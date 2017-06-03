@@ -23,7 +23,7 @@ define(['angular', 'underscore', 'toastr'], function(angular, _) {
       .state('costfunction', {
         url: '/cost-function',
         controller: 'ModelCostCoverageController as vm',
-        templateUrl: 'js/modules/costfunction/cost-function.html',
+        templateUrl: 'js/modules/costfunction/cost-function.html?cacheBust=xxx',
         bindToController: true,
       });
   });

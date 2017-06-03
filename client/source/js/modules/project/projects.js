@@ -9,7 +9,7 @@ define(['angular', 'ui.router'], function (angular) {
     $stateProvider
       .state('home', {
         url: '/',
-        templateUrl: 'js/modules/project/manage-projects.html',
+        templateUrl: 'js/modules/project/manage-projects.html?cacheBust=xxx',
         controller: 'ProjectOpenController'
       })
   });

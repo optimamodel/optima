@@ -17,7 +17,7 @@ define(['angular'], function (angular) {
       return {
         restrict: 'A',
         scope: {settings: '= menu'},
-        templateUrl: 'js/modules/ui/menu.html',
+        templateUrl: 'js/modules/ui/menu.html?cacheBust=xxx',
         controller: ['$scope', function($scope) {
 
           $scope.state = $state.current;

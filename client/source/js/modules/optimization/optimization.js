@@ -10,7 +10,7 @@ define(['angular', 'ui.router'], function (angular) {
     $stateProvider
       .state('optimization', {
         url: '/optimization',
-        templateUrl: 'js/modules/optimization/optimization.html',
+        templateUrl: 'js/modules/optimization/optimization.html?cacheBust=xxx',
         controller: 'AnalysisOptimizationController'
       });
   });
@@ -501,7 +501,7 @@ define(['angular', 'ui.router'], function (angular) {
 
       $modal
         .open({
-          templateUrl: 'js/modules/optimization/optimization-modal.html',
+          templateUrl: 'js/modules/optimization/optimization-modal.html?cacheBust=xxx',
           controller: OptimizationModalController,
           windowClass: 'fat-modal',
         })

@@ -18,8 +18,8 @@
   <meta name="msapplication-TileColor" content="#ffffff">
   <meta name="msapplication-config" content="assets/images/optimalogo/browserconfig.xml">
 
-  <link rel="stylesheet" href="assets/css/main.css?bust=v0.4.0">
-  <link rel="stylesheet" href="assets/css/chart.css?bust=v0.4.0">
+  <link rel="stylesheet" href="assets/css/main.css?cacheBust=xxx">
+  <link rel="stylesheet" href="assets/css/chart.css?cacheBust=xxx">
   <style>
     [ng\:cloak], [ng-cloak], [data-ng-cloak], [x-ng-cloak], .ng-cloak, .x-ng-cloak, .ng-hide {
       display: none !important;
@@ -43,7 +43,7 @@
       width: 100%;
       height: 100%;
       z-index: 9999;
-      background: url(assets/images/icons/loading-animation.gif) center no-repeat #fff;
+      background: url(assets/images/icons/loading-animation.gif?cacheBust=xxx) center no-repeat #fff;
     }
   </style>
 
@@ -52,7 +52,7 @@
   <script>
     function loadScripts() {
       require(['require', './js/config'], function(require, config) {
-        config.urlArgs = 'bust=v1.0.1';
+        config.urlArgs = 'cacheBust=xxx';  // The gulp cache buster will replace the assigned value.
         window.require.config(config);
         require(['./js/main.js']);
       });
@@ -97,7 +97,7 @@
 <div class="actionbar">
   <div class="elastic header">
     <div style="display:table-cell; width:160px">
-      <img src="assets/images/optimalogo/optima-hiv-logo.png">
+      <img src="assets/images/optimalogo/optima-hiv-logo.png?cacheBust=xxx">
     </div>
     <div style="display:table-cell; vertical-align: middle;" data-menu ng-cloak ng-if="userLogged()">
     </div>

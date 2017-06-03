@@ -12,7 +12,7 @@ define(['angular', 'ui.router', './population-modal'], function (angular) {
     $stateProvider
       .state('createproject', {
         url: '/create-project',
-        templateUrl: 'js/modules/project/create-project.html',
+        templateUrl: 'js/modules/project/create-project.html?cacheBust=xxx',
         controller: 'ProjectCreateOrEditController'
       });
   });
@@ -81,7 +81,7 @@ define(['angular', 'ui.router', './population-modal'], function (angular) {
 
     function openPopulationModal(population) {
       return $modal.open({
-        templateUrl: 'js/modules/project/population-modal.html',
+        templateUrl: 'js/modules/project/population-modal.html?cacheBust=xxx',
         controller: 'ProjectCreatePopulationModalController',
         resolve: {
           populations: function(){ return $scope.populations; },

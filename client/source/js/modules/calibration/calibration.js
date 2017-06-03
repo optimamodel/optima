@@ -10,7 +10,7 @@ define(['angular', 'underscore'], function (angular, _) {
       $stateProvider
         .state('calibration', {
           url: '/calibration',
-          templateUrl: 'js/modules/calibration/calibration.html',
+          templateUrl: 'js/modules/calibration/calibration.html?cacheBust=xxx',
           controller: 'ModelCalibrationController',
         })
     });

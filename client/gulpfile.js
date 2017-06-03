@@ -12,13 +12,14 @@ var spawnSync = require('child_process').spawnSync;
 var uglify = require('gulp-uglify');
 var plumber = require('gulp-plumber');
 var fs = require('fs');
+var regexreplace = require('gulp-regex-replace');
 
 var handleError = function (err) {
   console.log(err.name, ' in ', err.plugin, ': ', err.message);
   process.exit(1);
 };
 
-// Write version.js
+// Write version.js with the git version and date info
 gulp.task('write-version-js', function() {
   try {
     var data = spawnSync('git', ['rev-parse', '--short', 'HEAD']).output;
@@ -66,6 +67,10 @@ gulp.task('copy-assets-and-vendor-js', ['compile-sass'], function () {
 });
 
 // Optimize the app into the build/js directory
+// NOTE: Something is not completed correctly here because the console never registers
+// a Finished for this task (which will cause any gulp tasks with dependencies on
+// 'compile-build-js-client-uglify' to also not complete. Possible reason: if any
+// @import dependencies in the sass fail, this will silently fail (argh!).
 gulp.task('compile-build-js-client-uglify', ['write-version-js'], function () {
   var configRequire = require('./source/js/config.js');
   var configBuild = {
@@ -137,11 +142,45 @@ gulp.task('watch', [], function () {
       'change', livereload.changed);
 });
 
-// Defaults -- WARNING, do version.js separately
+// Task for doing cache-busting on the build files.
+// Note, there should be a ['compile-build-js-client-uglify'] set here as a dependency, but
+// this does not terminate correctly, so I can't use it.
+// So, currently a separate gulp call (gulp cache-bust)
+// needs to be made after the main call by the building scripts.
+gulp.task('cache-bust', function () {
+    // Grab the current date, returning 'unknown' if this doesn't work.
+    try {
+    	var today = new Date();
+		var version = today.getFullYear()+'.'+(today.getMonth()+1)+'.'+today.getDate()+'_'+today.getHours()+'.'+today.getMinutes()+'.'+today.getSeconds();
+    }
+    catch(err) {
+        version = 'unknown';
+    }
+    return es.concat(
+        // Do a regular expression replace "cacheBust=xxx" -> "cacheBust=_version_" for just index.html.
+        gulp.src(['build/index.html'])
+            .pipe(regexreplace({
+                regex: 'cacheBust=xxx',
+                replace: ('cacheBust=' + version)
+            }))
+            .pipe(gulp.dest('build/')),
+        // Do a regular expression replace "cacheBust=xxx" -> "cacheBust=_version_" for js files in modules.
+        gulp.src(['build/js/**/*.html', 'build/js/**/*.js'])
+            .pipe(regexreplace({
+                regex: 'cacheBust=xxx',
+                replace: ('cacheBust=' + version)
+            }))
+            .pipe(gulp.dest('build/js/'))
+    )
+});
+
+// Defaults
 gulp.task(
   'default',
   [
     'copy-assets-and-vendor-js',
     'compile-build-js-client-uglify',
-  ]);
+    //'cache-bust'  // uncomment once we can figure out how to fix 'compile-build-js-client-uglify' to halt correctly
+  ]
+);
 
