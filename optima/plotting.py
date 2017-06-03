@@ -927,10 +927,10 @@ def plotcascade(results=None, aspercentage=False, cascadecolors=None, figsize=gl
             txtargs = {'fontsize':legendsize, 'color':targetcolor, 'horizontalalignment':'center'}
             ax.plot([basex[1], basex[1]+targetxpos], [90,90], **lineargs)
             ax.plot([basex[2], basex[2]+targetxpos], [81,81], **lineargs)
-            ax.plot([basex[3], basex[3]+targetxpos], [72,72], **lineargs)
+            ax.plot([basex[3], basex[3]+targetxpos], [73,73], **lineargs)
             ax.text(basex[1]+labelxpos,90+dy,'90%', **txtargs)
             ax.text(basex[2]+labelxpos,81+dy,'81%', **txtargs)
-            ax.text(basex[3]+labelxpos,72+dy,'72%', **txtargs)
+            ax.text(basex[3]+labelxpos,73+dy,'73%', **txtargs)
             
             ax.set_xticks(basex+1.0)
             ax.set_xticklabels(casclabels)
