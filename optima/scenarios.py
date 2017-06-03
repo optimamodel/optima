@@ -300,16 +300,19 @@ def defaultscenarios(project=None, which=None, startyear=2016, endyear=2020, par
     if which is None: which = 'budgets'
     
     if which=='budgets':
+        parsetname = 'default-scenarios'
+        project.copyparset(orig=parset, new=parsetname)
+        project.parsets['default-scenarios'].fixprops(False) # Ensure they're not fixed
         defaultbudget = project.progsets[progset].getdefaultbudget()
         maxbudget = dcp(defaultbudget)
         nobudget = dcp(defaultbudget)
         for key in maxbudget: maxbudget[key] += project.settings.infmoney
         for key in nobudget: nobudget[key] *= 1e-6
         scenlist = [
-            Parscen(   name='Baseline',         parsetname=0, pars=[]),
-            Budgetscen(name='Zero budget',      parsetname=0, progsetname=0, t=[startyear], budget=nobudget),
-            Budgetscen(name='Baseline budget',  parsetname=0, progsetname=0, t=[startyear], budget=defaultbudget),
-            Budgetscen(name='Unlimited budget', parsetname=0, progsetname=0, t=[startyear], budget=maxbudget),
+            Parscen(   name='Baseline',         parsetname=parsetname, pars=[]),
+            Budgetscen(name='Zero budget',      parsetname=parsetname, progsetname=0, t=[startyear], budget=nobudget),
+            Budgetscen(name='Baseline budget',  parsetname=parsetname, progsetname=0, t=[startyear], budget=defaultbudget),
+            Budgetscen(name='Unlimited budget', parsetname=parsetname, progsetname=0, t=[startyear], budget=maxbudget),
             ]
     
     # WARNING, this may not entirely work

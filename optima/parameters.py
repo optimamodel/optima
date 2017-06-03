@@ -131,6 +131,17 @@ class Parameterset(object):
         for key in self.parkeys():
             self.pars[key].updateprior()
         return None
+    
+    
+    def fixprops(self, fix=None):
+        '''
+        Fix or unfix the proportions of people on ART and suppressed.
+        
+        To fix:   P.parset().fixprops()
+        To unfix: P.parset().fixprops(False)
+        '''
+        self.pars = togglefixprops(self.pars, fix=fix)
+        return None
         
     
     def printpars(self, output=False):
@@ -980,14 +991,14 @@ def balance(act=None, which=None, data=None, popkeys=None, limits=None, popsizep
 
 
 
-def makepars(data=None, verbose=2, die=True):
+def makepars(data=None, verbose=2, die=True, fixprops=None):
     """
     Translates the raw data (which were read from the spreadsheet) into
     parameters that can be used in the model. These data are then used to update 
     the corresponding model (project). This method should be called before a 
     simulation is run.
     
-    Version: 2017feb02 by cliffk
+    Version: 2017jun03
     """
     
     printv('Converting data to parameters...', 1, verbose)
@@ -1118,10 +1129,9 @@ def makepars(data=None, verbose=2, die=True):
         pars['numcirc'].y[key] = array([0.0]) # Set to 0 for all populations, since program parameter only
 
     # Fix treatment from final data year
-    pars['fixproptx'].t = pars['numtx'].t['tot'][-1]
-    pars['fixpropsupp'].t = pars['fixproptx'].t # Doesn't make sense to assume proportion on treatment without assuming proportion suppressed....also, crashes otherwise :)
-    for key in ['fixpropdx', 'fixpropcare', 'fixproppmtct']:
+    for key in ['fixproptx', 'fixpropsupp', 'fixpropdx', 'fixpropcare', 'fixproppmtct']:
         pars[key].t = 2100 # WARNING, KLUDGY -- don't use these, so just set to well past the end of the analysis
+    pars = togglefixprops(pars, fix=fixprops) # Optionally fix the proportions
 
     # Set the values of parameters that aren't from data
     pars['transnorm'].y = 0.43 # See analyses/misc/calculatecd4transnorm.py for calculation
@@ -1169,9 +1179,14 @@ def makepars(data=None, verbose=2, die=True):
     return pars
 
 
-    
-        
-
+def togglefixprops(pars=None, fix=None):
+    ''' Tiny little method to fix the date for proptx and propsupp '''
+    if fix is None: fix = True # By default, do fix
+    if fix:  endyear = pars['numtx'].t['tot'][-1]
+    else:    endyear = 2100
+    pars['fixproptx'].t   = endyear
+    pars['fixpropsupp'].t = endyear # Doesn't make sense to assume proportion on treatment without assuming proportion suppressed....also, crashes otherwise :)
+    return pars
 
 
 def makesimpars(pars, name=None, keys=None, start=None, end=None, dt=None, tvec=None, settings=None, smoothness=None, asarray=True, sample=None, tosample=None, randseed=None, verbose=2):

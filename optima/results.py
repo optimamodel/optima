@@ -44,6 +44,7 @@ class Resultset(object):
         self.name = name if name else 'default' # May be blank if automatically generated, but can be overwritten
         self.main = odict() # For storing main results
         self.other = odict() # For storing other results -- not available in the interface
+        self.keys = [0] # Used for comparison with multiresultsets -- 0 corresponds to e.g. self.main[<key>].tot[0]
         
         # Turn inputs into lists if not already
         if raw is None: raise OptimaException('To generate results, you must feed in model output: none provided')
@@ -545,13 +546,13 @@ class Resultset(object):
         Example:
             import optima as op
             P = op.demo(0)
-            P.defaultscenarios(doplot=False) # Run a multi sim
             P.result().summary() # Show default results for current year
             P.result().summary(year=2020) # Show default results for 2020
-            P.result().summary(key=['Baseline', 'Zero budget']) # Show multiple results
+            P.defaultscenarios(doplot=False) # Run a multi sim
+            P.result().summary(year=2020) # For a multiresultset, show default results for current year for all simulations
             P.result().summary(year=[2015,2020], key=['Baseline', 'Zero budget']) # Show multiple results for multiple years
         '''
-        if key  is None: key  = 0
+        if key  is None: key  = dcp(self.keys)
         if year is None: year = self.projectref().settings.now
         yearlist = promotetolist(year)
         keylist  = promotetolist(key)

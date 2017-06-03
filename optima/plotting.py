@@ -486,13 +486,13 @@ def plotepi(results, toplot=None, uncertainty=True, die=True, showdata=True, ver
                     for l in range(nlinesperplot):
                         ydata = factor*best[nlinesperplot-1-l]
                         allydata.append(ydata)
-                        ax.plot(xdata, ydata, lw=lw, c=colors[nlinesperplot-1-l], zorder=linezorder) # Index is each different e.g. scenario
+                        ax.plot(xdata, ydata, lw=lw, c=colors[nlinesperplot-1-l], zorder=linezorder, label=labels[l]) # Index is each different e.g. scenario
                 
                 if ismultisim and isperpop:
                     for l in range(nlinesperplot):
                         ydata = factor*best[nlinesperplot-1-l][i]
                         allydata.append(ydata)
-                        ax.plot(xdata, ydata, lw=lw, c=colors[nlinesperplot-1-l], zorder=linezorder) # Indices are different populations (i), then different e..g scenarios (l)
+                        ax.plot(xdata, ydata, lw=lw, c=colors[nlinesperplot-1-l], zorder=linezorder, label=labels[l]) # Indices are different populations (i), then different e..g scenarios (l)
 
 
 
@@ -546,10 +546,11 @@ def plotepi(results, toplot=None, uncertainty=True, die=True, showdata=True, ver
                 ax.set_xlim((results.tvec[startind], results.tvec[endind]))
                 if not ismultisim:
                     if isstacked: 
-                        handles, labels = ax.get_legend_handles_labels()
-                        ax.legend(handles[::-1], labels[::-1], **legendsettings) # Multiple entries, all populations
+                        handles, legendlabels = ax.get_legend_handles_labels()
+                        ax.legend(handles[::-1], legendlabels[::-1], **legendsettings) # Multiple entries, all populations
                 else:
-                    ax.legend(labels[::-1], **legendsettings) # Multiple simulations
+                    handles, legendlabels = ax.get_legend_handles_labels()
+                    ax.legend(handles[::-1], legendlabels, **legendsettings) # Multiple simulations
                 if useSIticks: SIticks(epiplots[pk])
                 else:          commaticks(epiplots[pk])
         
