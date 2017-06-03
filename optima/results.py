@@ -98,13 +98,15 @@ class Resultset(object):
         self.main['numtreat']       = Result('PLHIV on treatment')
         self.main['numsuppressed']  = Result('Virally suppressed PLHIV')
         
-        self.main['propdiag']       = Result('Diagnosed PLHIV (%)', ispercentage=True, defaultplot='total')
-        self.main['propevercare']   = Result('Diagnosed PLHIV initially linked to care (%)', ispercentage=True, defaultplot='total')
-        self.main['propincare']     = Result('Diagnosed PLHIV retained in care (%)', ispercentage=True, defaultplot='total')
-        self.main['proptreat']      = Result('PLHIV in care who are on treatment (%)', ispercentage=True, defaultplot='total')
-        self.main['propsuppressed'] = Result('Treated PLHIV who are virally suppressed (%)', ispercentage=True, defaultplot='total')
+        self.main['propdiag']       = Result('Diagnosed PLHIV (%)',                      ispercentage=True, defaultplot='total')
+        self.main['propplhivtreat'] = Result('Treated PLHIV (%)',                        ispercentage=True, defaultplot='total')
+        self.main['propplhivsupp']  = Result('Virally suppressed PLHIV (%)',             ispercentage=True, defaultplot='total')
+        self.main['propevercare']   = Result('Diagnosed PLHIV linked to care (%)',       ispercentage=True, defaultplot='total')
+        self.main['propincare']     = Result('Diagnosed PLHIV retained in care (%)',     ispercentage=True, defaultplot='total')
+        self.main['proptreat']      = Result('Diagnosed PLHIV on treatment (%)',         ispercentage=True, defaultplot='total')
+        self.main['propsuppressed'] = Result('Treated PLHIV with viral suppression (%)', ispercentage=True, defaultplot='total')
         
-        self.main['prev']           = Result('HIV prevalence (%)', ispercentage=True, defaultplot='population')
+        self.main['prev']           = Result('HIV prevalence (%)',       ispercentage=True, defaultplot='population')
         self.main['force']          = Result('Incidence (per 100 p.y.)', ispercentage=True, defaultplot='population')
         self.main['numnewdiag']     = Result('New diagnoses')
         self.main['nummtct']        = Result('HIV+ births')
@@ -269,74 +271,74 @@ class Resultset(object):
 
         
         self.main['prev'].pops = quantile(allpeople[:,allplhiv,:,:][:,:,:,indices].sum(axis=1) / allpeople[:,:,:,indices].sum(axis=1), quantiles=quantiles) # Axis 1 is health state
-        self.main['prev'].tot = quantile(allpeople[:,allplhiv,:,:][:,:,:,indices].sum(axis=(1,2)) / allpeople[:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles) # Axis 2 is populations
+        self.main['prev'].tot  = quantile(allpeople[:,allplhiv,:,:][:,:,:,indices].sum(axis=(1,2)) / allpeople[:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles) # Axis 2 is populations
         if data is not None: 
             self.main['prev'].datapops = processdata(data['hivprev'], uncertainty=True)
-            self.main['prev'].datatot = processdata(data['optprev'])
+            self.main['prev'].datatot  = processdata(data['optprev'])
         
         self.main['force'].pops = quantile(allinci[:,:,indices] / allpeople[:,:,:,indices].sum(axis=1), quantiles=quantiles) # Axis 1 is health state
-        self.main['force'].tot = quantile(allinci[:,:,indices].sum(axis=1) / allpeople[:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles) # Axis 2 is populations
+        self.main['force'].tot  = quantile(allinci[:,:,indices].sum(axis=1) / allpeople[:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles) # Axis 2 is populations
 
         self.main['numinci'].pops = quantile(allinci[:,:,indices], quantiles=quantiles).round()
-        self.main['numinci'].tot = quantile(allinci[:,:,indices].sum(axis=1), quantiles=quantiles).round() # Axis 1 is populations
+        self.main['numinci'].tot  = quantile(allinci[:,:,indices].sum(axis=1), quantiles=quantiles).round() # Axis 1 is populations
         if data is not None: 
             self.main['numinci'].datatot = processdata(data['optnuminfect'])
             self.main['numinci'].estimate = True # It's not real data, just an estimate
         
         self.main['numincibypop'].pops = quantile(allincibypop[:,:,indices], quantiles=quantiles).round()
-        self.main['numincibypop'].tot = quantile(allincibypop[:,:,indices].sum(axis=1), quantiles=quantiles).round() # Axis 1 is populations
+        self.main['numincibypop'].tot  = quantile(allincibypop[:,:,indices].sum(axis=1), quantiles=quantiles).round() # Axis 1 is populations
         if data is not None: 
             self.main['numincibypop'].datatot = processdata(data['optnuminfect'])
             self.main['numincibypop'].estimate = True # It's not real data, just an estimate
         
         self.main['nummtct'].pops = quantile(allmtct[:,:,indices], quantiles=quantiles).round()
-        self.main['nummtct'].tot = quantile(allmtct[:,:,indices].sum(axis=1), quantiles=quantiles).round()
+        self.main['nummtct'].tot  = quantile(allmtct[:,:,indices].sum(axis=1), quantiles=quantiles).round()
 
         self.main['numhivbirths'].pops = quantile(allhivbirths[:,:,indices], quantiles=quantiles).round()
-        self.main['numhivbirths'].tot = quantile(allhivbirths[:,:,indices].sum(axis=1), quantiles=quantiles).round()
+        self.main['numhivbirths'].tot  = quantile(allhivbirths[:,:,indices].sum(axis=1), quantiles=quantiles).round()
 
         self.main['numpmtct'].pops = quantile(allpmtct[:,:,indices], quantiles=quantiles).round()
-        self.main['numpmtct'].tot = quantile(allpmtct[:,:,indices].sum(axis=1), quantiles=quantiles).round()
+        self.main['numpmtct'].tot  = quantile(allpmtct[:,:,indices].sum(axis=1), quantiles=quantiles).round()
 
         self.main['numnewdiag'].pops = quantile(alldiag[:,:,indices], quantiles=quantiles).round()
-        self.main['numnewdiag'].tot = quantile(alldiag[:,:,indices].sum(axis=1), quantiles=quantiles).round() # Axis 1 is populations
+        self.main['numnewdiag'].tot  = quantile(alldiag[:,:,indices].sum(axis=1), quantiles=quantiles).round() # Axis 1 is populations
         if data is not None: 
             self.main['numnewdiag'].datatot = processdata(data['optnumdiag'])
             self.main['numnewdiag'].estimate = False # It's real data, not just an estimate
         
         self.main['numdeath'].pops = quantile(alldeaths[:,:,:,indices].sum(axis=1), quantiles=quantiles).round()
-        self.main['numdeath'].tot = quantile(alldeaths[:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles).round() # Axis 1 is populations
+        self.main['numdeath'].tot  = quantile(alldeaths[:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles).round() # Axis 1 is populations
         if data is not None: 
             self.main['numdeath'].datatot = processdata(data['optdeath'])
             self.main['numdeath'].estimate = True # It's not real data, just an estimate
         
         self.main['numplhiv'].pops = quantile(allpeople[:,allplhiv,:,:][:,:,:,indices].sum(axis=1), quantiles=quantiles).round() # Axis 1 is health state
-        self.main['numplhiv'].tot = quantile(allpeople[:,allplhiv,:,:][:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles).round() # Axis 2 is populations
+        self.main['numplhiv'].tot  = quantile(allpeople[:,allplhiv,:,:][:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles).round() # Axis 2 is populations
         if data is not None: 
             self.main['numplhiv'].datatot = processdata(data['optplhiv'])
             self.main['numplhiv'].estimate = True # It's not real data, just an estimate
         
         self.main['numaids'].pops = quantile(allpeople[:,allaids,:,:][:,:,:,indices].sum(axis=1), quantiles=quantiles).round() # Axis 1 is health state
-        self.main['numaids'].tot = quantile(allpeople[:,allaids,:,:][:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles).round() # Axis 2 is populations
+        self.main['numaids'].tot  = quantile(allpeople[:,allaids,:,:][:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles).round() # Axis 2 is populations
 
         self.main['numdiag'].pops = quantile(allpeople[:,alldx,:,:][:,:,:,indices].sum(axis=1), quantiles=quantiles).round() # WARNING, this is ugly, but allpeople[:,txinds,:,indices] produces an error
         self.main['numdiag'].tot = quantile(allpeople[:,alldx,:,:][:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles).round() # Axis 1 is populations
         
         self.main['propdiag'].pops = quantile(allpeople[:,alldx,:,:][:,:,:,indices].sum(axis=1)/maximum(allpeople[:,allplhiv,:,:][:,:,:,indices].sum(axis=1),eps), quantiles=quantiles) 
-        self.main['propdiag'].tot = quantile(allpeople[:,alldx,:,:][:,:,:,indices].sum(axis=(1,2))/maximum(allpeople[:,allplhiv,:,:][:,:,:,indices].sum(axis=(1,2)),eps), quantiles=quantiles) # Axis 1 is populations
+        self.main['propdiag'].tot  = quantile(allpeople[:,alldx,:,:][:,:,:,indices].sum(axis=(1,2))/maximum(allpeople[:,allplhiv,:,:][:,:,:,indices].sum(axis=(1,2)),eps), quantiles=quantiles) # Axis 1 is populations
         if data is not None: self.main['propdiag'].datatot = processdata(data['optpropdx'])
         
         self.main['numevercare'].pops = quantile(allpeople[:,allevercare,:,:][:,:,:,indices].sum(axis=1), quantiles=quantiles).round() # WARNING, this is ugly, but allpeople[:,txinds,:,indices] produces an error
-        self.main['numevercare'].tot = quantile(allpeople[:,allevercare,:,:][:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles).round() # Axis 1 is populations
+        self.main['numevercare'].tot  = quantile(allpeople[:,allevercare,:,:][:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles).round() # Axis 1 is populations
 
         self.main['propevercare'].pops = quantile(allpeople[:,allevercare,:,:][:,:,:,indices].sum(axis=1)/maximum(allpeople[:,alldx,:,:][:,:,:,indices].sum(axis=1),eps), quantiles=quantiles) 
-        self.main['propevercare'].tot = quantile(allpeople[:,allevercare,:,:][:,:,:,indices].sum(axis=(1,2))/maximum(allpeople[:,alldx,:,:][:,:,:,indices].sum(axis=(1,2)),eps), quantiles=quantiles) # Axis 1 is populations
+        self.main['propevercare'].tot  = quantile(allpeople[:,allevercare,:,:][:,:,:,indices].sum(axis=(1,2))/maximum(allpeople[:,alldx,:,:][:,:,:,indices].sum(axis=(1,2)),eps), quantiles=quantiles) # Axis 1 is populations
 
         self.main['numincare'].pops = quantile(allpeople[:,allcare,:,:][:,:,:,indices].sum(axis=1), quantiles=quantiles).round() # WARNING, this is ugly, but allpeople[:,txinds,:,indices] produces an error
-        self.main['numincare'].tot = quantile(allpeople[:,allcare,:,:][:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles).round() # Axis 1 is populations
+        self.main['numincare'].tot  = quantile(allpeople[:,allcare,:,:][:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles).round() # Axis 1 is populations
 
         self.main['propincare'].pops = quantile(allpeople[:,allcare,:,:][:,:,:,indices].sum(axis=1)/maximum(allpeople[:,alldx,:,:][:,:,:,indices].sum(axis=1),eps), quantiles=quantiles) 
-        self.main['propincare'].tot = quantile(allpeople[:,allcare,:,:][:,:,:,indices].sum(axis=(1,2))/maximum(allpeople[:,alldx,:,:][:,:,:,indices].sum(axis=(1,2)),eps), quantiles=quantiles) # Axis 1 is populations
+        self.main['propincare'].tot  = quantile(allpeople[:,allcare,:,:][:,:,:,indices].sum(axis=(1,2))/maximum(allpeople[:,alldx,:,:][:,:,:,indices].sum(axis=(1,2)),eps), quantiles=quantiles) # Axis 1 is populations
         if data is not None: self.main['propincare'].datatot = processdata(data['optpropcare'])
 
         self.main['numtreat'].pops = quantile(allpeople[:,alltx,:,:][:,:,:,indices].sum(axis=1), quantiles=quantiles).round() # WARNING, this is ugly, but allpeople[:,txinds,:,indices] produces an error
@@ -344,11 +346,14 @@ class Resultset(object):
         if data is not None: self.main['numtreat'].datatot = processdata(data['numtx'])
 
         self.main['costtreat'].pops = quantile(allcosttreat[:,:,indices], quantiles=quantiles).round()
-        self.main['costtreat'].tot = quantile(allcosttreat[:,:,indices].sum(axis=1), quantiles=quantiles).round() # Axis 1 is populations
+        self.main['costtreat'].tot  = quantile(allcosttreat[:,:,indices].sum(axis=1), quantiles=quantiles).round() # Axis 1 is populations
 
-        self.main['proptreat'].pops = quantile(allpeople[:,alltx,:,:][:,:,:,indices].sum(axis=1)/maximum(allpeople[:,allcare,:,:][:,:,:,indices].sum(axis=1),eps), quantiles=quantiles) 
-        self.main['proptreat'].tot = quantile(allpeople[:,alltx,:,:][:,:,:,indices].sum(axis=(1,2))/maximum(allpeople[:,allcare,:,:][:,:,:,indices].sum(axis=(1,2)),eps), quantiles=quantiles) # Axis 1 is populations
+        self.main['proptreat'].pops = quantile(allpeople[:,alltx,:,:][:,:,:,indices].sum(axis=1)/maximum(allpeople[:,alldx,:,:][:,:,:,indices].sum(axis=1),eps), quantiles=quantiles) 
+        self.main['proptreat'].tot  = quantile(allpeople[:,alltx,:,:][:,:,:,indices].sum(axis=(1,2))/maximum(allpeople[:,alldx,:,:][:,:,:,indices].sum(axis=(1,2)),eps), quantiles=quantiles) # Axis 1 is populations
         if data is not None: self.main['proptreat'].datatot = processdata(data['optproptx'])
+
+        self.main['propplhivtreat'].pops = quantile(allpeople[:,alltx,:,:][:,:,:,indices].sum(axis=1)/maximum(allpeople[:,allplhiv,:,:][:,:,:,indices].sum(axis=1),eps), quantiles=quantiles) 
+        self.main['propplhivtreat'].tot = quantile(allpeople[:,alltx,:,:][:,:,:,indices].sum(axis=(1,2))/maximum(allpeople[:,allplhiv,:,:][:,:,:,indices].sum(axis=(1,2)),eps), quantiles=quantiles) # Axis 1 is populations
 
         self.main['numsuppressed'].pops = quantile(allpeople[:,svl,:,:][:,:,:,indices].sum(axis=1), quantiles=quantiles).round() # WARNING, this is ugly, but allpeople[:,txinds,:,indices] produces an error
         self.main['numsuppressed'].tot = quantile(allpeople[:,svl,:,:][:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles).round() # Axis 1 is populations
@@ -356,6 +361,9 @@ class Resultset(object):
         self.main['propsuppressed'].pops = quantile(allpeople[:,svl,:,:][:,:,:,indices].sum(axis=1)/maximum(allpeople[:,alltx,:,:][:,:,:,indices].sum(axis=1),eps), quantiles=quantiles) 
         self.main['propsuppressed'].tot = quantile(allpeople[:,svl,:,:][:,:,:,indices].sum(axis=(1,2))/maximum(allpeople[:,alltx,:,:][:,:,:,indices].sum(axis=(1,2)),eps), quantiles=quantiles) # Axis 1 is populations
         if data is not None: self.main['propsuppressed'].datatot = processdata(data['optpropsupp'])
+
+        self.main['propplhivsupp'].pops = quantile(allpeople[:,svl,:,:][:,:,:,indices].sum(axis=1)/maximum(allpeople[:,allplhiv,:,:][:,:,:,indices].sum(axis=1),eps), quantiles=quantiles) 
+        self.main['propplhivsupp'].tot = quantile(allpeople[:,svl,:,:][:,:,:,indices].sum(axis=(1,2))/maximum(allpeople[:,allplhiv,:,:][:,:,:,indices].sum(axis=(1,2)),eps), quantiles=quantiles) # Axis 1 is populations
 
         self.main['popsize'].pops = quantile(allpeople[:,:,:,indices].sum(axis=1), quantiles=quantiles).round()
         self.main['popsize'].tot = quantile(allpeople[:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles).round()
@@ -468,7 +476,7 @@ class Resultset(object):
             return outputstr
         
     
-    def get(self, what=None, year=None, key=0, pop='tot', dosum=False):
+    def get(self, what=None, year=None, key=None, pop=None, dosum=False):
         '''
         A small function to make it easier to access results. For example, to 
         get the number of deaths in the current year, just do
@@ -486,9 +494,10 @@ class Resultset(object):
         The "key" kwarg is mostly used for multiresultsets to choose which simulation result to get.
         For non-multiresultsets, [0,1,2] will choose [best, low, high].
         '''
-        # If year isn't specified, use now
-        if year is None: 
-            year = self.projectref().settings.now
+        # If kwargs aren't specified, use now
+        if key  is None: key  = 0
+        if year is None: year = self.projectref().settings.now
+        if pop  is None: pop = 'tot'
         
         # Figure out which dictionary to use
         if   what in self.main.keys():   resultobj = self.main[what]
@@ -527,6 +536,80 @@ class Resultset(object):
             result = sum(result)
         
         return result
+    
+    
+    def summary(self, year=None, key=None, doprint=True):
+        '''
+        Get a text summary of key results for a given year.
+        
+        Example:
+            import optima as op
+            P = op.demo(0)
+            P.defaultscenarios(doplot=False) # Run a multi sim
+            P.result().summary() # Show default results for current year
+            P.result().summary(year=2020) # Show default results for 2020
+            P.result().summary(key=['Baseline', 'Zero budget']) # Show multiple results
+            P.result().summary(year=[2015,2020], key=['Baseline', 'Zero budget']) # Show multiple results for multiple years
+        '''
+        if key  is None: key  = 0
+        if year is None: year = self.projectref().settings.now
+        yearlist = promotetolist(year)
+        keylist  = promotetolist(key)
+        nyears = len(yearlist)
+        nkeys  = len(keylist)
+        
+        # Define settings
+        padlen = 2 # How much space to have at beginning and between columns
+        headerlen = 8 # Default header length
+        epikeylist = ['prev', None, 'numinci', 'numdeath', 'numplhiv', 'numtreat', None, 'propdiag', 'propplhivtreat', 'propplhivsupp', None, 'proptreat', 'propsuppressed'] # Define what to include -- "None" is a spacer
+        
+        # Figure out how to make the labels
+        if   keylist==[0]:            keystr = '' # Skip adding here, since don't need or will add later
+        elif (nkeys>1 and nyears==1): keystr = ', year %s' % yearlist[0] # Show year
+        elif (nkeys>1 and nyears>1):  keystr = ', keys "%s"' % ('", "'.join(keylist)) # Multiple keys and multiple years, show them here since can't show them in headers
+        else:                         keystr = ', key "%s"' % keylist[0] # Add sngle key information, if nontrivial
+        output = 'Summary of results for "%s"%s:\n\n' % (self.name, keystr) # Create output
+        pad = ' '*padlen
+        labellen = max([len(res.name) for res in self.main.values()]) # Figure out how long the label needs to be
+        labelctrl = '%%%is: ' % labellen # e.g. '%30s'
+        
+        # Year or key header
+        if nkeys>nyears: headerlen = padlen+max([len(tmpkey) for tmpkey in keylist]) # Find out the maximum length required
+        headerctrl  = '%%%is'   % headerlen # Format for header, e.g.'%8s'
+        percentctrl = '%%%i.2f' % headerlen # Format for percentages, e.g.'%8.2f'
+        numberctrl  = '%%%i.0f' % headerlen # Format for numbers, e.g.'%8.0f'
+        output += pad + labelctrl % '' # Add a blank space of the right length
+        for year in yearlist:
+            for key in keylist: # Loop over here too to duplicate if required
+                if nyears>=nkeys: output += numberctrl % year # The header is the year
+                else:             output += headerctrl % key # The header is the key
+        output += '\n'
+        
+        # Get standard indicators
+        for epikey in epikeylist:
+            if epikey is None:
+                output += '\n' # Add a space
+            else:
+                thisresult = self.main[epikey]
+                label = labelctrl % thisresult.name
+                output += pad + label
+                for year in yearlist:
+                    for key in keylist:
+                        thisnumber = self.get(what=epikey, year=year, key=key)
+                        if thisresult.ispercentage: resultstr = percentctrl % (thisnumber*100.0)
+                        else:                       resultstr = numberctrl  % (thisnumber)
+                        output += resultstr
+                output += '\n'
+        
+        maxlinelen = max([len(line) for line in output.splitlines()])
+        divider = '-'*maxlinelen + '\n'
+        output = divider + output + divider
+        if doprint: 
+            print(output)
+            return None
+        else:
+            return output
+        
             
         
 
@@ -622,10 +705,10 @@ class Multiresultset(Resultset):
             P = op.demo(0)
             P.defaultscenarios(doplot=False)
             resultsdiff = P.result().diff()
-            resultsdiff.get('numplhiv', key='No budget', year='all')
+            resultsdiff.get('numplhiv', key='Zero budget', year='all')
         
         Use the "base" kwarg (which can be a key or an index) to set the baseline:
-            resultsdiff = P.result().diff(base='No budget')
+            resultsdiff = P.result().diff(base='Zero budget')
             resultsdiff.get('numplhiv', key='Baseline conditions')
         '''
         
