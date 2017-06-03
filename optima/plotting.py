@@ -8,7 +8,7 @@ To add a new plot, you need to add it to getplotselections (in this file) so it 
 plotresults (in gui.py) so it will be sent to the right spot; and then add the actual function to do the
 plotting to this file.
 
-Version: 2017may22
+Version: 2017jun03
 '''
 
 from optima import OptimaException, Resultset, Multiresultset, odict, printv, gridcolors, vectocolor, alpinecolormap, makefilepath, sigfig, dcp, findinds, promotetolist, saveobj, promotetoodict, promotetoarray, boxoff
@@ -139,9 +139,9 @@ def getplotselections(results, advanced=False):
     
     ## Cascade plot is always available, since epi is always available
     plotselections['keys'].append('cascade')
-    plotselections['names'].append('Treatment cascade')
+    plotselections['names'].append('Care cascade')
     plotselections['keys'].append('cascadebars')
-    plotselections['names'].append('Treatment cascade (bars)')
+    plotselections['names'].append('Care cascade (bars)')
     
 #    ## Deaths by CD4 -- broken because no results.raw
 #    if advanced:
@@ -838,7 +838,12 @@ def plotcascade(results=None, aspercentage=False, cascadecolors=None, figsize=gl
     ''' 
     Plot the treatment cascade.
     
-    NOTE: do not call this function directly; instead, call via plotresults().
+    NOTE: do not call this function directly; instead, call via plotresults() using 'cascade' or 'cascadebars'.
+    
+    Example to show two bars for 2017 and 2020:
+        import optima as op
+        P = op.demo(0)
+        op.plotresults(P, toplot='cascadebars', plotstartyear=2017, plotendyear=2020)
     
     Version: 2017jun02 
     '''
@@ -858,12 +863,12 @@ def plotcascade(results=None, aspercentage=False, cascadecolors=None, figsize=gl
     # Set up figure and do plot
     cascadeplots = odict()
     if asbars:
-        baseyear  = results.pars['numtx'].t['tot'][-1]
-        endyear   = results.tvec[-1]
-        startind, endind = getplotinds(plotstartyear=baseyear, plotendyear=endyear, tvec=results.tvec, die=die, verbose=verbose) # Get year indices for producing plots
+        if plotstartyear is None: plotstartyear = results.pars['numtx'].t['tot'][-1]
+        if plotendyear   is None: plotendyear   = results.tvec[-1]
+        startind, endind = getplotinds(plotstartyear=plotstartyear, plotendyear=plotendyear, tvec=results.tvec, die=die, verbose=verbose) # Get year indices for producing plots
         cascinds = [startind, endind]
-        baselabel = '%4i' % baseyear
-        endlabel  = '%4i' % endyear
+        baselabel = '%4i' % plotstartyear
+        endlabel  = '%4i' % plotendyear
         yearlabels = [baselabel, endlabel]
         casclabels  = ['PLHIV', 'Diagnosed', 'Treated', 'Suppressed']
         casckeys    = ['numplhiv',  'numdiag',   'numtreat','numsuppressed']
