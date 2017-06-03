@@ -158,7 +158,7 @@ from .optimization import Optim, defaultobjectives, defaultconstraints, optimize
 import optimization as _optimization; del optimization
 
 # Plotting functions
-from .plotting import getplotselections, makeplots, plotepi, plotcascade, plotallocations, plotcostcov, saveplots, reanimateplots, sanitizeresults
+from .plotting import getplotselections, makeplots, plotepi, plotcascade, plotallocations, plotcostcov, plotbycd4, saveplots, reanimateplots, sanitizeresults
 import plotting as _plotting; del plotting
 
 #####################################################################################################################

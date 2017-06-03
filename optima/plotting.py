@@ -1084,7 +1084,7 @@ def plotbycd4(results=None, whattoplot='people', figsize=globalfigsize, lw=2, ti
         raise OptimaException(errormsg)
 
     # Set up figure and do plot
-    fig = makefigure(figsize=figsize, interactive=interactive)
+    fig,naxes = makefigure(figsize=figsize, interactive=interactive)
     ax = []
     
     titlemap = {'people': 'PLHIV', 'death': 'Deaths'}
