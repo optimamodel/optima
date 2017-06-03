@@ -1,8 +1,10 @@
 #!/bin/bash
 # Build the client.
-# Usage:
-#    ./build_client.sh # Build full client and minify JavaScript (slow)
-#    ./build_client.sh quick # Build client but without minifying JavaScript
+#
+# Usage is complicated:
+#    ./build_client.sh # Build full client and minify JavaScript
+#
+# Version: 2017jun03
 
 echo 'Building client...'
 
@@ -35,7 +37,7 @@ npm install --skip-installed
 echo -e '\nCompiling client (including minifying JavaScript)'
 node_modules/gulp/bin/gulp.js
 
-# The line below needs to be tested, but will be needed to do the cache-busting 
-# after the main run of gulp, until the compile-build-js-client-uglify task 
+# This needs to be done separately, until the compile-build-js-client-uglify task 
 # is made to terminate correctly in gulpfile.js.
+echo -e '\nAdding cache-busting strings'
 gulp cache-bust

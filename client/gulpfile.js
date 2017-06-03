@@ -69,7 +69,8 @@ gulp.task('copy-assets-and-vendor-js', ['compile-sass'], function () {
 // Optimize the app into the build/js directory
 // NOTE: Something is not completed correctly here because the console never registers
 // a Finished for this task (which will cause any gulp tasks with dependencies on
-// 'compile-build-js-client-uglify' to also not complete.
+// 'compile-build-js-client-uglify' to also not complete. Possible reason: if any
+// @import dependencies in the sass fail, this will silently fail (argh!).
 gulp.task('compile-build-js-client-uglify', ['write-version-js'], function () {
   var configRequire = require('./source/js/config.js');
   var configBuild = {
