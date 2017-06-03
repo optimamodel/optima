@@ -84,9 +84,8 @@ gulp.task('compile-build-js-client-uglify', ['write-version-js'], function () {
   var config = _(configBuild).extend(configRequire);
 
   return rjs(config)
-    .on('error', handleError)
     .pipe(ngAnnotate())
-    .pipe(uglify().on('error', handleError)) // This is key -- it compresses the JS, but takes a long time
+    .pipe(uglify()) // This is key -- it compresses the JS, but takes a long time
     .pipe(gulp.dest('build/js/'));
 });
 
@@ -150,8 +149,8 @@ gulp.task('watch', [], function () {
 gulp.task('cache-bust', function () {
     // Grab the version hash from the Git repo, returning 'unknown' if this doesn't work.
     try {
-        var data = spawnSync('git', ['rev-parse', '--short', 'HEAD']).output;
-        var version = data.toString().split(',')[1].trim();
+    	var today = new Date();
+		var version = today.getFullYear()+'.'+(today.getMonth()+1)+'.'+today.getDate()+'_'+today.getHours()+'.'+today.getMinutes()+'.'+today.getSeconds();
     }
     catch(err) {
         version = 'unknown';
@@ -180,7 +179,7 @@ gulp.task(
   [
     'copy-assets-and-vendor-js',
     'compile-build-js-client-uglify',
-    //'cache-bust'  // uncomment once we can figure out how to fix 'compile-build-js-client-uglify' to halt correctly
+    'cache-bust'  // uncomment once we can figure out how to fix 'compile-build-js-client-uglify' to halt correctly
   ]
 );
 
