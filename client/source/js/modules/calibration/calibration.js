@@ -346,11 +346,10 @@ define(['angular', 'underscore'], function (angular, _) {
           'fixproptx_on',
           [
             projectService.project.id,
-            $scope.state.parset.id,
-            name])
+            $scope.state.parset.id])
         .then(function(response) {
-          $scope.getCalibrationGraphs();
           toastr.success('Using constant proportion on ART');
+          $scope.getCalibrationGraphs();
         });
     };
 
@@ -360,11 +359,10 @@ define(['angular', 'underscore'], function (angular, _) {
           'fixproptx_off',
           [
             projectService.project.id,
-            $scope.state.parset.id,
-            name])
+            $scope.state.parset.id])
         .then(function(response) {
-          $scope.getCalibrationGraphs();
           toastr.success('Using constant number on ART');
+          $scope.getCalibrationGraphs();
         });
     };
 
