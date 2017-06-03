@@ -154,10 +154,11 @@ def make_mpld3_graph_dict(result=None, which=None, zoom=None, startYear=None, en
     for graph_key in graphs:
         graph_selectors.append(extract_graph_selector(graph_key))
         graph_dict = convert_to_mpld3(graphs[graph_key], zoom=zoom)
-        if graph_key == "budget":
-            graph = graphs[graph_key]
-            ylabels = [l.get_text() for l in graph.axes[0].get_yticklabels()]
-            graph_dict['ylabels'] = ylabels
+        graph = graphs[graph_key]
+        ylabels = [l.get_text() for l in graph.axes[0].get_yticklabels()]
+        graph_dict['ylabels'] = ylabels
+        xlabels = [l.get_text() for l in graph.axes[0].get_xticklabels()]
+        graph_dict['xlabels'] = xlabels
         mpld3_graphs.append(graph_dict)
 
     return {

@@ -865,17 +865,17 @@ def plotcascade(results=None, aspercentage=False, cascadecolors=None, figsize=gl
         baselabel = '%4i' % baseyear
         endlabel  = '%4i' % endyear
         yearlabels = [baselabel, endlabel]
-        casclabels  = ['PLHIV', 'Diagnosed', 'Treated', 'Virally\nsuppressed']
+        casclabels  = ['PLHIV', 'Diagnosed', 'Treated', 'Suppressed']
         casckeys    = ['numplhiv',  'numdiag',   'numtreat','numsuppressed']
         ncategories = len(casclabels)
-        darken = 1.3 # Amount by which to darken succeeding cascade stages
+        darken = array([1.0, 1.3, 1.3]) # Amount by which to darken succeeding cascade stages -- can't use 0.2 since goes negative!!
         targetcolor   = array([0,0,0])
-        origbasecolor = array([0.6,0.5,0.9])
-        origendcolor  = array([0.6,0.8,0.5])
+        origbasecolor = array([0.5,0.60,0.9])
+        origendcolor  = array([0.3,0.85,0.6])
         casccolors = odict([(baselabel,[origbasecolor]), (endlabel, [origendcolor])])
         for k in range(len(casckeys)-1):
             for label in casccolors.keys():
-                darker = casccolors[label][-1]**darken # Make each color slightly darker than the one before
+                darker = dcp(casccolors[label][-1]**darken) # Make each color slightly darker than the one before
                 casccolors[label].append(darker)
     else:
         # Get year indices for producing plots
@@ -916,12 +916,12 @@ def plotcascade(results=None, aspercentage=False, cascadecolors=None, figsize=gl
                         thisbar = 100.*results.main[key].tot[plt][ind]/results.main['numplhiv'].tot[plt][ind] # If it's a multisim, need an extra index for the plot number
                     else:
                         thisbar = 100.*results.main[key].tot[0][ind]/results.main['numplhiv'].tot[0][ind] # Get the best estimate
-                    if k==0: yearlabel = yearlabels[i]
-                    else:    yearlabel = None
+                    if k==len(casckeys)-1: yearlabel = yearlabels[i]
+                    else:                  yearlabel = None
                     ax.bar(basex[k]+i*dx, thisbar, width=1., color=casccolors[i][k], linewidth=0, label=yearlabel)
             
             targetxpos = 2.0
-            labelxpos  = 3.5
+            labelxpos  = 3.2
             dy = -1
             lineargs = {'c':targetcolor, 'linewidth':2}
             txtargs = {'fontsize':legendsize, 'color':targetcolor, 'horizontalalignment':'center'}
@@ -940,7 +940,11 @@ def plotcascade(results=None, aspercentage=False, cascadecolors=None, figsize=gl
             ax.spines['right'].set_visible(False)
             ax.yaxis.set_ticks_position('left')
             ax.xaxis.set_ticks_position('bottom')
-        else:
+            5
+            if ismultisim: thistitle = 'Care cascade - %s' % titles[plt]
+            else:          thistitle = 'Care cascade'
+        
+        else: # Not bars
             bottom = 0*results.tvec # Easy way of setting to 0...
             for k,key in enumerate(reversed(cascadelist)): # Loop backwards so correct ordering -- first one at the top, not bottom
                 if ismultisim: 
@@ -963,6 +967,9 @@ def plotcascade(results=None, aspercentage=False, cascadecolors=None, figsize=gl
             if aspercentage: ax.set_ylim((0,100))
             else:            setylim(0, ax)
             ax.set_xlim((results.tvec[startind], results.tvec[endind]))
+            
+            if ismultisim: thistitle = 'Cascade - %s' % titles[plt]
+            else:          thistitle = 'Cascade'
         
         ## General plotting fixes
         if useSIticks: SIticks(fig)
@@ -979,8 +986,6 @@ def plotcascade(results=None, aspercentage=False, cascadecolors=None, figsize=gl
         legendsettings = {'loc':'upper left', 'bbox_to_anchor':(1.05, 1), 'fontsize':legendsize, 'title':'', 'frameon':False, 'scatterpoints':1}
         ax.legend(**legendsettings) # Multiple entries, all populations
             
-        if ismultisim: thistitle = 'Care cascade - %s' % titles[plt]
-        else:          thistitle = 'Care cascade'
         ax.set_title(thistitle)
         cascadeplots[thistitle] = fig
     
