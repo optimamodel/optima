@@ -582,9 +582,10 @@ class Project(object):
         return output
     
 
-    def runbudget(self, budget=None, budgetyears=None, name='runbudget', progsetname=None, parsetname='default', verbose=2):
+    def runbudget(self, name=None, budget=None, budgetyears=None, progsetname=None, parsetname='default', verbose=2):
         ''' Function to run the model for a given budget, years, programset and parameterset '''
-        if budget is None: raise OptimaException("Please enter a budget dictionary to run")
+        if name        is None: name = 'runbudget'
+        if budget      is None: raise OptimaException("Please enter a budget dictionary to run")
         if budgetyears is None: raise OptimaException("Please specify the years for your budget") # WARNING, the budget should probably contain the years itself
         if progsetname is None:
             try:
@@ -600,10 +601,14 @@ class Project(object):
         return results
     
     
-    def outcomecalc(self, budget=None, name=None, optim=None, optimname=None, parsetname=None, progsetname=None, 
+    def outcomecalc(self, name=None, budget=None, optim=None, optimname=None, parsetname=None, progsetname=None, 
                 objectives=None, constraints=None, origbudget=None, verbose=2, doconstrainbudget=False):
         '''
         Calculate the outcome for a given budget -- a substep of optimize(); similar to runbudget().
+        
+        Since it relies on an optimization structure, all the inputs that are valid for an optimization are valid
+        here too -- e.g. you can give it an Optim, or define objectives separately. By default it will use the 
+        objectives and constraints from the most recent optimization.
         
         Example usage:
             import optima as op
