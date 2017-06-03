@@ -19,7 +19,7 @@ var handleError = function (err) {
   process.exit(1);
 };
 
-// Write version.js
+// Write version.js with the git version and date info
 gulp.task('write-version-js', function() {
   try {
     var data = spawnSync('git', ['rev-parse', '--short', 'HEAD']).output;
@@ -145,11 +145,10 @@ gulp.task('watch', [], function () {
 // Task for doing cache-busting on the build files.
 // Note, there should be a ['compile-build-js-client-uglify'] set here as a dependency, but
 // this does not terminate correctly, so I can't use it.
-// So, currently a separate gulp call
-// gulp cache-bust
+// So, currently a separate gulp call (gulp cache-bust)
 // needs to be made after the main call by the building scripts.
 gulp.task('cache-bust', function () {
-    // Grab the version hash from the Git repo, returning 'unknown' if this doesn't work.
+    // Grab the current date, returning 'unknown' if this doesn't work.
     try {
     	var today = new Date();
 		var version = today.getFullYear()+'.'+(today.getMonth()+1)+'.'+today.getDate()+'_'+today.getHours()+'.'+today.getMinutes()+'.'+today.getSeconds();
@@ -175,7 +174,7 @@ gulp.task('cache-bust', function () {
     )
 });
 
-// Defaults -- WARNING, do version.js separately
+// Defaults
 gulp.task(
   'default',
   [
