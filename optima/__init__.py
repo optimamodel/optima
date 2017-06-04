@@ -149,13 +149,13 @@ import programs as _programs; del programs
 from .calibration import autofit
 import calibration as _calibration; del calibration
 
-# Optimization analyses
-from .optimization import Optim, defaultobjectives, defaultconstraints, optimize, multioptimize, outcomecalc
-import optimization as _optimization; del optimization
-
 # Scenario analyses -- must come after optimizations since relies on outcomecalc
-from .scenarios import Parscen, Budgetscen, Coveragescen, Progscen, runscenarios, makescenarios, baselinescenario, setparscenvalues, defaultscenarios, icers
+from .scenarios import Parscen, Budgetscen, Coveragescen, Progscen, runscenarios, makescenarios, baselinescenario, setparscenvalues, defaultscenarios
 import scenarios as _scenarios; del scenarios
+
+# Optimization analyses
+from .optimization import Optim, defaultobjectives, defaultconstraints, optimize, multioptimize, outcomecalc, icers
+import optimization as _optimization; del optimization
 
 # Plotting functions
 from .plotting import getplotselections, makeplots, plotepi, plotcascade, plotallocations, plotcostcov, plotbycd4, ploticers, saveplots, reanimateplots, sanitizeresults
