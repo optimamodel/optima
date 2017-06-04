@@ -1327,7 +1327,7 @@ class odict(OrderedDict):
         return None
     
      
-    def __repr__(self, maxlen=None, showmultilines=True, divider=False, dividerthresh=10, numindents=0, recurselevel=0, sigfigs=9, SI=False):
+    def __repr__(self, maxlen=None, showmultilines=True, divider=False, dividerthresh=10, numindents=0, recurselevel=0):
         ''' Print a meaningful representation of the odict '''
         
         # Set primitives for display.
@@ -1420,11 +1420,11 @@ class odict(OrderedDict):
         print(self.__repr__())
     
     
-    def disp(self, maxlen=55, showmultilines=False, divider=False, dividerthresh=10, numindents=0, sigfigs=6, SI=False):
+    def disp(self, maxlen=55, showmultilines=False, divider=False, dividerthresh=10, numindents=0):
         ''' Print out flexible representation, short by default'''
         print(self.__repr__(maxlen=maxlen, showmultilines=showmultilines, 
             divider=divider, dividerthresh=dividerthresh, 
-            numindents=numindents, recurselevel=0, sigfigs=sigfigs, SI=False))
+            numindents=numindents, recurselevel=0))
     
     
     def export(self, doprint=True):
