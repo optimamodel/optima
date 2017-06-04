@@ -1009,7 +1009,6 @@ def icers(name=None, project=None, parsetname=None, progsetname=None, objective=
                    'origbudget':origbudget, 'outputresults':False, 'verbose':verbose, 'doconstrainbudget':False, 'initpeople':initpeople}
     
     # Calculate baseline
-    baselinex = defaultbudget[:].sum()
     baseliney = outcomecalc(budgetvec=defaultbudget, **defaultargs)
     
     # Define structures for storing results
@@ -1034,6 +1033,7 @@ def icers(name=None, project=None, parsetname=None, progsetname=None, objective=
             
     # Calculate y values
     for key in keys:
+        baselinex = defaultbudget[key] # Because only looking at one program at a time
         for b in range(nbudgetratios):
             
             # Gather values to use
@@ -1045,7 +1045,7 @@ def icers(name=None, project=None, parsetname=None, progsetname=None, objective=
             else: 
                 lowerx = None
                 lowery = None
-            if b<nbudgetratios-1:    
+            if b<nbudgetratios-1:
                 upperx = rawx[key][b+1]
                 uppery = rawy[key][b+1]
             else: 

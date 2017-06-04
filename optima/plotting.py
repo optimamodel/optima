@@ -1197,7 +1197,7 @@ def ploticers(results=None, figsize=globalfigsize, lw=2, dotsize=30, titlesize=g
     ax.set_title('ICERs')
     ax.set_ylabel('Cost per %s averted' % objectivestr)
     ax.set_xlabel('Program spending relative to baseline (%)')
-    ax.set_ylim(0, newupper)
+    ax.set_ylim(0, newupper*1.05)
     dx = (x[-1]-x[0])*0.01
     ax.set_xlim(x[0]-dx, x[-1]+dx)
     legendsettings = {'loc':'upper left', 'bbox_to_anchor':(1.05, 1), 'fontsize':legendsize, 'title':'', 'frameon':False}
@@ -1405,7 +1405,7 @@ def sanitizeresults(results):
 
 def SItickformatter(x, pos):  # formatter function takes tick label and tick position
     ''' Formats axis ticks so that e.g. 34,243 becomes 34K '''
-    return sigfig(x, sigfigs=2, SI=True)
+    return sigfig(x, sigfigs=3, SI=True)
 
 
 def SIticks(figure, axis='y'):
