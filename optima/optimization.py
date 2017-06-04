@@ -325,8 +325,9 @@ def outcomecalc(budgetvec=None, which=None, project=None, parsetname=None, progs
     # Run model
     thiscoverage = progset.getprogcoverage(budget=constrainedbudget, t=objectives['start'], parset=parset, sample=ccsample)
     thisparsdict = progset.getpars(coverage=thiscoverage, t=objectives['start'], parset=parset, sample=ccsample)
-    if initpeople is not None:
-        tvec = project.settings.maketvec(start=objectives['start'], end=objectives['end'])
+    if initpeople is None: startyear = None
+    else:                  startyear = objectives['start']
+    tvec = project.settings.maketvec(start=startyear, end=objectives['end'])
     results = runmodel(pars=thisparsdict, project=project, parsetname=parsetname, progsetname=progsetname, tvec=tvec, initpeople=initpeople, verbose=0, label=project.name+'-optim-outcomecalc', doround=False)
 
     # Figure out which indices to use
