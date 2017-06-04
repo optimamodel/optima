@@ -366,7 +366,7 @@ def defaultscenarios(project=None, which=None, startyear=2016, endyear=2020, par
     return None # Can get it from project.scens
 
 
-def icers(name=None, project=None, parsetname=None, progsetname=None, progkeys=None, objective=None, 
+def icers(name=None, project=None, parsetname=None, progsetname=None, objective=None, 
           startyear=None, endyear=None, budgetratios=None, marginal=None, verbose=2):
     '''
     Calculate ICERs for each program.
@@ -376,7 +376,6 @@ def icers(name=None, project=None, parsetname=None, progsetname=None, progkeys=N
         project      = the project object
         parsetname   = name of the parameter set used; default -1
         progsetname  = name of the program set; default -1
-        progkeys     = optional list of keys by which to filter programs by; default None
         objective    = what to calculate; must be one of 'death', 'inci', 'daly'; 'daly' by default)
         startyear    = the year to start applying the budget and calculating the outcome; default from defaultobjectives()
         endyear      = ditto for end year
@@ -422,7 +421,6 @@ def icers(name=None, project=None, parsetname=None, progsetname=None, progkeys=N
     # Get budget information
     origbudget    = project.defaultbudget(progsetname, optimizable=False) # Get default budget for optimizable programs
     defaultbudget = project.defaultbudget(progsetname, optimizable=True)  # ...and just for optimizable programs
-    if progkeys is not None: defaultbudget = defaultbudget.sorted(sortby=progkeys) # If requested, filter budget further
     keys = defaultbudget.keys() # Get the program keys
     nkeys = len(keys)
     
