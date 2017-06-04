@@ -291,7 +291,7 @@ def constrainbudget(origbudget=None, budgetvec=None, totalbudget=None, budgetlim
 ### The main meat of the matter
 ################################################################################################################################################
 
-def outcomecalc(budgetvec=None, which=None, project=None, parset=None, progset=None, parsetname=None, progsetname=None, 
+def outcomecalc(budgetvec=None, which=None, project=None, parsetname=None, progsetname=None, 
                 objectives=None, constraints=None, totalbudget=None, optiminds=None, origbudget=None, tvec=None, 
                 initpeople=None, outputresults=False, verbose=2, ccsample='best', doconstrainbudget=True):
     ''' Function to evaluate the objective for a given budget vector (note, not time-varying) '''
@@ -302,8 +302,8 @@ def outcomecalc(budgetvec=None, which=None, project=None, parset=None, progset=N
         else:                      which = 'outcomes'
     if parsetname  is None: parsetname  = -1
     if progsetname is None: progsetname = -1
-    if parset      is None: parset      = project.parsets[parsetname] 
-    if progset     is None: progset     = project.progsets[progsetname] 
+    parset  = project.parsets[parsetname] 
+    progset = project.progsets[progsetname]
     if objectives  is None: objectives  = defaultobjectives(project=project, progset=progset, which=which)
     if constraints is None: constraints = defaultconstraints(project=project, progset=progset, which=which)
     if totalbudget is None: totalbudget = objectives['budget']
@@ -313,6 +313,7 @@ def outcomecalc(budgetvec=None, which=None, project=None, parset=None, progset=N
     if type(budgetvec)==odict: budgetvec = dcp(budgetvec[:][optiminds])
     
     # Validate input
+    
     arglist = [budgetvec, which, parset, progset, objectives, totalbudget, constraints, optiminds, origbudget]
     if any([arg is None for arg in arglist]):  # WARNING, this kind of obscures which of these is None -- is that ok? Also a little too hard-coded...
         raise OptimaException('outcomecalc() requires which, budgetvec, parset, progset, objectives, totalbudget, constraints, optiminds, origbudget, tvec as inputs at minimum; argument %i is None' % arglist.index(None))
@@ -329,13 +330,12 @@ def outcomecalc(budgetvec=None, which=None, project=None, parset=None, progset=N
         if len(budgetvec)==len(optiminds): constrainedbudget[optiminds] = budgetvec # Assume it's just the optimizable programs
         else:                              constrainedbudget[:]         = budgetvec # Assume it's all programs
         
-    
     # Run model
     thiscoverage = progset.getprogcoverage(budget=constrainedbudget, t=objectives['start'], parset=parset, sample=ccsample)
     thisparsdict = progset.getpars(coverage=thiscoverage, t=objectives['start'], parset=parset, sample=ccsample)
     if initpeople is not None:
         tvec = project.settings.maketvec(start=objectives['start'], end=objectives['end'])
-    results = runmodel(pars=thisparsdict, project=project, parset=parset, progset=progset, tvec=tvec, initpeople=initpeople, verbose=0, label=project.name+'-optim-outcomecalc', doround=False)
+    results = runmodel(pars=thisparsdict, project=project, parsetname=parsetname, progsetname=progsetname, tvec=tvec, initpeople=initpeople, verbose=0, label=project.name+'-optim-outcomecalc', doround=False)
 
     # Figure out which indices to use
     initialind = findinds(results.tvec, objectives['start'])
@@ -938,7 +938,7 @@ def minmoney(project=None, optim=None, tvec=None, verbose=None, maxtime=None, ma
 
 
 ################################################################################################################################################
-### ICER function
+### ICER calculation
 ################################################################################################################################################
 
 def icers(name=None, project=None, parsetname=None, progsetname=None, objective=None, 
@@ -961,8 +961,6 @@ def icers(name=None, project=None, parsetname=None, progsetname=None, objective=
     
     Version: 2017jun04
     '''
-    
-    printv('Calculating ICERs...')
     
     # Handle inputs
     if type(project).__name__ != 'Project': # Can't compare types directly since can't import Project since not defined yet
@@ -993,11 +991,27 @@ def icers(name=None, project=None, parsetname=None, progsetname=None, objective=
         if objective==key: objectives[key+'weight'] = 1.0 # Set weight to 1 if they match
         else:              objectives[key+'weight'] = 0.0 # Set to 0 otherwise
     
+    printv('Calculating ICERs for objective "%s" from %i-%i, parset "%s", progset "%s", marginal=%s...' % (objective, objectives['start'], objectives['end'], parsetname, progsetname, marginal), 2, verbose)
+    
     # Get budget information
     origbudget    = project.defaultbudget(progsetname, optimizable=False) # Get default budget for optimizable programs
     defaultbudget = project.defaultbudget(progsetname, optimizable=True)  # ...and just for optimizable programs
     keys = defaultbudget.keys() # Get the program keys
     nkeys = len(keys)
+    
+    # Calculate the initial people distribution
+    initresults = runmodel(project=project, parsetname=parsetname, progsetname=progsetname, keepraw=True, verbose=0, label=project.name+'-minoutcomes')
+    initialind  = findinds(initresults.raw[0]['tvec'], objectives['start'])
+    initpeople  = initresults.raw[0]['people'][:,:,initialind] # Pull out the people array corresponding to the start of the optimization -- there shouldn't be multiple raw arrays here
+
+    
+    # Define arguments that don't change in the loop
+    defaultargs = {'which':'outcomes', 'project':project, 'parsetname':parsetname, 'progsetname':progsetname, 'objectives':objectives, 
+                   'origbudget':origbudget, 'outputresults':False, 'verbose':verbose, 'doconstrainbudget':False, 'initpeople':initpeople}
+    
+    # Calculate baseline
+    baselinex = defaultbudget[:].sum()
+    baseliney = outcomecalc(budgetvec=defaultbudget, **defaultargs)
     
     # Define structures for storing results
     rawx    = odict().make(keys=keys, vals=[])
@@ -1005,14 +1019,6 @@ def icers(name=None, project=None, parsetname=None, progsetname=None, objective=
     y       = dcp(rawx)
     icer    = dcp(rawx)
     summary = dcp(rawx)
-    
-    # Define arguments that don't change in the loop
-    defaultargs = {'which':'outcomes', 'project':project, 'parsetname':parsetname, 'progsetname':progsetname, 'objectives':objectives, 
-                   'origbudget':origbudget, 'outputresults':False, 'verbose':verbose, 'doconstrainbudget':False}
-    
-    # Calculate baseline
-    baselinex = defaultbudget[:].sum()
-    baseliney = outcomecalc(budgetvec=defaultbudget, **defaultargs)
     
     # Loop over both programs and budget ratios
     count = 0

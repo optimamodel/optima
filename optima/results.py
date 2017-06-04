@@ -37,7 +37,7 @@ class Result(object):
 
 class Resultset(object):
     ''' Structure to hold results '''
-    def __init__(self, raw=None, name=None, pars=None, simpars=None, project=None, settings=None, data=None, parset=None, progset=None, budget=None, coverage=None, budgetyears=None, domake=True, keepraw=False, verbose=2, doround=True):
+    def __init__(self, raw=None, name=None, pars=None, simpars=None, project=None, settings=None, data=None, parsetname=None, progsetname=None, budget=None, coverage=None, budgetyears=None, domake=True, keepraw=False, verbose=2, doround=True):
         # Basic info
         self.uid = uuid()
         self.created = today()
@@ -45,6 +45,8 @@ class Resultset(object):
         self.main = odict() # For storing main results
         self.other = odict() # For storing other results -- not available in the interface
         self.keys = [0] # Used for comparison with multiresultsets -- 0 corresponds to e.g. self.main[<key>].tot[0]
+        self.parsetname = parsetname
+        self.progsetname = progsetname
         
         # Turn inputs into lists if not already
         if raw is None: raise OptimaException('To generate results, you must feed in model output: none provided')
@@ -53,12 +55,6 @@ class Resultset(object):
         
         # Read things in from the project if defined
         if project is not None:
-            if parset is None:
-                try: parset = project.parsets[simpars[0]['parsetname']] # Get parset if not supplied -- WARNING, UGLY
-                except: pass # Don't really worry if the parset can't be populated
-            if progset is None:
-                try: progset = project.progset[simpars[0]['progsetname']] # Get parset if not supplied -- WARNING, UGLY
-                except: pass # Don't really worry if the parset can't be populated
             if data is None: data = project.data # Copy data if not supplied -- DO worry if data don't exist!
             if settings is None: settings = project.settings
         
@@ -69,17 +65,13 @@ class Resultset(object):
         self.datayears = data['years'] if data is not None else None # Only get data years if data available
         self.projectref = Link(project) # ...and just store the whole project
         self.projectinfo = project.getinfo() # Store key info from the project separately in case the link breaks
-        self.parset = dcp(parset) # Store parameters
         if pars is not None:
             self.pars = pars # Keep pars
         else: # Try various other ways of getting pars
-            if parset is not None:
-                self.pars = self.parset.pars
+            if parsetname is not None and parsetname in self.projectref().parsets.keys():
+                self.pars = self.projectref().parsets[parsetname].pars
             else: raise OptimaException('To generate results, you must feed in a parset or pardict: none provided')
-        self.progset = dcp(progset) # Store programs
         self.data = dcp(data) # Store data
-        if self.parset is not None:  self.parset.projectref  = Link(project) # Replace copy of project with reference to project
-        if self.progset is not None: self.progset.projectref = Link(project) # Replace copy of project with reference to project
         self.budget = budget if budget is not None else odict() # Store budget
         self.coverage = coverage if coverage is not None else odict()  # Store coverage
         self.budgetyears = budgetyears if budgetyears is not None else odict()  # Store budget

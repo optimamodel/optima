@@ -1180,21 +1180,12 @@ def ploticers(results=None, figsize=globalfigsize, lw=2, dotsize=30, titlesize=g
     for k,key in enumerate(keys): # Loop backwards so correct ordering -- first one at the top, not bottom
         newupper = upperlim*(1.0+0.01*hitupper) # Make it so lines are distinguishable
         thisicer = minimum(icer[key], newupper) # Cap the ICERs with maximum value
-        goodinds, badinds = [], [] # Pull out "bad" indices (those exceeding the value) to plot as dotted lines
-        for v,val in enumerate(thisicer):
-            if val<upperlim:
-                goodinds.append(v)
-                if v-1 in badinds and v-1 not in goodinds:
-                    badinds.append(v)
-            else:
-                badinds.append(v)
-                if v-1 in goodinds and v-1 not in badinds:
-                    goodinds.append(v)
-        if len(badinds)>0: 
-            hitupper += 1
-        ax.plot(x[badinds],  thisicer[badinds],  color=colors[k], lw=lw*sizeratio, linestyle='--') 
-        ax.plot(x[goodinds], thisicer[goodinds], color=colors[k], lw=lw*sizeratio, label=key) # Colors are in reverse order
+        goodinds = findinds(thisicer<upperlim)
+        badinds  = findinds(thisicer>=upperlim)
+        if len(badinds)>0:  hitupper += 1
+        ax.plot(x, thisicer, color=colors[k], lw=lw*sizeratio, label=key) # Colors are in reverse order
         ax.scatter(x[goodinds], thisicer[goodinds], s=dotsize*sizeratio, facecolor=colors[k], lw=0)
+        ax.scatter(x[badinds],  thisicer[badinds],  s=dotsize*sizeratio, facecolor=(0,0,0), lw=1, marker='x', zorder=1000)
     
     # Configure plot
     boxoff(ax)

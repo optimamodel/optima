@@ -95,10 +95,9 @@ def runscenarios(project=None, verbose=2, defaultparset=0, debug=False, **kwargs
         budget = scenlist[scenno].budget if isinstance(scenlist[scenno], Progscen) else None
         coverage = scenlist[scenno].coverage if isinstance(scenlist[scenno], Progscen) else None
         budgetyears = scenlist[scenno].t if isinstance(scenlist[scenno], Progscen) else None
-        progset = project.progsets[scenlist[scenno].progsetname] if isinstance(scenlist[scenno], Progscen) else None
 
         # Run model and add results
-        result = runmodel(pars=scenparset.pars, parset=scenparset, progset=progset, project=project, budget=budget, coverage=coverage, budgetyears=budgetyears, verbose=0, debug=debug, label=project.name+'-scenarios', **kwargs)
+        result = runmodel(pars=scenparset.pars, parsetname=scenlist[scenno].parsetname, progsetname=scenlist[scenno].progsetname, project=project, budget=budget, coverage=coverage, budgetyears=budgetyears, verbose=0, debug=debug, label=project.name+'-scenarios', **kwargs)
         result.name = scenlist[scenno].name # Give a name to these results so can be accessed for the plot legend
         allresults.append(result) 
         printv('... completed scenario: %i/%i' % (scenno+1, nscens), 3, verbose)
