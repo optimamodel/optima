@@ -26,6 +26,7 @@ estimatecolor = (0.8,0.8,0.8) # Color of estimates rather than real data
 fillzorder = 0 # The order in which to plot things -- fill at the back
 datazorder = 100 # Then data
 linezorder = 200 # Finally, lines
+proghueshift = 0.05 # Slightly shift colors for programs
 
 # Define global font sizes
 globaltitlesize = 12
@@ -655,7 +656,7 @@ def plotbudget(multires=None, die=True, figsize=globalfigsize, legendsize=global
                 allprogkeys.append(key)
     nallprogs = len(allprogkeys)
     nallocs = len(alloclabels)
-    allprogcolors = gridcolors(nallprogs)
+    allprogcolors = gridcolors(nallprogs, hueshift=proghueshift)
     colordict = odict()
     for k,key in enumerate(allprogkeys):
         colordict[key] = allprogcolors[k]
@@ -773,7 +774,7 @@ def plotcoverage(multires=None, die=True, figsize=globalfigsize, legendsize=glob
         
         nprogs = nprogslist[plt]
         proglabels = progkeylists[plt]
-        colors = gridcolors(nprogs)
+        colors = gridcolors(nprogs, hueshift=proghueshift)
         nbudgetyears = len(budgetyearstoplot[plt])
         barwidth = .5/nbudgetyears
         for y in range(nbudgetyears):
@@ -1157,7 +1158,7 @@ def ploticers(results=None, figsize=globalfigsize, lw=2, dotsize=30, titlesize=g
     icer = results.icer
     x    = results.x*100.0 # Convert to percent
     nkeys = len(keys)
-    colors = gridcolors(nkeys, hueshift=0.05)
+    colors = gridcolors(nkeys, hueshift=proghueshift)
     if   results.objective == 'death': objectivestr = 'death'
     elif results.objective == 'inci':  objectivestr = 'new infection'
     elif results.objective == 'daly':  objectivestr = 'DALY'
