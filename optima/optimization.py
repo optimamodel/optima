@@ -782,7 +782,6 @@ def minmoney(project=None, optim=None, tvec=None, verbose=None, maxtime=None, ma
 
     ## Handle budget and remove fixed costs
     if project is None or optim is None: raise OptimaException('An optimization requires both a project and an optimization object to run')
-    parset  = project.parsets[optim.parsetname] # Link to the original parameter set
     progset = project.progsets[optim.progsetname] # Link to the original parameter set
     totalbudget = dcp(optim.objectives['budget'])
     origtotalbudget = totalbudget
