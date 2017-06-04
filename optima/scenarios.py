@@ -369,6 +369,8 @@ def defaultscenarios(project=None, which=None, startyear=2016, endyear=2020, par
 def icers(name=None, project=None, parsetname=None, progsetname=None, which=None, startyear=None, endyear=None, budgetratios=None, verbose=2, **kwargs):
     ''' Calculate ICERs for each program '''
     
+    printv('Calculating ICERs...')
+    
     # Handle inputs
     if type(project).__name__ != 'Project': # Can't compare types directly since can't import Project since not defined yet
         errormsg = 'To calculate ICERs you must supply a project, not "%s"' % type(project)
@@ -378,7 +380,9 @@ def icers(name=None, project=None, parsetname=None, progsetname=None, which=None
     if which        is None: which        = 'numdaly'
     if parsetname   is None: parsetname   = -1
     if progsetname  is None: progsetname  = -1
-    if budgetratios is None: budgetratios = [0.0, 0.1, 0.2, 0.5, 0.8, 1.0, 1.2, 1.5, 2.0]
+    if budgetratios is None: budgetratios = [0.0, 0.5, 1.0, 2.0] #[0.0, 0.1, 0.2, 0.5, 0.8, 1.0, 1.2, 1.5, 2.0]
+    budgetratios = array(budgetratios) # Ensure it's an array
+    nbudgetratios = len(budgetratios)
     
     # Define objectives
     objectives = defaultobjectives()
@@ -390,17 +394,34 @@ def icers(name=None, project=None, parsetname=None, progsetname=None, which=None
     origbudget    = project.defaultbudget(progsetname, optimizable=False) # Get default budget for optimizable programs
     defaultbudget = project.defaultbudget(progsetname, optimizable=True)  # ...and just for optimizable programs
     keys = defaultbudget.keys() # Get the program keys
+    nkeys = len(keys)
     
-    y = odict().make(keys=keys, vals=[])
+    # Define structures for storing results
+    rawx = odict().make(keys=keys, vals=[])
+    rawy = dcp(rawx)
+    y    = dcp(rawx)
     
+    # Define arguments that don't change in the loop
     defaultargs = {'which':'outcomes', 'project':project, 'parsetname':parsetname, 'progsetname':progsetname, 'objectives':objectives, 
                    'origbudget':origbudget, 'outputresults':False, 'verbose':verbose, 'doconstrainbudget':False}
     
-    outcome = outcomecalc(budgetvec=budget, **defaultargs)
+    # Calculate baseline
+    baseline = outcomecalc(budgetvec=defaultbudget, **defaultargs)
     
+    # Loop over both programs and budget ratios
+    count = 0
+    for key in keys:
+        for budgetratio in budgetratios:
+            count += 1
+            printv('Running budget %i of %i' % (count, nkeys*nbudgetratios), 2, verbose)
+            thisbudget = dcp(defaultbudget)
+            thisbudget[key] *= budgetratio
+            rawx[key].append(thisbudget[key])
+            if budgetratio==1: rawy[key] = baseline # Don't need to run, just copy this
+            else:              rawy[key] = outcomecalc(budgetvec=thisbudget, **defaultargs) # The crux of the matter!! Actually calculate
+            
+    # Calculate y values
     
-    results = ICER(name=name, which=objectives['which'], startyear=objectives['start'], endyear=objectives['end'], x=budgetratios, y=y, baseline=baseline, keys=keys, defaultbudget=defaultbudget, parsetname=parsetname, progsetname=progsetname)
-    
-    
-    
+    # Assemble into results
+    results = ICER(name=name, which=objectives['which'], startyear=objectives['start'], endyear=objectives['end'], rawx=rawx, rawy=rawy, x=budgetratios, y=y, baseline=baseline, keys=keys, defaultbudget=defaultbudget, parsetname=parsetname, progsetname=progsetname)
     return results

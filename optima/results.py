@@ -833,7 +833,7 @@ class BOC(object):
 class ICER(object):
     ''' Structure to hold the results of an ICER run; similar to the BOC class '''
     
-    def __init__(self, name='icer', which=None, startyear=None, endyear=None, x=None, y=None, baseline=None, keys=None, defaultbudget=None, parsetname=None, progsetname=None):
+    def __init__(self, name='icer', which=None, startyear=None, endyear=None, rawx=None, rawy=None, x=None, y=None, baseline=None, keys=None, defaultbudget=None, parsetname=None, progsetname=None):
         self.name          = name        # Required by rmresult in Project.
         self.uid           = uuid()      # Unique identifier
         self.created       = today()     # When created
@@ -842,8 +842,10 @@ class ICER(object):
         self.endyear       = endyear     # Ditto, to end
         self.parsetname    = parsetname  # The parset used
         self.progsetname   = progsetname # The progset used
-        self.x             = x if x else odict() # An odict of budget ratios
-        self.y             = y if y else odict() # A corresponding odict of outcomes relative to baseline
+        self.rawx          = rawx if rawx else odict() # An odict of budgets
+        self.rawy          = rawy if rawy else odict() # A corresponding odict of absolute outcomes
+        self.x             = x    if x    else []      # A list/array of budget ratios
+        self.y             = y    if y    else odict() # A corresponding odict of outcomes relative to baseline
         self.baseline      = baseline      # The outcome given baseline conditions
         self.keys          = keys          # The program keys
         self.defaultbudget = defaultbudget # The baseline budget used
