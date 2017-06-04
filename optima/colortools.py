@@ -37,6 +37,7 @@ def shifthue(colors=None, hueshift=0.0):
     if origndim==1: colors = colors[0] # Pull it out again
     return colors
 
+
 def gridcolors(ncolors=10, limits=None, nsteps=10, asarray=False, reverse=False, doplot=False, hueshift=0):
     """
     GRIDCOLORS
@@ -72,13 +73,13 @@ def gridcolors(ncolors=10, limits=None, nsteps=10, asarray=False, reverse=False,
     
     # Steal colorbrewer colors for small numbers of colors
     colorbrewercolors = array([
-    [27,  158, 119],
-    [217, 95,  2],
-    [117, 112, 179],
-    [231, 41,  138],
-    [255, 127, 0],
-    [200, 200, 51], # Was too bright yellow
-    [166, 86,  40],
+    [ 55, 126, 184], # [27,  158, 119], # Old color
+    [228,  26,  28], # [217, 95,  2],
+    [ 77, 175,  74], # [117, 112, 179],
+    [162,  78, 153], # [231, 41,  138],
+    [255, 127,   0],
+    [200, 200,  51], # Was too bright yellow
+    [166,  86,  40],
     [247, 129, 191],
     [153, 153, 153],
     ])/255.

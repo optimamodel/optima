@@ -12,11 +12,11 @@ Version: 2017jun03
 '''
 
 from optima import OptimaException, Resultset, Multiresultset, ICER, odict, printv, gridcolors, vectocolor, alpinecolormap, makefilepath, sigfig, dcp, findinds, promotetolist, saveobj, promotetoodict, promotetoarray, boxoff
-from numpy import array, ndim, maximum, arange, zeros, mean, shape, isnan, linspace
+from numpy import array, ndim, maximum, arange, zeros, mean, shape, isnan, linspace, minimum # Numeric functions
+from pylab import gcf, get_fignums, close, ion, ioff, isinteractive, figure # Plotting functions
 from matplotlib.backends.backend_agg import new_figure_manager_given_figure as nfmgf # Warning -- assumes user has agg on their system, but should be ok. Use agg since doesn't require an X server
 from matplotlib.figure import Figure # This is the non-interactive version
 from matplotlib import ticker
-from pylab import gcf, get_fignums, close, ion, ioff, isinteractive, figure
 import textwrap
 
 # Define allowable plot formats -- 3 kinds, but allow some flexibility for how they're specified
@@ -1047,7 +1047,7 @@ def plotallocations(project=None, budgets=None, colors=None, factor=1e6, compare
             ax[-1].plot([0,nprogs+1],[0,0],c=(0,0,0))
         ax[-1].set_xlim(0,nprogs+1)
         
-        if factor==1: ax[-1].set_ylabel('Spending (US$)')
+        if factor==1:     ax[-1].set_ylabel('Spending (US$)')
         elif factor==1e3: ax[-1].set_ylabel("Spending (US$'000s)")
         elif factor==1e6: ax[-1].set_ylabel('Spending (US$m)')
         ax[-1].set_title(labels[plt])
@@ -1133,10 +1133,10 @@ def plotbycd4(results=None, whattoplot='people', figsize=globalfigsize, lw=2, ti
 ##################################################################
 ## Plot things by CD4
 ##################################################################
-def ploticers(results=None, figsize=globalfigsize, lw=2, titlesize=globaltitlesize, labelsize=globallabelsize, 
-             ticksize=globalticksize, legendsize=globallegendsize, interactive=False, **kwargs):
+def ploticers(results=None, figsize=globalfigsize, lw=2, dotsize=30, titlesize=globaltitlesize, labelsize=globallabelsize, 
+             ticksize=globalticksize, legendsize=globallegendsize, position=None, interactive=False, **kwargs):
     ''' 
-    Plot ICERs.
+    Plot ICERs. Not part of weboptima yet.
     '''
     
     # Figure out what kind of result it is
@@ -1147,36 +1147,69 @@ def ploticers(results=None, figsize=globalfigsize, lw=2, titlesize=globaltitlesi
     # Set up figure and do plot
     fig,naxes = makefigure(figsize=figsize, interactive=interactive)
     ax = fig.add_subplot(naxes, 1, naxes)
+    position = dcp(position)
+    if position is None: # If defaults, reset
+        if interactive: position = dcp(interactiveposition)
+        else:           position = dcp(globalposition)
+        position[1] += 0.05 # More room on bottom for x-axis label
+    setposition(ax, position, interactive)
     keys = results.keys
     icer = results.icer
-    x    = results.x
+    x    = results.x*100.0 # Convert to percent
     nkeys = len(keys)
-    colors = gridcolors(nkeys, hueshift=0.3)
+    colors = gridcolors(nkeys, hueshift=0.05)
+    if   results.objective == 'death': objectivestr = 'death'
+    elif results.objective == 'inci':  objectivestr = 'new infection'
+    elif results.objective == 'daly':  objectivestr = 'DALY'
+    else:
+        errormsg = 'Cannot plot ICERs: objective "%s" is unknown' % results.objective
+        raise OptimaException(errormsg)
     
     # Figure out y-axis limits
     minicer  = icer[:].min()
     maxicer  = icer[:].max()
     meanicer = icer[:].mean()
     totalbudget = results.defaultbudget[:].sum()
-    upperlim = min([maxicer, totalbudget, 10*meanicer, 100*minicer]) # Set the y limit based on the minimum of each of these different options
+    upperlim = min([maxicer, totalbudget, 10*meanicer, 50*minicer]) # Set the y limit based on the minimum of each of these different options
     
     # Do the plotting
+    ax.plot([100,100], [0,upperlim], color=(0.7,0.7,0.7), linewidth=1, linestyle=':') # Mark the current spending
+    hitupper = 0 # Count the number of programs that hit the upper limit
+    newupper = upperlim
     for k,key in enumerate(keys): # Loop backwards so correct ordering -- first one at the top, not bottom
-        ax.plot(x, icer[key], color=colors[k], linewidth=2, label=key) # Colors are in reverse order
+        newupper = upperlim*(1.0+0.01*hitupper) # Make it so lines are distinguishable
+        thisicer = minimum(icer[key], newupper) # Cap the ICERs with maximum value
+        goodinds, badinds = [], [] # Pull out "bad" indices (those exceeding the value) to plot as dotted lines
+        for v,val in enumerate(thisicer):
+            if val<upperlim:
+                goodinds.append(v)
+                if v-1 in badinds and v-1 not in goodinds:
+                    badinds.append(v)
+            else:
+                badinds.append(v)
+                if v-1 in goodinds and v-1 not in badinds:
+                    goodinds.append(v)
+        if len(badinds)>0: 
+            hitupper += 1
+        ax.plot(x[badinds],  thisicer[badinds],  color=colors[k], lw=lw, linestyle='--') 
+        ax.plot(x[goodinds], thisicer[goodinds], color=colors[k], lw=lw, label=key) # Colors are in reverse order
+        ax.scatter(x[goodinds], thisicer[goodinds], s=dotsize, facecolor=colors[k], lw=0)
     
     # Configure plot
-    boxoff(ax[-1])
-    ax[-1].title.set_fontsize(titlesize)
-    ax[-1].xaxis.label.set_fontsize(labelsize)
-    for item in ax[-1].get_xticklabels() + ax[-1].get_yticklabels(): item.set_fontsize(ticksize)
+    boxoff(ax)
+    ax.title.set_fontsize(titlesize)
+    ax.xaxis.label.set_fontsize(labelsize)
+    for item in ax.get_xticklabels() + ax.get_yticklabels(): item.set_fontsize(ticksize)
 
     # Configure plot specifics
     ax.set_title('ICERs')
-    ax.set_ylim(0, upperlim)
-    ax.set_xlim(x[0], x[-1])
+    ax.set_ylabel('Cost per %s averted' % objectivestr)
+    ax.set_xlabel('Program spending relative to baseline (%)')
+    ax.set_ylim(0, newupper)
+    dx = (x[-1]-x[0])*0.01
+    ax.set_xlim(x[0]-dx, x[-1]+dx)
     legendsettings = {'loc':'upper left', 'bbox_to_anchor':(1.05, 1), 'fontsize':legendsize, 'title':'', 'frameon':False}
     ax.legend(**legendsettings) # Multiple entries, all populations
-        
     SIticks(fig)
     
     return fig    
