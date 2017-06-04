@@ -647,7 +647,7 @@ class Project(object):
         return results
 
 
-    def icers(self, parsetname=None, progsetname=None, which=None, startyear=None, endyear=None, budgetratios=None, **kwargs):
+    def icers(self, parsetname=None, progsetname=None, which=None, startyear=None, endyear=None, budgetratios=None, verbose=2, **kwargs):
         ''' Calculate ICERs '''
         results = icers(project=self, parsetname=parsetname, progsetname=progsetname, which=which, startyear=startyear, 
                         endyear=endyear, budgetratios=budgetratios, **kwargs)

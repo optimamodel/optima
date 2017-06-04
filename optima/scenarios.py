@@ -366,7 +366,7 @@ def defaultscenarios(project=None, which=None, startyear=2016, endyear=2020, par
     return None # Can get it from project.scens
 
 
-def icers(name=None, project=None, parsetname=None, progsetname=None, which=None, startyear=None, endyear=None, budgetratios=None, **kwargs):
+def icers(name=None, project=None, parsetname=None, progsetname=None, which=None, startyear=None, endyear=None, budgetratios=None, verbose=2, **kwargs):
     ''' Calculate ICERs for each program '''
     
     # Handle inputs
@@ -391,11 +391,15 @@ def icers(name=None, project=None, parsetname=None, progsetname=None, which=None
     defaultbudget = project.defaultbudget(progsetname, optimizable=True)  # ...and just for optimizable programs
     keys = defaultbudget.keys() # Get the program keys
     
-    outcome = outcomecalc(budgetvec=budget, which='outcomes', project=project, parsetname=parsetname, progsetname=progsetname, 
-                          objectives=objectives, origbudget=origbudget, outputresults=False, verbose=verbose, doconstrainbudget=False)
+    y = odict().make(keys=keys, vals=[])
+    
+    defaultargs = {'which':'outcomes', 'project':project, 'parsetname':parsetname, 'progsetname':progsetname, 'objectives':objectives, 
+                   'origbudget':origbudget, 'outputresults':False, 'verbose':verbose, 'doconstrainbudget':False}
+    
+    outcome = outcomecalc(budgetvec=budget, **defaultargs)
     
     
-    results = ICER(name=name, which=objectives['which'], startyear=objectives['start'], endyear=objectives['end'], x=None, y=None, baseline=None, keys=keys, defaultbudget=defaultbudget, parsetname=parsetname, progsetname=progsetname)
+    results = ICER(name=name, which=objectives['which'], startyear=objectives['start'], endyear=objectives['end'], x=budgetratios, y=y, baseline=baseline, keys=keys, defaultbudget=defaultbudget, parsetname=parsetname, progsetname=progsetname)
     
     
     

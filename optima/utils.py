@@ -1664,13 +1664,16 @@ class odict(OrderedDict):
         # Handle values
         vals = promotetolist(vals)
         nvals = len(vals)
-        if nvals==1: # Only a single value: duplicate it
+        if nvals==0: # Special case: it's an empty list
+            vallist = [vals for _ in range(nkeys)]
+        elif nvals==1: # Only a single value: duplicate it
             vallist = [vals[0] for _ in range(nkeys)]
         elif nvals==nkeys: # Lengths match, can use directly
             vallist = vals 
         else:
             errormsg = 'Must supply either a single value or a list of same length as the keys (%i keys, %i values supplied)' % (nkeys, nvals)
-            
+            raise Exception(errormsg)
+        
         # Update odict
         for key,val in zip(keylist,vallist):
             self.__setitem__(key, val)
