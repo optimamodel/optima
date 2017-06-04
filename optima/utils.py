@@ -1580,27 +1580,29 @@ class odict(OrderedDict):
     def sort(self, sortby=None, reverse=False, copy=False):
         '''
         Create a sorted version of the odict. Sorts by order of sortby, if provided, otherwise alphabetical.
-        If copy is True, then returns a copy (like sorted())
+        If copy is True, then returns a copy (like sorted()).
+        
+        Note that you can also use this to do filtering.
         
         Note: very slow, do not use for serious computations!!
         '''
-        if sortby is None: allkeys = sorted(self.keys())
+        origkeys = self.keys()
+        if sortby is None: allkeys = sorted(origkeys)
         else:
             if not isiterable(sortby): raise Exception('Please provide a list to determine the sort order.')
-            if all(isinstance(x,basestring) for x in sortby): # Going to sort by keys
-                if not set(sortby)==set(self.keys()): 
-                    errormsg = 'List of keys to sort by must be the same as list of keys in odict.\n You provided the following list of keys to sort by:\n'
-                    errormsg += '\n'.join(sortby)
-                    errormsg += '\n List of keys in odict is:\n'
-                    errormsg += '\n'.join(self.keys())
-                    raise Exception(errormsg)
-                else: allkeys = sortby
-            elif all(isinstance(x,Number) for x in sortby): # Going to sort by numbers
+            if all([isinstance(x,basestring) for x in sortby]): # Going to sort by keys
+                allkeys = sortby # Assume the user knows what s/he is doing
+            elif all([isinstance(x,bool) for x in sortby]) or all([(x==0 or x==1) for x in sortby]): # Using Boolean values
+                allkeys = []
+                for i,x in enumerate(sortby):
+                     if x: allkeys.append(origkeys[i])
+            elif all([isinstance(x,Number) for x in sortby]): # Going to sort by numbers
                 if not set(sortby)==set(range(len(self))):
                     errormsg = 'List to sort by "%s" is not compatible with length of odict "%i"' % (sortby, len(self))
                     raise Exception(errormsg)
-                else: allkeys = [y for (x,y) in sorted(zip(sortby,self.keys()))]
-            else: raise Exception('Cannot figure out how to sort by "%s"' % sortby)
+                else: allkeys = [y for (x,y) in sorted(zip(sortby,origkeys))]
+            else: 
+                raise Exception('Cannot figure out how to sort by "%s"' % sortby)
         tmpdict = odict()
         if reverse: allkeys.reverse() # If requested, reverse order
         if copy:
@@ -1627,6 +1629,11 @@ class odict(OrderedDict):
     def reversed(self):
         ''' Shortcut for making a copy of the sorted odict '''
         return self.reverse(copy=True)
+    
+    
+    def filter(self, keys=None):
+        ''' Filters the odict by a list of keys, indices, or booleans '''
+        
 
 
 

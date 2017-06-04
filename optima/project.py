@@ -577,7 +577,7 @@ class Project(object):
     def defaultbudget(self, progsetname=None, optimizable=None):
         ''' Small method to get the default budget '''
         if progsetname is None: progsetname = -1
-        if optimizable is None: optimizable = True
+        if optimizable is None: optimizable = False
         output = self.progsets[progsetname].getdefaultbudget(optimizable=optimizable) # Note that this is already safely dcp'd...
         return output
     

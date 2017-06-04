@@ -6,7 +6,7 @@ Version: 2017jun03
 
 ## Imports
 from numpy import append, array
-from optima import OptimaException, Link, Multiresultset, Project, runmodel, defaultobjectives, outcomecalc # Core classes/functions
+from optima import OptimaException, Link, Multiresultset, runmodel, defaultobjectives, outcomecalc # Core classes/functions
 from optima import dcp, today, odict, printv, findinds, defaultrepr, getresults, vec2obj, isnumber, uuid, promotetoarray # Utilities
 
 class Scen(object):
@@ -370,7 +370,7 @@ def icers(project=None, parsetname=None, progsetname=None, which=None, startyear
     ''' Calculate ICERs for each program '''
     
     # Handle inputs
-    if type(project)!=Project: 
+    if type(project).__name__ != 'Project': 
         errormsg = 'To calculate ICERs you must supply a project, not "%s"' % type(project)
         raise OptimaException(errormsg)
     objectives = defaultobjectives() # Only used if startyear or endyear is None

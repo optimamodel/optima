@@ -376,9 +376,9 @@ class Programset(object):
                     
         # Store default budget as an attribute
         self.defaultbudget = lastbudget
-        if t is None:  thisbudget = dcp(lastbudget)
-        else:          thisbudget = dcp(selectbudget)
-        if optimizable: thisbudget = thisbudget[self.optimizable()] # Pull out only optimizable programs
+        if t is None:   thisbudget = dcp(lastbudget)
+        else:           thisbudget = dcp(selectbudget)
+        if optimizable: thisbudget = thisbudget.sorted(self.optimizable()) # Pull out only optimizable programs
         return thisbudget
 
 

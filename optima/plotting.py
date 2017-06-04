@@ -1133,7 +1133,7 @@ def plotbycd4(results=None, whattoplot='people', figsize=globalfigsize, lw=2, ti
 ##################################################################
 ## Plot things by CD4
 ##################################################################
-def ploicers(results=None, figsize=globalfigsize, lw=2, titlesize=globaltitlesize, labelsize=globallabelsize, 
+def ploticers(results=None, figsize=globalfigsize, lw=2, titlesize=globaltitlesize, labelsize=globallabelsize, 
              ticksize=globalticksize, legendsize=globallegendsize, interactive=False, **kwargs):
     ''' 
     Plot ICERs
