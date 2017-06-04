@@ -602,7 +602,7 @@ def minoutcomes(project=None, optim=None, tvec=None, verbose=None, maxtime=None,
     if label is None: label = ''
     
     # Calculate the initial people distribution
-    results = runmodel(pars=parset.pars, project=project, parset=parset, progset=progset, tvec=tvec, keepraw=True, verbose=0, label=project.name+'-minoutcomes')
+    results = runmodel(pars=parset.pars, project=project, parsetname=optim.parsetname, progsetname=optim.progsetname, tvec=tvec, keepraw=True, verbose=0, label=project.name+'-minoutcomes')
     initialind = findinds(results.raw[0]['tvec'], optim.objectives['start'])
     initpeople = results.raw[0]['people'][:,:,initialind] # Pull out the people array corresponding to the start of the optimization -- there shouldn't be multiple raw arrays here
 
@@ -612,8 +612,8 @@ def minoutcomes(project=None, optim=None, tvec=None, verbose=None, maxtime=None,
     # Set up arguments which are shared between outcomecalc and asd
     args = {'which':'outcomes', 
             'project':project, 
-            'parset':parset, 
-            'progset':progset, 
+            'parsetname':optim.parsetname, 
+            'progsetname':optim.progsetname, 
             'objectives':optim.objectives, 
             'constraints':optim.constraints, 
             'totalbudget':origtotalbudget, # Complicated, see below

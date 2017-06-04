@@ -1417,6 +1417,7 @@ def SIticks(figure, axis='y'):
         else: raise OptimaException('Axis must be x, y, or z')
         thisaxis.set_major_formatter(ticker.FuncFormatter(SItickformatter))
 
+
 def commaticks(figure, axis='y'):
     ''' Use commas in formatting the y axis of a figure -- see http://stackoverflow.com/questions/25973581/how-to-format-axis-number-format-to-thousands-with-a-comma-in-matplotlib '''
     for ax in figure.axes:
@@ -1425,7 +1426,6 @@ def commaticks(figure, axis='y'):
         elif axis=='z': thisaxis = ax.zaxis
         else: raise OptimaException('Axis must be x, y, or z')
         thisaxis.set_major_formatter(ticker.FuncFormatter(lambda x, p: format(int(x), ',')))
-
 
 
 def getplotinds(plotstartyear=None, plotendyear=None, tvec=None, die=False, verbose=2):

@@ -642,10 +642,8 @@ class Multiresultset(Resultset):
         else: raise OptimaException('Resultsetlist type "%s" not understood' % str(type(resultsetlist)))
         
         # Fundamental quantities -- populated by project.runsim()
-        sameattrs = ['tvec', 'dt', 'popkeys', 'projectinfo', 'projectref', 'data', 'datayears', 'settings'] # Attributes that should be the same across all results sets
-        diffattrs = ['parset', 'progset'] # Things that differ between between results sets
+        sameattrs = ['tvec', 'dt', 'popkeys', 'projectinfo', 'projectref', 'parsetname', 'progsetname', 'data', 'datayears', 'settings'] # Attributes that should be the same across all results sets
         for attr in sameattrs: setattr(self, attr, None) # Shared attributes across all resultsets
-        for attr in diffattrs: setattr(self, attr+'dict', odict()) # Store a copy for each resultset, e.g. 'parsetdict'
 
         # Main and other results -- time series, by population -- get right structure, but clear out results -- WARNING, must match format above!
         self.main  = dcp(resultsetlist[0].main) # For storing main results -- get the format from the first entry, since should be the same for all
@@ -665,11 +663,6 @@ class Multiresultset(Resultset):
                 orig = getattr(self, attr)
                 new = getattr(rset, attr)
                 if orig is None: setattr(self, attr, new) # Pray that they match, since too hard to compare
-            
-            # Loop over different attributes and append to the odict
-            for attr in diffattrs:
-                getattr(self, attr+'dict')[key] = getattr(rset, attr) # Super confusing, but boils down to e.g. raw['foo'] = rset.raw -- WARNING, does this even work?
-                setattr(self, attr, getattr(rset, attr)) # And then also just store the last value, because most of the time they'll match anyway
             
             # Now, the real deal: fix self.main and self.other
             best = 0 # Key for best data -- discard uncertainty
