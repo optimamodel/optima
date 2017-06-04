@@ -431,16 +431,16 @@ def icers(name=None, project=None, parsetname=None, progsetname=None, which=None
             # Gather values to use
             thisx = rawx[key][b]
             thisy = rawy[key][b]
-            try:    
+            if b>0:    
                 lowerx = rawx[key][b-1]
                 lowery = rawy[key][b-1]
-            except: 
+            else: 
                 lowerx = None
                 lowery = None
-            try:    
+            if b<nbudgetratios-1:    
                 upperx = rawx[key][b+1]
                 uppery = rawy[key][b+1]
-            except: 
+            else: 
                 upperx = None
                 uppery = None
             
@@ -466,7 +466,9 @@ def icers(name=None, project=None, parsetname=None, progsetname=None, which=None
             # Finally, calculate the DALYs per dollar
             thisicer = array(estimates).mean() # Average upper and lower estimates, if available
             y[key].append(thisicer)
-            print key, b, thisx, lowerx, upperx, thisy, lowery, uppery, lower, upper, thisicer
+            for thing in ['key', 'b', 'thisx', 'lowerx', 'upperx', 'thisy', 'lowery', 'uppery', 'estimates']:
+                print('%s=%s' % (thing, eval(thing))),
+            print('')
                 
     # Assemble into results
     results = ICER(name=name, which=objectives['which'], startyear=objectives['start'], endyear=objectives['end'], rawx=rawx, rawy=rawy, x=budgetratios, y=y, baseline=baseliney, keys=keys, defaultbudget=defaultbudget, parsetname=parsetname, progsetname=progsetname)

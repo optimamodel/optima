@@ -92,27 +92,31 @@ def defaultobjectives(project=None, progset=None, which='outcomes', verbose=2):
         
     objectives = odict() # Dictionary of all objectives
     objectives['which'] = which
-    objectives['keys'] = ['death', 'inci'] # Define valid keys
-    objectives['keylabels'] = {'death':'Deaths', 'inci':'New infections'} # Define key labels
+    objectives['keys'] = ['death', 'inci', 'daly'] # Define valid keys
+    objectives['keylabels'] = odict([('death','Deaths'), ('inci','New infections'), ('daly','DALYs')]) # Define key labels
     if which in ['outcome', 'outcomes']:
-        objectives['base'] = None # "Baseline year to compare outcomes to"
-        objectives['start'] = 2017 # "Year to begin optimization"
-        objectives['end'] = 2030 # "Year to project outcomes to"
-        objectives['budget'] = defaultbudget # "Annual budget to optimize"
+        objectives['base']        = None # "Baseline year to compare outcomes to"
+        objectives['start']       = 2017 # "Year to begin optimization"
+        objectives['end']         = 2030 # "Year to project outcomes to"
+        objectives['budget']      = defaultbudget # "Annual budget to optimize"
         objectives['budgetscale'] = [1.] # "Scale factors to apply to budget"
-        objectives['deathweight'] = 5 # "Relative weight per death"
-        objectives['inciweight'] = 1 # "Relative weight per new infection"
-        objectives['deathfrac'] = None # Fraction of deaths to get to
-        objectives['incifrac'] = None # Fraction of incidence to get to
+        objectives['deathweight'] = 5    # "Relative weight per death"
+        objectives['inciweight']  = 1    # "Relative weight per new infection"
+        objectives['dalyweight']  = 0    # "Relative weight per DALY"
+        objectives['deathfrac']   = None # Fraction of deaths to get to
+        objectives['incifrac']    = None # Fraction of incidence to get to
+        objectives['dalyfrac']    = None # Fraction of DALYs to get to
     elif which=='money':
-        objectives['base'] = 2015 # "Baseline year to compare outcomes to"
-        objectives['start'] = 2017 # "Year to begin optimization"
-        objectives['end'] = 2027 # "Year by which to achieve objectives"
-        objectives['budget'] = defaultbudget # "Starting budget"
+        objectives['base']        = 2015 # "Baseline year to compare outcomes to"
+        objectives['start']       = 2017 # "Year to begin optimization"
+        objectives['end']         = 2027 # "Year by which to achieve objectives"
+        objectives['budget']      = defaultbudget # "Starting budget"
         objectives['deathweight'] = None # "Death weighting"
-        objectives['inciweight'] = None # "Incidence weighting"
-        objectives['deathfrac'] = 0.25 # Fraction of deaths to avert
-        objectives['incifrac'] = 0.25 # Fraction of incidence to avert
+        objectives['inciweight']  = None # "Incidence weighting"
+        objectives['dalyweight']  = None # "Incidence weighting"
+        objectives['deathfrac']   = 0.25 # Fraction of deaths to avert
+        objectives['incifrac']    = 0.25 # Fraction of incidence to avert
+        objectives['dalyfrac']    = 0 # Fraction of DALYs to avert
     else:
         raise OptimaException('"which" keyword argument must be either "outcome" or "money"')
 
