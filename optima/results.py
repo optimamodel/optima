@@ -673,14 +673,16 @@ class Multiresultset(Resultset):
                     getattr(self.other[key2], at)[key] = getattr(rset.other[key2], at)[best] # Add data: e.g. self.main['prev'].pops['foo'] = rset.main['prev'].pops[0] -- WARNING, the 0 discards uncertainty data
 
             # Finally, process the budget and budgetyears
-            if len(rset.budget): # If it has a budget, overwrite coverage information by calculating from budget
+            parset  = rset.projectref().parsets[rset.parsetname]
+            progset = rset.projectref().progsets[rset.progsetname]
+            if len(rset.budget):       # If it has a budget, overwrite coverage information by calculating from budget
                 self.budgets[key]      = rset.budget
-                self.budgetyears[key] = rset.budgetyears
-                self.coverages[key]    = rset.progset.getprogcoverage(budget=rset.budget, t=rset.budgetyears, parset=rset.parset, results=rset, proportion=True) # Set proportion TRUE here, because coverage will be outputted as PERCENT covered
-            elif len(rset.coverage): # If no budget, compute budget from coverage
-                self.coverages[key]      = rset.coverage
-                self.budgetyears[key] = rset.budgetyears
-                self.budgets[key]    = rset.progset.getprogbudget(coverage=rset.coverage, t=rset.budgetyears, parset=rset.parset, results=rset, proportion=False) # Set proportion FALSE here, because coverage will be inputted as NUMBER covered    
+                self.budgetyears[key]  = rset.budgetyears
+                self.coverages[key]    = progset.getprogcoverage(budget=rset.budget, t=rset.budgetyears, parset=parset, results=rset, proportion=True) # Set proportion TRUE here, because coverage will be outputted as PERCENT covered
+            elif len(rset.coverage):   # If no budget, compute budget from coverage
+                self.coverages[key]    = rset.coverage
+                self.budgetyears[key]  = rset.budgetyears
+                self.budgets[key]      = progset.getprogbudget(coverage=rset.coverage, t=rset.budgetyears, parset=parset, results=rset, proportion=False) # Set proportion FALSE here, because coverage will be inputted as NUMBER covered    
         
         
     def __repr__(self):

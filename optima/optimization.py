@@ -794,18 +794,18 @@ def minmoney(project=None, optim=None, tvec=None, verbose=None, maxtime=None, ma
     xmin = zeros(len(budgetvec))
 
     # Define arguments for ASD
-    args = {'which':'money', 
-            'project':project, 
-            'parset':parset, 
-            'progset':progset, 
-            'objectives':optim.objectives, 
+    args = {'which':      'money', 
+            'project':    project, 
+            'parsetname': optim.parsetname, 
+            'progsetname':optim.progsetname, 
+            'objectives': optim.objectives, 
             'constraints':optim.constraints, 
             'totalbudget':totalbudget, 
-            'optiminds':optiminds, 
-            'origbudget':origbudget, 
-            'tvec':tvec, 
-            'ccsample': ccsample, 
-            'verbose':verbose}
+            'optiminds':  optiminds, 
+            'origbudget': origbudget, 
+            'tvec':       tvec, 
+            'ccsample':   ccsample, 
+            'verbose':    verbose}
 
 
     ##########################################################################################################################
