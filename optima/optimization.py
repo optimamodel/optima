@@ -4,7 +4,7 @@ Functions for running optimizations.
 Version: 2017jun04
 """
 
-from optima import OptimaException, Link, Multiresultset, Programset, ICER, asd, runmodel, getresults # Main functions
+from optima import OptimaException, Link, Multiresultset, ICER, asd, runmodel, getresults # Main functions
 from optima import printv, dcp, odict, findinds, today, getdate, uuid, objrepr, promotetoarray, findnearest, sanitize # Utilities
 from numpy import zeros, empty, arange, maximum, array, inf, isfinite, argmin, argsort, nan, floor
 from numpy.random import random, seed
@@ -17,11 +17,11 @@ class Optim(object):
     ''' An object for storing an optimization '''
 
     def __init__(self, project=None, name='default', objectives=None, constraints=None, parsetname=None, progsetname=None):
-        if project is None:     raise OptimaException('To create an optimization, you must supply a project')
-        if parsetname is None:  parsetname = -1 # If none supplied, assume defaults
+        if project     is None: raise OptimaException('To create an optimization, you must supply a project')
+        if parsetname  is None: parsetname  = -1 # If none supplied, assume defaults
         if progsetname is None: progsetname = -1
-        if objectives is None:  objectives = defaultobjectives(project=project, progset=progsetname, verbose=0)
-        if constraints is None: constraints = defaultconstraints(project=project, progset=progsetname, verbose=0)
+        if objectives  is None: objectives  = defaultobjectives(project=project,  progsetname=progsetname, verbose=0)
+        if constraints is None: constraints = defaultconstraints(project=project, progsetname=progsetname, verbose=0)
         self.name         = name # Name of the optimization, e.g. 'default'
         self.uid          = uuid() # ID
         self.projectref   = Link(project) # Store pointer for the project, if available
