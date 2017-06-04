@@ -637,7 +637,7 @@ class Project(object):
 
         # Run outcome calculation        
         results = outcomecalc(budgetvec=budget, which='outcomes', project=self, parsetname=optim.parsetname, 
-                              progsetname=optim.progsetname, objectives=optim.objectives, constraints=optim.objectives, 
+                              progsetname=optim.progsetname, objectives=optim.objectives, constraints=optim.constraints, 
                               origbudget=origbudget, outputresults=True, verbose=verbose, doconstrainbudget=doconstrainbudget)
         # Add results
         results.name = name

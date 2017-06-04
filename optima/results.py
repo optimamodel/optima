@@ -833,7 +833,7 @@ class BOC(object):
 class ICER(object):
     ''' Structure to hold the results of an ICER run; similar to the BOC class '''
     
-    def __init__(self, name='icer', which=None, startyear=None, endyear=None, x=None, y=None, baseline=None, keys=None, defaultbudget=None, objectives=None, parsetname=None, progsetname=None):
+    def __init__(self, name='icer', which=None, startyear=None, endyear=None, x=None, y=None, baseline=None, keys=None, defaultbudget=None, parsetname=None, progsetname=None):
         self.name          = name        # Required by rmresult in Project.
         self.uid           = uuid()      # Unique identifier
         self.created       = today()     # When created

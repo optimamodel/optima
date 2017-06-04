@@ -6,7 +6,7 @@ Version: 2017jun03
 
 ## Imports
 from numpy import append, array
-from optima import OptimaException, Link, Multiresultset, runmodel, defaultobjectives, outcomecalc # Core classes/functions
+from optima import OptimaException, Link, Multiresultset, ICER, runmodel, defaultobjectives, outcomecalc # Core classes/functions
 from optima import dcp, today, odict, printv, findinds, defaultrepr, getresults, vec2obj, isnumber, uuid, promotetoarray # Utilities
 
 class Scen(object):
@@ -366,28 +366,36 @@ def defaultscenarios(project=None, which=None, startyear=2016, endyear=2020, par
     return None # Can get it from project.scens
 
 
-def icers(project=None, parsetname=None, progsetname=None, which=None, startyear=None, endyear=None, budgetratios=None, **kwargs):
+def icers(name=None, project=None, parsetname=None, progsetname=None, which=None, startyear=None, endyear=None, budgetratios=None, **kwargs):
     ''' Calculate ICERs for each program '''
     
     # Handle inputs
-    if type(project).__name__ != 'Project': 
+    if type(project).__name__ != 'Project': # Can't compare types directly since can't import Project since not defined yet
         errormsg = 'To calculate ICERs you must supply a project, not "%s"' % type(project)
         raise OptimaException(errormsg)
-    objectives = defaultobjectives() # Only used if startyear or endyear is None
     
     # Set defaults
     if which        is None: which        = 'numdaly'
     if parsetname   is None: parsetname   = -1
     if progsetname  is None: progsetname  = -1
-    if startyear    is None: startyear    = objectives['start']
-    if endyear      is None: endyear      = objectives['start']
     if budgetratios is None: budgetratios = [0.0, 0.1, 0.2, 0.5, 0.8, 1.0, 1.2, 1.5, 2.0]
     
-    defaultbudget = project.defaultbudget(progsetname) # Get default budget
+    # Define objectives
+    objectives = defaultobjectives()
+    objectives['which'] = which # Overwrite this by default
+    if startyear is not None: objectives['start'] = startyear # Do not overwrite by default
+    if endyear   is not None: objectives['end']   = endyear
+    
+    # Get budget information
+    origbudget    = project.defaultbudget(progsetname, optimizable=False) # Get default budget for optimizable programs
+    defaultbudget = project.defaultbudget(progsetname, optimizable=True)  # ...and just for optimizable programs
     keys = defaultbudget.keys() # Get the program keys
     
+    outcome = outcomecalc(budgetvec=budget, which='outcomes', project=project, parsetname=parsetname, progsetname=progsetname, 
+                          objectives=objectives, origbudget=origbudget, outputresults=False, verbose=verbose, doconstrainbudget=False)
     
     
+    results = ICER(name=name, which=objectives['which'], startyear=objectives['start'], endyear=objectives['end'], x=None, y=None, baseline=None, keys=keys, defaultbudget=defaultbudget, parsetname=parsetname, progsetname=progsetname)
     
     
     

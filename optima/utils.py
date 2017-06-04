@@ -419,6 +419,8 @@ def printtologfile(message=None, filename=None):
     
     return None
     
+    
+    
 ##############################################################################
 ### TYPE FUNCTIONS
 ##############################################################################
@@ -1233,7 +1235,8 @@ from numbers import Number
 class odict(OrderedDict):
     '''
     An ordered dictionary, like the OrderedDict class, but supporting list methods like integer referencing, slicing, and appending.
-    Version: 2016sep14 (cliffk)
+    
+    Version: 2017jun03
     '''
     
     def __init__(self, *args, **kwargs):
@@ -1631,8 +1634,55 @@ class odict(OrderedDict):
         return self.reverse(copy=True)
     
     
-    def filter(self, keys=None):
-        ''' Filters the odict by a list of keys, indices, or booleans '''
+    def make(self, keys=None, vals=None):
+        '''
+        An alternate way of making or adding to an odict. Examples:
+            a = odict().make(5) # Make an odict of length 5, populated with Nones and default key names
+            b = odict().make('foo',34) # Make an odict with a single key 'foo' of value 34
+            c = odict().make(['a','b']) # Make an odict with keys 'a' and 'b'
+            d = odict().make(['a','b'],0) # Make an odict with keys 'a' and 'b', initialized to 0
+            e = odict().make(keys=['a','b'], vals=[1,2]) # Make an odict with 'a':1 and 'b':2
+            f = odict({'a':34, 'b':58}).make(['c','d'],[99,45]) # Add extra keys to an exising odict
+        '''
+        # Handle keys
+        keylist = []
+        if keys is None and vals is None:
+            return None # Nothing to do if nothing supplied
+        if keys is None and vals is not None:
+            keys = len(promotetolist(vals)) # Values are supplied but keys aren't: use default keys
+        if isinstance(keys, Number): # It's a single number: pre-generate
+            keylist = ['%i'%i for i in range(keys)] # Generate keylist
+        elif isinstance(keys, basestring): # It's a single string
+            keylist = [flexstr(keys)]
+        elif isinstance(keys, list): # It's a list: use directly
+            keylist = keys
+        else:
+            errormsg = 'Could not understand keys "%s": must be number, string, or list' % keys
+            raise Exception(errormsg)
+        nkeys = len(keylist)
+        
+        # Handle values
+        vals = promotetolist(vals)
+        nvals = len(vals)
+        if nvals==1: # Only a single value: duplicate it
+            vallist = [vals[0] for _ in range(nkeys)]
+        elif nvals==nkeys: # Lengths match, can use directly
+            vallist = vals 
+        else:
+            errormsg = 'Must supply either a single value or a list of same length as the keys (%i keys, %i values supplied)' % (nkeys, nvals)
+            
+        # Update odict
+        for key,val in zip(keylist,vallist):
+            self.__setitem__(key, val)
+        
+        return self # A bit weird, but usually would use this return an odict
+        
+        
+        
+        
+        
+        
+
         
 
 
