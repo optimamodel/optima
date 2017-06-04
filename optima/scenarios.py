@@ -366,11 +366,26 @@ def defaultscenarios(project=None, which=None, startyear=2016, endyear=2020, par
     return None # Can get it from project.scens
 
 
-def icers(name=None, project=None, parsetname=None, progsetname=None, objective=None, startyear=None, endyear=None, budgetratios=None, marginal=None, verbose=2):
+def icers(name=None, project=None, parsetname=None, progsetname=None, progkeys=None, objective=None, 
+          startyear=None, endyear=None, budgetratios=None, marginal=None, verbose=2):
     '''
     Calculate ICERs for each program.
     
-    Objective must be one of 'death', 'inci', 'daly' ('daly' by default).
+    Inputs:
+        name         = name of the result
+        project      = the project object
+        parsetname   = name of the parameter set used; default -1
+        progsetname  = name of the program set; default -1
+        progkeys     = optional list of keys by which to filter programs by; default None
+        objective    = what to calculate; must be one of 'death', 'inci', 'daly'; 'daly' by default)
+        startyear    = the year to start applying the budget and calculating the outcome; default from defaultobjectives()
+        endyear      = ditto for end year
+        budgetratios = the list of budgets relative to baseline to run; default 10 budgets spanning 0.0 to 2.0
+        marginal     = whether to calculate marginal ICERs or relative to baseline; default marginal
+        
+    Do not call this function directly: see project.icer() for usage example.
+    
+    Version: 2017jun04
     '''
     
     printv('Calculating ICERs...')
@@ -395,7 +410,7 @@ def icers(name=None, project=None, parsetname=None, progsetname=None, objective=
     objectives = defaultobjectives(project=project)
     if startyear is not None: objectives['start'] = startyear # Do not overwrite by default
     if endyear   is not None: objectives['end']   = endyear
-    nyears = objectives['end']-objectives['start'] # Calculate the number of years
+    nyears = objectives['end'] - objectives['start'] # Calculate the number of years
     obkeys = objectives['keys']
     if objective not in obkeys:
         errormsg = 'Objective must be one of "%s", not "%s"' % (obkeys, objective)
@@ -407,6 +422,7 @@ def icers(name=None, project=None, parsetname=None, progsetname=None, objective=
     # Get budget information
     origbudget    = project.defaultbudget(progsetname, optimizable=False) # Get default budget for optimizable programs
     defaultbudget = project.defaultbudget(progsetname, optimizable=True)  # ...and just for optimizable programs
+    if progkeys is not None: defaultbudget = defaultbudget.sorted(sortby=progkeys) # If requested, filter budget further
     keys = defaultbudget.keys() # Get the program keys
     nkeys = len(keys)
     

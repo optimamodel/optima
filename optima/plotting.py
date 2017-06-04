@@ -1173,6 +1173,7 @@ def ploticers(results=None, figsize=globalfigsize, lw=2, dotsize=30, titlesize=g
     upperlim = min([maxicer, totalbudget, 10*meanicer, 50*minicer]) # Set the y limit based on the minimum of each of these different options
     
     # Do the plotting
+    sizeratio = 1.5
     ax.plot([100,100], [0,upperlim], color=(0.7,0.7,0.7), linewidth=1, linestyle=':') # Mark the current spending
     hitupper = 0 # Count the number of programs that hit the upper limit
     newupper = upperlim
@@ -1191,9 +1192,9 @@ def ploticers(results=None, figsize=globalfigsize, lw=2, dotsize=30, titlesize=g
                     goodinds.append(v)
         if len(badinds)>0: 
             hitupper += 1
-        ax.plot(x[badinds],  thisicer[badinds],  color=colors[k], lw=lw, linestyle='--') 
-        ax.plot(x[goodinds], thisicer[goodinds], color=colors[k], lw=lw, label=key) # Colors are in reverse order
-        ax.scatter(x[goodinds], thisicer[goodinds], s=dotsize, facecolor=colors[k], lw=0)
+        ax.plot(x[badinds],  thisicer[badinds],  color=colors[k], lw=lw*sizeratio, linestyle='--') 
+        ax.plot(x[goodinds], thisicer[goodinds], color=colors[k], lw=lw*sizeratio, label=key) # Colors are in reverse order
+        ax.scatter(x[goodinds], thisicer[goodinds], s=dotsize*sizeratio, facecolor=colors[k], lw=0)
     
     # Configure plot
     boxoff(ax)
