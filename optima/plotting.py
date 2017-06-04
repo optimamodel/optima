@@ -1406,7 +1406,7 @@ def sanitizeresults(results):
 
 def SItickformatter(x, pos):  # formatter function takes tick label and tick position
     ''' Formats axis ticks so that e.g. 34,243 becomes 34K '''
-    return sigfig(x, sigfigs=3, SI=True)
+    return sigfig(x, sigfigs=2, SI=True)
 
 
 def SIticks(fig=None, ax=None, axis='y'):

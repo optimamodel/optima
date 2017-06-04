@@ -169,7 +169,7 @@ def autofit_task(project, ind, outputqueue, name, fitwhat, fitto, maxtime, maxit
         return project
 
 
-def batchBOC(folder=None, projects=None, budgetratios=None, name=None, parsetname=None, progsetname=None, objectives=None, 
+def batchBOC(folder=None, projects=None, portfolio=None, budgetratios=None, name=None, parsetname=None, progsetname=None, objectives=None, 
              constraints=None,  maxiters=200, maxtime=None, verbose=2, stoppingfunc=None, 
              maxload=0.5, interval=None, prerun=True, batch=True, mc=3, die=False, recalculate=True, strict=True, randseed=None):
     """
@@ -185,6 +185,8 @@ def batchBOC(folder=None, projects=None, budgetratios=None, name=None, parsetnam
                 calculated (optional)
         projects - an odict of projects, as from a portfolio; if not None, will
                 be used instead of the folder
+        portfolio - a portfolio; if supplied, will be used instead of folder or
+                projects
         budgetratios - a vector of multiples of the current budget for which an
                 optimization will be performed to comprise the BOC (default:
                 [1.0, 0.6, 0.3, 0.1, 3.0, 6.0, 10.0])
@@ -225,6 +227,7 @@ def batchBOC(folder=None, projects=None, budgetratios=None, name=None, parsetnam
     
     # Praeludium
     starttime = tic()
+    if portfolio is not None: projects = portfolio.projects
     projects, nprojects, fromfolder = getprojects(projects, folder, verbose) # If no projects supplied, load them from the folder
     outputqueue, outputlist, processes = housekeeping(nprojects, batch) # Figure out things that need to be figured out
     

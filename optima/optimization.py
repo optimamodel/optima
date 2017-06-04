@@ -5,7 +5,7 @@ Version: 2017jun04
 """
 
 from optima import OptimaException, Link, Multiresultset, Programset, ICER, asd, runmodel, getresults # Main functions
-from optima import printv, dcp, odict, findinds, today, getdate, uuid, objrepr, promotetoarray, findnearest # Utilities
+from optima import printv, dcp, odict, findinds, today, getdate, uuid, objrepr, promotetoarray, findnearest, sanitize # Utilities
 from numpy import zeros, empty, arange, maximum, array, inf, isfinite, argmin, argsort, nan, floor
 from numpy.random import random, seed
 from time import time
@@ -565,7 +565,7 @@ def multioptimize(optim=None, nchains=None, nblocks=None, blockiters=None,
     
     # Assemble final results object from the initial and final run
     finalresults = outputlist[bestfvalind]
-    results.improvement[0] = fvalarray[bestfvalind,:] # Store fval vector in normal format
+    results.improvement[0] = sanitize(fvalarray[bestfvalind,:]) # Store fval vector in normal format
     results.multiimprovement = fvalarray # Store full fval array
     results.outcome = finalresults.outcome
     results.budget = finalresults.budget
