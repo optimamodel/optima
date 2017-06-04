@@ -1327,7 +1327,7 @@ class odict(OrderedDict):
         return None
     
      
-    def __repr__(self, maxlen=None, showmultilines=True, divider=False, dividerthresh=10, numindents=0, recurselevel=0):
+    def __repr__(self, maxlen=None, showmultilines=True, divider=False, dividerthresh=10, numindents=0, recurselevel=0, sigfigs=9, SI=False):
         ''' Print a meaningful representation of the odict '''
         
         # Set primitives for display.
@@ -1358,6 +1358,8 @@ class odict(OrderedDict):
                 if isinstance(thisval, odict):
                     thisvalstr = flexstr(thisval.__repr__(maxlen=maxlen, showmultilines=showmultilines, divider=divider, 
                         dividerthresh=dividerthresh, numindents=numindents, recurselevel=recurselevel+1))
+                elif isnumber(thisval):
+                    thisvalstr = str(thisval) # To avoid numpy's stupid 0.4999999999945
                 else: # Otherwise, do the normal __repr__() read.
                     thisvalstr = thisval.__repr__()
 
@@ -1367,6 +1369,7 @@ class odict(OrderedDict):
                 vallinecounts.append(thisvalstr.count('\n') + 1) # Count the number of lines in the value.
             maxvallinecounts = max(vallinecounts)   # Grab the maximum count of lines in the dict values.                    
             
+            maxkeylen = max([len(keystr) for keystr in keystrs])
             for i in range(len(keystrs)): # Loop over the lists
                 keystr = keystrs[i]
                 valstr = valstrs[i]
@@ -1387,11 +1390,12 @@ class odict(OrderedDict):
                 if maxlen and len(valstr) > maxlen: 
                     valstr = valstr[:maxlen-len(toolong)] + toolong 
                     
-                # Create the the text to add, apply the indent, and add to the output.    
+                # Create the the text to add, apply the indent, and add to the output
+                spacer = ' '*(maxkeylen-len(keystr))
                 if vallinecount == 1 or not showmultilines:
-                    rawoutput = '#%i: "%s": %s\n' % (i, keystr, valstr)
+                    rawoutput = '#%i: "%s":%s %s\n' % (i, keystr, spacer, valstr)
                 else:
-                    rawoutput = '#%i: "%s": \n%s\n' % (i, keystr, valstr)
+                    rawoutput = '#%i: "%s":%s \n%s\n' % (i, keystr, spacer, valstr)
                     
                 # Perform the indentation.
                 newoutput = indent(prefix=theprefix, text=rawoutput, width=80)
@@ -1416,11 +1420,11 @@ class odict(OrderedDict):
         print(self.__repr__())
     
     
-    def disp(self, maxlen=55, showmultilines=False, divider=False, dividerthresh=10, numindents=0):
+    def disp(self, maxlen=55, showmultilines=False, divider=False, dividerthresh=10, numindents=0, sigfigs=6, SI=False):
         ''' Print out flexible representation, short by default'''
         print(self.__repr__(maxlen=maxlen, showmultilines=showmultilines, 
             divider=divider, dividerthresh=dividerthresh, 
-            numindents=numindents, recurselevel=0))
+            numindents=numindents, recurselevel=0, sigfigs=sigfigs, SI=False))
     
     
     def export(self, doprint=True):
