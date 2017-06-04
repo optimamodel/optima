@@ -218,6 +218,7 @@ class Portfolio(object):
         maxgaiters = int(1e6) # This should be a lot -- just not infinite, but should break first
         spendperproject = zeros(nbocs)
         runningtotal = grandtotal
+        oldpercentcomplete = 0.0 # Keep track of progress
         for i in range(maxgaiters):
             bestval = -inf
             bestboc = None
@@ -244,8 +245,10 @@ class Portfolio(object):
                     relspendvecs[b] = relspendvecs[b][withinbudget]
                     relimprovevecs[b] = relimprovevecs[b][withinbudget]
                     costeffvecs[b] = relimprovevecs[b]/relspendvecs[b]
-                if not i%100:
-                    printv('  Allocated %0.1f%% of the portfolio budget...' % ((grandtotal-runningtotal)/float(grandtotal)*100), 2, verbose)
+                newpercentcomplete = (grandtotal-runningtotal)/float(grandtotal)*100
+                if not(i%100) or (newpercentcomplete-oldpercentcomplete)>1.0:
+                    printv('  Allocated %0.1f%% of the portfolio budget...' % newpercentcomplete, 2, verbose)
+                    oldpercentcomplete = newpercentcomplete
             else:
                 break # We're done, there's nothing more to allocate
         
