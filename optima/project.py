@@ -718,7 +718,7 @@ class Project(object):
         boc = BOC(name='BOC '+self.name)
         if objectives is None:
             printv('Warning, genBOC "%s" did not get objectives, using defaults...' % (self.name), 2, verbose)
-            objectives = defaultobjectives(project=self, progset=progsetname)
+            objectives = defaultobjectives(project=self, progsetname=progsetname)
         boc.objectives = objectives
         boc.constraints = constraints
         

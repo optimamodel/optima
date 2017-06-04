@@ -363,8 +363,9 @@ class Portfolio(object):
                 projbudgets[k][io]  = alloc[io]
                 projoutcomes[k][io] = outcome[io]
                 
-                tmppars = self.results[key][io].parset
-                tmpprog = self.results[key][io].progset
+                thisioresult = self.results[key][io]
+                tmppars = thisioresult.projectref().parsets[thisioresult.parsetname]
+                tmpprog = thisioresult.projectref().progsets[thisioresult.progsetname]
                 tmpcov = tmpprog.getprogcoverage(alloc[io], self.objectives['start'], parset=tmppars)
                 projcov[k][io]  = tmpcov
                 

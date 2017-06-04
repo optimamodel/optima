@@ -65,7 +65,7 @@ class Optim(object):
 ### Helper functions
 ################################################################################################################################################
 
-def defaultobjectives(project=None, progset=None, which='outcomes', verbose=2):
+def defaultobjectives(project=None, progsetname=None, which=None, verbose=2):
     """
     Define default objectives for the optimization. Some objectives are shared
     between outcome and money minimizations, while others are different. However,
@@ -76,17 +76,12 @@ def defaultobjectives(project=None, progset=None, which='outcomes', verbose=2):
     """
     printv('Defining default objectives...', 3, verbose=verbose)
 
-    if type(progset)==Programset:
-        try: defaultbudget = sum(progset.getdefaultbudget()[:])
-        except: raise OptimaException('Could not get default budget for optimization')
-    elif type(project)==Programset: # Not actually a project, but proceed anyway
-        try: defaultbudget = sum(project.getdefaultbudget()[:])
-        except: raise OptimaException('Could not get default budget for optimization')
-    elif project is not None:
-        if progset is None: progset = -1 # Think it's OK to make this the default
-        try: defaultbudget = sum(project.progsets[progset].getdefaultbudget()[:])
-        except: raise OptimaException('Could not get default budget for optimization')
-    else:
+    if which       is None: which = 'outcomes'
+    if progsetname is None: progsetname = -1
+    
+    try:
+        defaultbudget = sum(project.progsets[progsetname].getdefaultbudget()[:])
+    except:
         defaultbudget = 0.0 # If can't find programs
         printv('defaultobjectives() did not get a project or progset, so setting budget to %0.0f' % defaultbudget, 2, verbose)
         
@@ -123,25 +118,22 @@ def defaultobjectives(project=None, progset=None, which='outcomes', verbose=2):
     return objectives
 
 
-def defaultconstraints(project=None, progset=None, which='outcomes', verbose=2):
+def defaultconstraints(project=None, progsetname=None, which='outcomes', verbose=2):
     """
     Define constraints for minimize outcomes optimization: at the moment, just
     total budget constraints defned as a fraction of current spending. Fixed costs
     are treated differently, and ART is hard-coded to not decrease.
 
-    Version: 2016feb03
+    Version: 2017jun04
     """
 
     printv('Defining default constraints...', 3, verbose=verbose)
 
-    if type(progset)==Programset: pass
-    elif type(project)==Programset: progset = project
-    elif project is not None:
-        if progset is None: progset = -1
-        progset = project.progsets[progset]
-        printv('defaultconstraints() did not get a progset input, so using default', 3, verbose)
-    else:
-        raise OptimaException('To define constraints, you must supply a program set as an input')
+    if progsetname is None: 
+        progsetname = -1
+        printv('defaultconstraints() did not get a progsetname input, so using default', 3, verbose)
+    try:    progset = project.progsets[progsetname]
+    except: raise OptimaException('To define constraints, you must supply a program set as an input')
 
     # If no programs in the progset, return None        
     if not(len(progset.programs)): return None
@@ -304,8 +296,8 @@ def outcomecalc(budgetvec=None, which=None, project=None, parsetname=None, progs
     if progsetname is None: progsetname = -1
     parset  = project.parsets[parsetname] 
     progset = project.progsets[progsetname]
-    if objectives  is None: objectives  = defaultobjectives(project=project, progset=progset, which=which)
-    if constraints is None: constraints = defaultconstraints(project=project, progset=progset, which=which)
+    if objectives  is None: objectives  = defaultobjectives(project=project,  progsetname=progsetname, which=which)
+    if constraints is None: constraints = defaultconstraints(project=project, progsetname=progsetname, which=which)
     if totalbudget is None: totalbudget = objectives['budget']
     if origbudget  is None: origbudget  = progset.getdefaultbudget()
     if optiminds   is None: optiminds   = findinds(progset.optimizable())
@@ -445,9 +437,9 @@ def optimize(optim=None, maxiters=None, maxtime=None, verbose=2, stoppingfunc=No
     # Optim structure validation
     progset = project.progsets[optim.progsetname] # Link to the original parameter set
     if not(hasattr(optim, 'objectives')) or optim.objectives is None:
-        optim.objectives = defaultobjectives(project=project, progset=progset, which=which, verbose=verbose)
+        optim.objectives = defaultobjectives(project=project, progsetname=optim.progsetname, which=which, verbose=verbose)
     if not(hasattr(optim, 'constraints')) or optim.constraints is None:
-        optim.constraints = defaultconstraints(project=project, progset=progset, which=which, verbose=verbose)
+        optim.constraints = defaultconstraints(project=project, progsetname=optim.progsetname, which=which, verbose=verbose)
 
     # Process inputs
     if not optim.objectives['budget']: # Handle 0 or None -- WARNING, temp?
