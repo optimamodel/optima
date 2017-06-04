@@ -647,9 +647,9 @@ class Project(object):
         return results
 
 
-    def icers(self, parsetname=None, progsetname=None, which=None, startyear=None, endyear=None, budgetratios=None, verbose=2, marginal=None, **kwargs):
+    def icers(self, parsetname=None, progsetname=None, objective=None, startyear=None, endyear=None, budgetratios=None, verbose=2, marginal=None, **kwargs):
         ''' Calculate ICERs '''
-        results = icers(project=self, parsetname=parsetname, progsetname=progsetname, which=which, startyear=startyear, 
+        results = icers(project=self, parsetname=parsetname, progsetname=progsetname, objective=objective, startyear=startyear, 
                         endyear=endyear, budgetratios=budgetratios, marginal=marginal, verbose=verbose, **kwargs)
         self.addresult(results)
         self.modified = today()

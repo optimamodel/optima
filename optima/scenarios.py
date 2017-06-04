@@ -366,8 +366,12 @@ def defaultscenarios(project=None, which=None, startyear=2016, endyear=2020, par
     return None # Can get it from project.scens
 
 
-def icers(name=None, project=None, parsetname=None, progsetname=None, which=None, startyear=None, endyear=None, budgetratios=None, marginal=True, verbose=2, **kwargs):
-    ''' Calculate ICERs for each program '''
+def icers(name=None, project=None, parsetname=None, progsetname=None, objective=None, startyear=None, endyear=None, budgetratios=None, marginal=None, verbose=2):
+    '''
+    Calculate ICERs for each program.
+    
+    Objective must be one of 'death', 'inci', 'daly' ('daly' by default).
+    '''
     
     printv('Calculating ICERs...')
     
@@ -378,19 +382,26 @@ def icers(name=None, project=None, parsetname=None, progsetname=None, which=None
     
     # Set defaults
     eps = project.settings.eps
-    if which        is None: which        = 'numdaly'
+    if marginal     is None: marginal     = True
+    if objective    is None: objective    = 'daly'
     if parsetname   is None: parsetname   = -1
     if progsetname  is None: progsetname  = -1
-    if budgetratios is None: budgetratios = [0.0, 0.5, 1.0, 2.0] #[0.0, 0.1, 0.2, 0.5, 0.8, 1.0, 1.2, 1.5, 2.0]
+    if budgetratios is None: budgetratios = [0.0, 0.1, 0.2, 0.4, 0.6, 0.8, 1.0, 1.2, 1.5, 2.0]
     budgetratios = array(budgetratios) # Ensure it's an array
     nbudgetratios = len(budgetratios)
     
     # Define objectives
     objectives = defaultobjectives(project=project)
-    objectives['which'] = which # Overwrite this by default
     if startyear is not None: objectives['start'] = startyear # Do not overwrite by default
     if endyear   is not None: objectives['end']   = endyear
     nyears = objectives['end']-objectives['start'] # Calculate the number of years
+    obkeys = objectives['keys']
+    if objective not in obkeys:
+        errormsg = 'Objective must be one of "%s", not "%s"' % (obkeys, objective)
+        raise OptimaException(errormsg)
+    for key in obkeys:
+        if objective==key: objectives[key+'weight'] = 1.0 # Set weight to 1 if they match
+        else:              objectives[key+'weight'] = 0.0 # Set to 0 otherwise
     
     # Get budget information
     origbudget    = project.defaultbudget(progsetname, optimizable=False) # Get default budget for optimizable programs
@@ -446,27 +457,32 @@ def icers(name=None, project=None, parsetname=None, progsetname=None, which=None
             
             # Calculate estimates by comparing to lower and upper values, and baseline if those fail
             estimates = [] # Start assembling ICER estimates
-            if marginal:
+            if marginal: # Calculate relative to next upper and lower choices
+                lower = None
                 if lowerx is not None:
                     lowerdiffx = (thisx - lowerx)*nyears
                     lowerdiffy = thisy - lowery
-                    lower = lowerdiffy/(lowerdiffx+eps)
+                    lower = -lowerdiffy/(lowerdiffx+eps)
                     estimates.append(lower)
+                upper = None
                 if upperx is not None:
                     upperdiffx = (thisx - upperx)*nyears
                     upperdiffy = thisy - uppery
-                    upper = upperdiffy/(upperdiffx+eps)
+                    upper = -upperdiffy/(upperdiffx+eps)
                     estimates.append(upper)
-            else:
+            else: # Calculate relative to baseline only
+                if thisx==baselinex:
+                    thisx = rawx[key][0] # Assume 0 is 0 budget
+                    thisy = rawy[key][0] # Assume 0 is 0 budget
                 baselinediffx = (thisx - baselinex)*nyears # To get total cost, need to multiply by the number of years
                 baselinediffy = thisy - baseliney
-                baselinediff = baselinediffy/(baselinediffx+eps)
+                baselinediff = -baselinediffy/(baselinediffx+eps)
                 estimates = [baselinediff]
             
             # Finally, calculate the DALYs per dollar
             thisicer = array(estimates).mean() # Average upper and lower estimates, if available
             y[key].append(thisicer)
-            for thing in ['key', 'b', 'thisx', 'lowerx', 'upperx', 'thisy', 'lowery', 'uppery', 'estimates']:
+            for thing in ['key', 'b', 'thisx', 'lowerx', 'upperx', 'thisy', 'lowery', 'uppery', 'lower', 'upper', 'estimates']:
                 print('%s=%s' % (thing, eval(thing))),
             print('')
                 
