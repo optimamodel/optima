@@ -551,8 +551,8 @@ def plotepi(results, toplot=None, uncertainty=True, die=True, showdata=True, ver
                 else:
                     handles, legendlabels = ax.get_legend_handles_labels()
                     ax.legend(handles[::-1], legendlabels, **legendsettings) # Multiple simulations
-                if useSIticks: SIticks(epiplots[pk])
-                else:          commaticks(epiplots[pk])
+                if useSIticks: SIticks(ax=ax)
+                else:          commaticks(ax=ax)
         
         return epiplots
 
@@ -632,7 +632,7 @@ def plotbudget(multires=None, die=True, figsize=globalfigsize, legendsize=global
 
     Results object must be of Multiresultset type.
     
-    Version: 2017mar09
+    Version: 2017jun04
     '''
     
     # Preliminaries: process inputs and extract needed data
@@ -717,7 +717,7 @@ def plotbudget(multires=None, die=True, figsize=globalfigsize, legendsize=global
         ax.set_ylim(0,nallocs+1)
         ax.set_title('Budget')
         
-        SIticks(fig, axis='x')
+        SIticks(ax=ax, axis='x')
         budgetplots['budget'] = fig
     
     return budgetplots
@@ -813,7 +813,7 @@ def plotcoverage(multires=None, die=True, figsize=globalfigsize, legendsize=glob
         ax[-1].legend(labels, **legendsettings) # Multiple entries, all populations
         
         # Tidy up
-        SIticks(fig)
+        SIticks(ax=ax)
         coverageplots[thistitle] = fig
     
     for thisax in ax: thisax.set_ylim(ymin,ymax) # So they all have the same scale
@@ -977,8 +977,8 @@ def plotcascade(results=None, aspercentage=False, cascadecolors=None, figsize=gl
             else:          thistitle = 'Cascade'
         
         ## General plotting fixes
-        if useSIticks: SIticks(fig)
-        else:          commaticks(fig)
+        if useSIticks: SIticks(ax=ax)
+        else:          commaticks(ax=ax)
         
         ## Configure plot -- WARNING, copied from plotepi()
         boxoff(ax)
@@ -1123,7 +1123,7 @@ def plotbycd4(results=None, whattoplot='people', figsize=globalfigsize, lw=2, ti
         ax[-1].set_xlim((results.tvec[0], results.tvec[-1]))
         ax[-1].legend(results.settings.hivstatesfull, **legendsettings) # Multiple entries, all populations
         
-    SIticks(fig)
+    SIticks(ax=ax)
     
     return fig    
 
@@ -1202,7 +1202,7 @@ def ploticers(results=None, figsize=globalfigsize, lw=2, dotsize=30, titlesize=g
     ax.set_xlim(x[0]-dx, x[-1]+dx)
     legendsettings = {'loc':'upper left', 'bbox_to_anchor':(1.05, 1), 'fontsize':legendsize, 'title':'', 'frameon':False}
     ax.legend(**legendsettings) # Multiple entries, all populations
-    SIticks(fig)
+    SIticks(ax=ax)
     
     return fig    
 
@@ -1408,24 +1408,32 @@ def SItickformatter(x, pos):  # formatter function takes tick label and tick pos
     return sigfig(x, sigfigs=3, SI=True)
 
 
-def SIticks(figure, axis='y'):
+def SIticks(fig=None, ax=None, axis='y'):
     ''' Apply SI tick formatting to the y axis of a figure '''
-    for ax in figure.axes:
-        if axis=='x':   thisaxis = ax.xaxis
+    if  fig is not None: axlist = fig.axes
+    elif ax is not None: axlist = promotetolist(ax)
+    else: raise OptimaException('Must supply either figure or axes')
+    for ax in axlist:
+        if   axis=='x': thisaxis = ax.xaxis
         elif axis=='y': thisaxis = ax.yaxis
         elif axis=='z': thisaxis = ax.zaxis
         else: raise OptimaException('Axis must be x, y, or z')
         thisaxis.set_major_formatter(ticker.FuncFormatter(SItickformatter))
+    return None
 
 
-def commaticks(figure, axis='y'):
+def commaticks(fig=None, ax=None, axis='y'):
     ''' Use commas in formatting the y axis of a figure -- see http://stackoverflow.com/questions/25973581/how-to-format-axis-number-format-to-thousands-with-a-comma-in-matplotlib '''
-    for ax in figure.axes:
-        if axis=='x':   thisaxis = ax.xaxis
+    if  fig is not None: axlist = fig.axes
+    elif ax is not None: axlist = promotetolist(ax)
+    else: raise OptimaException('Must supply either figure or axes')
+    for ax in axlist:
+        if   axis=='x': thisaxis = ax.xaxis
         elif axis=='y': thisaxis = ax.yaxis
         elif axis=='z': thisaxis = ax.zaxis
         else: raise OptimaException('Axis must be x, y, or z')
         thisaxis.set_major_formatter(ticker.FuncFormatter(lambda x, p: format(int(x), ',')))
+    return None
 
 
 def getplotinds(plotstartyear=None, plotendyear=None, tvec=None, die=False, verbose=2):

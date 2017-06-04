@@ -523,7 +523,7 @@ class Project(object):
 
         # Store results -- WARNING, is this correct in all cases?
         resultname = 'parset-'+self.parsets[name].name 
-        results = Resultset(name=resultname, raw=rawlist, simpars=simparslist, project=self, keepraw=keepraw, verbose=verbose) # Create structure for storing results
+        results = Resultset(name=resultname, pars=self.parsets[name].pars, raw=rawlist, simpars=simparslist, project=self, keepraw=keepraw, verbose=verbose) # Create structure for storing results
         if addresult:
             keyname = self.addresult(result=results, overwrite=overwrite)
             self.parsets[name].resultsref = keyname # If linked to a parset, store the results

@@ -642,7 +642,7 @@ class Multiresultset(Resultset):
         else: raise OptimaException('Resultsetlist type "%s" not understood' % str(type(resultsetlist)))
         
         # Fundamental quantities -- populated by project.runsim()
-        sameattrs = ['tvec', 'dt', 'popkeys', 'projectinfo', 'projectref', 'parsetname', 'progsetname', 'data', 'datayears', 'settings'] # Attributes that should be the same across all results sets
+        sameattrs = ['tvec', 'dt', 'popkeys', 'projectinfo', 'projectref', 'parsetname', 'progsetname', 'pars', 'data', 'datayears', 'settings'] # Attributes that should be the same across all results sets
         for attr in sameattrs: setattr(self, attr, None) # Shared attributes across all resultsets
 
         # Main and other results -- time series, by population -- get right structure, but clear out results -- WARNING, must match format above!
