@@ -382,6 +382,7 @@ def icers(name=None, project=None, parsetname=None, progsetname=None, objective=
     
     # Set defaults
     eps = project.settings.eps
+    icereps = 1e-9 # A smaller epsilon for ensuring ICER divisions aren't zero
     if marginal     is None: marginal     = True
     if objective    is None: objective    = 'daly'
     if parsetname   is None: parsetname   = -1
@@ -413,6 +414,7 @@ def icers(name=None, project=None, parsetname=None, progsetname=None, objective=
     rawx = odict().make(keys=keys, vals=[])
     rawy = dcp(rawx)
     y    = dcp(rawx)
+    icer = dcp(rawx)
     
     # Define arguments that don't change in the loop
     defaultargs = {'which':'outcomes', 'project':project, 'parsetname':parsetname, 'progsetname':progsetname, 'objectives':objectives, 
@@ -481,11 +483,24 @@ def icers(name=None, project=None, parsetname=None, progsetname=None, objective=
             
             # Finally, calculate the DALYs per dollar
             thisicer = array(estimates).mean() # Average upper and lower estimates, if available
+            if thisicer<0:
+                printv('WARNING, ICER for "%s" at budget ratio %0.1f is negative (%0.3e); setting to 0' % (key, budgetratios[b], thisicer), 1, verbose)
+                thisicer = 0.0;
             y[key].append(thisicer)
             for thing in ['key', 'b', 'thisx', 'lowerx', 'upperx', 'thisy', 'lowery', 'uppery', 'lower', 'upper', 'estimates']:
                 print('%s=%s' % (thing, eval(thing))),
             print('')
+    
+    # Convert to arrays
+    for key in keys:
+        rawx[key] = array(rawx[key])
+        rawy[key] = array(rawy[key])
+        y[key]    = array(y[key]) 
+    
+    # Calculate actual ICERs
+    for key in keys:
+        icer[key] = 1.0/(y[key]+icereps)
                 
     # Assemble into results
-    results = ICER(name=name, which=objectives['which'], startyear=objectives['start'], endyear=objectives['end'], rawx=rawx, rawy=rawy, x=budgetratios, y=y, baseline=baseliney, keys=keys, defaultbudget=defaultbudget, parsetname=parsetname, progsetname=progsetname)
+    results = ICER(name=name, objective=objective, startyear=objectives['start'], endyear=objectives['end'], rawx=rawx, rawy=rawy, x=budgetratios, y=y, icer=icer, baseline=baseliney, keys=keys, defaultbudget=defaultbudget, parsetname=parsetname, progsetname=progsetname)
     return results

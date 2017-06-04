@@ -11,7 +11,7 @@ plotting to this file.
 Version: 2017jun03
 '''
 
-from optima import OptimaException, Resultset, Multiresultset, odict, printv, gridcolors, vectocolor, alpinecolormap, makefilepath, sigfig, dcp, findinds, promotetolist, saveobj, promotetoodict, promotetoarray, boxoff
+from optima import OptimaException, Resultset, Multiresultset, ICER, odict, printv, gridcolors, vectocolor, alpinecolormap, makefilepath, sigfig, dcp, findinds, promotetolist, saveobj, promotetoodict, promotetoarray, boxoff
 from numpy import array, ndim, maximum, arange, zeros, mean, shape, isnan, linspace
 from matplotlib.backends.backend_agg import new_figure_manager_given_figure as nfmgf # Warning -- assumes user has agg on their system, but should be ok. Use agg since doesn't require an X server
 from matplotlib.figure import Figure # This is the non-interactive version
@@ -1136,50 +1136,48 @@ def plotbycd4(results=None, whattoplot='people', figsize=globalfigsize, lw=2, ti
 def ploticers(results=None, figsize=globalfigsize, lw=2, titlesize=globaltitlesize, labelsize=globallabelsize, 
              ticksize=globalticksize, legendsize=globallegendsize, interactive=False, **kwargs):
     ''' 
-    Plot ICERs
+    Plot ICERs.
     '''
     
     # Figure out what kind of result it is
-    if not(type(results)==Resultset): 
-        errormsg = 'Results input to ploticers() must be a Resultset, not "%s".' % type(results)
+    if not(type(results)==ICER): 
+        errormsg = 'Results input to ploticers() must be an ICER result, not "%s".' % type(results)
         raise OptimaException(errormsg)
 
     # Set up figure and do plot
     fig,naxes = makefigure(figsize=figsize, interactive=interactive)
     ax = fig.add_subplot(naxes, 1, naxes)
+    keys = results.keys
+    icer = results.icer
+    x    = results.x
+    nkeys = len(keys)
+    colors = gridcolors(nkeys, hueshift=0.3)
     
-    print('NOT IMPLEMENTED')
+    # Figure out y-axis limits
+    minicer  = icer[:].min()
+    maxicer  = icer[:].max()
+    meanicer = icer[:].mean()
+    totalbudget = results.defaultbudget[:].sum()
+    upperlim = min([maxicer, totalbudget, 10*meanicer, 100*minicer]) # Set the y limit based on the minimum of each of these different options
     
-#    bottom = 0.*results.tvec # Easy way of setting to 0...
-#    thisdata = 0.*results.tvec # Initialise
-#    allydata = []
-#    
-#    ## Do the plotting
-#    
-#    for s,state in enumerate(reversed(hivstates)): # Loop backwards so correct ordering -- first one at the top, not bottom
-#        if ismultisim: thisdata += results.raw[plt][ind][whattoplot][getattr(settings,state),:,:].sum(axis=(0,1))[indices] # If it's a multisim, need an extra index for the plot number
-#        else:          thisdata += results.raw[ind][whattoplot][getattr(settings,state),:,:].sum(axis=(0,1))[indices] # Get the best estimate
-#        ax[-1].fill_between(results.tvec, bottom, thisdata, facecolor=colors[s], alpha=1, lw=0)
-#        bottom = dcp(thisdata) # Set the bottom so it doesn't overwrite
-#        ax[-1].plot((0, 0), (0, 0), color=colors[len(colors)-s-1], linewidth=10) # Colors are in reverse order
-#        allydata.append(thisdata)
-#    
-#    ## Configure plot -- WARNING, copied from plotepi()
-#    boxoff(ax[-1])
-#    ax[-1].title.set_fontsize(titlesize)
-#    ax[-1].xaxis.label.set_fontsize(labelsize)
-#    for item in ax[-1].get_xticklabels() + ax[-1].get_yticklabels(): item.set_fontsize(ticksize)
-#
-#    # Configure plot specifics
-#    legendsettings = {'loc':'upper left', 'bbox_to_anchor':(1.05, 1), 'fontsize':legendsize, 'title':'',
-#                      'frameon':False}
-#    if ismultisim: ax[-1].set_title(titlemap[whattoplot]+'- %s' % titles[plt])
-#    else: ax[-1].set_title(titlemap[whattoplot])
-#    setylim(allydata, ax[-1])
-#    ax[-1].set_xlim((results.tvec[0], results.tvec[-1]))
-#    ax[-1].legend(results.settings.hivstatesfull, **legendsettings) # Multiple entries, all populations
-#        
-#    SIticks(fig)
+    # Do the plotting
+    for k,key in enumerate(keys): # Loop backwards so correct ordering -- first one at the top, not bottom
+        ax.plot(x, icer[key], color=colors[k], linewidth=2, label=key) # Colors are in reverse order
+    
+    # Configure plot
+    boxoff(ax[-1])
+    ax[-1].title.set_fontsize(titlesize)
+    ax[-1].xaxis.label.set_fontsize(labelsize)
+    for item in ax[-1].get_xticklabels() + ax[-1].get_yticklabels(): item.set_fontsize(ticksize)
+
+    # Configure plot specifics
+    ax.set_title('ICERs')
+    ax.set_ylim(0, upperlim)
+    ax.set_xlim(x[0], x[-1])
+    legendsettings = {'loc':'upper left', 'bbox_to_anchor':(1.05, 1), 'fontsize':legendsize, 'title':'', 'frameon':False}
+    ax.legend(**legendsettings) # Multiple entries, all populations
+        
+    SIticks(fig)
     
     return fig    
 
