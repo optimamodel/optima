@@ -68,7 +68,7 @@ class Coveragescen(Progscen):
 def runscenarios(project=None, verbose=2, defaultparset=0, debug=False, **kwargs):
     """
     Run all the scenarios.
-    Version: 2016jan22 by cliffk
+    Version: 2017jun04 by cliffk
     """
     
     printv('Running scenarios...', 1, verbose)

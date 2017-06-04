@@ -1004,7 +1004,6 @@ def icers(name=None, project=None, parsetname=None, progsetname=None, objective=
     initialind  = findinds(initresults.raw[0]['tvec'], objectives['start'])
     initpeople  = initresults.raw[0]['people'][:,:,initialind] # Pull out the people array corresponding to the start of the optimization -- there shouldn't be multiple raw arrays here
 
-    
     # Define arguments that don't change in the loop
     defaultargs = {'which':'outcomes', 'project':project, 'parsetname':parsetname, 'progsetname':progsetname, 'objectives':objectives, 
                    'origbudget':origbudget, 'outputresults':False, 'verbose':verbose, 'doconstrainbudget':False, 'initpeople':initpeople}
