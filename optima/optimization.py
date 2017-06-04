@@ -331,7 +331,7 @@ def outcomecalc(budgetvec=None, which=None, project=None, parset=None, progset=N
     thisparsdict = progset.getpars(coverage=thiscoverage, t=objectives['start'], parset=parset, sample=ccsample)
     if initpeople is not None:
         tvec = project.settings.maketvec(start=objectives['start'], end=objectives['end'])
-    results = runmodel(pars=thisparsdict, project=project, parset=parset, progset=progset, tvec=tvec, initpeople=initpeople, verbose=0, label=project.name+'-optim-outcomecalc')
+    results = runmodel(pars=thisparsdict, project=project, parset=parset, progset=progset, tvec=tvec, initpeople=initpeople, verbose=0, label=project.name+'-optim-outcomecalc', doround=False)
 
     # Figure out which indices to use
     initialind = findinds(results.tvec, objectives['start'])

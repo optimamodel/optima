@@ -893,7 +893,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
 
 
 
-def runmodel(project=None, simpars=None, pars=None, parset=None, progset=None, budget=None, coverage=None, budgetyears=None, settings=None, start=None, end=None, dt=None, tvec=None, name=None, uid=None, data=None, initpeople=None, debug=False, die=False, keepraw=False, label=None, verbose=2):
+def runmodel(project=None, simpars=None, pars=None, parset=None, progset=None, budget=None, coverage=None, budgetyears=None, settings=None, start=None, end=None, dt=None, tvec=None, name=None, uid=None, data=None, initpeople=None, debug=False, die=False, keepraw=False, label=None, verbose=2, doround=True):
     ''' 
     Convenience function for running the model. Requires input of either "simpars" or "pars"; and for including the data,
     requires input of either "project" or "data". All other inputs are optional.
@@ -916,5 +916,5 @@ def runmodel(project=None, simpars=None, pars=None, parset=None, progset=None, b
     # Actually run the model
     raw = model(simpars=simpars, settings=settings, initpeople=initpeople, debug=debug, die=die, label=label, verbose=verbose) # RUN OPTIMA!!
     
-    results = Resultset(project=project, raw=raw, parset=parset, progset=progset, budget=budget, coverage=coverage, budgetyears=budgetyears, pars=pars, simpars=simpars, data=data, domake=True, keepraw=keepraw, verbose=verbose) # Create structure for storing results
+    results = Resultset(project=project, raw=raw, parset=parset, progset=progset, budget=budget, coverage=coverage, budgetyears=budgetyears, pars=pars, simpars=simpars, data=data, domake=True, keepraw=keepraw, verbose=verbose, doround=doround) # Create structure for storing results
     return results

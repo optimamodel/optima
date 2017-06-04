@@ -1231,6 +1231,7 @@ def iternested(nesteddict,previous = []):
 from collections import OrderedDict
 from numpy import array
 from numbers import Number
+from copy import deepcopy as dcp
 
 class odict(OrderedDict):
     '''
@@ -1665,9 +1666,9 @@ class odict(OrderedDict):
         vals = promotetolist(vals)
         nvals = len(vals)
         if nvals==0: # Special case: it's an empty list
-            vallist = [vals for _ in range(nkeys)]
+            vallist = [dcp(vals) for _ in range(nkeys)]
         elif nvals==1: # Only a single value: duplicate it
-            vallist = [vals[0] for _ in range(nkeys)]
+            vallist = [dcp(vals[0]) for _ in range(nkeys)]
         elif nvals==nkeys: # Lengths match, can use directly
             vallist = vals 
         else:

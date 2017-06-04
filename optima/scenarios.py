@@ -366,7 +366,7 @@ def defaultscenarios(project=None, which=None, startyear=2016, endyear=2020, par
     return None # Can get it from project.scens
 
 
-def icers(name=None, project=None, parsetname=None, progsetname=None, which=None, startyear=None, endyear=None, budgetratios=None, verbose=2, **kwargs):
+def icers(name=None, project=None, parsetname=None, progsetname=None, which=None, startyear=None, endyear=None, budgetratios=None, marginal=True, verbose=2, **kwargs):
     ''' Calculate ICERs for each program '''
     
     printv('Calculating ICERs...')
@@ -377,6 +377,7 @@ def icers(name=None, project=None, parsetname=None, progsetname=None, which=None
         raise OptimaException(errormsg)
     
     # Set defaults
+    eps = project.settings.eps
     if which        is None: which        = 'numdaly'
     if parsetname   is None: parsetname   = -1
     if progsetname  is None: progsetname  = -1
@@ -385,10 +386,11 @@ def icers(name=None, project=None, parsetname=None, progsetname=None, which=None
     nbudgetratios = len(budgetratios)
     
     # Define objectives
-    objectives = defaultobjectives()
+    objectives = defaultobjectives(project=project)
     objectives['which'] = which # Overwrite this by default
     if startyear is not None: objectives['start'] = startyear # Do not overwrite by default
     if endyear   is not None: objectives['end']   = endyear
+    nyears = endyear-startyear # Calculate the number of years
     
     # Get budget information
     origbudget    = project.defaultbudget(progsetname, optimizable=False) # Get default budget for optimizable programs
@@ -406,7 +408,8 @@ def icers(name=None, project=None, parsetname=None, progsetname=None, which=None
                    'origbudget':origbudget, 'outputresults':False, 'verbose':verbose, 'doconstrainbudget':False}
     
     # Calculate baseline
-    baseline = outcomecalc(budgetvec=defaultbudget, **defaultargs)
+    baselinex = defaultbudget.sum()
+    baseliney = outcomecalc(budgetvec=defaultbudget, **defaultargs)
     
     # Loop over both programs and budget ratios
     count = 0
@@ -417,11 +420,55 @@ def icers(name=None, project=None, parsetname=None, progsetname=None, which=None
             thisbudget = dcp(defaultbudget)
             thisbudget[key] *= budgetratio
             rawx[key].append(thisbudget[key])
-            if budgetratio==1: rawy[key] = baseline # Don't need to run, just copy this
-            else:              rawy[key] = outcomecalc(budgetvec=thisbudget, **defaultargs) # The crux of the matter!! Actually calculate
+            if budgetratio==1: outcome = baseliney # Don't need to run, just copy this
+            else:              outcome = outcomecalc(budgetvec=thisbudget, **defaultargs) # The crux of the matter!! Actually calculate
+            rawy[key].append(outcome)
             
     # Calculate y values
+    for key in keys:
+        for b in range(nbudgetratios):
+            
+            # Gather values to use
+            thisx = rawx[key][b]
+            thisy = rawy[key][b]
+            try:    
+                lowerx = rawx[key][b-1]
+                lowery = rawy[key][b-1]
+            except: 
+                lowerx = None
+                lowery = None
+            try:    
+                upperx = rawx[key][b+1]
+                uppery = rawy[key][b+1]
+            except: 
+                upperx = None
+                uppery = None
+            
+            # Calculate estimates by comparing to lower and upper values, and baseline if those fail
+            estimates = [] # Start assembling ICER estimates
+            if marginal:
+                if lowerx is not None:
+                    lowerdiffx = (thisx - lowerx)*nyears
+                    lowerdiffy = thisy - lowery
+                    lower = lowerdiffy/(lowerdiffx+eps)
+                    estimates.append(lower)
+                if upperx is not None:
+                    upperdiffx = (thisx - upperx)*nyears
+                    upperdiffy = thisy - uppery
+                    upper = upperdiffy/(upperdiffx+eps)
+                    estimates.append(upper)
+            else:
+                baselinediffx = (thisx - baselinex)*nyears # To get total cost, need to multiply by the number of years
+                baselinediffy = thisy - baseliney
+                baselinediff = baselinediffy/(baselinediffx+eps)
+                estimates = [baselinediff]
+            
+            # Finally, calculate the DALYs per dollar
+            thisicer = array(estimates).mean() # Average upper and lower estimates, if available
+            y[key].append(thisicer)
+                
+            
     
     # Assemble into results
-    results = ICER(name=name, which=objectives['which'], startyear=objectives['start'], endyear=objectives['end'], rawx=rawx, rawy=rawy, x=budgetratios, y=y, baseline=baseline, keys=keys, defaultbudget=defaultbudget, parsetname=parsetname, progsetname=progsetname)
+    results = ICER(name=name, which=objectives['which'], startyear=objectives['start'], endyear=objectives['end'], rawx=rawx, rawy=rawy, x=budgetratios, y=y, baseline=baseliney, keys=keys, defaultbudget=defaultbudget, parsetname=parsetname, progsetname=progsetname)
     return results
