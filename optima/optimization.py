@@ -400,7 +400,7 @@ def outcomecalc(budgetvec=None, which=None, project=None, parset=None, progset=N
 
 
 def optimize(optim=None, maxiters=None, maxtime=None, verbose=2, stoppingfunc=None, 
-             die=False, origbudget=None, randseed=None, mc=None, label=None, outputqueue=None, **kwargs):
+             die=False, origbudget=None, randseed=None, mc=None, label=None, outputqueue=None, *args, **kwargs):
     '''
     The standard Optima optimization function: minimize outcomes for a fixed total budget.
     
@@ -421,6 +421,9 @@ def optimize(optim=None, maxiters=None, maxtime=None, verbose=2, stoppingfunc=No
     '''
     
     ## Input validation
+    if not kwargs: 
+        if not args: kwargs = {}
+        else:        kwargs = args[0] # Kwargs can be passed as non-kwargs...horribly confusing, I know
     if optim is None: raise OptimaException('minoutcomes() requires project and optim arguments at minimum')
     project = optim.projectref() # Get the project
     which = optim.objectives['which']
@@ -479,7 +482,7 @@ def optimize(optim=None, maxiters=None, maxtime=None, verbose=2, stoppingfunc=No
 
 def multioptimize(optim=None, nchains=None, nblocks=None, blockiters=None, 
                   batch=None, mc=None, randseed=None, maxiters=None, maxtime=None, verbose=2, 
-                  stoppingfunc=None, die=False, origbudget=None, label=None, *args, **kwargs):
+                  stoppingfunc=None, die=False, origbudget=None, label=None, **kwargs):
     '''
     Run a multi-chain optimization. See project.optimize() for usage examples, and optimize()
     for kwarg explanation.
@@ -527,8 +530,8 @@ def multioptimize(optim=None, nchains=None, nblocks=None, blockiters=None,
             randtime = int((time()-floor(time()))*1e4)
             if randseed is None: thisseed = (blockrand+threadrand)*randtime # Get a random number based on both the time and the thread
             else:                thisseed = randseed + blockrand+threadrand
-            args = (optim, blockiters, maxtime, verbose, stoppingfunc, die, origbudget, thisseed, mc, label, outputqueue)
-            prc = Process(target=optimize, args=args)
+            optimargs = (optim, blockiters, maxtime, verbose, stoppingfunc, die, origbudget, thisseed, mc, label, outputqueue, kwargs)
+            prc = Process(target=optimize, args=optimargs)
             prc.start()
             processes.append(prc)
         
