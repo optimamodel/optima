@@ -123,7 +123,7 @@ from .settings import Settings, convertlimits, gettvecdt
 import settings as _settings; del settings
 
 # Generate results -- import first because parameters use results
-from .results import Result, Resultset, Multiresultset, BOC, getresults
+from .results import Result, Resultset, Multiresultset, BOC, ICER, getresults
 import results as _results; del results
 
 # Define the model parameters -- import before makespreadsheet because makespreadsheet uses partable to make a pre-filled spreadsheet
@@ -149,16 +149,16 @@ import programs as _programs; del programs
 from .calibration import autofit
 import calibration as _calibration; del calibration
 
-# Scenario analyses
-from .scenarios import Parscen, Budgetscen, Coveragescen, Progscen, runscenarios, makescenarios, baselinescenario, setparscenvalues, defaultscenarios
-import scenarios as _scenarios; del scenarios
-
 # Optimization analyses
 from .optimization import Optim, defaultobjectives, defaultconstraints, optimize, multioptimize, outcomecalc
 import optimization as _optimization; del optimization
 
+# Scenario analyses -- must come after optimizations since relies on outcomecalc
+from .scenarios import Parscen, Budgetscen, Coveragescen, Progscen, runscenarios, makescenarios, baselinescenario, setparscenvalues, defaultscenarios, icers
+import scenarios as _scenarios; del scenarios
+
 # Plotting functions
-from .plotting import getplotselections, makeplots, plotepi, plotcascade, plotallocations, plotcostcov, plotbycd4, saveplots, reanimateplots, sanitizeresults
+from .plotting import getplotselections, makeplots, plotepi, plotcascade, plotallocations, plotcostcov, plotbycd4, ploticers, saveplots, reanimateplots, sanitizeresults
 import plotting as _plotting; del plotting
 
 #####################################################################################################################

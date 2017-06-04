@@ -773,7 +773,7 @@ class Multiresultset(Resultset):
 class BOC(object):
     ''' Structure to hold a budget and outcome array for geospatial analysis'''
     
-    def __init__(self, name='unspecified', x=None, y=None, yinf=None, budgets=None, defaultbudget=None, objectives=None, constraints=None, parsetname=None, progsetname=None):
+    def __init__(self, name='boc', x=None, y=None, yinf=None, budgets=None, defaultbudget=None, objectives=None, constraints=None, parsetname=None, progsetname=None):
         self.uid = uuid()
         self.created = today()
         self.x = x if x else [] # A list of budget totals
@@ -830,8 +830,31 @@ class BOC(object):
         return None
 
 
+class ICER(object):
+    ''' Structure to hold the results of an ICER run; similar to the BOC class '''
+    
+    def __init__(self, name='icer', which=None, startyear=None, endyear=None, x=None, y=None, baseline=None, keys=None, defaultbudget=None, objectives=None, parsetname=None, progsetname=None):
+        self.name          = name        # Required by rmresult in Project.
+        self.uid           = uuid()      # Unique identifier
+        self.created       = today()     # When created
+        self.which         = which       # The objective to calculate the ICER for
+        self.startyear     = startyear   # The year to start the budget and the outcome calculation
+        self.endyear       = endyear     # Ditto, to end
+        self.parsetname    = parsetname  # The parset used
+        self.progsetname   = progsetname # The progset used
+        self.x             = x if x else odict() # An odict of budget ratios
+        self.y             = y if y else odict() # A corresponding odict of outcomes relative to baseline
+        self.baseline      = baseline      # The outcome given baseline conditions
+        self.keys          = keys          # The program keys
+        self.defaultbudget = defaultbudget # The baseline budget used
+        
 
-
+    def __repr__(self):
+        ''' Print out summary stats '''
+        output = defaultrepr(self)
+        return output
+    
+    
 
 
 

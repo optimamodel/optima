@@ -1,7 +1,7 @@
 from optima import OptimaException, Settings, Parameterset, Programset, Resultset, BOC, Parscen, Optim, Link # Import classes
 from optima import odict, getdate, today, uuid, dcp, makefilepath, objrepr, printv, isnumber, saveobj, promotetolist, sigfig # Import utilities
 from optima import loadspreadsheet, model, gitinfo, defaultscenarios, makesimpars, makespreadsheet
-from optima import defaultobjectives, runmodel, autofit, runscenarios, optimize, multioptimize, outcomecalc # Import functions
+from optima import defaultobjectives, runmodel, autofit, runscenarios, optimize, multioptimize, outcomecalc, icers # Import functions
 from optima import version # Get current version
 from numpy import argmin, argsort
 from numpy.random import seed, randint
@@ -35,7 +35,7 @@ class Project(object):
         3. copy -- copy a structure in the odict
         4. rename -- rename a structure in the odict
 
-    Version: 2017apr04 by cliffk
+    Version: 2017jun03
     """
 
 
@@ -574,10 +574,11 @@ class Project(object):
         return None
     
     
-    def defaultbudget(self, progsetname=None):
+    def defaultbudget(self, progsetname=None, optimizable=None):
         ''' Small method to get the default budget '''
         if progsetname is None: progsetname = -1
-        output = self.progsets[progsetname].getdefaultbudget()
+        if optimizable is None: optimizable = True
+        output = self.progsets[progsetname].getdefaultbudget(optimizable=optimizable) # Note that this is already safely dcp'd...
         return output
     
 
@@ -643,6 +644,15 @@ class Project(object):
         self.addresult(results)
         self.modified = today()
         
+        return results
+
+
+    def icers(self, parsetname=None, progsetname=None, which=None, startyear=None, endyear=None, budgetratios=None, **kwargs):
+        ''' Calculate ICERs '''
+        results = icers(project=self, parsetname=parsetname, progsetname=progsetname, which=which, startyear=startyear, 
+                        endyear=endyear, budgetratios=budgetratios, **kwargs)
+        self.addresult(results)
+        self.modified = today()
         return results
 
 

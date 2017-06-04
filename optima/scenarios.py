@@ -1,7 +1,13 @@
+'''
+Define classes and functions for handling scenarios and ICERs.
+
+Version: 2017jun03
+'''
+
 ## Imports
 from numpy import append, array
-from optima import OptimaException, Link, dcp, today, odict, printv, findinds, runmodel, Multiresultset, defaultrepr, getresults, vec2obj, isnumber, uuid, promotetoarray
-
+from optima import OptimaException, Link, Multiresultset, Project, runmodel, defaultobjectives, outcomecalc # Core classes/functions
+from optima import dcp, today, odict, printv, findinds, defaultrepr, getresults, vec2obj, isnumber, uuid, promotetoarray # Utilities
 
 class Scen(object):
     ''' The scenario base class -- not to be used directly, instead use Parscen or Progscen '''
@@ -358,3 +364,31 @@ def defaultscenarios(project=None, which=None, startyear=2016, endyear=2020, par
         from optima import pygui
         pygui(project)
     return None # Can get it from project.scens
+
+
+def icers(project=None, parsetname=None, progsetname=None, which=None, startyear=None, endyear=None, budgetratios=None, **kwargs):
+    ''' Calculate ICERs for each program '''
+    
+    # Handle inputs
+    if type(project)!=Project: 
+        errormsg = 'To calculate ICERs you must supply a project, not "%s"' % type(project)
+        raise OptimaException(errormsg)
+    objectives = defaultobjectives() # Only used if startyear or endyear is None
+    
+    # Set defaults
+    if which        is None: which        = 'numdaly'
+    if parsetname   is None: parsetname   = -1
+    if progsetname  is None: progsetname  = -1
+    if startyear    is None: startyear    = objectives['start']
+    if endyear      is None: endyear      = objectives['start']
+    if budgetratios is None: budgetratios = [0.0, 0.1, 0.2, 0.5, 0.8, 1.0, 1.2, 1.5, 2.0]
+    
+    defaultbudget = project.defaultbudget(progsetname) # Get default budget
+    keys = defaultbudget.keys() # Get the program keys
+    
+    
+    
+    
+    
+    
+    return results

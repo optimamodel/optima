@@ -1020,7 +1020,7 @@ def plotallocations(project=None, budgets=None, colors=None, factor=1e6, compare
         colors = gridcolors(nprogs)
             
     
-    fig = makefigure(figsize=(10,10), interactive=interactive)
+    fig,naxes = makefigure(figsize=(10,10), interactive=interactive)
     fig.subplots_adjust(left=0.10) # Less space on left
     fig.subplots_adjust(right=0.98) # Less space on right
     fig.subplots_adjust(top=0.95) # Less space on bottom
@@ -1034,7 +1034,7 @@ def plotallocations(project=None, budgets=None, colors=None, factor=1e6, compare
     ymax = 0
     nplt = len(budgets)
     for plt in range(nplt):
-        ax.append(fig.add_subplot(len(budgets),1,plt+1))
+        ax.append(fig.add_subplot(naxes+len(budgets)-1,1,naxes+plt))
         ax[-1].hold(True)
         for p,ind in enumerate(indices):
             ax[-1].bar([xbardata[p]], [budgets[plt][ind]/factor], color=colors[p], linewidth=0)
@@ -1124,6 +1124,62 @@ def plotbycd4(results=None, whattoplot='people', figsize=globalfigsize, lw=2, ti
         ax[-1].legend(results.settings.hivstatesfull, **legendsettings) # Multiple entries, all populations
         
     SIticks(fig)
+    
+    return fig    
+
+
+
+
+##################################################################
+## Plot things by CD4
+##################################################################
+def ploicers(results=None, figsize=globalfigsize, lw=2, titlesize=globaltitlesize, labelsize=globallabelsize, 
+             ticksize=globalticksize, legendsize=globallegendsize, interactive=False, **kwargs):
+    ''' 
+    Plot ICERs
+    '''
+    
+    # Figure out what kind of result it is
+    if not(type(results)==Resultset): 
+        errormsg = 'Results input to ploticers() must be a Resultset, not "%s".' % type(results)
+        raise OptimaException(errormsg)
+
+    # Set up figure and do plot
+    fig,naxes = makefigure(figsize=figsize, interactive=interactive)
+    ax = fig.add_subplot(naxes, 1, naxes)
+    
+    print('NOT IMPLEMENTED')
+    
+#    bottom = 0.*results.tvec # Easy way of setting to 0...
+#    thisdata = 0.*results.tvec # Initialise
+#    allydata = []
+#    
+#    ## Do the plotting
+#    
+#    for s,state in enumerate(reversed(hivstates)): # Loop backwards so correct ordering -- first one at the top, not bottom
+#        if ismultisim: thisdata += results.raw[plt][ind][whattoplot][getattr(settings,state),:,:].sum(axis=(0,1))[indices] # If it's a multisim, need an extra index for the plot number
+#        else:          thisdata += results.raw[ind][whattoplot][getattr(settings,state),:,:].sum(axis=(0,1))[indices] # Get the best estimate
+#        ax[-1].fill_between(results.tvec, bottom, thisdata, facecolor=colors[s], alpha=1, lw=0)
+#        bottom = dcp(thisdata) # Set the bottom so it doesn't overwrite
+#        ax[-1].plot((0, 0), (0, 0), color=colors[len(colors)-s-1], linewidth=10) # Colors are in reverse order
+#        allydata.append(thisdata)
+#    
+#    ## Configure plot -- WARNING, copied from plotepi()
+#    boxoff(ax[-1])
+#    ax[-1].title.set_fontsize(titlesize)
+#    ax[-1].xaxis.label.set_fontsize(labelsize)
+#    for item in ax[-1].get_xticklabels() + ax[-1].get_yticklabels(): item.set_fontsize(ticksize)
+#
+#    # Configure plot specifics
+#    legendsettings = {'loc':'upper left', 'bbox_to_anchor':(1.05, 1), 'fontsize':legendsize, 'title':'',
+#                      'frameon':False}
+#    if ismultisim: ax[-1].set_title(titlemap[whattoplot]+'- %s' % titles[plt])
+#    else: ax[-1].set_title(titlemap[whattoplot])
+#    setylim(allydata, ax[-1])
+#    ax[-1].set_xlim((results.tvec[0], results.tvec[-1]))
+#    ax[-1].legend(results.settings.hivstatesfull, **legendsettings) # Multiple entries, all populations
+#        
+#    SIticks(fig)
     
     return fig    
 
