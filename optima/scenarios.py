@@ -496,14 +496,11 @@ def icers(name=None, project=None, parsetname=None, progsetname=None, objective=
                 estimates = [baselinediff]
             
             # Finally, calculate the DALYs per dollar
-            thisicer = array(estimates).mean() # Average upper and lower estimates, if available
-            if thisicer<0:
-                printv('WARNING, ICER for "%s" at budget ratio %0.1f is negative (%0.3e); setting to 0' % (key, budgetratios[b], thisicer), 1, verbose)
-                thisicer = 0.0;
-            y[key].append(thisicer)
-            for thing in ['key', 'b', 'thisx', 'lowerx', 'upperx', 'thisy', 'lowery', 'uppery', 'lower', 'upper', 'estimates']:
-                print('%s=%s' % (thing, eval(thing))),
-            print('')
+            thisiecr = array(estimates).mean() # Average upper and lower estimates, if available -- "iecr" is the inverse of an icer
+            if thisiecr<0:
+                printv('WARNING, ICER for "%s" at budget ratio %0.1f is negative (%0.3e); setting to 0' % (key, budgetratios[b], 1./(thisiecr+icereps)), 1, verbose)
+                thisiecr = 0.0;
+            y[key].append(thisiecr)
     
     # Convert to arrays
     for key in keys:
@@ -516,5 +513,5 @@ def icers(name=None, project=None, parsetname=None, progsetname=None, objective=
         icer[key] = 1.0/(y[key]+icereps)
                 
     # Assemble into results
-    results = ICER(name=name, objective=objective, startyear=objectives['start'], endyear=objectives['end'], rawx=rawx, rawy=rawy, x=budgetratios, y=y, icer=icer, baseline=baseliney, keys=keys, defaultbudget=defaultbudget, parsetname=parsetname, progsetname=progsetname)
+    results = ICER(name=name, objective=objective, startyear=objectives['start'], endyear=objectives['end'], rawx=rawx, rawy=rawy, x=budgetratios, icer=icer, baseline=baseliney, keys=keys, defaultbudget=defaultbudget, parsetname=parsetname, progsetname=progsetname)
     return results

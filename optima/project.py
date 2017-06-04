@@ -654,7 +654,7 @@ class Project(object):
             P = op.demo(0)
             P.parset().fixprops(False)
             P.icers()
-            op.ploticers(P.result())
+            op.ploticers(P.result(), interactive=True)
         '''
         results = icers(project=self, parsetname=parsetname, progsetname=progsetname, objective=objective, startyear=startyear, 
                         endyear=endyear, budgetratios=budgetratios, marginal=marginal, verbose=verbose, **kwargs)
