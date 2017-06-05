@@ -1333,7 +1333,7 @@ class odict(OrderedDict):
         return None
     
      
-    def __repr__(self, maxlen=None, showmultilines=True, divider=False, dividerthresh=10, numindents=0, recurselevel=0):
+    def __repr__(self, maxlen=None, showmultilines=True, divider=False, dividerthresh=10, numindents=0, recurselevel=0, sigfigs=None, numformat=None):
         ''' Print a meaningful representation of the odict '''
         
         # Set primitives for display.
@@ -1363,9 +1363,14 @@ class odict(OrderedDict):
                 # and passing the same parameters we received.
                 if isinstance(thisval, odict):
                     thisvalstr = flexstr(thisval.__repr__(maxlen=maxlen, showmultilines=showmultilines, divider=divider, 
-                        dividerthresh=dividerthresh, numindents=numindents, recurselevel=recurselevel+1))
-                elif isnumber(thisval):
-                    thisvalstr = str(thisval) # To avoid numpy's stupid 0.4999999999945
+                        dividerthresh=dividerthresh, numindents=numindents, recurselevel=recurselevel+1, sigfigs=sigfigs, numformat=numformat))
+                elif isnumber(thisval): # Flexibly print out numbers, since they're largely why we're here
+                    if numformat is not None:
+                        thisvalstr = numformat % thisval
+                    elif sigfigs is not None:
+                        thisvalstr = sigfig(thisval, sigfigs=sigfigs)
+                    else:
+                        thisvalstr = str(thisval) # To avoid numpy's stupid 0.4999999999945
                 else: # Otherwise, do the normal __repr__() read.
                     thisvalstr = thisval.__repr__()
 
@@ -1426,11 +1431,20 @@ class odict(OrderedDict):
         print(self.__repr__())
     
     
-    def disp(self, maxlen=55, showmultilines=False, divider=False, dividerthresh=10, numindents=0):
-        ''' Print out flexible representation, short by default'''
+    def disp(self, maxlen=None, showmultilines=True, divider=False, dividerthresh=10, numindents=0, sigfigs=5, numformat=None):
+        '''
+        Print out flexible representation, short by default.
+        
+        Example:
+            import optima as op
+            import pylab as pl
+            z = op.odict().make(keys=['a','b','c'], vals=(10*pl.rand(3)).tolist())
+            z.disp(sigfigs=3)
+            z.disp(numformat='%0.6f')
+        '''
         print(self.__repr__(maxlen=maxlen, showmultilines=showmultilines, 
             divider=divider, dividerthresh=dividerthresh, 
-            numindents=numindents, recurselevel=0))
+            numindents=numindents, recurselevel=0, sigfigs=sigfigs, numformat=None))
     
     
     def export(self, doprint=True):
