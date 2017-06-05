@@ -672,9 +672,10 @@ class Multiresultset(Resultset):
                 for key2 in self.other.keys():
                     getattr(self.other[key2], at)[key] = getattr(rset.other[key2], at)[best] # Add data: e.g. self.main['prev'].pops['foo'] = rset.main['prev'].pops[0] -- WARNING, the 0 discards uncertainty data
 
-            # Finally, process the budget and budgetyears
-            parset  = rset.projectref().parsets[rset.parsetname]
-            progset = rset.projectref().progsets[rset.progsetname]
+            # Finally, process the budget and budgetyears -- these  are only needed for the budget/coverage conversions
+            if len(rset.budget) or len(rset.coverage):
+                parset  = rset.projectref().parsets[rset.parsetname]
+                progset = rset.projectref().progsets[rset.progsetname]
             if len(rset.budget):       # If it has a budget, overwrite coverage information by calculating from budget
                 self.budgets[key]      = rset.budget
                 self.budgetyears[key]  = rset.budgetyears
