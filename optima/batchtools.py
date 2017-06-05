@@ -9,7 +9,7 @@ http://stackoverflow.com/questions/9670926/multiprocessing-on-windows-breaks
 Version: 2017mar17
 """
 
-from optima import loadproj, loadbalancer, printv, getfilelist, dcp, odict, outcomecalc, tic, toc
+from optima import Link, loadproj, loadbalancer, printv, getfilelist, dcp, odict, outcomecalc, tic, toc
 from numpy import empty, inf
 try: from multiprocessing import Process, Queue
 except: Process, Queue = None, None # OK to skip these if batch is False
@@ -324,6 +324,12 @@ def reoptimizeprojects(projects=None, objectives=None, maxtime=None, maxiters=No
         
     # Print any warnings, if they exist
     for project in projects.values(): project.getwarnings() 
+    
+    # Restore project links
+    for key,resultpair in resultpairs.items():
+        for result in resultpair.values():
+            if hasattr(result, 'projectref'): # Not guaranteed to be a result (keys are stored here too)
+                result.projectref = Link(projects[key])
     
     printv('Reoptimization complete', 2, verbose)
     toc(starttime, label='reoptimizeprojects')

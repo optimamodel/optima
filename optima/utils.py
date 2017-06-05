@@ -1987,6 +1987,12 @@ class Link(object):
         try:    self.uid = obj.uid # If the object has a UID, store it separately 
         except: self.uid = None # If not, just use None
     
+    
+    def __repr__(self):
+        ''' Just use default '''
+        output  = defaultrepr(self)
+        return output
+    
     def __call__(self, obj=None):
         ''' If called with no argument, return the stored object; if called with argument, update object '''
         if obj is None:
