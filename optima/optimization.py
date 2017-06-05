@@ -949,7 +949,7 @@ def icers(name=None, project=None, parsetname=None, progsetname=None, objective=
         budgetratios = the list of budgets relative to baseline to run; default 10 budgets spanning 0.0 to 2.0
         marginal     = whether to calculate marginal ICERs or relative to baseline; default marginal
         
-    Do not call this function directly: see project.icer() for usage example.
+    Do not call this function directly: see project.icers() for usage example.
     
     Version: 2017jun04
     '''
