@@ -321,23 +321,24 @@ class Portfolio(object):
         if not self.results:
             errormsg = 'Portfolio does not contain results: most likely geospatial analysis has not been run'
             raise OptimaException(errormsg)
+        self.GAresults  = odict() # I can't believe this wasn't stored before
         
         # Keys for initial and optimized
         iokeys = ['init', 'opt'] 
         
         # Initialize to zero
-        projnames = []
-        projbudgets = []
-        projcov = []
-        projoutcomes = []
+        projnames        = []
+        projbudgets      = []
+        projcov          = []
+        projoutcomes     = []
         projoutcomesplit = []
-        
-        overallbud = odict() # Overall budget
-        overallout = odict() # Overall outcomes
+        overallbud       = odict() # Overall budget
+        overallout       = odict() # Overall outcomes
         for io in iokeys:
             overallbud[io] = 0
             overallout[io] = 0
         
+        # Set up dict for the outcome split
         overalloutcomesplit = odict()
         for obkey in self.objectives['keys']:
             overalloutcomesplit['num'+obkey] = odict()
@@ -376,8 +377,17 @@ class Portfolio(object):
                 for obkey in self.objectives['keys']:
                     projoutcomesplit[k][io]['num'+obkey] = self.results[key][io].main['num'+obkey].tot[0][indices[io]].sum()     # Again, current and optimal should be same for 0 second optimisation, but being explicit.
                     overalloutcomesplit['num'+obkey][io] += projoutcomesplit[k][io]['num'+obkey]
-                
-        ## Actually create the output
+        
+        # Add to the results structure
+        self.GAresults['overallbudget']        = overallbud
+        self.GAresults['overalloutcomes']      = overallout
+        self.GAresults['overalloutcomessplit'] = overalloutcomesplit
+        self.GAresults['projectbudgets']       = projbudgets
+        self.GAresults['projectcoverages']     = projcov
+        self.GAresults['projectoutcomes']      = projoutcomes
+        self.GAresults['projectoutcomessplit'] = projoutcomesplit
+        
+        # Create the text output
         output = ''
         output += 'Geospatial analysis results: minimize outcomes from %i to %i' % (self.objectives['start'], self.objectives['end'])
         output += '\n\n'
