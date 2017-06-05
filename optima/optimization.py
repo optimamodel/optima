@@ -344,7 +344,7 @@ def outcomecalc(budgetvec=None, which=None, project=None, parsetname=None, progs
         for key in objectives['keys']:
             thisweight = objectives[key+'weight'] # e.g. objectives['inciweight']
             thisoutcome = results.main['num'+key].tot[0][indices].sum() # the instantaneous outcome e.g. objectives['numdeath'] -- 0 is since best
-            rawoutcomes[key] = thisoutcome*results.dt
+            rawoutcomes['num'+key] = thisoutcome*results.dt
             outcome += thisoutcome*thisweight*results.dt # Calculate objective
 
         # Output results

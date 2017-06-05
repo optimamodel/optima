@@ -11,10 +11,11 @@ from optima import dcp, today, odict, printv, findinds, defaultrepr, getresults,
 
 class Scen(object):
     ''' The scenario base class -- not to be used directly, instead use Parscen or Progscen '''
-    def __init__(self, name=None, parsetname=-1, t=None, active=True):
+    def __init__(self, name=None, parsetname=-1, progsetname=-1, t=None, active=True):
         self.uid = uuid()
         self.name = name
-        self.parsetname = parsetname
+        self.parsetname  = parsetname
+        self.progsetname = progsetname
         self.t = t
         self.active = active
         self.resultsref = None

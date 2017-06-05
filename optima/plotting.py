@@ -1410,7 +1410,7 @@ def SItickformatter(x, pos):  # formatter function takes tick label and tick pos
 
 
 def SIticks(fig=None, ax=None, axis='y'):
-    ''' Apply SI tick formatting to the y axis of a figure '''
+    ''' Apply SI tick formatting to one axis of a figure '''
     if  fig is not None: axlist = fig.axes
     elif ax is not None: axlist = promotetolist(ax)
     else: raise OptimaException('Must supply either figure or axes')

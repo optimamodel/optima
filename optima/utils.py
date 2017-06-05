@@ -57,16 +57,18 @@ def createcollist(oldkeys, title, strlen = 18, ncol = 3):
 
 def objectid(obj):
     ''' Return the object ID as per the default Python __repr__ method '''
-    return '<%s.%s at %s>\n' % (obj.__class__.__module__, obj.__class__.__name__, hex(id(obj)))
+    output = '<%s.%s at %s>\n' % (obj.__class__.__module__, obj.__class__.__name__, hex(id(obj)))
+    return output
 
 
-def objatt(obj, strlen = 18, ncol = 3):
+def objatt(obj, strlen=18, ncol=3):
     ''' Return a sorted string of object attributes for the Python __repr__ method '''
     oldkeys = sorted(obj.__dict__.keys())
-    return createcollist(oldkeys, 'Attributes', strlen = 18, ncol = 3)
+    output = createcollist(oldkeys, 'Attributes', strlen = 18, ncol = 3)
+    return output
 
 
-def objmeth(obj, strlen = 18, ncol = 3):
+def objmeth(obj, strlen=18, ncol=3):
     ''' Return a sorted string of object methods for the Python __repr__ method '''
     oldkeys = sorted([method + '()' for method in dir(obj) if callable(getattr(obj, method)) and not method.startswith('__')])
     output = createcollist(oldkeys, 'Methods', strlen=strlen, ncol=ncol)
@@ -1682,19 +1684,19 @@ class odict(OrderedDict):
         return self # A bit weird, but usually would use this return an odict
     
     
-    def enumerkeys(self):
+    def enumkeys(self):
         ''' Shortcut for enumerate(odict.keys()) '''
         iterator = enumerate(self.keys())
         return iterator
     
     
-    def enumervals(self):
+    def enumvals(self):
         ''' Shortcut for enumerate(odict.values()) '''
         iterator = enumerate(self.values())
         return iterator
     
     
-    def enumeritems(self):
+    def enumitems(self):
         ''' Returns tuple of 3 things: index, key, value '''
         iterator = [] # Would be better to not pre-allocate but what can you do...
         for ind,item in enumerate(self.items()):
