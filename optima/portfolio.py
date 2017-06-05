@@ -278,14 +278,16 @@ class Portfolio(object):
         if reoptimize: 
             resultpairs = reoptimizeprojects(projects=self.projects, objectives=objectives, maxtime=maxtime, maxiters=maxiters, mc=mc, batch=batch, maxload=maxload, interval=interval, verbose=verbose, randseed=randseed)
             self.results = resultpairs
-        # Tidy up
-        if doprint and self.results: self.makeoutput(doprint=True, verbose=verbose)
+        
+        # Make results and optionally export
+        if self.results: self.makeoutput(doprint=doprint, verbose=verbose)
         if export:
             if self.results:
                 self.export(filename=outfile, verbose=verbose)
             else:
                 errormsg = 'Could not export results for portfolio %s since no results generated' % self.name
                 raise OptimaException(errormsg)
+        
         toc(GAstart)
         return None
 
