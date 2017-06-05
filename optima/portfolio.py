@@ -1,4 +1,4 @@
-from optima import OptimaException, gitinfo, tic, toc, odict, getdate, today, uuid, dcp, objrepr, makefilepath, printv, findinds, saveobj, loadproj, promotetolist # Import utilities
+from optima import OptimaException, Link, gitinfo, tic, toc, odict, getdate, today, uuid, dcp, objrepr, makefilepath, printv, findinds, saveobj, loadproj, promotetolist # Import utilities
 from optima import version, defaultobjectives, Project, pchip, getfilelist, batchBOC, reoptimizeprojects
 from numpy import arange, argsort, zeros, nonzero, linspace, log, exp, inf, argmax, array
 from xlsxwriter import Workbook
@@ -96,19 +96,30 @@ class Portfolio(object):
         
         
     
-    def save(self, filename=None, folder=None, saveresults=False, verbose=2):
+    def save(self, filename=None, folder=None, saveresults=True, verbose=2):
         ''' Save the current portfolio, by default using its name, and without results '''
         fullpath = makefilepath(filename=filename, folder=folder, default=[self.filename, self.name], ext='prt')
         self.filename = fullpath # Store file path
         printv('Saving portfolio to %s...' % self.filename, 2, verbose)
+        
+        # Easy -- just save the whole thing
         if saveresults:
             saveobj(fullpath, self, verbose=verbose)
+        
+        # Hard -- have to make a copy, remove results, and restore links
         else:
             tmpportfolio = dcp(self) # Need to do this so we don't clobber the existing results
-            for P in range(len(self.projects.values())):
-                tmpportfolio.projects[P].cleanresults() # Get rid of all results
+            for P in self.projects.values():
+                P.cleanresults() # Get rid of all results
+                P.restorelinks() # Restore links in projects
+            if tmpportfolio.results: # Restore project links in results, but only iterate over it if it's populated
+                for key,resultpair in tmpportfolio.results.items():
+                    for result in resultpair.values():
+                        if hasattr(result, 'projectref'): # Check, because it may not be a result
+                            result.projectref = Link(tmpportfolio.projects[key]) # Recreate the link
             saveobj(fullpath, tmpportfolio, verbose=verbose) # Save it to file
             del tmpportfolio # Don't need it hanging around any more
+        
         return fullpath
     
     
@@ -381,13 +392,13 @@ class Portfolio(object):
                     overalloutcomesplit['num'+obkey][io] += projoutcomesplit[k][io]['num'+obkey]
         
         # Add to the results structure
-        self.GAresults['overallbudget']        = overallbud
-        self.GAresults['overalloutcomes']      = overallout
-        self.GAresults['overalloutcomessplit'] = overalloutcomesplit
-        self.GAresults['projectbudgets']       = projbudgets
-        self.GAresults['projectcoverages']     = projcov
-        self.GAresults['projectoutcomes']      = projoutcomes
-        self.GAresults['projectoutcomessplit'] = projoutcomesplit
+        self.GAresults['overallbudget']       = overallbud
+        self.GAresults['overalloutcomes']     = overallout
+        self.GAresults['overalloutcomesplit'] = overalloutcomesplit
+        self.GAresults['projectbudgets']      = projbudgets
+        self.GAresults['projectcoverages']    = projcov
+        self.GAresults['projectoutcomes']     = projoutcomes
+        self.GAresults['projectoutcomesplit'] = projoutcomesplit
         
         # Create the text output
         output = ''
