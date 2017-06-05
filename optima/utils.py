@@ -1646,6 +1646,7 @@ class odict(OrderedDict):
             d = odict().make(['a','b'],0) # Make an odict with keys 'a' and 'b', initialized to 0
             e = odict().make(keys=['a','b'], vals=[1,2]) # Make an odict with 'a':1 and 'b':2
             f = odict({'a':34, 'b':58}).make(['c','d'],[99,45]) # Add extra keys to an exising odict
+            g = odict().make(keys=['a','b','c'], keys2=['A','B','C'], keys3=['x','y','z'], vals=0) # Make a triply nested odict
         '''
         # Handle keys
         keylist = []
