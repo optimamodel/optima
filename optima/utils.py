@@ -1680,6 +1680,28 @@ class odict(OrderedDict):
             self.__setitem__(key, val)
         
         return self # A bit weird, but usually would use this return an odict
+    
+    
+    def enumerkeys(self):
+        ''' Shortcut for enumerate(odict.keys()) '''
+        iterator = enumerate(self.keys())
+        return iterator
+    
+    
+    def enumervals(self):
+        ''' Shortcut for enumerate(odict.values()) '''
+        iterator = enumerate(self.values())
+        return iterator
+    
+    
+    def enumeritems(self):
+        ''' Returns tuple of 3 things: index, key, value '''
+        iterator = [] # Would be better to not pre-allocate but what can you do...
+        for ind,item in enumerate(self.items()):
+            thistuple = (ind,)+item # Combine into one tuple
+            iterator.append(thistuple)
+        return iterator
+        
         
         
         
