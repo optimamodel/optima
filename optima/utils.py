@@ -1637,7 +1637,7 @@ class odict(OrderedDict):
         return self.reverse(copy=True)
     
     
-    def make(self, keys=None, vals=None):
+    def make(self, keys=None, vals=None, keys2=None, keys3=None):
         '''
         An alternate way of making or adding to an odict. Examples:
             a = odict().make(5) # Make an odict of length 5, populated with Nones and default key names
@@ -1677,9 +1677,14 @@ class odict(OrderedDict):
             errormsg = 'Must supply either a single value or a list of same length as the keys (%i keys, %i values supplied)' % (nkeys, nvals)
             raise Exception(errormsg)
         
-        # Update odict
-        for key,val in zip(keylist,vallist):
-            self.__setitem__(key, val)
+        # Handle nested keys -- warning, would be better to not hard-code this, but does the brain in as it is!
+        if keys2 is not None and keys3 is not None: # Doubly nested
+            self.make(keys=keys, vals=odict().make(keys=keys2, vals=odict().make(keys=keys3, vals=vals)))
+        elif keys2 is not None: # Singly nested
+            self.make(keys=keys, vals=odict().make(keys=keys2, vals=vals))
+        else: # Not nested -- normal case of making an odict
+            for key,val in zip(keylist,vallist): # Update odict
+                self.__setitem__(key, val)
         
         return self # A bit weird, but usually would use this return an odict
     
