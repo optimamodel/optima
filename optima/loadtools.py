@@ -47,7 +47,7 @@ def setmigrations(which='migrations'):
         ('2.3.5', ('2.3.6', '2017-04-21', None,              'Fixed PMTCT calculations')),
         ('2.3.6', ('2.3.7', '2017-05-13', None,              'Changed plotting syntax')),
         ('2.3.7', ('2.3.8', '2017-05-23', None,              'Malawi: Many minor changes to plotting, parameters, etc.')),
-        ('2.3.8', ('2.4',   '2017-07-04', None,              'Ukraine: ICER analysis; cascade bar plot; GUI tools; summary() and fixprops() methdods')),
+        ('2.3.8', ('2.4',   '2017-07-05', None,              'Ukraine: ICER analysis; cascade bar plot; GUI tools; summary() and fixprops() methdods')),
         ])
     
     # Define changelog
