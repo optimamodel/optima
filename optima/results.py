@@ -4,7 +4,9 @@ This module defines the classes for stores the results of a single simulation ru
 Version: 2016oct28 by cliffk
 """
 
-from optima import OptimaException, Link, Settings, uuid, today, getdate, quantile, printv, odict, dcp, objrepr, makefilepath, defaultrepr, sigfig, pchip, plotpchip, findinds, findnearest, promotetolist, checktype
+from optima import OptimaException, Link, Settings, odict, pchip, plotpchip, sigfig # Classes/functions
+from optima import uuid, today, makefilepath, getdate, printv, dcp, objrepr, defaultrepr # Printing utilities
+from optima import quantile, findinds, findnearest, promotetolist, promotetoarray, checktype # Numeric utilities
 from numpy import array, nan, zeros, arange, shape, maximum
 from numbers import Number
 from xlsxwriter import Workbook
@@ -539,7 +541,7 @@ class Resultset(object):
             raise OptimaException(errormsg)
         
         if dosum:
-            result = sum(result)
+            result = promotetoarray(result).sum()
         
         return result
     
