@@ -4,7 +4,6 @@ def processcolors(colors=None, asarray=False, reverse=False):
     Expects colors to be an array. If asarray is True and reverse are False, returns 
     that array. Otherwise, does the required permutations.    
     '''
-    
     if asarray:
         output = colors
         if reverse: output = output[::-1] # Reverse the array
@@ -12,11 +11,34 @@ def processcolors(colors=None, asarray=False, reverse=False):
         output = []
         for c in colors: output.append(tuple(c)) # Gather output
         if reverse: output.reverse() # Reverse the list
-    
     return output
 
 
-def gridcolors(ncolors=10, limits=None, nsteps=10, asarray=False, reverse=False, doplot=False):
+def shifthue(colors=None, hueshift=0.0):
+    '''
+    Shift the hue of the colors being fed in.
+    
+    Example:
+        colors = shifthue(colors=[(1,0,0),(0,1,0)], hueshift=0.5)
+    '''
+    from copy import deepcopy as dcp
+    from matplotlib.colors import rgb_to_hsv, hsv_to_rgb
+    from numpy import ndim, array
+    
+    colors = dcp(colors) # So we don't overwrite the original
+    origndim = ndim(colors) # Original dimensionality
+    if origndim==1: colors = [colors] # Wrap it in another list
+    colors = array(colors) # Just convert it to an array
+    for c,color in enumerate(colors):
+        hsvcolor = rgb_to_hsv(color)
+        hsvcolor[0] = (hsvcolor[0]+hueshift) % 1.0 # Calculate new hue and return the modulus
+        rgbcolor = hsv_to_rgb(hsvcolor)
+        colors[c] = rgbcolor
+    if origndim==1: colors = colors[0] # Pull it out again
+    return colors
+
+
+def gridcolors(ncolors=10, limits=None, nsteps=10, asarray=False, reverse=False, doplot=False, hueshift=0):
     """
     GRIDCOLORS
 
@@ -51,13 +73,13 @@ def gridcolors(ncolors=10, limits=None, nsteps=10, asarray=False, reverse=False,
     
     # Steal colorbrewer colors for small numbers of colors
     colorbrewercolors = array([
-    [27,  158, 119],
-    [217, 95,  2],
-    [117, 112, 179],
-    [231, 41,  138],
-    [255, 127, 0],
-    [200, 200, 51], # Was too bright yellow
-    [166, 86,  40],
+    [ 55, 126, 184], # [27,  158, 119], # Old color
+    [228,  26,  28], # [217, 95,  2],
+    [ 77, 175,  74], # [117, 112, 179],
+    [162,  78, 153], # [231, 41,  138],
+    [255, 127,   0],
+    [200, 200,  51], # Was too bright yellow
+    [166,  86,  40],
     [247, 129, 191],
     [153, 153, 153],
     ])/255.
@@ -90,6 +112,7 @@ def gridcolors(ncolors=10, limits=None, nsteps=10, asarray=False, reverse=False,
         colors = dots[indices,:]
     
     ## Wrap up -- turn color array into a list, or reverse
+    if hueshift: colors = shifthue(colors, hueshift=hueshift) # Shift hue if requested
     output = processcolors(colors=colors, asarray=asarray, reverse=reverse)
     
     ## For plotting -- optional
@@ -108,7 +131,6 @@ def gridcolors(ncolors=10, limits=None, nsteps=10, asarray=False, reverse=False,
         ax.set_xlim((0,1))
         ax.set_ylim((0,1))
         ax.set_zlim((0,1))
-#        ax.grid(False)
     
     return output
     

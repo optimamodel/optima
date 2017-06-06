@@ -1,7 +1,7 @@
 from optima import OptimaException, Settings, Parameterset, Programset, Resultset, BOC, Parscen, Optim, Link # Import classes
 from optima import odict, getdate, today, uuid, dcp, makefilepath, objrepr, printv, isnumber, saveobj, promotetolist, sigfig # Import utilities
 from optima import loadspreadsheet, model, gitinfo, defaultscenarios, makesimpars, makespreadsheet
-from optima import defaultobjectives, runmodel, autofit, runscenarios, optimize, multioptimize # Import functions
+from optima import defaultobjectives, runmodel, autofit, runscenarios, optimize, multioptimize, outcomecalc, icers # Import functions
 from optima import version # Get current version
 from numpy import argmin, argsort
 from numpy.random import seed, randint
@@ -35,7 +35,7 @@ class Project(object):
         3. copy -- copy a structure in the odict
         4. rename -- rename a structure in the odict
 
-    Version: 2017apr04 by cliffk
+    Version: 2017jun03
     """
 
 
@@ -135,7 +135,6 @@ class Project(object):
 
     def loadspreadsheet(self, filename, name='default', overwrite=True, makedefaults=True, dorun=True, **kwargs):
         ''' Load a data spreadsheet -- enormous, ugly function so located in its own file '''
-
         ## Load spreadsheet and update metadata
         self.data = loadspreadsheet(filename, verbose=self.settings.verbose) # Do the hard work of actually loading the spreadsheet
         self.spreadsheetdate = today() # Update date when spreadsheet was last loaded
@@ -143,15 +142,21 @@ class Project(object):
         self.makeparset(name=name, overwrite=overwrite)
         if makedefaults: self.makedefaults(name)
         self.settings.start = self.data['years'][0] # Reset the default simulation start to initial year of data
-        if dorun: self.runsim(name, addresult=True, **kwargs)
+        if dorun: self.runsim(name, addresult=True, **kwargs) # Pass all kwargs to runsim as well
         if self.name == 'default' and filename.endswith('.xlsx'): self.name = os.path.basename(filename)[:-5] # If no project filename is given, reset it to match the uploaded spreadsheet, assuming .xlsx extension
         return None
 
 
-    def makespreadsheet(self, filename=None, folder=None, pops=None):
+    def makespreadsheet(self, filename=None, folder=None, pops=None, datastart=None, dataend=None):
         ''' Create a spreadsheet with the data from the project'''
         fullpath = makefilepath(filename=filename, folder=folder, default=self.name, ext='xlsx')
-        makespreadsheet(filename=fullpath, pops=pops, data=self.data, datastart=self.settings.start, dataend=self.settings.dataend)
+        if datastart is None: 
+            try:    datastart = self.data['years'][0]
+            except: datastart = self.settings.start
+        if dataend is None:   
+            try:    dataend = self.data['years'][-1]
+            except: dataend = self.settings.dataend
+        makespreadsheet(filename=fullpath, pops=pops, data=self.data, datastart=datastart, dataend=dataend)
         return fullpath
 
 
@@ -518,7 +523,7 @@ class Project(object):
 
         # Store results -- WARNING, is this correct in all cases?
         resultname = 'parset-'+self.parsets[name].name 
-        results = Resultset(name=resultname, raw=rawlist, simpars=simparslist, project=self, keepraw=keepraw, verbose=verbose) # Create structure for storing results
+        results = Resultset(name=resultname, pars=self.parsets[name].pars, parsetname=name, raw=rawlist, simpars=simparslist, project=self, keepraw=keepraw, verbose=verbose) # Create structure for storing results
         if addresult:
             keyname = self.addresult(result=results, overwrite=overwrite)
             self.parsets[name].resultsref = keyname # If linked to a parset, store the results
@@ -560,7 +565,7 @@ class Project(object):
         multires = runscenarios(project=self, verbose=verbose, debug=debug, **kwargs)
         self.addresult(result=multires)
         self.modified = today()
-        return None
+        return multires
     
     
     def defaultscenarios(self, which=None, **kwargs):
@@ -568,10 +573,19 @@ class Project(object):
         defaultscenarios(self, which=which, **kwargs)
         return None
     
+    
+    def defaultbudget(self, progsetname=None, optimizable=None):
+        ''' Small method to get the default budget '''
+        if progsetname is None: progsetname = -1
+        if optimizable is None: optimizable = False
+        output = self.progsets[progsetname].getdefaultbudget(optimizable=optimizable) # Note that this is already safely dcp'd...
+        return output
+    
 
-    def runbudget(self, name='runbudget', budget=None, budgetyears=None, progsetname=None, parsetname='default', verbose=2):
+    def runbudget(self, name=None, budget=None, budgetyears=None, progsetname=None, parsetname='default', verbose=2):
         ''' Function to run the model for a given budget, years, programset and parameterset '''
-        if budget is None: raise OptimaException("Please enter a budget dictionary to run")
+        if name        is None: name = 'runbudget'
+        if budget      is None: raise OptimaException("Please enter a budget dictionary to run")
         if budgetyears is None: raise OptimaException("Please specify the years for your budget") # WARNING, the budget should probably contain the years itself
         if progsetname is None:
             try:
@@ -580,11 +594,73 @@ class Project(object):
             except: raise OptimaException("No program set entered, and there are none stored in the project") 
         coverage = self.progsets[progsetname].getprogcoverage(budget=budget, t=budgetyears, parset=self.parsets[parsetname])
         progpars = self.progsets[progsetname].getpars(coverage=coverage,t=budgetyears, parset=self.parsets[parsetname])
-        results = runmodel(pars=progpars, project=self, parset=self.parsets[parsetname], progset=self.progsets[progsetname], budget=budget, budgetyears=budgetyears, label=self.name+'-runbudget') # WARNING, this should probably use runsim, but then would need to make simpars...
+        results = runmodel(pars=progpars, project=self, parsetname=parsetname, progsetname=progsetname, budget=budget, budgetyears=budgetyears, label=self.name+'-runbudget') # WARNING, this should probably use runsim, but then would need to make simpars...
         results.name = name
         self.addresult(results)
         self.modified = today()
-        return None
+        return results
+    
+    
+    def outcomecalc(self, name=None, budget=None, optim=None, optimname=None, parsetname=None, progsetname=None, 
+                objectives=None, constraints=None, origbudget=None, verbose=2, doconstrainbudget=False):
+        '''
+        Calculate the outcome for a given budget -- a substep of optimize(); similar to runbudget().
+        
+        Since it relies on an optimization structure, all the inputs that are valid for an optimization are valid
+        here too -- e.g. you can give it an Optim, or define objectives separately. By default it will use the 
+        objectives and constraints from the most recent optimization.
+        
+        Example usage:
+            import optima as op
+            P = op.demo(0)
+            budget1 = P.defaultbudget()
+            budget2 = P.defaultbudget()
+            budget1[:] *= 0.5
+            budget2[:] *= 2.0
+            P.outcomecalc(name='Baseline')
+            P.outcomecalc(name='Halve funding', budget=budget1)
+            P.outcomecalc(name='Double funding', budget=budget2)
+            P.result('Baseline').outcome
+            P.result('Halve funding').outcome
+            P.result('Double funding').outcome
+        '''
+        
+        # Check inputs
+        if name is None: name = 'outcomecalc'
+        if optim is None:
+            if len(self.optims) and all([arg is None for arg in [objectives, constraints, parsetname, progsetname, optimname]]):
+                optimname = -1 # No arguments supplied but optims exist, use most recent optim to run
+            if optimname is not None: # Get the optimization by name if supplied
+                optim = self.optims[optimname] 
+            else: # If neither an optim nor an optimname is supplied, create one
+                optim = Optim(project=self, name=name, objectives=objectives, constraints=constraints, parsetname=parsetname, progsetname=progsetname)
+
+        # Run outcome calculation        
+        results = outcomecalc(budgetvec=budget, which='outcomes', project=self, parsetname=optim.parsetname, 
+                              progsetname=optim.progsetname, objectives=optim.objectives, constraints=optim.constraints, 
+                              origbudget=origbudget, outputresults=True, verbose=verbose, doconstrainbudget=doconstrainbudget)
+        # Add results
+        results.name = name
+        self.addresult(results)
+        self.modified = today()
+        
+        return results
+
+
+    def icers(self, parsetname=None, progsetname=None, objective=None, startyear=None, endyear=None, budgetratios=None, verbose=2, marginal=None, **kwargs):
+        '''
+        Calculate ICERs. Example:
+            from optima import op
+            P = op.demo(0)
+            P.parset().fixprops(False)
+            P.icers()
+            op.ploticers(P.result(), interactive=True)
+        '''
+        results = icers(project=self, parsetname=parsetname, progsetname=progsetname, objective=objective, startyear=startyear, 
+                        endyear=endyear, budgetratios=budgetratios, marginal=marginal, verbose=verbose, **kwargs)
+        self.addresult(results)
+        self.modified = today()
+        return results
 
 
     def optimize(self, name=None, parsetname=None, progsetname=None, objectives=None, constraints=None, maxiters=None, maxtime=None, 
@@ -601,7 +677,6 @@ class Project(object):
             P.optimize(optimname=-1) # Same as previous
             P.optimize(multi=True) # Do a multi-chain optimization
             P.optimize(multi=True, nchains=8, nblocks=10, blockiters=50) # Do a very large multi-chain optimization
-        
         '''
         
         # Check inputs
@@ -643,7 +718,7 @@ class Project(object):
         boc = BOC(name='BOC '+self.name)
         if objectives is None:
             printv('Warning, genBOC "%s" did not get objectives, using defaults...' % (self.name), 2, verbose)
-            objectives = defaultobjectives(project=self, progset=progsetname)
+            objectives = defaultobjectives(project=self, progsetname=progsetname)
         boc.objectives = objectives
         boc.constraints = constraints
         

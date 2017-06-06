@@ -1,11 +1,11 @@
 """
 Functions for running optimizations.
 
-Version: 2017mar03
+Version: 2017jun04
 """
 
-from optima import OptimaException, Link, Multiresultset, Programset, asd, runmodel, getresults # Main functions
-from optima import printv, dcp, odict, findinds, today, getdate, uuid, objrepr, promotetoarray # Utilities
+from optima import OptimaException, Link, Multiresultset, ICER, asd, runmodel, getresults # Main functions
+from optima import printv, dcp, odict, findinds, today, getdate, uuid, objrepr, promotetoarray, findnearest, sanitize # Utilities
 from numpy import zeros, empty, arange, maximum, array, inf, isfinite, argmin, argsort, nan, floor
 from numpy.random import random, seed
 from time import time
@@ -17,11 +17,11 @@ class Optim(object):
     ''' An object for storing an optimization '''
 
     def __init__(self, project=None, name='default', objectives=None, constraints=None, parsetname=None, progsetname=None):
-        if project is None:     raise OptimaException('To create an optimization, you must supply a project')
-        if parsetname is None:  parsetname = -1 # If none supplied, assume defaults
+        if project     is None: raise OptimaException('To create an optimization, you must supply a project')
+        if parsetname  is None: parsetname  = -1 # If none supplied, assume defaults
         if progsetname is None: progsetname = -1
-        if objectives is None:  objectives = defaultobjectives(project=project, progset=progsetname, verbose=0)
-        if constraints is None: constraints = defaultconstraints(project=project, progset=progsetname, verbose=0)
+        if objectives  is None: objectives  = defaultobjectives(project=project,  progsetname=progsetname, verbose=0)
+        if constraints is None: constraints = defaultconstraints(project=project, progsetname=progsetname, verbose=0)
         self.name         = name # Name of the optimization, e.g. 'default'
         self.uid          = uuid() # ID
         self.projectref   = Link(project) # Store pointer for the project, if available
@@ -65,7 +65,7 @@ class Optim(object):
 ### Helper functions
 ################################################################################################################################################
 
-def defaultobjectives(project=None, progset=None, which='outcomes', verbose=2):
+def defaultobjectives(project=None, progsetname=None, which=None, verbose=2):
     """
     Define default objectives for the optimization. Some objectives are shared
     between outcome and money minimizations, while others are different. However,
@@ -76,68 +76,64 @@ def defaultobjectives(project=None, progset=None, which='outcomes', verbose=2):
     """
     printv('Defining default objectives...', 3, verbose=verbose)
 
-    if type(progset)==Programset:
-        try: defaultbudget = sum(progset.getdefaultbudget()[:])
-        except: raise OptimaException('Could not get default budget for optimization')
-    elif type(project)==Programset: # Not actually a project, but proceed anyway
-        try: defaultbudget = sum(project.getdefaultbudget()[:])
-        except: raise OptimaException('Could not get default budget for optimization')
-    elif project is not None:
-        if progset is None: progset = -1 # Think it's OK to make this the default
-        try: defaultbudget = sum(project.progsets[progset].getdefaultbudget()[:])
-        except: raise OptimaException('Could not get default budget for optimization')
-    else:
+    if which       is None: which = 'outcomes'
+    if progsetname is None: progsetname = -1
+    
+    try:
+        defaultbudget = sum(project.progsets[progsetname].getdefaultbudget()[:])
+    except:
         defaultbudget = 0.0 # If can't find programs
         printv('defaultobjectives() did not get a project or progset, so setting budget to %0.0f' % defaultbudget, 2, verbose)
         
     objectives = odict() # Dictionary of all objectives
     objectives['which'] = which
-    objectives['keys'] = ['death', 'inci'] # Define valid keys
-    objectives['keylabels'] = {'death':'Deaths', 'inci':'New infections'} # Define key labels
+    objectives['keys'] = ['death', 'inci', 'daly'] # Define valid keys
+    objectives['keylabels'] = odict([('death','Deaths'), ('inci','New infections'), ('daly','DALYs')]) # Define key labels
     if which in ['outcome', 'outcomes']:
-        objectives['base'] = None # "Baseline year to compare outcomes to"
-        objectives['start'] = 2017 # "Year to begin optimization"
-        objectives['end'] = 2030 # "Year to project outcomes to"
-        objectives['budget'] = defaultbudget # "Annual budget to optimize"
+        objectives['base']        = None # "Baseline year to compare outcomes to"
+        objectives['start']       = 2017 # "Year to begin optimization"
+        objectives['end']         = 2030 # "Year to project outcomes to"
+        objectives['budget']      = defaultbudget # "Annual budget to optimize"
         objectives['budgetscale'] = [1.] # "Scale factors to apply to budget"
-        objectives['deathweight'] = 5 # "Relative weight per death"
-        objectives['inciweight'] = 1 # "Relative weight per new infection"
-        objectives['deathfrac'] = None # Fraction of deaths to get to
-        objectives['incifrac'] = None # Fraction of incidence to get to
+        objectives['deathweight'] = 5    # "Relative weight per death"
+        objectives['inciweight']  = 1    # "Relative weight per new infection"
+        objectives['dalyweight']  = 0    # "Relative weight per DALY"
+        objectives['deathfrac']   = None # Fraction of deaths to get to
+        objectives['incifrac']    = None # Fraction of incidence to get to
+        objectives['dalyfrac']    = None # Fraction of DALYs to get to
     elif which=='money':
-        objectives['base'] = 2015 # "Baseline year to compare outcomes to"
-        objectives['start'] = 2017 # "Year to begin optimization"
-        objectives['end'] = 2027 # "Year by which to achieve objectives"
-        objectives['budget'] = defaultbudget # "Starting budget"
+        objectives['base']        = 2015 # "Baseline year to compare outcomes to"
+        objectives['start']       = 2017 # "Year to begin optimization"
+        objectives['end']         = 2027 # "Year by which to achieve objectives"
+        objectives['budget']      = defaultbudget # "Starting budget"
         objectives['deathweight'] = None # "Death weighting"
-        objectives['inciweight'] = None # "Incidence weighting"
-        objectives['deathfrac'] = 0.25 # Fraction of deaths to avert
-        objectives['incifrac'] = 0.25 # Fraction of incidence to avert
+        objectives['inciweight']  = None # "Incidence weighting"
+        objectives['dalyweight']  = None # "Incidence weighting"
+        objectives['deathfrac']   = 0.25 # Fraction of deaths to avert
+        objectives['incifrac']    = 0.25 # Fraction of incidence to avert
+        objectives['dalyfrac']    = 0 # Fraction of DALYs to avert
     else:
         raise OptimaException('"which" keyword argument must be either "outcome" or "money"')
 
     return objectives
 
 
-def defaultconstraints(project=None, progset=None, which='outcomes', verbose=2):
+def defaultconstraints(project=None, progsetname=None, which='outcomes', verbose=2):
     """
     Define constraints for minimize outcomes optimization: at the moment, just
     total budget constraints defned as a fraction of current spending. Fixed costs
     are treated differently, and ART is hard-coded to not decrease.
 
-    Version: 2016feb03
+    Version: 2017jun04
     """
 
     printv('Defining default constraints...', 3, verbose=verbose)
 
-    if type(progset)==Programset: pass
-    elif type(project)==Programset: progset = project
-    elif project is not None:
-        if progset is None: progset = -1
-        progset = project.progsets[progset]
-        printv('defaultconstraints() did not get a progset input, so using default', 3, verbose)
-    else:
-        raise OptimaException('To define constraints, you must supply a program set as an input')
+    if progsetname is None: 
+        progsetname = -1
+        printv('defaultconstraints() did not get a progsetname input, so using default', 3, verbose)
+    try:    progset = project.progsets[progsetname]
+    except: raise OptimaException('To define constraints, you must supply a program set as an input')
 
     # If no programs in the progset, return None        
     if not(len(progset.programs)): return None
@@ -287,7 +283,7 @@ def constrainbudget(origbudget=None, budgetvec=None, totalbudget=None, budgetlim
 ### The main meat of the matter
 ################################################################################################################################################
 
-def outcomecalc(budgetvec=None, which=None, project=None, parset=None, progset=None, parsetname=None, progsetname=None, 
+def outcomecalc(budgetvec=None, which=None, project=None, parsetname=None, progsetname=None, 
                 objectives=None, constraints=None, totalbudget=None, optiminds=None, origbudget=None, tvec=None, 
                 initpeople=None, outputresults=False, verbose=2, ccsample='best', doconstrainbudget=True):
     ''' Function to evaluate the objective for a given budget vector (note, not time-varying) '''
@@ -296,19 +292,20 @@ def outcomecalc(budgetvec=None, which=None, project=None, parset=None, progset=N
     if which is None: 
         if objectives is not None: which = objectives['which']
         else:                      which = 'outcomes'
-    if parsetname is None: parsetname = -1
+    if parsetname  is None: parsetname  = -1
     if progsetname is None: progsetname = -1
-    if parset is None: parset  = project.parsets[parsetname] 
-    if progset is None: progset = project.progsets[progsetname] 
-    if objectives is None: objectives = defaultobjectives(project=project, progset=progset, which=which)
-    if constraints is None: constraints = defaultconstraints(project=project, progset=progset, which=which)
+    parset  = project.parsets[parsetname] 
+    progset = project.progsets[progsetname]
+    if objectives  is None: objectives  = defaultobjectives(project=project,  progsetname=progsetname, which=which)
+    if constraints is None: constraints = defaultconstraints(project=project, progsetname=progsetname, which=which)
     if totalbudget is None: totalbudget = objectives['budget']
-    if origbudget is None: origbudget = progset.getdefaultbudget()
-    if optiminds is None: optiminds = findinds(progset.optimizable())
-    if budgetvec is None: budgetvec = dcp(origbudget[:][optiminds])
+    if origbudget  is None: origbudget  = progset.getdefaultbudget()
+    if optiminds   is None: optiminds   = findinds(progset.optimizable())
+    if budgetvec   is None: budgetvec   = dcp(origbudget[:][optiminds])
     if type(budgetvec)==odict: budgetvec = dcp(budgetvec[:][optiminds])
     
     # Validate input
+    
     arglist = [budgetvec, which, parset, progset, objectives, totalbudget, constraints, optiminds, origbudget]
     if any([arg is None for arg in arglist]):  # WARNING, this kind of obscures which of these is None -- is that ok? Also a little too hard-coded...
         raise OptimaException('outcomecalc() requires which, budgetvec, parset, progset, objectives, totalbudget, constraints, optiminds, origbudget, tvec as inputs at minimum; argument %i is None' % arglist.index(None))
@@ -322,14 +319,16 @@ def outcomecalc(budgetvec=None, which=None, project=None, parset=None, progset=N
         constrainedbudget = constrainbudget(origbudget=origbudget, budgetvec=budgetvec, totalbudget=totalbudget, budgetlims=constraints, optiminds=optiminds, outputtype='odict')
     else:
         constrainedbudget = dcp(origbudget)
-        constrainedbudget[:] = budgetvec
-    
+        if len(budgetvec)==len(optiminds): constrainedbudget[optiminds] = budgetvec # Assume it's just the optimizable programs
+        else:                              constrainedbudget[:]         = budgetvec # Assume it's all programs
+        
     # Run model
     thiscoverage = progset.getprogcoverage(budget=constrainedbudget, t=objectives['start'], parset=parset, sample=ccsample)
     thisparsdict = progset.getpars(coverage=thiscoverage, t=objectives['start'], parset=parset, sample=ccsample)
-    if initpeople is not None:
-        tvec = project.settings.maketvec(start=objectives['start'], end=objectives['end'])
-    results = runmodel(pars=thisparsdict, project=project, parset=parset, progset=progset, tvec=tvec, initpeople=initpeople, verbose=0, label=project.name+'-optim-outcomecalc')
+    if initpeople is None: startyear = None
+    else:                  startyear = objectives['start']
+    tvec = project.settings.maketvec(start=startyear, end=objectives['end'])
+    results = runmodel(pars=thisparsdict, project=project, parsetname=parsetname, progsetname=progsetname, tvec=tvec, initpeople=initpeople, verbose=0, label=project.name+'-optim-outcomecalc', doround=False)
 
     # Figure out which indices to use
     initialind = findinds(results.tvec, objectives['start'])
@@ -345,7 +344,7 @@ def outcomecalc(budgetvec=None, which=None, project=None, parset=None, progset=N
         for key in objectives['keys']:
             thisweight = objectives[key+'weight'] # e.g. objectives['inciweight']
             thisoutcome = results.main['num'+key].tot[0][indices].sum() # the instantaneous outcome e.g. objectives['numdeath'] -- 0 is since best
-            rawoutcomes[key] = thisoutcome*results.dt
+            rawoutcomes['num'+key] = thisoutcome*results.dt
             outcome += thisoutcome*thisweight*results.dt # Calculate objective
 
         # Output results
@@ -398,7 +397,7 @@ def outcomecalc(budgetvec=None, which=None, project=None, parset=None, progset=N
 
 
 def optimize(optim=None, maxiters=None, maxtime=None, verbose=2, stoppingfunc=None, 
-             die=False, origbudget=None, randseed=None, mc=None, label=None, outputqueue=None, **kwargs):
+             die=False, origbudget=None, randseed=None, mc=None, label=None, outputqueue=None, *args, **kwargs):
     '''
     The standard Optima optimization function: minimize outcomes for a fixed total budget.
     
@@ -419,6 +418,9 @@ def optimize(optim=None, maxiters=None, maxtime=None, verbose=2, stoppingfunc=No
     '''
     
     ## Input validation
+    if not kwargs: 
+        if not args: kwargs = {}
+        else:        kwargs = args[0] # Kwargs can be passed as non-kwargs...horribly confusing, I know
     if optim is None: raise OptimaException('minoutcomes() requires project and optim arguments at minimum')
     project = optim.projectref() # Get the project
     which = optim.objectives['which']
@@ -436,9 +438,9 @@ def optimize(optim=None, maxiters=None, maxtime=None, verbose=2, stoppingfunc=No
     # Optim structure validation
     progset = project.progsets[optim.progsetname] # Link to the original parameter set
     if not(hasattr(optim, 'objectives')) or optim.objectives is None:
-        optim.objectives = defaultobjectives(project=project, progset=progset, which=which, verbose=verbose)
+        optim.objectives = defaultobjectives(project=project, progsetname=optim.progsetname, which=which, verbose=verbose)
     if not(hasattr(optim, 'constraints')) or optim.constraints is None:
-        optim.constraints = defaultconstraints(project=project, progset=progset, which=which, verbose=verbose)
+        optim.constraints = defaultconstraints(project=project, progsetname=optim.progsetname, which=which, verbose=verbose)
 
     # Process inputs
     if not optim.objectives['budget']: # Handle 0 or None -- WARNING, temp?
@@ -477,7 +479,7 @@ def optimize(optim=None, maxiters=None, maxtime=None, verbose=2, stoppingfunc=No
 
 def multioptimize(optim=None, nchains=None, nblocks=None, blockiters=None, 
                   batch=None, mc=None, randseed=None, maxiters=None, maxtime=None, verbose=2, 
-                  stoppingfunc=None, die=False, origbudget=None, label=None, *args, **kwargs):
+                  stoppingfunc=None, die=False, origbudget=None, label=None, **kwargs):
     '''
     Run a multi-chain optimization. See project.optimize() for usage examples, and optimize()
     for kwarg explanation.
@@ -525,8 +527,8 @@ def multioptimize(optim=None, nchains=None, nblocks=None, blockiters=None,
             randtime = int((time()-floor(time()))*1e4)
             if randseed is None: thisseed = (blockrand+threadrand)*randtime # Get a random number based on both the time and the thread
             else:                thisseed = randseed + blockrand+threadrand
-            args = (optim, blockiters, maxtime, verbose, stoppingfunc, die, origbudget, thisseed, mc, label, outputqueue)
-            prc = Process(target=optimize, args=args)
+            optimargs = (optim, blockiters, maxtime, verbose, stoppingfunc, die, origbudget, thisseed, mc, label, outputqueue, kwargs)
+            prc = Process(target=optimize, args=optimargs)
             prc.start()
             processes.append(prc)
         
@@ -556,7 +558,7 @@ def multioptimize(optim=None, nchains=None, nblocks=None, blockiters=None,
     
     # Assemble final results object from the initial and final run
     finalresults = outputlist[bestfvalind]
-    results.improvement[0] = fvalarray[bestfvalind,:] # Store fval vector in normal format
+    results.improvement[0] = sanitize(fvalarray[bestfvalind,:]) # Store fval vector in normal format
     results.multiimprovement = fvalarray # Store full fval array
     results.outcome = finalresults.outcome
     results.budget = finalresults.budget
@@ -593,7 +595,7 @@ def minoutcomes(project=None, optim=None, tvec=None, verbose=None, maxtime=None,
     if label is None: label = ''
     
     # Calculate the initial people distribution
-    results = runmodel(pars=parset.pars, project=project, parset=parset, progset=progset, tvec=tvec, keepraw=True, verbose=0, label=project.name+'-minoutcomes')
+    results = runmodel(pars=parset.pars, project=project, parsetname=optim.parsetname, progsetname=optim.progsetname, tvec=tvec, keepraw=True, verbose=0, label=project.name+'-minoutcomes')
     initialind = findinds(results.raw[0]['tvec'], optim.objectives['start'])
     initpeople = results.raw[0]['people'][:,:,initialind] # Pull out the people array corresponding to the start of the optimization -- there shouldn't be multiple raw arrays here
 
@@ -603,8 +605,8 @@ def minoutcomes(project=None, optim=None, tvec=None, verbose=None, maxtime=None,
     # Set up arguments which are shared between outcomecalc and asd
     args = {'which':'outcomes', 
             'project':project, 
-            'parset':parset, 
-            'progset':progset, 
+            'parsetname':optim.parsetname, 
+            'progsetname':optim.progsetname, 
             'objectives':optim.objectives, 
             'constraints':optim.constraints, 
             'totalbudget':origtotalbudget, # Complicated, see below
@@ -773,7 +775,6 @@ def minmoney(project=None, optim=None, tvec=None, verbose=None, maxtime=None, ma
 
     ## Handle budget and remove fixed costs
     if project is None or optim is None: raise OptimaException('An optimization requires both a project and an optimization object to run')
-    parset  = project.parsets[optim.parsetname] # Link to the original parameter set
     progset = project.progsets[optim.progsetname] # Link to the original parameter set
     totalbudget = dcp(optim.objectives['budget'])
     origtotalbudget = totalbudget
@@ -785,18 +786,18 @@ def minmoney(project=None, optim=None, tvec=None, verbose=None, maxtime=None, ma
     xmin = zeros(len(budgetvec))
 
     # Define arguments for ASD
-    args = {'which':'money', 
-            'project':project, 
-            'parset':parset, 
-            'progset':progset, 
-            'objectives':optim.objectives, 
+    args = {'which':      'money', 
+            'project':    project, 
+            'parsetname': optim.parsetname, 
+            'progsetname':optim.progsetname, 
+            'objectives': optim.objectives, 
             'constraints':optim.constraints, 
             'totalbudget':totalbudget, 
-            'optiminds':optiminds, 
-            'origbudget':origbudget, 
-            'tvec':tvec, 
-            'ccsample': ccsample, 
-            'verbose':verbose}
+            'optiminds':  optiminds, 
+            'origbudget': origbudget, 
+            'tvec':       tvec, 
+            'ccsample':   ccsample, 
+            'verbose':    verbose}
 
 
     ##########################################################################################################################
@@ -925,3 +926,170 @@ def minmoney(project=None, optim=None, tvec=None, verbose=None, maxtime=None, ma
     multires.optimsettings = odict([('maxiters',maxiters),('maxtime',maxtime),('randseed',randseed)])
 
     return multires
+
+
+
+################################################################################################################################################
+### ICER calculation
+################################################################################################################################################
+
+def icers(name=None, project=None, parsetname=None, progsetname=None, objective=None, 
+          startyear=None, endyear=None, budgetratios=None, marginal=None, verbose=2):
+    '''
+    Calculate ICERs for each program.
+    
+    Inputs:
+        name         = name of the result
+        project      = the project object
+        parsetname   = name of the parameter set used; default -1
+        progsetname  = name of the program set; default -1
+        objective    = what to calculate; must be one of 'death', 'inci', 'daly'; 'daly' by default)
+        startyear    = the year to start applying the budget and calculating the outcome; default from defaultobjectives()
+        endyear      = ditto for end year
+        budgetratios = the list of budgets relative to baseline to run; default 10 budgets spanning 0.0 to 2.0
+        marginal     = whether to calculate marginal ICERs or relative to baseline; default marginal
+        
+    Do not call this function directly: see project.icers() for usage example.
+    
+    Version: 2017jun04
+    '''
+    
+    # Handle inputs
+    if type(project).__name__ != 'Project': # Can't compare types directly since can't import Project since not defined yet
+        errormsg = 'To calculate ICERs you must supply a project, not "%s"' % type(project)
+        raise OptimaException(errormsg)
+    
+    # Set defaults
+    eps = project.settings.eps
+    icereps = 1e-9 # A smaller epsilon for ensuring ICER divisions aren't zero
+    if marginal     is None: marginal     = True
+    if objective    is None: objective    = 'daly'
+    if parsetname   is None: parsetname   = -1
+    if progsetname  is None: progsetname  = -1
+    if budgetratios is None: budgetratios = [0.0, 0.1, 0.2, 0.4, 0.6, 0.8, 1.0, 1.2, 1.5, 2.0]
+    budgetratios = array(budgetratios) # Ensure it's an array
+    nbudgetratios = len(budgetratios)
+    
+    # Define objectives
+    objectives = defaultobjectives(project=project)
+    if startyear is not None: objectives['start'] = startyear # Do not overwrite by default
+    if endyear   is not None: objectives['end']   = endyear
+    nyears = objectives['end'] - objectives['start'] # Calculate the number of years
+    obkeys = objectives['keys']
+    if objective not in obkeys:
+        errormsg = 'Objective must be one of "%s", not "%s"' % (obkeys, objective)
+        raise OptimaException(errormsg)
+    for key in obkeys:
+        if objective==key: objectives[key+'weight'] = 1.0 # Set weight to 1 if they match
+        else:              objectives[key+'weight'] = 0.0 # Set to 0 otherwise
+    
+    printv('Calculating ICERs for objective "%s" from %i-%i, parset "%s", progset "%s", marginal=%s...' % (objective, objectives['start'], objectives['end'], parsetname, progsetname, marginal), 2, verbose)
+    
+    # Get budget information
+    origbudget    = project.defaultbudget(progsetname, optimizable=False) # Get default budget for optimizable programs
+    defaultbudget = project.defaultbudget(progsetname, optimizable=True)  # ...and just for optimizable programs
+    keys = defaultbudget.keys() # Get the program keys
+    nkeys = len(keys)
+    
+    # Calculate the initial people distribution
+    initresults = runmodel(project=project, parsetname=parsetname, progsetname=progsetname, keepraw=True, verbose=0, label=project.name+'-minoutcomes')
+    initialind  = findinds(initresults.raw[0]['tvec'], objectives['start'])
+    initpeople  = initresults.raw[0]['people'][:,:,initialind] # Pull out the people array corresponding to the start of the optimization -- there shouldn't be multiple raw arrays here
+
+    # Define arguments that don't change in the loop
+    defaultargs = {'which':'outcomes', 'project':project, 'parsetname':parsetname, 'progsetname':progsetname, 'objectives':objectives, 
+                   'origbudget':origbudget, 'outputresults':False, 'verbose':verbose, 'doconstrainbudget':False, 'initpeople':initpeople}
+    
+    # Calculate baseline
+    baseliney = outcomecalc(budgetvec=defaultbudget, **defaultargs)
+    
+    # Define structures for storing results
+    rawx    = odict().make(keys=keys, vals=[])
+    rawy    = dcp(rawx)
+    y       = dcp(rawx)
+    icer    = dcp(rawx)
+    summary = dcp(rawx)
+    
+    # Loop over both programs and budget ratios
+    count = 0
+    for key in keys:
+        for budgetratio in budgetratios:
+            count += 1
+            printv('Running ICER budget %i of %i' % (count, nkeys*nbudgetratios), 2, verbose)
+            thisbudget = dcp(defaultbudget)
+            thisbudget[key] *= budgetratio
+            rawx[key].append(thisbudget[key])
+            if budgetratio==1: outcome = baseliney # Don't need to run, just copy this
+            else:              outcome = outcomecalc(budgetvec=thisbudget, **defaultargs) # The crux of the matter!! Actually calculate
+            rawy[key].append(outcome)
+            
+    # Calculate y values
+    for key in keys:
+        baselinex = defaultbudget[key] # Because only looking at one program at a time
+        for b in range(nbudgetratios):
+            
+            # Gather values to use
+            thisx = rawx[key][b]
+            thisy = rawy[key][b]
+            if b>0:    
+                lowerx = rawx[key][b-1]
+                lowery = rawy[key][b-1]
+            else: 
+                lowerx = None
+                lowery = None
+            if b<nbudgetratios-1:
+                upperx = rawx[key][b+1]
+                uppery = rawy[key][b+1]
+            else: 
+                upperx = None
+                uppery = None
+            
+            # Calculate estimates by comparing to lower and upper values, and baseline if those fail
+            estimates = [] # Start assembling ICER estimates
+            if marginal: # Calculate relative to next upper and lower choices
+                lower = None
+                if lowerx is not None:
+                    lowerdiffx = (thisx - lowerx)*nyears
+                    lowerdiffy = thisy - lowery
+                    lower = -lowerdiffy/(lowerdiffx+eps)
+                    estimates.append(lower)
+                upper = None
+                if upperx is not None:
+                    upperdiffx = (thisx - upperx)*nyears
+                    upperdiffy = thisy - uppery
+                    upper = -upperdiffy/(upperdiffx+eps)
+                    estimates.append(upper)
+            else: # Calculate relative to baseline only
+                if thisx==baselinex:
+                    thisx = rawx[key][0] # Assume 0 is 0 budget
+                    thisy = rawy[key][0] # Assume 0 is 0 budget
+                baselinediffx = (thisx - baselinex)*nyears # To get total cost, need to multiply by the number of years
+                baselinediffy = thisy - baseliney
+                baselinediff = -baselinediffy/(baselinediffx+eps)
+                estimates = [baselinediff]
+            
+            # Finally, calculate the DALYs per dollar
+            thisiecr = array(estimates).mean() # Average upper and lower estimates, if available -- "iecr" is the inverse of an icer
+            if thisiecr<0:
+                printv('WARNING, ICER for "%s" at budget ratio %0.1f is negative (%0.3e); setting to 0' % (key, budgetratios[b], 1./(thisiecr+icereps)), 1, verbose)
+                thisiecr = 0.0;
+            y[key].append(thisiecr)
+    
+    # Convert to arrays
+    for key in keys:
+        rawx[key] = array(rawx[key])
+        rawy[key] = array(rawy[key])
+        y[key]    = array(y[key]) 
+    
+    # Calculate actual ICERs
+    for key in keys:
+        icer[key] = 1.0/(y[key]+icereps)
+    
+    # Summarize results
+    nearest = findnearest(budgetratios, 1.0)
+    for key in keys:
+        summary[key] = icer[key][nearest]
+    
+    # Assemble into results
+    results = ICER(name=name, objective=objective, startyear=objectives['start'], endyear=objectives['end'], rawx=rawx, rawy=rawy, x=budgetratios, icer=icer, summary=summary, baseline=baseliney, keys=keys, defaultbudget=defaultbudget, parsetname=parsetname, progsetname=progsetname)
+    return results

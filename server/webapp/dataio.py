@@ -1047,7 +1047,8 @@ def create_parset(project_id, new_parset_name):
 
 
 def refresh_parset(project_id, parset_id):
-
+    ''' Refresh parset from data '''
+    
     def update_project_fn(project):
         parset = parse.get_parset_from_project(project, parset_id)
         parset_name = parset.name
@@ -1055,6 +1056,28 @@ def refresh_parset(project_id, parset_id):
 
     update_project_with_fn(project_id, update_project_fn)
     delete_result_by_parset_id(project_id, parset_id)
+    return None
+
+
+def fixproptx(project_id, parset_id, fix=None):
+    ''' Toggle whether or not proportion of people on ART is fixed '''
+    def update_project_fn(project):
+        parset = parse.get_parset_from_project(project, parset_id)
+        parset.fixprops(fix=fix) # Update the proportions
+
+    update_project_with_fn(project_id, update_project_fn)
+    delete_result_by_parset_id(project_id, parset_id)
+    return None
+
+def fixproptx_on(project_id, parset_id):
+    ''' Turn on constant proportion on ART '''
+    fixproptx(project_id, parset_id, fix=True)
+    return None
+
+def fixproptx_off(project_id, parset_id):
+    ''' Turn off constant proportion on ART '''
+    fixproptx(project_id, parset_id, fix=False)
+    return None
 
 
 def load_parset_summaries(project_id):
@@ -1089,9 +1112,7 @@ def save_parameters(project_id, parset_id, parameters):
 
 
 
-def load_parset_graphs(
-        project_id, parset_id, calculation_type, which=None,
-        parameters=None, zoom=None, startYear=None, endYear=None):
+def load_parset_graphs(project_id, parset_id, calculation_type, which=None, parameters=None, zoom=None, startYear=None, endYear=None):
 
     project = load_project(project_id)
     parset = parse.get_parset_from_project(project, parset_id)
