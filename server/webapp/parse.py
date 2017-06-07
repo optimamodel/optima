@@ -1294,8 +1294,10 @@ def set_scenario_summaries_on_project(project, scenario_summaries):
 ### OPTIMIZATIONS
 #############################################################################################
 
-def parse_constraints(constraints):
+def parse_constraints(constraints, project=None):
     entries = []
+    if constraints is None:
+        constraints = op.defaultconstraints(project=project)
     for key, value in constraints['name'].items():
         entries.append({
             'key': key,
@@ -1328,17 +1330,15 @@ def revert_constraints(entries):
 
 def get_default_optimization_summaries(project):
     defaults_by_progset_id = {}
-    for progset in project.progsets.values():
+    for progsetkey,progset in project.progsets.items():
         progset_id = progset.uid
         default = {
-            'constraints': parse_constraints(
-                op.defaultconstraints(project=project, progset=progset)),
+            'constraints': parse_constraints(op.defaultconstraints(project=project, progsetname=progsetkey)),
             'objectives': {}
         }
         for which in ['outcomes', 'money']:
             default['objectives'][which] = normalize_obj(
-                op.defaultobjectives(
-                    project=project, progset=progset, which=which))
+                op.defaultobjectives(project=project, progsetname=progsetkey, which=which))
         defaults_by_progset_id[progset_id] = default
 
     return normalize_obj(defaults_by_progset_id)
@@ -1394,7 +1394,7 @@ def get_optimization_summaries(project):
             "id": str(optim.uid),
             "name": str(optim.name),
             "objectives": normalize_obj(optim.objectives),
-            "constraints": parse_constraints(optim.constraints),
+            "constraints": parse_constraints(optim.constraints, project=project),
         }
 
         optim_summary["which"] = str(optim.objectives["which"])
@@ -1512,7 +1512,6 @@ def get_portfolio_summary(portfolio):
 
 
 def delete_project_in_portfolio(portfolio, project_id):
-    n = len(portfolio.projects)
     for (k, project) in portfolio.projects.items():
         if str(project.uid) == str(project_id):
             del portfolio.projects[k]
