@@ -78,7 +78,7 @@ define(['angular', 'ui.router'], function (angular) {
         projectService.setActiveProjectId(id);
         projectService.getActiveProject()
           .then(function() {
-            toastr.success('Project "' + project.name + '" loaded');
+            toastr.success('Project "' + name + '" loaded');
           });
       };
 
