@@ -77,6 +77,7 @@ define(['angular', 'ui.router'], function (angular) {
       $scope.open = function (name, id) {
         projectService.setActiveProjectId(id);
         projectService.getActiveProject();
+        toastr.success('Project "'+project.name+'" loaded');
       };
 
       $scope.copy = function(name, projectId) {
