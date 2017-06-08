@@ -383,7 +383,7 @@ def outcomecalc(budgetvec=None, which=None, project=None, parsetname=None, progs
             results.rawoutcomes = final
             output = results
         else:
-            summary = 'Baseline: %0.0f %0.0f | Target: %0.0f %0.0f | Final: %0.0f %0.0f' % tuple(baseline.values()+target.values()+final.values())
+            summary = 'Baseline: %0.0f %0.0f %0.0f | Target: %0.0f %0.0f %0.0f | Final: %0.0f %0.0f %0.0f' % tuple(baseline.values()+target.values()+final.values())
             output = (targetsmet, summary)
     
     return output
@@ -837,7 +837,7 @@ def minmoney(project=None, optim=None, tvec=None, verbose=None, maxtime=None, ma
         else:
             absreductions[key] = 1e9 # A very very large number to effectively turn this off -- WARNING, not robust
     weights = dcp(absreductions) # Copy this, since will be modifying it -- not strictly necessary but could come in handy
-    weights = 1.0/weights[:] # Relative weights are inversely proportional to absolute reductions -- e.g. asking for a reduction of 100 deaths and 400 new infections means 1 death = 4 new infections
+    weights = 1.0/(weights[:]+project.settings.eps) # Relative weights are inversely proportional to absolute reductions -- e.g. asking for a reduction of 100 deaths and 400 new infections means 1 death = 4 new infections
     weights /= weights.min() # Normalize such that the lowest weight is 1; arbitrary, but could be useful
     for k,key in enumerate(optim.objectives['keys']):
        optim.objectives[key+'weight'] = maximum(weights[k],0) # Reset objective weights according to the reduction required -- don't let it go below 0, though
