@@ -295,7 +295,7 @@ define(['angular', 'underscore'], function (angular, _) {
           'download_project_object',
           [projectService.project.id, 'parset', $scope.state.parset.id])
         .then(function(response) {
-          toastr.success('Parset downloaded');
+          toastr.success('Parameter set downloaded');
         });
     };
 
@@ -305,7 +305,7 @@ define(['angular', 'underscore'], function (angular, _) {
         .rpcUpload(
           'upload_project_object', [$scope.project.id, 'parset'], {}, '.par')
         .then(function(response) {
-          toastr.success('Parset uploaded');
+          toastr.success('Parameter set uploaded');
           var name = response.data.name;
 
           rpcService
@@ -328,7 +328,7 @@ define(['angular', 'underscore'], function (angular, _) {
             .rpcRun(
               'refresh_parset', [projectService.project.id, $scope.state.parset.id])
             .then(function(response) {
-              toastr.success('Parset uploaded');
+              toastr.success('Parameter set refreshed');
               $scope.getCalibrationGraphs();
             });
         },
@@ -338,6 +338,32 @@ define(['angular', 'underscore'], function (angular, _) {
         'This will reset all your calibration parameters to match the ones in the "default" parset. Do you wish to continue?',
         'Refresh paramter set'
       );
+    };
+
+    $scope.constantProportionART = function() {
+      rpcService
+        .rpcRun(
+          'fixproptx_on',
+          [
+            projectService.project.id,
+            $scope.state.parset.id])
+        .then(function(response) {
+          toastr.success('Using constant proportion on ART');
+          $scope.getCalibrationGraphs();
+        });
+    };
+
+    $scope.constantNumberART = function() {
+      rpcService
+        .rpcRun(
+          'fixproptx_off',
+          [
+            projectService.project.id,
+            $scope.state.parset.id])
+        .then(function(response) {
+          toastr.success('Using constant number on ART');
+          $scope.getCalibrationGraphs();
+        });
     };
 
     // autofit routines
@@ -397,20 +423,6 @@ define(['angular', 'underscore'], function (angular, _) {
           }
         });
 
-      // rpcService
-      //   .rpcAsyncRun(
-      //     'launch_autofit',
-      //     [projectService.project.id, $scope.state.parset.id, $scope.state.maxtime])
-      //   .then(function(response) {
-      //     var status = response.data.status;
-      //     if (status === 'started') {
-      //       $scope.statusMessage = 'Autofit started.';
-      //       $scope.secondsRun = 0;
-      //       initPollAutoCalibration();
-      //     } else if (status === 'blocked') {
-      //       $scope.statusMessage = 'Another calculation on this project is already running.'
-      //     }
-      //   });
     };
 
     function initPollAutoCalibration() {

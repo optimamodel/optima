@@ -57,16 +57,18 @@ def createcollist(oldkeys, title, strlen = 18, ncol = 3):
 
 def objectid(obj):
     ''' Return the object ID as per the default Python __repr__ method '''
-    return '<%s.%s at %s>\n' % (obj.__class__.__module__, obj.__class__.__name__, hex(id(obj)))
+    output = '<%s.%s at %s>\n' % (obj.__class__.__module__, obj.__class__.__name__, hex(id(obj)))
+    return output
 
 
-def objatt(obj, strlen = 18, ncol = 3):
+def objatt(obj, strlen=18, ncol=3):
     ''' Return a sorted string of object attributes for the Python __repr__ method '''
     oldkeys = sorted(obj.__dict__.keys())
-    return createcollist(oldkeys, 'Attributes', strlen = 18, ncol = 3)
+    output = createcollist(oldkeys, 'Attributes', strlen = 18, ncol = 3)
+    return output
 
 
-def objmeth(obj, strlen = 18, ncol = 3):
+def objmeth(obj, strlen=18, ncol=3):
     ''' Return a sorted string of object methods for the Python __repr__ method '''
     oldkeys = sorted([method + '()' for method in dir(obj) if callable(getattr(obj, method)) and not method.startswith('__')])
     output = createcollist(oldkeys, 'Methods', strlen=strlen, ncol=ncol)
@@ -418,6 +420,8 @@ def printtologfile(message=None, filename=None):
         print('WARNING, could not write to logfile %s' % filename)
     
     return None
+    
+    
     
 ##############################################################################
 ### TYPE FUNCTIONS
@@ -1229,11 +1233,13 @@ def iternested(nesteddict,previous = []):
 from collections import OrderedDict
 from numpy import array
 from numbers import Number
+from copy import deepcopy as dcp
 
 class odict(OrderedDict):
     '''
     An ordered dictionary, like the OrderedDict class, but supporting list methods like integer referencing, slicing, and appending.
-    Version: 2016sep14 (cliffk)
+    
+    Version: 2017jun03
     '''
     
     def __init__(self, *args, **kwargs):
@@ -1327,7 +1333,7 @@ class odict(OrderedDict):
         return None
     
      
-    def __repr__(self, maxlen=None, showmultilines=True, divider=False, dividerthresh=10, numindents=0, recurselevel=0):
+    def __repr__(self, maxlen=None, showmultilines=True, divider=False, dividerthresh=10, numindents=0, recurselevel=0, sigfigs=None, numformat=None):
         ''' Print a meaningful representation of the odict '''
         
         # Set primitives for display.
@@ -1357,7 +1363,14 @@ class odict(OrderedDict):
                 # and passing the same parameters we received.
                 if isinstance(thisval, odict):
                     thisvalstr = flexstr(thisval.__repr__(maxlen=maxlen, showmultilines=showmultilines, divider=divider, 
-                        dividerthresh=dividerthresh, numindents=numindents, recurselevel=recurselevel+1))
+                        dividerthresh=dividerthresh, numindents=numindents, recurselevel=recurselevel+1, sigfigs=sigfigs, numformat=numformat))
+                elif isnumber(thisval): # Flexibly print out numbers, since they're largely why we're here
+                    if numformat is not None:
+                        thisvalstr = numformat % thisval
+                    elif sigfigs is not None:
+                        thisvalstr = sigfig(thisval, sigfigs=sigfigs)
+                    else:
+                        thisvalstr = str(thisval) # To avoid numpy's stupid 0.4999999999945
                 else: # Otherwise, do the normal __repr__() read.
                     thisvalstr = thisval.__repr__()
 
@@ -1367,6 +1380,7 @@ class odict(OrderedDict):
                 vallinecounts.append(thisvalstr.count('\n') + 1) # Count the number of lines in the value.
             maxvallinecounts = max(vallinecounts)   # Grab the maximum count of lines in the dict values.                    
             
+            maxkeylen = max([len(keystr) for keystr in keystrs])
             for i in range(len(keystrs)): # Loop over the lists
                 keystr = keystrs[i]
                 valstr = valstrs[i]
@@ -1387,11 +1401,12 @@ class odict(OrderedDict):
                 if maxlen and len(valstr) > maxlen: 
                     valstr = valstr[:maxlen-len(toolong)] + toolong 
                     
-                # Create the the text to add, apply the indent, and add to the output.    
+                # Create the the text to add, apply the indent, and add to the output
+                spacer = ' '*(maxkeylen-len(keystr))
                 if vallinecount == 1 or not showmultilines:
-                    rawoutput = '#%i: "%s": %s\n' % (i, keystr, valstr)
+                    rawoutput = '#%i: "%s":%s %s\n' % (i, keystr, spacer, valstr)
                 else:
-                    rawoutput = '#%i: "%s": \n%s\n' % (i, keystr, valstr)
+                    rawoutput = '#%i: "%s":%s \n%s\n' % (i, keystr, spacer, valstr)
                     
                 # Perform the indentation.
                 newoutput = indent(prefix=theprefix, text=rawoutput, width=80)
@@ -1416,11 +1431,20 @@ class odict(OrderedDict):
         print(self.__repr__())
     
     
-    def disp(self, maxlen=55, showmultilines=False, divider=False, dividerthresh=10, numindents=0):
-        ''' Print out flexible representation, short by default'''
+    def disp(self, maxlen=None, showmultilines=True, divider=False, dividerthresh=10, numindents=0, sigfigs=5, numformat=None):
+        '''
+        Print out flexible representation, short by default.
+        
+        Example:
+            import optima as op
+            import pylab as pl
+            z = op.odict().make(keys=['a','b','c'], vals=(10*pl.rand(3)).tolist())
+            z.disp(sigfigs=3)
+            z.disp(numformat='%0.6f')
+        '''
         print(self.__repr__(maxlen=maxlen, showmultilines=showmultilines, 
             divider=divider, dividerthresh=dividerthresh, 
-            numindents=numindents, recurselevel=0))
+            numindents=numindents, recurselevel=0, sigfigs=sigfigs, numformat=None))
     
     
     def export(self, doprint=True):
@@ -1576,27 +1600,29 @@ class odict(OrderedDict):
     def sort(self, sortby=None, reverse=False, copy=False):
         '''
         Create a sorted version of the odict. Sorts by order of sortby, if provided, otherwise alphabetical.
-        If copy is True, then returns a copy (like sorted())
+        If copy is True, then returns a copy (like sorted()).
+        
+        Note that you can also use this to do filtering.
         
         Note: very slow, do not use for serious computations!!
         '''
-        if sortby is None: allkeys = sorted(self.keys())
+        origkeys = self.keys()
+        if sortby is None: allkeys = sorted(origkeys)
         else:
             if not isiterable(sortby): raise Exception('Please provide a list to determine the sort order.')
-            if all(isinstance(x,basestring) for x in sortby): # Going to sort by keys
-                if not set(sortby)==set(self.keys()): 
-                    errormsg = 'List of keys to sort by must be the same as list of keys in odict.\n You provided the following list of keys to sort by:\n'
-                    errormsg += '\n'.join(sortby)
-                    errormsg += '\n List of keys in odict is:\n'
-                    errormsg += '\n'.join(self.keys())
-                    raise Exception(errormsg)
-                else: allkeys = sortby
-            elif all(isinstance(x,Number) for x in sortby): # Going to sort by numbers
+            if all([isinstance(x,basestring) for x in sortby]): # Going to sort by keys
+                allkeys = sortby # Assume the user knows what s/he is doing
+            elif all([isinstance(x,bool) for x in sortby]) or all([(x==0 or x==1) for x in sortby]): # Using Boolean values
+                allkeys = []
+                for i,x in enumerate(sortby):
+                     if x: allkeys.append(origkeys[i])
+            elif all([isinstance(x,Number) for x in sortby]): # Going to sort by numbers
                 if not set(sortby)==set(range(len(self))):
                     errormsg = 'List to sort by "%s" is not compatible with length of odict "%i"' % (sortby, len(self))
                     raise Exception(errormsg)
-                else: allkeys = [y for (x,y) in sorted(zip(sortby,self.keys()))]
-            else: raise Exception('Cannot figure out how to sort by "%s"' % sortby)
+                else: allkeys = [y for (x,y) in sorted(zip(sortby,origkeys))]
+            else: 
+                raise Exception('Cannot figure out how to sort by "%s"' % sortby)
         tmpdict = odict()
         if reverse: allkeys.reverse() # If requested, reverse order
         if copy:
@@ -1623,6 +1649,89 @@ class odict(OrderedDict):
     def reversed(self):
         ''' Shortcut for making a copy of the sorted odict '''
         return self.reverse(copy=True)
+    
+    
+    def make(self, keys=None, vals=None, keys2=None, keys3=None):
+        '''
+        An alternate way of making or adding to an odict. Examples:
+            a = odict().make(5) # Make an odict of length 5, populated with Nones and default key names
+            b = odict().make('foo',34) # Make an odict with a single key 'foo' of value 34
+            c = odict().make(['a','b']) # Make an odict with keys 'a' and 'b'
+            d = odict().make(['a','b'],0) # Make an odict with keys 'a' and 'b', initialized to 0
+            e = odict().make(keys=['a','b'], vals=[1,2]) # Make an odict with 'a':1 and 'b':2
+            f = odict({'a':34, 'b':58}).make(['c','d'],[99,45]) # Add extra keys to an exising odict
+            g = odict().make(keys=['a','b','c'], keys2=['A','B','C'], keys3=['x','y','z'], vals=0) # Make a triply nested odict
+        '''
+        # Handle keys
+        keylist = []
+        if keys is None and vals is None:
+            return None # Nothing to do if nothing supplied
+        if keys is None and vals is not None:
+            keys = len(promotetolist(vals)) # Values are supplied but keys aren't: use default keys
+        if isinstance(keys, Number): # It's a single number: pre-generate
+            keylist = ['%i'%i for i in range(keys)] # Generate keylist
+        elif isinstance(keys, basestring): # It's a single string
+            keylist = [flexstr(keys)]
+        elif isinstance(keys, list): # It's a list: use directly
+            keylist = keys
+        else:
+            errormsg = 'Could not understand keys "%s": must be number, string, or list' % keys
+            raise Exception(errormsg)
+        nkeys = len(keylist)
+        
+        # Handle values
+        vals = promotetolist(vals)
+        nvals = len(vals)
+        if nvals==0: # Special case: it's an empty list
+            vallist = [dcp(vals) for _ in range(nkeys)]
+        elif nvals==1: # Only a single value: duplicate it
+            vallist = [dcp(vals[0]) for _ in range(nkeys)]
+        elif nvals==nkeys: # Lengths match, can use directly
+            vallist = vals 
+        else:
+            errormsg = 'Must supply either a single value or a list of same length as the keys (%i keys, %i values supplied)' % (nkeys, nvals)
+            raise Exception(errormsg)
+        
+        # Handle nested keys -- warning, would be better to not hard-code this, but does the brain in as it is!
+        if keys2 is not None and keys3 is not None: # Doubly nested
+            self.make(keys=keys, vals=odict().make(keys=keys2, vals=odict().make(keys=keys3, vals=vals)))
+        elif keys2 is not None: # Singly nested
+            self.make(keys=keys, vals=odict().make(keys=keys2, vals=vals))
+        else: # Not nested -- normal case of making an odict
+            for key,val in zip(keylist,vallist): # Update odict
+                self.__setitem__(key, val)
+        
+        return self # A bit weird, but usually would use this return an odict
+    
+    
+    def enumkeys(self):
+        ''' Shortcut for enumerate(odict.keys()) '''
+        iterator = enumerate(self.keys())
+        return iterator
+    
+    
+    def enumvals(self):
+        ''' Shortcut for enumerate(odict.values()) '''
+        iterator = enumerate(self.values())
+        return iterator
+    
+    
+    def enumitems(self):
+        ''' Returns tuple of 3 things: index, key, value '''
+        iterator = [] # Would be better to not pre-allocate but what can you do...
+        for ind,item in enumerate(self.items()):
+            thistuple = (ind,)+item # Combine into one tuple
+            iterator.append(thistuple)
+        return iterator
+        
+        
+        
+        
+        
+        
+        
+
+        
 
 
 
@@ -1921,6 +2030,12 @@ class Link(object):
         self.obj = obj # Store the object -- or rather a reference to it, if it's mutable
         try:    self.uid = obj.uid # If the object has a UID, store it separately 
         except: self.uid = None # If not, just use None
+    
+    
+    def __repr__(self):
+        ''' Just use default '''
+        output  = defaultrepr(self)
+        return output
     
     def __call__(self, obj=None):
         ''' If called with no argument, return the stored object; if called with argument, update object '''

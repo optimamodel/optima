@@ -8,13 +8,13 @@ Version: 2017may27
 '''
 
 ## Imports and globals...need Qt since matplotlib doesn't support edit boxes, grr!
-from optima import OptimaException, Settings, dcp, printv, sigfig, makeplots, getplotselections, gridcolors, odict, isnumber, promotetolist, loadobj, sanitizeresults, reanimateplots
+from optima import OptimaException, dcp, printv, sigfig, makeplots, getplotselections, gridcolors, odict, isnumber, promotetolist, loadobj, sanitizeresults, reanimateplots
 from pylab import figure, close, floor, ion, ioff, isinteractive, ceil, array, show, pause
 from pylab import subplot, ylabel, transpose, legend, fill_between, xlim, title
 from matplotlib.widgets import CheckButtons, Button
 
-global panel, results, origpars, tmppars, parset, fulllabellist, fullkeylist, fullsubkeylist, fulltypelist, fullvallist, plotfig, panelfig, check, checkboxes, updatebutton, clearbutton, defaultsbutton, advancedbutton, closebutton, plotargs, scrwid, scrhei, globaladvanced  # For manualfit GUI
-if 1:  panel, results, origpars, tmppars, parset, fulllabellist, fullkeylist, fullsubkeylist, fulltypelist, fullvallist, plotfig, panelfig, check, checkboxes, updatebutton, clearbutton, defaultsbutton, advancedbutton, closebutton, plotargs, scrwid, scrhei, globaladvanced = [None]*23
+global panel, results, origpars, tmppars, parset, fulllabellist, fullkeylist, fullsubkeylist, fulltypelist, fullvallist, plotfig, panelfig, check, checkboxes, updatebutton, clearbutton, defaultsbutton, advancedbutton, closebutton, plusbutton, minusbutton, plotargs, scrwid, scrhei, globaladvanced  # For manualfit GUI
+if 1:  panel, results, origpars, tmppars, parset, fulllabellist, fullkeylist, fullsubkeylist, fulltypelist, fullvallist, plotfig, panelfig, check, checkboxes, updatebutton, clearbutton, defaultsbutton, advancedbutton, closebutton, plusbutton, minusbutton, plotargs, scrwid, scrhei, globaladvanced = [None]*25
 scrwid, scrhei = 24, 12 # Specify these here...if too large, should shrink anyway
 
 
@@ -99,7 +99,7 @@ def pygui(tmpresults, toplot=None, advanced=False, verbose=2, figargs=None, **kw
     Version: 1.3 (2017feb07)
     '''
     
-    global check, checkboxes, updatebutton, clearbutton, defaultsbutton, advancedbutton, closebutton, panelfig, results, plotargs, globaladvanced
+    global check, checkboxes, updatebutton, clearbutton, defaultsbutton, advancedbutton, closebutton, plusbutton, minusbutton, panelfig, results, plotargs, globaladvanced
     plotargs = kwargs # Reset global to match function input
     results = sanitizeresults(tmpresults)
     globaladvanced = advanced
@@ -127,28 +127,34 @@ def pygui(tmpresults, toplot=None, advanced=False, verbose=2, figargs=None, **kw
             errormsg += '%s\n' % tmptoplot
             errormsg += 'Available keys are:\n'
             errormsg += '%s' % checkboxes
-            if not globaladvanced: errormsg += 'Set advanced=True for more options'
+            if not globaladvanced: errormsg += '\nSet advanced=True for more options'
             printv(errormsg, 1, verbose=verbose)
     
     ## Set up control panel
-    if advanced: figwidth = 14
-    else:        figwidth = 7
+    if advanced: 
+        figwidth = 14
+        advwid = 0.6 # Adjust button width
+    else:
+        figwidth = 7
+        advwid = 1.0
     figheight = 12
-    fc = Settings().optimablue # Try loading global optimablue
     panelfig = figure(num='Optima control panel', figsize=(figwidth,figheight), facecolor=(0.95, 0.95, 0.95)) # Open control panel
-    xinit = 0.10
-    if advanced: cbapos = [0.05,  0.07, 0.9, 1.8] # cba="check box axes position": extra tall, for moving later
-    else:        cbapos = [xinit, 0.07, 0.8, 0.9]
+    xinit = 0.10*advwid
+    if advanced: cbapos = [xinit*advwid,  0.07, 0.9, 1.8] # cba="check box axes position": extra tall, for moving later
+    else:        cbapos = [xinit,         0.07, 0.8, 0.9]
     ypos = 0.02 # y-position of buttons
-    bwid = 0.14 # x-width of buttons
+    bwid = 0.14*advwid # x-width of buttons
     bhei = 0.03 # y-height of buttons
     sep  = 0.165 # Separation between buttons
+    pmwid = 0.03*advwid # Width of plus/minus buttons
     checkboxaxes = panelfig.add_axes(cbapos) # Create checkbox locations
     updateaxes   = panelfig.add_axes([xinit+0*sep, ypos, bwid, bhei]) # Create update button location
     clearaxes    = panelfig.add_axes([xinit+1*sep, ypos, bwid, bhei]) # Create clear button location
     defaultsaxes = panelfig.add_axes([xinit+2*sep, ypos, bwid, bhei]) # Create defaults button location
     advancedaxes = panelfig.add_axes([xinit+3*sep, ypos, bwid, bhei]) # Create defaults button location
     closeaxes    = panelfig.add_axes([xinit+4*sep, ypos, bwid, bhei]) # Create close button location
+    plusaxes     = panelfig.add_axes([xinit+5*sep, ypos+0.015, pmwid, 0.02]) # Create plus button location
+    minusaxes    = panelfig.add_axes([xinit+5*sep, ypos-0.005, pmwid, 0.02]) # Create plus button location
     check = CheckButtons(checkboxaxes, checkboxnames, isselected) # Actually create checkboxes
     
     # Reformat the checkboxes
@@ -196,16 +202,24 @@ def pygui(tmpresults, toplot=None, advanced=False, verbose=2, figargs=None, **kw
     
     if advanced: advlabel = 'Normal'
     else:        advlabel = 'Advanced'
-    updatebutton   = Button(updateaxes,   'Update',   color=fc) # Make button pretty and blue
-    clearbutton    = Button(clearaxes,    'Clear',    color=fc) # Make button pretty and blue
-    defaultsbutton = Button(defaultsaxes, 'Defaults', color=fc) # Make button pretty and blue
-    advancedbutton = Button(advancedaxes, advlabel,   color=fc) # Make button pretty and blue
-    closebutton    = Button(closeaxes,    'Close',    color=fc) # Make button pretty and blue
+    blue  = (0.4,0.7,1.0) # Also green = (0.2,0.7,0.1), red   = (1.0,0.5,0.1)
+    white = (1.0,1.0,1.0)
+    black = (0.4,0.4,0.4)
+    darker = 0.7
+    updatebutton   = Button(updateaxes,   'Update',   color=blue, hovercolor=tuple(array(blue)*darker)) 
+    clearbutton    = Button(clearaxes,    'Clear',    color=blue,  hovercolor=tuple(array(blue)*darker))
+    defaultsbutton = Button(defaultsaxes, 'Defaults', color=blue,  hovercolor=tuple(array(blue)*darker))
+    advancedbutton = Button(advancedaxes,  advlabel,  color=blue,  hovercolor=tuple(array(blue)*darker))
+    closebutton    = Button(closeaxes,    'Close',    color=blue,   hovercolor=tuple(array(blue)*darker))
+    plusbutton     = Button(plusaxes,      '+',       color=white, hovercolor=tuple(array(white)*darker))
+    minusbutton    = Button(minusaxes,     '-',       color=black, hovercolor=tuple(array(black)*darker))
     updatebutton.on_clicked(updateplots) # Update figure if button is clicked
     clearbutton.on_clicked(clearselections) # Clear all checkboxes
     defaultsbutton.on_clicked(defaultselections) # Return to default selections
     advancedbutton.on_clicked(advancedselections) # Return to default selections
     closebutton.on_clicked(closegui) # Close figures
+    plusbutton.on_clicked(zoomin) # Zoom in on plots
+    minusbutton.on_clicked(zoomout) # Zoom in on plots
     updateplots(None) # Plot initially -- ACTUALLY GENERATES THE PLOTS
     return None
 
@@ -272,7 +286,7 @@ def manualfit(project=None, parsubset=None, name=-1, ind=0, maxrows=25, verbose=
             fullvallist[b] = eval(str(box.text())) 
         
         # Create lists for update
-        mflists = dict()
+        mflists = odict()
         mflists['keys'] = fullkeylist
         mflists['subkeys'] = fullsubkeylist
         mflists['types'] = fulltypelist
@@ -313,7 +327,7 @@ def manualfit(project=None, parsubset=None, name=-1, ind=0, maxrows=25, verbose=
     leftmargin = 10
     rowheight = 25
     colwidth = 450
-    ncols = floor(npars/maxrows)+1
+    ncols = floor(npars/(maxrows+10*advanced))+1
     nrows = ceil(nfull/float(ncols))
     panelwidth = colwidth*ncols
     panelheight = rowheight*(nfull/ncols+2)+50
@@ -714,6 +728,33 @@ def advancedselections(event=None):
     pause(0.2) # Without this, it doesn't work...siiiigh
     return None
     
+
+def zoomplots(event=None, ratio=1.0):
+    ''' Zoom in or out '''
+    global plotfig
+    for ax in plotfig.axes:
+        axpos = ax.get_position()
+        x0 = axpos.x0
+        x1 = axpos.x1
+        y0 = axpos.y0
+        y1 = axpos.y1
+        xdiff = x1-x0
+        ydiff = y1-y0
+        xchange = xdiff*(1-ratio)/2.0
+        ychange = ydiff*(1-ratio)/2.0
+        ax.set_position([x0+xchange, y0+ychange, xdiff*ratio, ydiff*ratio])
+    return None
+
+def zoomin(event=None):
+    ''' Zoom into plots '''
+    zoomplots(event=event, ratio=1.1)
+    return None
+
+def zoomout(event=None):
+    ''' Zoom out of plots '''
+    zoomplots(event=event, ratio=0.9)
+    return None
+
     
 def updateplots(event=None, tmpresults=None, **kwargs):
     ''' Close current window if it exists and open a new one based on user selections '''

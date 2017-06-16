@@ -1,14 +1,21 @@
+'''
+Define classes and functions for handling scenarios and ICERs.
+
+Version: 2017jun03
+'''
+
 ## Imports
 from numpy import append, array
-from optima import OptimaException, Link, dcp, today, odict, printv, findinds, runmodel, Multiresultset, defaultrepr, getresults, vec2obj, isnumber, uuid, promotetoarray
-
+from optima import OptimaException, Link, Multiresultset, runmodel # Core classes/functions
+from optima import dcp, today, odict, printv, findinds, defaultrepr, getresults, vec2obj, isnumber, uuid, promotetoarray # Utilities
 
 class Scen(object):
     ''' The scenario base class -- not to be used directly, instead use Parscen or Progscen '''
-    def __init__(self, name=None, parsetname=-1, t=None, active=True):
+    def __init__(self, name=None, parsetname=-1, progsetname=-1, t=None, active=True):
         self.uid = uuid()
         self.name = name
-        self.parsetname = parsetname
+        self.parsetname  = parsetname
+        self.progsetname = progsetname
         self.t = t
         self.active = active
         self.resultsref = None
@@ -62,7 +69,7 @@ class Coveragescen(Progscen):
 def runscenarios(project=None, verbose=2, defaultparset=0, debug=False, **kwargs):
     """
     Run all the scenarios.
-    Version: 2016jan22 by cliffk
+    Version: 2017jun04 by cliffk
     """
     
     printv('Running scenarios...', 1, verbose)
@@ -89,10 +96,9 @@ def runscenarios(project=None, verbose=2, defaultparset=0, debug=False, **kwargs
         budget = scenlist[scenno].budget if isinstance(scenlist[scenno], Progscen) else None
         coverage = scenlist[scenno].coverage if isinstance(scenlist[scenno], Progscen) else None
         budgetyears = scenlist[scenno].t if isinstance(scenlist[scenno], Progscen) else None
-        progset = project.progsets[scenlist[scenno].progsetname] if isinstance(scenlist[scenno], Progscen) else None
 
         # Run model and add results
-        result = runmodel(pars=scenparset.pars, parset=scenparset, progset=progset, project=project, budget=budget, coverage=coverage, budgetyears=budgetyears, verbose=0, debug=debug, label=project.name+'-scenarios', **kwargs)
+        result = runmodel(pars=scenparset.pars, parsetname=scenlist[scenno].parsetname, progsetname=scenlist[scenno].progsetname, project=project, budget=budget, coverage=coverage, budgetyears=budgetyears, verbose=0, debug=debug, label=project.name+'-scenarios', **kwargs)
         result.name = scenlist[scenno].name # Give a name to these results so can be accessed for the plot legend
         allresults.append(result) 
         printv('... completed scenario: %i/%i' % (scenno+1, nscens), 3, verbose)
@@ -300,16 +306,19 @@ def defaultscenarios(project=None, which=None, startyear=2016, endyear=2020, par
     if which is None: which = 'budgets'
     
     if which=='budgets':
+        parsetname = 'default-scenarios'
+        project.copyparset(orig=parset, new=parsetname)
+        project.parsets['default-scenarios'].fixprops(False) # Ensure they're not fixed
         defaultbudget = project.progsets[progset].getdefaultbudget()
         maxbudget = dcp(defaultbudget)
         nobudget = dcp(defaultbudget)
         for key in maxbudget: maxbudget[key] += project.settings.infmoney
         for key in nobudget: nobudget[key] *= 1e-6
         scenlist = [
-            Parscen(name='Baseline', parsetname=0, pars=[]),
-            Budgetscen(name='No budget', parsetname=0, progsetname=0, t=[startyear], budget=nobudget),
-            Budgetscen(name='Baseline budget', parsetname=0, progsetname=0, t=[startyear], budget=defaultbudget),
-            Budgetscen(name='Unlimited spending', parsetname=0, progsetname=0, t=[startyear], budget=maxbudget),
+            Parscen(   name='Baseline',         parsetname=parsetname, pars=[]),
+            Budgetscen(name='Zero budget',      parsetname=parsetname, progsetname=0, t=[startyear], budget=nobudget),
+            Budgetscen(name='Baseline budget',  parsetname=parsetname, progsetname=0, t=[startyear], budget=defaultbudget),
+            Budgetscen(name='Unlimited budget', parsetname=parsetname, progsetname=0, t=[startyear], budget=maxbudget),
             ]
     
     # WARNING, this may not entirely work

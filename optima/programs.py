@@ -340,14 +340,15 @@ class Programset(object):
         else: return progs_by_targetpar
 
 
-    def getdefaultbudget(self, t=None, verbose=2):
-        ''' Extract the budget if cost data has been provided'''
+    def getdefaultbudget(self, t=None, verbose=2, optimizable=None):
+        ''' Extract the budget if cost data has been provided; if optimizable is True, then only return optimizable programs '''
         
         # Initialise outputs
         totalbudget, lastbudget, selectbudget = odict(), odict(), odict()
 
         # Validate inputs
-        if t is not None: t = promotetoarray(t)
+        if t is not None:t = promotetoarray(t)
+        if optimizable is None: optimizable = False # Return only optimizable indices
 
         # Set up internal variables
         settings = self.getsettings()
@@ -373,9 +374,13 @@ class Programset(object):
                     yrindex = findinds(tvec,yr)
                     selectbudget[program].append(totalbudget[program][yrindex][0])
                     
-        # TEMP: store default budget as an attribute
+        # Store default budget as an attribute
         self.defaultbudget = lastbudget
-        return selectbudget if t is not None else lastbudget
+        if t is None:   thisbudget = dcp(lastbudget)
+        else:           thisbudget = dcp(selectbudget)
+        if optimizable: thisbudget = thisbudget.sorted(self.optimizable()) # Pull out only optimizable programs
+        return thisbudget
+
 
     def getdefaultcoverage(self, t=None, parset=None, results=None, verbose=2, sample='best'):
         ''' Extract the coverage levels corresponding to the default budget'''
@@ -384,6 +389,7 @@ class Programset(object):
         for progno in range(len(defaultcoverage)):
             defaultcoverage[progno] = defaultcoverage[progno][0] if defaultcoverage[progno] else nan    
         return defaultcoverage
+
 
     def getprogcoverage(self, budget, t, parset=None, results=None, proportion=False, sample='best', verbose=2):
         '''Budget is currently assumed to be a DICTIONARY OF ARRAYS'''

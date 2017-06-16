@@ -8,15 +8,15 @@ To add a new plot, you need to add it to getplotselections (in this file) so it 
 plotresults (in gui.py) so it will be sent to the right spot; and then add the actual function to do the
 plotting to this file.
 
-Version: 2017may22
+Version: 2017jun03
 '''
 
-from optima import OptimaException, Resultset, Multiresultset, odict, printv, gridcolors, vectocolor, alpinecolormap, makefilepath, sigfig, dcp, findinds, promotetolist, saveobj, promotetoodict, promotetoarray, boxoff
-from numpy import array, ndim, maximum, arange, zeros, mean, shape, isnan, linspace
+from optima import OptimaException, Resultset, Multiresultset, ICER, odict, printv, gridcolors, vectocolor, alpinecolormap, makefilepath, sigfig, dcp, findinds, promotetolist, saveobj, promotetoodict, promotetoarray, boxoff
+from numpy import array, ndim, maximum, arange, zeros, mean, shape, isnan, linspace, minimum # Numeric functions
+from pylab import gcf, get_fignums, close, ion, ioff, isinteractive, figure # Plotting functions
 from matplotlib.backends.backend_agg import new_figure_manager_given_figure as nfmgf # Warning -- assumes user has agg on their system, but should be ok. Use agg since doesn't require an X server
 from matplotlib.figure import Figure # This is the non-interactive version
 from matplotlib import ticker
-from pylab import gcf, get_fignums, close, ion, ioff, isinteractive, figure
 import textwrap
 
 # Define allowable plot formats -- 3 kinds, but allow some flexibility for how they're specified
@@ -26,6 +26,7 @@ estimatecolor = (0.8,0.8,0.8) # Color of estimates rather than real data
 fillzorder = 0 # The order in which to plot things -- fill at the back
 datazorder = 100 # Then data
 linezorder = 200 # Finally, lines
+proghueshift = 0.05 # Slightly shift colors for programs
 
 # Define global font sizes
 globaltitlesize = 12
@@ -39,15 +40,17 @@ interactiveposition = [0.15,0.1,0.55,0.75] # Use slightly larger margnis for int
 
 def getdefaultplots(ismulti='both'):
     ''' Since these can get overwritten otherwise '''
-    defaultplots = ['cascade', 'budgets', 'numplhiv-stacked', 'numinci-stacked', 'numdeath-stacked', 'numtreat-stacked', 'numnewdiag-stacked', 'prev-population'] # Default epidemiological plots
+    defaultplots = ['cascadebars', 'budgets', 'numplhiv-stacked', 'numinci-stacked', 'numdeath-stacked', 'numtreat-stacked', 'numnewdiag-stacked', 'prev-population'] # Default epidemiological plots
     defaultmultiplots = ['budgets', 'numplhiv-total', 'numinci-total', 'numdeath-total', 'numtreat-total', 'numnewdiag-total', 'prev-population'] # Default epidemiological plots
     if ismulti==False:  return defaultplots
     elif ismulti==True: return defaultmultiplots
     else:               return defaultplots,defaultmultiplots
 
 
-def makefigure(figsize=None, facecolor=(1,1,1), interactive=False, fig=None, **kwargs):
+def makefigure(figsize=None, facecolor=None, interactive=False, fig=None, **kwargs):
     ''' Decide whether to make an interactive figure() or a non-interactive Figure()'''
+    if figsize is None:   figsize = globalfigsize
+    if facecolor is None: facecolor = (1,1,1)
     if fig is None: # Create a new figure if one is not supplied
         if interactive:  fig = figure(facecolor=facecolor, figsize=figsize, **kwargs)
         else:            fig = Figure(facecolor=facecolor, figsize=figsize, **kwargs)
@@ -137,7 +140,9 @@ def getplotselections(results, advanced=False):
     
     ## Cascade plot is always available, since epi is always available
     plotselections['keys'].append('cascade')
-    plotselections['names'].append('Treatment cascade')
+    plotselections['names'].append('Care cascade')
+    plotselections['keys'].append('cascadebars')
+    plotselections['names'].append('Care cascade (bars)')
     
 #    ## Deaths by CD4 -- broken because no results.raw
 #    if advanced:
@@ -244,6 +249,16 @@ def makeplots(results=None, toplot=None, die=False, verbose=2, plotstartyear=Non
         except OptimaException as E: 
             if die: raise E
             else: printv('Could not plot cascade: "%s"' % E.__repr__(), 1, verbose)
+    
+    ## Add cascade plot(s) with bars
+    if 'cascadebars' in toplot:
+        toplot.remove('cascadebars') # Because everything else is passed to plotepi()
+        try: 
+            cascadebarplots = plotcascade(results, die=die, plotstartyear=plotstartyear, plotendyear=plotendyear, fig=fig, asbars=True, **kwargs)
+            allplots.update(cascadebarplots)
+        except OptimaException as E: 
+            if die: raise E
+            else: printv('Could not plot cascade bars: "%s"' % E.__repr__(), 1, verbose)
     
     ## Add deaths by CD4 plot -- WARNING, only available if results includes raw
     if 'deathbycd4' in toplot:
@@ -472,13 +487,13 @@ def plotepi(results, toplot=None, uncertainty=True, die=True, showdata=True, ver
                     for l in range(nlinesperplot):
                         ydata = factor*best[nlinesperplot-1-l]
                         allydata.append(ydata)
-                        ax.plot(xdata, ydata, lw=lw, c=colors[nlinesperplot-1-l], zorder=linezorder) # Index is each different e.g. scenario
+                        ax.plot(xdata, ydata, lw=lw, c=colors[nlinesperplot-1-l], zorder=linezorder, label=labels[l]) # Index is each different e.g. scenario
                 
                 if ismultisim and isperpop:
                     for l in range(nlinesperplot):
                         ydata = factor*best[nlinesperplot-1-l][i]
                         allydata.append(ydata)
-                        ax.plot(xdata, ydata, lw=lw, c=colors[nlinesperplot-1-l], zorder=linezorder) # Indices are different populations (i), then different e..g scenarios (l)
+                        ax.plot(xdata, ydata, lw=lw, c=colors[nlinesperplot-1-l], zorder=linezorder, label=labels[l]) # Indices are different populations (i), then different e..g scenarios (l)
 
 
 
@@ -532,12 +547,13 @@ def plotepi(results, toplot=None, uncertainty=True, die=True, showdata=True, ver
                 ax.set_xlim((results.tvec[startind], results.tvec[endind]))
                 if not ismultisim:
                     if isstacked: 
-                        handles, labels = ax.get_legend_handles_labels()
-                        ax.legend(handles[::-1], labels[::-1], **legendsettings) # Multiple entries, all populations
+                        handles, legendlabels = ax.get_legend_handles_labels()
+                        ax.legend(handles[::-1], legendlabels[::-1], **legendsettings) # Multiple entries, all populations
                 else:
-                    ax.legend(labels[::-1], **legendsettings) # Multiple simulations
-                if useSIticks: SIticks(epiplots[pk])
-                else:          commaticks(epiplots[pk])
+                    handles, legendlabels = ax.get_legend_handles_labels()
+                    ax.legend(handles[::-1], legendlabels, **legendsettings) # Multiple simulations
+                if useSIticks: SIticks(ax=ax)
+                else:          commaticks(ax=ax)
         
         return epiplots
 
@@ -617,7 +633,7 @@ def plotbudget(multires=None, die=True, figsize=globalfigsize, legendsize=global
 
     Results object must be of Multiresultset type.
     
-    Version: 2017mar09
+    Version: 2017jun04
     '''
     
     # Preliminaries: process inputs and extract needed data
@@ -640,7 +656,7 @@ def plotbudget(multires=None, die=True, figsize=globalfigsize, legendsize=global
                 allprogkeys.append(key)
     nallprogs = len(allprogkeys)
     nallocs = len(alloclabels)
-    allprogcolors = gridcolors(nallprogs)
+    allprogcolors = gridcolors(nallprogs, hueshift=proghueshift)
     colordict = odict()
     for k,key in enumerate(allprogkeys):
         colordict[key] = allprogcolors[k]
@@ -702,7 +718,7 @@ def plotbudget(multires=None, die=True, figsize=globalfigsize, legendsize=global
         ax.set_ylim(0,nallocs+1)
         ax.set_title('Budget')
         
-        SIticks(fig, axis='x')
+        SIticks(ax=ax, axis='x')
         budgetplots['budget'] = fig
     
     return budgetplots
@@ -758,7 +774,7 @@ def plotcoverage(multires=None, die=True, figsize=globalfigsize, legendsize=glob
         
         nprogs = nprogslist[plt]
         proglabels = progkeylists[plt]
-        colors = gridcolors(nprogs)
+        colors = gridcolors(nprogs, hueshift=proghueshift)
         nbudgetyears = len(budgetyearstoplot[plt])
         barwidth = .5/nbudgetyears
         for y in range(nbudgetyears):
@@ -798,7 +814,7 @@ def plotcoverage(multires=None, die=True, figsize=globalfigsize, legendsize=glob
         ax[-1].legend(labels, **legendsettings) # Multiple entries, all populations
         
         # Tidy up
-        SIticks(fig)
+        SIticks(ax=ax)
         coverageplots[thistitle] = fig
     
     for thisax in ax: thisax.set_ylim(ymin,ymax) # So they all have the same scale
@@ -820,13 +836,18 @@ def plotcoverage(multires=None, die=True, figsize=globalfigsize, legendsize=glob
 ##################################################################
 def plotcascade(results=None, aspercentage=False, cascadecolors=None, figsize=globalfigsize, lw=2, titlesize=globaltitlesize, 
                 labelsize=globallabelsize, ticksize=globalticksize, legendsize=globallegendsize, position=None, useSIticks=True, 
-                showdata=True, dotsize=50, plotstartyear=None, plotendyear=None, die=False, verbose=2, interactive=False, fig=None, **kwargs):
+                showdata=True, dotsize=50, plotstartyear=None, plotendyear=None, die=False, verbose=2, interactive=False, fig=None, asbars=False, **kwargs):
     ''' 
     Plot the treatment cascade.
     
-    NOTE: do not call this function directly; instead, call via plotresults().
+    NOTE: do not call this function directly; instead, call via plotresults() using 'cascade' or 'cascadebars'.
     
-    Version: 2016sep28    
+    Example to show two bars for 2017 and 2020:
+        import optima as op
+        P = op.demo(0)
+        op.plotresults(P, toplot='cascadebars', plotstartyear=2017, plotendyear=2020)
+    
+    Version: 2017jun02 
     '''
     
     # Figure out what kind of result it is
@@ -841,49 +862,124 @@ def plotcascade(results=None, aspercentage=False, cascadecolors=None, figsize=gl
         errormsg = 'Results input to plotcascade() must be either Resultset or Multiresultset, not "%s".' % type(results)
         raise OptimaException(errormsg)
         
-    # Get year indices for producing plots
-    startind, endind = getplotinds(plotstartyear=plotstartyear, plotendyear=plotendyear, tvec=results.tvec, die=die, verbose=verbose)
-
     # Set up figure and do plot
     cascadeplots = odict()
-    cascadelist = ['numplhiv', 'numdiag', 'numevercare', 'numincare', 'numtreat', 'numsuppressed'] 
-    cascadenames = ['Undiagnosed', 'Diagnosed', 'Linked to care', 'Retained in care', 'Treated', 'Virally suppressed']
-        
-    # Handle colors
-    defaultcascadecolors = odict([ # Based on https://www.aids.gov/federal-resources/policies/care-continuum/
-        ('undx',  [0.71, 0.26, 0.24]),
-        ('dx',    [0.39, 0.48, 0.13]),
-        ('care',  [0.49, 0.68, 0.23]),
-        ('retain',[0.59, 0.78, 0.33]),
-        ('unsupp',[0.38, 0.52, 0.64]),
-        ('supp',  [0.43, 0.29, 0.62]),
-        ]).reversed() # Colors get called in opposite order
-    if cascadecolors is None:      colors = defaultcascadecolors[:]
-    elif cascadecolors=='grid':    colors = gridcolors(len(cascadelist), reverse=True)
-    elif cascadecolors=='alpine':  colors = vectocolor(arange(len(cascadelist)), cmap=alpinecolormap()) # Handle this as a special case
-    elif type(cascadecolors)==str: colors = vectocolor(arange(len(cascadelist)+2), cmap=cascadecolors)[1:-1] # Remove first and last element
-    else: colors = cascadecolors
+    if asbars:
+        if plotstartyear is None: plotstartyear = results.pars['numtx'].t['tot'][-1]
+        if plotendyear   is None: plotendyear   = results.tvec[-1]
+        startind, endind = getplotinds(plotstartyear=plotstartyear, plotendyear=plotendyear, tvec=results.tvec, die=die, verbose=verbose) # Get year indices for producing plots
+        cascinds = [startind, endind]
+        baselabel = '%4i' % plotstartyear
+        endlabel  = '%4i' % plotendyear
+        yearlabels = [baselabel, endlabel]
+        casclabels  = ['PLHIV', 'Diagnosed', 'Treated', 'Suppressed']
+        casckeys    = ['numplhiv',  'numdiag',   'numtreat','numsuppressed']
+        ncategories = len(casclabels)
+        darken = array([1.0, 1.3, 1.3]) # Amount by which to darken succeeding cascade stages -- can't use 0.2 since goes negative!!
+        targetcolor   = array([0,0,0])
+        origbasecolor = array([0.5,0.60,0.9])
+        origendcolor  = array([0.3,0.85,0.6])
+        casccolors = odict([(baselabel,[origbasecolor]), (endlabel, [origendcolor])])
+        for k in range(len(casckeys)-1):
+            for label in casccolors.keys():
+                darker = dcp(casccolors[label][-1]**darken) # Make each color slightly darker than the one before
+                casccolors[label].append(darker)
+    else:
+        # Get year indices for producing plots
+        startind, endind = getplotinds(plotstartyear=plotstartyear, plotendyear=plotendyear, tvec=results.tvec, die=die, verbose=verbose)
+        cascadelist = ['numplhiv', 'numdiag', 'numevercare', 'numincare', 'numtreat', 'numsuppressed'] 
+        cascadenames = ['Undiagnosed', 'Diagnosed', 'Linked to care', 'Retained in care', 'Treated', 'Virally suppressed']
+            
+        # Handle colors
+        defaultcascadecolors = odict([ # Based on https://www.aids.gov/federal-resources/policies/care-continuum/
+            ('undx',  [0.71, 0.26, 0.24]),
+            ('dx',    [0.39, 0.48, 0.13]),
+            ('care',  [0.49, 0.68, 0.23]),
+            ('retain',[0.59, 0.78, 0.33]),
+            ('unsupp',[0.38, 0.52, 0.64]),
+            ('supp',  [0.43, 0.29, 0.62]),
+            ]).reversed() # Colors get called in opposite order
+        if cascadecolors is None:      colors = defaultcascadecolors[:]
+        elif cascadecolors=='grid':    colors = gridcolors(len(cascadelist), reverse=True)
+        elif cascadecolors=='alpine':  colors = vectocolor(arange(len(cascadelist)), cmap=alpinecolormap()) # Handle this as a special case
+        elif type(cascadecolors)==str: colors = vectocolor(arange(len(cascadelist)+2), cmap=cascadecolors)[1:-1] # Remove first and last element
+        else: colors = cascadecolors
     
+    # Actually do the plotting
     for plt in range(nsims): # WARNING, copied from plotallocs()
-        bottom = 0*results.tvec # Easy way of setting to 0...
         
-        ## Do the plotting
+        # Create the figure and axes
         fig,naxes = makefigure(figsize=figsize, interactive=interactive, fig=fig)
         ax = fig.add_subplot(naxes, 1, naxes)
         setposition(ax, position, interactive)
-        for k,key in enumerate(reversed(cascadelist)): # Loop backwards so correct ordering -- first one at the top, not bottom
-            if ismultisim: 
-                thisdata = results.main[key].tot[plt] # If it's a multisim, need an extra index for the plot number
-                if aspercentage: thisdata *= 100./results.main['numplhiv'].tot[plt]
-            else:
-                thisdata = results.main[key].tot[0] # Get the best estimate
-                if aspercentage: thisdata *= 100./results.main['numplhiv'].tot[0]
-            ax.fill_between(results.tvec, bottom, thisdata, facecolor=colors[k], alpha=1, lw=0)
-            bottom = dcp(thisdata) # Set the bottom so it doesn't overwrite
-            ax.plot((0, 0), (0, 0), color=colors[len(colors)-k-1], linewidth=10, label=cascadenames[k]) # Colors are in reverse order
-        if showdata and not aspercentage: # Don't try to plot if it's a percentage
-            thisdata = results.main['numtreat'].datatot[0]
-            ax.scatter(results.datayears, thisdata, c=(0,0,0), s=dotsize, lw=0)
+            
+        if asbars:
+            dx = 1.0
+            space = 4.0
+            basex = arange(ncategories)*space
+            for k,key in enumerate(casckeys):
+                for i,ind in enumerate(cascinds):
+                    if ismultisim: 
+                        thisbar = 100.*results.main[key].tot[plt][ind]/results.main['numplhiv'].tot[plt][ind] # If it's a multisim, need an extra index for the plot number
+                    else:
+                        thisbar = 100.*results.main[key].tot[0][ind]/results.main['numplhiv'].tot[0][ind] # Get the best estimate
+                    if k==len(casckeys)-1: yearlabel = yearlabels[i]
+                    else:                  yearlabel = None
+                    ax.bar(basex[k]+i*dx, thisbar, width=1., color=casccolors[i][k], linewidth=0, label=yearlabel)
+            
+            targetxpos = 2.0
+            labelxpos  = 3.2
+            dy = -1
+            lineargs = {'c':targetcolor, 'linewidth':2}
+            txtargs = {'fontsize':legendsize, 'color':targetcolor, 'horizontalalignment':'center'}
+            ax.plot([basex[1], basex[1]+targetxpos], [90,90], **lineargs)
+            ax.plot([basex[2], basex[2]+targetxpos], [81,81], **lineargs)
+            ax.plot([basex[3], basex[3]+targetxpos], [73,73], **lineargs)
+            ax.text(basex[1]+labelxpos,90+dy,'90%', **txtargs)
+            ax.text(basex[2]+labelxpos,81+dy,'81%', **txtargs)
+            ax.text(basex[3]+labelxpos,73+dy,'73%', **txtargs)
+            
+            ax.set_xticks(basex+1.0)
+            ax.set_xticklabels(casclabels)
+            ax.set_ylabel('Percentage of PLHIV')
+            ax.set_xlim((basex[0]-1,basex[-1]+space))
+            ax.spines['top'].set_visible(False)
+            ax.spines['right'].set_visible(False)
+            ax.yaxis.set_ticks_position('left')
+            ax.xaxis.set_ticks_position('bottom')
+            if ismultisim: thistitle = 'Care cascade - %s' % titles[plt]
+            else:          thistitle = 'Care cascade'
+        
+        else: # Not bars
+            bottom = 0*results.tvec # Easy way of setting to 0...
+            for k,key in enumerate(reversed(cascadelist)): # Loop backwards so correct ordering -- first one at the top, not bottom
+                if ismultisim: 
+                    thisdata = results.main[key].tot[plt] # If it's a multisim, need an extra index for the plot number
+                    if aspercentage: thisdata *= 100./results.main['numplhiv'].tot[plt]
+                else:
+                    thisdata = results.main[key].tot[0] # Get the best estimate
+                    if aspercentage: thisdata *= 100./results.main['numplhiv'].tot[0]
+                ax.fill_between(results.tvec, bottom, thisdata, facecolor=colors[k], alpha=1, lw=0)
+                bottom = dcp(thisdata) # Set the bottom so it doesn't overwrite
+                ax.plot((0, 0), (0, 0), color=colors[len(colors)-k-1], linewidth=10, label=cascadenames[k]) # Colors are in reverse order
+            if showdata and not aspercentage: # Don't try to plot if it's a percentage
+                thisdata = results.main['numtreat'].datatot[0]
+                ax.scatter(results.datayears, thisdata, c=(0,0,0), s=dotsize, lw=0)
+            
+            # Configure rest of the plot
+            if aspercentage: ax.set_ylabel('Percentage of PLHIV')
+            else:            ax.set_ylabel('Number of PLHIV')
+                    
+            if aspercentage: ax.set_ylim((0,100))
+            else:            setylim(0, ax)
+            ax.set_xlim((results.tvec[startind], results.tvec[endind]))
+            
+            if ismultisim: thistitle = 'Cascade - %s' % titles[plt]
+            else:          thistitle = 'Cascade'
+        
+        ## General plotting fixes
+        if useSIticks: SIticks(ax=ax)
+        else:          commaticks(ax=ax)
         
         ## Configure plot -- WARNING, copied from plotepi()
         boxoff(ax)
@@ -891,32 +987,15 @@ def plotcascade(results=None, aspercentage=False, cascadecolors=None, figsize=gl
         ax.xaxis.label.set_fontsize(labelsize)
         ax.yaxis.label.set_fontsize(labelsize)
         for item in ax.get_xticklabels() + ax.get_yticklabels(): item.set_fontsize(ticksize)
-
+        
         # Configure legend
         legendsettings = {'loc':'upper left', 'bbox_to_anchor':(1.05, 1), 'fontsize':legendsize, 'title':'', 'frameon':False, 'scatterpoints':1}
         ax.legend(**legendsettings) # Multiple entries, all populations
-        
-        # Configure rest of the plot
-        
-        if ismultisim: thistitle = 'Cascade - %s' % titles[plt]
-        else:          thistitle = 'Cascade'
+            
         ax.set_title(thistitle)
-        if aspercentage: ax.set_ylabel('Percentage of PLHIV')
-        else:            ax.set_ylabel('Number of PLHIV')
-                
-        if aspercentage: ax.set_ylim((0,100))
-        else:            setylim(0, ax)
-        ax.set_xlim((results.tvec[startind], results.tvec[endind]))
-        
-        if useSIticks: SIticks(fig)
-        else:          commaticks(fig)
-        
         cascadeplots[thistitle] = fig
     
     return cascadeplots
-
-
-
 
 
 
@@ -942,7 +1021,7 @@ def plotallocations(project=None, budgets=None, colors=None, factor=1e6, compare
         colors = gridcolors(nprogs)
             
     
-    fig = makefigure(figsize=(10,10), interactive=interactive)
+    fig,naxes = makefigure(figsize=(10,10), interactive=interactive)
     fig.subplots_adjust(left=0.10) # Less space on left
     fig.subplots_adjust(right=0.98) # Less space on right
     fig.subplots_adjust(top=0.95) # Less space on bottom
@@ -956,7 +1035,7 @@ def plotallocations(project=None, budgets=None, colors=None, factor=1e6, compare
     ymax = 0
     nplt = len(budgets)
     for plt in range(nplt):
-        ax.append(fig.add_subplot(len(budgets),1,plt+1))
+        ax.append(fig.add_subplot(naxes+len(budgets)-1,1,naxes+plt))
         ax[-1].hold(True)
         for p,ind in enumerate(indices):
             ax[-1].bar([xbardata[p]], [budgets[plt][ind]/factor], color=colors[p], linewidth=0)
@@ -969,7 +1048,7 @@ def plotallocations(project=None, budgets=None, colors=None, factor=1e6, compare
             ax[-1].plot([0,nprogs+1],[0,0],c=(0,0,0))
         ax[-1].set_xlim(0,nprogs+1)
         
-        if factor==1: ax[-1].set_ylabel('Spending (US$)')
+        if factor==1:     ax[-1].set_ylabel('Spending (US$)')
         elif factor==1e3: ax[-1].set_ylabel("Spending (US$'000s)")
         elif factor==1e6: ax[-1].set_ylabel('Spending (US$m)')
         ax[-1].set_title(labels[plt])
@@ -1006,7 +1085,7 @@ def plotbycd4(results=None, whattoplot='people', figsize=globalfigsize, lw=2, ti
         raise OptimaException(errormsg)
 
     # Set up figure and do plot
-    fig = makefigure(figsize=figsize, interactive=interactive)
+    fig,naxes = makefigure(figsize=figsize, interactive=interactive)
     ax = []
     
     titlemap = {'people': 'PLHIV', 'death': 'Deaths'}
@@ -1045,7 +1124,86 @@ def plotbycd4(results=None, whattoplot='people', figsize=globalfigsize, lw=2, ti
         ax[-1].set_xlim((results.tvec[0], results.tvec[-1]))
         ax[-1].legend(results.settings.hivstatesfull, **legendsettings) # Multiple entries, all populations
         
-    SIticks(fig)
+    SIticks(ax=ax)
+    
+    return fig    
+
+
+
+
+##################################################################
+## Plot things by CD4
+##################################################################
+def ploticers(results=None, figsize=globalfigsize, lw=2, dotsize=30, titlesize=globaltitlesize, labelsize=globallabelsize, 
+             ticksize=globalticksize, legendsize=globallegendsize, position=None, interactive=False, **kwargs):
+    ''' 
+    Plot ICERs. Not part of weboptima yet.
+    '''
+    
+    # Figure out what kind of result it is
+    if not(type(results)==ICER): 
+        errormsg = 'Results input to ploticers() must be an ICER result, not "%s".' % type(results)
+        raise OptimaException(errormsg)
+
+    # Set up figure and do plot
+    fig,naxes = makefigure(figsize=figsize, interactive=interactive)
+    ax = fig.add_subplot(naxes, 1, naxes)
+    position = dcp(position)
+    if position is None: # If defaults, reset
+        if interactive: position = dcp(interactiveposition)
+        else:           position = dcp(globalposition)
+        position[1] += 0.05 # More room on bottom for x-axis label
+    setposition(ax, position, interactive)
+    keys = results.keys
+    icer = results.icer
+    x    = results.x*100.0 # Convert to percent
+    nkeys = len(keys)
+    colors = gridcolors(nkeys, hueshift=proghueshift)
+    if   results.objective == 'death': objectivestr = 'death'
+    elif results.objective == 'inci':  objectivestr = 'new infection'
+    elif results.objective == 'daly':  objectivestr = 'DALY'
+    else:
+        errormsg = 'Cannot plot ICERs: objective "%s" is unknown' % results.objective
+        raise OptimaException(errormsg)
+    
+    # Figure out y-axis limits
+    minicer  = icer[:].min()
+    maxicer  = icer[:].max()
+    meanicer = icer[:].mean()
+    totalbudget = results.defaultbudget[:].sum()
+    upperlim = min([maxicer, totalbudget, 10*meanicer, 50*minicer]) # Set the y limit based on the minimum of each of these different options
+    
+    # Do the plotting
+    sizeratio = 1.5
+    ax.plot([100,100], [0,upperlim], color=(0.7,0.7,0.7), linewidth=1, linestyle=':') # Mark the current spending
+    hitupper = 0 # Count the number of programs that hit the upper limit
+    newupper = upperlim
+    for k,key in enumerate(keys): # Loop backwards so correct ordering -- first one at the top, not bottom
+        newupper = upperlim*(1.0+0.01*hitupper) # Make it so lines are distinguishable
+        thisicer = minimum(icer[key], newupper) # Cap the ICERs with maximum value
+        goodinds = findinds(thisicer<upperlim)
+        badinds  = findinds(thisicer>=upperlim)
+        if len(badinds)>0:  hitupper += 1
+        ax.plot(x, thisicer, color=colors[k], lw=lw*sizeratio, label=key) # Colors are in reverse order
+        ax.scatter(x[goodinds], thisicer[goodinds], s=dotsize*sizeratio, facecolor=colors[k], lw=0)
+        ax.scatter(x[badinds],  thisicer[badinds],  s=dotsize*sizeratio, facecolor=(0,0,0), lw=1, marker='x', zorder=1000)
+    
+    # Configure plot
+    boxoff(ax)
+    ax.title.set_fontsize(titlesize)
+    ax.xaxis.label.set_fontsize(labelsize)
+    for item in ax.get_xticklabels() + ax.get_yticklabels(): item.set_fontsize(ticksize)
+
+    # Configure plot specifics
+    ax.set_title('ICERs')
+    ax.set_ylabel('Cost per %s averted' % objectivestr)
+    ax.set_xlabel('Program spending relative to baseline (%)')
+    ax.set_ylim(0, newupper*1.05)
+    dx = (x[-1]-x[0])*0.01
+    ax.set_xlim(x[0]-dx, x[-1]+dx)
+    legendsettings = {'loc':'upper left', 'bbox_to_anchor':(1.05, 1), 'fontsize':legendsize, 'title':'', 'frameon':False}
+    ax.legend(**legendsettings) # Multiple entries, all populations
+    SIticks(ax=ax)
     
     return fig    
 
@@ -1251,24 +1409,32 @@ def SItickformatter(x, pos):  # formatter function takes tick label and tick pos
     return sigfig(x, sigfigs=2, SI=True)
 
 
-def SIticks(figure, axis='y'):
-    ''' Apply SI tick formatting to the y axis of a figure '''
-    for ax in figure.axes:
-        if axis=='x':   thisaxis = ax.xaxis
+def SIticks(fig=None, ax=None, axis='y'):
+    ''' Apply SI tick formatting to one axis of a figure '''
+    if  fig is not None: axlist = fig.axes
+    elif ax is not None: axlist = promotetolist(ax)
+    else: raise OptimaException('Must supply either figure or axes')
+    for ax in axlist:
+        if   axis=='x': thisaxis = ax.xaxis
         elif axis=='y': thisaxis = ax.yaxis
         elif axis=='z': thisaxis = ax.zaxis
         else: raise OptimaException('Axis must be x, y, or z')
         thisaxis.set_major_formatter(ticker.FuncFormatter(SItickformatter))
+    return None
 
-def commaticks(figure, axis='y'):
+
+def commaticks(fig=None, ax=None, axis='y'):
     ''' Use commas in formatting the y axis of a figure -- see http://stackoverflow.com/questions/25973581/how-to-format-axis-number-format-to-thousands-with-a-comma-in-matplotlib '''
-    for ax in figure.axes:
-        if axis=='x':   thisaxis = ax.xaxis
+    if  fig is not None: axlist = fig.axes
+    elif ax is not None: axlist = promotetolist(ax)
+    else: raise OptimaException('Must supply either figure or axes')
+    for ax in axlist:
+        if   axis=='x': thisaxis = ax.xaxis
         elif axis=='y': thisaxis = ax.yaxis
         elif axis=='z': thisaxis = ax.zaxis
         else: raise OptimaException('Axis must be x, y, or z')
         thisaxis.set_major_formatter(ticker.FuncFormatter(lambda x, p: format(int(x), ',')))
-
+    return None
 
 
 def getplotinds(plotstartyear=None, plotendyear=None, tvec=None, die=False, verbose=2):

@@ -11,7 +11,8 @@ from .parse import normalize_obj
 
 frontendfigsize = (5.5, 2)
 frontendpositionnolegend = [[0.19, 0.12], [0.85, 0.85]]
-frontendpositionlegend = [[0.19, 0.12], [0.63, 0.85]]
+frontendpositionlegend   = [[0.19, 0.12], [0.63, 0.85]]
+frontendpositionmidway   = [[0.19, 0.12], [0.80, 0.85]]
 
 
 def extract_graph_selector(graph_key):
@@ -28,7 +29,7 @@ def extract_graph_selector(graph_key):
     return base + suffix
 
 
-def convert_to_mpld3(figure, zoom=None):
+def convert_to_mpld3(figure, zoom=None, graph_pos=None):
     plugin = mpld3.plugins.MousePosition(fontsize=8, fmt='.4r')
     mpld3.plugins.connect(figure, plugin)
     
@@ -45,9 +46,9 @@ def convert_to_mpld3(figure, zoom=None):
             # Put a legend to the right of the current axis
             legend._loc = 2
             legend.set_bbox_to_anchor((1, 1.1))
-            ax.set_position(Bbox(array(frontendpositionlegend)))
+            if graph_pos=='mid': ax.set_position(Bbox(array(frontendpositionmidway)))
+            else:                ax.set_position(Bbox(array(frontendpositionlegend)))
         else:
-            pass
             ax.set_position(Bbox(array(frontendpositionnolegend)))
 
     mpld3_dict = mpld3.fig_to_dict(figure)
@@ -153,11 +154,13 @@ def make_mpld3_graph_dict(result=None, which=None, zoom=None, startYear=None, en
     mpld3_graphs = []
     for graph_key in graphs:
         graph_selectors.append(extract_graph_selector(graph_key))
-        graph_dict = convert_to_mpld3(graphs[graph_key], zoom=zoom)
-        if graph_key == "budget":
-            graph = graphs[graph_key]
-            ylabels = [l.get_text() for l in graph.axes[0].get_yticklabels()]
-            graph_dict['ylabels'] = ylabels
+        graph_pos = 'mid' if type(graph_key)==str and graph_key.find('Care cascade')>=0 else None
+        graph_dict = convert_to_mpld3(graphs[graph_key], zoom=zoom, graph_pos=graph_pos)
+        graph = graphs[graph_key]
+        ylabels = [l.get_text() for l in graph.axes[0].get_yticklabels()]
+        graph_dict['ylabels'] = ylabels
+        xlabels = [l.get_text() for l in graph.axes[0].get_xticklabels()]
+        graph_dict['xlabels'] = xlabels
         mpld3_graphs.append(graph_dict)
 
     return {

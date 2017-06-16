@@ -70,7 +70,7 @@ from .asd import asd
 from .pchip import pchip, plotpchip
 
 # Color definitions
-from .colortools import alpinecolormap, bicolormap, gridcolors, vectocolor
+from .colortools import alpinecolormap, bicolormap, gridcolors, vectocolor, shifthue
 import colortools as _colortools; del colortools
 
 
@@ -123,7 +123,7 @@ from .settings import Settings, convertlimits, gettvecdt
 import settings as _settings; del settings
 
 # Generate results -- import first because parameters use results
-from .results import Result, Resultset, Multiresultset, BOC, getresults
+from .results import Result, Resultset, Multiresultset, BOC, ICER, getresults
 import results as _results; del results
 
 # Define the model parameters -- import before makespreadsheet because makespreadsheet uses partable to make a pre-filled spreadsheet
@@ -153,12 +153,12 @@ import calibration as _calibration; del calibration
 from .scenarios import Parscen, Budgetscen, Coveragescen, Progscen, runscenarios, makescenarios, baselinescenario, setparscenvalues, defaultscenarios
 import scenarios as _scenarios; del scenarios
 
-# Optimization analyses
-from .optimization import Optim, defaultobjectives, defaultconstraints, optimize, multioptimize, outcomecalc
+# Optimization and ICER analyses
+from .optimization import Optim, defaultobjectives, defaultconstraints, optimize, multioptimize, outcomecalc, icers
 import optimization as _optimization; del optimization
 
 # Plotting functions
-from .plotting import getplotselections, makeplots, plotepi, plotcascade, plotallocations, plotcostcov, saveplots, reanimateplots, sanitizeresults
+from .plotting import getplotselections, makeplots, plotepi, plotcascade, plotbudget, plotcoverage, plotallocations, plotcostcov, plotbycd4, ploticers, saveplots, reanimateplots, sanitizeresults, commaticks, SIticks
 import plotting as _plotting; del plotting
 
 #####################################################################################################################

@@ -131,6 +131,17 @@ class Parameterset(object):
         for key in self.parkeys():
             self.pars[key].updateprior()
         return None
+    
+    
+    def fixprops(self, fix=None):
+        '''
+        Fix or unfix the proportions of people on ART and suppressed.
+        
+        To fix:   P.parset().fixprops()
+        To unfix: P.parset().fixprops(False)
+        '''
+        self.pars = togglefixprops(self.pars, fix=fix)
+        return None
         
     
     def printpars(self, output=False):
@@ -283,40 +294,34 @@ class Parameterset(object):
     
     
     ## Define update step
-    def update(self, mflists):
+    def update(self, mflists, verbose=2):
         ''' Update Parameterset with new results -- WARNING, duplicates the function in gui.py!!!! '''
         if not self.pars:
             raise OptimaException("No parameters available!")
     
         tmppars = self.pars
     
-        keylist = mflists['keys']
+        keylist    = mflists['keys']
         subkeylist = mflists['subkeys']
-        typelist = mflists['types']
-        valuelist = mflists['values']
-    
+        typelist   = mflists['types']
+        valuelist  = mflists['values']
+        
         ## Loop over all parameters and update them
-        verbose = 0
         for (key, subkey, ptype, value) in zip(keylist, subkeylist, typelist, valuelist):
             if ptype=='meta':  # Metaparameters
-                vtype = type(tmppars[key].m)
-                tmppars[key].m = vtype(value)
+                tmppars[key].m = float(value)
                 printv('%s.m = %s' % (key, value), 4, verbose)
             elif ptype=='pop':  # Populations or partnerships
-                vtype = type(tmppars[key].y[subkey])
-                tmppars[key].y[subkey] = vtype(value)
+                tmppars[key].y[subkey] = float(value)
                 printv('%s.y[%s] = %s' % (key, subkey, value), 4, verbose)
             elif ptype=='exp':  # Population growth
-                vtype = type(tmppars[key].i[subkey])
-                tmppars[key].i[subkey] = vtype(value)
+                tmppars[key].i[subkey] = float(value)
                 printv('%s.i[%s] = %s' % (key, subkey, value), 4, verbose)
             elif ptype in ['const', 'advanced']:  # Constants
-                vtype = type(tmppars[key].y)
-                tmppars[key].y = vtype(value)
+                tmppars[key].y = float(value)
                 printv('%s.y = %s' % (key, value), 4, verbose)
             elif ptype=='year':  # Year parameters
-                vtype = type(tmppars[key].t)
-                tmppars[key].t = vtype(value)
+                tmppars[key].t = float(value)
                 printv('%s.t = %s' % (key, value), 4, verbose)
             else:
                 errormsg = 'Parameter type "%s" not implemented!' % ptype
@@ -431,7 +436,7 @@ class Par(object):
     
     Version: 2016nov06 by cliffk    
     '''
-    def __init__(self, short=None, name=None, limits=(0.,1.), by=None, manual='', fromdata=None, m=1., prior=None, verbose=None, **defaultargs): # "type" data needed for parameter table, but doesn't need to be stored
+    def __init__(self, short=None, name=None, limits=(0.,1.), by=None, manual='', fromdata=None, m=1.0, prior=None, verbose=None, **defaultargs): # "type" data needed for parameter table, but doesn't need to be stored
         ''' To initialize with a prior, prior should be a dict with keys 'dist' and 'pars' '''
         self.short = short # The short name, e.g. "hivtest"
         self.name = name # The full name, e.g. "HIV testing rate"
@@ -656,7 +661,7 @@ class Timepar(Par):
 class Popsizepar(Par):
     ''' The definition of the population size parameter '''
     
-    def __init__(self, i=None, e=None, m=1., start=2000., **defaultargs):
+    def __init__(self, i=None, e=None, m=1.0, start=2000., **defaultargs):
         Par.__init__(self, **defaultargs)
         if i is None: i = odict()
         if e is None: e = odict()
@@ -896,7 +901,7 @@ def data2timepar(data=None, keys=None, defaultind=0, verbose=2, **defaultargs):
         errormsg = 'Cannot create a time parameter without keyword arguments "name" and "short"! \n\nArguments:\n %s' % defaultargs.items()
         raise OptimaException(errormsg)
         
-    par = Timepar(m=1, y=odict(), t=odict(), **defaultargs) # Create structure
+    par = Timepar(m=1.0, y=odict(), t=odict(), **defaultargs) # Create structure
     for row,key in enumerate(keys):
         try:
             validdata = ~isnan(data[short][row]) # WARNING, this could all be greatly simplified!!!! Shouldn't need to call this and sanitize()
@@ -986,14 +991,14 @@ def balance(act=None, which=None, data=None, popkeys=None, limits=None, popsizep
 
 
 
-def makepars(data=None, verbose=2, die=True):
+def makepars(data=None, verbose=2, die=True, fixprops=None):
     """
     Translates the raw data (which were read from the spreadsheet) into
     parameters that can be used in the model. These data are then used to update 
     the corresponding model (project). This method should be called before a 
     simulation is run.
     
-    Version: 2017feb02 by cliffk
+    Version: 2017jun03
     """
     
     printv('Converting data to parameters...', 1, verbose)
@@ -1054,7 +1059,7 @@ def makepars(data=None, verbose=2, die=True):
             
             elif partype=='timepar': # Otherwise it's a regular time par, made from data
                 if fromdata: pars[parname] = data2timepar(data=data, keys=keys, **rawpar) 
-                else: pars[parname] = Timepar(m=1, y=odict([(key,array([nan])) for key in keys]), t=odict([(key,array([0.0])) for key in keys]), **rawpar) # Create structure
+                else: pars[parname] = Timepar(m=1.0, y=odict([(key,array([nan])) for key in keys]), t=odict([(key,array([0.0])) for key in keys]), **rawpar) # Create structure
             
             elif partype=='constant': # The constants, e.g. transmfi
                 best = data[parname][0] if fromdata else nan
@@ -1124,10 +1129,9 @@ def makepars(data=None, verbose=2, die=True):
         pars['numcirc'].y[key] = array([0.0]) # Set to 0 for all populations, since program parameter only
 
     # Fix treatment from final data year
-    pars['fixproptx'].t = pars['numtx'].t['tot'][-1]
-    pars['fixpropsupp'].t = pars['fixproptx'].t # Doesn't make sense to assume proportion on treatment without assuming proportion suppressed....also, crashes otherwise :)
-    for key in ['fixpropdx', 'fixpropcare', 'fixproppmtct']:
+    for key in ['fixproptx', 'fixpropsupp', 'fixpropdx', 'fixpropcare', 'fixproppmtct']:
         pars[key].t = 2100 # WARNING, KLUDGY -- don't use these, so just set to well past the end of the analysis
+    pars = togglefixprops(pars, fix=fixprops) # Optionally fix the proportions
 
     # Set the values of parameters that aren't from data
     pars['transnorm'].y = 0.43 # See analyses/misc/calculatecd4transnorm.py for calculation
@@ -1175,9 +1179,14 @@ def makepars(data=None, verbose=2, die=True):
     return pars
 
 
-    
-        
-
+def togglefixprops(pars=None, fix=None):
+    ''' Tiny little method to fix the date for proptx and propsupp '''
+    if fix is None: fix = True # By default, do fix
+    if fix:  endyear = pars['numtx'].t['tot'][-1]
+    else:    endyear = 2100
+    pars['fixproptx'].t   = endyear
+    pars['fixpropsupp'].t = endyear # Doesn't make sense to assume proportion on treatment without assuming proportion suppressed....also, crashes otherwise :)
+    return pars
 
 
 def makesimpars(pars, name=None, keys=None, start=None, end=None, dt=None, tvec=None, settings=None, smoothness=None, asarray=True, sample=None, tosample=None, randseed=None, verbose=2):
@@ -1309,8 +1318,18 @@ def comparepars(pars1=None, pars2=None):
 def comparesimpars(pars1=None, pars2=None, inds=Ellipsis, inds2=Ellipsis):
     ''' 
     Function to compare two sets of simpars, like what's stored in results.
-    comparesimpars(P.results[0].simpars[0][0], Q.results[0].simpars[0])
+    
+    Example:
+        import optima as op
+        P = op.demo(0)
+        P.copyparset(0,'new')
+        P.pars('new')['numtx'].y[:] *= 1.5
+        R1 = P.runsim('default', keepraw=True)
+        R2 = P.runsim('new', keepraw=True)
+        op.comparesimpars(R1.simpars, R2.simpars)
     '''
+    if type(pars1)==list: pars1 = pars1[0] # If a list is supplied, pull out just the dict
+    if type(pars2)==list: pars2 = pars2[0]
     keys = pars1.keys()
     nkeys = 0
     count = 0
@@ -1340,11 +1359,15 @@ def comparesimpars(pars1=None, pars2=None, inds=Ellipsis, inds2=Ellipsis):
                 pars2str = str(this2)
             if pars1str != pars2str: # Convert to string representation for testing equality
                 count += 1
-                msg = 'Parameter "%s" %s differs:\n' % (key, key2str)
+                dividerlen = 70
+                bigdivide    = '='*dividerlen+'\n'
+                littledivide = '-'*int(dividerlen/2.0-4)
+                msg  = '\n\n'+bigdivide
+                msg += 'Parameter "%s" %s differs:\n\n' % (key, key2str)
                 msg += '%s\n' % pars1str
-                msg += 'vs\n'
-                msg += '%s\n' % pars2str
-                msg += '\n\n'
+                msg += littledivide + ' vs ' + littledivide + '\n'
+                msg += '%s\n\n' % pars2str
+                msg += bigdivide
                 print(msg)
     if count==0: print('All %i parameters match' % nkeys)
     else:        print('%i of %i parameters did not match' % (count, nkeys))

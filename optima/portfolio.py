@@ -1,4 +1,4 @@
-from optima import OptimaException, gitinfo, tic, toc, odict, getdate, today, uuid, dcp, objrepr, makefilepath, printv, findinds, saveobj, loadproj, promotetolist # Import utilities
+from optima import OptimaException, Link, gitinfo, tic, toc, odict, getdate, today, uuid, dcp, objrepr, makefilepath, printv, findinds, saveobj, loadproj, promotetolist # Import utilities
 from optima import version, defaultobjectives, Project, pchip, getfilelist, batchBOC, reoptimizeprojects
 from numpy import arange, argsort, zeros, nonzero, linspace, log, exp, inf, argmax, array
 from xlsxwriter import Workbook
@@ -96,19 +96,30 @@ class Portfolio(object):
         
         
     
-    def save(self, filename=None, folder=None, saveresults=False, verbose=2):
+    def save(self, filename=None, folder=None, saveresults=True, verbose=2):
         ''' Save the current portfolio, by default using its name, and without results '''
         fullpath = makefilepath(filename=filename, folder=folder, default=[self.filename, self.name], ext='prt')
         self.filename = fullpath # Store file path
         printv('Saving portfolio to %s...' % self.filename, 2, verbose)
+        
+        # Easy -- just save the whole thing
         if saveresults:
             saveobj(fullpath, self, verbose=verbose)
+        
+        # Hard -- have to make a copy, remove results, and restore links
         else:
             tmpportfolio = dcp(self) # Need to do this so we don't clobber the existing results
-            for P in range(len(self.projects.values())):
-                tmpportfolio.projects[P].cleanresults() # Get rid of all results
+            for P in self.projects.values():
+                P.cleanresults() # Get rid of all results
+                P.restorelinks() # Restore links in projects
+            if tmpportfolio.results: # Restore project links in results, but only iterate over it if it's populated
+                for key,resultpair in tmpportfolio.results.items():
+                    for result in resultpair.values():
+                        if hasattr(result, 'projectref'): # Check, because it may not be a result
+                            result.projectref = Link(tmpportfolio.projects[key]) # Recreate the link
             saveobj(fullpath, tmpportfolio, verbose=verbose) # Save it to file
             del tmpportfolio # Don't need it hanging around any more
+        
         return fullpath
     
     
@@ -218,6 +229,7 @@ class Portfolio(object):
         maxgaiters = int(1e6) # This should be a lot -- just not infinite, but should break first
         spendperproject = zeros(nbocs)
         runningtotal = grandtotal
+        oldpercentcomplete = 0.0 # Keep track of progress
         for i in range(maxgaiters):
             bestval = -inf
             bestboc = None
@@ -244,8 +256,10 @@ class Portfolio(object):
                     relspendvecs[b] = relspendvecs[b][withinbudget]
                     relimprovevecs[b] = relimprovevecs[b][withinbudget]
                     costeffvecs[b] = relimprovevecs[b]/relspendvecs[b]
-                if not i%100:
-                    printv('  Allocated %0.1f%% of the portfolio budget...' % ((grandtotal-runningtotal)/float(grandtotal)*100), 2, verbose)
+                newpercentcomplete = (grandtotal-runningtotal)/float(grandtotal)*100
+                if not(i%100) or (newpercentcomplete-oldpercentcomplete)>1.0:
+                    printv('  Allocated %0.1f%% of the portfolio budget...' % newpercentcomplete, 2, verbose)
+                    oldpercentcomplete = newpercentcomplete
             else:
                 break # We're done, there's nothing more to allocate
         
@@ -275,14 +289,16 @@ class Portfolio(object):
         if reoptimize: 
             resultpairs = reoptimizeprojects(projects=self.projects, objectives=objectives, maxtime=maxtime, maxiters=maxiters, mc=mc, batch=batch, maxload=maxload, interval=interval, verbose=verbose, randseed=randseed)
             self.results = resultpairs
-        # Tidy up
-        if doprint and self.results: self.makeoutput(doprint=True, verbose=verbose)
+        
+        # Make results and optionally export
+        if self.results: self.makeoutput(doprint=doprint, verbose=verbose)
         if export:
             if self.results:
                 self.export(filename=outfile, verbose=verbose)
             else:
                 errormsg = 'Could not export results for portfolio %s since no results generated' % self.name
                 raise OptimaException(errormsg)
+        
         toc(GAstart)
         return None
 
@@ -318,23 +334,24 @@ class Portfolio(object):
         if not self.results:
             errormsg = 'Portfolio does not contain results: most likely geospatial analysis has not been run'
             raise OptimaException(errormsg)
+        self.GAresults  = odict() # I can't believe this wasn't stored before
         
         # Keys for initial and optimized
         iokeys = ['init', 'opt'] 
         
         # Initialize to zero
-        projnames = []
-        projbudgets = []
-        projcov = []
-        projoutcomes = []
+        projnames        = []
+        projbudgets      = []
+        projcov          = []
+        projoutcomes     = []
         projoutcomesplit = []
-        
-        overallbud = odict() # Overall budget
-        overallout = odict() # Overall outcomes
+        overallbud       = odict() # Overall budget
+        overallout       = odict() # Overall outcomes
         for io in iokeys:
             overallbud[io] = 0
             overallout[io] = 0
         
+        # Set up dict for the outcome split
         overalloutcomesplit = odict()
         for obkey in self.objectives['keys']:
             overalloutcomesplit['num'+obkey] = odict()
@@ -363,8 +380,9 @@ class Portfolio(object):
                 projbudgets[k][io]  = alloc[io]
                 projoutcomes[k][io] = outcome[io]
                 
-                tmppars = self.results[key][io].parset
-                tmpprog = self.results[key][io].progset
+                thisioresult = self.results[key][io]
+                tmppars = thisioresult.projectref().parsets[thisioresult.parsetname]
+                tmpprog = thisioresult.projectref().progsets[thisioresult.progsetname]
                 tmpcov = tmpprog.getprogcoverage(alloc[io], self.objectives['start'], parset=tmppars)
                 projcov[k][io]  = tmpcov
                 
@@ -372,8 +390,17 @@ class Portfolio(object):
                 for obkey in self.objectives['keys']:
                     projoutcomesplit[k][io]['num'+obkey] = self.results[key][io].main['num'+obkey].tot[0][indices[io]].sum()     # Again, current and optimal should be same for 0 second optimisation, but being explicit.
                     overalloutcomesplit['num'+obkey][io] += projoutcomesplit[k][io]['num'+obkey]
-                
-        ## Actually create the output
+        
+        # Add to the results structure
+        self.GAresults['overallbudget']       = overallbud
+        self.GAresults['overalloutcomes']     = overallout
+        self.GAresults['overalloutcomesplit'] = overalloutcomesplit
+        self.GAresults['projectbudgets']      = projbudgets
+        self.GAresults['projectcoverages']    = projcov
+        self.GAresults['projectoutcomes']     = projoutcomes
+        self.GAresults['projectoutcomesplit'] = projoutcomesplit
+        
+        # Create the text output
         output = ''
         output += 'Geospatial analysis results: minimize outcomes from %i to %i' % (self.objectives['start'], self.objectives['end'])
         output += '\n\n'
