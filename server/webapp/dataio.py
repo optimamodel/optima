@@ -1093,6 +1093,9 @@ def load_parset_graphs(
         project_id, parset_id, calculation_type, which=None,
         parameters=None, zoom=None, startYear=None, endYear=None):
 
+    print(">> load_parset_graphs args project_id %s" % project_id)
+    print(">> load_parset_graphs args parset_id %s" % parset_id)
+    print(">> load_parset_graphs args calculation_type %s" % calculation_type)
     project = load_project(project_id)
     parset = parse.get_parset_from_project(project, parset_id)
 
