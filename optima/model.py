@@ -52,6 +52,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
     raw_mtctfrom    = zeros((npops, npts))          # Number of mother-to-child transmissions from each population
     raw_hivbirths   = zeros((npops, npts))          # Number of births to HIV+ pregnant women
     raw_receivepmtct= zeros((npops, npts))          # Initialise a place to store the number of people in each population receiving PMTCT
+    raw_ancdiag     = zeros((npops, npts))          # Number diagnosed births per timestep (assuming HIV+ births from mothers on PMTCT will be diagnosed)
     raw_diag        = zeros((npops, npts))          # Number diagnosed per timestep
     raw_newcare     = zeros((npops, npts))          # Number newly in care per timestep
     raw_newtreat    = zeros((npops, npts))          # Number initiating ART per timestep
@@ -710,11 +711,13 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
             popmtct = mtctundx + mtctdx + mtcttx + mtctpmtct # Total MTCT, adding up all components         
             
             raw_receivepmtct[p1, t] += thisreceivepmtct*timestepsonpmtct
+            raw_ancdiag[p2, t] += mtctpmtct/dt            
             raw_mtct[p2, t] += popmtct/dt
             raw_mtctfrom[p1, t] += popmtct/dt
             raw_births[p2, t] += popbirths/dt
             raw_hivbirths[p1, t] += thisbirthrate*people[allplhiv, p1, t].sum()/dt
-            
+        
+        raw_diag[:,t] += raw_ancdiag[:, t] #update ANC diagnosis based on HIV+ births to mothers on PMTCT
         raw_inci[:,t] += raw_mtct[:,t] # Update infections acquired based on PMTCT calculation
         raw_incibypop[:,t] += raw_mtctfrom[:,t] # Update infections caused based on PMTCT calculation
 
@@ -729,7 +732,8 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
         if t<npts-1:
             
             ## Births 
-            people[undx[0], :, t+1] += raw_mtct[:, t]*dt # HIV+ babies assigned to undiagnosed compartment -- WARNING, shouldn't use a raw variable in a calculation, that's for output
+            people[dx[0], :, t+1] += raw_ancdiag[:, t]*dt #HIV+ babies assigned to diagnosed compartment - WARNING as below
+            people[undx[0], :, t+1] += (raw_mtct[:, t] - raw_ancdiag[:, t])*dt # HIV+ babies assigned to undiagnosed compartment -- WARNING, shouldn't use a raw variable in a calculation, that's for output
             people[susreg, :, t+1] += (raw_births[:,t] - raw_mtct[:, t])*dt  # HIV- babies assigned to uncircumcised compartment
 
             ## Circumcision 
@@ -880,6 +884,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
     raw['births']       = raw_births
     raw['hivbirths']    = raw_hivbirths
     raw['pmtct']        = raw_receivepmtct
+    raw['anc_diag']     = raw_ancdiag
     raw['diag']         = raw_diag
     raw['newtreat']     = raw_newtreat
     raw['death']        = raw_death
