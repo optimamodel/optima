@@ -31,17 +31,17 @@ define(['angular', 'underscore'], function (angular, _) {
         graphs: undefined,
       };
 
-      reloadActiveProject();
+      reloadActiveProject(true);
 
       $scope.projectService = projectService;
       $scope.$watch('projectService.project.id', function() {
         if (!_.isUndefined($scope.project) && ($scope.project.id !== projectService.project.id)) {
-          reloadActiveProject();
+          reloadActiveProject(true);
         }
       });
     }
 
-    function reloadActiveProject() {
+    function reloadActiveProject(resetUndoStack) {
       projectService
         .getActiveProject()
         .then(function(response) {
@@ -73,6 +73,13 @@ define(['angular', 'underscore'], function (angular, _) {
                 $scope.setActiveParset();
               }
             });
+			
+		  // Initialize a new UndoStack on the server.
+		  if (resetUndoStack) {
+		    rpcService
+			  .rpcRun(
+			    'init_new_undo_stack', [$scope.project.id]);
+		  }
         });
     }
 
@@ -155,9 +162,13 @@ define(['angular', 'underscore'], function (angular, _) {
           function(response) {
             loadParametersAndGraphs(response.data);
             toastr.success('Loaded graphs');
-            console.log('getCalibrationGraphs', response.graphs);
+            console.log('saveAndUpdateGraphs', response.graphs);
             $scope.statusMessage = '';
             $scope.state.isRunnable = true;
+			rpcService
+			  .rpcRun(
+			    'push_project_to_undo_stack', 
+				[projectService.project.id]);
           },
           function(response) {
             $scope.state.isRunnable = false;
@@ -366,6 +377,28 @@ define(['angular', 'underscore'], function (angular, _) {
         });
     };
 
+	$scope.undo = function() {
+      rpcService
+        .rpcRun(
+          'fetch_undo_project',
+          [projectService.project.id])
+        .then(function(response) {
+          toastr.success('Undo me baby!');
+		  reloadActiveProject(false);
+        });		
+	}
+	
+	$scope.redo = function() {
+      rpcService
+        .rpcRun(
+          'fetch_redo_project',
+          [projectService.project.id])
+        .then(function(response) {
+          toastr.success('Redo me baby!');
+		  reloadActiveProject(false);		  
+        });      		
+	}
+	
     // autofit routines
 
     $scope.checkNotRunnable = function() {

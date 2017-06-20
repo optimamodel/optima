@@ -38,6 +38,15 @@ from .dbmodels import UserDb, ProjectDb, ResultsDb, PyObjectDb
 from .plot import make_mpld3_graph_dict, convert_to_mpld3
 
 
+#############################################################################################
+### UndoStack class
+#############################################################################################
+
+# Variable for holding the singleton usable UndoStack for the logged in user.
+undoStack = None
+
+
+
 TEMPLATEDIR = "/tmp"  # CK: hotfix to prevent ownership issues
 
     
@@ -565,7 +574,11 @@ def save_project_as_new(project, user_id):
     print(">> save_project_as_new '%s'" % project.name)
     project.uid = project_record.id
     
+    print(">> save_project_as_new my_parset_id %s" % project.parsets[0].uid)
+#    if len(project.results) > 0:
+#        print(">> save_project_as_new my_parset_id2 %s" % project.results[0].parset.uid)
     for result in project.results.values():
+        #print(">> save_project_as_new my_parset_id3 %s" % result.parset.uid)
         name = result.name
         result.uid = op.uuid() # Reset UID since stored separately in DB
         if 'scenarios' in name: update_or_create_result_record_by_id(result, project.uid, None, 'scenarios')
@@ -580,11 +593,17 @@ def copy_project(project_id, new_project_name):
     """
     Returns the project_id of the copied project
     """
+    print(">> copy_project args project_id %s" % project_id)
+    print(">> copy_project args new_project_name %s" % new_project_name)   
     project_record = load_project_record(
         project_id, raise_exception=True)
     user_id = current_user.id # Save as the current user always
     project = load_project_from_record(project_record)
     project.name = new_project_name
+    print(">> copy_project parset_id %s" % project.parsets[0].uid)
+#    if len(project.results) > 0:
+#        print(">> copy_project parset_id2 %s" % project.results[0].parset.uid)
+#    project.save('trap_copy.prj', saveresults=True)
     save_project_as_new(project, user_id)
 
     parset_name_by_id = {parset.uid: name for name, parset in project.parsets.items()}
@@ -851,6 +870,64 @@ def upload_project_object(filename, project_id, obj_type):
     return { 'name': obj.name }
 
 
+def init_new_undo_stack(project_id):
+    """
+    Given a project UID, if we have a valid project record, set up a new 
+    UndoStack and return True if the project UID is new, False otherwise.
+    
+    Args:
+        project_id: UID of the project
+        
+    Returns:
+        True if the project UID is new, False otherwise
+    """    
+    print(">> init_new_undo_stack project_id '%s'" % project_id)
+    return { 'updatedundostack': True }
+
+
+def push_project_to_undo_stack(project_id):
+    """
+    Given a project UID, if the UndoStack has an ID match, load the Project 
+    object and push it to the UndoStack.
+    
+    Args:
+        project_id: UID of the project
+    """
+    print(">> push_project_to_undo_stack project_id '%s'" % project_id)
+
+
+def fetch_undo_project(project_id):
+    """
+    Given a project UID, if the UndoStack has an ID match, and it can do a 
+    valid Undo, grab the appropriate Project object and update Postgres and 
+    Redis and return True; otherwise return False.
+    
+    Args:
+        project_id: UID of the project
+        
+    Returns:
+        True if a successful undo is done, False otherwise    
+    """
+    print(">> fetch_undo_project project_id '%s'" % project_id)
+    return { 'didundo': True }
+
+
+def fetch_redo_project(project_id):
+    """
+    Given a project UID, if the UndoStack has an ID match, and it can do a 
+    valid Redo, grab the appropriate Project object and update Postgres and 
+    Redis and return True; otherwise return False.
+    
+    Args:
+        project_id: UID of the project
+        
+    Returns:
+        True if a successful redo is done, False otherwise      
+    """
+    print(">> fetch_redo_project project_id '%s'" % project_id)
+    return { 'didredo': True }
+
+
 
 #############################################################################################
 ### RESULTS
@@ -893,6 +970,8 @@ def update_or_create_result_record_by_id(
     if db_session is None:
         db_session = db.session
 
+    print(">> update_or_create_result_record_by_id args project_id %s" % project_id)
+    print(">> update_or_create_result_record_by_id args parset_id %s" % parset_id)
     result_record = db_session.query(ResultsDb).get(result.uid)
     if result_record is not None:
         print(">> update_or_create_result_record_by_id update '%s'" % (result.name))

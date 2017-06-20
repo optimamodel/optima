@@ -43,10 +43,21 @@
               ng-model="state.endYear"
               ng-options="year for year in years"></select>
 
-            <!--<button-->
+            <button
+              class="btn"
+              ng-click="undo()">
+			  Undo
+			</button>
+			
+            <button
+              class="btn"
+              ng-click="redo()">
+			  Redo
+			</button>
+			
+			<!--<button-->
             <!--class="btn"-->
             <!--ng-click="refreshParset()">Set to default</button>-->
-
           </div>
         </div>
         <div style="display: table-cell; padding-right: 100px;">
