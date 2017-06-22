@@ -157,3 +157,28 @@ class WorkLogDb(db.Model):  # pylint: disable=R0903
     status = db.Column(work_status, default='started')
     error = db.Column(db.Text, default=None)
 
+
+class UndoStackDb(db.Model):
+
+    __tablename__ = 'undo_stacks'
+
+    id = db.Column(UUID(True), server_default=text("uuid_generate_v1mc()"), primary_key=True)
+    project_id = db.Column(UUID(True), db.ForeignKey('projects.id', ondelete='SET NULL'))
+    # NOTE: should check out whether that ondelete argument should be used
+
+    def __init__(self, project_id, id=None):
+        self.project_id = project_id
+        if id:
+            self.id = id
+
+    def load(self):
+        print(">> UndoStackDb.load undo-stack-" + self.id.hex)
+        return op.loadstr(redis.get("undo-stack-" + self.id.hex))
+
+    def save_obj(self, obj):
+        print(">> UndoStackDb.save undo-stack-" + self.id.hex)
+        redis.set("undo-stack-" + self.id.hex, op.dumpstr(obj))
+
+    def cleanup(self):
+        print(">> UndoStackDb.cleanup undo-stack-" + self.id.hex)
+        redis.delete("undo-stack-" + self.id.hex)
