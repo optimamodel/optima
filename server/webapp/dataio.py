@@ -42,6 +42,209 @@ from .plot import make_mpld3_graph_dict, convert_to_mpld3
 ### UndoStack class
 #############################################################################################
 
+class UndoStack(object):
+    """
+    A stack of Project objects for allowing Undo and Redo functionality in 
+    Optima.
+    
+    Methods:
+        __init__(theProjectUID: UUID): void -- constructor, taking the project's 
+            UID
+        pushNewVersion(newVersion: Project): bool -- if we can, push a Project 
+            object as a new save version on the stack and return True; 
+            otherwise return False
+        getUndoVersion(): Project -- index the stack back to the previous 
+            version and return the Project object saved there
+        getRedoVersion(): Project -- index the stack forward to the next 
+            version and return the Project object saved there
+        getSelectedVersion(): Project -- return the Project object saved in 
+            the selected stack entry
+        getProjectUID(): UUID -- returns the project UID
+        isDirty(): bool -- is there pending data to be saved?
+        isClean(): bool -- is there no pending data yet to be saved?
+        setDirtyFlagUse(useDirtyFlag: bool): void -- sets whether the stack 
+            uses the dirty flag or not
+        setDirty(): void -- set the dirty flag dirty
+        setClean(): void -- set the dirty flag clean
+        canSave(): void -- can we save to this stack?
+        canUndo(): bool -- can we do an Undo from this stack?
+        canRedo(): bool -- can we do an Redo from this stack? 
+        isEmpty(): bool -- is the stack empty?
+        atStackTop(): bool -- are we at the top of the stack (latest version)?
+        showContents(): void -- print out the contents of the stack
+                    
+    Attributes:
+        projectUID: UUID -- UID of the project, indexing the Postgres and 
+            Redis tables
+        useDirtyFlag: bool -- should we use the dirty flag?
+        dirtyFlag: bool -- do we have pending information waiting to be saved?
+        projectVersions: list of Project objects -- Python list holding 
+            the Project objects we want to be able to revert to
+        currentIndex: int [or None] -- the index into the current project 
+            version on the stack
+        
+    Usage:
+        >>> undoStack = UndoStack(project_id)                      
+    """
+    
+    def __init__(self, theProjectUID):
+        # Set up the project UID we pass in.
+        self.projectUID = theProjectUID 
+        
+        # Set the dirtyFlag to be used to start with.
+        self.setDirtyFlagUse(True)
+        
+        # Set the dirtyFlag to clean.
+        self.setClean()
+        
+        # Start with an empty list of Projects and index None.
+        self.projectVersions = []
+        self.currentIndex = None       
+        
+    def pushNewVersion(self, newVersion):
+        # Exit if we cannot save to the stack yet.
+        if not self.canSave():
+            return False
+        
+        # If we are not at the stack top, trim out all indices after the 
+        # current one.
+        if not self.atStackTop():
+            self.projectVersions = self.projectVersions[:(self.currentIndex + 1)]
+            
+        # Append the Project object for the new version.
+        self.projectVersions.append(newVersion)
+        
+        # Move the index up so we point to the new version.
+        if self.currentIndex == None:
+            self.currentIndex = 0
+        else:
+            self.currentIndex += 1
+            
+        # Set the dirty flag clean.
+        self.setClean()
+        
+        # Return success.
+        return True
+    
+    def getUndoVersion(self):
+        # Exit if we cannot undo from the stack yet.
+        if not self.canUndo():
+            return None
+        
+        # If we are using the dirty flag...
+        if self.useDirtyFlag:
+            # If we have stuff pending to save, set the clean flag and 
+            # return the current version.
+            if self.isDirty:
+                self.setClean()
+                return self.getSelectedVersion()
+            
+            # If nothing is pending to save...
+            else:
+                # Move the index back to the previous version.
+                self.currentIndex -= 1
+                
+                # Return the now-pointed-to version of the Project.
+                return self.projectVersions[self.currentIndex]
+        
+        # Otherwise (not using the dirty flag)...
+        else:
+            # Move the index back to the previous version.
+            self.currentIndex -= 1
+            
+            # Return the now-pointed-to version of the Project.
+            return self.projectVersions[self.currentIndex]
+    
+    def getRedoVersion(self):
+        # Exit if we cannot redo from the stack yet.
+        if not self.canRedo():
+            return None
+        
+        # Move the index forward to the next version.
+        self.currentIndex += 1
+        
+        # Set the clean flag.  (We'll lose any changes pending for saving.)
+        self.setClean()
+        
+        # Return the now-pointed-to version of the Project.
+        return self.projectVersions[self.currentIndex]
+    
+    def getSelectedVersion(self):
+        return self.projectVersions[self.currentIndex]
+    
+    def getProjectUID(self):
+        return self.projectUID
+    
+    def isDirty(self):
+        return self.dirtyFlag
+    
+    def isClean(self):
+        return not self.dirtyFlag
+    
+    def setDirtyFlagUse(self, useDirtyFlag):
+        self.useDirtyFlag = useDirtyFlag
+        
+    def setDirty(self):
+        self.dirtyFlag = True
+    
+    def setClean(self):
+        self.dirtyFlag = False
+        
+    def canSave(self):
+        # You can only save to the stack if the dirty flag is not being used or 
+        # it is set.
+        if not self.useDirtyFlag:
+            return True
+        else:
+            return self.isDirty()
+    
+    def canUndo(self):
+        # If the stack is empty, return False.
+        if self.isEmpty():
+            return False
+        
+        # If we are using the dirty flag and it is clean, we need more than 
+        # one item on the stack to do an undo.
+        if self.useDirtyFlag and self.isClean():
+            return len(self.projectVersions) > 1
+        
+        # Otherwise, we can only do an Undo if we are using the dirty flag.
+        # (There's only 1 version on the stack.)
+        else:
+            return self.useDirtyFlag
+    
+    def canRedo(self):
+        return (not self.atStackTop())
+    
+    def isEmpty(self):
+        return len(self.projectVersions) == 0
+    
+    def atStackTop(self):
+        if self.currentIndex == None:
+            return True
+        else:
+            return (self.currentIndex == (len(self.projectVersions) - 1))
+        
+    def showContents(self):
+        print 'Undo Stack Contents'
+        print '-------------------'
+        print "Project UID: '%s'" % self.projectUID
+        if self.useDirtyFlag:
+            print 'Uses Dirty Flag?: Yes'
+            if self.dirtyFlag:
+                print 'Dirty Flag State: Dirty'
+            else:
+                print 'Dirty Flag State: Clean'
+        else:
+            print 'Uses Dirty Flag?: No'
+        if self.isEmpty():
+            print 'Contents: Empty'
+        else:
+            print 'Contents: %d Project versions' % len(self.projectVersions)
+            print 'Stack Index: %d' % self.currentIndex
+        print
+
+        
 # Variable for holding the singleton usable UndoStack for the logged in user.
 undoStack = None
 
@@ -880,10 +1083,74 @@ def init_new_undo_stack(project_id):
         
     Returns:
         True if the project UID is new, False otherwise
-    """    
+    """   
+    global undoStack
+    
     print(">> init_new_undo_stack project_id '%s'" % project_id)
-    return { 'updatedundostack': True }
-
+    if undoStack is not None:
+        print(">> init_new_undo_stack in_stackproject_id '%s'" % undoStack.getProjectUID())
+    else:
+        print('WARNING: undoStack == None!')
+    
+    # If the undoStack is not defined yet or the project UID is different...
+    if undoStack is None or project_id != undoStack.getProjectUID():
+        return test_undo_stack(project_id, useDirtyFlag=True)
+        
+#        # Create a new undoStack, passing in the new project UID.
+#        undoStack = UndoStack(project_id)
+#        
+#        undoStack.setDirtyFlagUse(True)
+#        undoStack.showContents()
+#        
+#        # Get the Project object from the databases.
+#        project = load_project(project_id)
+#        
+#        undoStack.pushNewVersion(project)
+#        
+#        undoStack.showContents()
+#        
+#        # Return that we updated the undoStack.
+#        return { 'updatedundostack': True }
+    else:
+        # Return that we did not update the undoStack.
+        return { 'updatedundostack': False }
+    
+def test_undo_stack(project_id, useDirtyFlag=True):
+        # Create a new undoStack, passing in the new project UID.
+        undoStack = UndoStack(project_id)
+        
+        # Set whether we want to use the dirty flag.
+        undoStack.setDirtyFlagUse(useDirtyFlag)
+        
+        undoStack.showContents()
+        
+        # If we're using tbe dirty flag, test usage with it.
+        if useDirtyFlag:
+            # Get the Project object from the databases.
+            project = load_project(project_id)
+            
+            # Set the dirty flag to enable pushing.
+            undoStack.setDirty()
+            
+            # Try to push the project to the stack.
+            undoStack.pushNewVersion(project)
+            
+            undoStack.showContents()
+            
+            # Return that we updated the undoStack.
+            return { 'updatedundostack': True }
+        
+        # Otherwise (we're not using the dirty flag), test usage in that case.
+        else:
+            # Get the Project object from the databases.
+            project = load_project(project_id)
+            
+            # Try to push the project to the stack.
+            undoStack.pushNewVersion(project)
+            
+            undoStack.showContents()
+            
+            return { 'updatedundostack': True }
 
 def push_project_to_undo_stack(project_id):
     """
@@ -892,9 +1159,15 @@ def push_project_to_undo_stack(project_id):
     
     Args:
         project_id: UID of the project
+        
+    Returns:
+        True if a successful push is done, False otherwise           
     """
     print(">> push_project_to_undo_stack project_id '%s'" % project_id)
-
+    if undoStack is not None:
+        print(">> push_project_to_undo_stack in_stackproject_id '%s'" % undoStack.getProjectUID())
+    else:
+        print('WARNING: undoStack == None!')
 
 def fetch_undo_project(project_id):
     """
