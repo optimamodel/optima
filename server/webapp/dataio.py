@@ -951,7 +951,20 @@ def delete_result_by_name(
             record.cleanup()
             db_session.delete(record)
     db_session.commit()
+    
+    
+def delete_result_by_project_id(
+        project_id, db_session=None):
+    if db_session is None:
+        db_session = db.session
 
+    records = db_session.query(ResultsDb).filter_by(project_id=project_id)
+    for record in records:
+        print(">> delete_result_by_project_id '%s'" % project_id)
+        record.cleanup()
+        db_session.delete(record)
+    db_session.commit()
+    
 
 def download_result_data(result_id):
     """
@@ -1727,6 +1740,7 @@ class UndoStack(object):
         canRedo(): bool -- can we do an Redo from this stack? 
         isEmpty(): bool -- is the stack empty?
         atStackTop(): bool -- are we at the top of the stack (latest version)?
+        atStackBottom(): bool -- are we at the bottom of the stack (oldest version)?
         showContents(): void -- print out the contents of the stack
                     
     Attributes:
@@ -1855,23 +1869,26 @@ class UndoStack(object):
             return self.isDirty()
     
     def canUndo(self):
-        # If the stack is empty, return False.
-        if self.isEmpty():
+        # If we don't have a valid index, we can't undo.
+        if self.currentIndex is None:
             return False
         
         # If we are using the dirty flag...
         if self.useDirtyFlag:
-            # If the dirty flag is clean, we can undo only if there is more 
-            # than one entry in the stack.
+            # If the dirty flag is clean, we can undo only if we are at least 
+            # one stack entry from the bottom.
             if self.isClean():
-                return len(self.projectVersions) > 1
-            # Otherwise (dirty flag dirty), we're good just not being empty.
+                return self.currentIndex > 0
+            
+            # Otherwise (dirty flag dirty), we're good just by having a valid 
+            # index.
             else:
-                return True
-        
-        # Otherwise (we're not using dirty flag), we're good if we're not empty.
+                return True            
+            
+        # Otherwise (we're not using dirty flag), we're good only if we are 
+        # at least one stack entry from the bottom.
         else:
-            return True
+            return self.currentIndex > 0
     
     def canRedo(self):
         return (not self.atStackTop())
@@ -1884,6 +1901,9 @@ class UndoStack(object):
             return True
         else:
             return (self.currentIndex == (len(self.projectVersions) - 1))
+        
+    def atStackBottom(self):
+        return self.currentIndex == 0
         
     def showContents(self):
         print 'Undo Stack Contents'
@@ -1997,26 +2017,24 @@ def init_new_undo_stack(project_id):
     # Load the Project object from the UID.
     project = load_project(project_id)
     
-    # If we have a valid project...
-    if project is not None:
-        # Create a new UndoStack object which is empty and owned by the UID.
-        undoStack = UndoStack(project_id)
-        
-        # Turn off the use of the dirty flag.
-        undoStack.setDirtyFlagUse(False)
-        
-        # Push the project object to the UndoStack, so we have the first save in it.
-        undoStack.pushNewVersion(project)
-        
-        # Update the undo_stacks entry (including the Redis stored data).
-        update_or_create_undo_stack_record(undoStack, project_id)
-        
-        # Return success.
-        return { 'updatedundostack': True }
-    
-    # Otherwise, return failure.
-    else:
+    # If we don't have a valid project, return a failure.
+    if project is None:
         return { 'updatedundostack': False }
+        
+    # Create a new UndoStack object which is empty and owned by the UID.
+    undoStack = UndoStack(project_id)
+    
+    # Turn off the use of the dirty flag.
+    undoStack.setDirtyFlagUse(False)
+    
+    # Push the project object to the UndoStack, so we have the first save in it.
+    undoStack.pushNewVersion(project)
+    
+    # Update the undo_stacks entry (including the Redis stored data).
+    update_or_create_undo_stack_record(undoStack, project_id)
+    
+    # Return success.
+    return { 'updatedundostack': True }
 
 
 def push_project_to_undo_stack(project_id):
@@ -2035,8 +2053,16 @@ def push_project_to_undo_stack(project_id):
     # Load the Project object from the UID.
     project = load_project(project_id)
     
+    # If we don't have a valid project, return a failure.
+    if project is None:
+        return { 'didpush': False }
+    
     # Load the saved UndoStack object indexed by the project UID.
     undoStack = load_undo_stack(project_id)     
+    
+    # If we cannot save to the Undo stack, return a failure.
+    if not undoStack.canSave():
+        return { 'didpush': False }
     
     # Push the project to the stack.
     undoStack.pushNewVersion(project)
@@ -2044,6 +2070,7 @@ def push_project_to_undo_stack(project_id):
     # Update the undo_stacks entry (including the Redis stored data).
     update_or_create_undo_stack_record(undoStack, project_id)
     
+    # Return success.
     return { 'didpush': True }
 
 
@@ -2066,8 +2093,16 @@ def fetch_undo_project(project_id):
     # Load the saved UndoStack object indexed by the project UID.
     undoStack = load_undo_stack(project_id) 
     
+    # If we cannot do an undo on the Undo stack, return a failure.
+    if not undoStack.canUndo():
+        return { 'didundo': False }
+    
     # Pull out the Undo version of the project and update the stack.
     project = undoStack.getUndoVersion()
+    
+    # If we don't have a valid project, return a failure.
+    if project is None:
+        return { 'didundo': False }  
     
     # Save the withdrawn version of the project to the databases.
     save_project(project)
@@ -2075,6 +2110,12 @@ def fetch_undo_project(project_id):
     # Update the undo_stacks entry (including the Redis stored data).
     update_or_create_undo_stack_record(undoStack, project_id)
     
+    # Delete any result records with the corresponding project UID.  This 
+    # will force the client to rerun the simulation rather than mistakenly
+    # using the cached result for the graphs.
+    delete_result_by_project_id(project_id)
+    
+    # Return success.
     return { 'didundo': True }
 
 
@@ -2095,10 +2136,18 @@ def fetch_redo_project(project_id):
     #unit_test_show_and_delete_undo_stack(project_id)
     
     # Load the saved UndoStack object indexed by the project UID.
-    undoStack = load_undo_stack(project_id)  
+    undoStack = load_undo_stack(project_id)
+    
+    # If we cannot do an redo on the Undo stack, return a failure.
+    if not undoStack.canRedo():
+        return { 'didredo': False } 
     
     # Pull out the Redo version of the project and update the stack.
-    project = undoStack.getRedoVersion()    
+    project = undoStack.getRedoVersion() 
+    
+    # If we don't have a valid project, return a failure.
+    if project is None:
+        return { 'didredo': False }  
     
     # Save the withdrawn version of the project to the databases.
     save_project(project)
@@ -2106,6 +2155,12 @@ def fetch_redo_project(project_id):
     # Update the undo_stacks entry (including the Redis stored data).
     update_or_create_undo_stack_record(undoStack, project_id)
     
+    # Delete any result records with the corresponding project UID.  This 
+    # will force the client to rerun the simulation rather than mistakenly
+    # using the cached result for the graphs.
+    delete_result_by_project_id(project_id)
+    
+    # Return success.
     return { 'didredo': True }
 
 

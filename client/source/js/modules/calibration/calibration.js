@@ -31,17 +31,18 @@ define(['angular', 'underscore'], function (angular, _) {
         graphs: undefined,
       };
 
-      reloadActiveProject(true);
+	  // Load the active project, telling the function we're not using an Undo stack.
+      reloadActiveProject(false);
 
       $scope.projectService = projectService;
       $scope.$watch('projectService.project.id', function() {
         if (!_.isUndefined($scope.project) && ($scope.project.id !== projectService.project.id)) {
-          reloadActiveProject(true);
+          reloadActiveProject(false);  // we're not using an Undo stack here, either
         }
       });
     }
 
-    function reloadActiveProject(resetUndoStack) {
+    function reloadActiveProject(useUndoStack) {
       projectService
         .getActiveProject()
         .then(function(response) {
@@ -74,8 +75,9 @@ define(['angular', 'underscore'], function (angular, _) {
               }
             });
 			
-		  // Initialize a new UndoStack on the server.
-		  if (resetUndoStack) {
+		  // Initialize a new UndoStack on the server if we are not using an UndoStack in this 
+		  // call.
+		  if (!useUndoStack) {
 		    rpcService
 			  .rpcRun(
 			    'init_new_undo_stack', [$scope.project.id]);
@@ -120,11 +122,15 @@ define(['angular', 'underscore'], function (angular, _) {
 
     $scope.getCalibrationGraphs = function() {
       console.log('active parset id', $scope.state.parset.id);
+	  rpc_args = 
+	    [
+		  projectService.project.id, 
+		  $scope.state.parset.id,
+          "calibration", 
+	      getSelectors()
+	    ]		  
       rpcService
-        .rpcRun(
-          'load_parset_graphs',
-          [projectService.project.id, $scope.state.parset.id,
-          "calibration", getSelectors()])
+        .rpcRun('load_parset_graphs', rpc_args)
         .then(
           function(response) {
             loadParametersAndGraphs(response.data);
@@ -383,8 +389,8 @@ define(['angular', 'underscore'], function (angular, _) {
           'fetch_undo_project',
           [projectService.project.id])
         .then(function(response) {
-          toastr.success('Undo me baby!');
-		  reloadActiveProject(false);
+		  if (response.data.didundo)
+		    reloadActiveProject(true);
         });		
 	}
 	
@@ -394,8 +400,8 @@ define(['angular', 'underscore'], function (angular, _) {
           'fetch_redo_project',
           [projectService.project.id])
         .then(function(response) {
-          toastr.success('Redo me baby!');
-		  reloadActiveProject(false);		  
+		  if (response.data.didredo)
+		    reloadActiveProject(true);		  
         });      		
 	}
 	
