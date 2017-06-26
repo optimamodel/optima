@@ -568,9 +568,19 @@ def save_project_as_new(project, user_id):
     for result in project.results.values():
         name = result.name
         result.uid = op.uuid() # Reset UID since stored separately in DB
-        if 'scenarios' in name: update_or_create_result_record_by_id(result, project.uid, None, 'scenarios')
-        if 'optim' in name:     update_or_create_result_record_by_id(result, project.uid, None, 'optimization')
-        if 'parset' in name:    update_or_create_result_record_by_id(result, project.uid, result.parset.uid, 'calibration')
+        if 'scenarios' in name: 
+            update_or_create_result_record_by_id(result, project.uid, None, 
+                'scenarios')
+            break  # only create result record for the first match
+        if 'optim' in name:     
+            update_or_create_result_record_by_id(result, project.uid, None, 
+                'optimization')
+            break  # only create result record for the first match
+        if 'parset' in name:    
+            update_or_create_result_record_by_id(result, project.uid, 
+                project.parsets[result.parsetname].uid, 
+                'calibration')
+            break  # only create result record for the first match
     db.session.commit()
     save_project(project)
     return None
@@ -580,42 +590,88 @@ def copy_project(project_id, new_project_name):
     """
     Returns the project_id of the copied project
     """
-    project_record = load_project_record(
-        project_id, raise_exception=True)
-    user_id = current_user.id # Save as the current user always
+    
+    # Get the Project object for the project to be copied.
+    project_record = load_project_record(project_id, raise_exception=True)
     project = load_project_from_record(project_record)
+    
+    # Just change the project name, and we have the new version of the 
+    # Project object to be saved as a copy.
     project.name = new_project_name
+    
+    # Set the user UID for the new projects record to be the current user.
+    user_id = current_user.id 
+    
+    # Save a Postgres projects record for the copy project.
     save_project_as_new(project, user_id)
 
-    parset_name_by_id = {parset.uid: name for name, parset in project.parsets.items()}
+    # Grab a dictionary of parset UIDs, pointing to names for each.
+    # This line is not neessary if the block below is removed.
+    #parset_name_by_id = {parset.uid: name for name, parset in project.parsets.items()}
+    
+    # Remember the new project UID (created in save_project_as_new()).
     copy_project_id = project.uid
 
-    # copy each result
-    result_records = project_record.results
-    if result_records:
-        for result_record in result_records:
-            # reset the parset_id in results to new project
-            result = result_record.load()
-            parset_id = result_record.parset_id
-            if parset_id not in parset_name_by_id:
-                continue
-            parset_name = parset_name_by_id[parset_id]
-            new_parset = [r for r in project.parsets.values() if r.name == parset_name]
-            if not new_parset:
-                continue
-            copy_parset_id = new_parset[0].uid
+    # I'm not convinced any of this code below is necessary to the 
+    # functionality of project copying, and it frequently causes extra 
+    # Postgres results records to be created that are just copies of the 
+    # Postgres records made from the Resultsets embedded in the Project 
+    # objects.  At worst, 1 runsim() ends up getting done when a copy of a 
+    # cached result is missing. [GLC, 6/26/17]
+#    # Copy each matching Postgres results record to a new record.
+#    
+#    # Grab all of the Postgres results records matching the project record.
+#    result_records = project_record.results
+#    
+#    # If any results match...
+#    if result_records:
+#        # For each matching recsult record...
+#        for result_record in result_records:
+#            # reset the parset_id in results to new project
+#            
+#            # Load the Result object from the record.
+#            result = result_record.load()
+#            
+#            # Pull the parset ID from the record's UID.
+#            parset_id = result_record.parset_id
+#            
+#            # If the old project lacks the record UID, skip over this result 
+#            # record.  We don't want to copy it.
+#            if parset_id not in parset_name_by_id:
+#                continue
+#            
+#            # Get the parset name matching what's in the Project object.
+#            parset_name = parset_name_by_id[parset_id]
+#            
+#            # Get a list of all matching parsets where the name matches what 
+#            # we are looking for.
+#            new_parset = [r for r in project.parsets.values() if r.name == parset_name]
+#            
+#            # If there is no match, skip this results record.  We don't want 
+#            # to copy it.
+#            if not new_parset:
+#                continue
+#            
+#            # Get the parset UID just of the first match.
+#            copy_parset_id = new_parset[0].uid
+#
+#            # Create a new results record for the copy project for this results 
+#            # record from the old project.
+#            copy_result_record = ResultsDb(
+#                copy_parset_id, copy_project_id, result_record.calculation_type)
+#            
+#            # Add and flush the new record to Postgres.
+#            db.session.add(copy_result_record)
+#            db.session.flush()
+#
+#            # Write out the result with new UID to Redis.
+#            result.uid = copy_result_record.id
+#            copy_result_record.save_obj(result)
 
-            copy_result_record = ResultsDb(
-                copy_parset_id, copy_project_id, result_record.calculation_type)
-            db.session.add(copy_result_record)
-            db.session.flush()
-
-            # serializes result with new
-            result.uid = copy_result_record.id
-            copy_result_record.save_obj(result)
-
+    # Commit the Postgres changes.
     db.session.commit()
 
+    # Return the UID for the new projects record.
     return { 'projectId': copy_project_id }
 
 
