@@ -14,7 +14,7 @@ tests = [
 #'autocalib',
 #'manualcalib',
 #'reconcile',
-#'runscenarios',
+'runscenarios',
 #'optimize',
 'dosave',
 ]
@@ -51,7 +51,7 @@ if 'standardrun' in tests:
     P = defaultproject('best',dorun=False)
     P.runsim(debug=True, start=2000, end=2040)
     if runsensitivity: P.sensitivity()
-    if doplot: pygui(P)
+#    if doplot: pygui(P)
 
 ## Calibration
 if 'autocalib' in tests: 
@@ -76,16 +76,16 @@ if 'runscenarios' in tests:
     scenlist = [
         Budgetscen(name='No budget', parsetname=ind, progsetname=ind, t=[2016], budget=nobudget),
         Budgetscen(name='Current budget', parsetname=ind, progsetname=ind, t=[2016], budget=defaultbudget),
-        Coveragescen(name='No '+testprog+' coverage', parsetname=ind, progsetname=ind, t=[2016], coverage={testprog: 0.}),
-        Budgetscen(name='Unlimited '+testprog+' budget', parsetname=ind, progsetname=ind, t=[2016], budget={testprog: 1e9}),
-        Budgetscen(name='Unlimited spending', parsetname=ind, progsetname=ind, t=[2016], budget=maxbudget),
+#        Coveragescen(name='No '+testprog+' coverage', parsetname=ind, progsetname=ind, t=[2016], coverage={testprog: 0.}),
+#        Budgetscen(name='Unlimited '+testprog+' budget', parsetname=ind, progsetname=ind, t=[2016], budget={testprog: 1e9}),
+#        Budgetscen(name='Unlimited spending', parsetname=ind, progsetname=ind, t=[2016], budget=maxbudget),
         ]
     
     # Run the scenarios
-    P.addscenlist(scenlist)
+    P.addscens(scenlist)
     P.runscenarios() 
     if doplot:
-        pygui(P.results[ind], toplot='default')
+        pygui(P.results[ind], toplot='cascadebars')
 
 
 
