@@ -691,7 +691,10 @@ def create_project_from_prj_file(prj_filename, user_id, other_names):
     Returns the project id of the new project.
     """
     print(">> create_project_from_prj_file '%s'" % prj_filename)
-    project = op.loadproj(prj_filename)
+    try:
+        project = op.loadproj(prj_filename)
+    except Exception:
+        return { 'projectId': 'BadFileFormatError' }
     project.name = get_unique_name(project.name, other_names)
     save_project_as_new(project, user_id)
     return { 'projectId': str(project.uid) }
@@ -702,7 +705,10 @@ def create_project_from_spreadsheet(xlsx_filename, user_id, other_names):
     Returns the project id of the new project.
     """
     print(">> create_project_from_spreadsheet '%s'" % xlsx_filename)
-    project = op.Project(spreadsheet=xlsx_filename)
+    try:
+        project = op.Project(spreadsheet=xlsx_filename)
+    except Exception:
+        return { 'projectId': 'BadFileFormatError' }        
     project.name = get_unique_name(project.name, other_names)
     save_project_as_new(project, user_id)
     return { 'projectId': str(project.uid) }
@@ -743,7 +749,11 @@ def download_project_with_result(project_id):
 def update_project_from_uploaded_spreadsheet(spreadsheet_fname, project_id):
     def modify(project):
         project.loadspreadsheet(spreadsheet_fname, name='default', overwrite=True, makedefaults=True)
-    update_project_with_fn(project_id, modify)
+    try:
+        update_project_with_fn(project_id, modify)
+    except Exception:
+        return { 'success': False }
+    return { 'success': True }
 
 
 def load_zip_of_prj_files(project_ids):
@@ -893,16 +903,19 @@ def upload_project_object(filename, project_id, obj_type):
         server filename
     """
     project = load_project(project_id)
-    obj = op.loadobj(filename)
-    obj.uid = op.uuid()
-    if obj_type == "parset":
-        project.addparset(parset=obj, overwrite=True)
-    elif obj_type == "progset":
-        project.addprogset(progset=obj, overwrite=True)
-    elif obj_type == "scenario":
-        project.addscen(scen=obj, overwrite=True)
-    elif obj_type == "optimization":
-        project.addoptim(optim=obj, overwrite=True)
+    try:
+        obj = op.loadobj(filename)
+        obj.uid = op.uuid()
+        if obj_type == "parset":
+            project.addparset(parset=obj, overwrite=True)
+        elif obj_type == "progset":
+            project.addprogset(progset=obj, overwrite=True)
+        elif obj_type == "scenario":
+            project.addscen(scen=obj, overwrite=True)
+        elif obj_type == "optimization":
+            project.addoptim(optim=obj, overwrite=True)
+    except Exception:
+        return { 'name': 'BadFileFormatError' }
     save_project(project)
     return { 'name': obj.name }
 
@@ -1665,8 +1678,11 @@ def portfolio_results_ready(portfolio_id):
 
 
 def update_portfolio_from_prt(prt_filename):
-    portfolio = op.loadportfolio(prt_filename)
-    create_portfolio(portfolio.name, portfolio=portfolio)
+    try:
+        portfolio = op.loadportfolio(prt_filename)
+        create_portfolio(portfolio.name, portfolio=portfolio)
+    except Exception:
+        return { 'created': 'BadFileFormatError' }
     return parse.get_portfolio_summary(portfolio)
 
 
@@ -1718,7 +1734,10 @@ def make_region_projects(spreadsheet_fname, project_id):
     print("> make_region_projects from %s %s" % (project_id, spreadsheet_fname))
     baseproject = load_project(project_id)
 
-    projects = op.makegeoprojects(project=baseproject, spreadsheetpath=spreadsheet_fname, dosave=False)
+    try:
+        projects = op.makegeoprojects(project=baseproject, spreadsheetpath=spreadsheet_fname, dosave=False)
+    except Exception:
+        return { 'prjNames': 'BadFileFormatError' }
 
     prj_names = []
     for project in projects:

@@ -259,17 +259,21 @@ define(['angular', 'ui.router'], function (angular) {
         .rpcUpload(
           'upload_project_object', [projectService.project.id, 'optimization'], {}, '.opt')
         .then(function(response) {
-          toastr.success('Optimization uploaded');
-          var name = response.data.name;
-          rpcService
-            .rpcRun(
-              'load_optimization_summaries', [$scope.state.project.id])
-            .then(function(response) {
-              console.log('uploadOptimization response', response);
-              $scope.state.optimizations = response.data.optimizations;
-              $scope.state.optimization = _.findWhere(
-                $scope.state.optimizations, {'name': name});
-            });
+			if (response.data.name == 'BadFileFormatError') {
+			  toastr.error('The file you have chosen is not valid for uploading');  
+		    } else {
+              toastr.success('Optimization uploaded');
+              var name = response.data.name;
+              rpcService
+                .rpcRun(
+                  'load_optimization_summaries', [$scope.state.project.id])
+                .then(function(response) {
+                  console.log('uploadOptimization response', response);
+                  $scope.state.optimizations = response.data.optimizations;
+                  $scope.state.optimization = _.findWhere(
+                    $scope.state.optimizations, {'name': name});
+		        });
+			}
         });
     };
 
