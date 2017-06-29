@@ -192,9 +192,11 @@ define(['angular', 'sha224/sha224',  '../../version'], function (angular, SHA224
   
   module.controller(
     'RegisterController',
-    function ($scope, $window, userApi) {
+    function ($scope, $window, userApi, modalService) {
 
     $scope.error = false;
+	
+	$scope.termsAccepted = false;
 
     $scope.register = function () {
       $scope.$broadcast('form-input-check-validity');
@@ -203,7 +205,7 @@ define(['angular', 'sha224/sha224',  '../../version'], function (angular, SHA224
         return;
       }
 
-      $scope.error = false;
+      $scope.error = false;  
 
       var hashed_password = SHA224($scope.password).toString();
 
@@ -238,6 +240,10 @@ define(['angular', 'sha224/sha224',  '../../version'], function (angular, SHA224
         }
       );
     };
+	
+	$scope.spawnTerms = function () {
+      modalService.termsAndConditions();
+	}
 
   });
   
