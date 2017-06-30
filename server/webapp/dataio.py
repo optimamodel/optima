@@ -558,31 +558,44 @@ def download_data_spreadsheet(project_id, is_blank=True):
 
 
 def save_project_as_new(project, user_id):
+    # Create a new Postgres projects table record, and add and flush it.
     project_record = ProjectDb(user_id)
     db.session.add(project_record)
     db.session.flush()
 
     print(">> save_project_as_new '%s'" % project.name)
+    
+    # Set the UID of the Project object passed in to the UID created in the 
+    # new Postgres record.
     project.uid = project_record.id
     
+    # For each of the embedded Resultsets...
     for result in project.results.values():
+        # Grab the result name.
         name = result.name
-        result.uid = op.uuid() # Reset UID since stored separately in DB
+        
+        # Set a new UID to be used for the DB entries.
+        result.uid = op.uuid()
+        
+        # For results that should be cached, create or update a Postgres 
+        # record for the result.
         if 'scenarios' in name: 
             update_or_create_result_record_by_id(result, project.uid, None, 
                 'scenarios')
-            break  # only create result record for the first match
         if 'optim' in name:     
             update_or_create_result_record_by_id(result, project.uid, None, 
                 'optimization')
-            break  # only create result record for the first match
         if 'parset' in name:    
             update_or_create_result_record_by_id(result, project.uid, 
                 project.parsets[result.parsetname].uid, 
                 'calibration')
-            break  # only create result record for the first match
+            
+    # Commit the Postgres changes.
     db.session.commit()
+    
+    # Save the changed Project object to Redis.
     save_project(project)
+    
     return None
 
 
