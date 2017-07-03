@@ -50,11 +50,12 @@
   </div>
   
   <div class="section flex__medium_space_between">
+  <input type="checkbox" ng-model="termsAccepted"/>
+
     <span class="text_bold_medium" style="width: 100%">
       I agree to Optima's <a class="link __blue" ng-click="spawnTerms()">Terms and Condtions</a>.
     </span>
   
-    <input type="checkbox" ng-model="termsAccepted"/>
   </div>
   
   <button type="submit" class="section btn __l __block" ng-disabled="!termsAccepted">Join</button>
