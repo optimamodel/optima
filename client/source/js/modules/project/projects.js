@@ -116,26 +116,44 @@ define(['angular', 'ui.router'], function (angular) {
       $scope.uploadProject = function() {
         projectService
           .uploadProject()
-          .then(function() {
-            toastr.success('Project uploaded');
-          });
+          .then(
+		      function() {
+                toastr.success('Project uploaded');
+              }, 
+		      function() {
+			    toastr.error('The file you have chosen is not valid for uploading');
+			  }
+			);
       };
 
       $scope.uploadProjectFromSpreadsheet = function() {
         projectService
           .uploadProjectFromSpreadsheet()
-          .then(function() {
-            toastr.success('Project uploaded from spreadsheet');
-          });
+          .then(
+		    function() {
+              toastr.success('Project uploaded from spreadsheet');
+            },
+		    function() {
+			  toastr.error('The file you have chosen is not valid for uploading');
+			}			
+		  );
       };
 
       $scope.uploadSpreadsheet = function(projectName, projectId) {
         rpcService
           .rpcUpload(
-            'update_project_from_uploaded_spreadsheet', [projectId])
-          .then(function(response) {
-            toastr.success('Uploaded spreadsheet for project');
-          });
+            'update_project_from_uploaded_spreadsheet', 
+			[projectId], 
+			{},
+			'.xlsx')
+          .then(
+		    function(response) {
+			  if (response.data.success) {
+			    toastr.success('Uploaded spreadsheet for project');
+			  } else {
+			    toastr.error('The file you have chosen is not valid for uploading');
+			  }     
+            });
       };
 
       $scope.editProjectName = function(project) {

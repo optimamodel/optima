@@ -558,21 +558,44 @@ def download_data_spreadsheet(project_id, is_blank=True):
 
 
 def save_project_as_new(project, user_id):
+    # Create a new Postgres projects table record, and add and flush it.
     project_record = ProjectDb(user_id)
     db.session.add(project_record)
     db.session.flush()
 
     print(">> save_project_as_new '%s'" % project.name)
+    
+    # Set the UID of the Project object passed in to the UID created in the 
+    # new Postgres record.
     project.uid = project_record.id
     
+    # For each of the embedded Resultsets...
     for result in project.results.values():
+        # Grab the result name.
         name = result.name
-        result.uid = op.uuid() # Reset UID since stored separately in DB
-        if 'scenarios' in name: update_or_create_result_record_by_id(result, project.uid, None, 'scenarios')
-        if 'optim' in name:     update_or_create_result_record_by_id(result, project.uid, None, 'optimization')
-        if 'parset' in name:    update_or_create_result_record_by_id(result, project.uid, result.parset.uid, 'calibration')
+        
+        # Set a new UID to be used for the DB entries.
+        result.uid = op.uuid()
+        
+        # For results that should be cached, create or update a Postgres 
+        # record for the result.
+        if 'scenarios' in name: 
+            update_or_create_result_record_by_id(result, project.uid, None, 
+                'scenarios')
+        if 'optim' in name:     
+            update_or_create_result_record_by_id(result, project.uid, None, 
+                'optimization')
+        if 'parset' in name:    
+            update_or_create_result_record_by_id(result, project.uid, 
+                project.parsets[result.parsetname].uid, 
+                'calibration')
+            
+    # Commit the Postgres changes.
     db.session.commit()
+    
+    # Save the changed Project object to Redis.
     save_project(project)
+    
     return None
 
 
@@ -580,42 +603,88 @@ def copy_project(project_id, new_project_name):
     """
     Returns the project_id of the copied project
     """
-    project_record = load_project_record(
-        project_id, raise_exception=True)
-    user_id = current_user.id # Save as the current user always
+    
+    # Get the Project object for the project to be copied.
+    project_record = load_project_record(project_id, raise_exception=True)
     project = load_project_from_record(project_record)
+    
+    # Just change the project name, and we have the new version of the 
+    # Project object to be saved as a copy.
     project.name = new_project_name
+    
+    # Set the user UID for the new projects record to be the current user.
+    user_id = current_user.id 
+    
+    # Save a Postgres projects record for the copy project.
     save_project_as_new(project, user_id)
 
-    parset_name_by_id = {parset.uid: name for name, parset in project.parsets.items()}
+    # Grab a dictionary of parset UIDs, pointing to names for each.
+    # This line is not neessary if the block below is removed.
+    #parset_name_by_id = {parset.uid: name for name, parset in project.parsets.items()}
+    
+    # Remember the new project UID (created in save_project_as_new()).
     copy_project_id = project.uid
 
-    # copy each result
-    result_records = project_record.results
-    if result_records:
-        for result_record in result_records:
-            # reset the parset_id in results to new project
-            result = result_record.load()
-            parset_id = result_record.parset_id
-            if parset_id not in parset_name_by_id:
-                continue
-            parset_name = parset_name_by_id[parset_id]
-            new_parset = [r for r in project.parsets.values() if r.name == parset_name]
-            if not new_parset:
-                continue
-            copy_parset_id = new_parset[0].uid
+    # I'm not convinced any of this code below is necessary to the 
+    # functionality of project copying, and it frequently causes extra 
+    # Postgres results records to be created that are just copies of the 
+    # Postgres records made from the Resultsets embedded in the Project 
+    # objects.  At worst, 1 runsim() ends up getting done when a copy of a 
+    # cached result is missing. [GLC, 6/26/17]
+#    # Copy each matching Postgres results record to a new record.
+#    
+#    # Grab all of the Postgres results records matching the project record.
+#    result_records = project_record.results
+#    
+#    # If any results match...
+#    if result_records:
+#        # For each matching recsult record...
+#        for result_record in result_records:
+#            # reset the parset_id in results to new project
+#            
+#            # Load the Result object from the record.
+#            result = result_record.load()
+#            
+#            # Pull the parset ID from the record's UID.
+#            parset_id = result_record.parset_id
+#            
+#            # If the old project lacks the record UID, skip over this result 
+#            # record.  We don't want to copy it.
+#            if parset_id not in parset_name_by_id:
+#                continue
+#            
+#            # Get the parset name matching what's in the Project object.
+#            parset_name = parset_name_by_id[parset_id]
+#            
+#            # Get a list of all matching parsets where the name matches what 
+#            # we are looking for.
+#            new_parset = [r for r in project.parsets.values() if r.name == parset_name]
+#            
+#            # If there is no match, skip this results record.  We don't want 
+#            # to copy it.
+#            if not new_parset:
+#                continue
+#            
+#            # Get the parset UID just of the first match.
+#            copy_parset_id = new_parset[0].uid
+#
+#            # Create a new results record for the copy project for this results 
+#            # record from the old project.
+#            copy_result_record = ResultsDb(
+#                copy_parset_id, copy_project_id, result_record.calculation_type)
+#            
+#            # Add and flush the new record to Postgres.
+#            db.session.add(copy_result_record)
+#            db.session.flush()
+#
+#            # Write out the result with new UID to Redis.
+#            result.uid = copy_result_record.id
+#            copy_result_record.save_obj(result)
 
-            copy_result_record = ResultsDb(
-                copy_parset_id, copy_project_id, result_record.calculation_type)
-            db.session.add(copy_result_record)
-            db.session.flush()
-
-            # serializes result with new
-            result.uid = copy_result_record.id
-            copy_result_record.save_obj(result)
-
+    # Commit the Postgres changes.
     db.session.commit()
 
+    # Return the UID for the new projects record.
     return { 'projectId': copy_project_id }
 
 
@@ -635,7 +704,10 @@ def create_project_from_prj_file(prj_filename, user_id, other_names):
     Returns the project id of the new project.
     """
     print(">> create_project_from_prj_file '%s'" % prj_filename)
-    project = op.loadproj(prj_filename)
+    try:
+        project = op.loadproj(prj_filename)
+    except Exception:
+        return { 'projectId': 'BadFileFormatError' }
     project.name = get_unique_name(project.name, other_names)
     save_project_as_new(project, user_id)
     return { 'projectId': str(project.uid) }
@@ -646,7 +718,10 @@ def create_project_from_spreadsheet(xlsx_filename, user_id, other_names):
     Returns the project id of the new project.
     """
     print(">> create_project_from_spreadsheet '%s'" % xlsx_filename)
-    project = op.Project(spreadsheet=xlsx_filename)
+    try:
+        project = op.Project(spreadsheet=xlsx_filename)
+    except Exception:
+        return { 'projectId': 'BadFileFormatError' }        
     project.name = get_unique_name(project.name, other_names)
     save_project_as_new(project, user_id)
     return { 'projectId': str(project.uid) }
@@ -687,7 +762,11 @@ def download_project_with_result(project_id):
 def update_project_from_uploaded_spreadsheet(spreadsheet_fname, project_id):
     def modify(project):
         project.loadspreadsheet(spreadsheet_fname, name='default', overwrite=True, makedefaults=True)
-    update_project_with_fn(project_id, modify)
+    try:
+        update_project_with_fn(project_id, modify)
+    except Exception:
+        return { 'success': False }
+    return { 'success': True }
 
 
 def load_zip_of_prj_files(project_ids):
@@ -837,16 +916,19 @@ def upload_project_object(filename, project_id, obj_type):
         server filename
     """
     project = load_project(project_id)
-    obj = op.loadobj(filename)
-    obj.uid = op.uuid()
-    if obj_type == "parset":
-        project.addparset(parset=obj, overwrite=True)
-    elif obj_type == "progset":
-        project.addprogset(progset=obj, overwrite=True)
-    elif obj_type == "scenario":
-        project.addscen(scen=obj, overwrite=True)
-    elif obj_type == "optimization":
-        project.addoptim(optim=obj, overwrite=True)
+    try:
+        obj = op.loadobj(filename)
+        obj.uid = op.uuid()
+        if obj_type == "parset":
+            project.addparset(parset=obj, overwrite=True)
+        elif obj_type == "progset":
+            project.addprogset(progset=obj, overwrite=True)
+        elif obj_type == "scenario":
+            project.addscen(scen=obj, overwrite=True)
+        elif obj_type == "optimization":
+            project.addoptim(optim=obj, overwrite=True)
+    except Exception:
+        return { 'name': 'BadFileFormatError' }
     save_project(project)
     return { 'name': obj.name }
 
@@ -1609,8 +1691,11 @@ def portfolio_results_ready(portfolio_id):
 
 
 def update_portfolio_from_prt(prt_filename):
-    portfolio = op.loadportfolio(prt_filename)
-    create_portfolio(portfolio.name, portfolio=portfolio)
+    try:
+        portfolio = op.loadportfolio(prt_filename)
+        create_portfolio(portfolio.name, portfolio=portfolio)
+    except Exception:
+        return { 'created': 'BadFileFormatError' }
     return parse.get_portfolio_summary(portfolio)
 
 
@@ -1662,7 +1747,10 @@ def make_region_projects(spreadsheet_fname, project_id):
     print("> make_region_projects from %s %s" % (project_id, spreadsheet_fname))
     baseproject = load_project(project_id)
 
-    projects = op.makegeoprojects(project=baseproject, spreadsheetpath=spreadsheet_fname, dosave=False)
+    try:
+        projects = op.makegeoprojects(project=baseproject, spreadsheetpath=spreadsheet_fname, dosave=False)
+    except Exception:
+        return { 'prjNames': 'BadFileFormatError' }
 
     prj_names = []
     for project in projects:
