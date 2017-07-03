@@ -103,7 +103,10 @@ class ProjectDb(db.Model):
     def delete_dependent_objects(self, synchronize_session=False):
         str_project_id = str(self.id)
         # delete all relevant entries explicitly
+        # INVESTIGATE: Does this end up leaving zombie Redis keys? I don't 
+        # see any calls to the cleanup code for these records. (GLC, 7/3/17)
         db.session.query(ResultsDb).filter_by(project_id=str_project_id).delete(synchronize_session)
+        db.session.query(UndoStackDb).filter_by(project_id=str_project_id).delete(synchronize_session)
         db.session.flush()
 
     def recursive_delete(self, synchronize_session=False):
@@ -164,7 +167,6 @@ class UndoStackDb(db.Model):
 
     id = db.Column(UUID(True), server_default=text("uuid_generate_v1mc()"), primary_key=True)
     project_id = db.Column(UUID(True), db.ForeignKey('projects.id', ondelete='SET NULL'))
-    # NOTE: should check out whether that ondelete argument should be used
 
     def __init__(self, project_id, id=None):
         self.project_id = project_id

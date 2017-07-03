@@ -1998,8 +1998,29 @@ def delete_undo_stack_record(project_id, db_session=None):
     
     # Commit the database session.
     db_session.commit()
-
+    
+    
+def delete_undo_stack_zombie_records(db_session=None):
+    print(">> delete_undo_stack_zombie_records")
+    
+    # If no session is passed in, grab the db module one.    
+    if db_session is None:
+        db_session = db.session  
         
+    # Pull out all undo_stacks rows with NULL Project UID.
+    undo_stack_records = db_session.query(UndoStackDb).filter_by(project_id=None)
+
+    # Call the cleanup for each record (i.e., deleting the Redis entries).
+    for undo_stack_record in undo_stack_records:
+        undo_stack_record.cleanup()
+        
+    # Delete all of the matching records.
+    undo_stack_records.delete()
+    
+    # Commit the database session.
+    db_session.commit()
+
+    
 def init_new_undo_stack(project_id):
     """
     Given a project UID, if we have a valid project record, set up a new 
@@ -2013,7 +2034,7 @@ def init_new_undo_stack(project_id):
         True if the project gets written to a new UndoStack, False otherwise
     """   
     print(">> init_new_undo_stack project_id '%s'" % project_id)
-    
+
     # Load the Project object from the UID.
     project = load_project(project_id)
     
