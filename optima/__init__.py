@@ -60,7 +60,7 @@ from .utils import drprint, findinds, findnearest, getdate, getfilelist, getvali
 from .utils import Link, LinkException, loadbalancer, makefilepath, objectid, objatt, objmeth, objrepr
 from .utils import odict, percentcomplete, perturb, printarr, printdata as pd, printv, printtologfile
 from .utils import promotetoarray, promotetolist, promotetoodict, quantile, runcommand, sanitize, scaleratio
-from .utils import sigfig, slacknotification, smoothinterp, tic, toc, today, vec2obj
+from .utils import sigfig, slacknotification, smoothinterp, tic, toc, today, vec2obj, sanitizefilename
 import utils as _utils; del utils
 
 # Optimization algorithm

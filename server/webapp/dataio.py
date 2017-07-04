@@ -872,7 +872,7 @@ def get_server_filename(basename):
     dirname = upload_dir_user(TEMPLATEDIR)
     if not dirname:
         dirname = TEMPLATEDIR
-    return os.path.join(dirname, basename)
+    return os.path.join(dirname, op.sanitizefilename(basename))
 
 
 def download_project_object(project_id, obj_type, obj_id):
