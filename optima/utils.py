@@ -970,7 +970,7 @@ def sanitizefilename(rawfilename):
     '''
     import re # Import regular expression package.
     filtername = re.sub('[\!\?\"\'<>]', '', rawfilename) # Erase certain characters we don't want at all: !, ?, ", ', <, >
-    filtername = re.sub('[ :/\\\*\|,]', '_', filtername) # Change certain characters that might be being used as separators from what they were to underscores: space, :, /, \, *, |, comma
+    filtername = re.sub('[:/\\\*\|,]', '_', filtername) # Change certain characters that might be being used as separators from what they were to underscores: space, :, /, \, *, |, comma
     return filtername # Return the sanitized file name.
 
 
