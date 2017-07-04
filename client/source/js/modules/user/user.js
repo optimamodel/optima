@@ -52,6 +52,16 @@ define(['angular', 'sha224/sha224',  '../../version'], function (angular, SHA224
           templateUrl: 'js/modules/user/register.html?cacheBust=xxx' ,
           controller: 'RegisterController'
         })
+        .state('devregister', {
+          url: '/devregister',
+          onEnter: function ($state, userManager) {
+            if (userManager.isLoggedIn) {
+              $state.go('home');
+            }
+          },
+          templateUrl: 'js/modules/user/devregister.html?cacheBust=xxx' ,
+          controller: 'DevRegisterController'
+        })		
         .state('edit', {
           url: '/edit',
           templateUrl: 'js/modules/user/edit.html?cacheBust=xxx' ,
@@ -182,6 +192,63 @@ define(['angular', 'sha224/sha224',  '../../version'], function (angular, SHA224
   
   module.controller(
     'RegisterController',
+    function ($scope, $window, userApi, modalService) {
+
+    $scope.error = false;
+	
+	$scope.termsAccepted = false;
+
+    $scope.register = function () {
+      $scope.$broadcast('form-input-check-validity');
+
+      if ($scope.RegisterForm.$invalid) {
+        return;
+      }
+
+      $scope.error = false;  
+
+      var hashed_password = SHA224($scope.password).toString();
+
+      userApi.create({
+        username: $scope.username,
+        password: hashed_password,
+        displayName: $scope.displayName,
+        email: $scope.email
+      },
+        // success
+        function (response) {
+          if (response.username) {
+            // success
+            $window.location = './#/login';
+          }
+        },
+        // error
+        function (error) {
+          $scope.error = error.data.reason;
+          switch(error.status){
+            case 409: // conflict: will be sent if the email already exists
+              // show css error tick to email field
+              $scope.RegisterForm.email.$invalid = true;
+              $scope.RegisterForm.email.$valid = false;
+              $scope.$broadcast('form-input-check-validity');
+              break;
+            case 400:
+              break;
+            default:
+              $scope.error = 'Server feels bad. Please try again in a bit';
+          }
+        }
+      );
+    };
+	
+	$scope.spawnTerms = function () {
+      modalService.termsAndConditions();
+	}
+
+  });
+  
+  module.controller(
+    'DevRegisterController',
     function ($scope, $window, userApi) {
 
     $scope.error = false;
@@ -230,7 +297,7 @@ define(['angular', 'sha224/sha224',  '../../version'], function (angular, SHA224
     };
 
   });
-
+  
   return module;
 
 });
