@@ -146,19 +146,23 @@ define(['angular', 'ui.router', './program-modal'], function (angular) {
         .rpcUpload(
           'upload_project_object', [projectService.project.id, 'progset'], {}, '.prg')
         .then(function(response) {
-          toastr.success('Program set uploaded');
-          var name = response.data.name;
+		  if (response.data.name == 'BadFileFormatError') {
+			toastr.error('The file you have chosen is not valid for uploading');  
+		  } else {
+            toastr.success('Program set uploaded');
+            var name = response.data.name;
 
-          rpcService
-            .rpcRun('load_progset_summaries', [projectService.project.id])
-            .then(function(response) {
-              var data = response.data;
-              if (data.progsets) {
-                $scope.programSetList = data.progsets;
-                console.log("uploadProgramSet", $scope.programSetList);
-                $scope.state.activeProgramSet = _.findWhere(data.progsets, {name: name});
-              }
-            });
+            rpcService
+              .rpcRun('load_progset_summaries', [projectService.project.id])
+              .then(function(response) {
+                var data = response.data;
+                if (data.progsets) {
+                  $scope.programSetList = data.progsets;
+                  console.log("uploadProgramSet", $scope.programSetList);
+                  $scope.state.activeProgramSet = _.findWhere(data.progsets, {name: name});
+                }
+              });
+		  }
         });
     };
 

@@ -172,13 +172,19 @@ define(['angular', '../common/local-storage-polyfill'], function (angular) {
       rpcService
         .rpcUpload(
           'create_project_from_prj_file',
-          [userManager.user.id, otherNames])
+          [userManager.user.id, otherNames], 
+		  {},
+		  '.prj')
         .then(
           function(response) {
-            getProjectAndMakeActive(response.data.projectId)
-              .then(
-                function(response) { deferred.resolve(response); },
-                function(response) { deferred.reject(response); });
+			if (response.data.projectId == 'BadFileFormatError') {
+			  deferred.reject(response);
+			} else {
+              getProjectAndMakeActive(response.data.projectId)
+                .then(
+                  function(response) { deferred.resolve(response); },
+                  function(response) { deferred.reject(response); });
+			}
           },
           function(response) {
             deferred.reject(response);
@@ -192,13 +198,19 @@ define(['angular', '../common/local-storage-polyfill'], function (angular) {
       rpcService
         .rpcUpload(
           'create_project_from_spreadsheet',
-          [userManager.user.id, otherNames])
+          [userManager.user.id, otherNames], 
+		  {},
+		  '.xlsx')
         .then(
           function(response) {
-            getProjectAndMakeActive(response.data.projectId)
-              .then(
-                function(response) { deferred.resolve(response); },
-                function(response) { deferred.reject(response); });
+			if (response.data.projectId == 'BadFileFormatError') {
+			  deferred.reject(response);
+            } else {			  
+              getProjectAndMakeActive(response.data.projectId)
+                .then(
+                  function(response) { deferred.resolve(response); },
+                  function(response) { deferred.reject(response); });
+			}
           },
           function(response) {
             deferred.reject(response);

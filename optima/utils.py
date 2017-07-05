@@ -881,6 +881,7 @@ def percentcomplete(step=None, maxsteps=None, indent=1):
     return None
 
 
+
 def checkmem(origvariable, descend=0, order='n', plot=False, verbose=0):
     '''
     Checks how much memory the variable in question uses by dumping it to file.
@@ -950,6 +951,7 @@ def checkmem(origvariable, descend=0, order='n', plot=False, verbose=0):
     return None
 
 
+
 def getfilelist(folder=None, ext=None):
     ''' A short-hand since glob is annoying '''
     from glob import glob
@@ -958,6 +960,19 @@ def getfilelist(folder=None, ext=None):
     if ext is None: ext = '*'
     filelist = sorted(glob(os.path.join(folder, '*.'+ext)))
     return filelist
+
+
+
+def sanitizefilename(rawfilename):
+    '''
+    Takes a potentially Linux- and Windows-unfriendly candidate file name, and 
+    returns a "sanitized" version that is more usable.
+    '''
+    import re # Import regular expression package.
+    filtername = re.sub('[\!\?\"\'<>]', '', rawfilename) # Erase certain characters we don't want at all: !, ?, ", ', <, >
+    filtername = re.sub('[:/\\\*\|,]', '_', filtername) # Change certain characters that might be being used as separators from what they were to underscores: space, :, /, \, *, |, comma
+    return filtername # Return the sanitized file name.
+
 
 
 def makefilepath(filename=None, folder=None, ext=None, default=None, split=False, abspath=True, makedirs=True, verbose=False):

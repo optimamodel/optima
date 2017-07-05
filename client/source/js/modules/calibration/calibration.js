@@ -322,20 +322,24 @@ define(['angular', 'underscore'], function (angular, _) {
         .rpcUpload(
           'upload_project_object', [$scope.project.id, 'parset'], {}, '.par')
         .then(function(response) {
-          toastr.success('Parameter set uploaded');
-          var name = response.data.name;
+		  if (response.data.name == 'BadFileFormatError') {
+			toastr.error('The file you have chosen is not valid for uploading');  
+		  } else {
+            toastr.success('Parameter set uploaded');
+            var name = response.data.name;
 
-          rpcService
-            .rpcRun('load_parset_summaries', [$scope.project.id])
-            .then(function(response) {
-              var parsets = response.data.parsets;
-              if (parsets) {
-                $scope.parsets = parsets;
-                $scope.state.parset = _.findWhere($scope.parsets, {name: name});
-                $scope.setActiveParset();
-              }
-            });
-        });
+            rpcService
+              .rpcRun('load_parset_summaries', [$scope.project.id])
+              .then(function(response) {
+                var parsets = response.data.parsets;
+                if (parsets) {
+                  $scope.parsets = parsets;
+                  $scope.state.parset = _.findWhere($scope.parsets, {name: name});
+                  $scope.setActiveParset();
+                }
+              });	
+		  }			  
+		});
     };
 
     $scope.refreshParset = function() {
