@@ -151,6 +151,9 @@ def parse_user_args(args):
         'name': args.get('displayName', ''),
         'username': args.get('username', ''),
         'password': hashed_password(args.get('password')),
+#        'country': args.get('country', ''),
+#        'organization': args.get('organization', ''),
+#        'position': args.get('position', ''),
     }
 
 
