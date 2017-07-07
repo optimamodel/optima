@@ -924,7 +924,7 @@ def plotcascade(results=None, aspercentage=False, cascadecolors=None, figsize=gl
         else: colors = cascadecolors
     
     # Actually do the plotting
-    if finalbars:
+    if asbars and finalbars:
         
         # Create the figure and axes
         fig,naxes = makefigure(figsize=figsize, interactive=interactive, fig=fig)
@@ -942,7 +942,6 @@ def plotcascade(results=None, aspercentage=False, cascadecolors=None, figsize=gl
                     thisbar = 100.*results.main[key].tot[0][-1]/results.main['numplhiv'].tot[0][-1] 
                 if k==len(casckeys)-1: label = labels[i]
                 else:                  label = None
-#                import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
                 ax.bar(basex[k]+i*dx, thisbar, width=1., color=casccolors[i][k], linewidth=0, label=label)
         
         targetxpos = 2.0
@@ -970,7 +969,6 @@ def plotcascade(results=None, aspercentage=False, cascadecolors=None, figsize=gl
         ax.yaxis.set_ticks_position('left')
         ax.xaxis.set_ticks_position('bottom')
         thistitle = 'Final care cascade'
-    
         
     else:
         for plt in range(nsims): # WARNING, copied from plotallocs()
