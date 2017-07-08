@@ -96,9 +96,9 @@ define(['angular', 'sha224/sha224',  '../../version'], function (angular, SHA224
     $scope.displayName = user.displayName;
     $scope.email = user.email;
     $scope.password = '';
-	$scope.country = '';
-	$scope.organization = '';
-	$scope.position = '';
+	$scope.country = user.country;
+	$scope.organization = user.organization;
+	$scope.position = user.position;
 
     $scope.update = function () {
       $scope.$broadcast('form-input-check-validity');
