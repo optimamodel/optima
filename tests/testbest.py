@@ -14,7 +14,7 @@ tests = [
 #'autocalib',
 #'manualcalib',
 #'reconcile',
-'runscenarios',
+#'runscenarios',
 #'optimize',
 'dosave',
 ]
@@ -51,7 +51,7 @@ if 'standardrun' in tests:
     P = defaultproject('best',dorun=False)
     P.runsim(debug=True, start=2000, end=2040)
     if runsensitivity: P.sensitivity()
-#    if doplot: pygui(P)
+    if doplot: pygui(P)
 
 ## Calibration
 if 'autocalib' in tests: 
