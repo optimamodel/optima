@@ -491,7 +491,7 @@ class Project(object):
     #######################################################################################################
 
 
-    def runsim(self, name=None, simpars=None, start=None, end=None, dt=None, addresult=True, die=True, debug=False, overwrite=True, n=1, sample=False, tosample=None, randseed=None, verbose=None, keepraw=False, **kwargs):
+    def runsim(self, name=None, simpars=None, start=None, end=None, dt=None, addresult=True, die=True, debug=False, overwrite=True, n=1, sample=None, tosample=None, randseed=None, verbose=None, keepraw=False, **kwargs):
         ''' 
         This function runs a single simulation, or multiple simulations if n>1.
         
@@ -532,7 +532,7 @@ class Project(object):
         return results
 
 
-    def sensitivity(self, name='perturb', orig='default', n=5, tosample=None, randseed=None, **kwargs): # orig=default or orig=0?
+    def sensitivity(self, name='perturb', orig=-1, n=5, tosample=None, randseed=None, **kwargs): # orig=default or orig=0?
         '''
         Function to perform sensitivity analysis over the parameters as a proxy for "uncertainty".
         
