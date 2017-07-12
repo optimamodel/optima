@@ -654,7 +654,7 @@ def redovlmon(project, **kwargs):
     kwargs['dataname'] = 'Number of VL tests recommended per person per year'
     kwargs['datashort'] = 'requiredvl'
     kwargs['y'] = requiredvldata[0]
-    kwargs['prior'] = {'dist':'uniform', 'pars':(requiredvldata[1], requiredvldata[2])}
+    kwargs['prior'] = op.Dist(dist='uniform', pars=(requiredvldata[1], requiredvldata[2]))
     addparameter(project=project, copyfrom=copyfrom, short=short, **kwargs)
 
     return None
@@ -691,7 +691,7 @@ def redoparamattr(project, **kwargs):
     kwargs['y'] = project.settings.transnorm
     kwargs['fromdata'] = 0
     kwargs['limits'] = (0, 'maxmeta')
-    kwargs['prior'] = {'dist':'uniform', 'pars':project.settings.transnorm*array([ 0.9,  1.1])}
+    kwargs['prior'] = op.Dist(dist='uniform', pars=project.settings.transnorm*array([ 0.9,  1.1]))
     addparameter(project=project, copyfrom=copyfrom, short=short, **kwargs)
     
     return None
