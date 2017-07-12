@@ -115,6 +115,9 @@ def parse_user_record(user_record):
         'displayName': user_record.name,
         'username': user_record.username,
         'email': user_record.email,
+        'country': user_record.country, 
+        'organization': user_record.organization,
+        'position': user_record.position,
         'is_admin': user_record.is_admin,
     }
     return user_record_dict
@@ -151,6 +154,9 @@ def parse_user_args(args):
         'name': args.get('displayName', ''),
         'username': args.get('username', ''),
         'password': hashed_password(args.get('password')),
+        'country': args.get('country', ''),
+        'organization': args.get('organization', ''),
+        'position': args.get('position', ''),
     }
 
 

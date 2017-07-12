@@ -17,14 +17,21 @@ class UserDb(db.Model):
     name = db.Column(db.String(60))
     email = db.Column(db.String(200))
     password = db.Column(db.String(200))
+    country = db.Column(db.String(60))
+    organization = db.Column(db.String(60))
+    position = db.Column(db.String(60)) 
     is_admin = db.Column(db.Boolean, server_default=text('FALSE'))
     projects = db.relationship('ProjectDb', backref='user', lazy='dynamic')
-
-    def __init__(self, name, email, password, username, is_admin=False):
+    
+    def __init__(self, name, email, password, username, country, organization, 
+        position, is_admin=False):
         self.name = name
         self.email = email
         self.password = password
         self.username = username
+        self.country = country
+        self.organization = organization
+        self.position = position
         self.is_admin = is_admin
 
     def get_id(self):
