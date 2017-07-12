@@ -114,6 +114,7 @@ def parse_user_record(user_record):
         'id': user_record.id,
         'displayName': user_record.name,
         'username': user_record.username,
+        'password': user_record.password,
         'email': user_record.email,
         'country': user_record.country, 
         'organization': user_record.organization,
