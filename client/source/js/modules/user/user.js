@@ -95,7 +95,6 @@ define(['angular', 'sha224/sha224',  '../../version'], function (angular, SHA224
     $scope.username = user.username;
     $scope.displayName = user.displayName;
     $scope.email = user.email;
-    $scope.old_hashed_password = user.password;
     $scope.password = '';
     $scope.country = user.country;
     $scope.organization = user.organization;
@@ -112,9 +111,9 @@ define(['angular', 'sha224/sha224',  '../../version'], function (angular, SHA224
 
       var hashed_password = SHA224($scope.password).toString();
 
-      // Use the old hashed password if we don't want to update the password.
+      // Use '' as the hashed password if we don't want to update the password.
       if ($scope.password == '') {
-        hashed_password = $scope.old_hashed_password;
+        hashed_password = ''
       }
 
       userApi.update({

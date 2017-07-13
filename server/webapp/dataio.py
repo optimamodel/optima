@@ -114,7 +114,6 @@ def parse_user_record(user_record):
         'id': user_record.id,
         'displayName': user_record.name,
         'username': user_record.username,
-        'password': user_record.password,
         'email': user_record.email,
         'country': user_record.country, 
         'organization': user_record.organization,
@@ -142,8 +141,16 @@ def nullable_email(email_str):
 
 
 def hashed_password(password_str):
+    # If we have something that looks like a hash ID, use it.
     if isinstance(password_str, basestring) and len(password_str) == 56:
         return password_str
+    
+    # If we have a blank string, use it.  (It's being used to specify no
+    # update of the password field for update_user().)
+    if password_str == '':
+        return password_str
+    
+    # Throw an error related to an invalid password string format.
     raise ValueError(
         'Invalid password - expecting SHA224 - Received {} of length {} and type {}'.format(
             password_str, len(password_str), type(password_str)))
@@ -200,6 +207,12 @@ def update_user(user_id, args):
             abort(403)
 
     for key, value in args.iteritems():
+        # Skip update of the password if a '' value is passed in for it.
+        if key == 'password' and value == '':
+            continue
+        
+        # If we have a value for the key, set the appropriate field for the 
+        # user record.
         if value is not None:
             setattr(user, key, value)
 
