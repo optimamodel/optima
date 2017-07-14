@@ -111,6 +111,11 @@ define(['angular', 'sha224/sha224',  '../../version'], function (angular, SHA224
 
       var hashed_password = SHA224($scope.password).toString();
 
+      // Use '' as the hashed password if we don't want to update the password.
+      if ($scope.password == '') {
+        hashed_password = ''
+      }
+
       userApi.update({
           username: $scope.username,
           password: hashed_password,

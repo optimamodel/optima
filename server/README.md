@@ -20,13 +20,13 @@ _ WARNING, much of this document is out-of-date! _
 
 ## To modify the database (not out of date!)
 
-0. First, back up (assuming SQL user `optima`; may be e.g. `postgres`):
+0. First, back up (may also need `-U optima` assuming SQL user `optima`; may be e.g. `postgres`):
 
-  `pg_dump -d optima -U optima > optima_old_db.sql`
+  `pg_dump optima > optima_old_db.sql`
 
 0. Log into the database:
 
-  `psql -d optima -U optima`
+  `psql optima`
 
 0. Perform the required commands, e.g.:
 
@@ -37,7 +37,7 @@ ADD COLUMN organization character varying(60),
 ADD COLUMN position character varying(60);
 ```
 
-0. Exit (e.g. `Ctrl+D`)
+0. Exit (e.g. `Ctrl+D`), and the database should be updated
 
 ## Installing the server
 
