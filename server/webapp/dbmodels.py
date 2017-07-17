@@ -108,12 +108,27 @@ class ProjectDb(db.Model):
         return project.name + ".prj"
 
     def delete_dependent_objects(self, synchronize_session=False):
-        str_project_id = str(self.id)
-        # delete all relevant entries explicitly
-        # INVESTIGATE: Does this end up leaving zombie Redis keys? I don't 
-        # see any calls to the cleanup code for these records. (GLC, 7/3/17)
-        db.session.query(ResultsDb).filter_by(project_id=str_project_id).delete(synchronize_session)
-        db.session.query(UndoStackDb).filter_by(project_id=str_project_id).delete(synchronize_session)
+        str_project_id = str(self.id)        
+        # Pull out all results rows with Project UID matching str_project_id.
+        result_records = db.session.query(ResultsDb).filter_by(project_id=str_project_id)
+        
+        # Call the cleanup for each record (i.e., deleting the Redis entries).
+        for result_record in result_records:
+            result_record.cleanup()
+            
+        # Now delete the Postgres results entries.
+        result_records.delete(synchronize_session)
+        
+        # Pull out all undo_stacks rows with Project UID matching str_project_id.
+        undo_stack_records = db.session.query(UndoStackDb).filter_by(project_id=str_project_id)
+        
+        # Call the cleanup for each record (i.e., deleting the Redis entries).
+        for undo_stack_record in undo_stack_records:
+            undo_stack_record.cleanup()
+            
+        # Now delete the Postgres undo_stacks entries.
+        undo_stack_records.delete(synchronize_session)
+        
         db.session.flush()
 
     def recursive_delete(self, synchronize_session=False):
