@@ -7,16 +7,37 @@ _ WARNING, much of this document is out-of-date! _
   webclient, you can see a list of available API calls at <http://sandbox.optimamodel.com/api/spec.html#!/spec>,
   or locally, once the webserver is running <http://localhost:8080/api/spec.html>
 - `flask` is a micro-framework to provide libraries to build `api.py`
-- `api.py` stores projects in a `postgres` database, a robust high-performant database. 
-  It uses the `sqlalchemy` python library to interface with the database, 
-  the database schema, tables and entries. You can directly interrogate the `postgres` 
+- `api.py` stores projects in a `postgres` database, a robust high-performant database.
+  It uses the `sqlalchemy` python library to interface with the database,
+  the database schema, tables and entries. You can directly interrogate the `postgres`
   database using the standard `postgres` command-line tools, such as `psql`. The
   database schema is stored in `server/webapp/dbmodels.py`.
-- `bin/run_server.py` uses `twisted` to bridge `api.py` to the outgoing port of your computer using the 
-  `wsgi` specification. `run_server.py` also serves the client js files from the `client` folder 
+- `bin/run_server.py` uses `twisted` to bridge `api.py` to the outgoing port of your computer using the
+  `wsgi` specification. `run_server.py` also serves the client js files from the `client` folder
 - to carry out parallel simulations, `server/webapp/tasks.py` is a  `celery` daemon that listens for jobs
   from `api.py`, which is communicated through an in-memory/intermittent-disk-based `redis`
   database.
+
+## To modify the database (not out of date!)
+
+0. First, back up (may also need `-U optima` assuming SQL user `optima`; may be e.g. `postgres`):
+
+  `pg_dump optima > optima_old_db.sql`
+
+0. Log into the database:
+
+  `psql optima`
+
+0. Perform the required commands, e.g.:
+
+  ```
+  ALTER TABLE users
+ADD COLUMN country character varying(60),
+ADD COLUMN organization character varying(60),
+ADD COLUMN position character varying(60);
+```
+
+0. Exit (e.g. `Ctrl+D`), and the database should be updated
 
 ## Installing the server
 
@@ -26,8 +47,8 @@ _On Mac_
     - `ruby -e “$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)”`
 2. install `python` and all the required third-party `python` modules:
     - `brew install python`
-    - to make sure `python` can find the Optima `<root>` directory, in the top `<root>` folder, run: 
-        `python setup.py develop` 
+    - to make sure `python` can find the Optima `<root>` directory, in the top `<root>` folder, run:
+        `python setup.py develop`
     - to load all the `python` modules needed (such as `celery`, `flask`, `twisted` etc), in the `<root>/server` folder, run:
         `pip install -r localrequirements`
 3. install the ruby `lunchy` controller for MacOSX daemons
@@ -55,7 +76,7 @@ REDIS_URL = CELERY_BROKER_URL
 MATPLOTLIB_BACKEND = "agg"
 ```
 
-You can choose which ports to use, the name of the databases. Matplotlib is the key python library 
+You can choose which ports to use, the name of the databases. Matplotlib is the key python library
 that generates the graphs, it must be set to the "agg" backend, otherwise it can cause GUI crashes with
 the windowing system of your computer.
 
@@ -70,7 +91,7 @@ If you haven't already launched `redis` and `postgres`, launch them:
 
 Then, from the `<root>/bin` directory:
 
-- launch the webserver `./start_server.sh` 
+- launch the webserver `./start_server.sh`
 - launch the parallel-processing daemon `./start_celery.sh`
 
 __!__ Note: whenever you make a change that could affect a celery task, you need to restart it manually.
@@ -104,7 +125,7 @@ In `server/webapp`:
 ## API documentation
 
 Once you have configured the `api.py` server, you can browse api endpoints at
- <http://localhost:8080/api/spec.html#!/spec> on your local machine, 
+ <http://localhost:8080/api/spec.html#!/spec> on your local machine,
  or <http://sandbox.optimamodel.com/api/spec.html#!/spec>
 
 The webserver API reads PyOptima objects and converts it to JSON dictionary structures that can be read by the web-client
@@ -141,7 +162,7 @@ Parameterset (Parset):
             # initialized by partype: "initprev", "popsize", "meta", "timepar", "no", "constant"
             initprev: ...
             popsize: ...
-            <par_short>: 
+            <par_short>:
                 Par
                     self.name: str
                     self.short: str
@@ -163,7 +184,7 @@ Parameterset (Parset):
                 PopsizePar
                     <same as Par>
                     self.p: odict ??
-                    self.m: float 
+                    self.m: float
                     self.start: int
                   -or-
                 Constant
@@ -182,15 +203,15 @@ Program:
     self.targetpops:
         - string or tuple of 2 strings
     self.targetpartypes
-    self.costcovfn: 
+    self.costcovfn:
         Costcov
-            self.ccopars: 
+            self.ccopars:
                 <odict>
                     t: list of ints
                     unitcost: list of 2tuple(float)
                     saturation: list of 2tuple(float)
             self.interaction: "additive", "nested", "random"
-    self.costcovdata: 
+    self.costcovdata:
         t: list of ints
         cost: list of [float or None]
         coverage: list of [float or None]
@@ -199,19 +220,19 @@ Program:
         hivstatus: 'allstates', -or- list of strings ['gt200'...]
         pregnant: boolean
     self.targetcomposition:
- 
+
 Programset (Progset):
     self.name: string
     self.uid: uuid
     self.default_interaction:  default_interaction ??
-    self.programs:  odict() ?? 
+    self.programs:  odict() ??
     self.defaultbudget:  odict() ??
     self.created:  Datetime
     self.modified:  Datetime
-    self.covout: 
+    self.covout:
         <odict>
            - <target_par_short>:
-                <pop_key>: 
+                <pop_key>:
                     Covout
                         self.ccopars: <odict>
                             t: list of ints
@@ -235,7 +256,7 @@ Parscen:
           startval: float
           startyear: int
         - ...
-  
+
 Budgetscen:
     self.name: string
     self.parsetname: string
@@ -269,7 +290,7 @@ Optimizations:
     self.parsetname: string
     self.progsetname: string
     self.resultsref:  None # Store pointer to results
-    self.objectives: 
+    self.objectives:
        base:
        budget: int
        deathfrac: float
@@ -302,13 +323,13 @@ Result:
     self.tot:  tot # The model result total, if available
     self.datapops:  datapops # The input data by population, if available
     ...?
-    
+
 Resultset:
     self.uid: uuid
     self.created: Datetime
     self.name: string
     ...?
-    
+
 Settings:
     self.dt: float # Timestep
     self.start: float # implied int, Default start year
@@ -322,7 +343,7 @@ Settings:
     self.progcirc:  arange(1,2) # Uninfected, programatically circumcised
     self.undx    :  arange(0*self.ncd4+2, 1*self.ncd4+2) # Infected, undiagnosed
     self.dx      :  arange(1*self.ncd4+2, 2*self.ncd4+2) # Infected, diagnosed
-    self.care    :  arange(2*self.ncd4+2, 3*self.ncd4+2) # Infected, in care 
+    self.care    :  arange(2*self.ncd4+2, 3*self.ncd4+2) # Infected, in care
     self.usvl    :  arange(3*self.ncd4+2, 4*self.ncd4+2) # Infected, on treatment, with unsuppressed viral load
     self.svl     :  arange(4*self.ncd4+2, 5*self.ncd4+2) # Infected, on treatment, with suppressed viral load
     self.lost    :  arange(5*self.ncd4+2, 6*self.ncd4+2) # Infected, but lost to follow-up
@@ -330,7 +351,7 @@ Settings:
     self.nsus    :  len(self.susreg) + len(self.progcirc)
     self.ninf    :  self.nhealth - self.nsus
     # Health states by CD4 count
-    spacing:  arange(self.ninf)*self.ncd4 
+    spacing:  arange(self.ninf)*self.ncd4
     self.acute:  2 + spacing
     self.gt500:  3 + spacing
     self.gt350:  4 + spacing
@@ -355,7 +376,7 @@ Settings:
     self.verbose:  verbose # Default verbosity for how much to print out -- see definitions in utils.py:printv()
     self.safetymargin:  0.5 # Do not move more than this fraction of people on a single timestep
     self.eps:  1e-3 # Must be small enough to be applied to prevalence, which might be ~0.1% or less
-    
+
 Project:
     self.uid: uuid
     self.created: Datetime
@@ -369,7 +390,7 @@ Project:
     self.name:  string
     self.settings:  Settings(verbose=verbose) # Global settings
     self.data:  {} # Data from the spreadsheet
-    self.parsets: 
+    self.parsets:
       <odict>
         - <parset_name>: Parameterset
         - ...
@@ -435,10 +456,10 @@ progset:
     updated: datetime_string
     programs: [program] # contains also default programs that are not active
 
-# used in create new parameter scenario modal 
+# used in create new parameter scenario modal
 ykeysByParsetId:
-    <parsetId>: 
-        <parameterShortName>: 
+    <parsetId>:
+        <parameterShortName>:
             - val: number
               label: string
             - ...
@@ -477,7 +498,7 @@ project:
     user_id: uuid_string
     dataStart: number
     dataEnd: number
-    populations: 
+    populations:
         - age_from: number
           age_to: number
           female: number
@@ -538,19 +559,19 @@ defaultPopulations:
 
 optimizations:
     - constraints:
-          max: 
+          max:
               <program_short>: float or null
               ...
-          min: 
+          min:
               <program_short>: float or null
               ...
-          name: 
+          name:
               <program_short>: float or null
               ...
       id: string
       name: string
       objectives:
-          base: null 
+          base: null
           budget: number
           deathfrac: number
           deathweight: number

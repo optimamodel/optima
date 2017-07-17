@@ -96,6 +96,9 @@ define(['angular', 'sha224/sha224',  '../../version'], function (angular, SHA224
     $scope.displayName = user.displayName;
     $scope.email = user.email;
     $scope.password = '';
+    $scope.country = user.country;
+    $scope.organization = user.organization;
+    $scope.position = user.position;
 
     $scope.update = function () {
       $scope.$broadcast('form-input-check-validity');
@@ -108,11 +111,19 @@ define(['angular', 'sha224/sha224',  '../../version'], function (angular, SHA224
 
       var hashed_password = SHA224($scope.password).toString();
 
+      // Use '' as the hashed password if we don't want to update the password.
+      if ($scope.password == '') {
+        hashed_password = ''
+      }
+
       userApi.update({
           username: $scope.username,
           password: hashed_password,
           displayName: $scope.displayName,
           email: $scope.email,
+          country: $scope.country,
+          organization: $scope.organization,
+          position: $scope.position,	  
           id: user.id
         },
         // success
@@ -213,7 +224,10 @@ define(['angular', 'sha224/sha224',  '../../version'], function (angular, SHA224
         username: $scope.username,
         password: hashed_password,
         displayName: $scope.displayName,
-        email: $scope.email
+        email: $scope.email,
+        country: $scope.country,
+        organization: $scope.organization,
+        position: $scope.position
       },
         // success
         function (response) {
