@@ -75,12 +75,12 @@ define(['angular', 'underscore'], function (angular, _) {
               }
             });
 			
-		  // Initialize a new UndoStack on the server if we are not using an UndoStack in this 
-		  // call.
+          // Initialize a new UndoStack on the server if we are not using an UndoStack in this 
+          // call.
 		  if (!useUndoStack) {
-		    rpcService
-			  .rpcRun(
-			    'init_new_undo_stack', [$scope.project.id]);
+            rpcService
+              .rpcRun(
+                'init_new_undo_stack', [$scope.project.id]);
 		  }
         });
     }
@@ -171,10 +171,10 @@ define(['angular', 'underscore'], function (angular, _) {
             console.log('saveAndUpdateGraphs', response.graphs);
             $scope.statusMessage = '';
             $scope.state.isRunnable = true;
-			rpcService
-			  .rpcRun(
-			    'push_project_to_undo_stack', 
-				[projectService.project.id]);
+            rpcService
+              .rpcRun(
+                'push_project_to_undo_stack', 
+                [projectService.project.id]);
           },
           function(response) {
             $scope.state.isRunnable = false;
@@ -196,6 +196,10 @@ define(['angular', 'underscore'], function (angular, _) {
             $scope.state.parset = $scope.parsets[$scope.parsets.length - 1];
             toastr.success('Created parset');
             $scope.setActiveParset();
+            rpcService
+              .rpcRun(
+                'push_project_to_undo_stack',
+                [projectService.project.id]);
           });
       }
       modalService.rename(
@@ -223,6 +227,10 @@ define(['angular', 'underscore'], function (angular, _) {
             $scope.parsets = response.data.parsets;
             $scope.state.parset = $scope.parsets[$scope.parsets.length - 1];
             toastr.success('Copied parset');
+            rpcService
+              .rpcRun(
+                'push_project_to_undo_stack',
+                [projectService.project.id]);
           });
       }
     };
@@ -251,6 +259,10 @@ define(['angular', 'underscore'], function (angular, _) {
           .then(function(response) {
             $scope.state.parset.name = name;
             toastr.success('Renamed parset');
+            rpcService
+              .rpcRun(
+                'push_project_to_undo_stack',
+                [projectService.project.id]);
           });
       }
 
@@ -290,6 +302,10 @@ define(['angular', 'underscore'], function (angular, _) {
               $scope.state.parset = $scope.parsets[0];
               toastr.success('Deleted parset');
               $scope.setActiveParset();
+              rpcService
+                .rpcRun(
+                  'push_project_to_undo_stack',
+                  [projectService.project.id]);
             }
           });
       }
@@ -336,6 +352,10 @@ define(['angular', 'underscore'], function (angular, _) {
                   $scope.parsets = parsets;
                   $scope.state.parset = _.findWhere($scope.parsets, {name: name});
                   $scope.setActiveParset();
+                  rpcService
+                    .rpcRun(
+                      'push_project_to_undo_stack',
+                      [projectService.project.id]);
                 }
               });	
 		  }			  
@@ -351,6 +371,10 @@ define(['angular', 'underscore'], function (angular, _) {
             .then(function(response) {
               toastr.success('Parameter set refreshed');
               $scope.getCalibrationGraphs();
+              rpcService
+                .rpcRun(
+                  'push_project_to_undo_stack',
+                  [projectService.project.id]);
             });
         },
         function () { },
@@ -371,6 +395,10 @@ define(['angular', 'underscore'], function (angular, _) {
         .then(function(response) {
           toastr.success('Using constant proportion on ART');
           $scope.getCalibrationGraphs();
+          rpcService
+            .rpcRun(
+              'push_project_to_undo_stack',
+              [projectService.project.id]);
         });
     };
 
@@ -384,6 +412,10 @@ define(['angular', 'underscore'], function (angular, _) {
         .then(function(response) {
           toastr.success('Using constant number on ART');
           $scope.getCalibrationGraphs();
+          rpcService
+            .rpcRun(
+              'push_project_to_undo_stack',
+              [projectService.project.id]);
         });
     };
 
@@ -480,6 +512,10 @@ define(['angular', 'underscore'], function (angular, _) {
             $scope.statusMessage = '';
             toastr.success('Autofit completed');
             $scope.getCalibrationGraphs();
+			rpcService
+			  .rpcRun(
+			    'push_project_to_undo_stack', 
+				[projectService.project.id]);
           } else if (status === 'started') {
             var start = new Date(response.data.start_time);
             var now = new Date(response.data.current_time);
