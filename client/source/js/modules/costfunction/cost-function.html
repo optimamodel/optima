@@ -38,6 +38,9 @@
         ng-model="vm.state.progset">
       </select>
 
+      <icon action="undo" click="vm.undo()"/>
+      <icon action="redo" click="vm.redo()"/>
+
     </div>
 
     <div ng-if="vm.programs.length == 0">
