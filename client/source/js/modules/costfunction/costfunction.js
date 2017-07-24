@@ -215,7 +215,7 @@ define(['angular', 'underscore', 'toastr'], function(angular, _) {
           [vm.project.id, vm.state.progset.id, vm.state.parset.id, vm.state.year])
         .then(function(response) {
           vm.state.summary = response.data;
-          console.log('changeProgsetAndParset reoncile', response.data);
+          console.log('changeProgsetAndParset reconcile', response.data);
 
           // Fetch outcomes for this progset
           return rpcService.rpcRun(
@@ -326,6 +326,10 @@ define(['angular', 'underscore', 'toastr'], function(angular, _) {
             [vm.project.id, vm.state.program.progset_id, vm.state.program])
           .then(function(response) {
             toastr.success('Cost data were saved');
+            rpcService
+              .rpcRun(
+                'push_project_to_undo_stack', 
+                [vm.project.id]);
             vm.updateCostCovGraph();
             loadReconcileData();
           })
@@ -455,6 +459,10 @@ define(['angular', 'underscore', 'toastr'], function(angular, _) {
             [vm.project.id, vm.state.progset.id, getFilteredOutcomes(vm.outcomes)])
           .then(function(response) {
             toastr.success('Outcomes were saved');
+            rpcService
+              .rpcRun(
+                'push_project_to_undo_stack', 
+                [vm.project.id]);
             vm.outcomes = response.data.outcomes;
             console.log('vm.saveProgsetoutcomes', vm.outcomes);
             vm.changeTargetParameter();
@@ -661,6 +669,7 @@ define(['angular', 'underscore', 'toastr'], function(angular, _) {
                 .rpcRun(
                   'push_project_to_undo_stack', 
                   [vm.project.id]);
+                loadReconcileData();
             } else if (calcState.status === 'started') {
               var start = new Date(calcState.start_time);
               var now = new Date(calcState.current_time);
