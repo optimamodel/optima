@@ -744,7 +744,7 @@ class Project(object):
 
         # Calculate defaults
         defaultbudget = self.progsets[progsetname].getdefaultbudget()
-        defaultoutcome = outcomecalc(budgetvec=defaultbudget, objectives=objectives, constraints=constraints, parsetname=parsetname, progsetname=progsetname)
+        defaultoutcome = outcomecalc(project=self, budgetvec=defaultbudget, objectives=objectives, constraints=constraints, parsetname=parsetname, progsetname=progsetname)
 
         # Initialize arrays
         budgetdict = odict()
