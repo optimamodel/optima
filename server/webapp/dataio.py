@@ -1299,6 +1299,16 @@ def create_progset(project_id, progset_summary):
     return parse.get_progset_summary(project, progset_summary["name"])
 
 
+def create_default_progset(project_id, new_progset_name):
+
+    def update_project_fn(project):
+        project.addprogset(name=new_progset_name)
+        project.progsets[new_progset_name].uid = op.uuid()
+
+    update_project_with_fn(project_id, update_project_fn)
+    return load_progset_summaries(project_id)
+
+
 def save_progset(project_id, progset_id, progset_summary):
     """
     Returns progset summary
