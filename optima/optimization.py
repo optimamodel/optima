@@ -946,7 +946,7 @@ def icers(name=None, project=None, parsetname=None, progsetname=None, objective=
         objective    = what to calculate; must be one of 'death', 'inci', 'daly'; 'daly' by default)
         startyear    = the year to start applying the budget and calculating the outcome; default from defaultobjectives()
         endyear      = ditto for end year
-        budgetratios = the list of budgets relative to baseline to run; default 10 budgets spanning 0.0 to 2.0
+        budgetratios = the list of budgets relative to baseline to run; default 10 budgets spanning 0.0 to 2.0; if 'baseline', then will use just [0.,1.]
         marginal     = whether to calculate marginal ICERs or relative to baseline; default marginal
         
     Do not call this function directly: see project.icers() for usage example.
@@ -966,7 +966,8 @@ def icers(name=None, project=None, parsetname=None, progsetname=None, objective=
     if objective    is None: objective    = 'daly'
     if parsetname   is None: parsetname   = -1
     if progsetname  is None: progsetname  = -1
-    if budgetratios is None: budgetratios = [0.0, 0.1, 0.2, 0.4, 0.6, 0.8, 1.0, 1.2, 1.5, 2.0]
+    if   budgetratios is None:       budgetratios = [0.0, 0.1, 0.2, 0.4, 0.6, 0.8, 1.0, 1.2, 1.5, 2.0]
+    elif budgetratios is 'baseline': budgetratios = [0.0, 1.0]
     budgetratios = array(budgetratios) # Ensure it's an array
     nbudgetratios = len(budgetratios)
     

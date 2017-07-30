@@ -839,8 +839,8 @@ def migrateportfolio(portfolio=None, verbose=2):
     
     # Check to make sure it's the latest version
     if portfolio.version != op.version:
-        errormsg = "No portfolio migration exists from version %s to the latest version (%s)" % (portfolio.version, op.version)
-        raise op.OptimaException(errormsg)
+        errormsg = "Warning: portfolio created in a different Optima version (%s vs. %s)" % (portfolio.version, op.version)
+        print(errormsg)
     
     return portfolio
 

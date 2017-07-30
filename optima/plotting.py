@@ -12,8 +12,8 @@ Version: 2017jun03
 '''
 
 from optima import OptimaException, Resultset, Multiresultset, ICER, odict, printv, gridcolors, vectocolor, alpinecolormap, makefilepath, sigfig, dcp, findinds, promotetolist, saveobj, promotetoodict, promotetoarray, boxoff
-from numpy import array, ndim, maximum, arange, zeros, mean, shape, isnan, linspace, minimum # Numeric functions
-from pylab import gcf, get_fignums, close, ion, ioff, isinteractive, figure # Plotting functions
+from numpy import array, ndim, maximum, arange, zeros, mean, shape, isnan, linspace, minimum, argsort # Numeric functions
+from pylab import gcf, get_fignums, close, ion, ioff, isinteractive, figure, barh # Plotting functions
 from matplotlib.backends.backend_agg import new_figure_manager_given_figure as nfmgf # Warning -- assumes user has agg on their system, but should be ok. Use agg since doesn't require an X server
 from matplotlib.figure import Figure # This is the non-interactive version
 from matplotlib import ticker
@@ -1211,6 +1211,72 @@ def ploticers(results=None, figsize=globalfigsize, lw=2, dotsize=30, titlesize=g
     
     return fig    
 
+
+
+
+
+def plotstaircase(project=None, colors=None, budgetfactor=None, outcomefactor=None, ratiolims=None, interactive=False):
+    ''' Plot allocations in bar charts -- not part of weboptima '''
+    
+    boc = project.getBOC() # WARNING, should make more flexible
+    
+    buddata = boc.x
+    outdata = boc.y
+    order = argsort(buddata)
+    budgets = dcp(boc.budgets)
+    budgets.insert(pos=0, key='0.0', value=dcp(boc.budgets[0]))
+    budgets[0][:] *= 0 # Make zero
+    
+    
+    labels = budgets.keys()
+    progs = budgets[0].keys()
+    nprogs = len(progs)
+    
+    if colors        is None: colors = gridcolors(nprogs)
+    if budgetfactor  is None: budgetfactor = 1e6
+    if outcomefactor is None: outcomefactor = 1.0
+    if ratiolims     is None: ratiolims = [0.1, 2.0]
+    eps = 1e-6 # To avoid floating point problems
+    
+    # Trim out-of-range indices
+    barorder = []
+    defaultbudget = boc.defaultbudget[:].sum()
+    for o in order:
+        if buddata[o]>=defaultbudget*(ratiolims[0]+eps) and buddata[o]<=defaultbudget*(ratiolims[1]-eps):
+            barorder.append(o)
+    
+    fig,naxes = makefigure(figsize=(10,10), interactive=interactive)
+    fig.subplots_adjust(left=0.10) # Less space on left
+    fig.subplots_adjust(right=0.98) # Less space on right
+    fig.subplots_adjust(top=0.95) # Less space on bottom
+    fig.subplots_adjust(bottom=0.35) # Less space on bottom
+    fig.subplots_adjust(wspace=0.30) # More space between
+    fig.subplots_adjust(hspace=0.40) # More space between
+    
+    ax = []
+    yaxis = arange(len(barorder))+0.5
+    ymin = 0
+    ymax = 0
+    
+    # Make the right panel
+    ax.append(fig.add_subplot(2,1,2))
+    ax[-1].hold(True)
+    hei = 0.8
+    for b,bo in enumerate(barorder): # Loop over spending amounts
+        left = 0.0
+        for p in range(nprogs): # Loop over programs in the correct order
+            xdata = budgets[bo][p]/budgetfactor
+            barh(bottom=yaxis[b], width=xdata, left=left, color=colors[p], lw=0, height=hei)
+            left += xdata
+    ax[-1].set_yticks(array(yaxis)+hei/2.0)
+    ax[-1].set_yticklabels(labels)
+#    ax[-1].set_position([0.15,0.07,0.77,0.9])
+#    ax[-1].set_ylim((min(yticklocs)-hei/2.0, max(yticklocs)+2*hei))
+#    legend(frameon=False, bbox_to_anchor=(1,0.2))
+#    boxoff(gca())
+#    xlabel('Spending (US$m)')
+    
+    return fig
 
 
 
