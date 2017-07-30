@@ -877,8 +877,12 @@ def plotcascade(results=None, aspercentage=False, cascadecolors=None, figsize=gl
         ncategories = len(casclabels)
         darken = array([1.0, 1.3, 1.3]) # Amount by which to darken succeeding cascade stages -- can't use 0.2 since goes negative!!
         targetcolor   = array([0,0,0])
-        origbasecolor = array([0.5,0.60,0.9])
-        origendcolor  = array([0.3,0.85,0.6])
+        if cascadecolors is None: # Use defaults
+            origbasecolor = array([0.5,0.60,0.9])
+            origendcolor  = array([0.3,0.85,0.6])
+        else: # If supplied, use the first two
+            origbasecolor = cascadecolors[0]
+            origendcolor  = cascadecolors[1]
         casccolors = odict([(baselabel,[origbasecolor]), (endlabel, [origendcolor])])
         for k in range(len(casckeys)-1):
             for label in casccolors.keys():
@@ -1210,7 +1214,7 @@ def ploticers(results=None, figsize=globalfigsize, lw=2, dotsize=30, titlesize=g
 
 
 
-def plotcostcov(program=None, year=None, parset=None, results=None, plotoptions=None, existingFigure=None, plotbounds=True, npts=100, maxupperlim=1e8, doplot=False):
+def plotcostcov(program=None, year=None, parset=None, results=None, plotoptions=None, existingFigure=None, plotbounds=True, npts=100, maxupperlim=1e8, doplot=False, interactive=False):
     ''' Plot the cost-coverage curve for a single program'''
     
     # Put plotting imports here so fails at the last possible moment
@@ -1258,8 +1262,8 @@ def plotcostcov(program=None, year=None, parset=None, results=None, plotoptions=
         plotdata['xlinedata'] = linspace(0,xupperlim,npts)
     else:
         plotdata['xlinedata'] = xlinedata
-        
-    fig = existingFigure if existingFigure else Figure()
+    
+    fig,naxes = makefigure(figsize=None, interactive=interactive, fig=existingFigure)
     fig.hold(True)
     ax = fig.add_subplot(111)
 
