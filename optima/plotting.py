@@ -88,7 +88,7 @@ def setylim(data=None, ax=None):
     # Calculate the lower limit based on all the data
     lowerlim = 0
     upperlim = 0
-    data = promotetolist(data) # Make sure it'siterable
+    data = promotetolist(data) # Make sure it's iterable
     for ydata in data:
         lowerlim = min(lowerlim, promotetoarray(ydata).min())
         upperlim = max(upperlim, promotetoarray(ydata).max())
@@ -1228,10 +1228,12 @@ def plotstaircase(project=None, colors=None, ratiolims=None, interactive=True):
     budgets[0][:] *= 0 # Make zero
     budgets.insert(pos=0, key='Baseline', value=dcp(boc.defaultbudget))
     
-    try:
+    # WARNING, temporary for old BOCs
+    try:    
         defaultoutcome = boc.defaultoutcome
-    except:
-        defaultoutcome = -1.0
+    except: 
+        print('Warning, could not get default outcome')
+        defaultoutcome = 0.0
     outdata.insert(0, defaultoutcome)
     
     labels = budgets.keys()
@@ -1264,7 +1266,7 @@ def plotstaircase(project=None, colors=None, ratiolims=None, interactive=True):
     
     fig,naxes = makefigure(figsize=(14,8), interactive=interactive)
     fig.subplots_adjust(left=0.08) # Less space on left
-    fig.subplots_adjust(right=0.65) # Less space on right
+    fig.subplots_adjust(right=0.75) # Less space on right
     fig.subplots_adjust(top=0.95) # Less space on bottom
     fig.subplots_adjust(bottom=0.08) # Less space on bottom
     fig.subplots_adjust(wspace=0.30) # More space between
@@ -1283,7 +1285,8 @@ def plotstaircase(project=None, colors=None, ratiolims=None, interactive=True):
         ax[-1].barh(bottom=yaxis[b], width=xdata, left=0, color=outcomecolor, lw=0, height=hei)
     ax[-1].set_xlabel('Outcome')
     ax[-1].invert_xaxis()
-    ax[-1].spines['left'].set_visible(False)
+    boxoff(ax=ax[-1], spines=['left','top'], setticks=['bottom','right'])
+    ax[-1].set_yticklabels([])
     
     # Make the right panel
     ax.append(fig.add_subplot(1,2,2))
@@ -1297,11 +1300,15 @@ def plotstaircase(project=None, colors=None, ratiolims=None, interactive=True):
             ax[-1].barh(bottom=yaxis[b], width=xdata, left=left, color=colors[p], lw=0, height=hei, label=label)
             left += xdata
     ax[-1].set_xlabel('Spending')
-    ax[-1].legend(frameon=False, bbox_to_anchor=(1,1.2))
+    ax[-1].legend(frameon=False, bbox_to_anchor=(1.7,0.8))
     ax[-1].set_yticks(array(yaxis)+hei/2.0)
     ax[-1].set_yticklabels(ticklabels)
-    SIticks(ax=ax[-1], axis='x')
     boxoff(ax[-1])
+    
+    for a in ax:
+        a.set_yticks(array(yaxis)+hei/2.0)
+        SIticks(ax=a, axis='x')
+        a.set_ylim((0,yaxis[-1]))
     
     return fig
 
