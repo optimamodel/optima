@@ -1215,27 +1215,26 @@ def ploticers(results=None, figsize=globalfigsize, lw=2, dotsize=30, titlesize=g
 
 
 
-def plotstaircase(project=None, colors=None, budgetfactor=None, outcomefactor=None, ratiolims=None, interactive=False):
+def plotstaircase(project=None, colors=None, ratiolims=None, interactive=True):
     ''' Plot allocations in bar charts -- not part of weboptima '''
     
     boc = project.getBOC() # WARNING, should make more flexible
     
     buddata = boc.x
     outdata = boc.y
-    order = argsort(buddata)
+    order = argsort(buddata) + 1 # Add one since inserting baseline
     budgets = dcp(boc.budgets)
     budgets.insert(pos=0, key='0.0', value=dcp(boc.budgets[0]))
     budgets[0][:] *= 0 # Make zero
-    
+    budgets.insert(pos=0, key='Baseline', value=dcp(boc.defaultbudget))
+    outdata.insert(boc.defaultoutcome)
     
     labels = budgets.keys()
     progs = budgets[0].keys()
     nprogs = len(progs)
     
     if colors        is None: colors = gridcolors(nprogs)
-    if budgetfactor  is None: budgetfactor = 1e6
-    if outcomefactor is None: outcomefactor = 1.0
-    if ratiolims     is None: ratiolims = [0.1, 2.0]
+    if ratiolims     is None: ratiolims = [0.0, 2.0]
     eps = 1e-6 # To avoid floating point problems
     
     # Trim out-of-range indices
@@ -1244,6 +1243,16 @@ def plotstaircase(project=None, colors=None, budgetfactor=None, outcomefactor=No
     for o in order:
         if buddata[o]>=defaultbudget*(ratiolims[0]+eps) and buddata[o]<=defaultbudget*(ratiolims[1]-eps):
             barorder.append(o)
+    barorder.insert(-1) # Add baseline -- -1 since then add one
+    barorder = array(barorder)+1 # Shift everything up by 1
+    
+    # Calculate tick labels
+    ticklabels = []
+    for bo in barorder:
+        origlabel = labels[bo]
+        pctlabel = 100.0*float(origlabel)
+        newlabel = '%0.0f%%' % round(pctlabel)
+        ticklabels.append(newlabel)
     
     fig,naxes = makefigure(figsize=(10,10), interactive=interactive)
     fig.subplots_adjust(left=0.10) # Less space on left
@@ -1255,26 +1264,38 @@ def plotstaircase(project=None, colors=None, budgetfactor=None, outcomefactor=No
     
     ax = []
     yaxis = arange(len(barorder))+0.5
-    ymin = 0
-    ymax = 0
+    outcomecolor = (0,0,0)
     
     # Make the right panel
-    ax.append(fig.add_subplot(2,1,2))
+    ax.append(fig.add_subplot(1,2,1))
     ax[-1].hold(True)
     hei = 0.8
     for b,bo in enumerate(barorder): # Loop over spending amounts
         left = 0.0
         for p in range(nprogs): # Loop over programs in the correct order
-            xdata = budgets[bo][p]/budgetfactor
-            barh(bottom=yaxis[b], width=xdata, left=left, color=colors[p], lw=0, height=hei)
+            xdata = budgets[bo][p]
+            ax[-1].barh(bottom=yaxis[b], width=xdata, left=left, color=colors[p], lw=0, height=hei)
             left += xdata
-    ax[-1].set_yticks(array(yaxis)+hei/2.0)
-    ax[-1].set_yticklabels(labels)
+    ax[-1].set_xlabel('Spending')
+    
+    ax.append(fig.add_subplot(1,2,2))
+    ax[-1].hold(True)
+    for b,bo in enumerate(barorder): # Loop over outcomes
+        xdata = outdata[bo]
+        ax[-1].barh(bottom=yaxis[b], width=xdata, left=0, color=outcomecolor, lw=0, height=hei)
+    ax[-1].set_xlabel('Outcome')
+    
 #    ax[-1].set_position([0.15,0.07,0.77,0.9])
 #    ax[-1].set_ylim((min(yticklocs)-hei/2.0, max(yticklocs)+2*hei))
 #    legend(frameon=False, bbox_to_anchor=(1,0.2))
 #    boxoff(gca())
 #    xlabel('Spending (US$m)')
+    
+    
+    for a in ax:
+        a.set_yticks(array(yaxis)+hei/2.0)
+        a.set_yticklabels(ticklabels)
+        SIticks(ax=a, axis='x')
     
     return fig
 

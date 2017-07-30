@@ -730,11 +730,9 @@ class Project(object):
             printv('Warning, using default progset', 3, verbose)
             progsetname = -1
         
-        defaultbudget = self.progsets[progsetname].getdefaultbudget()
-        
         if budgetratios is None:
             budgetratios = [1.0, 0.8, 0.5, 0.3, 0.1, 0.01, 1.5, 3.0, 5.0, 10.0, 30.0, 100.0]
-        
+
         # Calculate the number of iterations
         noptims = 1 + (mc!=0) + max(abs(mc),0) # Calculate the number of optimizations per BOC point
         nbocpts = len(budgetratios)
@@ -743,7 +741,11 @@ class Project(object):
         estminiters = noptims*nbocpts*guessminiters
         estmaxiters = noptims*nbocpts*guessmaxiters
         printv('Generating BOC for %s for %0.0f-%0.0f with weights deaths=%0.1f, infections=%0.1f (est. %i-%i iterations)' % (self.name, objectives['start'], objectives['end'], objectives['deathweight'], objectives['inciweight'], estminiters, estmaxiters), 1, verbose)
-        
+
+        # Calculate defaults
+        defaultbudget = self.progsets[progsetname].getdefaultbudget()
+        defaultoutcome = outcomecalc(budgetvec=defaultbudget, objectives=objectives, constraints=constraints, parsetname=parsetname, progsetname=progsetname)
+
         # Initialize arrays
         budgetdict = odict()
         for budgetratio in budgetratios:
@@ -803,6 +805,7 @@ class Project(object):
             boc.parsetname = parsetname
             boc.progsetname = progsetname
             boc.defaultbudget = dcp(defaultbudget)
+            boc.defaultoutcome = dcp(defaultoutcome)
             boc.bocsettings = odict([('maxiters',maxiters),('maxtime',maxtime),('mc',mc),('randseed',randseed)])
             self.addresult(result=boc)
             self.modified = today()
