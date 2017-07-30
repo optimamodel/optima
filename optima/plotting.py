@@ -1240,15 +1240,15 @@ def plotstaircase(project=None, colors=None, ratiolims=None, interactive=True):
     progs = budgets[0].keys()
     nprogs = len(progs)
     
-    if colors        is None: colors = gridcolors(nprogs)
-    if ratiolims     is None: ratiolims = [0.0, 2.0]
+    if colors      is None: colors = gridcolors(nprogs)
+    if ratiolims   is None: ratiolims = [0.0, 2.0]
     eps = 1e-6 # To avoid floating point problems
     
     # Trim out-of-range indices
     barorder = []
     defaultbudget = boc.defaultbudget[:].sum()
     for o in order:
-        if buddata[o]>=defaultbudget*(ratiolims[0]+eps) and buddata[o]<=defaultbudget*(ratiolims[1]-eps):
+        if buddata[o]>=defaultbudget*(ratiolims[0]-eps) and buddata[o]<=defaultbudget*(ratiolims[1]+eps):
             barorder.append(o)
     barorder.insert(0, -1) # Add baseline -- -1 since then add one
     barorder = array(barorder)+1 # Shift everything up by 1
@@ -1263,6 +1263,16 @@ def plotstaircase(project=None, colors=None, ratiolims=None, interactive=True):
         except: # If it's 'Baseline'
             newlabel = origlabel 
         ticklabels.append(newlabel)
+    
+    # Decide outcome text label
+    tmpobjs = boc.objectives
+    weights = [tmpobjs['deathweight'], tmpobjs['inciweight'], tmpobjs['dalyweight']]
+    outcometext = None
+    if abs(sum(weights)-1)<eps: # The weights sum to 1
+        for w,weight in enumerate(weights):
+            if abs(weight-1)<eps:
+                outcometext = tmpobjs['keylabels'][w] # Replace it with the key
+    if outcometext is None: outcometext = 'Outcome' # If all else fails
     
     fig,naxes = makefigure(figsize=(14,8), interactive=interactive)
     fig.subplots_adjust(left=0.08) # Less space on left
@@ -1283,7 +1293,7 @@ def plotstaircase(project=None, colors=None, ratiolims=None, interactive=True):
     for b,bo in enumerate(barorder): # Loop over outcomes
         xdata = outdata[bo]
         ax[-1].barh(bottom=yaxis[b], width=xdata, left=0, color=outcomecolor, lw=0, height=hei)
-    ax[-1].set_xlabel('Outcome')
+    ax[-1].set_xlabel(outcometext)
     ax[-1].invert_xaxis()
     boxoff(ax=ax[-1], spines=['left','top'], setticks=['bottom','right'])
     ax[-1].set_yticklabels([])
@@ -1308,7 +1318,7 @@ def plotstaircase(project=None, colors=None, ratiolims=None, interactive=True):
     for a in ax:
         a.set_yticks(array(yaxis)+hei/2.0)
         SIticks(ax=a, axis='x')
-        a.set_ylim((0,yaxis[-1]))
+        a.set_ylim((0,yaxis[-1]+hei))
     
     return fig
 

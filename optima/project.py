@@ -731,7 +731,7 @@ class Project(object):
             progsetname = -1
         
         if budgetratios is None:
-            budgetratios = [1.0, 0.8, 0.5, 0.3, 0.1, 0.01, 1.5, 3.0, 5.0, 10.0, 30.0, 100.0]
+            budgetratios = [1.0, 0.9, 0.8, 0.7, 0.5, 0.3, 0.1, 0.01, 1.1, 1.2, 1.3, 1.5, 3.0, 5.0, 10.0, 30.0, 100.0]
 
         # Calculate the number of iterations
         noptims = 1 + (mc!=0) + max(abs(mc),0) # Calculate the number of optimizations per BOC point
