@@ -1262,48 +1262,46 @@ def plotstaircase(project=None, colors=None, ratiolims=None, interactive=True):
             newlabel = origlabel 
         ticklabels.append(newlabel)
     
-    fig,naxes = makefigure(figsize=(10,10), interactive=interactive)
-    fig.subplots_adjust(left=0.10) # Less space on left
-    fig.subplots_adjust(right=0.98) # Less space on right
+    fig,naxes = makefigure(figsize=(14,8), interactive=interactive)
+    fig.subplots_adjust(left=0.08) # Less space on left
+    fig.subplots_adjust(right=0.65) # Less space on right
     fig.subplots_adjust(top=0.95) # Less space on bottom
-    fig.subplots_adjust(bottom=0.35) # Less space on bottom
+    fig.subplots_adjust(bottom=0.08) # Less space on bottom
     fig.subplots_adjust(wspace=0.30) # More space between
     fig.subplots_adjust(hspace=0.40) # More space between
     
     ax = []
     yaxis = arange(len(barorder))+0.5
     outcomecolor = (0,0,0)
-    
-    # Make the right panel
-    ax.append(fig.add_subplot(1,2,1))
-    ax[-1].hold(True)
     hei = 0.8
-    for b,bo in enumerate(barorder): # Loop over spending amounts
-        left = 0.0
-        for p in range(nprogs): # Loop over programs in the correct order
-            xdata = budgets[bo][p]
-            ax[-1].barh(bottom=yaxis[b], width=xdata, left=left, color=colors[p], lw=0, height=hei)
-            left += xdata
-    ax[-1].set_xlabel('Spending')
     
-    ax.append(fig.add_subplot(1,2,2))
+    # Make the left panel
+    ax.append(fig.add_subplot(1,2,1))
     ax[-1].hold(True)
     for b,bo in enumerate(barorder): # Loop over outcomes
         xdata = outdata[bo]
         ax[-1].barh(bottom=yaxis[b], width=xdata, left=0, color=outcomecolor, lw=0, height=hei)
     ax[-1].set_xlabel('Outcome')
+    ax[-1].invert_xaxis()
+    ax[-1].spines['left'].set_visible(False)
     
-#    ax[-1].set_position([0.15,0.07,0.77,0.9])
-#    ax[-1].set_ylim((min(yticklocs)-hei/2.0, max(yticklocs)+2*hei))
-#    legend(frameon=False, bbox_to_anchor=(1,0.2))
-#    boxoff(gca())
-#    xlabel('Spending (US$m)')
-    
-    
-    for a in ax:
-        a.set_yticks(array(yaxis)+hei/2.0)
-        a.set_yticklabels(ticklabels)
-        SIticks(ax=a, axis='x')
+    # Make the right panel
+    ax.append(fig.add_subplot(1,2,2))
+    ax[-1].hold(True)
+    for b,bo in enumerate(barorder): # Loop over spending amounts
+        left = 0.0
+        for p in range(nprogs): # Loop over programs in the correct order
+            xdata = budgets[bo][p]
+            if b==0: label = progs[p]
+            else: label = None
+            ax[-1].barh(bottom=yaxis[b], width=xdata, left=left, color=colors[p], lw=0, height=hei, label=label)
+            left += xdata
+    ax[-1].set_xlabel('Spending')
+    ax[-1].legend(frameon=False, bbox_to_anchor=(1,1.2))
+    ax[-1].set_yticks(array(yaxis)+hei/2.0)
+    ax[-1].set_yticklabels(ticklabels)
+    SIticks(ax=ax[-1], axis='x')
+    boxoff(ax[-1])
     
     return fig
 
