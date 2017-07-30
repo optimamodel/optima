@@ -1222,12 +1222,17 @@ def plotstaircase(project=None, colors=None, ratiolims=None, interactive=True):
     
     buddata = boc.x
     outdata = boc.y
-    order = argsort(buddata) + 1 # Add one since inserting baseline
+    order = argsort(buddata)
     budgets = dcp(boc.budgets)
     budgets.insert(pos=0, key='0.0', value=dcp(boc.budgets[0]))
     budgets[0][:] *= 0 # Make zero
     budgets.insert(pos=0, key='Baseline', value=dcp(boc.defaultbudget))
-    outdata.insert(boc.defaultoutcome)
+    
+    try:
+        defaultoutcome = boc.defaultoutcome
+    except:
+        defaultoutcome = -1.0
+    outdata.insert(0, defaultoutcome)
     
     labels = budgets.keys()
     progs = budgets[0].keys()
@@ -1243,15 +1248,18 @@ def plotstaircase(project=None, colors=None, ratiolims=None, interactive=True):
     for o in order:
         if buddata[o]>=defaultbudget*(ratiolims[0]+eps) and buddata[o]<=defaultbudget*(ratiolims[1]-eps):
             barorder.append(o)
-    barorder.insert(-1) # Add baseline -- -1 since then add one
+    barorder.insert(0, -1) # Add baseline -- -1 since then add one
     barorder = array(barorder)+1 # Shift everything up by 1
     
     # Calculate tick labels
     ticklabels = []
     for bo in barorder:
         origlabel = labels[bo]
-        pctlabel = 100.0*float(origlabel)
-        newlabel = '%0.0f%%' % round(pctlabel)
+        try: # If it's e.g. '0.1'
+            pctlabel = 100.0*float(origlabel)
+            newlabel = '%0.0f%%' % round(pctlabel)
+        except: # If it's 'Baseline'
+            newlabel = origlabel 
         ticklabels.append(newlabel)
     
     fig,naxes = makefigure(figsize=(10,10), interactive=interactive)
