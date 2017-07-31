@@ -1,4 +1,4 @@
-def asd(function, x, args=None, stepsize=0.1, sinc=1.4, sdec=2, pinc=1.4, pdec=2,
+def asd(function, x, args=None, stepsize=0.1, sinc=1.4, sdec=2, pinc=1.4, pdec=2, minprob=0.1,
     pinitial=None, sinitial=None, absinitial=None, xmin=None, xmax=None,
     maxiters=None, maxtime=None, abstol=None, reltol=1e-3, stalliters=None,
     stoppingfunc=None, randseed=None, label=None, fulloutput=True, verbose=2):
@@ -22,10 +22,11 @@ def asd(function, x, args=None, stepsize=0.1, sinc=1.4, sdec=2, pinc=1.4, pdec=2
     names and default values are as follows:
     
       stepsize       0.1     Initial step size as a fraction of each parameter
-      sinc           2       Step size learning rate (increase)
+      sinc           1.4     Step size learning rate (increase)
       sdec           2       Step size learning rate (decrease)
-      pinc           2       Parameter selection learning rate (increase)
+      pinc           1.4     Parameter selection learning rate (increase)
       pdec           2       Parameter selection learning rate (decrease)
+      minprob        0.1     Minimum (relative) learned probability for each parameter
       pinitial       None    Set initial parameter selection probabilities
       sinitial       None    Set initial step sizes; if empty, calculated from stepsize instead
       xmin           None    Min value allowed for each parameter  
@@ -49,7 +50,7 @@ def asd(function, x, args=None, stepsize=0.1, sinc=1.4, sdec=2, pinc=1.4, pdec=2
     Version: 2017may17 by Cliff Kerr (cliff@thekerrlab.com)
     """
     
-    from numpy import array, shape, reshape, ones, zeros, mean, cumsum, mod, concatenate, floor, flatnonzero, isnan, inf
+    from numpy import array, shape, reshape, ones, zeros, mean, cumsum, mod, concatenate, floor, flatnonzero, isnan, inf, maximum
     from numpy.random import random, seed
     from copy import deepcopy # For arrays, even y = x[:] doesn't copy properly
     from time import time
@@ -75,6 +76,7 @@ def asd(function, x, args=None, stepsize=0.1, sinc=1.4, sdec=2, pinc=1.4, pdec=2
     # Set initial parameter selection probabilities -- uniform by default
     if pinitial is None: probabilities = ones(2*nparams)
     else:                probabilities = consistentshape(pinitial)
+    minprobs = minprob*probabilities # Minimum probabilities for each step
     
     # Handle step sizes
     if sinitial is None: 
@@ -124,6 +126,8 @@ def asd(function, x, args=None, stepsize=0.1, sinc=1.4, sdec=2, pinc=1.4, pdec=2
         
         # Calculate next parameters
         probabilities = probabilities/sum(probabilities) # Normalize probabilities
+        probabilities = maximum(probabilities,minprobs) # Make sure probabilities don't become too small
+        probabilities = probabilities/sum(probabilities) # Renormalize
         cumprobs = cumsum(probabilities) # Calculate the cumulative distribution
         inrange = False
         for r in range(maxrangeiters): # Try to find parameters within range
