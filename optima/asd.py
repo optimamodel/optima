@@ -76,6 +76,7 @@ def asd(function, x, args=None, stepsize=0.1, sinc=1.4, sdec=2, pinc=1.4, pdec=2
     # Set initial parameter selection probabilities -- uniform by default
     if pinitial is None: probabilities = ones(2*nparams)
     else:                probabilities = consistentshape(pinitial)
+    probabilities = probabilities/sum(probabilities) # Normalize probabilities
     minprobs = minprob*probabilities # Minimum probabilities for each step
     
     # Handle step sizes
@@ -172,6 +173,7 @@ def asd(function, x, args=None, stepsize=0.1, sinc=1.4, sdec=2, pinc=1.4, pdec=2
             break
         if verbose>=2: print(offset + label + ' step %i (%0.1f s) %s (orig: %s | best:%s | new:%s | diff:%s)' % ((count, time()-start, flag)+multisigfig([fvalorig, fvalold, fvalnew, fvalnew-fvalold])))
         fvalchange = fvalchangenew # Update
+        if verbose>=4: print('Vector:\n%s\nProbabilities:\n%s\nStep sizes:\n%s\n\n'% (x, probabilities, stepsizes))
         
         # Store output information
         fvals[count] = fval # Store objective function evaluations
