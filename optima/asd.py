@@ -1,4 +1,4 @@
-def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
+def asd(function, x, args=None, stepsize=0.1, sinc=1.4, sdec=2, pinc=1.4, pdec=2,
     pinitial=None, sinitial=None, absinitial=None, xmin=None, xmax=None,
     maxiters=None, maxtime=None, abstol=None, reltol=1e-3, stalliters=None,
     stoppingfunc=None, randseed=None, label=None, fulloutput=True, verbose=2):
@@ -102,6 +102,7 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
     if args is None: args = {} # Reset if no function arguments supplied
     fval = function(x, **args) # Calculate initial value of the objective function
     fvalorig = fval # Store the original value of the objective function, since fval is overwritten on each step
+    fvalchange = 0.0 # Store the change in the value of the objective function -- zero to begin with
     xorig = deepcopy(x) # Keep the original x, just in case
     
     # Initialize history
@@ -144,15 +145,17 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
         xnew = deepcopy(x) # Initialize the new parameter set
         xnew[par] = newval # Update the new parameter set
         fvalnew = function(xnew, **args) # Calculate the objective function for the new parameter set
-        abserrorhistory[mod(count,stalliters)] = max(0, fval-fvalnew) # Keep track of improvements in the error
+        fvalchangenew = fvalnew-fval
+        abserrorhistory[mod(count,stalliters)] = max(0, -fvalchangenew) # Keep track of improvements in the error
         relerrorhistory[mod(count,stalliters)] = max(0, fval/float(fvalnew)-1.0) # Keep track of improvements in the error  
         if verbose>=3: print(offset+'step=%i choice=%s, par=%s, pm=%s, origval=%s, newval=%s, inrange=%s' % (count, choice, par, pm, x[par], xnew[par], inrange))
 
         # Check if this step was an improvement
         fvalold = fval # Store old fval
         if fvalnew < fvalold: # New parameter set is better than previous one
-            probabilities[choice] = probabilities[choice]*pinc # Increase probability of picking this parameter again
-            stepsizes[choice] = stepsizes[choice]*sinc # Increase size of step for next time
+            if fvalchangenew >= fvalchange: # Only update step sizes and probabilities if it was an improvement on the previous step
+                probabilities[choice] = probabilities[choice]*pinc # Increase probability of picking this parameter again
+                stepsizes[choice]     = stepsizes[choice]*sinc # Increase size of step for next time
             x = xnew # Reset current parameters
             fval = fvalnew # Reset current error
             flag = '++' # Marks an improvement
@@ -164,6 +167,7 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
             exitreason = 'Objective function returned NaN'
             break
         if verbose>=2: print(offset + label + ' step %i (%0.1f s) %s (orig: %s | best:%s | new:%s | diff:%s)' % ((count, time()-start, flag)+multisigfig([fvalorig, fvalold, fvalnew, fvalnew-fvalold])))
+        fvalchange = fvalchangenew # Update
         
         # Store output information
         fvals[count] = fval # Store objective function evaluations
