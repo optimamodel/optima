@@ -127,10 +127,14 @@ define(['angular', 'ui.router', './program-modal'], function (angular) {
     // Open pop-up to add new programSet
     $scope.addProgramSet = function () {
       var add = function (name) {
-        var newProgramSet = {name:name, programs: angular.copy(defaultPrograms.programs)};
-        $scope.programSetList[$scope.programSetList ? $scope.programSetList.length : 0] = newProgramSet;
-        $scope.state.activeProgramSet = newProgramSet;
-        $scope.saveActiveProgramSet('Progset added');
+        rpcService
+          .rpcRun(
+            'create_default_progset', [project.id, name])
+          .then(function(response) {
+            $scope.programSetList = response.data.progsets;
+            console.log("loaded program sets", $scope.programSetList);
+            $scope.state.activeProgramSet = _.findWhere($scope.programSetList, {name:name});
+            toastr.success('Program set added');
 
         // Push the saved project to the UndoStack.
         rpcService
