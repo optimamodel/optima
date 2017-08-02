@@ -99,7 +99,7 @@ define(['angular', 'ui.router', './program-modal'], function (angular) {
             $scope.programSetList = response.data.progsets;
             console.log("loaded program sets", $scope.programSetList);
             $scope.state.activeProgramSet = _.findWhere($scope.programSetList, {name:name});
-            toastr.success('Progset added');
+            toastr.success('Program set added');
           });
       };
       modalService.rename(
