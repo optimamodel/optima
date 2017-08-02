@@ -267,11 +267,24 @@ class Project(object):
         if name is None:
             try: name = item.name # Try getting name from the item
             except: name = 'default' # If not, revert to default
-        if item is None and type(name)!=str: # Maybe an item has been supplied as the only argument
-            try: 
-                item = name # It's actully an item, not a name
-                name = item.name # Try getting name from the item
-            except: raise OptimaException('Could not figure out how to add item with name "%s" and item "%s"' % (name, item))
+        if item is None:
+            if type(name)!=str: # Maybe an item has been supplied as the only argument
+                try: 
+                    item = name # It's actully an item, not a name
+                    name = item.name # Try getting name from the item
+                except: raise OptimaException('Could not figure out how to add item with name "%s" and item "%s"' % (name, item))
+            else: # No item has been supplied, add a default one
+                if what=='parset':  
+                    item = Parameterset(name=name, project=self)
+                    item.makepars(self.data, verbose=self.settings.verbose) # Create parameters
+                elif what=='progset': 
+                    item = Programset(name=name, project=self)
+                elif what=='scen':
+                    item = Parscen(name=name)
+                elif what=='optim': 
+                    item = Optim(project=self, name=name)
+                else:
+                    raise OptimaException('Unable to add item of type "%s", please supply explicitly' % what)
         structlist = self.getwhat(item=item, what=what)
         self.checkname(structlist, checkabsent=name, overwrite=overwrite)
         structlist[name] = item

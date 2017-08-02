@@ -132,11 +132,22 @@ define(['angular', 'ui.router', './program-modal'], function (angular) {
         $scope.state.activeProgramSet = newProgramSet;
         $scope.saveActiveProgramSet('Progset added');
 
-        // Push the saved project to the UndoStack.
+        // Call create_default_progset RPC.
         rpcService
           .rpcRun(
-            'push_project_to_undo_stack', 
-            [project.id]);
+            'create_default_progset', [project.id, name])
+          .then(function(response) {
+            $scope.programSetList = response.data.progsets;
+            console.log("loaded program sets", $scope.programSetList);
+            $scope.state.activeProgramSet = _.findWhere($scope.programSetList, {name:name});
+            toastr.success('Program set added');
+
+            // Push the saved project to the UndoStack.
+            rpcService
+              .rpcRun(
+                'push_project_to_undo_stack', 
+                [project.id]);
+              });
       };
       modalService.rename(
         add,
