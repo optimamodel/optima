@@ -97,7 +97,7 @@ define(['angular', 'ui.router', './program-modal'], function (angular) {
             toastr.success('Undo to previous save complete');
           }
         });		
-	}
+	};
 	
 	$scope.redo = function() {
       rpcService
@@ -110,7 +110,7 @@ define(['angular', 'ui.router', './program-modal'], function (angular) {
             toastr.success('Redo to next save complete');
           }		  
         });      		
-	}
+	};
 
     /* Program set functions */
 
@@ -130,18 +130,20 @@ define(['angular', 'ui.router', './program-modal'], function (angular) {
         rpcService
           .rpcRun(
             'create_default_progset', [project.id, name])
-          .then(function(response) {
+          .then(function (response) {
             $scope.programSetList = response.data.progsets;
             console.log("loaded program sets", $scope.programSetList);
-            $scope.state.activeProgramSet = _.findWhere($scope.programSetList, {name:name});
+            $scope.state.activeProgramSet = _.findWhere($scope.programSetList, {name: name});
             toastr.success('Program set added');
 
-        // Push the saved project to the UndoStack.
-        rpcService
-          .rpcRun(
-            'push_project_to_undo_stack', 
-            [project.id]);
+            // Push the saved project to the UndoStack.
+            rpcService
+              .rpcRun(
+                'push_project_to_undo_stack',
+                [project.id]);
+          });
       };
+
       modalService.rename(
         add,
         'Add program set',
