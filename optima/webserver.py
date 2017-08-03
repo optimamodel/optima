@@ -57,6 +57,11 @@ def find_open_port(ip, port, n=50):
 def serve(html, ip='127.0.0.1', port=8888, n_retries=50):
     """Start a server serving the given HTML, and open a browser
 
+    Example:
+       html = '<b>Hello, world!</b>'
+       import optima as op
+       op._webserver.serve(html)
+
     Parameters
     ----------
     html : string
@@ -89,15 +94,17 @@ def browser(results, toplot=None, doplot=True):
     Create an MPLD3 GUI and display in the browser. This is basically a testbed for 
     the Optima frontend.
     
-    Usage:
-        browser(results, [toplot])
+    Usage example:
+    	import optima as op
+    	P = op.demo(0)
+        browser(P.result())
     
     where results is the output of e.g. runsim() and toplot is an optional list of form e.g.
         toplot = ['prev-tot', 'inci-pop']
     
     With doplot=True, launch a web server. Otherwise, return the HTML representation of the figures.
     
-    Version: 1.1 (2015dec29) by cliffk
+    Version: 2017aug02
     '''
     import mpld3 # Only import this if needed, since might not always be available
     import json
@@ -177,7 +184,7 @@ def browser(results, toplot=None, doplot=True):
     ## Create the figures to plot
     jsons = [] # List for storing the converted JSONs
     plots = op.makeplots(results=results, toplot=toplot) # Generate the plots
-    op.gui.reanimateplots(plots)
+    op.reanimateplots(plots)
     nplots = len(plots) # Figure out how many plots there are
     for p in range(nplots): # Loop over each plot
         mpld3.plugins.connect(plots[p], mpld3.plugins.MousePosition(fontsize=14,fmt='.4r')) # Add plugins
