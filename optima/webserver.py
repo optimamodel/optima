@@ -1,7 +1,7 @@
 """
 A simple server used to show mpld3 images -- based on _server in the mpld3 package.
 
-Version: 1.0 (2015dec29) by cliffk
+Version: 2015dec29
 """
 
 from pylab import ion, ioff, isinteractive, close
@@ -190,6 +190,7 @@ def browser(results, toplot=None, doplot=True):
         mpld3.plugins.connect(plots[p], mpld3.plugins.MousePosition(fontsize=14,fmt='.4r')) # Add plugins
         jsons.append(str(json.dumps(mpld3.fig_to_dict(plots[p])))) # Save to JSON
         close(plots[p]) # We're done, close it
+    if wasinteractive: ion()
     
     ## Create div and JSON strings to replace the placeholers above
     divstr = ''
@@ -202,5 +203,4 @@ def browser(results, toplot=None, doplot=True):
     
     ## Launch a server or return the HTML representation
     if doplot: serve(html)
-    if wasinteractive: ion()
     else: return html
