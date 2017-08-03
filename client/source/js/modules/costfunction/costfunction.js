@@ -63,19 +63,28 @@ define(['angular', 'underscore', 'toastr'], function(angular, _) {
         $scope.$watch('projectService.project.id', function() {
           if (!_.isUndefined(vm.project) && (vm.project.id !== projectService.project.id)) {
             console.log('ModelCostCoverageController project-change', projectService.project.name);
-            reloadActiveProject();
+            reloadActiveProject(false);   // we're not using an Undo stack here 
           }
         });
 
-        reloadActiveProject();
+        // Load the active project, telling the function we're not using an Undo stack.
+        reloadActiveProject(false);
       }
 
-      function reloadActiveProject() {
+      function reloadActiveProject(useUndoStack) {
         projectService
           .getActiveProject()
           .then(function(response) {
             vm.project = response.data;
             console.log('reloadActiveProject init vm.project', vm.project);
+
+            // Initialize a new UndoStack on the server if we are not using an UndoStack in this 
+            // call.
+            if (!useUndoStack) {
+              rpcService
+                .rpcRun(
+                  'init_new_undo_stack', [vm.project.id]);
+            }
 
             // Fetch progsets
             return rpcService.rpcRun('load_progset_summaries', [vm.project.id]);
@@ -206,7 +215,7 @@ define(['angular', 'underscore', 'toastr'], function(angular, _) {
           [vm.project.id, vm.state.progset.id, vm.state.parset.id, vm.state.year])
         .then(function(response) {
           vm.state.summary = response.data;
-          console.log('changeProgsetAndParset reoncile', response.data);
+          console.log('changeProgsetAndParset reconcile', response.data);
 
           // Fetch outcomes for this progset
           return rpcService.rpcRun(
@@ -220,6 +229,32 @@ define(['angular', 'underscore', 'toastr'], function(angular, _) {
           vm.changeProgram();
         })
       };
+
+      vm.undo = function() {
+        rpcService
+          .rpcRun(
+            'fetch_undo_project',
+            [projectService.project.id])
+          .then(function(response) {
+		    if (response.data.didundo) {
+		      reloadActiveProject(true);
+              toastr.success('Undo to previous save complete');
+            }
+          });		
+	  }
+	
+      vm.redo = function() {
+        rpcService
+          .rpcRun(
+            'fetch_redo_project',
+            [projectService.project.id])
+          .then(function(response) {
+		    if (response.data.didredo) {
+		      reloadActiveProject(true);
+              toastr.success('Redo to next save complete');	
+            }	  
+          });      		
+	  }
 
       vm.updateCostCovGraph = function() {
         projectService.getActiveProject();
@@ -291,6 +326,10 @@ define(['angular', 'underscore', 'toastr'], function(angular, _) {
             [vm.project.id, vm.state.program.progset_id, vm.state.program])
           .then(function(response) {
             toastr.success('Cost data were saved');
+            rpcService
+              .rpcRun(
+                'push_project_to_undo_stack', 
+                [vm.project.id]);
             vm.updateCostCovGraph();
             loadReconcileData();
           })
@@ -420,6 +459,10 @@ define(['angular', 'underscore', 'toastr'], function(angular, _) {
             [vm.project.id, vm.state.progset.id, getFilteredOutcomes(vm.outcomes)])
           .then(function(response) {
             toastr.success('Outcomes were saved');
+            rpcService
+              .rpcRun(
+                'push_project_to_undo_stack', 
+                [vm.project.id]);
             vm.outcomes = response.data.outcomes;
             console.log('vm.saveProgsetoutcomes', vm.outcomes);
             vm.changeTargetParameter();
@@ -622,6 +665,11 @@ define(['angular', 'underscore', 'toastr'], function(angular, _) {
             if (calcState.status === 'completed') {
               vm.state.statusMessage = '';
               toastr.success('Reconcile completed');
+              rpcService
+                .rpcRun(
+                  'push_project_to_undo_stack', 
+                  [vm.project.id]);
+                loadReconcileData();
             } else if (calcState.status === 'started') {
               var start = new Date(calcState.start_time);
               var now = new Date(calcState.current_time);

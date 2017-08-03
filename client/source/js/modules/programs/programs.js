@@ -29,13 +29,15 @@ define(['angular', 'ui.router', './program-modal'], function (angular) {
       $scope.$watch('projectService.project.id', function() {
         if (!_.isUndefined(project) && (project.id !== projectService.project.id)) {
           console.log('ProgramSetController project-change', projectService.project.name);
-          reloadActiveProject();
+          reloadActiveProject(false);   // we're not using an Undo stack here
         }
       });
-      reloadActiveProject();
+
+      // Load the active project, telling the function we're not using an Undo stack.
+      reloadActiveProject(false);
     }
 
-    function reloadActiveProject() {
+    function reloadActiveProject(useUndoStack) {
       projectService
         .getActiveProject()
         .then(function(response) {
@@ -60,6 +62,14 @@ define(['angular', 'ui.router', './program-modal'], function (angular) {
             }
           }
 
+          // Initialize a new UndoStack on the server if we are not using an UndoStack in this 
+          // call.
+		  if (!useUndoStack) {
+            rpcService
+              .rpcRun(
+                'init_new_undo_stack', [project.id]);
+		  }
+
           // Load a default set of inactive programs for new
           return projectService.getDefaultPrograms(project.id)
         })
@@ -76,6 +86,32 @@ define(['angular', 'ui.router', './program-modal'], function (angular) {
         });
     }
 
+	$scope.undo = function() {
+      rpcService
+        .rpcRun(
+          'fetch_undo_project',
+          [projectService.project.id])
+        .then(function(response) {
+		  if (response.data.didundo) {
+		    reloadActiveProject(true);
+            toastr.success('Undo to previous save complete');
+          }
+        });		
+	}
+	
+	$scope.redo = function() {
+      rpcService
+        .rpcRun(
+          'fetch_redo_project',
+          [projectService.project.id])
+        .then(function(response) {
+		  if (response.data.didredo) {
+		    reloadActiveProject(true);
+            toastr.success('Redo to next save complete');
+          }		  
+        });      		
+	}
+
     /* Program set functions */
 
     $scope.getCategories = function() {
@@ -91,7 +127,8 @@ define(['angular', 'ui.router', './program-modal'], function (angular) {
     // Open pop-up to add new programSet
     $scope.addProgramSet = function () {
       var add = function (name) {
-        // new stuff...
+
+        // Call create_default_progset RPC.
         rpcService
           .rpcRun(
             'create_default_progset', [project.id, name])
@@ -100,7 +137,13 @@ define(['angular', 'ui.router', './program-modal'], function (angular) {
             console.log("loaded program sets", $scope.programSetList);
             $scope.state.activeProgramSet = _.findWhere($scope.programSetList, {name:name});
             toastr.success('Program set added');
-          });
+
+            // Push the saved project to the UndoStack.
+            rpcService
+              .rpcRun(
+                'push_project_to_undo_stack', 
+                [project.id]);
+              });
       };
       modalService.rename(
         add,
@@ -122,6 +165,12 @@ define(['angular', 'ui.router', './program-modal'], function (angular) {
               'rename_progset', [project.id, $scope.state.activeProgramSet.id, name])
             .then(function(response) {
               $scope.state.activeProgramSet.name = name;
+
+              // Push the saved project to the UndoStack.
+              rpcService
+                .rpcRun(
+                  'push_project_to_undo_stack', 
+                  [project.id]);
             });
         }
         var name = $scope.state.activeProgramSet.name;
@@ -158,6 +207,12 @@ define(['angular', 'ui.router', './program-modal'], function (angular) {
             toastr.success('Program set uploaded');
             var name = response.data.name;
 
+            // Push the saved project to the UndoStack.
+            rpcService
+              .rpcRun(
+                'push_project_to_undo_stack', 
+                [project.id]);
+
             rpcService
               .rpcRun('load_progset_summaries', [projectService.project.id])
               .then(function(response) {
@@ -186,6 +241,13 @@ define(['angular', 'ui.router', './program-modal'], function (angular) {
       }
 
       toastr.success("Program set deleted");
+
+      // Push the saved project to the UndoStack.
+      rpcService
+        .rpcRun(
+          'push_project_to_undo_stack', 
+          [project.id]);
+
       $state.reload();
     }
 
@@ -230,6 +292,12 @@ define(['angular', 'ui.router', './program-modal'], function (angular) {
               $scope.programSetList = response.data.progsets;
               console.log("loaded program sets", $scope.programSetList);
               $scope.state.activeProgramSet = _.findWhere($scope.programSetList, {name:name});
+
+              // Push the saved project to the UndoStack.
+              rpcService
+                .rpcRun(
+                  'push_project_to_undo_stack', 
+                  [project.id]);
             });
         };
         var names = _.pluck($scope.programSetList, 'name');
@@ -254,6 +322,7 @@ define(['angular', 'ui.router', './program-modal'], function (angular) {
       if (!successMessage) {
         successMessage = 'Changes saved';
       }
+
       if (programSet.id) {
         rpcService
           .rpcRun(
@@ -262,6 +331,12 @@ define(['angular', 'ui.router', './program-modal'], function (angular) {
             $scope.state.activeProgramSet.id = response.data.id;
             toastr.success(successMessage);
             projectService.getActiveProject();
+
+            // Push the saved project to the UndoStack.
+            rpcService
+              .rpcRun(
+                'push_project_to_undo_stack', 
+                [project.id]);
           });
       } else {
         rpcService
@@ -272,6 +347,12 @@ define(['angular', 'ui.router', './program-modal'], function (angular) {
             _.assign($scope.state.activeProgramSet, response.data);
             toastr.success(successMessage);
             projectService.getActiveProject();
+
+            // Push the saved project to the UndoStack.
+            rpcService
+              .rpcRun(
+                'push_project_to_undo_stack', 
+                [project.id]);
           });
       }
     };
