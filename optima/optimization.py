@@ -634,6 +634,9 @@ def minoutcomes(project=None, optim=None, tvec=None, verbose=None, maxtime=None,
     results = runmodel(pars=parset.pars, project=project, parsetname=optim.parsetname, progsetname=optim.progsetname, tvec=tvec, keepraw=True, verbose=0, label=project.name+'-minoutcomes')
     initialind = findinds(results.raw[0]['tvec'], optim.objectives['start'])
     initpeople = results.raw[0]['people'][:,:,initialind] # Pull out the people array corresponding to the start of the optimization -- there shouldn't be multiple raw arrays here
+    
+    baselinetvec = project.settings.maketvec(start=optim.objectives['start'], end=optim.objectives['end'])
+    baselineresults = runmodel(pars=parset.pars, project=project, parsetname=optim.parsetname, progsetname=optim.progsetname, tvec=baselinetvec, initpeople=initpeople, verbose=0, label=project.name+'-optim-initoutcome', doround=False) # Run again, but this time only for the time period of interest
 
     # Calculate original things
     constrainedbudgetorig, constrainedbudgetvecorig, lowerlim, upperlim = constrainbudget(origbudget=origbudget, budgetvec=budgetvec, totalbudget=origtotalbudget, budgetlims=optim.constraints, optiminds=optiminds, outputtype='full')
@@ -648,7 +651,7 @@ def minoutcomes(project=None, optim=None, tvec=None, verbose=None, maxtime=None,
             'totalbudget':origtotalbudget, # Complicated, see below
             'optiminds':optiminds, 
             'origbudget':origbudget, 
-            'baselineresults':results,
+            'baselineresults':baselineresults,
             'tvec':tvec, 
             'ccsample':ccsample, 
             'verbose':verbose, 
@@ -675,11 +678,13 @@ def minoutcomes(project=None, optim=None, tvec=None, verbose=None, maxtime=None,
         if key=='Baseline': 
             args['initpeople'] = None # Do this so it runs for the full time series, and is comparable to the optimization result
             args['totalbudget'] = origbudget[:].sum() # Need to reset this since constraining the budget
+            args['baselineresults'] = results
             doconstrainbudget = True # This is needed so it returns the full budget odict, not just the budget vector
             inds = optiminds # WARNING, super kludgy
         else:
             args['initpeople'] = initpeople # Do this so saves a lot of time (runs twice as fast for all the budget scenarios)
             args['totalbudget'] = origtotalbudget
+            args['baselineresults'] = baselineresults
             doconstrainbudget = False
             inds = arange(nprogs)
         extremeresults[key] = outcomecalc(exbudget[inds], outputresults=True, doconstrainbudget=doconstrainbudget, **args)
@@ -698,17 +703,18 @@ def minoutcomes(project=None, optim=None, tvec=None, verbose=None, maxtime=None,
         for key in firstkeys+besttoworstkeys:
             printv(('Outcome for %'+str(longestkey)+'s: %0.0f') % (key,extremeoutcomes[key]), 2, verbose)
     else:
-        printv('Outcome for baseline budget (starting point): %0.0f' % sum(extremeoutcomes['Baseline']), 2, verbose)
-        printv('Outcome for infinite budget (best possible): %0.0f' % sum(extremeoutcomes['Infinite']), 2, verbose)
-        printv('Outcome for zero budget (worst possible):    %0.0f' % sum(extremeoutcomes['Zero']), 2, verbose)
+        
+        printv('Outcome for baseline budget (starting point): %0.0f' % extremeoutcomes['Baseline'], 2, verbose)
+        printv('Outcome for infinite budget (best possible): %0.0f' % extremeoutcomes['Infinite'], 2, verbose)
+        printv('Outcome for zero budget (worst possible):    %0.0f' % extremeoutcomes['Zero'], 2, verbose)
     
     # Check extremes -- not quite fair since not constrained but oh well
-    if sum(extremeoutcomes['Infinite']) >= sum(extremeoutcomes['Zero']):
-        errormsg = 'Infinite funding has a worse or identical outcome to no funding: %s vs. %s' % (sum(extremeoutcomes['Infinite']), sum(extremeoutcomes['Zero']))
+    if extremeoutcomes['Infinite'] >= extremeoutcomes['Zero']:
+        errormsg = 'Infinite funding has a worse or identical outcome to no funding: %s vs. %s' % (extremeoutcomes['Infinite'], extremeoutcomes['Zero'])
         raise OptimaException(errormsg)
     for k,key in enumerate(extremeoutcomes.keys()):
-        if sum(extremeoutcomes[key]) > sum(extremeoutcomes['Zero']):
-            errormsg = 'WARNING, funding for %s has a worse outcome than no funding: %s vs. %s' % (key, sum(extremeoutcomes[key]), sum(extremeoutcomes['Zero']))
+        if extremeoutcomes[key] > extremeoutcomes['Zero']:
+            errormsg = 'WARNING, funding for %s has a worse outcome than no funding: %s vs. %s' % (key, extremeoutcomes[key], extremeoutcomes['Zero'])
             if die: raise OptimaException(errormsg)
             else:   print(errormsg)
             
@@ -766,6 +772,7 @@ def minoutcomes(project=None, optim=None, tvec=None, verbose=None, maxtime=None,
             
             ## Calculate outcomes
             args['initpeople'] = None # Set to None to get full results, not just from strat year
+            args['baselineresults'] = results # Get the full results
             new = outcomecalc(asdresults[bestkey]['budget'], outputresults=True, **args)
             if len(scalefactors)==1: new.name = 'Optimal' # If there's just one optimization, just call it optimal
             else: new.name = 'Optimal (%.0f%% budget)' % (scalefactor*100.) # Else, say what the budget is
