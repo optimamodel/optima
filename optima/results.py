@@ -137,8 +137,12 @@ class Resultset(object):
         ''' A small method to make sure two resultsets are compatible, and return a copy of the first one. '''
         if type(R2)!=Resultset: raise OptimaException('Can only add results sets with other results sets')
         for attr in ['tvec','popkeys']:
-            if any(array(getattr(self,attr))!=array(getattr(R2,attr))):
+            if len(getattr(self,attr))!=len(array(getattr(R2,attr))):
                 raise OptimaException('Cannot add Resultsets that have dissimilar "%s"' % attr)
+            else:
+                if any(array(getattr(self,attr))!=array(getattr(R2,attr))):
+                    raise OptimaException('Cannot add Resultsets that have dissimilar "%s"' % attr)
+
         
         # Keep the properties of this first one
         R1 = dcp(self) 

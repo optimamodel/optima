@@ -4,7 +4,7 @@ Functions for running optimizations.
 Version: 2017jun04
 """
 
-from optima import OptimaException, Link, Multiresultset, ICER, asd, runmodel, getresults # Main functions
+from optima import OptimaException, Link, Multiresultset, ICER, asd, runmodel, getresults, Budgetscen # Main functions
 from optima import printv, dcp, odict, findinds, today, getdate, uuid, objrepr, promotetoarray, findnearest, sanitize # Utilities
 from numpy import zeros, empty, arange, maximum, array, inf, isfinite, argmin, argsort, nan, floor
 from numpy.random import random, seed
@@ -87,6 +87,8 @@ def defaultobjectives(project=None, progsetname=None, which=None, verbose=2):
         
     objectives = odict() # Dictionary of all objectives
     objectives['which'] = which
+    objectives['pareto'] = True
+    objectives['paretopenalty'] = 1e5 # This is a term for how much you want to penalise outcomes that make one population worse off.
     objectives['keys'] = ['death', 'inci', 'daly'] # Define valid keys
     objectives['keylabels'] = odict([('death','Deaths'), ('inci','New infections'), ('daly','DALYs')]) # Define key labels
     if which in ['outcome', 'outcomes']:
@@ -118,7 +120,7 @@ def defaultobjectives(project=None, progsetname=None, which=None, verbose=2):
     return objectives
 
 
-def defaultconstraints(project=None, progsetname=None, which='outcomes', verbose=2):
+def defaultconstraints(project=None, progsetname=None, verbose=2):
     """
     Define constraints for minimize outcomes optimization: at the moment, just
     total budget constraints defned as a fraction of current spending. Fixed costs
@@ -138,7 +140,7 @@ def defaultconstraints(project=None, progsetname=None, which='outcomes', verbose
     # If no programs in the progset, return None        
     if not(len(progset.programs)): return None
 
-    constraints = odict() # Dictionary of all constraints -- WARNING, change back to odict!
+    constraints = odict() # Dictionary of all constraints 
     constraints['name'] = odict() # Full name
     constraints['min'] = odict() # Minimum budgets
     constraints['max'] = odict() # Maximum budgets
@@ -158,6 +160,24 @@ def defaultconstraints(project=None, progsetname=None, which='outcomes', verbose
     return constraints
 
 
+def defaultparetoconstraints(project=None, parsetname=None, verbose=2):
+    """
+    Define Pareto constraints for minimize outcomes optimization.
+    """
+
+    printv('Defining Pareto constraints...', 3, verbose=verbose)
+
+    if parsetname is None: 
+        parsetname = -1
+        printv('paretoconstraints() did not get a parsetname input, so using default', 3, verbose)
+    try:    parset = project.parsets[parsetname]
+    except: raise OptimaException('To define constraints, you must supply a parset as an input')
+
+    paretoconstraints = odict() 
+    for popkey in parset.popkeys:
+        paretoconstraints[popkey] = 1. # By default, specify that outcome can't be less than 100% of baseline
+
+    return paretoconstraints
 
 
 
@@ -284,7 +304,7 @@ def constrainbudget(origbudget=None, budgetvec=None, totalbudget=None, budgetlim
 ################################################################################################################################################
 
 def outcomecalc(budgetvec=None, which=None, project=None, parsetname=None, progsetname=None, 
-                objectives=None, constraints=None, totalbudget=None, optiminds=None, origbudget=None, tvec=None, 
+                objectives=None, constraints=None, paretoconstraints=None, baselineresults=None, totalbudget=None, optiminds=None, origbudget=None, tvec=None, 
                 initpeople=None, outputresults=False, verbose=2, ccsample='best', doconstrainbudget=True):
     ''' Function to evaluate the objective for a given budget vector (note, not time-varying) '''
 
@@ -297,15 +317,25 @@ def outcomecalc(budgetvec=None, which=None, project=None, parsetname=None, progs
     parset  = project.parsets[parsetname] 
     progset = project.progsets[progsetname]
     if objectives  is None: objectives  = defaultobjectives(project=project,  progsetname=progsetname, which=which)
-    if constraints is None: constraints = defaultconstraints(project=project, progsetname=progsetname, which=which)
+    if constraints is None: constraints = defaultconstraints(project=project, progsetname=progsetname)
     if totalbudget is None: totalbudget = objectives['budget']
     if origbudget  is None: origbudget  = progset.getdefaultbudget()
     if optiminds   is None: optiminds   = findinds(progset.optimizable())
     if budgetvec   is None: budgetvec   = dcp(origbudget[:][optiminds])
     if type(budgetvec)==odict: budgetvec = dcp(budgetvec[:][optiminds])
-    
-    # Validate input
-    
+
+    # Handle Pareto constraints
+    paretopenalty = objectives['paretopenalty']
+    if objectives['pareto']:
+        if paretoconstraints is None:
+            paretoconstraints = defaultparetoconstraints(project=project, parsetname=parsetname, verbose=verbose)
+        if baselineresults is None:
+            raise OptimaException('Need to have a baseline to calculate Pareto optimum') # Think about this more later... 
+    else:
+        if paretoconstraints is not None:
+            raise OptimaException('Pareto constraints supplied, but objectives[''pareto''] is False') # Is this required, or should it overwrite?
+        
+    # Validate input    
     arglist = [budgetvec, which, parset, progset, objectives, totalbudget, constraints, optiminds, origbudget]
     if any([arg is None for arg in arglist]):  # WARNING, this kind of obscures which of these is None -- is that ok? Also a little too hard-coded...
         raise OptimaException('outcomecalc() requires which, budgetvec, parset, progset, objectives, totalbudget, constraints, optiminds, origbudget, tvec as inputs at minimum; argument %i is None' % arglist.index(None))
@@ -321,7 +351,7 @@ def outcomecalc(budgetvec=None, which=None, project=None, parsetname=None, progs
         constrainedbudget = dcp(origbudget)
         if len(budgetvec)==len(optiminds): constrainedbudget[optiminds] = budgetvec # Assume it's just the optimizable programs
         else:                              constrainedbudget[:]         = budgetvec # Assume it's all programs
-        
+    
     # Run model
     thiscoverage = progset.getprogcoverage(budget=constrainedbudget, t=objectives['start'], parset=parset, sample=ccsample)
     thisparsdict = progset.getpars(coverage=thiscoverage, t=objectives['start'], parset=parset, sample=ccsample)
@@ -329,6 +359,9 @@ def outcomecalc(budgetvec=None, which=None, project=None, parsetname=None, progs
     else:                  startyear = objectives['start']
     tvec = project.settings.maketvec(start=startyear, end=objectives['end'])
     results = runmodel(pars=thisparsdict, project=project, parsetname=parsetname, progsetname=progsetname, tvec=tvec, initpeople=initpeople, verbose=0, label=project.name+'-optim-outcomecalc', doround=False)
+
+    # Generate results of interest for Pareto case
+    if objectives['pareto']: diffresults = baselineresults - results
 
     # Figure out which indices to use
     initialind = findinds(results.tvec, objectives['start'])
@@ -346,6 +379,9 @@ def outcomecalc(budgetvec=None, which=None, project=None, parsetname=None, progs
             thisoutcome = results.main['num'+key].tot[0][indices].sum() # the instantaneous outcome e.g. objectives['numdeath'] -- 0 is since best
             rawoutcomes['num'+key] = thisoutcome*results.dt
             outcome += thisoutcome*thisweight*results.dt # Calculate objective
+            if objectives['pareto']:
+                popdiffs = paretoconstraints[:]*diffresults.main['num'+key].pops[0][:,indices].sum(axis=1) # the instantaneous outcome for each population e.g. objectives['numdeath'] -- 0 is since best
+                outcome -= paretopenalty*sum(popdiffs[popdiffs<0]) # Add penalty for populations with higher outcomes... 
 
         # Output results
         if outputresults:
@@ -612,6 +648,7 @@ def minoutcomes(project=None, optim=None, tvec=None, verbose=None, maxtime=None,
             'totalbudget':origtotalbudget, # Complicated, see below
             'optiminds':optiminds, 
             'origbudget':origbudget, 
+            'baselineresults':results,
             'tvec':tvec, 
             'ccsample':ccsample, 
             'verbose':verbose, 
@@ -661,17 +698,17 @@ def minoutcomes(project=None, optim=None, tvec=None, verbose=None, maxtime=None,
         for key in firstkeys+besttoworstkeys:
             printv(('Outcome for %'+str(longestkey)+'s: %0.0f') % (key,extremeoutcomes[key]), 2, verbose)
     else:
-        printv('Outcome for baseline budget (starting point): %0.0f' % extremeoutcomes['Baseline'], 2, verbose)
-        printv('Outcome for infinite budget (best possible): %0.0f' % extremeoutcomes['Infinite'], 2, verbose)
-        printv('Outcome for zero budget (worst possible):    %0.0f' % extremeoutcomes['Zero'], 2, verbose)
+        printv('Outcome for baseline budget (starting point): %0.0f' % sum(extremeoutcomes['Baseline']), 2, verbose)
+        printv('Outcome for infinite budget (best possible): %0.0f' % sum(extremeoutcomes['Infinite']), 2, verbose)
+        printv('Outcome for zero budget (worst possible):    %0.0f' % sum(extremeoutcomes['Zero']), 2, verbose)
     
     # Check extremes -- not quite fair since not constrained but oh well
-    if extremeoutcomes['Infinite'] >= extremeoutcomes['Zero']:
-        errormsg = 'Infinite funding has a worse or identical outcome to no funding: %s vs. %s' % (extremeoutcomes['Infinite'], extremeoutcomes['Zero'])
+    if sum(extremeoutcomes['Infinite']) >= sum(extremeoutcomes['Zero']):
+        errormsg = 'Infinite funding has a worse or identical outcome to no funding: %s vs. %s' % (sum(extremeoutcomes['Infinite']), sum(extremeoutcomes['Zero']))
         raise OptimaException(errormsg)
     for k,key in enumerate(extremeoutcomes.keys()):
-        if extremeoutcomes[key] > extremeoutcomes['Zero']:
-            errormsg = 'WARNING, funding for %s has a worse outcome than no funding: %s vs. %s' % (key, extremeoutcomes[key], extremeoutcomes['Zero'])
+        if sum(extremeoutcomes[key]) > sum(extremeoutcomes['Zero']):
+            errormsg = 'WARNING, funding for %s has a worse outcome than no funding: %s vs. %s' % (key, sum(extremeoutcomes[key]), sum(extremeoutcomes['Zero']))
             if die: raise OptimaException(errormsg)
             else:   print(errormsg)
             
