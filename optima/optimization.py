@@ -360,7 +360,7 @@ def outcomecalc(budgetvec=None, which=None, project=None, parsetname=None, progs
     tvec = project.settings.maketvec(start=startyear, end=objectives['end'])
     results = runmodel(pars=thisparsdict, project=project, parsetname=parsetname, progsetname=progsetname, tvec=tvec, initpeople=initpeople, verbose=0, label=project.name+'-optim-outcomecalc', doround=False)
 
-    # Generate results of interest for Pareto case
+    # Compute the difference in the current run and the baseline - used for checking Pareto superiority
     if objectives['pareto']: diffresults = baselineresults - results
 
     # Figure out which indices to use
