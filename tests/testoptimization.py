@@ -10,7 +10,7 @@ Version: 2017jan13
 
 ## Define tests to run here!!!
 tests = [
-'minimizeoutcomes',
+#'minimizeoutcomes',
 'investmentstaircase',
 #'minimizemoney',
 ]

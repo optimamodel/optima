@@ -679,12 +679,14 @@ def minoutcomes(project=None, optim=None, tvec=None, verbose=None, maxtime=None,
             args['initpeople'] = None # Do this so it runs for the full time series, and is comparable to the optimization result
             args['totalbudget'] = origbudget[:].sum() # Need to reset this since constraining the budget
             args['baselineresults'] = results
+            args['tvec'] = tvec
             doconstrainbudget = True # This is needed so it returns the full budget odict, not just the budget vector
             inds = optiminds # WARNING, super kludgy
         else:
             args['initpeople'] = initpeople # Do this so saves a lot of time (runs twice as fast for all the budget scenarios)
-            args['totalbudget'] = origtotalbudget
             args['baselineresults'] = baselineresults
+            args['totalbudget'] = origtotalbudget
+            args['tvec'] = baselinetvec
             doconstrainbudget = False
             inds = arange(nprogs)
         extremeresults[key] = outcomecalc(exbudget[inds], outputresults=True, doconstrainbudget=doconstrainbudget, **args)
@@ -731,6 +733,8 @@ def minoutcomes(project=None, optim=None, tvec=None, verbose=None, maxtime=None,
         constrainedbudget, constrainedbudgetvec, lowerlim, upperlim = constrainbudget(origbudget=origbudget, budgetvec=budgetvec, totalbudget=totalbudget, budgetlims=optim.constraints, optiminds=optiminds, outputtype='full')
         args['totalbudget'] = totalbudget
         args['initpeople'] = initpeople # Set so only runs the part of the optimization required
+        args['tvec'] = baselinetvec
+        args['baselineresults'] = baselineresults
         
         # Set up budgets to run
         if totalbudget: # Budget is nonzero, run
@@ -773,6 +777,7 @@ def minoutcomes(project=None, optim=None, tvec=None, verbose=None, maxtime=None,
             ## Calculate outcomes
             args['initpeople'] = None # Set to None to get full results, not just from strat year
             args['baselineresults'] = results # Get the full results
+            args['tvec'] = tvec 
             new = outcomecalc(asdresults[bestkey]['budget'], outputresults=True, **args)
             if len(scalefactors)==1: new.name = 'Optimal' # If there's just one optimization, just call it optimal
             else: new.name = 'Optimal (%.0f%% budget)' % (scalefactor*100.) # Else, say what the budget is
