@@ -801,13 +801,18 @@ def minoutcomes(project=None, optim=None, tvec=None, verbose=None, maxtime=None,
             
             ## Check that the new allocation is Pareto superior to the baseline
             if dopareto:
-                initialind = findinds(tvec, optim.objectives['start']) # WARNING, Copied from above
-                finalind = findinds(tvec, optim.objectives['end'])
-                indices = arange(initialind, finalind) 
+                originitialind = findinds(args['baselineresults'].tvec, optim.objectives['start']) # WARNING, Copied from above
+                origfinalind = findinds(args['baselineresults'].tvec, optim.objectives['end'])
+                origindices = arange(originitialind, origfinalind) 
+                newinitialind = findinds(new.tvec, optim.objectives['start']) # WARNING, Copied from above
+                newfinalind = findinds(new.tvec, optim.objectives['end'])
+                newindices = arange(newinitialind, newfinalind) 
                 for pn,pop in enumerate(new.popkeys):
                     for key in optim.objectives['keys']:
-                        if new.main['num'+key].pops[0][pn,indices].sum() > optim.paretoconstraints[pop]*args['baselineresults'].main['num'+key].pops[0][pn,indices].sum():
-                            errormsg = 'Outcome %s got worse for population %s: %s vs. %s' % (key, pop, new.main['num'+key].pops[0][pn,indices].sum(), args['baselineresults'].main['num'+key].pops[0][pn,indices].sum())
+                        origval = args['baselineresults'].main['num'+key].pops[0][pn,origindices].sum()
+                        newval = new.main['num'+key].pops[0][pn,newindices].sum()
+                        if newval > optim.paretoconstraints[pop]*origval:
+                            errormsg = 'Outcome %s got worse for population %s: %s vs. %s' % (key, pop, newval, origval)
                             raise OptimaException(errormsg)
                         
 
