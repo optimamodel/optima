@@ -10,8 +10,8 @@ Version: 2017jan13
 
 ## Define tests to run here!!!
 tests = [
-#'minimizeoutcomes',
-'investmentstaircase',
+'minimizeoutcomes',
+#'investmentstaircase',
 #'minimizemoney',
 ]
 
@@ -64,7 +64,7 @@ if 'minimizeoutcomes' in tests:
     
     objectives = defaultobjectives(P.progsets[0]) # This or P
     constraints = defaultconstraints(P) # This or P.progsets[0]
-    P.optimize(name='minoutcome', maxtime=5, mc=0, parsetname=-1, progsetname=-1, objectives=objectives)
+    P.optimize(name='minoutcome', maxtime=5, mc=2, parsetname=-1, progsetname=-1, objectives=objectives)
     
     print('Original allocation: '),
     print(P.results[-1].budgets[0])

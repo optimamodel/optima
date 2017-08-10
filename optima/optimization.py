@@ -660,7 +660,6 @@ def minoutcomes(project=None, optim=None, tvec=None, verbose=None, maxtime=None,
     extremebudgets['Baseline'] = zeros(nprogs)
     for i,p in enumerate(optiminds): extremebudgets['Baseline'][p] = constrainedbudgetvecorig[i] # Must be a better way of doing this :(
     for i in nonoptiminds:           extremebudgets['Baseline'][i] = origbudget[i] # Copy the original budget
-    extremebudgets['Baseline-short'] = dcp(extremebudgets['Baseline'])
     extremebudgets['Zero']     = zeros(nprogs)
     extremebudgets['Infinite'] = origbudget[:]+project.settings.infmoney
     firstkeys = ['Baseline', 'Zero', 'Infinite'] # These are special, store them
@@ -739,7 +738,6 @@ def minoutcomes(project=None, optim=None, tvec=None, verbose=None, maxtime=None,
     tmpfullruninfo = odict()
     tmpresults['Baseline'] = extremeresults['Baseline'] # Include un-optimized original
     scalefactors = promotetoarray(optim.objectives['budgetscale']) # Ensure it's a list
-#    import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
     for scalefactor in scalefactors: 
 
         # Get the total budget & constrain it 
