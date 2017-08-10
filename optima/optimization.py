@@ -87,8 +87,6 @@ def defaultobjectives(project=None, progsetname=None, which=None, verbose=2):
         
     objectives = odict() # Dictionary of all objectives
     objectives['which'] = which
-    objectives['pareto'] = True
-    objectives['paretopenalty'] = 1e5 # This is a term for how much you want to penalise outcomes that make one population worse off.
     objectives['keys'] = ['death', 'inci', 'daly'] # Define valid keys
     objectives['keylabels'] = odict([('death','Deaths'), ('inci','New infections'), ('daly','DALYs')]) # Define key labels
     if which in ['outcome', 'outcomes']:
@@ -103,7 +101,10 @@ def defaultobjectives(project=None, progsetname=None, which=None, verbose=2):
         objectives['deathfrac']   = None # Fraction of deaths to get to
         objectives['incifrac']    = None # Fraction of incidence to get to
         objectives['dalyfrac']    = None # Fraction of DALYs to get to
+        objectives['pareto'] = True
+        objectives['paretopenalty'] = 1e5 # This is a term for how much you want to penalise outcomes that make one population worse off.
     elif which=='money':
+        objectives['pareto']      = False # For now
         objectives['base']        = 2015 # "Baseline year to compare outcomes to"
         objectives['start']       = 2017 # "Year to begin optimization"
         objectives['end']         = 2027 # "Year by which to achieve objectives"
@@ -325,8 +326,8 @@ def outcomecalc(budgetvec=None, which=None, project=None, parsetname=None, progs
     if type(budgetvec)==odict: budgetvec = dcp(budgetvec[:][optiminds])
 
     # Handle Pareto constraints
-    paretopenalty = objectives['paretopenalty']
     if objectives['pareto']:
+        paretopenalty = objectives['paretopenalty']
         if paretoconstraints is None:
             paretoconstraints = defaultparetoconstraints(project=project, parsetname=parsetname, verbose=verbose)
         if baselineresults is None:

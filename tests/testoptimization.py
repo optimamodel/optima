@@ -11,8 +11,8 @@ Version: 2017jan13
 ## Define tests to run here!!!
 tests = [
 #'minimizeoutcomes',
-'investmentstaircase',
-#'minimizemoney',
+#'investmentstaircase',
+'minimizemoney',
 ]
 
 
@@ -89,7 +89,7 @@ if 'investmentstaircase' in tests:
     objectives = defaultobjectives(P.progsets[0]) # This or P
     objectives['budgetscale'] = [0.1, 0.2, 0.5, 1., 1.2, 1.5]
     constraints = defaultconstraints(P) # This or P.progsets[0]
-    P.optimize(name='minoutcome', parsetname='default', progsetname='default', objectives=objectives, maxtime=10, mc=0)
+    P.optimize(name='minoutcome', parsetname='default', progsetname='default', objectives=objectives, maxtime=5, mc=0)
     
     if doplot: 
         from optima import pygui
@@ -109,10 +109,10 @@ if 'minimizemoney' in tests:
     
     P = defaultproject('best')
     
-    objectives = defaultobjectives(which='money', progset=P.progsets[0])
+    objectives = defaultobjectives(P.progsets[0], which='money')
     objectives['deathfrac'] = 0.1 # Yes, this means an increase in deaths
     objectives['incifrac'] = 0.2
-    constraints = defaultconstraints(P.progsets[0])
+    constraints = defaultconstraints(P)
     P.optimize(name='minmoney', parsetname='default', progsetname='default', objectives=objectives, constraints=constraints, maxtime=10, ccsample='random')
     
     print('Original allocation: ($%g)' % sum(P.results[-1].budgets[0][:]))
