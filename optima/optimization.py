@@ -475,7 +475,9 @@ def optimize(optim=None, maxiters=None, maxtime=None, verbose=2, stoppingfunc=No
     if not(hasattr(optim, 'objectives')) or optim.objectives is None:
         optim.objectives = defaultobjectives(project=project, progsetname=optim.progsetname, which=which, verbose=verbose)
     if not(hasattr(optim, 'constraints')) or optim.constraints is None:
-        optim.constraints = defaultconstraints(project=project, progsetname=optim.progsetname, which=which, verbose=verbose)
+        optim.constraints = defaultconstraints(project=project, progsetname=optim.progsetname, verbose=verbose)
+    if optim.objectives.get('pareto'):
+        optim.paretoconstraints = defaultparetoconstraints(project=project, parsetname=optim.parsetname, verbose=verbose)
 
     # Process inputs
     if not optim.objectives['budget']: # Handle 0 or None -- WARNING, temp?
@@ -796,6 +798,20 @@ def minoutcomes(project=None, optim=None, tvec=None, verbose=None, maxtime=None,
             args['baselineresults'] = extremeresults['Baseline'] # Get the full results
             args['tvec'] = tvec 
             new = outcomecalc(asdresults[bestkey]['budget'], outputresults=True, **args)
+            
+            ## Check that the new allocation is Pareto superior to the baseline
+            if dopareto:
+                initialind = findinds(tvec, optim.objectives['start']) # WARNING, Copied from above
+                finalind = findinds(tvec, optim.objectives['end'])
+                indices = arange(initialind, finalind) 
+                for pn,pop in enumerate(new.popkeys):
+                    for key in optim.objectives.keys():
+                        if new.main['num'+key].pops[0][pn,indices].sum() > optim.paretoconstraints[pop]*args['baselineresults'].main['num'+key].pops[0][pn,indices].sum():
+                            errormsg = 'Outcome %s got worse for population %s: %s vs. %s' % (key, pop, new.main['num'+key].pops[0][pn,indices].sum(), args['baselineresults'].main['num'+key].pops[0][pn,indices].sum())
+                            raise OptimaException(errormsg)
+                        
+
+            ## Name and store outputs
             if len(scalefactors)==1: new.name = 'Optimal' # If there's just one optimization, just call it optimal
             else: new.name = 'Optimal (%.0f%% budget)' % (scalefactor*100.) # Else, say what the budget is
             tmpresults[new.name] = new
