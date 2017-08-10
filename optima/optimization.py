@@ -674,7 +674,7 @@ def minoutcomes(project=None, optim=None, tvec=None, verbose=None, maxtime=None,
     extremeresults  = odict()
     extremeoutcomes = odict()
 
-    # Set conditions to get baseline
+    # Set baseline
     dopareto = dcp(optim.objectives['pareto']) # Store whether Pareto condition is being used or not
     args['objectives']['pareto'] = False # Don't use Pareto condition on the baseline run, because we need to know the baseline before we can run the Pareto condition
     args['initpeople'] = None # Do this so it runs for the full time series, and is comparable to the optimization result
@@ -719,7 +719,6 @@ def minoutcomes(project=None, optim=None, tvec=None, verbose=None, maxtime=None,
         for key in firstkeys+besttoworstkeys:
             printv(('Outcome for %'+str(longestkey)+'s: %0.0f') % (key,extremeoutcomes[key]), 2, verbose)
     else:
-        
         printv('Outcome for baseline budget (starting point): %0.0f' % extremeoutcomes['Baseline'], 2, verbose)
         printv('Outcome for infinite budget (best possible): %0.0f' % extremeoutcomes['Infinite'], 2, verbose)
         printv('Outcome for zero budget (worst possible):    %0.0f' % extremeoutcomes['Zero'], 2, verbose)
@@ -740,12 +739,20 @@ def minoutcomes(project=None, optim=None, tvec=None, verbose=None, maxtime=None,
     tmpfullruninfo = odict()
     tmpresults['Baseline'] = extremeresults['Baseline'] # Include un-optimized original
     scalefactors = promotetoarray(optim.objectives['budgetscale']) # Ensure it's a list
+#    import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
     for scalefactor in scalefactors: 
 
         # Get the total budget & constrain it 
         totalbudget = origtotalbudget*scalefactor
         constrainedbudget, constrainedbudgetvec, lowerlim, upperlim = constrainbudget(origbudget=origbudget, budgetvec=budgetvec, totalbudget=totalbudget, budgetlims=optim.constraints, optiminds=optiminds, outputtype='full')
         args['totalbudget'] = totalbudget
+
+        # If using Pareto conditions, calculate baseline for this budget
+        args['objectives']['pareto'] = False # Don't use Pareto condition on the baseline run, because we need to know the baseline before we can run the Pareto condition
+        args['baselineresults'] = None
+        if dopareto:
+            args['baselineresults'] = outcomecalc(budgetvec=constrainedbudgetvec, outputresults=True, **args)
+        args['objectives']['pareto'] = dopareto # Reset the Pareto condition    
         
         # Set up budgets to run
         if totalbudget: # Budget is nonzero, run
@@ -787,7 +794,7 @@ def minoutcomes(project=None, optim=None, tvec=None, verbose=None, maxtime=None,
             
             ## Calculate outcomes
             args['initpeople'] = None # Set to None to get full results, not just from strat year
-            args['baselineresults'] = extremeoutcomes['Baseline'] # Get the full results
+            args['baselineresults'] = extremeresults['Baseline'] # Get the full results
             args['tvec'] = tvec 
             new = outcomecalc(asdresults[bestkey]['budget'], outputresults=True, **args)
             if len(scalefactors)==1: new.name = 'Optimal' # If there's just one optimization, just call it optimal
