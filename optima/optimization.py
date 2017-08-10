@@ -101,8 +101,7 @@ def defaultobjectives(project=None, progsetname=None, which=None, verbose=2):
         objectives['deathfrac']   = None # Fraction of deaths to get to
         objectives['incifrac']    = None # Fraction of incidence to get to
         objectives['dalyfrac']    = None # Fraction of DALYs to get to
-        objectives['pareto'] = True
-        objectives['paretopenalty'] = 1e5 # This is a term for how much you want to penalise outcomes that make one population worse off.
+        objectives['pareto']      = True # Find Pareto optimum
     elif which=='money':
         objectives['pareto']      = False # For now
         objectives['base']        = 2015 # "Baseline year to compare outcomes to"
@@ -305,7 +304,7 @@ def constrainbudget(origbudget=None, budgetvec=None, totalbudget=None, budgetlim
 ################################################################################################################################################
 
 def outcomecalc(budgetvec=None, which=None, project=None, parsetname=None, progsetname=None, 
-                objectives=None, constraints=None, paretoconstraints=None, baselineresults=None, totalbudget=None, optiminds=None, origbudget=None, tvec=None, 
+                objectives=None, constraints=None, paretoconstraints=None, baselineresults=None, baselineoutcome=None, totalbudget=None, optiminds=None, origbudget=None, tvec=None, 
                 initpeople=None, outputresults=False, verbose=2, ccsample='best', doconstrainbudget=True, keepraw=False):
     ''' Function to evaluate the objective for a given budget vector (note, not time-varying) '''
 
@@ -327,11 +326,10 @@ def outcomecalc(budgetvec=None, which=None, project=None, parsetname=None, progs
 
     # Handle Pareto constraints
     if objectives['pareto']:
-        paretopenalty = objectives['paretopenalty']
-        if paretoconstraints is None:
+        if paretoconstraints is None: 
             paretoconstraints = defaultparetoconstraints(project=project, parsetname=parsetname, verbose=verbose)
-        if baselineresults is None:
-            raise OptimaException('Need to have a baseline to calculate Pareto optimum') # Think about this more later... 
+        if baselineresults is None or baselineoutcome is None:
+            raise OptimaException('Need to have a baseline to calculate Pareto optimum') 
     else:
         if paretoconstraints is not None:
             raise OptimaException('Pareto constraints supplied, but objectives[''pareto''] is False') # Is this required, or should it overwrite?
@@ -361,9 +359,6 @@ def outcomecalc(budgetvec=None, which=None, project=None, parsetname=None, progs
     tvec = project.settings.maketvec(start=startyear, end=objectives['end'])
     results = runmodel(pars=thisparsdict, project=project, parsetname=parsetname, progsetname=progsetname, tvec=tvec, initpeople=initpeople, verbose=0, label=project.name+'-optim-outcomecalc', doround=False, keepraw=keepraw)
 
-    # Compute the difference in the current run and the baseline - used for checking Pareto superiority
-    if objectives['pareto']: diffresults = baselineresults - results
-
     # Figure out which indices to use
     initialind = findinds(results.tvec, objectives['start'])
     finalind = findinds(results.tvec, objectives['end'])
@@ -380,9 +375,12 @@ def outcomecalc(budgetvec=None, which=None, project=None, parsetname=None, progs
             thisoutcome = results.main['num'+key].tot[0][indices].sum() # the instantaneous outcome e.g. objectives['numdeath'] -- 0 is since best
             rawoutcomes['num'+key] = thisoutcome*results.dt
             outcome += thisoutcome*thisweight*results.dt # Calculate objective
+
+            # See whether things have gotten worse than allowed for any population
             if objectives['pareto']:
-                popdiffs = paretoconstraints[:]*diffresults.main['num'+key].pops[0][:,indices].sum(axis=1) # the instantaneous outcome for each population e.g. objectives['numdeath'] -- 0 is since best
-                outcome -= paretopenalty*sum(popdiffs[popdiffs<0]) # Add penalty for populations with higher outcomes... 
+                for pn,pop in enumerate(results.popkeys):
+                    if results.main['num'+key].pops[0][pn,indices].sum() > paretoconstraints[pop]*results.main['num'+key].pops[0][pn,indices].sum():
+                        outcome = baselineoutcome # If things are worse than allowed, we don't want to accept this step... 
 
         # Output results
         if outputresults:
@@ -650,6 +648,7 @@ def minoutcomes(project=None, optim=None, tvec=None, verbose=None, maxtime=None,
             'optiminds':optiminds, 
             'origbudget':origbudget, 
             'baselineresults':None, # This is set below
+            'baselineoutcome':None, # This is set below
             'tvec':tvec, 
             'ccsample':ccsample, 
             'verbose':verbose, 
@@ -693,6 +692,7 @@ def minoutcomes(project=None, optim=None, tvec=None, verbose=None, maxtime=None,
     # If using Pareto conditions, we also calculate a shorter baseline for comparison
     if dopareto:
         args['baselineresults'] = outcomecalc(budgetvec=extremebudgets['Baseline'][inds], outputresults=True, doconstrainbudget=doconstrainbudget, **args)
+        args['baselineoutcome'] = args['baselineresults'].outcome
     args['objectives']['pareto'] = dopareto # Reset the Pareto condition
 
     # Set conditions for all other runs
@@ -750,6 +750,7 @@ def minoutcomes(project=None, optim=None, tvec=None, verbose=None, maxtime=None,
         args['baselineresults'] = None
         if dopareto:
             args['baselineresults'] = outcomecalc(budgetvec=constrainedbudgetvec, outputresults=True, **args)
+            args['baselineoutcome'] = args['baselineresults'].outcome
         args['objectives']['pareto'] = dopareto # Reset the Pareto condition    
         
         # Set up budgets to run
