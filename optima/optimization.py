@@ -805,7 +805,7 @@ def minoutcomes(project=None, optim=None, tvec=None, verbose=None, maxtime=None,
                 finalind = findinds(tvec, optim.objectives['end'])
                 indices = arange(initialind, finalind) 
                 for pn,pop in enumerate(new.popkeys):
-                    for key in optim.objectives.keys():
+                    for key in optim.objectives['keys']:
                         if new.main['num'+key].pops[0][pn,indices].sum() > optim.paretoconstraints[pop]*args['baselineresults'].main['num'+key].pops[0][pn,indices].sum():
                             errormsg = 'Outcome %s got worse for population %s: %s vs. %s' % (key, pop, new.main['num'+key].pops[0][pn,indices].sum(), args['baselineresults'].main['num'+key].pops[0][pn,indices].sum())
                             raise OptimaException(errormsg)
