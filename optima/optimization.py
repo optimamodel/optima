@@ -814,7 +814,6 @@ def minoutcomes(project=None, optim=None, tvec=None, verbose=None, maxtime=None,
                         if newval > optim.paretoconstraints[pop]*origval:
                             errormsg = 'Outcome %s got worse for population %s: %s vs. %s' % (key, pop, newval, origval)
                             raise OptimaException(errormsg)
-                        
 
             ## Name and store outputs
             if len(scalefactors)==1: new.name = 'Optimal' # If there's just one optimization, just call it optimal
