@@ -306,7 +306,7 @@ def constrainbudget(origbudget=None, budgetvec=None, totalbudget=None, budgetlim
 
 def outcomecalc(budgetvec=None, which=None, project=None, parsetname=None, progsetname=None, 
                 objectives=None, constraints=None, paretoconstraints=None, baselineresults=None, totalbudget=None, optiminds=None, origbudget=None, tvec=None, 
-                initpeople=None, outputresults=False, verbose=2, ccsample='best', doconstrainbudget=True):
+                initpeople=None, outputresults=False, verbose=2, ccsample='best', doconstrainbudget=True, keepraw=False):
     ''' Function to evaluate the objective for a given budget vector (note, not time-varying) '''
 
     # Set up defaults
@@ -359,7 +359,7 @@ def outcomecalc(budgetvec=None, which=None, project=None, parsetname=None, progs
     if initpeople is None: startyear = None
     else:                  startyear = objectives['start']
     tvec = project.settings.maketvec(start=startyear, end=objectives['end'])
-    results = runmodel(pars=thisparsdict, project=project, parsetname=parsetname, progsetname=progsetname, tvec=tvec, initpeople=initpeople, verbose=0, label=project.name+'-optim-outcomecalc', doround=False)
+    results = runmodel(pars=thisparsdict, project=project, parsetname=parsetname, progsetname=progsetname, tvec=tvec, initpeople=initpeople, verbose=0, label=project.name+'-optim-outcomecalc', doround=False, keepraw=keepraw)
 
     # Compute the difference in the current run and the baseline - used for checking Pareto superiority
     if objectives['pareto']: diffresults = baselineresults - results
@@ -631,14 +631,11 @@ def minoutcomes(project=None, optim=None, tvec=None, verbose=None, maxtime=None,
     xmin = zeros(noptimprogs)
     if label is None: label = ''
     
-    # Calculate the initial people distribution
+    # Calculate the initial people distribution using pars
     results = runmodel(pars=parset.pars, project=project, parsetname=optim.parsetname, progsetname=optim.progsetname, tvec=tvec, keepraw=True, verbose=0, label=project.name+'-minoutcomes')
     initialind = findinds(results.raw[0]['tvec'], optim.objectives['start'])
     initpeople = results.raw[0]['people'][:,:,initialind] # Pull out the people array corresponding to the start of the optimization -- there shouldn't be multiple raw arrays here
     
-    baselinetvec = project.settings.maketvec(start=optim.objectives['start'], end=optim.objectives['end'])
-    baselineresults = runmodel(pars=parset.pars, project=project, parsetname=optim.parsetname, progsetname=optim.progsetname, tvec=baselinetvec, initpeople=initpeople, verbose=0, label=project.name+'-optim-initoutcome', doround=False) # Run again, but this time only for the time period of interest
-
     # Calculate original things
     constrainedbudgetorig, constrainedbudgetvecorig, lowerlim, upperlim = constrainbudget(origbudget=origbudget, budgetvec=budgetvec, totalbudget=origtotalbudget, budgetlims=optim.constraints, optiminds=optiminds, outputtype='full')
     
@@ -652,7 +649,7 @@ def minoutcomes(project=None, optim=None, tvec=None, verbose=None, maxtime=None,
             'totalbudget':origtotalbudget, # Complicated, see below
             'optiminds':optiminds, 
             'origbudget':origbudget, 
-            'baselineresults':baselineresults,
+            'baselineresults':None, # This is set below
             'tvec':tvec, 
             'ccsample':ccsample, 
             'verbose':verbose, 
@@ -663,6 +660,7 @@ def minoutcomes(project=None, optim=None, tvec=None, verbose=None, maxtime=None,
     extremebudgets['Baseline'] = zeros(nprogs)
     for i,p in enumerate(optiminds): extremebudgets['Baseline'][p] = constrainedbudgetvecorig[i] # Must be a better way of doing this :(
     for i in nonoptiminds:           extremebudgets['Baseline'][i] = origbudget[i] # Copy the original budget
+    extremebudgets['Baseline-short'] = dcp(extremebudgets['Baseline'])
     extremebudgets['Zero']     = zeros(nprogs)
     extremebudgets['Infinite'] = origbudget[:]+project.settings.infmoney
     firstkeys = ['Baseline', 'Zero', 'Infinite'] # These are special, store them
@@ -672,27 +670,43 @@ def minoutcomes(project=None, optim=None, tvec=None, verbose=None, maxtime=None,
             extremebudgets[prog][p] = sum(constrainedbudgetvecorig)
             for i in nonoptiminds: extremebudgets[prog][p] = origbudget[p] # Copy the original budget
     
-    # Run extremes
+    # Set up storage for extreme budgets
     extremeresults  = odict()
     extremeoutcomes = odict()
+
+    # Set conditions to get baseline
+    dopareto = dcp(optim.objectives['pareto']) # Store whether Pareto condition is being used or not
+    args['objectives']['pareto'] = False # Don't use Pareto condition on the baseline run, because we need to know the baseline before we can run the Pareto condition
+    args['initpeople'] = None # Do this so it runs for the full time series, and is comparable to the optimization result
+    args['totalbudget'] = origbudget[:].sum() # Need to reset this since constraining the budget
+    args['tvec'] = tvec
+    doconstrainbudget = True # This is needed so it returns the full budget odict, not just the budget vector
+    inds = optiminds # WARNING, super kludgy
+    extremeresults['Baseline'] = outcomecalc(budgetvec=extremebudgets['Baseline'][inds], outputresults=True, doconstrainbudget=doconstrainbudget, **args)
+    extremeresults['Baseline'].name = 'Baseline'
+    extremeoutcomes['Baseline'] = extremeresults['Baseline'].outcome 
+    
+    # From now on, we start with the initpeople array
+    baselinetvec = project.settings.maketvec(start=optim.objectives['start'], end=optim.objectives['end'])
+    args['initpeople'] = initpeople # Do this so saves a lot of time (runs twice as fast for all the budget scenarios)
+    args['tvec'] = baselinetvec
+    
+    # If using Pareto conditions, we also calculate a shorter baseline for comparison
+    if dopareto:
+        args['baselineresults'] = outcomecalc(budgetvec=extremebudgets['Baseline'][inds], outputresults=True, doconstrainbudget=doconstrainbudget, **args)
+    args['objectives']['pareto'] = dopareto # Reset the Pareto condition
+
+    # Set conditions for all other runs
+    args['totalbudget'] = origtotalbudget
+    doconstrainbudget = False
+    inds = arange(nprogs)
+    
     for key,exbudget in extremebudgets.items():
-        if key=='Baseline': 
-            args['initpeople'] = None # Do this so it runs for the full time series, and is comparable to the optimization result
-            args['totalbudget'] = origbudget[:].sum() # Need to reset this since constraining the budget
-            args['baselineresults'] = results
-            args['tvec'] = tvec
-            doconstrainbudget = True # This is needed so it returns the full budget odict, not just the budget vector
-            inds = optiminds # WARNING, super kludgy
-        else:
-            args['initpeople'] = initpeople # Do this so saves a lot of time (runs twice as fast for all the budget scenarios)
-            args['baselineresults'] = baselineresults
-            args['totalbudget'] = origtotalbudget
-            args['tvec'] = baselinetvec
-            doconstrainbudget = False
-            inds = arange(nprogs)
-        extremeresults[key] = outcomecalc(exbudget[inds], outputresults=True, doconstrainbudget=doconstrainbudget, **args)
-        extremeresults[key].name = key
-        extremeoutcomes[key] = extremeresults[key].outcome
+        if key!='Baseline': 
+            extremeresults[key] = outcomecalc(budgetvec=exbudget[inds], outputresults=True, keepraw=True, doconstrainbudget=doconstrainbudget, **args)
+#        import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+            extremeresults[key].name = key
+            extremeoutcomes[key] = extremeresults[key].outcome
     if mc: bestprogram = argmin(extremeoutcomes[:][len(firstkeys):])+len(firstkeys) # Don't include no funding or infinite funding examples
     
     # Print out results of the run
@@ -733,9 +747,9 @@ def minoutcomes(project=None, optim=None, tvec=None, verbose=None, maxtime=None,
         totalbudget = origtotalbudget*scalefactor
         constrainedbudget, constrainedbudgetvec, lowerlim, upperlim = constrainbudget(origbudget=origbudget, budgetvec=budgetvec, totalbudget=totalbudget, budgetlims=optim.constraints, optiminds=optiminds, outputtype='full')
         args['totalbudget'] = totalbudget
-        args['initpeople'] = initpeople # Set so only runs the part of the optimization required
-        args['tvec'] = baselinetvec
-        args['baselineresults'] = baselineresults
+#        args['initpeople'] = initpeople # Set so only runs the part of the optimization required
+#        args['tvec'] = baselinetvec
+#        args['baselineresults'] = baselineresults
         
         # Set up budgets to run
         if totalbudget: # Budget is nonzero, run
