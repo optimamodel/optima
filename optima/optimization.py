@@ -702,9 +702,8 @@ def minoutcomes(project=None, optim=None, tvec=None, verbose=None, maxtime=None,
     inds = arange(nprogs)
     
     for key,exbudget in extremebudgets.items():
-        if key!='Baseline': 
+        if key!='Baseline':  # We already did this one
             extremeresults[key] = outcomecalc(budgetvec=exbudget[inds], outputresults=True, keepraw=True, doconstrainbudget=doconstrainbudget, **args)
-#        import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
             extremeresults[key].name = key
             extremeoutcomes[key] = extremeresults[key].outcome
     if mc: bestprogram = argmin(extremeoutcomes[:][len(firstkeys):])+len(firstkeys) # Don't include no funding or infinite funding examples
@@ -747,9 +746,6 @@ def minoutcomes(project=None, optim=None, tvec=None, verbose=None, maxtime=None,
         totalbudget = origtotalbudget*scalefactor
         constrainedbudget, constrainedbudgetvec, lowerlim, upperlim = constrainbudget(origbudget=origbudget, budgetvec=budgetvec, totalbudget=totalbudget, budgetlims=optim.constraints, optiminds=optiminds, outputtype='full')
         args['totalbudget'] = totalbudget
-#        args['initpeople'] = initpeople # Set so only runs the part of the optimization required
-#        args['tvec'] = baselinetvec
-#        args['baselineresults'] = baselineresults
         
         # Set up budgets to run
         if totalbudget: # Budget is nonzero, run
@@ -791,7 +787,7 @@ def minoutcomes(project=None, optim=None, tvec=None, verbose=None, maxtime=None,
             
             ## Calculate outcomes
             args['initpeople'] = None # Set to None to get full results, not just from strat year
-            args['baselineresults'] = results # Get the full results
+            args['baselineresults'] = extremeoutcomes['Baseline'] # Get the full results
             args['tvec'] = tvec 
             new = outcomecalc(asdresults[bestkey]['budget'], outputresults=True, **args)
             if len(scalefactors)==1: new.name = 'Optimal' # If there's just one optimization, just call it optimal
