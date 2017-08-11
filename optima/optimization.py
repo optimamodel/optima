@@ -178,7 +178,7 @@ def defaultparetoconstraints(project=None, parsetname=None, verbose=2):
 
     paretoconstraints = odict() 
     for popkey in parset.popkeys:
-        paretoconstraints[popkey] = 1.1 # By default, specify that outcome can't be less than 100% of baseline
+        paretoconstraints[popkey] = 1.01 # By default, specify that outcomes can't be more than 101% of their current value
 
     return paretoconstraints
 
@@ -816,6 +816,7 @@ def minoutcomes(project=None, optim=None, tvec=None, verbose=None, maxtime=None,
                         newval = new.main['num'+key].pops[0][pn,newindices].sum()
                         if newval > optim.paretoconstraints[pop]*origval:
                             errormsg = 'Outcome %s got worse for population %s: %s vs. %s' % (key, pop, newval, origval)
+#                            import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
                             raise OptimaException(errormsg)
 
             ## Name and store outputs
