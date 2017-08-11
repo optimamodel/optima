@@ -4,7 +4,7 @@ Functions for running optimizations.
 Version: 2017jun04
 """
 
-from optima import OptimaException, Link, Multiresultset, ICER, asd, runmodel, getresults, Budgetscen # Main functions
+from optima import OptimaException, Link, Multiresultset, ICER, asd, runmodel, getresults # Main functions
 from optima import printv, dcp, odict, findinds, today, getdate, uuid, objrepr, promotetoarray, findnearest, sanitize # Utilities
 from numpy import zeros, empty, arange, maximum, array, inf, isfinite, argmin, argsort, nan, floor
 from numpy.random import random, seed
@@ -308,7 +308,7 @@ def constrainbudget(origbudget=None, budgetvec=None, totalbudget=None, budgetlim
 
 def outcomecalc(budgetvec=None, which=None, project=None, parsetname=None, progsetname=None, 
                 objectives=None, constraints=None, paretoconstraints=None, baselineresults=None, baselineoutcome=None, totalbudget=None, optiminds=None, origbudget=None, tvec=None, 
-                initpeople=None, outputresults=False, verbose=2, ccsample='best', doconstrainbudget=True, keepraw=False):
+                initpeople=None, outputresults=False, verbose=2, ccsample='best', doconstrainbudget=True):
     ''' Function to evaluate the objective for a given budget vector (note, not time-varying) '''
 
     # Set up defaults
@@ -360,7 +360,7 @@ def outcomecalc(budgetvec=None, which=None, project=None, parsetname=None, progs
     if initpeople is None: startyear = None
     else:                  startyear = objectives['start']
     tvec = project.settings.maketvec(start=startyear, end=objectives['end'])
-    results = runmodel(pars=thisparsdict, project=project, parsetname=parsetname, progsetname=progsetname, tvec=tvec, initpeople=initpeople, verbose=0, label=project.name+'-optim-outcomecalc', doround=False, keepraw=keepraw)
+    results = runmodel(pars=thisparsdict, project=project, parsetname=parsetname, progsetname=progsetname, tvec=tvec, initpeople=initpeople, verbose=0, label=project.name+'-optim-outcomecalc', doround=False)
 
     # Figure out which indices to use
     initialind = findinds(results.tvec, objectives['start'])
@@ -382,7 +382,7 @@ def outcomecalc(budgetvec=None, which=None, project=None, parsetname=None, progs
             # See whether things have gotten worse than allowed for any population
             if objectives['pareto']:
                 for pn,pop in enumerate(results.popkeys):
-                    if results.main['num'+key].pops[0][pn,indices].sum() > paretoconstraints[pop]*results.main['num'+key].pops[0][pn,indices].sum():
+                    if results.main['num'+key].pops[0][pn,indices].sum() > paretoconstraints[pop]*baselineresults.main['num'+key].pops[0][pn,indices].sum():
                         outcome = dcp(baselineoutcome) # If things are worse than allowed, we don't want to accept this step... 
 
         # Output results
@@ -694,12 +694,6 @@ def minoutcomes(project=None, optim=None, tvec=None, verbose=None, maxtime=None,
     args['initpeople'] = initpeople # Do this so saves a lot of time (runs twice as fast for all the budget scenarios)
     args['tvec'] = baselinetvec
     
-    # If using Pareto conditions, we also calculate a shorter baseline for comparison
-    if dopareto:
-        args['baselineresults'] = outcomecalc(budgetvec=extremebudgets['Baseline'][inds], outputresults=True, doconstrainbudget=doconstrainbudget, **args)
-        args['baselineoutcome'] = args['baselineresults'].outcome
-    args['objectives']['pareto'] = dopareto # Reset the Pareto condition
-
     # Set conditions for all other runs
     args['totalbudget'] = origtotalbudget
     doconstrainbudget = False
@@ -707,7 +701,7 @@ def minoutcomes(project=None, optim=None, tvec=None, verbose=None, maxtime=None,
     
     for key,exbudget in extremebudgets.items():
         if key!='Baseline':  # We already did this one
-            extremeresults[key] = outcomecalc(budgetvec=exbudget[inds], outputresults=True, keepraw=True, doconstrainbudget=doconstrainbudget, **args)
+            extremeresults[key] = outcomecalc(budgetvec=exbudget[inds], outputresults=True, doconstrainbudget=doconstrainbudget, **args)
             extremeresults[key].name = key
             extremeoutcomes[key] = extremeresults[key].outcome
     if mc: bestprogram = argmin(extremeoutcomes[:][len(firstkeys):])+len(firstkeys) # Don't include no funding or infinite funding examples
@@ -816,7 +810,6 @@ def minoutcomes(project=None, optim=None, tvec=None, verbose=None, maxtime=None,
                         newval = new.main['num'+key].pops[0][pn,newindices].sum()
                         if newval > optim.paretoconstraints[pop]*origval:
                             errormsg = 'Outcome %s got worse for population %s: %s vs. %s' % (key, pop, newval, origval)
-#                            import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
                             raise OptimaException(errormsg)
 
             ## Name and store outputs
