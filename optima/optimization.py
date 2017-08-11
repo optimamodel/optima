@@ -22,6 +22,9 @@ class Optim(object):
         if progsetname is None: progsetname = -1
         if objectives  is None: objectives  = defaultobjectives(project=project,  progsetname=progsetname, verbose=0)
         if constraints is None: constraints = defaultconstraints(project=project, progsetname=progsetname, verbose=0)
+        if objectives.get('pareto'): 
+            self.paretoconstraints = defaultparetoconstraints(project=project, parsetname=parsetname, verbose=0)
+
         self.name         = name # Name of the optimization, e.g. 'default'
         self.uid          = uuid() # ID
         self.projectref   = Link(project) # Store pointer for the project, if available

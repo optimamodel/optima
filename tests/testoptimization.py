@@ -81,7 +81,7 @@ if 'minimizeoutcomes' in tests:
         for pn, pop in enumerate(P.results[-1].popkeys):
             origval = P.results[-1].main['num'+key].pops['Baseline'][pn,inds].sum()
             newval = P.results[-1].main['num'+key].pops['Optimal'][pn,inds].sum()
-            output += '%s | %.1f | %.1f | %.1f \n' % (pop.rjust(10), origval, newval, (origval-newval)/origval)
+            output += '{:<10} | {:>7} | {:>7} | {:>6} \n'.format(pop.rjust(10), int(origval), int(newval), round((origval-newval)/origval,2))
     print output
 
     print('Original allocation: '),
