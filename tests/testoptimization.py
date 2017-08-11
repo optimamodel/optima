@@ -58,7 +58,8 @@ if 'minimizeoutcomes' in tests:
     t = tic()
 
     print('Running minimize outcomes test...')
-    from optima import defaultobjectives, defaultconstraints
+    from optima import defaultobjectives, defaultconstraints, findinds
+    from numpy import arange
     
     P = defaultproject('best') 
     
@@ -66,6 +67,23 @@ if 'minimizeoutcomes' in tests:
     constraints = defaultconstraints(P) # This or P.progsets[0]
     P.optimize(name='minoutcome', maxtime=5, mc=0, parsetname=-1, progsetname=-1, objectives=objectives)
     
+    # Check Pareto condition
+    optim = P.optims[0]
+    startind = findinds(P.results[-1].tvec, optim.objectives['start'])
+    endind = findinds(P.results[-1].tvec, optim.objectives['end'])
+    inds = arange(startind,endind)
+    output = '=====================\n'
+    output += 'Outcomes by population\n'
+    output += '=====================\n'
+    for key in optim.objectives['keys']:
+        output += optim.objectives['keylabels'][key]+'\n'
+        output += 'Population | Old val | New val | Improvement \n'
+        for pn, pop in enumerate(P.results[-1].popkeys):
+            origval = P.results[-1].main['num'+key].pops['Baseline'][pn,inds].sum()
+            newval = P.results[-1].main['num'+key].pops['Optimal'][pn,inds].sum()
+            output += '%s | %.1f | %.1f | %.1f \n' % (pop.rjust(10), origval, newval, (origval-newval)/origval)
+    print output
+
     print('Original allocation: '),
     print(P.results[-1].budgets[0])
     print('Optimal allocation: '),

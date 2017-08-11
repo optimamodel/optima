@@ -175,7 +175,7 @@ def defaultparetoconstraints(project=None, parsetname=None, verbose=2):
 
     paretoconstraints = odict() 
     for popkey in parset.popkeys:
-        paretoconstraints[popkey] = 1. # By default, specify that outcome can't be less than 100% of baseline
+        paretoconstraints[popkey] = 1.1 # By default, specify that outcome can't be less than 100% of baseline
 
     return paretoconstraints
 
@@ -380,7 +380,7 @@ def outcomecalc(budgetvec=None, which=None, project=None, parsetname=None, progs
             if objectives['pareto']:
                 for pn,pop in enumerate(results.popkeys):
                     if results.main['num'+key].pops[0][pn,indices].sum() > paretoconstraints[pop]*results.main['num'+key].pops[0][pn,indices].sum():
-                        outcome = baselineoutcome # If things are worse than allowed, we don't want to accept this step... 
+                        outcome = dcp(baselineoutcome) # If things are worse than allowed, we don't want to accept this step... 
 
         # Output results
         if outputresults:
@@ -801,10 +801,10 @@ def minoutcomes(project=None, optim=None, tvec=None, verbose=None, maxtime=None,
             
             ## Check that the new allocation is Pareto superior to the baseline
             if dopareto:
-                originitialind = findinds(args['baselineresults'].tvec, optim.objectives['start']) # WARNING, Copied from above
+                originitialind = findinds(args['baselineresults'].tvec, optim.objectives['start']) # Different indices for different result sets... maybe can think of a better way of handling this
                 origfinalind = findinds(args['baselineresults'].tvec, optim.objectives['end'])
                 origindices = arange(originitialind, origfinalind) 
-                newinitialind = findinds(new.tvec, optim.objectives['start']) # WARNING, Copied from above
+                newinitialind = findinds(new.tvec, optim.objectives['start'])
                 newfinalind = findinds(new.tvec, optim.objectives['end'])
                 newindices = arange(newinitialind, newfinalind) 
                 for pn,pop in enumerate(new.popkeys):
