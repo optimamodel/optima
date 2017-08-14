@@ -373,14 +373,17 @@ def outcomecalc(budgetvec=None, which=None, project=None, parsetname=None, progs
         # Calculate outcome
         outcome = 0 # Preallocate objective value
         rawoutcomes = odict()
+
+        # Calculate the outcome
         for key in objectives['keys']:
             thisweight = objectives[key+'weight'] # e.g. objectives['inciweight']
             thisoutcome = results.main['num'+key].tot[0][indices].sum() # the instantaneous outcome e.g. objectives['numdeath'] -- 0 is since best
             rawoutcomes['num'+key] = thisoutcome*results.dt
             outcome += thisoutcome*thisweight*results.dt # Calculate objective
 
-            # See whether things have gotten worse than allowed for any population
-            if objectives['pareto']:
+        # See whether things have gotten worse than allowed for any population
+        if objectives['pareto']:
+            for key in objectives['keys']:
                 for pn,pop in enumerate(results.popkeys):
                     if results.main['num'+key].pops[0][pn,indices].sum() > paretoconstraints[pop]*baselineresults.main['num'+key].pops[0][pn,indices].sum():
                         outcome = dcp(baselineoutcome) # If things are worse than allowed, we don't want to accept this step... 
