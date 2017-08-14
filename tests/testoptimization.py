@@ -10,8 +10,8 @@ Version: 2017jan13
 
 ## Define tests to run here!!!
 tests = [
-'minimizeoutcomes',
-#'investmentstaircase',
+#'minimizeoutcomes',
+'investmentstaircase',
 #'minimizemoney',
 ]
 
@@ -111,7 +111,7 @@ if 'investmentstaircase' in tests:
     
     if doplot: 
         from optima import pygui
-        pygui(P.results[-1], toplot=['budget', 'improvement', 'prev', 'numinci'])
+        pygui(P.results[-1], toplot=['budgets', 'prev', 'numinci'])
     
     done(t)
 
