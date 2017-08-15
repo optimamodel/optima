@@ -1,7 +1,7 @@
 """
 This module defines the classes for stores the results of a single simulation run.
 
-Version: 2016oct28 by cliffk
+Version: 2016oct28
 """
 
 from optima import OptimaException, Link, Settings, odict, pchip, plotpchip, sigfig # Classes/functions
@@ -660,6 +660,7 @@ class Multiresultset(Resultset):
             for key in self.other.keys():
                 setattr(self.other[key], at, odict()) # Turn all of these into an odict -- e.g. self.main['prev'].pops = odict()
 
+#        import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
         for i,rset in enumerate(resultsetlist):
             key = rset.name if rset.name is not None else str(i)
             self.keys.append(key)
@@ -671,7 +672,7 @@ class Multiresultset(Resultset):
                 if orig is None: setattr(self, attr, new) # Pray that they match, since too hard to compare
             
             # Now, the real deal: fix self.main and self.other
-            best = 0 # Key for best data -- discard uncertainty
+            best = Ellipsis # Key for best data 
             for at in ['pops', 'tot']:
                 for key2 in self.main.keys():
                     getattr(self.main[key2], at)[key] = getattr(rset.main[key2], at)[best] # Add data: e.g. self.main['prev'].pops['foo'] = rset.main['prev'].pops[0] -- WARNING, the 0 discards uncertainty data

@@ -66,10 +66,10 @@ class Coveragescen(Progscen):
         self.coverage = coverage
 
 
-def runscenarios(project=None, verbose=2, defaultparset=0, debug=False, **kwargs):
+def runscenarios(project=None, verbose=2, defaultparset=-1, debug=False, **kwargs):
     """
     Run all the scenarios.
-    Version: 2017jun04 by cliffk
+    Version: 2017aug15
     """
     
     printv('Running scenarios...', 1, verbose)
