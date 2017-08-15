@@ -504,7 +504,9 @@ class Project(object):
     #######################################################################################################
 
 
-    def runsim(self, name=None, simpars=None, start=None, end=None, dt=None, addresult=True, die=True, debug=False, overwrite=True, n=1, sample=None, tosample=None, randseed=None, verbose=None, keepraw=False, **kwargs):
+    def runsim(self, name=None, pars=None, simpars=None, start=None, end=None, dt=None, addresult=True, 
+               die=True, debug=False, overwrite=True, n=1, sample=None, tosample=None, randseed=None,
+               verbose=None, keepraw=False, **kwargs):
         ''' 
         This function runs a single simulation, or multiple simulations if n>1.
         
@@ -513,7 +515,16 @@ class Project(object):
         if start is None: start=self.settings.start # Specify the start year
         if end is None: end=self.settings.end # Specify the end year
         if dt is None: dt=self.settings.dt # Specify the timestep
-        if name is None: name = -1 # Set default name
+
+        # Extract parameters either from a parset stored in project or from input
+        if name is None:
+            if pars is None:
+                name = -1 # Set default name
+                pars = self.parsets[name].pars
+        else:
+            if pars is not None:
+                printv('Model was given a pardict and a parsetname, defaulting to use pardict input', 1, self.settings.verbose)
+            
         if verbose is None: verbose = self.settings.verbose
         
         # Get the parameters sorted
@@ -524,7 +535,7 @@ class Project(object):
             for i in range(n):
                 maxint = 2**31-1 # See https://en.wikipedia.org/wiki/2147483647_(number)
                 sampleseed = randint(0,maxint) 
-                simparslist.append(makesimpars(self.parsets[name].pars, start=start, end=end, dt=dt, settings=self.settings, name=name, sample=sample, tosample=tosample, randseed=sampleseed))
+                simparslist.append(makesimpars(pars, start=start, end=end, dt=dt, settings=self.settings, name=name, sample=sample, tosample=tosample, randseed=sampleseed))
         else:
             simparslist = promotetolist(simpars)
 
