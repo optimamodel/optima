@@ -10,7 +10,8 @@ tests = [
 #'standardscen',
 #'maxcoverage',
 #'maxbudget',
-'90-90-90'
+'sensitivity',
+#'90-90-90'
 #'VMMC'
 ]
 
@@ -217,13 +218,24 @@ if 'standardscen' in tests:
     done(t)
 
 
+## Test scenario sensitivity feature
+if 'sensitivity' in tests:
+    t = tic()
+
+    print('Testing scenario sensitivity...')
+    from optima import Parscen, defaultproject, pygui, findinds, plotpeople
+    
+    P = defaultproject('best')
+    P.cleanresults() # Check that scenarios can be run even if no results stored
+    P.pars()['fixproptx'].t = 2100 # WARNING, kludgy
+
 
 ## 90-90-90 scenario test
 if '90-90-90' in tests:
     t = tic()
 
     print('Running standard scenarios test...')
-    from optima import Parscen, defaultproject, pygui, findinds, plotpeople
+    from optima import Parscen, defaultproject, pygui, findinds
     
     P = defaultproject('best')
     P.cleanresults() # Check that scenarios can be run even if no results stored

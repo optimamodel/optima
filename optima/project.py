@@ -506,7 +506,8 @@ class Project(object):
 
     def runsim(self, name=None, pars=None, simpars=None, start=None, end=None, dt=None, addresult=True, 
                die=True, debug=False, overwrite=True, n=1, sample=None, tosample=None, randseed=None,
-               verbose=None, keepraw=False, **kwargs):
+               verbose=None, keepraw=False, resultname=None, progsetname=None, budget=None, coverage=None,
+               budgetyears=None, data=None, **kwargs):
         ''' 
         This function runs a single simulation, or multiple simulations if n>1.
         
@@ -515,18 +516,21 @@ class Project(object):
         if start is None: start=self.settings.start # Specify the start year
         if end is None: end=self.settings.end # Specify the end year
         if dt is None: dt=self.settings.dt # Specify the timestep
-
+        if verbose is None: verbose = self.settings.verbose
+        
         # Extract parameters either from a parset stored in project or from input
         if name is None:
             if pars is None:
                 name = -1 # Set default name
                 pars = self.parsets[name].pars
+            if resultname is None: resultname = 'pardict'
         else:
             if pars is not None:
                 printv('Model was given a pardict and a parsetname, defaulting to use pardict input', 1, self.settings.verbose)
+                if resultname is None: resultname = 'pardict'
+            else:
+                if resultname is None: resultname = 'parset-'+self.parsets[name].name 
             
-        if verbose is None: verbose = self.settings.verbose
-        
         # Get the parameters sorted
         if simpars is None: # Optionally run with a precreated simpars instead
             simparslist = [] # Needs to be a list
@@ -542,15 +546,15 @@ class Project(object):
         # Run the model! -- WARNING, the logic of this could be cleaned up a lot!
         rawlist = []
         for ind,simpars in enumerate(simparslist):
-            raw = model(simpars, self.settings, die=die, debug=debug, verbose=verbose, label=self.name, **kwargs) # ACTUALLY RUN THE MODEL
+            raw = model(simpars, self.settings, die=die, debug=debug, verbose=verbose, **kwargs) # ACTUALLY RUN THE MODEL
             rawlist.append(raw)
 
         # Store results -- WARNING, is this correct in all cases?
-        resultname = 'parset-'+self.parsets[name].name 
-        results = Resultset(name=resultname, pars=self.parsets[name].pars, parsetname=name, raw=rawlist, simpars=simparslist, project=self, keepraw=keepraw, verbose=verbose) # Create structure for storing results
+        results = Resultset(name=resultname, pars=pars, parsetname=name, progsetname=progsetname, raw=rawlist, simpars=simparslist, budget=budget, coverage=coverage, budgetyears=budgetyears, project=self, keepraw=keepraw, data=data, verbose=verbose) # Create structure for storing results
         if addresult:
             keyname = self.addresult(result=results, overwrite=overwrite)
-            self.parsets[name].resultsref = keyname # If linked to a parset, store the results
+            if name is not None:
+                self.parsets[name].resultsref = keyname # If linked to a parset, store the results
 
         self.modified = today()
         return results
