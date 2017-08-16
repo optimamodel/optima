@@ -100,9 +100,7 @@ def runscenarios(project=None, verbose=2, defaultparset=-1, debug=False, **kwarg
 
         # Run model and add results
 #        import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
-        result = project.runsim(pars=scenparset.pars, progsetname=progsetname, budget=budget, coverage=coverage, budgetyears=budgetyears, verbose=0, debug=debug, resultname=project.name+'-scenarios', addresult=False, **kwargs)
-
-#        result = runmodel(pars=scenparset.pars, parsetname=scenlist[scenno].parsetname, progsetname=scenlist[scenno].progsetname, project=project, budget=budget, coverage=coverage, budgetyears=budgetyears, verbose=0, debug=debug, label=project.name+'-scenarios', **kwargs)
+        result = project.runsim(pars=scenparset.pars, name=scenlist[scenno].parsetname, progsetname=progsetname, budget=budget, coverage=coverage, budgetyears=budgetyears, verbose=0, debug=debug, resultname=project.name+'-scenarios', addresult=False, **kwargs)
         result.name = scenlist[scenno].name # Give a name to these results so can be accessed for the plot legend
         allresults.append(result) 
         printv('... completed scenario: %i/%i' % (scenno+1, nscens), 3, verbose)

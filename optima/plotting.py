@@ -392,9 +392,16 @@ def plotepi(results, toplot=None, uncertainty=True, die=True, showdata=True, ver
             if istotal or isstacked: datattrtype = 'tot' # For pulling out total data
             else: datattrtype = 'pops'
             
-            if ismultisim:  # e.g. scenario, no uncertainty
+            if ismultisim:  # e.g. scenario
                 best = list() # Initialize as empty list for storing results sets
-                for s in range(nsims): best.append(getattr(results.main[datatype], attrtype)[s])
+#                import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+                for s in range(nsims):
+                    if getattr(results.main[datatype], attrtype)[s].shape[0] == 3: # This means it has uncertainty estimates - WARNING, not robust!!
+                        bind = 0 # Index of the best estimates -- we will only plot the best estimates for multisims with uncertainty
+                        thisbest = getattr(results.main[datatype], attrtype)[s][bind]
+                    else:
+                        thisbest = getattr(results.main[datatype], attrtype)[s]
+                    best.append(thisbest)
                 lower = None
                 upper = None
                 databest = None

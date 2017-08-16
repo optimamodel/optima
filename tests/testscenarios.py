@@ -10,9 +10,8 @@ tests = [
 #'standardscen',
 #'maxcoverage',
 #'maxbudget',
-'sensitivity',
 #'90-90-90'
-#'VMMC'
+'VMMC'
 ]
 
 ##############################################################################
@@ -197,24 +196,6 @@ if 'standardscen' in tests:
         from optima import pygui
         pygui(P.results[-1], toplot='default')
 
-    if showstats:
-        from optima import Settings, findinds
-        from numpy import arange
-        settings = Settings()
-        tvec = arange(settings.start,settings.end+settings.dt,settings.dt)
-        yr = 2020
-        blank()
-        for scenno, scen in enumerate([scen for scen in P.scens.values() if scen.active]):
-            output = '===================================\n'
-            output += scen.name
-            output += '\n'           
-            output += 'PLHIV: %s\n' % (P.results[-1].raw[scenno][0]['people'][settings.allplhiv,:,findinds(tvec,yr)].sum(axis=(0,1)))
-            output += 'Prop aware: %s\n' % (P.results[-1].raw[scenno][0]['people'][settings.alldx,:,findinds(tvec,yr)].sum(axis=(0,1))/P.results[-1].raw[scenno][0]['people'][settings.allplhiv,:,findinds(tvec,yr)].sum(axis=(0,1)))
-            output += 'Number treated: %s\n' % (P.results[-1].raw[scenno][0]['people'][settings.alltx,:,findinds(tvec,yr)].sum(axis=(0,1)))
-            output += 'Prop treated: %s\n' % (P.results[-1].raw[scenno][0]['people'][settings.alltx,:,findinds(tvec,yr)].sum(axis=(0,1))/P.results[-1].raw[scenno][0]['people'][settings.allplhiv,:,findinds(tvec,yr)].sum(axis=(0,1)))
-            print output
-
-
     done(t)
 
 
@@ -223,7 +204,7 @@ if 'sensitivity' in tests:
     t = tic()
 
     print('Testing scenario sensitivity...')
-    from optima import Parscen, defaultproject, pygui, findinds, plotpeople
+    from optima import Parscen, defaultproject, pygui, findinds
     
     P = defaultproject('best')
     P.cleanresults() # Check that scenarios can be run even if no results stored
@@ -235,7 +216,7 @@ if '90-90-90' in tests:
     t = tic()
 
     print('Running standard scenarios test...')
-    from optima import Parscen, defaultproject, pygui, findinds
+    from optima import Parscen, defaultproject, pygui
     
     P = defaultproject('best')
     P.cleanresults() # Check that scenarios can be run even if no results stored
@@ -350,7 +331,7 @@ if 'maxcoverage' in tests:
     from numpy import array
     
     ## Set up default project
-    P = defaultproject('generalized')
+    P = defaultproject('best')
     
     ## Define scenarios
     defaultbudget = P.progsets['default'].getdefaultbudget()
@@ -383,7 +364,7 @@ if 'maxbudget' in tests:
     from numpy import array
     
     ## Set up default project
-    P = defaultproject('generalized')
+    P = defaultproject('best')
     
     ## Define scenarios
     defaultbudget = P.progsets['default'].getdefaultbudget()
@@ -398,13 +379,14 @@ if 'maxbudget' in tests:
         ]
     
     # Run the scenarios
-    P.addscen(scenlist)
+    P.addscens(scenlist)
     P.runscenarios() 
      
     if doplot:
-        from optima import pygui, plotpars
+        from optima import pygui
         pygui(P.results[-1], toplot='default')
-        apd = plotpars([scen.scenparset.pars for scen in P.scens.values()])
+#        from optima import plotpars
+#        apd = plotpars([scen.scenparset.pars for scen in P.scens.values()])
 
 
 
@@ -416,7 +398,8 @@ if 'VMMC' in tests:
     print('Running VMMC scenario test...')
     from optima import Parscen, Budgetscen, findinds, defaultproject
     
-    P = defaultproject('generalized')
+    P = defaultproject('generalized',dorun=False)
+#    P.runsim()
     pops = P.data['pops']['short']
 
     malelist = findinds(P.data['pops']['male'])
@@ -458,12 +441,9 @@ if 'VMMC' in tests:
     P.runscenarios()
      
     if doplot:
-        from optima import pygui, plotpars
-        ppl1 = P.results[-1].raw['Scale up VMMC program'][0]['people']
-        ppl2 = P.results[-1].raw['Imagine that no-one gets circumcised'][0]['people']
-        plotpeople(P, ppl1, start=0, end=None, pops=[-2], animate=False)
-        apd = plotpars([scen.scenparset.pars for scen in P.scens.values()])
-        pygui(P.results[-1], toplot='default')
+        from optima import pygui
+#        apd = plotpars([scen.scenparset.pars for scen in P.scens.values()])
+        pygui(P.results[-1])
         
 
     done(t)
