@@ -193,7 +193,7 @@ class Project(object):
             raise OptimaException('No data in project "%s"!' % self.name)
         if overwrite or name not in self.parsets:
             parset = Parameterset(name=name, project=self)
-            parset.makeparsfromdata(self.data, verbose=self.settings.verbose) # Create parameters
+            parset.makepars(self.data, verbose=self.settings.verbose) # Create parameters
             self.addparset(name=name, parset=parset, overwrite=overwrite) # Store parameters
             self.modified = today()
         return None
@@ -276,7 +276,7 @@ class Project(object):
             else: # No item has been supplied, add a default one
                 if what=='parset':  
                     item = Parameterset(name=name, project=self)
-                    item.makeparsfromdata(self.data, verbose=self.settings.verbose) # Create parameters
+                    item.makepars(self.data, verbose=self.settings.verbose) # Create parameters
                 elif what=='progset': 
                     item = Programset(name=name, project=self)
                 elif what=='scen':
@@ -550,7 +550,7 @@ class Project(object):
         # Run the model! -- WARNING, the logic of this could be cleaned up a lot!
         rawlist = []
         for ind,simpars in enumerate(simparslist):
-            raw = model(simpars, self.settings, die=die, debug=debug, verbose=verbose, **kwargs) # ACTUALLY RUN THE MODEL
+            raw = model(simpars, self.settings, die=die, debug=debug, verbose=verbose, label=self.name, **kwargs) # ACTUALLY RUN THE MODEL
             rawlist.append(raw)
 
         # Store results -- WARNING, is this correct in all cases?
@@ -596,9 +596,9 @@ class Project(object):
         if scenlist is not None: self.addscens(scenlist) # Replace existing scenario list with a new one
     
         multires, multiresdiff = runscenarios(project=self, verbose=verbose, debug=debug, nruns=nruns, storediffs=storediffs, base=base, **kwargs)
-        self.addresult(result=multires)
         if  storediffs:
             self.addresult(result=multiresdiff)
+        self.addresult(result=multires)
         self.modified = today()
         return multires, multiresdiff
     

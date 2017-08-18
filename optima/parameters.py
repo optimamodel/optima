@@ -106,8 +106,8 @@ class Parameterset(object):
                 
     
     
-    def makeparsfromdata(self, data=None, verbose=2):
-        self.pars = makeparsfromdata(data=data, verbose=verbose) # Initialize as list with single entry
+    def makepars(self, data=None, verbose=2):
+        self.pars = makepars(data=data, verbose=verbose) # Initialize as list with single entry
         self.popkeys = dcp(self.pars['popkeys']) # Store population keys more accessibly
         self.start = data['years'][0] # Store the start year
         return None
@@ -994,7 +994,7 @@ def balance(act=None, which=None, data=None, popkeys=None, limits=None, popsizep
 
 
 
-def makeparsfromdata(data=None, verbose=2, die=True, fixprops=None):
+def makepars(data=None, verbose=2, die=True, fixprops=None):
     """
     Translates the raw data (which were read from the spreadsheet) into
     parameters that can be used in the model. These data are then used to update 

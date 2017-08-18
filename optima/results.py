@@ -424,11 +424,7 @@ class Resultset(object):
             self.other['only'+healthkey].pops = process(allpeople[:,healthinds,:,:][:,:,:,indices].sum(axis=1)) # WARNING, this is ugly, but allpeople[:,txinds,:,indices] produces an error
             self.other['only'+healthkey].tot =  process(allpeople[:,healthinds,:,:][:,:,:,indices].sum(axis=(1,2))) # Axis 1 is populations
 
-        # Add error check for quantiles
-#        import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
-        if self.main['numinci'].tot[0].sum() < self.main['numinci'].tot[1].sum(): # Best is smaller than low
-            import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
-        return None # make()
+        return None
         
         
     def export(self, filename=None, folder=None, bypop=True, sep=',', ind=0, sigfigs=3, writetofile=True, asexcel=True, verbose=2):
