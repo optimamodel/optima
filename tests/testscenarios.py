@@ -10,7 +10,8 @@ tests = [
 #'standardscen',
 #'maxcoverage',
 #'maxbudget',
-'90-90-90'
+#'90-90-90',
+'sensitivity',
 #'VMMC'
 ]
 
@@ -205,10 +206,51 @@ if 'sensitivity' in tests:
 
     print('Testing scenario sensitivity...')
     from optima import Parscen, defaultproject, pygui, findinds
+    from numpy import array
     
     P = defaultproject('best')
-    P.cleanresults() # Check that scenarios can be run even if no results stored
+    P.cleanresults() 
     P.pars()['fixproptx'].t = 2100 # WARNING, kludgy
+    
+    # Set reasonable force priors:
+    P.pars()['force'].prior['FSW'].pars = array([3.45,3.55])
+    P.pars()['force'].prior['Clients'].pars = array([1.45,1.55])
+    P.pars()['force'].prior['MSM'].pars = array([1.45,1.55])
+    P.pars()['force'].prior['PWID'].pars = array([1.65,1.75])
+    P.pars()['force'].prior['M 15+'].pars = array([2.95,3.05])
+    P.pars()['force'].prior['F 15+'].pars = array([.35,.45])
+    
+#    P.sensitivity() # Generate a parset with multiple pars
+    
+    ## Define scenarios
+    scenlist = [
+        Parscen(name='Current conditions',
+                parsetname='default',
+                pars=[]),
+
+        Parscen(name='Increase numtx',
+              parsetname='default',
+              pars=[
+              {'name': 'numtx',
+              'for': 'tot',
+              'startyear': 2014.,
+              'endyear': 2020.,
+              'endval': 68000.,
+              }]),
+                                
+        ]
+        
+    # Store these in the project
+    P.addscens(scenlist, overwrite=True)
+    # Run the scenarios
+    P.runscenarios(debug=True,nruns=5) 
+     
+    if doplot:
+        pygui(P.results[-1], toplot='default')
+
+    done(t)
+
+    
 
 
 ## 90-90-90 scenario test
