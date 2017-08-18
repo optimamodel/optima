@@ -243,10 +243,16 @@ if 'sensitivity' in tests:
     # Store these in the project
     P.addscens(scenlist, overwrite=True)
     # Run the scenarios
-    P.runscenarios(debug=True,nruns=5) 
-     
-    if doplot:
-        pygui(P.results[-1], toplot='default')
+    P.runscenarios(debug=True,nruns=5,tosample='force') 
+    
+    resultsdiff = P.result().diff(base=1)
+    
+    output = '\n\n----------------\nScenario impact:\n'
+    output += 'Infections averted: %s [%s, %s]\n' % (resultsdiff.get('numinci', key='Current conditions', year='all')[0,17:].sum(), resultsdiff.get('numinci', key='Current conditions', year='all')[1,17:].sum(), resultsdiff.get('numinci', key='Current conditions', year='all')[2,17:].sum())
+    output += 'Deaths averted: %s [%s, %s]\n' % (resultsdiff.get('numdeath', key='Current conditions', year='all')[0,17:].sum(), resultsdiff.get('numdeath', key='Current conditions', year='all')[1,17:].sum(), resultsdiff.get('numdeath', key='Current conditions', year='all')[2,17:].sum())
+    output += 'DALYs averted: %s [%s, %s]\n' % (resultsdiff.get('numdaly', key='Current conditions', year='all')[0,17:].sum(), resultsdiff.get('numdaly', key='Current conditions', year='all')[1,17:].sum(), resultsdiff.get('numdaly', key='Current conditions', year='all')[2,17:].sum())
+    
+    print output
 
     done(t)
 
@@ -416,7 +422,7 @@ if 'VMMC' in tests:
     t = tic()
 
     print('Running VMMC scenario test...')
-    from optima import Parscen, Budgetscen, findinds, defaultproject
+    from optima import Parscen, Budgetscen, defaultproject
     
     P = defaultproject('generalized',dorun=False)
 #    P.runsim()

@@ -83,7 +83,7 @@ def runscenarios(project=None, verbose=2, defaultparset=-1, debug=False, nruns=1
     nscens = len(scenlist)
     
     # Convert the list of scenarios to the actual parameters to use in the model
-    scenparsets = makescenarios(project=project, scenlist=scenlist, verbose=verbose)
+    scenparsets = makescenarios(project=project, scenlist=scenlist, verbose=verbose)        
 
     # Run scenarios
     allresults = []
@@ -91,6 +91,7 @@ def runscenarios(project=None, verbose=2, defaultparset=-1, debug=False, nruns=1
         printv('Running scenario "%s" (%i/%i)...' % (scen, scenno+1, nscens), 2, verbose)
         scenparset = scenparsets[scen]
         project.scens[scenno].scenparset = scenparset # Copy into scenarios objects
+        
 
         # Items specific to program (budget or coverage) scenarios
         budget = scenlist[scenno].budget if isinstance(scenlist[scenno], Progscen) else None
