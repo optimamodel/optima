@@ -1233,56 +1233,6 @@ def makesimpars(pars, name=None, keys=None, start=None, end=None, dt=None, tvec=
     return simpars
 
 
-def subsetparset(parset=None, project=None, newparsetname=None, newstartyear=None, verbose=2, dt=None, smoothness=None, die=True):
-    """
-    Takes a parset with a given startyear and returns a new parset starting in a later year.
-    """
-    
-    # Process inputs
-    if parset is None: raise OptimaException('Need to supply a parset to subsetparset')
-    if newstartyear is None: raise OptimaException('Need to supply a new starting year to subsetparset')
-    if newstartyear<parset.start: raise OptimaException('The new start year supplied to subsetparset needs to be later than the startyear of the parset supplied (parset: %s, startyear: %, you supplied newstaryear:%' % (parset.name, parset.start, newstartyear))
-    if newparsetname is None: newparsetname = parset.name+'-'+str(newstartyear)
-    if project is None:
-        try: project = parset.projectref()
-        except: OptimaException('Need to supply a project or a parset with a projectref to subsetparset')
-    if dt is None:
-        try: dt = project.settings.dt
-        except: OptimaException('Need to supply dt or a parset with a projectref to subsetparset')
-        
-    printv('Creating a new parset for project %s - new parset will start in year %s and be based on parset %s (which starts in %s)...' % (project.name, newstartyear, parset.name, newparsetname), 1, verbose)
-
-    # Initialization new parset by copying old one
-    newparset = dcp(parset)
-    newparset.name = newparsetname
-    newparset.start = newstartyear
-    
-    # Run the model to get the right initial conditions for the new startyear
-
-    newpars = odict() 
-    keys = parset.pars.keys() # Just get all keys
-    if smoothness is None: smoothness = int(defaultsmoothness/dt)
-    
-    # Copy default keys by default
-    for key in generalkeys: newpars[key] = dcp(parset.pars[key])
-    for key in staticmatrixkeys: newpars[key] = dcp(array(parset.pars[key]))
-
-    # Loop over requested keys
-    for key in keys: # Loop over all keys
-        if isinstance(parset.pars[key], Par): # Check that it is actually a parameter -- it could be the popkeys odict, for example
-            if key=='initprev': # This is handled differently from all of the others
-                
-            import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
-            try:
-                newpars[key] = parset.pars[key].interp(tvec=newstartyear, dt=dt, smoothness=smoothness, asarray=False)
-            except OptimaException as E: 
-                errormsg = 'Could not figure out how to interpolate parameter "%s"' % key
-                errormsg += 'Error: "%s"' % E.__repr__()
-                raise OptimaException(errormsg)
-
-    return newparset
-    
-
 
 
 def applylimits(y, par=None, limits=None, dt=None, warn=True, verbose=2):
