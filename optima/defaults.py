@@ -403,6 +403,15 @@ def defaultproject(which='best', addprogset=True, addcostcovdata=True, usestanda
         
         # "Calibrate"
         P.pars()['force'].y[:] = [3.5, 1.5, 1.5, 1.7, 3.0, 0.4]
+
+        # Set reasonable force priors:
+        P.pars()['force'].prior['FSW'].pars = array([3.45,3.55])
+        P.pars()['force'].prior['Clients'].pars = array([1.45,1.55])
+        P.pars()['force'].prior['MSM'].pars = array([1.45,1.55])
+        P.pars()['force'].prior['PWID'].pars = array([1.65,1.75])
+        P.pars()['force'].prior['M 15+'].pars = array([2.95,3.05])
+        P.pars()['force'].prior['F 15+'].pars = array([.35,.45])
+        
         if dorun: P.runsim() # Run after calibration
     
         # Get a default progset 

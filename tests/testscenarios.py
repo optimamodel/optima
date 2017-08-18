@@ -9,9 +9,9 @@ Version: 2016feb07
 tests = [
 #'standardscen',
 #'maxcoverage',
-#'maxbudget',
+'budget',
 #'90-90-90',
-'sensitivity',
+#'sensitivity',
 #'VMMC'
 ]
 
@@ -212,16 +212,6 @@ if 'sensitivity' in tests:
     P.cleanresults() 
     P.pars()['fixproptx'].t = 2100 # WARNING, kludgy
     
-    # Set reasonable force priors:
-    P.pars()['force'].prior['FSW'].pars = array([3.45,3.55])
-    P.pars()['force'].prior['Clients'].pars = array([1.45,1.55])
-    P.pars()['force'].prior['MSM'].pars = array([1.45,1.55])
-    P.pars()['force'].prior['PWID'].pars = array([1.65,1.75])
-    P.pars()['force'].prior['M 15+'].pars = array([2.95,3.05])
-    P.pars()['force'].prior['F 15+'].pars = array([.35,.45])
-    
-#    P.sensitivity() # Generate a parset with multiple pars
-    
     ## Define scenarios
     scenlist = [
         Parscen(name='Current conditions',
@@ -237,7 +227,6 @@ if 'sensitivity' in tests:
               'endyear': 2020.,
               'endval': 68000.,
               }]),
-                                
         ]
         
     # Store these in the project
@@ -379,13 +368,11 @@ if 'maxcoverage' in tests:
 
 
 
-
-
-## Set up project etc.
-if 'maxbudget' in tests:
+## Test budget scenarios
+if 'budget' in tests:
     t = tic()
 
-    print('Running maximum budget scenario test...')
+    print('Running budget scenario test...')
     from optima import Budgetscen, defaultproject, dcp
     from numpy import array
     
@@ -406,13 +393,26 @@ if 'maxbudget' in tests:
     
     # Run the scenarios
     P.addscens(scenlist)
-    P.runscenarios() 
+    P.runscenarios(nruns=5,tosample='force') 
      
     if doplot:
         from optima import pygui
         pygui(P.results[-1], toplot='default')
-#        from optima import plotpars
-#        apd = plotpars([scen.scenparset.pars for scen in P.scens.values()])
+
+    resultsdiff1 = P.result().diff(base='Current conditions')
+    resultsdiff2 = P.result().diff(base='Unlimited spending')
+    
+    output = '\n\n----------------\n'
+    output += 'Impact of current expenditure (relative to zero):\n'
+    output += 'Infections averted: %s [%s, %s]\n' % (resultsdiff1.get('numinci', key='Zero spending', year='all')[0,17:].sum(), resultsdiff1.get('numinci', key='Zero spending', year='all')[1,17:].sum(), resultsdiff1.get('numinci', key='Zero spending', year='all')[2,17:].sum())
+    output += '    Deaths averted: %s [%s, %s]\n' % (resultsdiff1.get('numdeath', key='Zero spending', year='all')[0,17:].sum(), resultsdiff1.get('numdeath', key='Zero spending', year='all')[1,17:].sum(), resultsdiff1.get('numdeath', key='Zero spending', year='all')[2,17:].sum())
+    output += '     DALYs averted: %s [%s, %s]\n' % (resultsdiff1.get('numdaly', key='Zero spending', year='all')[0,17:].sum(), resultsdiff1.get('numdaly', key='Zero spending', year='all')[1,17:].sum(), resultsdiff1.get('numdaly', key='Zero spending', year='all')[2,17:].sum())
+    output += 'Impact of unlimited expenditure (relative to zero):\n'
+    output += 'Infections averted: %s [%s, %s]\n' % (resultsdiff2.get('numinci', key='Zero spending', year='all')[0,17:].sum(), resultsdiff2.get('numinci', key='Zero spending', year='all')[1,17:].sum(), resultsdiff2.get('numinci', key='Zero spending', year='all')[2,17:].sum())
+    output += '    Deaths averted: %s [%s, %s]\n' % (resultsdiff2.get('numdeath', key='Zero spending', year='all')[0,17:].sum(), resultsdiff2.get('numdeath', key='Zero spending', year='all')[1,17:].sum(), resultsdiff2.get('numdeath', key='Zero spending', year='all')[2,17:].sum())
+    output += '     DALYs averted: %s [%s, %s]\n' % (resultsdiff2.get('numdaly', key='Zero spending', year='all')[0,17:].sum(), resultsdiff2.get('numdaly', key='Zero spending', year='all')[1,17:].sum(), resultsdiff2.get('numdaly', key='Zero spending', year='all')[2,17:].sum())
+    
+    print output
 
 
 
