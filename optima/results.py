@@ -167,7 +167,6 @@ class Resultset(object):
         elif operation=='sub': R.name += ' - ' + R2.name
 
         R.projectref = self.projectref # ...and just store the whole project
-            
         
         # Collect all results objects, making use of the fact that they're mutable
         resultsobjs = odict() # One entry of these is e.g. R.main['prev']

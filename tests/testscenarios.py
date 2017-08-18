@@ -393,7 +393,7 @@ if 'budget' in tests:
     
     # Run the scenarios
     P.addscens(scenlist)
-    P.runscenarios(nruns=10,tosample='force',verbose=3, base=2) 
+    P.runscenarios(nruns=5,tosample='force',verbose=3, base=2) 
      
 #    if doplot:
 #        from optima import pygui
