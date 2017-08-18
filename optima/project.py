@@ -523,7 +523,10 @@ class Project(object):
             if pars is None:
                 name = -1 # Set default name
                 pars = self.parsets[name].pars
-            if resultname is None: resultname = 'pardict'
+                resultname = 'parset-'+self.parsets[name].name
+            else:
+                printv('Model was given a pardict and a parsetname, defaulting to use pardict input', 3, self.settings.verbose)
+                if resultname is None: resultname = 'pardict'
         else:
             if pars is not None:
                 printv('Model was given a pardict and a parsetname, defaulting to use pardict input', 3, self.settings.verbose)
@@ -588,13 +591,16 @@ class Project(object):
         return None
     
     
-    def runscenarios(self, scenlist=None, verbose=2, debug=False, nruns=1, **kwargs):
+    def runscenarios(self, scenlist=None, verbose=2, debug=False, nruns=1, storediffs=True, base=0, **kwargs):
         ''' Function to run scenarios '''
         if scenlist is not None: self.addscens(scenlist) # Replace existing scenario list with a new one
-        multires = runscenarios(project=self, verbose=verbose, debug=debug, nruns=nruns, **kwargs)
+    
+        multires, multiresdiff = runscenarios(project=self, verbose=verbose, debug=debug, nruns=nruns, storediffs=storediffs, base=base, **kwargs)
         self.addresult(result=multires)
+        if  storediffs:
+            self.addresult(result=multiresdiff)
         self.modified = today()
-        return multires
+        return multires, multiresdiff
     
     
     def defaultscenarios(self, which=None, **kwargs):

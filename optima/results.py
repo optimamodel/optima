@@ -39,7 +39,7 @@ class Result(object):
 
 class Resultset(object):
     ''' Structure to hold results '''
-    def __init__(self, raw=None, name=None, pars=None, simpars=None, project=None, settings=None, data=None, parsetname=None, progsetname=None, budget=None, coverage=None, budgetyears=None, domake=True, keepraw=False, verbose=2, doround=True):
+    def __init__(self, raw=None, name=None, pars=None, simpars=None, project=None, settings=None, data=None, parsetname=None, progsetname=None, budget=None, coverage=None, budgetyears=None, domake=True, quantiles=None, keepraw=False, verbose=2, doround=True):
         # Basic info
         self.uid = uuid()
         self.created = today()
@@ -119,7 +119,7 @@ class Resultset(object):
         for healthkey,healthname in zip(self.settings.healthstates, self.settings.healthstatesfull): # Health keys: ['susreg', 'progcirc', 'undx', 'dx', 'care', 'lost', 'usvl', 'svl']
             self.other['only'+healthkey]   = Result(healthname) # Pick out only people in these health states
             
-        if domake: self.make(raw, verbose=verbose, doround=doround)
+        if domake: self.make(raw, verbose=verbose, quantiles=quantiles, doround=doround)
     
     
     def __repr__(self):
@@ -165,6 +165,8 @@ class Resultset(object):
         popsize2 = dcp(R2.main['popsize'])
         if   operation=='add': R.name += ' + ' + R2.name
         elif operation=='sub': R.name += ' - ' + R2.name
+
+        R.projectref = self.projectref # ...and just store the whole project
             
         
         # Collect all results objects, making use of the fact that they're mutable

@@ -393,24 +393,22 @@ if 'budget' in tests:
     
     # Run the scenarios
     P.addscens(scenlist)
-    P.runscenarios(nruns=5,tosample='force',verbose=3) 
+    P.runscenarios(nruns=10,tosample='force',verbose=3, base=2) 
      
-    if doplot:
-        from optima import pygui
-        pygui(P.results[-1], toplot='default')
-
-    resultsdiff1 = P.result().diff(base='Current conditions')
-    resultsdiff2 = P.result().diff(base='Unlimited spending')
-    
+#    if doplot:
+#        from optima import pygui
+#        pygui(P.results[-1], toplot='default')
+#
+    resdiff = P.results[-1]
     output = '\n\n----------------\n'
     output += 'Impact of current expenditure (relative to zero):\n'
-    output += 'Infections averted: %s [%s, %s]\n' % (resultsdiff1.get('numinci', key='Zero spending', year='all')[0,17:].sum(), resultsdiff1.get('numinci', key='Zero spending', year='all')[1,17:].sum(), resultsdiff1.get('numinci', key='Zero spending', year='all')[2,17:].sum())
-    output += '    Deaths averted: %s [%s, %s]\n' % (resultsdiff1.get('numdeath', key='Zero spending', year='all')[0,17:].sum(), resultsdiff1.get('numdeath', key='Zero spending', year='all')[1,17:].sum(), resultsdiff1.get('numdeath', key='Zero spending', year='all')[2,17:].sum())
-    output += '     DALYs averted: %s [%s, %s]\n' % (resultsdiff1.get('numdaly', key='Zero spending', year='all')[0,17:].sum(), resultsdiff1.get('numdaly', key='Zero spending', year='all')[1,17:].sum(), resultsdiff1.get('numdaly', key='Zero spending', year='all')[2,17:].sum())
+    output += 'Infections averted: %s [%s, %s]\n' % (resdiff.get('numinci', key=0, year='all')[0,17:].sum(), resdiff.get('numinci', key=0, year='all')[1,17:].sum(), resdiff.get('numinci', key=0, year='all')[2,17:].sum())
+    output += '    Deaths averted: %s [%s, %s]\n' % (resdiff.get('numdeath', key=0, year='all')[0,17:].sum(), resdiff.get('numdeath', key=0, year='all')[1,17:].sum(), resdiff.get('numdeath', key=0, year='all')[2,17:].sum())
+    output += '     DALYs averted: %s [%s, %s]\n' % (resdiff.get('numdaly', key=0, year='all')[0,17:].sum(), resdiff.get('numdaly', key=0, year='all')[1,17:].sum(), resdiff.get('numdaly', key=0, year='all')[2,17:].sum())
     output += 'Impact of unlimited expenditure (relative to zero):\n'
-    output += 'Infections averted: %s [%s, %s]\n' % (resultsdiff2.get('numinci', key='Zero spending', year='all')[0,17:].sum(), resultsdiff2.get('numinci', key='Zero spending', year='all')[1,17:].sum(), resultsdiff2.get('numinci', key='Zero spending', year='all')[2,17:].sum())
-    output += '    Deaths averted: %s [%s, %s]\n' % (resultsdiff2.get('numdeath', key='Zero spending', year='all')[0,17:].sum(), resultsdiff2.get('numdeath', key='Zero spending', year='all')[1,17:].sum(), resultsdiff2.get('numdeath', key='Zero spending', year='all')[2,17:].sum())
-    output += '     DALYs averted: %s [%s, %s]\n' % (resultsdiff2.get('numdaly', key='Zero spending', year='all')[0,17:].sum(), resultsdiff2.get('numdaly', key='Zero spending', year='all')[1,17:].sum(), resultsdiff2.get('numdaly', key='Zero spending', year='all')[2,17:].sum())
+    output += 'Infections averted: %s [%s, %s]\n' % (resdiff.get('numinci', key=1, year='all')[0,17:].sum(), resdiff.get('numinci', key=1, year='all')[1,17:].sum(), resdiff.get('numinci', key=1, year='all')[2,17:].sum())
+    output += '    Deaths averted: %s [%s, %s]\n' % (resdiff.get('numdeath', key=1, year='all')[0,17:].sum(), resdiff.get('numdeath', key=1, year='all')[1,17:].sum(), resdiff.get('numdeath', key=1, year='all')[2,17:].sum())
+    output += '     DALYs averted: %s [%s, %s]\n' % (resdiff.get('numdaly', key=1, year='all')[0,17:].sum(), resdiff.get('numdaly', key=1, year='all')[1,17:].sum(), resdiff.get('numdaly', key=1, year='all')[2,17:].sum())
     
     print output
 

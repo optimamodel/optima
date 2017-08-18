@@ -66,7 +66,7 @@ class Coveragescen(Progscen):
         self.coverage = coverage
 
 
-def runscenarios(project=None, verbose=2, defaultparset=-1, debug=False, nruns=1, **kwargs):
+def runscenarios(project=None, verbose=2, defaultparset=-1, debug=False, nruns=1, storediffs=True, base=0, **kwargs):
     """
     Run all the scenarios.
     Version: 2017aug15
@@ -100,15 +100,28 @@ def runscenarios(project=None, verbose=2, defaultparset=-1, debug=False, nruns=1
         progsetname = scenlist[scenno].progsetname if isinstance(scenlist[scenno], Progscen) else None
 
         # Run model and add results
-        result = project.runsim(pars=scenparset.pars, name=scenlist[scenno].parsetname, progsetname=progsetname, budget=budget, coverage=coverage, budgetyears=budgetyears, verbose=0, debug=debug, resultname=project.name+'-scenarios', addresult=False, n=nruns, **kwargs)
+        if storediffs: # If calculating and storing the differences, we have to kepe the raw results
+            result = project.runsim(pars=scenparset.pars, name=scenlist[scenno].parsetname, progsetname=progsetname, budget=budget, coverage=coverage, budgetyears=budgetyears, verbose=0, debug=debug, resultname=project.name+'-scenarios', addresult=False, keepraw=True, n=nruns, **kwargs)
+        else:
+            result = project.runsim(pars=scenparset.pars, name=scenlist[scenno].parsetname, progsetname=progsetname, budget=budget, coverage=coverage, budgetyears=budgetyears, verbose=0, debug=debug, resultname=project.name+'-scenarios', addresult=False, n=nruns, **kwargs)
+
         result.name = scenlist[scenno].name # Give a name to these results so can be accessed for the plot legend
         allresults.append(result) 
         printv('... completed scenario: %i/%i' % (scenno+1, nscens), 3, verbose)
     
+    # Calculate diffs
+    if storediffs:
+        alldiffresults = []
+        for rn,thisresult in enumerate(allresults):
+            thisdiffresult = allresults[base]-thisresult
+            thisdiffresult.name = thisresult.name+' vs '+allresults[base].name
+            alldiffresults.append(thisdiffresult) 
+    
     multires = Multiresultset(resultsetlist=allresults, name='scenarios')
     for scen in scenlist: scen.resultsref = multires.uid # Copy results into each scenario that's been run
+    multiresdiff = Multiresultset(resultsetlist=alldiffresults, name='scenario diffs against '+allresults[base].name)
     
-    return multires
+    return multires, multiresdiff
 
 
 
