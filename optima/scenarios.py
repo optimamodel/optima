@@ -99,7 +99,6 @@ def runscenarios(project=None, verbose=2, defaultparset=-1, debug=False, **kwarg
         progsetname = scenlist[scenno].progsetname if isinstance(scenlist[scenno], Progscen) else None
 
         # Run model and add results
-#        import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
         result = project.runsim(pars=scenparset.pars, name=scenlist[scenno].parsetname, progsetname=progsetname, budget=budget, coverage=coverage, budgetyears=budgetyears, verbose=0, debug=debug, resultname=project.name+'-scenarios', addresult=False, **kwargs)
         result.name = scenlist[scenno].name # Give a name to these results so can be accessed for the plot legend
         allresults.append(result) 
@@ -161,6 +160,7 @@ def makescenarios(project=None, scenlist=None, verbose=2):
                 last_y = thispar.interp(tvec=last_t, dt=project.settings.dt, asarray=False, sample=False) # Find what the model would get for this value
 
                 # Loop over populations
+                import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
                 for pop in pops:
 
                     # Get the index of the population

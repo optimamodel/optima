@@ -394,7 +394,6 @@ def plotepi(results, toplot=None, uncertainty=True, die=True, showdata=True, ver
             
             if ismultisim:  # e.g. scenario
                 best = list() # Initialize as empty list for storing results sets
-#                import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
                 for s in range(nsims):
                     if getattr(results.main[datatype], attrtype)[s].shape[0] == 3: # This means it has uncertainty estimates - WARNING, not robust!!
                         bind = 0 # Index of the best estimates -- we will only plot the best estimates for multisims with uncertainty

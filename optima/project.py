@@ -529,7 +529,8 @@ class Project(object):
                 printv('Model was given a pardict and a parsetname, defaulting to use pardict input', 1, self.settings.verbose)
                 if resultname is None: resultname = 'pardict'
             else:
-                if resultname is None: resultname = 'parset-'+self.parsets[name].name 
+                if resultname is None: resultname = 'parset-'+self.parsets[name].name
+                pars = self.parsets[name].pars
             
         # Get the parameters sorted
         if simpars is None: # Optionally run with a precreated simpars instead

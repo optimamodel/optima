@@ -10,8 +10,8 @@ tests = [
 #'standardscen',
 #'maxcoverage',
 #'maxbudget',
-#'90-90-90'
-'VMMC'
+'90-90-90'
+#'VMMC'
 ]
 
 ##############################################################################
@@ -283,28 +283,6 @@ if '90-90-90' in tests:
 
     # Run the scenarios
     P.runscenarios(debug=True) 
-
-    if showstats:
-        blank()
-        for scind, scen in enumerate([scen for scen in P.scens.values() if scen.active]):
-            res_endind = findinds(P.results[-1].tvec, endyear)
-            res = P.results[-1]
-            end_plhiv = res.main['numplhiv'].tot[scind][res_endind]
-            end_propdx = res.main['numdiag'].tot[scind][res_endind]/res.main['numplhiv'].tot[scind][res_endind]
-            end_propevercare = res.main['numevercare'].tot[scind][res_endind]/res.main['numdiag'].tot[scind][res_endind]
-            end_propretincare = res.main['numincare'].tot[scind][res_endind]/res.main['numevercare'].tot[scind][res_endind]
-            end_proptx = res.main['numtreat'].tot[scind][res_endind]/res.main['numincare'].tot[scind][res_endind]
-            end_propsupp = res.main['numsuppressed'].tot[scind][res_endind]/res.main['numtreat'].tot[scind][res_endind]
-            output = '===================================\n'
-            output += scen.name
-            output += '\nOutcomes in Year %i\n' % (endyear)
-            output += 'PLHIV: %s\n' % (end_plhiv)
-            output += 'Prop aware: %s\n' % (end_propdx)
-            output += 'Prop initially linked to care: %s\n' % (end_propevercare)
-            output += 'Prop retained in care: %s\n' % (end_propretincare)
-            output += 'Prop treated: %s\n' % (end_proptx)
-            output += 'Prop suppressed: %s\n' % (end_propsupp)
-            print output
 
   
      

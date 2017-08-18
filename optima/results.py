@@ -679,7 +679,6 @@ class Multiresultset(Resultset):
 
             # Finally, process the budget and budgetyears -- these  are only needed for the budget/coverage conversions
             if len(rset.budget) or len(rset.coverage):
-#                import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
                 parset  = rset.projectref().parsets[rset.parsetname]
                 progset = rset.projectref().progsets[rset.progsetname]
             if len(rset.budget):       # If it has a budget, overwrite coverage information by calculating from budget
