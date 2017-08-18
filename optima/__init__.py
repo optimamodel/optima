@@ -128,7 +128,7 @@ import results as _results; del results
 
 # Define the model parameters -- import before makespreadsheet because makespreadsheet uses partable to make a pre-filled spreadsheet
 from .parameters import Par, Dist, Constant, Metapar, Timepar, Popsizepar, Yearpar, Parameterset # Parameter and Parameterset classes
-from .parameters import makepars, makesimpars, applylimits, comparepars, comparesimpars, sanitycheck
+from .parameters import makeparsfromdata, subsetparset, makesimpars, applylimits, comparepars, comparesimpars, sanitycheck
 import parameters as _parameters; del parameters
 
 # Create a blank spreadsheet

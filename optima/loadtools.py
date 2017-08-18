@@ -559,7 +559,7 @@ def redoparameters(project, die=True, **kwargs):
         oldpars = ps.pars[0]
         tmpdata = op.dcp(project.data)
         for key,val in tmpdata['const'].items(): tmpdata[key] = val # Parameters were moved from 'const' to main data
-        newpars = op.makepars(data=tmpdata, verbose=verbose, die=die) # Remake parameters using data, forging boldly ahead come hell or high water
+        newpars = op.makeparsfromdata(data=tmpdata, verbose=verbose, die=die) # Remake parameters using data, forging boldly ahead come hell or high water
         
         oldparnames = oldpars.keys()
         newparnames = newpars.keys()

@@ -193,7 +193,7 @@ class Project(object):
             raise OptimaException('No data in project "%s"!' % self.name)
         if overwrite or name not in self.parsets:
             parset = Parameterset(name=name, project=self)
-            parset.makepars(self.data, verbose=self.settings.verbose) # Create parameters
+            parset.makeparsfromdata(self.data, verbose=self.settings.verbose) # Create parameters
             self.addparset(name=name, parset=parset, overwrite=overwrite) # Store parameters
             self.modified = today()
         return None
@@ -276,7 +276,7 @@ class Project(object):
             else: # No item has been supplied, add a default one
                 if what=='parset':  
                     item = Parameterset(name=name, project=self)
-                    item.makepars(self.data, verbose=self.settings.verbose) # Create parameters
+                    item.makeparsfromdata(self.data, verbose=self.settings.verbose) # Create parameters
                 elif what=='progset': 
                     item = Programset(name=name, project=self)
                 elif what=='scen':

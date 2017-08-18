@@ -15,7 +15,7 @@ tests = [
 #'manualcalib',
 #'reconcile',
 #'runscenarios',
-'optimize',
+#'optimize',
 #'dosave',
 ]
 
