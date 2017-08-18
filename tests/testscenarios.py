@@ -377,7 +377,7 @@ if 'budget' in tests:
     from numpy import array
     
     ## Set up default project
-    P = defaultproject('best')
+    P = defaultproject('best',dorun=False)
     
     ## Define scenarios
     defaultbudget = P.progsets['default'].getdefaultbudget()

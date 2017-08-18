@@ -181,8 +181,7 @@ class Resultset(object):
             resultsobjs1[typekey] = dcp(R.other[typekey])
             resultsobjs2[typekey] = dcp(R2.other[typekey])
         typekeys = R.main.keys()+R.other.keys()
-        
-        
+
         # Handle results
         for typekey in typekeys:
             res1 = resultsobjs1[typekey]
@@ -213,7 +212,7 @@ class Resultset(object):
         R = self._combine(R2, operation='sub')
         return R
             
-            
+        
     def make(self, raw, quantiles=None, annual=True, verbose=2, doround=True):
         """ Gather standard results into a form suitable for plotting with uncertainties. """
         
@@ -425,7 +424,10 @@ class Resultset(object):
             self.other['only'+healthkey].pops = process(allpeople[:,healthinds,:,:][:,:,:,indices].sum(axis=1)) # WARNING, this is ugly, but allpeople[:,txinds,:,indices] produces an error
             self.other['only'+healthkey].tot =  process(allpeople[:,healthinds,:,:][:,:,:,indices].sum(axis=(1,2))) # Axis 1 is populations
 
-        
+        # Add error check for quantiles
+#        import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+        if self.main['numinci'].tot[0].sum() < self.main['numinci'].tot[1].sum(): # Best is smaller than low
+            import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
         return None # make()
         
         
@@ -625,8 +627,6 @@ class Resultset(object):
         
             
         
-
-
 
 
 

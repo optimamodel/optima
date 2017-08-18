@@ -6,7 +6,7 @@ Version: 2017jun03
 
 ## Imports
 from numpy import append, array
-from optima import OptimaException, Link, Multiresultset, runmodel # Core classes/functions
+from optima import OptimaException, Link, Resultset, Multiresultset, runmodel, rawdiff # Core classes/functions
 from optima import dcp, today, odict, printv, findinds, defaultrepr, getresults, vec2obj, isnumber, uuid, promotetoarray # Utilities
 
 class Scen(object):
@@ -110,13 +110,19 @@ def runscenarios(project=None, verbose=2, defaultparset=-1, debug=False, nruns=1
         printv('... completed scenario: %i/%i' % (scenno+1, nscens), 3, verbose)
     
     # Calculate diffs
+    #import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
     if storediffs:
         alldiffresults = []
         for rn,thisresult in enumerate(allresults):
-            thisdiffresult = allresults[base]-thisresult
+            if base!=rn:
+                thisrawlist = []
+                for n in range(nruns):
+                    thisrawdiff = rawdiff(allresults[base].raw[n],thisresult.raw[n])
+                    thisrawlist.append(thisrawdiff)
+            thisdiffresult = Resultset(pars=allresults[base].pars,raw=thisrawlist, project=project, verbose=verbose) 
             thisdiffresult.name = thisresult.name+' vs '+allresults[base].name
             alldiffresults.append(thisdiffresult) 
-    
+
     multires = Multiresultset(resultsetlist=allresults, name='scenarios')
     for scen in scenlist: scen.resultsref = multires.uid # Copy results into each scenario that's been run
     multiresdiff = Multiresultset(resultsetlist=alldiffresults, name='scenario diffs against '+allresults[base].name)

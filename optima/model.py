@@ -1,5 +1,5 @@
 ## Imports
-from numpy import zeros, exp, maximum, minimum, inf, array, isnan, einsum, floor, ones, power as npow, concatenate as cat, interp, nan, squeeze
+from numpy import zeros, exp, maximum, minimum, inf, array, isnan, einsum, floor, ones, power as npow, concatenate as cat, interp, nan, squeeze, array_equal
 from optima import OptimaException, printv, dcp, odict, findinds, makesimpars, Resultset
 
 def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False, debug=False, label=None):
@@ -891,13 +891,31 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
 
 
 
+def rawdiff(raw1, raw2):
+    ''' Method to calculate the difference between two sets of raw model outputs'''
+
+    rawdiff = odict()
+    
+    # Make sure that they have the same popkeys and tvecs
+    if not array_equal(raw1['tvec'],raw2['tvec']): raise OptimaException('Can''t calculate the difference between raw outputs that have different tvecs')
+    if not array_equal(raw1['popkeys'],raw2['popkeys']): raise OptimaException('Can''t calculate the difference between raw outputs that have different popkeys')
+    if not array_equal(raw1.keys(),raw2.keys()): raise OptimaException('Can''t calculate the difference between raw outputs that have different keys')
+        
+    for typekey in raw1.keys():
+        if typekey not in ['tvec','popkeys']:
+            rawdiff[typekey]  = raw1[typekey] - raw2[typekey]
+        else:
+            rawdiff[typekey]  = raw1[typekey]
+    
+    return rawdiff
+    
+
+
 
 def runmodel(project=None, simpars=None, pars=None, parsetname=None, progsetname=None, budget=None, coverage=None, budgetyears=None, settings=None, start=None, end=None, dt=None, tvec=None, name=None, uid=None, data=None, initpeople=None, debug=False, die=False, keepraw=False, label=None, verbose=2, doround=True):
     ''' 
     Convenience function for running the model. Requires input of either "simpars" or "pars"; and for including the data,
     requires input of either "project" or "data". All other inputs are optional.
-    
-    Version: 2017jun04 by cliffk    
     '''
     if settings is None:
         try:    settings = project.settings 
