@@ -114,14 +114,14 @@ def runscenarios(project=None, verbose=2, defaultparset=-1, debug=False, nruns=1
     if storediffs:
         alldiffresults = []
         for rn,thisresult in enumerate(allresults):
+            thisrawlist = []
             if base!=rn:
-                thisrawlist = []
                 for n in range(nruns):
                     thisrawdiff = rawdiff(allresults[base].raw[n],thisresult.raw[n])
                     thisrawlist.append(thisrawdiff)
-            thisdiffresult = Resultset(pars=allresults[base].pars,raw=thisrawlist, project=project, verbose=verbose) 
-            thisdiffresult.name = thisresult.name+' vs '+allresults[base].name
-            alldiffresults.append(thisdiffresult) 
+                thisdiffresult = Resultset(pars=allresults[base].pars,raw=thisrawlist, project=project, verbose=verbose) 
+                thisdiffresult.name = thisresult.name+' vs '+allresults[base].name
+                alldiffresults.append(thisdiffresult) 
 
     multires = Multiresultset(resultsetlist=allresults, name='scenarios')
     for scen in scenlist: scen.resultsref = multires.uid # Copy results into each scenario that's been run
