@@ -66,7 +66,7 @@ class Coveragescen(Progscen):
         self.coverage = coverage
 
 
-def runscenarios(project=None, verbose=2, defaultparset=-1, debug=False, nruns=1, storediffs=True, base=0, **kwargs):
+def runscenarios(project=None, verbose=2, defaultparset=-1, debug=False, nruns=1, storediffs=True, base=0, ccsample=False, randseed=None, **kwargs):
     """
     Run all the scenarios.
     Version: 2017aug15
@@ -83,7 +83,7 @@ def runscenarios(project=None, verbose=2, defaultparset=-1, debug=False, nruns=1
     nscens = len(scenlist)
     
     # Convert the list of scenarios to the actual parameters to use in the model
-    scenparsets = makescenarios(project=project, scenlist=scenlist, verbose=verbose)        
+    scenparsets = makescenarios(project=project, scenlist=scenlist, ccsample=ccsample, randseed=randseed, verbose=verbose)        
 
     # Run scenarios
     allresults = []
@@ -133,7 +133,7 @@ def runscenarios(project=None, verbose=2, defaultparset=-1, debug=False, nruns=1
 
 
 
-def makescenarios(project=None, scenlist=None, verbose=2):
+def makescenarios(project=None, scenlist=None, verbose=2, ccsample=False, randseed=None):
     """ Convert dictionary of scenario parameters into parset to model parameters """
 
     scenparsets = odict()
@@ -243,7 +243,7 @@ def makescenarios(project=None, scenlist=None, verbose=2):
                         scen.budget[budgetkey] = [budgetentry]
                 
                 # Figure out coverage
-                scen.coverage = thisprogset.getprogcoverage(budget=scen.budget, t=scen.t, parset=thisparset, results=results)
+                scen.coverage = thisprogset.getprogcoverage(budget=scen.budget, t=scen.t, parset=thisparset, results=results, sample=ccsample)
 
             elif isinstance(scen, Coveragescen):
                 
@@ -269,7 +269,7 @@ def makescenarios(project=None, scenlist=None, verbose=2):
                 scen.budget = thisprogset.getprogbudget(coverage=scen.coverage, t=scen.t, parset=thisparset, results=results)
 
             # Create parameter dictionary
-            thisparsdict = thisprogset.getpars(coverage=scen.coverage, t=scen.t, parset=thisparset, results=results)
+            thisparsdict = thisprogset.getpars(coverage=scen.coverage, t=scen.t, parset=thisparset, results=results, sample=ccsample)
             scen.pars = thisparsdict
             thisparset.pars = thisparsdict
             

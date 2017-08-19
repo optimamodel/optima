@@ -591,11 +591,11 @@ class Project(object):
         return None
     
     
-    def runscenarios(self, scenlist=None, verbose=2, debug=False, nruns=1, storediffs=True, base=0, **kwargs):
+    def runscenarios(self, scenlist=None, verbose=2, debug=False, nruns=1, storediffs=True, base=0, ccsample=False, randseed=None, **kwargs):
         ''' Function to run scenarios '''
         if scenlist is not None: self.addscens(scenlist) # Replace existing scenario list with a new one
     
-        multires, multiresdiff = runscenarios(project=self, verbose=verbose, debug=debug, nruns=nruns, storediffs=storediffs, base=base, **kwargs)
+        multires, multiresdiff = runscenarios(project=self, verbose=verbose, debug=debug, nruns=nruns, storediffs=storediffs, base=base, ccsample=ccsample, randseed=randseed, **kwargs)
         if  storediffs:
             self.addresult(result=multiresdiff)
         self.addresult(result=multires)
