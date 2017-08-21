@@ -728,7 +728,9 @@ class Project(object):
     def genBOC(self, budgetratios=None, name=None, parsetname=None, progsetname=None, objectives=None, constraints=None, maxiters=1000, 
                maxtime=None, verbose=2, stoppingfunc=None, mc=3, die=False, randseed=None, **kwargs):
         ''' Function to generate project-specific budget-outcome curve for geospatial analysis '''
-        boc = BOC(name='BOC '+self.name)
+        if name is None:
+            name = 'BOC ' + self.name
+        boc = BOC(name=name)
         if objectives is None:
             printv('Warning, genBOC "%s" did not get objectives, using defaults...' % (self.name), 2, verbose)
             objectives = defaultobjectives(project=self, progsetname=progsetname)
