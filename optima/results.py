@@ -1,7 +1,7 @@
 """
 This module defines the classes for stores the results of a single simulation run.
 
-Version: 2016oct28 by cliffk
+Version: 2016oct28
 """
 
 from optima import OptimaException, Link, Settings, odict, pchip, plotpchip, sigfig # Classes/functions
@@ -39,7 +39,7 @@ class Result(object):
 
 class Resultset(object):
     ''' Structure to hold results '''
-    def __init__(self, raw=None, name=None, pars=None, simpars=None, project=None, settings=None, data=None, parsetname=None, progsetname=None, budget=None, coverage=None, budgetyears=None, domake=True, keepraw=False, verbose=2, doround=True):
+    def __init__(self, raw=None, name=None, pars=None, simpars=None, project=None, settings=None, data=None, parsetname=None, progsetname=None, budget=None, coverage=None, budgetyears=None, domake=True, quantiles=None, keepraw=False, verbose=2, doround=True):
         # Basic info
         self.uid = uuid()
         self.created = today()
@@ -119,7 +119,7 @@ class Resultset(object):
         for healthkey,healthname in zip(self.settings.healthstates, self.settings.healthstatesfull): # Health keys: ['susreg', 'progcirc', 'undx', 'dx', 'care', 'lost', 'usvl', 'svl']
             self.other['only'+healthkey]   = Result(healthname) # Pick out only people in these health states
             
-        if domake: self.make(raw, verbose=verbose, doround=doround)
+        if domake: self.make(raw, verbose=verbose, quantiles=quantiles, doround=doround)
     
     
     def __repr__(self):
@@ -137,8 +137,12 @@ class Resultset(object):
         ''' A small method to make sure two resultsets are compatible, and return a copy of the first one. '''
         if type(R2)!=Resultset: raise OptimaException('Can only add results sets with other results sets')
         for attr in ['tvec','popkeys']:
-            if any(array(getattr(self,attr))!=array(getattr(R2,attr))):
+            if len(getattr(self,attr))!=len(array(getattr(R2,attr))):
                 raise OptimaException('Cannot add Resultsets that have dissimilar "%s"' % attr)
+            else:
+                if any(array(getattr(self,attr))!=array(getattr(R2,attr))):
+                    raise OptimaException('Cannot add Resultsets that have dissimilar "%s"' % attr)
+
         
         # Keep the properties of this first one
         R1 = dcp(self) 
@@ -161,7 +165,8 @@ class Resultset(object):
         popsize2 = dcp(R2.main['popsize'])
         if   operation=='add': R.name += ' + ' + R2.name
         elif operation=='sub': R.name += ' - ' + R2.name
-            
+
+        R.projectref = self.projectref # ...and just store the whole project
         
         # Collect all results objects, making use of the fact that they're mutable
         resultsobjs = odict() # One entry of these is e.g. R.main['prev']
@@ -176,8 +181,7 @@ class Resultset(object):
             resultsobjs1[typekey] = dcp(R.other[typekey])
             resultsobjs2[typekey] = dcp(R2.other[typekey])
         typekeys = R.main.keys()+R.other.keys()
-        
-        
+
         # Handle results
         for typekey in typekeys:
             res1 = resultsobjs1[typekey]
@@ -208,7 +212,7 @@ class Resultset(object):
         R = self._combine(R2, operation='sub')
         return R
             
-            
+        
     def make(self, raw, quantiles=None, annual=True, verbose=2, doround=True):
         """ Gather standard results into a form suitable for plotting with uncertainties. """
         
@@ -420,8 +424,7 @@ class Resultset(object):
             self.other['only'+healthkey].pops = process(allpeople[:,healthinds,:,:][:,:,:,indices].sum(axis=1)) # WARNING, this is ugly, but allpeople[:,txinds,:,indices] produces an error
             self.other['only'+healthkey].tot =  process(allpeople[:,healthinds,:,:][:,:,:,indices].sum(axis=(1,2))) # Axis 1 is populations
 
-        
-        return None # make()
+        return None
         
         
     def export(self, filename=None, folder=None, bypop=True, sep=',', ind=0, sigfigs=3, writetofile=True, asexcel=True, verbose=2):
@@ -620,8 +623,6 @@ class Resultset(object):
         
             
         
-
-
 
 
 
