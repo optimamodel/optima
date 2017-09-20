@@ -1,5 +1,5 @@
-from optima import OptimaException, Settings, Parameterset, Programset, Resultset, BOC, Parscen, Optim, Link # Import classes
-from optima import odict, getdate, today, uuid, dcp, makefilepath, objrepr, printv, isnumber, saveobj, promotetolist, sigfig # Import utilities
+from optima import OptimaException, Settings, Parameterset, Programset, Resultset, BOC, Parscen, Budgetscen, Coveragescen, Optim, Link # Import classes
+from optima import odict, getdate, today, uuid, dcp, makefilepath, objrepr, printv, isnumber, saveobj, promotetolist, promotetoodict, sigfig # Import utilities
 from optima import loadspreadsheet, model, gitinfo, defaultscenarios, makesimpars, makespreadsheet
 from optima import defaultobjectives, runmodel, autofit, runscenarios, optimize, multioptimize, outcomecalc, icers # Import functions
 from optima import version # Get current version
@@ -663,7 +663,7 @@ class Project(object):
     def icers(self, parsetname=None, progsetname=None, objective=None, startyear=None, endyear=None, budgetratios=None, verbose=2, marginal=None, **kwargs):
         '''
         Calculate ICERs. Example:
-            from optima import op
+            import optima as op
             P = op.demo(0)
             P.parset().fixprops(False)
             P.icers()
@@ -719,6 +719,87 @@ class Project(object):
         return multires
     
     
+    def makescript(self, spreadsheetfilename=None, filename=None, verbose=2):
+        '''
+        Export a script that, when run, generates this project. Example:
+            import optima as op
+            P = op.demo(0)
+            P.makescript(filename=demo.py)
+        '''
+        if filename is None:
+            filename = self.name+'.py'
+        
+        if spreadsheetfilename is None:
+            spreadsheetfilename = self.name+'.xlsx'
+            self.makespreadsheet(spreadsheetfilename)
+            printv('Generated spreadsheet from project %s and saved to file %s' % (self.name, spreadsheetfilename), 2, verbose)
+
+        output = "'''\nSCRIPT TO GENERATE PROJECT %s\n" %(self.name)
+        output += "Created %s\n\n\n'''\n\n\n" %(today())
+        output += "### Imports\n" 
+        output += "from optima import Project, Program, Programset, Parscen, Budgetscen, Coveragescen, odict \n\n" 
+        output += "### Define analyses to run\n"
+        output += "torun = ['makeproject',\n'calibrate',\n'makeprograms',\n'scens',\n'optims',\n'saveproject',\n]\n\n"
+        output += "### Filepaths and global variables\n"
+        output += "spreadsheetfile = '%s'\n\n\n" %(spreadsheetfilename)
+        output += "### Make project\n" 
+        output += "if 'makeproject' in torun:\n"
+        output += "    P = Project(spreadsheet=spreadsheetfile, dorun=False)\n\n"
+        output += "### Calibrate\n" 
+        output += "if 'calibrate' in torun:\n"
+        for psn,ps in self.parsets.iteritems():
+            output += "    pars = P.parsets['"+psn+"'].pars\n"
+            output += "    "+ps.export().replace("\n","\n    ")+"\n"
+        output += "### Make programs\n" 
+        output += "if 'makeprograms' in torun:\n"
+        for prn,pr in self.progsets.iteritems():
+            pi = 0
+            plist = "["
+            for pn,p in pr.programs.iteritems():
+                output += "    p"+str(pi)+" = Program(short='"+p.short+"',name='"+p.name+"',targetpars="+str(p.targetpars)+",targetpops="+str(p.targetpops)+")\n"
+                output += "    p"+str(pi)+".costcovfn.ccopars = "+p.costcovfn.ccopars.export(doprint=False)+"\n\n"
+                plist += "p"+str(pi)+","
+                pi += 1
+            plist += "]"
+            output += "    R = Programset(programs="+plist+")\n"
+            for partype in pr.covout.keys():
+                for popname in pr.covout[partype].keys():
+                    strpopname = str(popname) if isinstance(popname,tuple) else "'"+popname+"'"
+                    output += "    R.covout['"+partype+"']["+strpopname+"].ccopars = "+pr.covout[partype][popname].ccopars.export(doprint=False)+"\n"
+                    output += "    R.covout['"+partype+"']["+strpopname+"].interaction = '"+pr.covout[partype][popname].interaction+"'\n\n"
+
+            output += "    P.addprogset(name='"+psn+"',progset=R)\n\n"
+        
+        output += "### Scenarios\n" 
+        output += "if 'scens' in torun:\n"
+        slist = "["
+        for sn,s in self.scens.iteritems():
+            parsetname = s.parsetname if isinstance(s.parsetname,str) else str(s.parsetname)
+            if isinstance(s,Parscen):
+                scentoadd = "Parscen(name='"+s.name+"',parsetname="+parsetname+",pars="+str(s.pars)+")"
+            elif isinstance(s,Budgetscen):
+                progsetname = s.progsetname if isinstance(s.progsetname,str) else str(s.progsetname)
+                scentoadd = "Budgetscen(name='"+s.name+"',parsetname="+parsetname+",progsetname="+progsetname+",budget="+promotetoodict(s.budget).export(doprint=False)+")"
+            elif isinstance(s,Coveragescen):
+                progsetname = s.progsetname if isinstance(s.progsetname,str) else str(s.progsetname)
+                scentoadd = "Coveragescen(name='"+s.name+"',parsetname="+parsetname+",progsetname="+progsetname+",budget="+promotetoodict(s.coverage).export(doprint=False)+")"
+            slist += scentoadd+",\n                "
+        slist += "]"
+            
+        output += "    P.addscens("+slist+")\n\n\n"
+
+        output += "### Optimizations\n" 
+        output += "if 'optims' in torun:\n"
+
+        output += "### Save project\n" 
+        output += "if 'saveproject' in torun:\n"
+        output += "    P.save(filename='"+self.name+"-scripted.prj')\n\n"
+
+
+        f = open(filename, 'w')
+        f.write( output )
+        f.close()
+        printv('Saved project %s to script file %s' % (self.name, filename), 2, verbose)
 
 
     #######################################################################################################
