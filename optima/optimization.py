@@ -806,7 +806,7 @@ def minoutcomes(project=None, optim=None, tvec=None, verbose=None, maxtime=None,
             
             ## Calculate final outcomes for the full time vector
             args['initpeople'] = None # Set to None to get full results, not just from strat year
-            args['baselineresults'] = fullbaselineresults # Get the full results
+            args['baselineresults'] = fullbaselineresults if dopareto else None # Get the full results
             args['tvec'] = tvec 
             new = outcomecalc(asdresults[bestkey]['budget'], outputresults=True, **args)
             

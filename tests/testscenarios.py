@@ -9,8 +9,8 @@ Version: 2016feb07
 tests = [
 #'standardscen',
 #'maxcoverage',
-'budget',
-#'90-90-90',
+#'budget',
+'90-90-90',
 #'sensitivity',
 #'VMMC'
 ]

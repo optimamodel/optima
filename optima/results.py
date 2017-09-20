@@ -743,8 +743,9 @@ class Multiresultset(Resultset):
         resultsobjs = []
         for typekey in resultsdiff.main.keys():
             resultsobjs.append(resultsdiff.main[typekey])
-        for typekey in resultsdiff.other.keys():
-            resultsobjs.append(resultsdiff.other[typekey])
+        if hasattr(resultsdiff,'other'):
+            for typekey in resultsdiff.other.keys():
+                resultsobjs.append(resultsdiff.other[typekey])
         
         # Calculate the differences
         for resultsobj in resultsobjs:

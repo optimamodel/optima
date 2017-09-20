@@ -66,7 +66,7 @@ class Coveragescen(Progscen):
         self.coverage = coverage
 
 
-def runscenarios(project=None, verbose=2, defaultparset=-1, debug=False, nruns=1, storediffs=True, base=0, ccsample=False, randseed=None, **kwargs):
+def runscenarios(project=None, verbose=2, name=None, defaultparset=-1, debug=False, nruns=1, storediffs=True, base=0, ccsample=False, randseed=None, **kwargs):
     """
     Run all the scenarios.
     Version: 2017aug15
@@ -122,12 +122,16 @@ def runscenarios(project=None, verbose=2, defaultparset=-1, debug=False, nruns=1
                 thisdiffresult = Resultset(pars=allresults[base].pars,raw=thisrawlist, project=project, verbose=verbose) 
                 thisdiffresult.name = thisresult.name+' vs '+allresults[base].name
                 alldiffresults.append(thisdiffresult) 
+        multiresdiff = Multiresultset(resultsetlist=alldiffresults, name='scenario diffs against '+allresults[base].name)
 
-    multires = Multiresultset(resultsetlist=allresults, name='scenarios')
+    if name is None: name='scenarios'
+
+    multires = Multiresultset(resultsetlist=allresults, name=name)
     for scen in scenlist: scen.resultsref = multires.uid # Copy results into each scenario that's been run
-    multiresdiff = Multiresultset(resultsetlist=alldiffresults, name='scenario diffs against '+allresults[base].name)
-    
-    return multires, multiresdiff
+    scenres = odict()
+    scenres[name] = multires
+    if storediffs: scenres['scenariodiffs'] = multiresdiff
+    return scenres
 
 
 
