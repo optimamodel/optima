@@ -1,4 +1,4 @@
-from optima import OptimaException, Settings, Parameterset, Programset, Resultset, BOC, Parscen, Budgetscen, Coveragescen, Optim, Link # Import classes
+from optima import OptimaException, Settings, Parameterset, Programset, Resultset, BOC, Parscen, Budgetscen, Coveragescen, Progscen, Optim, Link # Import classes
 from optima import odict, getdate, today, uuid, dcp, makefilepath, objrepr, printv, isnumber, saveobj, promotetolist, promotetoodict, sigfig # Import utilities
 from optima import loadspreadsheet, model, gitinfo, defaultscenarios, makesimpars, makespreadsheet
 from optima import defaultobjectives, runmodel, autofit, runscenarios, optimize, multioptimize, outcomecalc, icers # Import functions
@@ -737,19 +737,26 @@ class Project(object):
         output = "'''\nSCRIPT TO GENERATE PROJECT %s\n" %(self.name)
         output += "Created %s\n\n\n'''\n\n\n" %(today())
         output += "### Imports\n" 
-        output += "from optima import Project, Program, Programset, Parscen, Budgetscen, Coveragescen, odict \n\n" 
+        output += "from optima import Project, Program, Programset, Parscen, Budgetscen, Coveragescen, Optim, odict, dcp \n" 
+        output += "from numpy import nan, array \n\n" 
         output += "### Define analyses to run\n"
         output += "torun = ['makeproject',\n'calibrate',\n'makeprograms',\n'scens',\n'optims',\n'saveproject',\n]\n\n"
         output += "### Filepaths and global variables\n"
+        output += "dorun = True\n" # Run things by default
         output += "spreadsheetfile = '%s'\n\n\n" %(spreadsheetfilename)
         output += "### Make project\n" 
         output += "if 'makeproject' in torun:\n"
         output += "    P = Project(spreadsheet=spreadsheetfile, dorun=False)\n\n"
         output += "### Calibrate\n" 
         output += "if 'calibrate' in torun:\n"
+        output += "    defaultps = dcp(P.parsets[0]) # Copy the default parset\n"
+        output += "    P.rmparset(0) # Remove the default parset\n\n"
         for psn,ps in self.parsets.iteritems():
-            output += "    pars = P.parsets['"+psn+"'].pars\n"
+            output += "    parset = dcp(defaultps)\n"
+            output += "    parset.name = '"+psn+"'\n"
+            output += "    pars = parset.pars\n"
             output += "    "+ps.export().replace("\n","\n    ")+"\n"
+            output += "    P.addparset(name='"+psn+"',parset=parset)\n\n"
         output += "### Make programs\n" 
         output += "if 'makeprograms' in torun:\n"
         for prn,pr in self.progsets.iteritems():
@@ -757,7 +764,8 @@ class Project(object):
             plist = "["
             for pn,p in pr.programs.iteritems():
                 output += "    p"+str(pi)+" = Program(short='"+p.short+"',name='"+p.name+"',targetpars="+str(p.targetpars)+",targetpops="+str(p.targetpops)+")\n"
-                output += "    p"+str(pi)+".costcovfn.ccopars = "+p.costcovfn.ccopars.export(doprint=False)+"\n\n"
+                output += "    p"+str(pi)+".costcovfn.ccopars = "+p.costcovfn.ccopars.export(doprint=False)+"\n"
+                output += "    p"+str(pi)+".costcovdata = "+promotetoodict(p.costcovdata).export(doprint=False)+"\n\n"
                 plist += "p"+str(pi)+","
                 pi += 1
             plist += "]"
@@ -768,33 +776,41 @@ class Project(object):
                     output += "    R.covout['"+partype+"']["+strpopname+"].ccopars = "+pr.covout[partype][popname].ccopars.export(doprint=False)+"\n"
                     output += "    R.covout['"+partype+"']["+strpopname+"].interaction = '"+pr.covout[partype][popname].interaction+"'\n\n"
 
-            output += "    P.addprogset(name='"+psn+"',progset=R)\n\n"
+            output += "    P.addprogset(name='"+prn+"',progset=R)\n\n"
         
         output += "### Scenarios\n" 
         output += "if 'scens' in torun:\n"
         slist = "["
         for sn,s in self.scens.iteritems():
-            parsetname = s.parsetname if isinstance(s.parsetname,str) else str(s.parsetname)
+            parsetname = "'"+s.parsetname+"'" if isinstance(s.parsetname,str) else str(s.parsetname)
             if isinstance(s,Parscen):
                 scentoadd = "Parscen(name='"+s.name+"',parsetname="+parsetname+",pars="+str(s.pars)+")"
-            elif isinstance(s,Budgetscen):
-                progsetname = s.progsetname if isinstance(s.progsetname,str) else str(s.progsetname)
-                scentoadd = "Budgetscen(name='"+s.name+"',parsetname="+parsetname+",progsetname="+progsetname+",budget="+promotetoodict(s.budget).export(doprint=False)+")"
-            elif isinstance(s,Coveragescen):
-                progsetname = s.progsetname if isinstance(s.progsetname,str) else str(s.progsetname)
-                scentoadd = "Coveragescen(name='"+s.name+"',parsetname="+parsetname+",progsetname="+progsetname+",budget="+promotetoodict(s.coverage).export(doprint=False)+")"
+            elif isinstance(s,Progscen):
+                progsetname = "'"+s.progsetname+"'" if isinstance(s.progsetname,str) else str(s.progsetname)
+                t = str(s.t)
+                if isinstance(s,Budgetscen):
+                    scentoadd = "Budgetscen(name='"+s.name+"',parsetname="+parsetname+",progsetname="+progsetname+",budget="+promotetoodict(s.budget).export(doprint=False)+",t="+t+")"
+                elif isinstance(s,Coveragescen):
+                    scentoadd = "Coveragescen(name='"+s.name+"',parsetname="+parsetname+",progsetname="+progsetname+",coverage="+promotetoodict(s.coverage).export(doprint=False)+",t="+t+")"
             slist += scentoadd+",\n                "
         slist += "]"
             
-        output += "    P.addscens("+slist+")\n\n\n"
+        output += "    P.addscens("+slist+")\n"
+        output += "    if dorun: P.runscenarios()\n\n\n"
 
         output += "### Optimizations\n" 
         output += "if 'optims' in torun:\n"
+        for on,o in self.optims.iteritems():
+            parsetname = "'"+o.parsetname+"'" if isinstance(o.parsetname,str) else str(o.parsetname)
+            progsetname = "'"+o.progsetname+"'" if isinstance(o.progsetname,str) else str(o.progsetname)
+            constraints = promotetoodict(o.constraints).export(doprint=False) if o.constraints is not None else 'None'
+            output += "    P.addoptim(name='"+on+"',\n               optim=Optim(project=P,\n                           parsetname="+parsetname+",\n                           progsetname="+progsetname+",\n                           objectives="+promotetoodict(o.objectives).export(doprint=False)+",\n                           constraints="+constraints+"))\n\n"
+
+        output += "    if dorun: P.optimize() # Run the most recent optimization\n\n\n"
 
         output += "### Save project\n" 
         output += "if 'saveproject' in torun:\n"
         output += "    P.save(filename='"+self.name+"-scripted.prj')\n\n"
-
 
         f = open(filename, 'w')
         f.write( output )
