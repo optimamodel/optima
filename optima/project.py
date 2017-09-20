@@ -1,7 +1,7 @@
 from optima import OptimaException, Settings, Parameterset, Programset, Resultset, BOC, Parscen, Optim, Link # Import classes
 from optima import odict, getdate, today, uuid, dcp, makefilepath, objrepr, printv, isnumber, saveobj, promotetolist, sigfig # Import utilities
 from optima import loadspreadsheet, model, gitinfo, defaultscenarios, makesimpars, makespreadsheet
-from optima import defaultobjectives, runmodel, autofit, runscenarios, optimize, multioptimize, timevarying, outcomecalc, icers # Import functions
+from optima import defaultobjectives, runmodel, autofit, runscenarios, optimize, multioptimize, tvoptimize, outcomecalc, icers # Import functions
 from optima import version # Get current version
 from numpy import argmin, argsort
 from numpy.random import seed, randint
@@ -708,7 +708,7 @@ class Project(object):
                                      die=die, origbudget=origbudget, randseed=randseed, mc=mc, nchains=nchains, nblocks=nblocks, 
                                      blockiters=blockiters, batch=batch, **kwargs)      
         elif timevarying:
-            multires = timevarying(optim=optim, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, 
+            multires = tvoptimize(optim=optim, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, 
                                      die=die, origbudget=origbudget, randseed=randseed, **kwargs)
         else:
             multires = optimize(optim=optim, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, 
