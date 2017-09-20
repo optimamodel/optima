@@ -569,6 +569,88 @@ def multioptimize(optim=None, nchains=None, nblocks=None, blockiters=None,
 
 
 
+
+
+def timevarying(optim=None, verbose=2, **kwargs):
+    '''
+    Run a time-varying optimization. See project.optimize() for usage examples, and optimize()
+    for kwarg explanation.
+    
+    Small usage example:
+        import optima as op
+        import pylab as pl
+        P = op.demo(0)
+        results = P.optimize(timevarying=True, randseed=1)
+        op.pygui(P, toplot=['improvement', 'budgets', 'numinci'])
+        pl.figure(); pl.plot(results.multiimprovement.transpose())
+    
+    You can see how after 10 iterations, the blocks talk to each other, and the optimization
+    for each thread restarts from the best solution found for each.
+    '''
+
+    printv('Starting a time-varying optimization...', 2, verbose)
+    
+#    # Loop over the optimization blocks
+#    for block in range(nblocks):
+#        
+#        # Set up the parallel process
+#        outputqueue = Queue()
+#        outputlist = empty(nchains, dtype=object)
+#        processes = []
+#            
+#        # Loop over the threads, starting the processes
+#        for thread in range(nchains):
+#            blockrand = (block+1)*(2**6-1) # Pseudorandom seeds
+#            threadrand = (thread+1)*(2**10-1) 
+#            randtime = int((time()-floor(time()))*1e4)
+#            if randseed is None: thisseed = (blockrand+threadrand)*randtime # Get a random number based on both the time and the thread
+#            else:                thisseed = randseed + blockrand+threadrand
+#            optimargs = (optim, blockiters, maxtime, verbose, stoppingfunc, die, origbudget, thisseed, mc, label, outputqueue, kwargs)
+#            prc = Process(target=optimize, args=optimargs)
+#            prc.start()
+#            processes.append(prc)
+#        
+#        # Tidy up: close the threads and gather the results
+#        for i in range(nchains):
+#            result = outputqueue.get() # This is needed or else the process never finishes
+#            outputlist[i] = result # WARNING, this randomizes the order
+#            if block==0 and i==0: results = dcp(result) # Copy the original results from the first optimization
+#        for prc in processes:
+#            prc.join() # Wait for them to finish
+#        
+#        # Figure out which one did best
+#        bestfvalval = inf
+#        bestfvalind = None
+#        for i in range(nchains):
+#            if block==0 and i==0: fvalarray[:,0] = outputlist[i].improvement[0][0] # Store the initial value
+#            thischain = outputlist[i].improvement[0][1:] # The chain to store the improvement of -- NB, improvement is an odict
+#            leftbound = block * blockiters + 1
+#            rightbound = block * blockiters + len(thischain) + 1
+#            fvalarray[i,leftbound:rightbound] = thischain
+#            thisbestval = outputlist[i].outcome
+#            if thisbestval<bestfvalval:
+#                bestfvalval = thisbestval
+#                bestfvalind = i
+#        
+#        origbudget = outputlist[bestfvalind].budget # Update the budget and use it as the input for the next block -- this is key!
+#    
+#    # Assemble final results object from the initial and final run
+#    finalresults = outputlist[bestfvalind]
+#    results.improvement[0] = sanitize(fvalarray[bestfvalind,:]) # Store fval vector in normal format
+#    results.multiimprovement = fvalarray # Store full fval array
+#    results.outcome = finalresults.outcome
+#    results.budget = finalresults.budget
+#    try: results.budgets['Optimal'] = finalresults.budgets['Optimal']
+#    except: pass
+#    
+#    return results
+
+
+
+
+
+
+
 def minoutcomes(project=None, optim=None, tvec=None, verbose=None, maxtime=None, maxiters=1000, 
                 origbudget=None, ccsample='best', randseed=None, mc=3, label=None, die=False, **kwargs):
     ''' Split out minimize outcomes '''
