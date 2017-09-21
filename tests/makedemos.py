@@ -34,6 +34,7 @@ for proj in tomake:
 
 
     ### Optimizations
+    P.optims = odict()
     optim = Optim(project=P, parsetname='Treatment fixed', name='Optimal with latest reported funding')
     P.addoptim(optim)
     
