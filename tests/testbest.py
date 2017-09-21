@@ -16,7 +16,7 @@ tests = [
 #'reconcile',
 #'runscenarios',
 #'optimize',
-'dosave',
+#'dosave',
 ]
 
 filename = 'best.prj'
@@ -73,12 +73,13 @@ if 'runscenarios' in tests:
     nobudget = dcp(defaultbudget)
     for key in nobudget: nobudget[key] *= 1e-6
     testprog = 'ART' # Try zero & infinite budgets for one test program
+    pind = 0
     scenlist = [
-        Budgetscen(name='No budget', parsetname=ind, progsetname=ind, t=[2016], budget=nobudget),
-        Budgetscen(name='Current budget', parsetname=ind, progsetname=ind, t=[2016], budget=defaultbudget),
-        Coveragescen(name='No '+testprog+' coverage', parsetname=ind, progsetname=ind, t=[2016], coverage={testprog: 0.}),
-        Budgetscen(name='Unlimited '+testprog+' budget', parsetname=ind, progsetname=ind, t=[2016], budget={testprog: 1e9}),
-        Budgetscen(name='Unlimited spending', parsetname=ind, progsetname=ind, t=[2016], budget=maxbudget),
+        Budgetscen(name='No budget', parsetname=ind, progsetname=pind, t=[2016], budget=nobudget),
+        Budgetscen(name='Current budget', parsetname=ind, progsetname=pind, t=[2016], budget=defaultbudget),
+        Coveragescen(name='No '+testprog+' coverage', parsetname=ind, progsetname=pind, t=[2016], coverage={testprog: 0.}),
+        Budgetscen(name='Unlimited '+testprog+' budget', parsetname=ind, progsetname=pind, t=[2016], budget={testprog: 1e9}),
+        Budgetscen(name='Unlimited spending', parsetname=ind, progsetname=pind, t=[2016], budget=maxbudget),
         ]
     
     # Run the scenarios
