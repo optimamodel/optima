@@ -217,10 +217,7 @@ class Project(object):
             self.addscens(scenlist)
 
         if overwrite or name not in self.optims:
-            optim = Optim(project=self, name='Optimal with latest reported funding')
-            self.addoptim(optim)
-            objectives = defaultobjectives(self, which='money')
-            optim = Optim(project=self, name='Minimal funding to reduce incidence and deaths by 25%', objectives=objectives)
+            optim = Optim(project=self, name=name)
             self.addoptim(optim)
 
         return None

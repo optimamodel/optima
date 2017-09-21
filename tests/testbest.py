@@ -68,6 +68,8 @@ if 'reconcile' in tests:
 ## Scenarios
 if 'runscenarios' in tests:
 
+    comparison = P.progsets[0].compareoutcomes(parset=P.parsets[0], year=2015, doprint=True)
+
     defaultbudget = P.progsets[ind].getdefaultbudget()
     maxbudget = dcp(defaultbudget)
     for key in maxbudget: maxbudget[key] += 1e14
@@ -77,11 +79,11 @@ if 'runscenarios' in tests:
     pind = 0
     scenlist = [
         Parscen(name='Current conditions', parsetname=ind, pars=[]),
-        Budgetscen(name='No budget', parsetname=ind, progsetname=pind, t=[2016], budget=nobudget),
-        Budgetscen(name='Current budget', parsetname=ind, progsetname=pind, t=[2016], budget=defaultbudget),
-        Coveragescen(name='No '+testprog+' coverage', parsetname=ind, progsetname=pind, t=[2016], coverage={testprog: 0.}),
-        Budgetscen(name='Unlimited '+testprog+' budget', parsetname=ind, progsetname=pind, t=[2016], budget={testprog: 1e9}),
-        Budgetscen(name='Unlimited spending', parsetname=ind, progsetname=pind, t=[2016], budget=maxbudget),
+        Budgetscen(name='No budget', parsetname=ind, progsetname=pind, t=[2014], budget=nobudget),
+        Budgetscen(name='Current budget', parsetname=ind, progsetname=pind, t=[2015], budget=defaultbudget),
+        Coveragescen(name='No '+testprog+' coverage', parsetname=ind, progsetname=pind, t=[2014], coverage={testprog: 0.}),
+        Budgetscen(name='Unlimited '+testprog+' budget', parsetname=ind, progsetname=pind, t=[2014], budget={testprog: 1e9}),
+        Budgetscen(name='Unlimited spending', parsetname=ind, progsetname=pind, t=[2014], budget=maxbudget),
         ]
     
     # Run the scenarios

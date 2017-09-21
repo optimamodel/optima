@@ -406,33 +406,34 @@ def defaultproject(which='best', addprogset=True, addcostcovdata=True, usestanda
         if dorun: P.runsim() # Run after calibration
     
         # Get a default progset 
-        R = defaultprogset(P, addcostcovpars=addcostcovpars, addcostcovdata=addcostcovdata, filterprograms=['Condoms', 'FSW programs', 'HTC', 'ART', 'Lab', 'Adherence', 'Tracing', 'Other'])
+        R = defaultprogset(P, addcostcovpars=addcostcovpars, addcostcovdata=addcostcovdata, filterprograms=['Condoms', 'FSW programs', 'MSM programs', 'HTC', 'ART', 'Lab', 'Adherence', 'Tracing', 'Other'])
         
-        R.programs['Condoms'].costcovdata =      {'t':[2014],'cost':[1.3e7],'coverage':[3e5]}
-        R.programs['FSW programs'].costcovdata = {'t':[2014],'cost':[2.5e6],'coverage':[1e9]}
-        R.programs['HTC'].costcovdata =          {'t':[2014],'cost':[1e7],'coverage':[1.3e6]}
-        R.programs['ART'].costcovdata =          {'t':[2014],'cost':[5e7],'coverage':[4.81e4]}
-        R.programs['Lab'].costcovdata =          {'t':[2014],'cost':[1.3e6],'coverage':[1e4]}
-        R.programs['Adherence'].costcovdata =    {'t':[2014],'cost':[1e6],'coverage':[1e4]}
-        R.programs['Tracing'].costcovdata =      {'t':[2014],'cost':[8e5],'coverage':[1e4]}
-        R.programs['Other'].costcovdata =        {'t':[2014],'cost':[1.5e7],'coverage':[None]}
+        R.programs['Condoms'].costcovdata =      {'t':[2015],'cost':[1.3e7],'coverage':[3e5]}
+        R.programs['FSW programs'].costcovdata = {'t':[2015],'cost':[2.5e6],'coverage':[1e9]}
+        R.programs['MSM programs'].costcovdata = {'t':[2015],'cost':[1e5],'coverage':[1e9]}
+        R.programs['HTC'].costcovdata =          {'t':[2015],'cost':[1e7],'coverage':[1.3e6]}
+        R.programs['ART'].costcovdata =          {'t':[2015],'cost':[2.35e7],'coverage':[39324]}
+        R.programs['Lab'].costcovdata =          {'t':[2015],'cost':[1.9e6],'coverage':[1e4]}
+        R.programs['Adherence'].costcovdata =    {'t':[2015],'cost':[1e6],'coverage':[1e4]}
+        R.programs['Tracing'].costcovdata =      {'t':[2015],'cost':[8e5],'coverage':[1e4]}
+        R.programs['Other'].costcovdata =        {'t':[2015],'cost':[1.5e7],'coverage':[None]}
         
         # Add program effects
-        R.covout['condcas'][('Clients', 'FSW')].addccopar({'intercept':  (0.2,0.25), 't': 2016.0, 'Condoms':(0.35,0.45), 'FSW programs':(0.75,0.85)})
+        R.covout['condcas'][('Clients', 'FSW')].addccopar({'intercept':  (0.35,0.4), 't': 2016.0, 'Condoms':(0.55,0.65), 'FSW programs':(0.9,0.99)})
         R.covout['condcas'][('Clients','F 15+')].addccopar({'intercept': (0.25,0.3), 't': 2016.0, 'Condoms':(0.85,0.95)})
-        R.covout['condcas'][('M 15+', 'FSW')].addccopar({'intercept':    (0.3,0.35), 't': 2016.0, 'Condoms':(0.50,0.55), 'FSW programs':(0.59,0.65)})
-        R.covout['condcas'][('M 15+','F 15+')].addccopar({'intercept':  (0.30,0.35), 't': 2016.0, 'Condoms':(0.45,0.50)})
-        R.covout['condcas'][('PWID','F 15+')].addccopar({'intercept':   (0.15,0.2), 't': 2016.0, 'Condoms':(0.35,0.45)})
-        R.covout['condcas'][('MSM', 'MSM')].addccopar({'intercept': (0.1,0.15), 't': 2016.0, 'Condoms':(0.55,0.65)})
+        R.covout['condcas'][('M 15+', 'FSW')].addccopar({'intercept':    (0.2,0.35), 't': 2016.0, 'Condoms':(0.4,0.5), 'FSW programs':(0.8,0.9)})
+        R.covout['condcas'][('M 15+','F 15+')].addccopar({'intercept':  (0.15,0.25), 't': 2016.0, 'Condoms':(0.4,0.5)})
+        R.covout['condcas'][('PWID','F 15+')].addccopar({'intercept':   (0.1,0.2), 't': 2016.0, 'Condoms':(0.35,0.45)})
+        R.covout['condcas'][('MSM', 'MSM')].addccopar({'intercept': (0.05,0.15), 't': 2016.0, 'Condoms':(0.2,0.3), 'MSM programs':(0.8,0.9)})
     
-        R.covout['condcom'][('Clients', 'FSW')].addccopar({'intercept': (0.3,0.35), 't': 2016.0, 'FSW programs':(0.9,0.95)})
+        R.covout['condcom'][('Clients', 'FSW')].addccopar({'intercept': (0.18,0.25), 't': 2016.0, 'FSW programs':(0.85,0.95)})
     
         R.covout['hivtest']['FSW'].addccopar({'intercept': (0.30,0.40), 't': 2016.0, 'HTC': (0.90,0.95), 'FSW programs':(0.90,0.95)})
         R.covout['hivtest']['Clients'].addccopar({'intercept': (0.10,0.15), 't': 2016.0, 'HTC': (0.40,0.60)})
         R.covout['hivtest']['M 15+'].addccopar({'intercept': (0.01,0.02), 't': 2016.0, 'HTC': (0.20,0.30)})
         R.covout['hivtest']['F 15+'].addccopar({'intercept': (0.01,0.02), 't': 2016.0, 'HTC': (0.20,0.30)})
         R.covout['hivtest']['PWID'].addccopar({'intercept': (0.10,0.15), 't': 2016.0, 'HTC': (0.80,0.90)})
-        R.covout['hivtest']['MSM'].addccopar({'intercept': (0.12,0.20), 't': 2016.0, 'HTC': (0.80,0.90)})
+        R.covout['hivtest']['MSM'].addccopar({'intercept': (0.15,0.20), 't': 2016.0, 'HTC': (0.85,0.90), 'MSM programs':(0.95,0.99)})
     
         R.covout['numtx']['tot'].addccopar({'intercept': (10.0,15.0), 't': 2016.0})
         R.covout['numvlmon']['tot'].addccopar({'intercept': (10.0,15.0), 't': 2016.0})
@@ -484,7 +485,7 @@ def defaultproject(which='best', addprogset=True, addcostcovdata=True, usestanda
                                     ('Females 25-49', 1.1),
                                     ('Males 50+', 1.18),
                                     ('Females 50+', 1.10)])
-        pars['hivtest'].m = .5
+#        pars['hivtest'].m = .5
         pars['transnorm'].y = 0.85
         pars['mtctbreast'].y *= .5
         
@@ -557,7 +558,6 @@ def defaultproject(which='best', addprogset=True, addcostcovdata=True, usestanda
         R.covout['hivtest']['Females 50+'].ccopars = odict([('intercept', [(0.01, 0.05)]), ('t', [2016]), (u'HTC', [(0.7, 0.8)]), ])
     
         P.addprogset(progset=R)
-    
     
     else:
         raise OptimaException('Default project type "%s" not understood: choices are "simple", "generalized", or "concentrated"' % which)
