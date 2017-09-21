@@ -14,7 +14,7 @@ tests = [
 #'autocalib',
 #'manualcalib',
 #'reconcile',
-#'runscenarios',
+'runscenarios',
 #'optimize',
 #'dosave',
 ]
@@ -48,10 +48,11 @@ T = tic()
 
 ## Make or load&migrate a project
 if 'standardrun' in tests:
-    P = defaultproject('best',dorun=False)
-    P.runsim(debug=True, start=2000, end=2040)
+    P = defaultproject('generalized',dorun=False)
+    P.parset().fixprops(False)
+    P.runsim(debug=True, start=2000, end=2030)
     if runsensitivity: P.sensitivity()
-    if doplot: pygui(P)
+#    if doplot: pygui(P)
 
 ## Calibration
 if 'autocalib' in tests: 
@@ -64,9 +65,9 @@ if 'manualcalib' in tests:
 if 'reconcile' in tests:
     P.progsets[ind].reconcile(parset=P.parsets[ind], year=2016)
 
-
 ## Scenarios
 if 'runscenarios' in tests:
+
     defaultbudget = P.progsets[ind].getdefaultbudget()
     maxbudget = dcp(defaultbudget)
     for key in maxbudget: maxbudget[key] += 1e14
@@ -75,6 +76,7 @@ if 'runscenarios' in tests:
     testprog = 'ART' # Try zero & infinite budgets for one test program
     pind = 0
     scenlist = [
+        Parscen(name='Current conditions', parsetname=ind, pars=[]),
         Budgetscen(name='No budget', parsetname=ind, progsetname=pind, t=[2016], budget=nobudget),
         Budgetscen(name='Current budget', parsetname=ind, progsetname=pind, t=[2016], budget=defaultbudget),
         Coveragescen(name='No '+testprog+' coverage', parsetname=ind, progsetname=pind, t=[2016], coverage={testprog: 0.}),
@@ -90,7 +92,7 @@ if 'runscenarios' in tests:
 
 
 if 'optimize' in tests:
-    P.optimize(name='demo',maxtime=10, mc=0)
+    P.optimize(name='default',maxtime=10, mc=0)
     if doplot: pygui(P.results[ind])
     
 

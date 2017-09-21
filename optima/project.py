@@ -133,12 +133,13 @@ class Project(object):
     ### Methods for I/O and spreadsheet loading
     #######################################################################################################
 
-    def loadspreadsheet(self, filename, name='default', overwrite=True, makedefaults=True, dorun=True, **kwargs):
+    def loadspreadsheet(self, filename, name=None, overwrite=True, makedefaults=True, dorun=True, **kwargs):
         ''' Load a data spreadsheet -- enormous, ugly function so located in its own file '''
         ## Load spreadsheet and update metadata
         self.data = loadspreadsheet(filename, verbose=self.settings.verbose) # Do the hard work of actually loading the spreadsheet
         self.spreadsheetdate = today() # Update date when spreadsheet was last loaded
         self.modified = today()
+        if name is None: name = 'default'
         self.makeparset(name=name, overwrite=overwrite)
         if makedefaults: self.makedefaults(name)
         self.settings.start = self.data['years'][0] # Reset the default simulation start to initial year of data
@@ -199,18 +200,29 @@ class Project(object):
         return None
 
 
-    def makedefaults(self, name='default', overwrite=False):
+    def makedefaults(self, name=None, scenname=None, overwrite=False):
         ''' When creating a project, create a default program set, scenario, and optimization to begin with '''
-        scenname = 'Baseline conditions'
+
+        # Handle inputs
+        if name is None: name = 'default'
+        if scenname is None: scenname = 'default'
+
+        # Make default progset, scenarios and optimizations
         if overwrite or name not in self.progsets:
             progset = Programset(name=name, project=self)
             self.addprogset(progset)
+
         if overwrite or scenname not in self.scens:
-            scen = Parscen(name=scenname)
-            self.addscen(scen)
+            scenlist = [Parscen(name=scenname, parsetname=name,pars=[])]
+            self.addscens(scenlist)
+
         if overwrite or name not in self.optims:
-            optim = Optim(project=self, name=name)
+            optim = Optim(project=self, name='Optimal with latest reported funding')
             self.addoptim(optim)
+            objectives = defaultobjectives(self, which='money')
+            optim = Optim(project=self, name='Minimal funding to reduce incidence and deaths by 25%', objectives=objectives)
+            self.addoptim(optim)
+
         return None
 
 
