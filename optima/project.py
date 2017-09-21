@@ -719,20 +719,22 @@ class Project(object):
         return multires
     
     
-    def makescript(self, spreadsheetfilename=None, filename=None, verbose=2):
+    def makescript(self, filename=None, folder=None, spreadsheetpath=None, verbose=2):
         '''
         Export a script that, when run, generates this project. Example:
             import optima as op
             P = op.demo(0)
-            P.makescript(filename=demo.py)
-        '''
-        if filename is None:
-            filename = self.name+'.py'
+            P.makescript(filename='demo.py')
         
-        if spreadsheetfilename is None:
-            spreadsheetfilename = self.name+'.xlsx'
-            self.makespreadsheet(spreadsheetfilename)
-            printv('Generated spreadsheet from project %s and saved to file %s' % (self.name, spreadsheetfilename), 2, verbose)
+        If a spreadsheet path isn't supplied, then export the spreadsheet as well.
+        '''
+        
+        fullpath = makefilepath(filename=filename, folder=folder, default=self.name, ext='py')
+        
+        if spreadsheetpath is None:
+            spreadsheetpath = self.name+'.xlsx'
+            self.makespreadsheet(filename=spreadsheetpath, folder=folder)
+            printv('Generated spreadsheet from project %s and saved to file %s' % (self.name, spreadsheetpath), 2, verbose)
 
         output = "'''\nSCRIPT TO GENERATE PROJECT %s\n" %(self.name)
         output += "Created %s\n\n\n'''\n\n\n" %(today())
@@ -743,7 +745,7 @@ class Project(object):
         output += "torun = ['makeproject',\n'calibrate',\n'makeprograms',\n'scens',\n'optims',\n'saveproject',\n]\n\n"
         output += "### Filepaths and global variables\n"
         output += "dorun = True\n" # Run things by default
-        output += "spreadsheetfile = '%s'\n\n\n" %(spreadsheetfilename)
+        output += "spreadsheetfile = '%s'\n\n\n" %(spreadsheetpath)
         output += "### Make project\n" 
         output += "if 'makeproject' in torun:\n"
         output += "    P = Project(spreadsheet=spreadsheetfile, dorun=False)\n\n"
@@ -812,10 +814,10 @@ class Project(object):
         output += "if 'saveproject' in torun:\n"
         output += "    P.save(filename='"+self.name+"-scripted.prj')\n\n"
 
-        f = open(filename, 'w')
+        f = open(fullpath, 'w')
         f.write( output )
         f.close()
-        printv('Saved project %s to script file %s' % (self.name, filename), 2, verbose)
+        printv('Saved project %s to script file %s' % (self.name, fullpath), 2, verbose)
 
 
     #######################################################################################################
