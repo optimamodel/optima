@@ -10,8 +10,8 @@ Version: 2017jan13
 
 ## Define tests to run here!!!
 tests = [
-'minimizeoutcomes',
-#'investmentstaircase',
+#'minimizeoutcomes',
+'investmentstaircase',
 #'minimizemoney',
 ]
 
@@ -58,7 +58,8 @@ if 'minimizeoutcomes' in tests:
     t = tic()
 
     print('Running minimize outcomes test...')
-    from optima import defaultobjectives, defaultconstraints
+    from optima import defaultobjectives, defaultconstraints, findinds
+    from numpy import arange
     
     P = defaultproject('best') 
     
@@ -66,10 +67,27 @@ if 'minimizeoutcomes' in tests:
     constraints = defaultconstraints(P) # This or P.progsets[0]
     P.optimize(name='minoutcome', maxtime=5, mc=0, parsetname=-1, progsetname=-1, objectives=objectives)
     
+    # Check Pareto condition
+    optim = P.optims[0]
+    startind = findinds(P.results[-1].tvec, optim.objectives['start'])
+    endind = findinds(P.results[-1].tvec, optim.objectives['end'])
+    inds = arange(startind,endind)
+    output = '=====================\n'
+    output += 'Outcomes by population\n'
+    output += '=====================\n'
+    for key in optim.objectives['keys']:
+        output += optim.objectives['keylabels'][key]+'\n'
+        output += 'Population | Old val | New val | Improvement \n'
+        for pn, pop in enumerate(P.results[-1].popkeys):
+            origval = P.results[-1].main['num'+key].pops['Baseline'][pn,inds].sum()
+            newval = P.results[-1].main['num'+key].pops['Optimal'][pn,inds].sum()
+            output += '{:<10} | {:>7} | {:>7} | {:>6} \n'.format(pop.rjust(10), int(origval), int(newval), round((origval-newval)/origval,2))
+    print output
+
     print('Original allocation: '),
-    print(P.results[-1].budget[0])
+    print(P.results[-1].budgets[0])
     print('Optimal allocation: '),
-    print(P.optims[-1].getresults().budget[1]) # Showing that results are "stored" in the optimization -- same object as before
+    print(P.optims[-1].getresults().budgets[1]) # Showing that results are "stored" in the optimization -- same object as before
     if doplot: 
         from optima import pygui
         pygui(P.results[-1], toplot=['budgets', 'improvement', 'prev-total', 'prev-population', 'numinci-total'], advanced=True)
@@ -89,11 +107,11 @@ if 'investmentstaircase' in tests:
     objectives = defaultobjectives(P.progsets[0]) # This or P
     objectives['budgetscale'] = [0.1, 0.2, 0.5, 1., 1.2, 1.5]
     constraints = defaultconstraints(P) # This or P.progsets[0]
-    P.optimize(name='minoutcome', parsetname='default', progsetname='default', objectives=objectives, maxtime=10, mc=0)
+    P.optimize(name='minoutcome', parsetname='default', progsetname='default', objectives=objectives, maxtime=5, mc=0)
     
     if doplot: 
         from optima import pygui
-        pygui(P.results[-1], toplot=['budget', 'improvement', 'prev', 'numinci'])
+        pygui(P.results[-1], toplot=['budgets', 'prev', 'numinci'])
     
     done(t)
 
@@ -109,10 +127,10 @@ if 'minimizemoney' in tests:
     
     P = defaultproject('best')
     
-    objectives = defaultobjectives(which='money', progset=P.progsets[0])
+    objectives = defaultobjectives(P.progsets[0], which='money')
     objectives['deathfrac'] = 0.1 # Yes, this means an increase in deaths
     objectives['incifrac'] = 0.2
-    constraints = defaultconstraints(P.progsets[0])
+    constraints = defaultconstraints(P)
     P.optimize(name='minmoney', parsetname='default', progsetname='default', objectives=objectives, constraints=constraints, maxtime=10, ccsample='random')
     
     print('Original allocation: ($%g)' % sum(P.results[-1].budgets[0][:]))

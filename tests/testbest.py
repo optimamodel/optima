@@ -15,8 +15,8 @@ tests = [
 #'manualcalib',
 #'reconcile',
 #'runscenarios',
-#'optimize',
-'dosave',
+'optimize',
+#'dosave',
 ]
 
 filename = 'best.prj'

@@ -49,6 +49,7 @@ def setmigrations(which='migrations'):
         ('2.3.7', ('2.3.8', '2017-05-23', None,              'Malawi: Many minor changes to plotting, parameters, etc.')),
         ('2.3.8', ('2.4',   '2017-06-05', None,              'Ukraine: ICER analysis; cascade bar plot; GUI tools; summary() and fixprops() methdods')),
         ('2.4',   ('2.5',   '2017-07-03', None,              'Made registration public')),
+        ('2.5',   ('2.5.1', '2017-08-11', addpareto,         'Add Pareto conditions to optimizations')),
         ])
     
     # Define changelog
@@ -724,6 +725,16 @@ def redotranstable(project, **kwargs):
     # Even though fixed by fixsettings above, just make it explicit that we're adding this as well
     project.settings.infmoney = 1e10
     
+    return None
+
+
+def addpareto(project, **kwargs):
+    ''' Add Pareto conditions to optimization '''
+    
+    # Add Pareto objective
+    for o in project.optims.values():
+        o.objectives['pareto'] = False # For old projects, assume that the Pareto condition is set to False.
+        
     return None
 
 
