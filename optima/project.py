@@ -761,6 +761,7 @@ class Project(object):
             output += "    P.addparset(name='"+psn+"',parset=parset)\n\n"
         output += "### Make programs\n" 
         output += "if 'makeprograms' in torun:\n"
+        output += "    P.rmprogset(0) # Remove the default progset\n\n"
         for prn,pr in self.progsets.iteritems():
             pi = 0
             plist = "["
