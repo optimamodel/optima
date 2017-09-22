@@ -14,7 +14,7 @@ tests = [
 #'autocalib',
 #'manualcalib',
 #'reconcile',
-'runscenarios',
+#'runscenarios',
 #'optimize',
 #'dosave',
 ]
@@ -48,7 +48,7 @@ T = tic()
 
 ## Make or load&migrate a project
 if 'standardrun' in tests:
-    P = defaultproject('generalized',dorun=False)
+    P = defaultproject('best',dorun=False)
     P.parset().fixprops(False)
     P.runsim(debug=True, start=2000, end=2030)
     if runsensitivity: P.sensitivity()
@@ -67,8 +67,6 @@ if 'reconcile' in tests:
 
 ## Scenarios
 if 'runscenarios' in tests:
-
-    comparison = P.progsets[0].compareoutcomes(parset=P.parsets[0], year=2015, doprint=True)
 
     defaultbudget = P.progsets[ind].getdefaultbudget()
     maxbudget = dcp(defaultbudget)
