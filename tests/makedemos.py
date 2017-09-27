@@ -7,12 +7,11 @@ Created on Thu Sep 21 11:51:08 2017
 from optima import defaultproject, Parscen, Optim, defaultobjectives, odict
 
 tomake = ['concentrated','generalized']
-dorun = True
 
 ### Make projects
 for proj in tomake:
 
-    P = defaultproject(proj,dorun=False)
+    P = defaultproject(proj, dorun=False)
     P.copyparset('default','Treatment fixed')
     P.parsets['Treatment fixed'].fixprops(False)
     P.copyparset('default','Status quo')
