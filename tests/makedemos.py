@@ -21,7 +21,7 @@ for proj in tomake:
     ### Scenarios
     P.scens = odict()
     P.addscens([Parscen(name='Status quo',parsetname='Status quo',pars=[]),
-                Parscen(name='90-90-90/95-95-95',parsetname='Treatment fixed',
+                Parscen(name='90-90-90 and 95-95-95',parsetname='Treatment fixed',
                         pars=[{'name': 'propdx', 'startyear': 2015.0, 'for': 'tot', 'endval': 0.9, 'endyear': 2020.0,},
                               {'name': 'propdx', 'startyear': 2020.0, 'for': 'tot', 'endval': 0.95, 'endyear': 2030.0, 'startval': 0.9},
                               {'name': 'propcare', 'startyear': 2015.0, 'startval': 1.0, 'for': 'tot'},
