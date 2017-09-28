@@ -179,7 +179,7 @@ def loadspreadsheet(filename='simple.xlsx', verbose=2):
                     if assumptiondata != '': # There's an assumption entered
                         thesedata = [assumptiondata] # Replace the (presumably blank) data if a non-blank assumption has been entered
                     data[thispar].append(thesedata) # Store data
-                    checkblank = False if sheetname in ['Optional indicators', 'Cascade'] or thispar=='numcirc' else True # Don't check optional indicators, check everything else
+                    checkblank = False if sheetname in ['Optional indicators', 'Cascade'] or thispar in ['numcirc', 'costtx'] else True # Don't check optional indicators, check everything else
                     validatedata(thesedata, sheetname, thispar, row, checkblank=checkblank, checkupper=checkupper[thispar])
 
                 # It's a matrix, append the data                                     

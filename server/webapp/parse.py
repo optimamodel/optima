@@ -1350,7 +1350,10 @@ def get_optimization_from_project(project, optim_id):
     for optim in project.optims.values():
         if str(optim.uid) == optim_id:
             return optim
-    raise ValueError("Optimisation does not exist %s %s" % (project.uid, optim_id))
+    errormsg ="Optimization '%s' for project '%s' does not exist; available optimizations are:" % (optim_id, project.uid)
+    for optim in project.optims.values():
+        errormsg += '\n%s' % optim.uid
+    raise ValueError(errormsg)
 
 
 def get_optimization_summaries(project):
