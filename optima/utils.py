@@ -598,11 +598,12 @@ def sanitize(data=None, returninds=False):
         if returninds: 
             inds = nonzero(~isnan(data))[0] # WARNING, nonzero returns tuple :(
             return sanitized, inds
-        else:          return sanitized
+        else:
+            return sanitized
 
 
 
-def getvaliddata(data=None, filterdata=None, defaultind=0):
+def getvaliddata(data=None, filterdata=None, defaultind=0, returninds=False):
     '''
     Return the years that are valid based on the validity of the input data.
     
@@ -613,8 +614,10 @@ def getvaliddata(data=None, filterdata=None, defaultind=0):
     data = array(data)
     if filterdata is None: filterdata = data # So it can work on a single input -- more or less replicates sanitize() then
     filterdata = array(filterdata)
-    if filterdata.dtype=='bool': validindices = filterdata # It's already boolean, so leave it as is
-    else:                        validindices = ~isnan(filterdata) # Else, assume it's nans that need to be removed
+    if filterdata.dtype=='bool': filterindices = filterdata # It's already boolean, so leave it as is
+    else:                        filterindices = ~isnan(filterdata) # Else, assume it's nans that need to be removed
+    dataindices = ~isnan(data) # Also check validity of data
+    validindices = logical_and(dataindices, filterindices)
     if validindices.any(): # There's at least one data point entered
         if len(data)==len(validindices): # They're the same length: use for logical indexing
             validdata = array(array(data)[validindices]) # Store each year
@@ -624,7 +627,10 @@ def getvaliddata(data=None, filterdata=None, defaultind=0):
             raise Exception('Array sizes are mismatched: %i vs. %i' % (len(data), len(validindices)))    
     else: 
         validdata = array([]) # No valid data, return an empty array
-    return validdata
+    if returninds:
+        return returninds # Only return indices -- WARNING, not consistent with sanitize()
+    else:
+        return validdata
 
 
 
