@@ -610,7 +610,7 @@ def getvaliddata(data=None, filterdata=None, defaultind=0, returninds=False):
     Example:
         getvaliddata(array([3,5,8,13]), array([2000, nan, nan, 2004])) # Returns array([3,13])
     '''
-    from numpy import array, isnan
+    from numpy import array, isnan, logical_and
     data = array(data)
     if filterdata is None: filterdata = data # So it can work on a single input -- more or less replicates sanitize() then
     filterdata = array(filterdata)
@@ -618,6 +618,10 @@ def getvaliddata(data=None, filterdata=None, defaultind=0, returninds=False):
     else:                        filterindices = ~isnan(filterdata) # Else, assume it's nans that need to be removed
     dataindices = ~isnan(data) # Also check validity of data
     validindices = logical_and(dataindices, filterindices)
+    print 'HIIIIIIIIIIIIIIIIIIIIIIIIIIIi'
+    print dataindices
+    print filterindices
+    print validindices
     if validindices.any(): # There's at least one data point entered
         if len(data)==len(validindices): # They're the same length: use for logical indexing
             validdata = array(array(data)[validindices]) # Store each year
@@ -628,7 +632,7 @@ def getvaliddata(data=None, filterdata=None, defaultind=0, returninds=False):
     else: 
         validdata = array([]) # No valid data, return an empty array
     if returninds:
-        return returninds # Only return indices -- WARNING, not consistent with sanitize()
+        return findinds(validindices) # Only return indices -- WARNING, not consistent with sanitize()
     else:
         return validdata
 
