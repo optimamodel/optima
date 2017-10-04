@@ -699,6 +699,8 @@ class Project(object):
             P.optimize(optimname=-1) # Same as previous
             P.optimize(multi=True) # Do a multi-chain optimization
             P.optimize(multi=True, nchains=8, nblocks=10, blockiters=50) # Do a very large multi-chain optimization
+            P.optimize(timevarying=True, mc=0, maxtime=30) # Do a short time-varying optimization
+            P.optimize(timevarying='budget') # Do a short time-varying optimization including allowing the budget to vary
         '''
         
         # Check inputs
@@ -718,7 +720,7 @@ class Project(object):
                                      blockiters=blockiters, batch=batch, **kwargs)      
         elif timevarying:
             multires = tvoptimize(optim=optim, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, 
-                                     die=die, origbudget=origbudget, randseed=randseed, **kwargs)
+                                     die=die, origbudget=origbudget, randseed=randseed, mc=mc, timevarying=timevarying, **kwargs)
         else:
             multires = optimize(optim=optim, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, 
                                 die=die, origbudget=origbudget, randseed=randseed, mc=mc, **kwargs)

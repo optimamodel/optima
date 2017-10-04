@@ -572,7 +572,7 @@ def multioptimize(optim=None, nchains=None, nblocks=None, blockiters=None,
 
 
 
-def tvoptimize(optim=None, verbose=2, **kwargs):
+def tvoptimize(optim=None, timevarying=True, verbose=2, **kwargs):
     '''
     Run a time-varying optimization. See project.optimize() for usage examples, and optimize()
     for kwarg explanation.
@@ -589,7 +589,9 @@ def tvoptimize(optim=None, verbose=2, **kwargs):
     for each thread restarts from the best solution found for each.
     '''
 
-    printv('Starting a time-varying optimization...', 2, verbose)
+    printv('Starting a time-varying optimization...', 1, verbose)
+    
+    print kwargs
     
     # Do a preliminary non-time-varying optimization
     prelim = optimize(optim=optim, verbose=verbose, **kwargs)
