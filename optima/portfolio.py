@@ -98,7 +98,7 @@ class Portfolio(object):
     
     def save(self, filename=None, folder=None, saveresults=True, verbose=2):
         ''' Save the current portfolio, by default using its name, and without results '''
-        fullpath = makefilepath(filename=filename, folder=folder, default=[self.filename, self.name], ext='prt')
+        fullpath = makefilepath(filename=filename, folder=folder, default=[self.filename, self.name], ext='prt', sanitize=True)
         self.filename = fullpath # Store file path
         printv('Saving portfolio to %s...' % self.filename, 2, verbose)
         
