@@ -1022,6 +1022,9 @@ def makefilepath(filename=None, folder=None, ext=None, default=None, split=False
     if verbose:
         print('From filename="%s", default="%s", extension="%s", made basename "%s"' % (filename, default, ext, filebasename))
     
+    # Sanitize base filename
+    filebasename = sanitizefilename(filebasename)
+    
     # Process folder
     if folder: # Replace with specified folder, if defined
         filefolder = folder 
