@@ -1221,12 +1221,23 @@ def plotcostcov(program=None, year=None, parset=None, results=None, plotoptions=
     # Get caption & scatter data 
     caption = plotoptions['caption'] if plotoptions and plotoptions.get('caption') else ''
     costdata = dcp(program.costcovdata['cost']) if program.costcovdata.get('cost') else []
+    covdata  = dcp(program.costcovdata['coverage']) if program.costcovdata.get('coverage') else []
+    timedata = dcp(program.costcovdata['t']) if program.costcovdata.get('t') else []
+    
+    # Sanitize for nans
+    costdata = promotetoarray(costdata)
+    covdata = promotetoarray(covdata)
+    timedata = promotetoarray(timedata)
+    validindices = getvaliddata(costdata, covdata, returninds=True)
+    costdata = costdata[validindices]
+    covdata = covdata[validindices]
+    timedata = timedata[validindices]
 
     # Make x data... 
     if plotoptions and plotoptions.get('xupperlim') and ~isnan(plotoptions['xupperlim']):
         xupperlim = plotoptions['xupperlim']
     else:
-        if costdata: xupperlim = 1.5*max(costdata)
+        if len(costdata): xupperlim = 1.5*max(costdata)
         else: xupperlim = maxupperlim
     xlinedata = linspace(0,xupperlim,npts)
 
@@ -1238,8 +1249,9 @@ def plotcostcov(program=None, year=None, parset=None, results=None, plotoptions=
         y_l = program.getcoverage(x=xlinedata, t=year, parset=parset, results=results, total=True, proportion=False, toplot=True, sample='l')
         y_m = program.getcoverage(x=xlinedata, t=year, parset=parset, results=results, total=True, proportion=False, toplot=True, sample='best')
         y_u = program.getcoverage(x=xlinedata, t=year, parset=parset, results=results, total=True, proportion=False, toplot=True, sample='u')
-    except:
+    except Exception as E:
         y_l,y_m,y_u = None,None,None
+        print('Warning, could not get program coverage: %s' % E.__repr__())
     plotdata['ylinedata_l'] = y_l
     plotdata['ylinedata_m'] = y_m
     plotdata['ylinedata_u'] = y_u
@@ -1248,12 +1260,12 @@ def plotcostcov(program=None, year=None, parset=None, results=None, plotoptions=
 
     # Flag to indicate whether we will adjust by population or not
     if plotoptions and plotoptions.get('perperson'):
-        if costdata:
-            for yrno, yr in enumerate(program.costcovdata['t']):
+        if len(costdata):
+            for yrno,yr in enumerate(timedata):
                 targetpopsize = program.gettargetpopsize(t=yr, parset=parset, results=results)
                 costdata[yrno] /= targetpopsize[0]
         if not (plotoptions and plotoptions.get('xupperlim') and ~isnan(plotoptions['xupperlim'])):
-            if costdata: xupperlim = 1.5*max(costdata) 
+            if len(costdata): xupperlim = 1.5*max(costdata) 
             else: xupperlim = 1e3
         plotdata['xlinedata'] = linspace(0,xupperlim,npts)
     else:
@@ -1262,7 +1274,7 @@ def plotcostcov(program=None, year=None, parset=None, results=None, plotoptions=
     fig,naxes = makefigure(figsize=None, interactive=interactive, fig=existingFigure)
     fig.hold(True)
     ax = fig.add_subplot(111)
-
+    
     ax.set_position((0.1, 0.35, .8, .6)) # to make a bit of room for extra text
     fig.text(.1, .05, textwrap.fill(caption))
     
@@ -1283,11 +1295,7 @@ def plotcostcov(program=None, year=None, parset=None, results=None, plotoptions=
                                   alpha=.1,
                                   lw=0)
     
-    # Sanitize for nans
-    costdata = array(costdata)
-    covdata = array(program.costcovdata['coverage'])
-    validindices = getvaliddata(costdata, covdata, returninds=True)
-    ax.scatter(costdata[validindices], covdata[validindices], color='#666666')
+    ax.scatter(costdata, covdata, color='#666666')
     
     setylim(0, ax) # Equivalent to ax.set_ylim(bottom=0)
     ax.set_xlim([0, xupperlim])
