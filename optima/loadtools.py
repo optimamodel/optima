@@ -790,7 +790,7 @@ def migrate(project, verbose=2, die=False):
     return project
 
 
-def loadproj(filename=None, folder=None, verbose=2, die=False, fromdb=False, domigrate=True):
+def loadproj(filename=None, folder=None, verbose=2, die=False, fromdb=False, domigrate=True, updatefilename=True):
     ''' Load a saved project file -- wrapper for loadobj using legacy classes '''
     
     if fromdb:    origP = op.loadstr(filename) # Load from database
@@ -799,7 +799,7 @@ def loadproj(filename=None, folder=None, verbose=2, die=False, fromdb=False, dom
     if domigrate: 
         try: 
             P = migrate(origP, verbose=verbose, die=die)
-            if not fromdb: P.filename = filename # Update filename if not being loaded from a database
+            if not fromdb and updatefilename: P.filename = filename # Update filename if not being loaded from a database
         except Exception as E:
             if die: raise E
             else:   P = origP # Fail: return unmigrated version
