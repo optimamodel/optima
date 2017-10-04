@@ -939,7 +939,6 @@ def upload_project_object(filename, project_id, obj_type):
     project = load_project(project_id)
     try:
         obj = op.loadobj(filename)
-        obj.uid = op.uuid()
         if obj_type == "parset":
             project.addparset(parset=obj, overwrite=True)
         elif obj_type == "progset":
