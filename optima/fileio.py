@@ -7,7 +7,6 @@ except: import pickle
 from gzip import GzipFile
 from cStringIO import StringIO
 from contextlib import closing
-from os import path, sep
 from numpy import ones, zeros
 from optima import odict, OptimaException, makefilepath
 from xlrd import open_workbook
@@ -20,7 +19,7 @@ import optima as op
 
 def saveobj(filename=None, obj=None, compresslevel=5, verbose=True, folder=None):
     ''' Save an object to file -- use compression 5, since more is much slower but not much smaller '''
-    fullpath = makefilepath(filename=filename, folder=folder)
+    fullpath = makefilepath(filename=filename, folder=folder, sanitize=True)
     with GzipFile(fullpath, 'wb', compresslevel=compresslevel) as fileobj:
         fileobj.write(pickle.dumps(obj, protocol=-1))
     if verbose: print('Object saved to "%s"' % fullpath)

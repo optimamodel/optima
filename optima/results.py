@@ -472,7 +472,7 @@ class Resultset(object):
         if writetofile: 
             ext = 'xlsx' if asexcel else 'csv'
             defaultname = self.projectinfo['name']+'-'+self.name # Default filename if none supplied
-            fullpath = makefilepath(filename=filename, folder=folder, default=defaultname, ext=ext)
+            fullpath = makefilepath(filename=filename, folder=folder, default=defaultname, ext=ext, sanitize=True)
             if asexcel:
                 outputdict = {'Results':outputstr}
                 exporttoexcel(fullpath, outputdict)

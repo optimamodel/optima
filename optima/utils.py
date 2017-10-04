@@ -975,7 +975,7 @@ def sanitizefilename(rawfilename):
 
 
 
-def makefilepath(filename=None, folder=None, ext=None, default=None, split=False, abspath=True, makedirs=True, verbose=False):
+def makefilepath(filename=None, folder=None, ext=None, default=None, split=False, abspath=True, makedirs=True, verbose=False, sanitize=False):
     '''
     Utility for taking a filename and folder -- or not -- and generating a valid path from them.
     
@@ -1023,7 +1023,7 @@ def makefilepath(filename=None, folder=None, ext=None, default=None, split=False
         print('From filename="%s", default="%s", extension="%s", made basename "%s"' % (filename, default, ext, filebasename))
     
     # Sanitize base filename
-    filebasename = sanitizefilename(filebasename)
+    if sanitize: filebasename = sanitizefilename(filebasename)
     
     # Process folder
     if folder: # Replace with specified folder, if defined
