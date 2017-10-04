@@ -9,7 +9,7 @@ from cStringIO import StringIO
 from contextlib import closing
 from os import path, sep
 from numpy import ones, zeros
-from optima import odict, OptimaException
+from optima import odict, OptimaException, makefilepath
 from xlrd import open_workbook
 import optima as op
 
@@ -18,19 +18,23 @@ import optima as op
 ### Basic I/O functions
 #############################################################################################################################
 
-def saveobj(filename, obj, compresslevel=5, verbose=True):
+def saveobj(filename=None, obj=None, compresslevel=5, verbose=True, folder=None):
     ''' Save an object to file -- use compression 5, since more is much slower but not much smaller '''
-    with GzipFile(filename, 'wb', compresslevel=compresslevel) as fileobj:
+    fullpath = makefilepath(filename=filename, folder=folder)
+    with GzipFile(fullpath, 'wb', compresslevel=compresslevel) as fileobj:
         fileobj.write(pickle.dumps(obj, protocol=-1))
-    if verbose: print('Object saved to "%s"' % filename)
-    return path.abspath(filename)
+    if verbose: print('Object saved to "%s"' % fullpath)
+    return fullpath
 
 
-def loadobj(filename, verbose=True):
+def loadobj(filename=None, verbose=True, folder=None):
     ''' Load a saved file '''
     # Handle loading of either filename or file object
-    if isinstance(filename, basestring): argtype='filename'
-    else: argtype = 'fileobj'
+    if isinstance(filename, basestring): 
+        argtype = 'filename'
+        filename = makefilepath(filename=filename, folder=folder) # If it is a file, validate the folder
+    else: 
+        argtype = 'fileobj'
     kwargs = {'mode': 'rb', argtype: filename}
     with GzipFile(**kwargs) as fileobj:
         obj = loadpickle(fileobj)
@@ -85,10 +89,11 @@ def loadpickle(fileobj, verbose=False):
 default_filename = 'model-inputs.xlsx'
 
 
-def loadpartable(filename=default_filename):
+def loadpartable(filename=None, folder=None):
     '''  Function to parse the parameter definitions from the spreadsheet and return a structure that can be used to generate the parameters '''
     sheetname = 'Model parameters'
-    workbook = open_workbook(path.abspath(path.dirname(__file__))+sep+filename)
+    fullpath = makefilepath(filename=filename, folder=folder, default=default_filename)
+    workbook = open_workbook(fullpath)
     sheet = workbook.sheet_by_name(sheetname)
 
     rawpars = []
@@ -103,11 +108,12 @@ def loadpartable(filename=default_filename):
 
 
 
-def loadtranstable(filename=default_filename, npops=None):
+def loadtranstable(filename=None, folder=None, npops=None, verbose=2):
     ''' Function to load the allowable transitions from the spreadsheet '''
     sheetname = 'Transitions' # This will only change between Optima versions, so OK to have in body of function
     if npops is None: npops = 1 # Use just one population if not told otherwise
-    workbook = open_workbook(path.abspath(path.dirname(__file__))+sep+filename)
+    fullpath = makefilepath(filename=filename, folder=folder, default=default_filename)
+    workbook = open_workbook(fullpath)
     sheet = workbook.sheet_by_name(sheetname)
     
     if sheet.nrows != sheet.ncols:
@@ -128,10 +134,11 @@ def loadtranstable(filename=default_filename, npops=None):
 
 
 
-def loaddatapars(filename=default_filename, verbose=2):
+def loaddatapars(filename=None, folder=None, verbose=2):
     ''' Function to parse the data parameter definitions '''
     inputsheets = ['Data inputs', 'Data constants']
-    workbook = open_workbook(path.abspath(path.dirname(__file__))+sep+filename)
+    fullpath = makefilepath(filename=filename, folder=folder, default=default_filename)
+    workbook = open_workbook(fullpath)
     
     pardefinitions = odict()
     for inputsheet in inputsheets:
