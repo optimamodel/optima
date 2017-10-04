@@ -1026,7 +1026,7 @@ def makefilepath(filename=None, folder=None, ext=None, default=None, split=False
     if sanitize: filebasename = sanitizefilename(filebasename)
     
     # Process folder
-    if folder: # Replace with specified folder, if defined
+    if folder is not None: # Replace with specified folder, if defined
         filefolder = folder 
     if abspath: # Convert to absolute path
         filefolder = os.path.abspath(filefolder) 

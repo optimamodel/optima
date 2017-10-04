@@ -10,7 +10,9 @@ from contextlib import closing
 from numpy import ones, zeros
 from optima import odict, OptimaException, makefilepath
 from xlrd import open_workbook
+import os
 import optima as op
+
 
 
 #############################################################################################################################
@@ -78,14 +80,29 @@ def loadpickle(fileobj, verbose=False):
         del op._portfolio.GAOptim
     
     return obj
+
+
+def optimafolder(subfolder=None):
+    '''
+    A centralized place to get the correct paths for Optima.
     
+    Usage:
+        folder = optimafolder() # Return code folder
+        folder = optimafolder('tests') # Returns the Optima tests folder
+    '''
+    if subfolder is None: subfolder = 'optima' # By default, use code directory
+    
+    parentfolder = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
+    folder = os.path.join(parentfolder, subfolder, '') # Empty last part puts a /
+    
+    return folder
 
 #############################################################################################################################
 ### Functions to load the parameters and transitions
 #############################################################################################################################
 
 # Default filename for all the functions that read this spreadsheet
-default_filename = 'model-inputs.xlsx'
+default_filename = optimafolder('optima')+'model-inputs.xlsx' # Include the Optima folder
 
 
 def loadpartable(filename=None, folder=None):
