@@ -10,8 +10,9 @@
   </div>
 
   <select
+    ng-init="projectService.project=projectService.optimaliteprojects[0]"
     ng-model="projectService.project"
-    ng-options="p as p.name for p in projectService.optimaliteprojects">
+    ng-options="p.name for p in projectService.optimaliteprojects">
   </select> &nbsp; &nbsp;
   <a class="btn" ng-click="copyOptimaLiteProject(projectService.project)">Add demo project</a> &nbsp; &nbsp;
 
