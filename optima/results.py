@@ -5,7 +5,7 @@ Version: 2016oct28 by cliffk
 """
 
 from optima import OptimaException, Link, Settings, odict, pchip, plotpchip, sigfig # Classes/functions
-from optima import uuid, today, makefilepath, getdate, printv, dcp, objrepr, defaultrepr # Printing utilities
+from optima import uuid, today, makefilepath, getdate, printv, dcp, objrepr, defaultrepr, sanitizefilename # Printing/file utilities
 from optima import quantile, findinds, findnearest, promotetolist, promotetoarray, checktype # Numeric utilities
 from numpy import array, nan, zeros, arange, shape, maximum
 from numbers import Number
@@ -472,7 +472,7 @@ class Resultset(object):
         if writetofile: 
             ext = 'xlsx' if asexcel else 'csv'
             defaultname = self.projectinfo['name']+'-'+self.name # Default filename if none supplied
-            fullpath = makefilepath(filename=filename, folder=folder, default=defaultname, ext=ext)
+            fullpath = makefilepath(filename=filename, folder=folder, default=defaultname, ext=ext, sanitize=True)
             if asexcel:
                 outputdict = {'Results':outputstr}
                 exporttoexcel(fullpath, outputdict)
@@ -953,7 +953,7 @@ def exporttoexcel(filename=None, outdict=None):
     workbook = Workbook(filename)
     
     for key,outstr in outdict.items():
-        worksheet = workbook.add_worksheet(key)
+        worksheet = workbook.add_worksheet(sanitizefilename(key)) # A valid filename should also be a valid Excel key
         
         # Define formatting
         colors = {'gentlegreen':'#3c7d3e', 'fadedstrawberry':'#ffeecb', 'edgyblue':'#bcd5ff','accountantgrey':'#f6f6f6', 'white':'#ffffff'}

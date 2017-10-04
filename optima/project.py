@@ -133,10 +133,10 @@ class Project(object):
     ### Methods for I/O and spreadsheet loading
     #######################################################################################################
 
-    def loadspreadsheet(self, filename, name=None, overwrite=True, makedefaults=True, dorun=True, **kwargs):
+    def loadspreadsheet(self, filename=None, folder=None, name=None, overwrite=True, makedefaults=True, dorun=True, **kwargs):
         ''' Load a data spreadsheet -- enormous, ugly function so located in its own file '''
         ## Load spreadsheet and update metadata
-        self.data = loadspreadsheet(filename, verbose=self.settings.verbose) # Do the hard work of actually loading the spreadsheet
+        self.data = loadspreadsheet(filename=filename, folder=folder, verbose=self.settings.verbose) # Do the hard work of actually loading the spreadsheet
         self.spreadsheetdate = today() # Update date when spreadsheet was last loaded
         self.modified = today()
         if name is None: name = 'default'
@@ -412,7 +412,7 @@ class Project(object):
     
     def save(self, filename=None, folder=None, saveresults=False, verbose=2):
         ''' Save the current project, by default using its name, and without results '''
-        fullpath = makefilepath(filename=filename, folder=folder, default=[self.filename, self.name], ext='prj')
+        fullpath = makefilepath(filename=filename, folder=folder, default=[self.filename, self.name], ext='prj', sanitize=True)
         self.filename = fullpath # Store file path
         if saveresults:
             saveobj(fullpath, self, verbose=verbose)
@@ -738,7 +738,7 @@ class Project(object):
         If a spreadsheet path isn't supplied, then export the spreadsheet as well.
         '''
         
-        fullpath = makefilepath(filename=filename, folder=folder, default=self.name, ext='py')
+        fullpath = makefilepath(filename=filename, folder=folder, default=self.name, ext='py', sanitize=True)
         
         if spreadsheetpath is None:
             spreadsheetpath = self.name+'.xlsx'
