@@ -115,7 +115,7 @@ class OptimaException(Exception):
 #####################################################################################################################
 
 # File I/O
-from .fileio import loadobj, saveobj, loadstr, dumpstr, loadpartable, loadtranstable, loaddatapars # CK: may want to tidy up
+from .fileio import loadobj, saveobj, loadstr, dumpstr, optimafolder, loadpartable, loadtranstable, loaddatapars # CK: may want to tidy up
 import fileio as _fileio; del fileio
 
 # Project settings

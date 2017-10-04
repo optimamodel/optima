@@ -144,6 +144,7 @@ def defaultconstraints(project=None, progsetname=None, which='outcomes', verbose
     constraints['max'] = odict() # Maximum budgets
     for prog in progset.programs.values():
         constraints['name'][prog.short] = prog.name
+
         if prog.optimizable():
             constraints['min'][prog.short] = 0.0
             constraints['max'][prog.short] = None
