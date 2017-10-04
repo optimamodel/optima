@@ -412,7 +412,7 @@ class Project(object):
     
     def save(self, filename=None, folder=None, saveresults=False, verbose=2):
         ''' Save the current project, by default using its name, and without results '''
-        fullpath = makefilepath(filename=filename, folder=folder, default=[self.filename, self.name], ext='prj')
+        fullpath = makefilepath(filename=filename, folder=folder, default=[self.filename, self.name], ext='prj', sanitize=True)
         self.filename = fullpath # Store file path
         if saveresults:
             saveobj(fullpath, self, verbose=verbose)
@@ -738,7 +738,7 @@ class Project(object):
         If a spreadsheet path isn't supplied, then export the spreadsheet as well.
         '''
         
-        fullpath = makefilepath(filename=filename, folder=folder, default=self.name, ext='py')
+        fullpath = makefilepath(filename=filename, folder=folder, default=self.name, ext='py', sanitize=True)
         
         if spreadsheetpath is None:
             spreadsheetpath = self.name+'.xlsx'
