@@ -939,7 +939,6 @@ def upload_project_object(filename, project_id, obj_type):
     project = load_project(project_id)
     try:
         obj = op.loadobj(filename)
-        obj.uid = op.uuid()
         if obj_type == "parset":
             project.addparset(parset=obj, overwrite=True)
         elif obj_type == "progset":
@@ -1530,6 +1529,10 @@ def save_optimization_summaries(project_id, optimization_summaries):
     """
     Returns all optimization summaries
     """
+    
+    print('save_optimization_summaries() for %s' % project_id)
+    print('%s' % optimization_summaries)
+    
     project = load_project(project_id)
     old_names = [o.name for o in project.optims.values()]
     parse.set_optimization_summaries_on_project(project, optimization_summaries)
