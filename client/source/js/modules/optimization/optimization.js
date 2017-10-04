@@ -378,6 +378,9 @@ define(['angular', 'ui.router'], function (angular) {
     function saveOptimization(saveOptim) {
       var isExisting = false;
       _.each($scope.state.optimizations, function(optim, i) {
+        console.log('HIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII');
+        console.log(optim.id);
+        console.log(saveOptim.id);
         if (optim.id == saveOptim.id) {
           $scope.state.optimizations[i] = saveOptim;
           isExisting = true;
