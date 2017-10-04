@@ -1530,12 +1530,8 @@ def save_optimization_summaries(project_id, optimization_summaries):
     Returns all optimization summaries
     """
     
-    print('%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 3')
-    print('%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 3')
-    print('save_optimization_summaries(%s, see below)' % project_id)
+    print('save_optimization_summaries() for %s' % project_id)
     print('%s' % optimization_summaries)
-    print('%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 3')
-    print('%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 3')
     
     project = load_project(project_id)
     old_names = [o.name for o in project.optims.values()]

@@ -322,10 +322,6 @@ def optimize(project_id, optimization_id, maxtime):
     close_db_session(db_session)
 
     print ">> optimize finish"
-    
-    print('TEMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMP')
-    print project.optims
-    print('FOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO')
 
 
 

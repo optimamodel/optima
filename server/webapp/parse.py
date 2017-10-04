@@ -1345,14 +1345,8 @@ def get_default_optimization_summaries(project):
 
 
 def get_optimization_from_project(project, optim_id):
-    print('%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 1')
-    print('%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 1')
-    print('get_optimization_from_project(project, %s)' % optim_id)
-    print('%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 1')
-    print('%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 1')
     for optim in project.optims.values():
         print(">> get_optimization_from_project optim %s" % optim.uid)
-    for optim in project.optims.values():
         if str(optim.uid) == optim_id:
             return optim
     errormsg ="Optimization '%s' for project '%s' does not exist; available optimizations are:" % (optim_id, project.uid)
@@ -1434,21 +1428,11 @@ def set_optimization_summaries_on_project(project, optimization_summaries):
 
     for summary in optimization_summaries:
         id = summary.get('id', None)
-        
-        print('%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 2')
-        print('%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 2')
         print('set_optimization_summaries_on_project(project, %s)' % id)
-        print('%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 2')
-        print('%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 2')
 
         if id is None:
-            print('#################################################################################################')
-            print('#################################################################################################')
-            print('ID IS NONE!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!')
-            print('#################################################################################################')
-            print('#################################################################################################')
             optim = op.Optim(project=project)
-            print(">> set_optimization_summaries_on_project create '%s'" % optim.uid)
+            print(">> set_optimization_summaries_on_project is none! Creating '%s'" % optim.uid)
         else:
             print(">> set_optimization_summaries_on_project update '%s'" % id)
             optim = get_optimization_from_project(project, id)
