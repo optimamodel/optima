@@ -739,10 +739,7 @@ def create_project_from_spreadsheet(xlsx_filename, user_id, other_names):
     Returns the project id of the new project.
     """
     print(">> create_project_from_spreadsheet '%s'" % xlsx_filename)
-    try:
-        project = op.Project(spreadsheet=xlsx_filename)
-    except Exception:
-        return { 'projectId': 'BadFileFormatError' }        
+    project = op.Project(spreadsheet=xlsx_filename)
     project.name = get_unique_name(project.name, other_names)
     save_project_as_new(project, user_id)
     return { 'projectId': str(project.uid) }
@@ -783,10 +780,7 @@ def download_project_with_result(project_id):
 def update_project_from_uploaded_spreadsheet(spreadsheet_fname, project_id):
     def modify(project):
         project.loadspreadsheet(spreadsheet_fname, name='default', overwrite=True, makedefaults=True)
-    try:
-        update_project_with_fn(project_id, modify)
-    except Exception:
-        return { 'success': False }
+    update_project_with_fn(project_id, modify)
     return { 'success': True }
 
 
