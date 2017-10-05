@@ -871,6 +871,7 @@ def plotcascade(results=None, aspercentage=False, cascadecolors=None, figsize=gl
         cascinds = [startind, endind]
         baselabel = '%4i' % plotstartyear
         endlabel  = '%4i' % plotendyear
+        if baselabel==endlabel: endlabel += ' ' # Small hack to avoid bug if both are the same
         yearlabels = [baselabel, endlabel]
         casclabels  = ['PLHIV', 'Diagnosed', 'Treated', 'Suppressed']
         casckeys    = ['numplhiv',  'numdiag',   'numtreat','numsuppressed']
