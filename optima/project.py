@@ -720,7 +720,7 @@ class Project(object):
                                      blockiters=blockiters, batch=batch, **kwargs)      
         elif timevarying:
             multires = tvoptimize(optim=optim, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, 
-                                     die=die, origbudget=origbudget, randseed=randseed, mc=mc, timevarying=timevarying, **kwargs)
+                                     die=die, origbudget=origbudget, randseed=randseed, mc=mc, tvsettings=timevarying, **kwargs)
         else:
             multires = optimize(optim=optim, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, 
                                 die=die, origbudget=origbudget, randseed=randseed, mc=mc, **kwargs)
