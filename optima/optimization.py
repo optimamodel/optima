@@ -306,7 +306,6 @@ def outcomecalc(budgetvec=None, which=None, project=None, parsetname=None, progs
     if type(budgetvec)==odict: budgetvec = dcp(budgetvec[:][optiminds])
     
     # Validate input
-    
     arglist = [budgetvec, which, parset, progset, objectives, totalbudget, constraints, optiminds, origbudget]
     if any([arg is None for arg in arglist]):  # WARNING, this kind of obscures which of these is None -- is that ok? Also a little too hard-coded...
         raise OptimaException('outcomecalc() requires which, budgetvec, parset, progset, objectives, totalbudget, constraints, optiminds, origbudget, tvec as inputs at minimum; argument %i is None' % arglist.index(None))
@@ -572,7 +571,9 @@ def multioptimize(optim=None, nchains=None, nblocks=None, blockiters=None,
 
 
 
-def tvoptimize(optim=None, timevarying=True, verbose=2, **kwargs):
+def tvoptimize(project=None, optim=None, tvec=None, verbose=None, maxtime=None, maxiters=1000, 
+                origbudget=None, ccsample='best', randseed=None, mc=3, label=None, die=False, 
+                timevarying=True, **kwargs):
     '''
     Run a time-varying optimization. See project.optimize() for usage examples, and optimize()
     for kwarg explanation.
@@ -595,8 +596,109 @@ def tvoptimize(optim=None, timevarying=True, verbose=2, **kwargs):
     
     # Do a preliminary non-time-varying optimization
     prelim = optimize(optim=optim, verbose=verbose, **kwargs)
+    
+    # Add in the time-varying component
+    origtotalbudget = dcp(optim.objectives['budget']) # Should be a float, but dcp just in case
+    totalbudget = origtotalbudget
+    origbudget = dcp(prelim.budget)
+    project = optim.projectref()
+
+    ## Handle budget and remove fixed costs
+    if project is None or optim is None: raise OptimaException('An optimization requires both a project and an optimization object to run')
+    parset  = project.parsets[optim.parsetname] # Link to the original parameter set
+    progset = project.progsets[optim.progsetname] # Link to the original program set
+    
+    optimizable = array(progset.optimizable())
+    optiminds = findinds(optimizable)
+    budgetvec = origbudget[:][optiminds] # Get the original budget vector
+    noptimprogs = len(budgetvec) # Number of optimizable programs
+    xmin = zeros(noptimprogs)
+    if label is None: label = ''
+    
+    # Calculate the initial people distribution
+    results = runmodel(pars=parset.pars, project=project, parsetname=optim.parsetname, progsetname=optim.progsetname, tvec=tvec, keepraw=True, verbose=0, label=project.name+'-minoutcomes')
+    initialind = findinds(results.raw[0]['tvec'], optim.objectives['start'])
+    initpeople = results.raw[0]['people'][:,:,initialind] # Pull out the people array corresponding to the start of the optimization -- there shouldn't be multiple raw arrays here
+
+    # Calculate original things
+    constrainedbudgetorig, constrainedbudgetvecorig, lowerlim, upperlim = constrainbudget(origbudget=origbudget, budgetvec=budgetvec, totalbudget=origtotalbudget, budgetlims=optim.constraints, optiminds=optiminds, outputtype='full')
+    
+    # Set up arguments which are shared between outcomecalc and asd
+    args = {'which':'outcomes', 
+            'project':project, 
+            'parsetname':optim.parsetname, 
+            'progsetname':optim.progsetname, 
+            'objectives':optim.objectives, 
+            'constraints':optim.constraints, 
+            'totalbudget':origtotalbudget, # Complicated, see below
+            'optiminds':optiminds, 
+            'origbudget':origbudget, 
+            'tvec':tvec, 
+            'ccsample':ccsample, 
+            'verbose':verbose, 
+            'initpeople':initpeople} # Complicated; see below
+    
+
             
-    return prelim
+    ## Loop over budget scale factors
+    tmpresults = odict()
+    tmpimprovements = odict()
+    tmpfullruninfo = odict()
+    tmpresults['Non-time-varying'] = prelim # Include un-optimized original
+
+    # Get the total budget & constrain it 
+    constrainedbudget, constrainedbudgetvec, lowerlim, upperlim = constrainbudget(origbudget=origbudget, budgetvec=budgetvec, totalbudget=totalbudget, budgetlims=optim.constraints, optiminds=optiminds, outputtype='full')
+    args['totalbudget'] = totalbudget
+    args['initpeople'] = initpeople # Set so only runs the part of the optimization required
+    
+    # Set up budgets to run
+    allbudgetvecs = odict()
+    allbudgetvecs['Baseline'] = dcp(constrainedbudgetvec)
+    if randseed is None: randseed = int((time()-floor(time()))*1e4) # Make sure a seed is used
+    allseeds = [randseed] # Start with current random seed
+            
+    # Actually run the optimizations
+    bestfval = inf # Value of outcome
+    asdresults = odict()
+    for k,key in enumerate(allbudgetvecs.keys()):
+        printv('Running optimization "%s" (%i/%i) with maxtime=%s, maxiters=%s' % (key, k+1, len(allbudgetvecs), maxtime, maxiters), 2, verbose)
+        if label: thislabel = '"'+label+'-'+key+'"'
+        else: thislabel = '"'+key+'"'
+        budgetvecnew, fvals, details = asd(outcomecalc, allbudgetvecs[key], args=args, xmin=xmin, maxtime=maxtime, maxiters=maxiters, verbose=verbose, randseed=allseeds[k], label=thislabel, **kwargs)
+        constrainedbudgetnew, constrainedbudgetvecnew, lowerlim, upperlim = constrainbudget(origbudget=origbudget, budgetvec=budgetvecnew, totalbudget=totalbudget, budgetlims=optim.constraints, optiminds=optiminds, outputtype='full')
+        asdresults[key] = {'budget':constrainedbudgetnew, 'fvals':fvals}
+        if fvals[-1]<bestfval: 
+            bestkey = key # Reset key
+            bestfval = fvals[-1] # Reset fval
+    
+    ## Calculate outcomes
+    args['initpeople'] = None # Set to None to get full results, not just from strat year
+    new = outcomecalc(asdresults[bestkey]['budget'], outputresults=True, **args)
+    new.name = 'Optimal (time-varying)' # Else, say what the budget is
+    tmpresults[new.name] = new
+    tmpimprovements[new.name] = asdresults[bestkey]['fvals']
+    tmpfullruninfo[new.name] = asdresults # Store everything
+
+    ## Output
+    multires = Multiresultset(resultsetlist=tmpresults.values(), name='optim-%s' % optim.name)
+    for k,key in enumerate(multires.keys): multires.budgetyears[key] = tmpresults[k].budgetyears # WARNING, this is ugly
+    multires.improvement = tmpimprovements # Store full function evaluation information -- only use last one
+    multires.fullruninfo = tmpfullruninfo # And the budgets/outcomes for every different run
+    multires.outcomes = odict() # Initialize
+    for key in tmpimprovements.keys():
+        multires.outcomes[key] = tmpimprovements[key][-1] # Get best value
+    optim.resultsref = multires.name # Store the reference for this result
+    try:
+        multires.outcome = multires.outcomes['Optimal'] # Store these defaults in a convenient place
+        multires.budget = multires.budgets['Optimal']
+    except:
+        multires.outcome = None
+        multires.budget = None
+    
+    # Store optimization settings
+    multires.optimsettings = odict([('maxiters',maxiters),('maxtime',maxtime),('mc',mc),('randseed',randseed),('timevarying',timevarying)])
+
+    return multires
 
 
 
