@@ -595,7 +595,7 @@ def tvoptimize(project=None, optim=None, tvec=None, verbose=None, maxtime=None, 
     print kwargs
     
     # Do a preliminary non-time-varying optimization
-    prelim = optimize(optim=optim, verbose=verbose, **kwargs)
+    prelim = optimize(optim=optim, verbose=verbose, maxtime=maxtime, maxiters=maxiters**kwargs)
     
     # Add in the time-varying component
     origtotalbudget = dcp(optim.objectives['budget']) # Should be a float, but dcp just in case
@@ -660,16 +660,17 @@ def tvoptimize(project=None, optim=None, tvec=None, verbose=None, maxtime=None, 
     # Actually run the optimizations
     bestfval = inf # Value of outcome
     asdresults = odict()
-    for k,key in enumerate(allbudgetvecs.keys()):
-        printv('Running optimization "%s" (%i/%i) with maxtime=%s, maxiters=%s' % (key, k+1, len(allbudgetvecs), maxtime, maxiters), 2, verbose)
-        if label: thislabel = '"'+label+'-'+key+'"'
-        else: thislabel = '"'+key+'"'
-        budgetvecnew, fvals, details = asd(outcomecalc, allbudgetvecs[key], args=args, xmin=xmin, maxtime=maxtime, maxiters=maxiters, verbose=verbose, randseed=allseeds[k], label=thislabel, **kwargs)
-        constrainedbudgetnew, constrainedbudgetvecnew, lowerlim, upperlim = constrainbudget(origbudget=origbudget, budgetvec=budgetvecnew, totalbudget=totalbudget, budgetlims=optim.constraints, optiminds=optiminds, outputtype='full')
-        asdresults[key] = {'budget':constrainedbudgetnew, 'fvals':fvals}
-        if fvals[-1]<bestfval: 
-            bestkey = key # Reset key
-            bestfval = fvals[-1] # Reset fval
+    k = 0 # TEMP
+    key = ''
+    printv('Running optimization "%s" (%i/%i) with maxtime=%s, maxiters=%s' % (key, k+1, len(allbudgetvecs), maxtime, maxiters), 2, verbose)
+    if label: thislabel = '"'+label+'-'+key+'"'
+    else: thislabel = '"'+key+'"'
+    budgetvecnew, fvals, details = asd(outcomecalc, allbudgetvecs[key], args=args, xmin=xmin, maxtime=maxtime, maxiters=maxiters, verbose=verbose, randseed=allseeds[k], label=thislabel, **kwargs)
+    constrainedbudgetnew, constrainedbudgetvecnew, lowerlim, upperlim = constrainbudget(origbudget=origbudget, budgetvec=budgetvecnew, totalbudget=totalbudget, budgetlims=optim.constraints, optiminds=optiminds, outputtype='full')
+    asdresults[key] = {'budget':constrainedbudgetnew, 'fvals':fvals}
+    if fvals[-1]<bestfval: 
+        bestkey = key # Reset key
+        bestfval = fvals[-1] # Reset fval
     
     ## Calculate outcomes
     args['initpeople'] = None # Set to None to get full results, not just from strat year
