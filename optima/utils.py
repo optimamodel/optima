@@ -603,21 +603,19 @@ def sanitize(data=None, returninds=False):
 
 
 
-def getvaliddata(data=None, filterdata=None, defaultind=0, returninds=False):
+def getvaliddata(data=None, filterdata=None, defaultind=0):
     '''
     Return the years that are valid based on the validity of the input data.
     
     Example:
         getvaliddata(array([3,5,8,13]), array([2000, nan, nan, 2004])) # Returns array([3,13])
     '''
-    from numpy import array, isnan, logical_and
+    from numpy import array, isnan
     data = array(data)
     if filterdata is None: filterdata = data # So it can work on a single input -- more or less replicates sanitize() then
     filterdata = array(filterdata)
-    if filterdata.dtype=='bool': filterindices = filterdata # It's already boolean, so leave it as is
-    else:                        filterindices = ~isnan(filterdata) # Else, assume it's nans that need to be removed
-    dataindices = ~isnan(data) # Also check validity of data
-    validindices = logical_and(dataindices, filterindices)
+    if filterdata.dtype=='bool': validindices = filterdata # It's already boolean, so leave it as is
+    else:                        validindices = ~isnan(filterdata) # Else, assume it's nans that need to be removed
     if validindices.any(): # There's at least one data point entered
         if len(data)==len(validindices): # They're the same length: use for logical indexing
             validdata = array(array(data)[validindices]) # Store each year
@@ -627,10 +625,27 @@ def getvaliddata(data=None, filterdata=None, defaultind=0, returninds=False):
             raise Exception('Array sizes are mismatched: %i vs. %i' % (len(data), len(validindices)))    
     else: 
         validdata = array([]) # No valid data, return an empty array
-    if returninds:
-        return findinds(validindices) # Only return indices -- WARNING, not consistent with sanitize()
-    else:
-        return validdata
+    return validdata
+
+
+
+def getvalidinds(*args):
+    '''
+    Return the years that are valid based on the validity of the input data from an arbitrary number
+    of 1-D vector inputs.
+    
+    Example:
+        getvalidinds([3,5,8,13], [2000, nan, nan, 2004]) # Returns array([0,3])
+    '''
+    from numpy import array, isnan, intersect1d
+    data = array(data)
+    if filterdata is None: filterdata = data # So it can work on a single input -- more or less replicates sanitize() then
+    filterdata = array(filterdata)
+    if filterdata.dtype=='bool': filterindices = filterdata # It's already boolean, so leave it as is
+    else:                        filterindices = ~isnan(filterdata) # Else, assume it's nans that need to be removed
+    dataindices = ~isnan(data) # Also check validity of data
+    validindices = intersect1d(dataindices, filterindices)
+    return findinds(validindices) # Only return indices -- WARNING, not consistent with sanitize()
 
 
 
