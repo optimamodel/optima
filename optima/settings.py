@@ -107,7 +107,7 @@ class Settings(object):
         if start is None: start=self.start
         if end   is None: end  =self.end
         if dt    is None: dt   =self.dt
-        tvec = inclusiverange(start, end, dt) # Can't use arange since handles floating point arithmetic badly, e.g. compare arange(2000, 2020, 0.2) with arange(2000, 2020.2, 0.2)
+        tvec = inclusiverange(start=start, end=end, step=dt) # Can't use arange since handles floating point arithmetic badly, e.g. compare arange(2000, 2020, 0.2) with arange(2000, 2020.2, 0.2)
         return tvec
     
     

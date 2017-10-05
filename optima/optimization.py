@@ -342,12 +342,13 @@ def outcomecalc(budgetvec=None, which=None, project=None, parsetname=None, progs
     # Run model
     if tvsettings is None:
         sdlfk
+        paryears = inclusiverange(objectives['start'], objectives['end'])
     else:
-        skfj
+        paryears = objectives['start']
         
     
-    thiscoverage = progset.getprogcoverage(budget=constrainedbudget, t=objectives['start'], parset=parset, sample=ccsample)
-    thisparsdict = progset.getpars(coverage=thiscoverage, t=objectives['start'], parset=parset, sample=ccsample)
+    thiscoverage = progset.getprogcoverage(budget=constrainedbudget, t=paryears, parset=parset, sample=ccsample)
+    thisparsdict = progset.getpars(coverage=thiscoverage, t=paryears, parset=parset, sample=ccsample)
     if initpeople is None: startyear = None
     else:                  startyear = objectives['start']
     tvec = project.settings.maketvec(start=startyear, end=objectives['end'])

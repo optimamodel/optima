@@ -835,18 +835,48 @@ def vec2obj(orig=None, newvec=None, inds=None):
     return new
 
 
-def inclusiverange(start=None, end=None, step=None):
+def inclusiverange(*args, **kwargs):
     '''
-    Like arange/linspace, but includes the start and end points. Example:
+    Like arange/linspace, but includes the start and end points. 
+    Accepts 0-3 args, or the kwargs start, end, step. Examples:
     
     x = inclusiverange(3,5,0.2)
+    x = inclusiverange(end=5)
+    x = inclusiverange(6, step=2)
     '''
+    
+    from numpy import linspace
+    
+    # Handle args
+    if len(args)==0:
+        start, end, step = None, None, None
+    elif len(args)==1:
+        end = args[0]
+        start, step = None
+    elif len(args)==2:
+        start = args[0]
+        end   = args[1]
+        step = None
+    elif len(args)==3:
+        start = args[0]
+        end = args[1]
+        step = args[2]
+    else:
+        raise Exception('Too many arguments supplied: inclusiverange() accepts 0-3 arguments')
+    
+    # Handle kwargs
+    start = kwargs.get('start', start)
+    end   = kwargs.get('end',   end)
+    step  = kwargs.get('step',  step)
+    
+    # Finalize defaults
     if start is None: start = 0
-    if end is None and start is not None:
     if end   is None: end   = 1
     if step  is None: step  = 1
-    from numpy import linspace
+    
+    # OK, actually generate
     x = linspace(start, end, int(round((end-start)/float(step))+1)) # Can't use arange since handles floating point arithmetic badly, e.g. compare arange(2000, 2020, 0.2) with arange(2000, 2020.2, 0.2)
+    
     return x
 
 
