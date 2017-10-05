@@ -629,10 +629,10 @@ def getvaliddata(data=None, filterdata=None, defaultind=0):
 
 
 
-def getvalidinds(*args):
+def getvalidinds(data=None, filterdata=None):
     '''
     Return the years that are valid based on the validity of the input data from an arbitrary number
-    of 1-D vector inputs.
+    of 1-D vector inputs. Warning, closely related to getvaliddata()!
     
     Example:
         getvalidinds([3,5,8,13], [2000, nan, nan, 2004]) # Returns array([0,3])
