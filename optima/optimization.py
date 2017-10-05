@@ -6,7 +6,7 @@ Version: 2017jun04
 
 from optima import OptimaException, Link, Multiresultset, ICER, asd, runmodel, getresults # Main functions
 from optima import printv, dcp, odict, findinds, today, getdate, uuid, objrepr, promotetoarray, findnearest, sanitize # Utilities
-from numpy import zeros, empty, arange, maximum, array, inf, isfinite, argmin, argsort, nan, floor
+from numpy import zeros, empty, arange, maximum, array, inf, isfinite, argmin, argsort, nan, floor, concatenate
 from numpy.random import random, seed
 from time import time
 
@@ -164,7 +164,7 @@ def defaultconstraints(project=None, progsetname=None, which='outcomes', verbose
 
 
 
-def constrainbudget(origbudget=None, budgetvec=None, totalbudget=None, budgetlims=None, optiminds=None, tolerance=1e-2, overalltolerance=1.0, outputtype=None):
+def constrainbudget(origbudget=None, budgetvec=None, totalbudget=None, budgetlims=None, optiminds=None, tolerance=1e-2, overalltolerance=1.0, outputtype=None, tvsettings=None):
     """ Take an unnormalized/unconstrained budgetvec and normalize and constrain it """
 
     # Prepare this budget for later scaling and the like
@@ -286,7 +286,7 @@ def constrainbudget(origbudget=None, budgetvec=None, totalbudget=None, budgetlim
 
 def outcomecalc(budgetvec=None, which=None, project=None, parsetname=None, progsetname=None, 
                 objectives=None, constraints=None, totalbudget=None, optiminds=None, origbudget=None, tvec=None, 
-                initpeople=None, outputresults=False, verbose=2, ccsample='best', doconstrainbudget=True):
+                initpeople=None, outputresults=False, verbose=2, ccsample='best', doconstrainbudget=True, tvsettings=None):
     ''' Function to evaluate the objective for a given budget vector (note, not time-varying) '''
 
     # Set up defaults
@@ -313,6 +313,23 @@ def outcomecalc(budgetvec=None, which=None, project=None, parsetname=None, progs
     if which not in ['outcomes','money']:
         errormsg = 'optimize(): "which" must be "outcomes" or "money"; you entered "%s"' % which
         raise OptimaException(errormsg)
+    
+    # Handle time-varying optimization
+    timevarying = (tvsettings is not None) # Set boolean
+    noptimprogs = len(optiminds) # Number of optimized programs
+    ndims = 2 # Semi-hard-code the number of dimensions of the time-varying optimization
+    if timevarying:
+        if len(budgetvec)>=ndims*noptimprogs:
+            tvcontrolvec = dcp(budgetvec[noptimprogs:ndims*noptimprogs]) # Pull out control vector
+            if len(budgetvec)==(ndims*noptimprogs):
+                tvenvelope = budgetvec[ndims*noptimprogs] # Pull out overall budget shape
+            budgetvec = dcp(budgetvec[:noptimprogs]) # Replace the budget vector with the ordinary budget vector
+        else:
+            errormsg = 'Time-varying optimization requested, but budget vector too short (length %i, %i expected)' % (noptimprogs, ndims*noptimprogs)
+            raise OptimaException(errormsg)
+        
+            
+        
 
     # Normalize budgetvec and convert to budget -- WARNING, is there a better way of doing this?
     if doconstrainbudget:
@@ -323,6 +340,12 @@ def outcomecalc(budgetvec=None, which=None, project=None, parsetname=None, progs
         else:                              constrainedbudget[:]         = budgetvec # Assume it's all programs
         
     # Run model
+    if tvsettings is None:
+        sdlfk
+    else:
+        skfj
+        
+    
     thiscoverage = progset.getprogcoverage(budget=constrainedbudget, t=objectives['start'], parset=parset, sample=ccsample)
     thisparsdict = progset.getpars(coverage=thiscoverage, t=objectives['start'], parset=parset, sample=ccsample)
     if initpeople is None: startyear = None
@@ -573,7 +596,7 @@ def multioptimize(optim=None, nchains=None, nblocks=None, blockiters=None,
 
 def tvoptimize(project=None, optim=None, tvec=None, verbose=None, maxtime=None, maxiters=1000, 
                 origbudget=None, ccsample='best', randseed=None, mc=3, label=None, die=False, 
-                timevarying=True, **kwargs):
+                tvsettings=None, **kwargs):
     '''
     Run a time-varying optimization. See project.optimize() for usage examples, and optimize()
     for kwarg explanation.
@@ -594,6 +617,10 @@ def tvoptimize(project=None, optim=None, tvec=None, verbose=None, maxtime=None, 
     
     print kwargs
     
+    if not isinstance(tvsettings, dict): # Dictionary already supplied: just use
+        tvsettings = {'tvtotalbudget': False, # Whether or not to let the budget itself change
+                      'stepsize': 0.1} # Default step size
+    
     # Do a preliminary non-time-varying optimization
     prelim = optimize(optim=optim, maxtime=maxtime, maxiters=maxiters, verbose=verbose, 
                 origbudget=origbudget, ccsample=ccsample, randseed=randseed, mc=mc, label=label, die=die, **kwargs)
@@ -601,7 +628,7 @@ def tvoptimize(project=None, optim=None, tvec=None, verbose=None, maxtime=None, 
     # Add in the time-varying component
     origtotalbudget = dcp(optim.objectives['budget']) # Should be a float, but dcp just in case
     totalbudget = origtotalbudget
-    origbudget = dcp(prelim.budget)
+    optimconstbudget = dcp(prelim.budget)
     project = optim.projectref()
 
     ## Handle budget and remove fixed costs
@@ -611,7 +638,7 @@ def tvoptimize(project=None, optim=None, tvec=None, verbose=None, maxtime=None, 
     
     optimizable = array(progset.optimizable())
     optiminds = findinds(optimizable)
-    budgetvec = origbudget[:][optiminds] # Get the original budget vector
+    budgetvec = optimconstbudget[:][optiminds] # Get the original budget vector
     noptimprogs = len(budgetvec) # Number of optimizable programs
     xmin = zeros(noptimprogs)
     if label is None: label = ''
@@ -622,7 +649,7 @@ def tvoptimize(project=None, optim=None, tvec=None, verbose=None, maxtime=None, 
     initpeople = results.raw[0]['people'][:,:,initialind] # Pull out the people array corresponding to the start of the optimization -- there shouldn't be multiple raw arrays here
 
     # Calculate original things
-    constrainedbudgetorig, constrainedbudgetvecorig, lowerlim, upperlim = constrainbudget(origbudget=origbudget, budgetvec=budgetvec, totalbudget=origtotalbudget, budgetlims=optim.constraints, optiminds=optiminds, outputtype='full')
+    constrainedbudgetorig, constrainedbudgetvecorig, lowerlim, upperlim = constrainbudget(origbudget=optimconstbudget, budgetvec=budgetvec, totalbudget=origtotalbudget, budgetlims=optim.constraints, optiminds=optiminds, outputtype='full')
     
     # Set up arguments which are shared between outcomecalc and asd
     args = {'which':'outcomes', 
@@ -633,40 +660,43 @@ def tvoptimize(project=None, optim=None, tvec=None, verbose=None, maxtime=None, 
             'constraints':optim.constraints, 
             'totalbudget':origtotalbudget, # Complicated, see below
             'optiminds':optiminds, 
-            'origbudget':origbudget, 
+            'origbudget':optimconstbudget, 
             'tvec':tvec, 
             'ccsample':ccsample, 
             'verbose':verbose, 
-            'initpeople':initpeople} # Complicated; see below
+            'initpeople':initpeople,
+            'tvsettings':tvsettings} # Complicated; see below
     
-    ## Loop over budget scale factors
+    doconstrainbudget = True; print 'WARNING doconstrain'
     tmpresults = odict()
     tmpimprovements = odict()
     tmpfullruninfo = odict()
-    tmpresults['Non-time-varying'] = prelim # Include un-optimized original
+    tmpresults['Baseline']         = outcomecalc(prelim.budgets['Baseline'], outputresults=True, doconstrainbudget=doconstrainbudget, **args)
+    tmpresults['Non-time-varying'] = outcomecalc(prelim.budgets['Optimal'],  outputresults=True, doconstrainbudget=doconstrainbudget, **args)
+    for key,result in tmpresults.items(): result.name = key # Update names
 
     # Get the total budget & constrain it 
-    constrainedbudget, constrainedbudgetvec, lowerlim, upperlim = constrainbudget(origbudget=origbudget, budgetvec=budgetvec, totalbudget=totalbudget, budgetlims=optim.constraints, optiminds=optiminds, outputtype='full')
+    constrainedbudget, constrainedbudgetvec, lowerlim, upperlim = constrainbudget(origbudget=optimconstbudget, budgetvec=budgetvec, totalbudget=totalbudget, budgetlims=optim.constraints, optiminds=optiminds, outputtype='full')
     args['totalbudget'] = totalbudget
     args['initpeople'] = initpeople # Set so only runs the part of the optimization required
     
     # Set up budgets to run
-    allbudgetvecs = odict()
-    allbudgetvecs['Baseline'] = dcp(constrainedbudgetvec)
+    tvbudgetvec = dcp(constrainedbudgetvec)
+    tvcontrolvec = zeros(len(tvbudgetvec)+tvsettings['tvtotalbudget']) # Generate vector of zeros for correct length, including an optional extra one for the total budget
+    tvvec = concatenate([tvbudgetvec, tvcontrolvec])
     if randseed is None: randseed = int((time()-floor(time()))*1e4) # Make sure a seed is used
-    allseeds = [randseed] # Start with current random seed
             
     # Actually run the optimizations
     bestfval = inf # Value of outcome
     asdresults = odict()
     k = 0 # TEMP
     key = 'Baseline'
-    printv('Running optimization "%s" (%i/%i) with maxtime=%s, maxiters=%s' % (key, k+1, len(allbudgetvecs), maxtime, maxiters), 2, verbose)
+    printv('Running time-varying optimization with maxtime=%s, maxiters=%s' % (maxtime, maxiters), 2, verbose)
     if label: thislabel = '"'+label+'-'+key+'"'
     else: thislabel = '"'+key+'"'
-    budgetvecnew, fvals, details = asd(outcomecalc, allbudgetvecs[key], args=args, xmin=xmin, maxtime=maxtime, maxiters=maxiters, verbose=verbose, randseed=allseeds[k], label=thislabel, **kwargs)
-    constrainedbudgetnew, constrainedbudgetvecnew, lowerlim, upperlim = constrainbudget(origbudget=origbudget, budgetvec=budgetvecnew, totalbudget=totalbudget, budgetlims=optim.constraints, optiminds=optiminds, outputtype='full')
-    asdresults[key] = {'budget':constrainedbudgetnew, 'fvals':fvals}
+    tvvecnew, fvals, details = asd(outcomecalc, tvvec, args=args, xmin=xmin, maxtime=maxtime, maxiters=maxiters, verbose=verbose, randseed=randseed, label=thislabel, **kwargs)
+    constrainedbudgetnew, constrainedbudgetvecnew, lowerlim, upperlim = constrainbudget(origbudget=optimconstbudget, budgetvec=tvvecnew, totalbudget=totalbudget, budgetlims=optim.constraints, optiminds=optiminds, outputtype='full', tvsettings=tvsettings)
+    asdresults[key] = {'budget':tvvecnew, 'fvals':fvals}
     if fvals[-1]<bestfval: 
         bestkey = key # Reset key
         bestfval = fvals[-1] # Reset fval
@@ -696,7 +726,7 @@ def tvoptimize(project=None, optim=None, tvec=None, verbose=None, maxtime=None, 
         multires.budget = None
     
     # Store optimization settings
-    multires.optimsettings = odict([('maxiters',maxiters),('maxtime',maxtime),('mc',mc),('randseed',randseed),('timevarying',timevarying)])
+    multires.optimsettings = odict([('maxiters',maxiters),('maxtime',maxtime),('mc',mc),('randseed',randseed),('tvsettings',tvsettings)])
 
     return multires
 

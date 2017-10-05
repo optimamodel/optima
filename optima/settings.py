@@ -14,7 +14,7 @@ Version: 2016oct05
 """
 
 from numpy import arange, array, concatenate as cat, linspace, shape
-from optima import OptimaException, defaultrepr, printv, dcp, isnumber
+from optima import OptimaException, defaultrepr, printv, dcp, isnumber, inclusiverange
 
 
 class Settings(object):
@@ -105,9 +105,9 @@ class Settings(object):
         ''' Little function for calculating the time vector -- here since start, end, dt are stored here '''
         printv('Making time vector', 4, self.verbose)
         if start is None: start=self.start
-        if end is None: end=self.end
-        if dt is None: dt=self.dt
-        tvec = linspace(start, end, int(round((end-start)/dt)+1)) # Can't use arange since handles floating point arithmetic badly, e.g. compare arange(2000, 2020, 0.2) with arange(2000, 2020.2, 0.2)
+        if end   is None: end  =self.end
+        if dt    is None: dt   =self.dt
+        tvec = inclusiverange(start, end, dt) # Can't use arange since handles floating point arithmetic badly, e.g. compare arange(2000, 2020, 0.2) with arange(2000, 2020.2, 0.2)
         return tvec
     
     

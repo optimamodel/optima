@@ -835,6 +835,19 @@ def vec2obj(orig=None, newvec=None, inds=None):
     return new
 
 
+def inclusiverange(start=None, end=None, step=None):
+    '''
+    Like arange/linspace, but includes the start and end points. Example:
+    
+    x = inclusiverange(3,5,0.2)
+    '''
+    if start is None: start = 0
+    if end is None and start is not None:
+    if end   is None: end   = 1
+    if step  is None: step  = 1
+    from numpy import linspace
+    x = linspace(start, end, int(round((end-start)/float(step))+1)) # Can't use arange since handles floating point arithmetic badly, e.g. compare arange(2000, 2020, 0.2) with arange(2000, 2020.2, 0.2)
+    return x
 
 
 ##############################################################################
