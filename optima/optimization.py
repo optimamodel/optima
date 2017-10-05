@@ -595,7 +595,8 @@ def tvoptimize(project=None, optim=None, tvec=None, verbose=None, maxtime=None, 
     print kwargs
     
     # Do a preliminary non-time-varying optimization
-    prelim = optimize(optim=optim, verbose=verbose, maxtime=maxtime, maxiters=maxiters**kwargs)
+    prelim = optimize(optim=optim, maxtime=maxtime, maxiters=maxiters, verbose=verbose, 
+                origbudget=origbudget, ccsample=ccsample, randseed=randseed, mc=mc, label=label, die=die, **kwargs)
     
     # Add in the time-varying component
     origtotalbudget = dcp(optim.objectives['budget']) # Should be a float, but dcp just in case
@@ -638,8 +639,6 @@ def tvoptimize(project=None, optim=None, tvec=None, verbose=None, maxtime=None, 
             'verbose':verbose, 
             'initpeople':initpeople} # Complicated; see below
     
-
-            
     ## Loop over budget scale factors
     tmpresults = odict()
     tmpimprovements = odict()
@@ -661,7 +660,7 @@ def tvoptimize(project=None, optim=None, tvec=None, verbose=None, maxtime=None, 
     bestfval = inf # Value of outcome
     asdresults = odict()
     k = 0 # TEMP
-    key = ''
+    key = 'Baseline'
     printv('Running optimization "%s" (%i/%i) with maxtime=%s, maxiters=%s' % (key, k+1, len(allbudgetvecs), maxtime, maxiters), 2, verbose)
     if label: thislabel = '"'+label+'-'+key+'"'
     else: thislabel = '"'+key+'"'
