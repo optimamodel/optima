@@ -837,11 +837,11 @@ def vec2obj(orig=None, newvec=None, inds=None):
 
 def inclusiverange(*args, **kwargs):
     '''
-    Like arange/linspace, but includes the start and end points. 
-    Accepts 0-3 args, or the kwargs start, end, step. Examples:
+    Like arange/linspace, but includes the start and stop points. 
+    Accepts 0-3 args, or the kwargs start, stop, step. Examples:
     
     x = inclusiverange(3,5,0.2)
-    x = inclusiverange(end=5)
+    x = inclusiverange(stop=5)
     x = inclusiverange(6, step=2)
     '''
     
@@ -849,33 +849,33 @@ def inclusiverange(*args, **kwargs):
     
     # Handle args
     if len(args)==0:
-        start, end, step = None, None, None
+        start, stop, step = None, None, None
     elif len(args)==1:
-        end = args[0]
+        stop = args[0]
         start, step = None
     elif len(args)==2:
         start = args[0]
-        end   = args[1]
+        stop   = args[1]
         step = None
     elif len(args)==3:
         start = args[0]
-        end = args[1]
+        stop = args[1]
         step = args[2]
     else:
         raise Exception('Too many arguments supplied: inclusiverange() accepts 0-3 arguments')
     
     # Handle kwargs
     start = kwargs.get('start', start)
-    end   = kwargs.get('end',   end)
+    stop  = kwargs.get('stop',  stop)
     step  = kwargs.get('step',  step)
     
     # Finalize defaults
     if start is None: start = 0
-    if end   is None: end   = 1
+    if stop  is None: stop  = 1
     if step  is None: step  = 1
     
     # OK, actually generate
-    x = linspace(start, end, int(round((end-start)/float(step))+1)) # Can't use arange since handles floating point arithmetic badly, e.g. compare arange(2000, 2020, 0.2) with arange(2000, 2020.2, 0.2)
+    x = linspace(start, stop, int(round((stop-start)/float(step))+1)) # Can't use arange since handles floating point arithmetic badly, e.g. compare arange(2000, 2020, 0.2) with arange(2000, 2020.2, 0.2)
     
     return x
 

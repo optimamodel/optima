@@ -366,8 +366,8 @@ def outcomecalc(budgetvec=None, which=None, project=None, parsetname=None, progs
         paryears = objectives['start']
     else: # Otherwise, it's not easy
         paryears = inclusiverange(start=objectives['start'], stop=objectives['end'], step=tvsettings['tvstep']) # Create the time vector
-        for v,val in constrainedbudget.enumvals(): # Loop over the programs and calculate the budget for each
-            constrainedbudget[v] = constrainedbudget[v]*tvfunction(years=paryears, par=tvcontrolvec[v])
+        for i,ind in enumerate(optiminds): # Loop over the programs and calculate the budget for each
+            constrainedbudget[ind] = constrainedbudget[ind]*tvfunction(years=paryears, par=tvcontrolvec[i])
         
     thiscoverage = progset.getprogcoverage(budget=constrainedbudget, t=paryears, parset=parset, sample=ccsample)
     thisparsdict = progset.getpars(coverage=thiscoverage, t=paryears, parset=parset, sample=ccsample)
@@ -661,7 +661,6 @@ def tvoptimize(project=None, optim=None, tvec=None, verbose=None, maxtime=None, 
     optiminds = findinds(optimizable)
     budgetvec = optimconstbudget[:][optiminds] # Get the original budget vector
     noptimprogs = len(budgetvec) # Number of optimizable programs
-    xmin = zeros(noptimprogs)
     if label is None: label = ''
     
     # Calculate the initial people distribution
@@ -694,7 +693,9 @@ def tvoptimize(project=None, optim=None, tvec=None, verbose=None, maxtime=None, 
     tmpfullruninfo = odict()
     tmpresults['Baseline']         = outcomecalc(prelim.budgets['Baseline'], outputresults=True, doconstrainbudget=doconstrainbudget, **args)
     tmpresults['Non-time-varying'] = outcomecalc(prelim.budgets['Optimal'],  outputresults=True, doconstrainbudget=doconstrainbudget, **args)
-    for key,result in tmpresults.items(): result.name = key # Update names
+    for key,result in tmpresults.items(): 
+        result.name = key # Update names
+        tmpimprovements[key] = [tmpresults[key].outcome] # Hacky, since expects a list
 
     # Get the total budget & constrain it 
     constrainedbudget, constrainedbudgetvec, lowerlim, upperlim = constrainbudget(origbudget=optimconstbudget, budgetvec=budgetvec, totalbudget=totalbudget, budgetlims=optim.constraints, optiminds=optiminds, outputtype='full')
@@ -716,6 +717,8 @@ def tvoptimize(project=None, optim=None, tvec=None, verbose=None, maxtime=None, 
     if label: thislabel = '"'+label+'-'+key+'"'
     else: thislabel = '"'+key+'"'
     args['tvsettings'] = tvsettings
+    
+    xmin = concatenate([zeros(noptimprogs), -inf*tvcontrolvec])
     tvvecnew, fvals, details = asd(outcomecalc, tvvec, args=args, xmin=xmin, maxtime=maxtime, maxiters=maxiters, verbose=verbose, randseed=randseed, label=thislabel, **kwargs)
     budgetvec, tvcontrolvec, tvenvelope = handletv(budgetvec=tvvecnew, tvsettings=tvsettings, optiminds=optiminds)
     constrainedbudgetnew, constrainedbudgetvecnew, lowerlim, upperlim = constrainbudget(origbudget=optimconstbudget, budgetvec=budgetvec, totalbudget=totalbudget, budgetlims=optim.constraints, optiminds=optiminds, outputtype='full', tvsettings=tvsettings)
