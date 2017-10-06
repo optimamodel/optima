@@ -368,7 +368,13 @@ def outcomecalc(budgetvec=None, which=None, project=None, parsetname=None, progs
         paryears = inclusiverange(start=objectives['start'], stop=objectives['end'], step=tvsettings['tvstep']) # Create the time vector
         for i,ind in enumerate(optiminds): # Loop over the programs and calculate the budget for each
             constrainedbudget[ind] = constrainedbudget[ind]*tvfunction(years=paryears, par=tvcontrolvec[i])
-        
+    
+    print 'HEYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY'
+    print budgetvec, tvcontrolvec, tvenvelope
+    print constrainedbudget
+#    for k,b in constrainedbudget.items():
+#        print('%s: %s' % k,promotetoarray(b)[0])
+    print 'okkkkkkkkkkkkkkk'
     thiscoverage = progset.getprogcoverage(budget=constrainedbudget, t=paryears, parset=parset, sample=ccsample)
     thisparsdict = progset.getpars(coverage=thiscoverage, t=paryears, parset=parset, sample=ccsample)
     if initpeople is None: startyear = None
@@ -392,6 +398,7 @@ def outcomecalc(budgetvec=None, which=None, project=None, parsetname=None, progs
             thisoutcome = results.main['num'+key].tot[0][indices].sum() # the instantaneous outcome e.g. objectives['numdeath'] -- 0 is since best
             rawoutcomes['num'+key] = thisoutcome*results.dt
             outcome += thisoutcome*thisweight*results.dt # Calculate objective
+            print key, thisoutcome, thisweight, outcome
 
         # Output results
         if outputresults:
