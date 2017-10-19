@@ -171,7 +171,7 @@ import loadtools as _loadtools; del loadtools
 changelog = _loadtools.setmigrations('changelog')
 
 # Load batch functions (has to load projects, so has to come after migration)
-from .batchtools import batchautofit, batchBOC, reoptimizeprojects
+from .batchtools import batchautofit, batchBOC, reoptimizeprojects, getprojects
 import batchtools as _batchtools; del batchtools
 
 # Import the Project class that ties everything together
