@@ -377,6 +377,10 @@ def outcomecalc(budgetvec=None, which=None, project=None, parsetname=None, progs
     print 'okkkkkkkkkkkkkkk'
     thiscoverage = progset.getprogcoverage(budget=constrainedbudget, t=paryears, parset=parset, sample=ccsample)
     thisparsdict = progset.getpars(coverage=thiscoverage, t=paryears, parset=parset, sample=ccsample)
+    
+    print thisparsdict['condcas'].y
+    print 'uufufufufufuf'
+    
     if initpeople is None: startyear = None
     else:                  startyear = objectives['start']
     tvec = project.settings.maketvec(start=startyear, end=objectives['end'])
