@@ -494,7 +494,7 @@ def create_project_with_spreadsheet_download(user_id, project_summary):
     new_project_template = secure_filename(
         "{}.xlsx".format(project_summary['name']))
     path = templatepath(new_project_template)
-    op.makespreadsheet(
+    op.makespreadsheet( # WARNING, should be project.makespreadsheet()
         path,
         pops=project_summary['populations'],
         datastart=project_summary['startYear'],
@@ -572,7 +572,7 @@ def download_data_spreadsheet(project_id, is_blank=True):
             datastart=project_summary["startYear"],
             dataend=project_summary["endYear"])
     else:
-        op.makespreadsheet(path, data=project.data)
+        project.makespreadsheet(filename=path)
     return path
 
 
