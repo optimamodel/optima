@@ -11,24 +11,17 @@ This README describes the steps involved in installing and running Optima. Follo
 
 4. Go to the Optima GitHub page (http://github.com/optimamodel/optima) and click on "Clone or download", followed by "Open in desktop" (or copy the link and clone)
 
-5. Finally, set up the Python path:
-
-  i. Run Spyder (part of Anaconda), e.g. from the Start menu
-
-  ii. Under the "Tools" (Linux and Windows) or "python" (under Mac) menu, go to "PYTHONPATH Manager"
-
-  iii. Select the Optima folder (e.g. `C:\Users\Alice\GitHub\Optima` on Windows) and click OK.
+5. Finally, set up the Python path:  
+  i. Run Spyder (part of Anaconda), e.g. from the Start menu  
+  ii. Under the "Tools" (Linux and Windows) or "python" (under Mac) menu, go to "PYTHONPATH Manager"  
+  iii. Select the Optima folder (e.g. `C:\Users\Alice\GitHub\Optima` on Windows) and click OK.  
 
 
-6. To check that everything works:
-
-  i. Run Spyder (e.g. Anaconda -> Spyder from the Start Menu in Windows; Anaconda Launcher or `spyder` from the Terminal on Mac or Linux)
-
-  ii. In the Spyder editor (File -> Open), go to the `Optima/tests` folder and open `simple.py`
-
-  iii. Run (F5, or select "Run" from the "Run" menu)
-
-  iv. You should see a figure appear -- note that it might appear in the console (if you're using IPython) or in a separate window but minimized.
+6. To check that everything works:  
+  i. Run Spyder (e.g. Anaconda -> Spyder from the Start Menu in Windows; Anaconda Launcher or `spyder` from the Terminal on Mac or Linux)  
+  ii. In the Spyder editor (File -> Open), go to the `Optima/tests` folder and open `simple.py`  
+  iii. Run (F5, or select "Run" from the "Run" menu)  
+  iv. You should see a figure appear -- note that it might appear in the console (if you're using IPython) or in a separate window but minimized.  
 
 
 
@@ -59,15 +52,11 @@ Make sure you download Python 2.7, not 3.6.
 
 5. Finally, to set the Python path, open a command prompt, and in the Optima folder (e.g. `C:\Users\Alice\GitHub\Optima` on Windows) type `python setup.py develop`.
 
-6. To check that everything works:
-
-  i. Run Spyder (e.g. Anaconda -> Spyder from the Start Menu)
-
-  ii. Open a new Python console (Console -> Python console)
-
-  iii. Type `from optima import demo; demo()` and press enter.
-
-  iv. You should see a figure appear -- note that it might appear in the console (if you're using IPython) or in a separate window but minimized.
+6. To check that everything works:  
+  i. Run Spyder (e.g. Anaconda -> Spyder from the Start Menu)  
+  ii. Open a new Python console (Console -> Python console)  
+  iii. Type `from optima import demo; demo()` and press enter.  
+  iv. You should see a figure appear -- note that it might appear in the console (if you're using IPython) or in a separate window but minimized.  
 
 7. To improve the plotting in Spyder (e.g. allow the use of `pygui()`), go to `Tools > Preferences > IPython Console > Graphics > Backend` and select "Automatic". This makes figures appear in new windows rather than in the console.
 
@@ -187,34 +176,26 @@ If you don't want to use Anaconda, you'll need to install the dependencies yours
 
 The last step is to make sure that Optima is available on the Python path. There are several ways of doing this:
 
- 1. **Option 1: Spyder path**
+ 1. **Option 1: Spyder path**  
+    i. Run Spyder (part of Anaconda)  
+    ii. Under the “Tools” (Linux and Windows) or “python” (under Mac) menu, go to "PYTHONPATH Manager"  
+    iii. Select the Optima folder (e.g. `C:\Users\Alice\GitHub\Optima` on Windows) and click OK.  
 
-    i. Run Spyder (part of Anaconda)
-
-    ii. Under the “Tools” (Linux and Windows) or “python” (under Mac) menu, go to “PYTHONPATH Manager”
-
-    iii. Select the Optima folder (e.g. `C:\Users\Alice\GitHub\Optima` on Windows) and click OK.
-
- 2. **Option 2: modify system path**
-
-    i. **Option 2A** (all operating systems): Go to the Optima root folder (in a terminal on Mac or Linux; in a command prompt [cmd.exe] in Windows) and run
-    `python setup.py develop`
-    Note: if Spyder does not use the system Python (which can happen in some cases), this will not work. In this case:
-
-       a. Inside a Spyder console, type
-          `import sys; sys.executable`
-
-       b. Replace the above command with the location of this executable, e.g.
-          `/software/anaconda/bin/python setup.py develop`
-
-    ii. **Option 2B** (Linux, Mac only): Add the Optima folder to `~/.bashrc` or `~/.bash_profile`, e.g.
-    `export PYTHONPATH=$PYTHONPATH:/users/alice/github/optima`
-    [NB: if you don't use `bash`, you are probably a hacker and don't need these instructions.]
-
-    iii. **Option 2C** (Windows only): search for “variables” from the Start Menu; the option should be called something like “Edit environment variables for your account”. Under “user variables”, you should see “PYTHONPATH” listed. Add the folder for the Optima repository, e.g.
-    `C:\Users\Alice\GitHub\Optima`
-    If there are already things on the Python path, add this to the end separated by a semicolon and no space, e.g.
-    `C:\Anaconda2\Library\bin;C:\Users\Alice\GitHub\Optima`
+ 2. **Option 2: modify system path**  
+    i. **Option 2A** (all operating systems): Go to the Optima root folder (in a terminal on Mac or Linux; in a command prompt [cmd.exe] in Windows) and run  
+    `python setup.py develop`  
+    Note: if Spyder does not use the system Python (which can happen in some cases), this will not work. In this case:  
+       a. Inside a Spyder console, type  
+          `import sys; sys.executable`  
+       b. Replace the above command with the location of this executable, e.g.  
+          `/software/anaconda/bin/python setup.py develop`  
+    ii. **Option 2B** (Linux, Mac only): Add the Optima folder to `~/.bashrc` or `~/.bash_profile`, e.g.  
+    `export PYTHONPATH=$PYTHONPATH:/users/alice/github/optima`  
+    [NB: if you don't use `bash`, you are probably a hacker and don't need these instructions.]  
+    iii. **Option 2C** (Windows only): search for “variables” from the Start Menu; the option should be called something like “Edit environment variables for your account”. Under “user variables”, you should see “PYTHONPATH” listed. Add the folder for the Optima repository, e.g.  
+    `C:\Users\Alice\GitHub\Optima`  
+    If there are already things on the Python path, add this to the end separated by a semicolon and no space, e.g.  
+    `C:\Anaconda2\Library\bin;C:\Users\Alice\GitHub\Optima`  
 
 ### 2.3 Verification/usage
 
@@ -330,14 +311,12 @@ Run script:
 
 In case you face issue in executing ./clean_build.sh you can alternatively execute commands:
 
-1. `npm install`
-2. `npm -g install bower (if you do not have bower already globally installed)`
-3. `npm -g install gulp (if you do not have gulp already globally installed)`
-4. Create file `client/source/js/version.js` and add this content to it:
-
-        define([], function () { return 'last_commit_short_hash'; });
-
-    (Where last_commit_short_hash is short hash for the last commit).
+1. `npm install`  
+2. `npm -g install bower (if you do not have bower already globally installed)`  
+3. `npm -g install gulp (if you do not have gulp already globally installed)`  
+4. Create file `client/source/js/version.js` and add this content to it:  
+        `define([], function () { return 'last_commit_short_hash'; });`  
+    (Where last_commit_short_hash is short hash for the last commit).  
 
 
 
