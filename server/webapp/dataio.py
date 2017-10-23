@@ -361,7 +361,11 @@ def get_optimademo_user(name='_OptimaDemo'):
 
 
 def get_optimademo_projects():
-    ''' Return the projects associated with the Optima Demo user '''
+    '''
+    Return the projects associated with the Optima Demo user.
+    
+    Note that these should be stored in the analyses repo under the name optimademo.    
+    '''
     user_id = get_optimademo_user()
     query = ProjectDb.query.filter_by(user_id=user_id)
     projectlist = map(load_project_summary_from_project_record, query.all())
