@@ -107,7 +107,7 @@ define(['angular', 'ui.router'], function (angular) {
             project.id,
             rpcService.getUniqueName(project.name, getProjectNames()))
           .then(function() {
-            toastr.success('Project "'+project.name+'" loaded from database. Please proceed directly to analysis (scenarios and/or optimizations)');
+            toastr.success('Project "'+project.name+'" loaded from database. Note: The Optima Consortium does not ensure that this project is comprehensive.');
             $state.reload();
           });
       };
