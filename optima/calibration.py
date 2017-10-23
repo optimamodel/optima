@@ -149,7 +149,7 @@ def objectivecalc(parvec=None, pars=None, parlist=None, project=None, fitto='pre
     related to the likelihood. Either way, it's very uncertain what this function
     does.
     
-    WARNING, 'bestindex' is kludgy -- discard upper and lower limits for the data
+    TODO: replace 'bestindex' with upper and lower limits for the data
     '''
     
     if doplot: # Store global information for debugging -- WARNING, is this the best way of doing this?
@@ -168,7 +168,7 @@ def objectivecalc(parvec=None, pars=None, parlist=None, project=None, fitto='pre
 
     printv(parvec, 4, verbose)
     
-    eps = project.settings.eps # 'eps' is also kludgy -- specify absolute error -- can't be larger than ~0.001 because then general population prevalence might get screwed
+    eps = project.settings.eps # Specify absolute error -- can't be larger than ~0.001 because then general population prevalence might be weighted incorrectly
     pars = convert(pars, parlist, parvec)
     results = runmodel(pars=pars, start=project.data['years'][0], end=project.data['years'][-1], project=project, verbose=0, label=project.name+'-autofit')
     

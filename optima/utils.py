@@ -1823,7 +1823,7 @@ class odict(OrderedDict):
 ##############################################################################
 
 # Some of these are repeated to make this frationally more self-contained
-from numpy import array, zeros, empty, vstack, hstack, matrix, argsort, argmin # analysis:ignore
+from numpy import array, zeros, empty, vstack, hstack, matrix, argsort, argmin, floor, log10 # analysis:ignore
 from numbers import Number # analysis:ignore
 
 class dataframe(object):
@@ -1881,10 +1881,7 @@ class dataframe(object):
                         outputlist[col].append(output)
                 outputformats[col] = '%'+'%i'%(maxlen+spacing)+'s'
             
-            if   nrows<10:   indformat = '%2s' # WARNING, KLUDGY, but easier to do explicitly than to find the general solution!
-            elif nrows<100:  indformat = '%3s'
-            elif nrows<1000: indformat = '%4s'
-            else:            indformat = '%6s'
+            indformat = '%%%is' % (floor(log10(nrows))+1) # Choose the right number of digits to print
             
             # Assemble output
             output = indformat % '' # Empty column for index
@@ -1892,7 +1889,7 @@ class dataframe(object):
                 output += outputformats[col] % col
             output += '\n'
             
-            for ind in range(nrows): # WARNING, KLUDGY
+            for ind in range(nrows): # Loop over rows to print out
                 output += indformat % flexstr(ind)
                 for col in self.cols: # Print out data
                     output += outputformats[col] % outputlist[col][ind]

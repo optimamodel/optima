@@ -782,9 +782,9 @@ def plotcoverage(multires=None, die=True, figsize=globalfigsize, legendsize=glob
             for i,x in enumerate(toplot[plt][:]):
                 if hasattr(x, '__len__'): 
                     try: progdata[i] = x[y]
-                    except: 
-                        try: progdata[i] = x[-1] # If not enough data points, just use last -- WARNING, KLUDGY
-                        except: progdata[i] = 0. # If not enough data points, just use last -- WARNING, KLUDGY
+                    except:# TODO: May break in some circumstances
+                        try: progdata[i] = x[-1] # If not enough data points, just use last 
+                        except: progdata[i] = 0. 
                 else:                     progdata[i] = x
             progdata *= 100 
             xbardata = arange(nprogs)+.75+barwidth*y
