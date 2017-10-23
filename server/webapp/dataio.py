@@ -195,10 +195,8 @@ def update_user(user_id, args):
     if user is None:
         raise UserDoesNotExist(user_id)
 
-    try:
-        userisanonymous = current_user.is_anonymous()  # CK: WARNING, SUPER HACKY way of dealing with different Flask versions
-    except:
-        userisanonymous = current_user.is_anonymous
+    try:    userisanonymous = current_user.is_anonymous() # Required for handling different Flask versions
+    except: userisanonymous = current_user.is_anonymous
 
     if userisanonymous or (str(user_id) != str(current_user.id) and not current_user.is_admin):
         secret = request.args.get('secret', '')
@@ -222,10 +220,8 @@ def update_user(user_id, args):
 
 
 def do_login_user(args):
-    try:
-        userisanonymous = current_user.is_anonymous()  # CK: WARNING, SUPER HACKY way of dealing with different Flask versions
-    except:
-        userisanonymous = current_user.is_anonymous
+    try:    userisanonymous = current_user.is_anonymous()  # For handling different Flask versions
+    except: userisanonymous = current_user.is_anonymous
 
     if userisanonymous:
         current_app.logger.debug("current user anonymous, proceed with logging in")
@@ -494,11 +490,7 @@ def create_project_with_spreadsheet_download(user_id, project_summary):
     new_project_template = secure_filename(
         "{}.xlsx".format(project_summary['name']))
     path = templatepath(new_project_template)
-    op.makespreadsheet( # WARNING, should be project.makespreadsheet()
-        path,
-        pops=project_summary['populations'],
-        datastart=project_summary['startYear'],
-        dataend=project_summary['endYear'])
+    op.makespreadsheet(path, pops=project_summary['populations'], datastart=project_summary['startYear'], dataend=project_summary['endYear'])
 
     print("> create_project_with_spreadsheet_download %s" % new_project_template)
 
@@ -1055,7 +1047,7 @@ def delete_result_by_project_id(
 
 def download_result_data(result_id):
     """
-    Returns (dirname, basename) of the the result.csv on the server -- WARNING, deprecated function name!
+    Returns (dirname, basename) of the the result.csv on the server
     """
     dirname = upload_dir_user(TEMPLATEDIR)
     if not dirname:

@@ -362,7 +362,7 @@ def boc(portfolio_id, project_id, maxtime=2, objectives=None):
     else:
         raise Exception("Couldn't find project in portfolio")
 
-    project.genBOC(maxtime=float(maxtime), objectives=objectives, mc=0) # WARNING, might want to run with MC one day
+    project.genBOC(maxtime=float(maxtime), objectives=objectives, mc=0) # TODO: Enable MC
 
     project_id = str(project.uid)
     db_session = init_db_session()
