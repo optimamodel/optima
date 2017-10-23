@@ -347,18 +347,18 @@ def verify_admin_request_decorator(api_call):
 
 
 #############################################################################################
-### OPTIMA LITE
+### OPTIMA DEMO PROJECTS
 #############################################################################################
 
-def get_optimalite_user(name='_OptimaLite'):
-    ''' Get the Optima Lite user ID, from its name -- default is '_OptimaLite' '''
+def get_optimademo_user(name='_OptimaDemo'):
+    ''' Get the Optima Demo user ID, from its name -- default is '_OptimaDemo' '''
     user = UserDb.query.filter_by(username=name).first()
     return user.id
 
 
-def get_optimalite_projects():
+def get_optimademo_projects():
     ''' Return the projects associated with the Optima Lite user '''
-    user_id = get_optimalite_user()
+    user_id = get_optimademo_user()
     query = ProjectDb.query.filter_by(user_id=user_id)
     projectlist = map(load_project_summary_from_project_record, query.all())
     sortedprojectlist = sorted(projectlist, key=lambda proj: proj['name']) # Sorts by project name

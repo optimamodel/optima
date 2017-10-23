@@ -100,7 +100,7 @@ define(['angular', 'ui.router'], function (angular) {
           });
       };
 
-      $scope.copyOptimaLiteProject = function(project) {
+      $scope.copyOptimaDemoProject = function(project) {
         var name =
         projectService
           .copyProject(
