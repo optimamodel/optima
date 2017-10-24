@@ -16,7 +16,7 @@ def autofit(project=None, name=None, fitwhat=None, fitto=None, method='wape', ma
         method = which method of calculating the objective/goodness-of-fit to use; default weighted absolute percentage error to place less weight on outliers
     Others should be self-explanatory.
     
-    Version: 2017may22 by cliffk
+    Version: 2017may22 
     '''
     if doplot: # Store global information for debugging
         global autofitfig, autofitresults

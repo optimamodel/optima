@@ -228,7 +228,7 @@ def printarr(arr, arrformat='%0.2f  '):
         from numpy import random
         printarr(rand(3,7,4))
     
-    Version: 2014dec01 by cliffk
+    Version: 2014dec01
     '''
     from numpy import ndim
     if ndim(arr)==1:
@@ -359,12 +359,12 @@ def slacknotification(to=None, message=None, fromuser=None, token=None, verbose=
     
     Example usage:
         slacknotification('#athena', 'Long process is finished')
-        slacknotification(token='/.slackurl', channel='@cliffk', message='Hi, how are you going?')
+        slacknotification(token='/.slackurl', channel='@username', message='Hi, how are you going?')
     
     What's the point? Add this to the end of a very long-running script to notify
     your loved ones that the script has finished.
         
-    Version: 2017feb09 by cliffk    
+    Version: 2017feb09
     '''
     
     # Imports
@@ -660,7 +660,7 @@ def findinds(val1, val2=None, eps=1e-6):
         findinds(rand(10)<0.5) # e.g. array([2, 4, 5, 9])
         findinds([2,3,6,3], 6) # e.g. array([2])
     
-    Version: 2016jun06 by cliffk
+    Version: 2016jun06 
     '''
     from numpy import nonzero, array, ndim
     if val2==None: # Check for equality
@@ -685,7 +685,7 @@ def findnearest(series=None, value=None):
         findnearest([2,3,6,3], 6) # returns 2
         findnearest([0,2,4,6,8,10], [3, 4, 5]) # returns array([1, 2, 2])
     
-    Version: 2017jan07 by cliffk
+    Version: 2017jan07
     '''
     from numpy import argmin
     series = promotetoarray(series)
@@ -724,7 +724,7 @@ def smoothinterp(newx=None, origx=None, origy=None, smoothness=None, growth=None
         hold(True)
         scatter(origx,origy)
     
-    Version: 2016nov02 by cliffk
+    Version: 2016nov02
     '''
     from numpy import array, interp, convolve, linspace, concatenate, ones, exp, isnan, argsort, ceil
     
@@ -1057,7 +1057,7 @@ def makefilepath(filename=None, folder=None, ext=None, default=None, split=False
     
     Assuming project.filename is None and project.name is "soggyrice" and ./congee doesn't exist:
         * Makes folder ./congee
-        * Returns e.g. ('/home/cliffk/optima/congee', 'soggyrice.prj')
+        * Returns e.g. ('/home/optima/congee', 'soggyrice.prj')
     
     Actual code example from project.py:
         fullpath = makefilepath(filename=filename, folder=folder, default=[self.filename, self.name], ext='prj')
@@ -1273,7 +1273,7 @@ Example 2:
         count += 1
         setnested(foo, twig, count)   # {'a': {'y': 1, 'x': 2, 'z': 3}, 'b': {'a': {'y': 4, 'x': 5}}}
 
-Version: 2014nov29 by cliffk
+Version: 2014nov29 
 '''
 
 def getnested(nesteddict, keylist, safe=False): 

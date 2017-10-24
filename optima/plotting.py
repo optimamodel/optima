@@ -575,7 +575,7 @@ def plotimprovement(results=None, figsize=globalfigsize, lw=2, titlesize=globalt
     
     NOTE: do not call this function directly; instead, call via plotresults().
     
-    Version: 2016jan23 by cliffk    
+    Version: 2016jan23 
     '''
 
     if hasattr(results, 'improvement'): improvement = results.improvement # Get improvement attribute of object if it exists

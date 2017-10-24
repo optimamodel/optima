@@ -43,7 +43,7 @@ def plotresults(results, toplot=None, fig=None, figargs=None, **kwargs):
         results = P.runsim('default')
         plotresults(results)
         
-    Version: 1.3 (2016jan25) by cliffk
+    Version: 2016jan25
     '''
     
     if figargs is None: figargs = dict()

@@ -434,7 +434,7 @@ class Par(object):
         * Popsizepars have sample() = msample, interp() = m*i[]*exp(e[])
         * Yearpars have no sampling methods, and interp() = t
     
-    Version: 2016nov06 by cliffk    
+    Version: 2016nov06 
     '''
     def __init__(self, short=None, name=None, limits=(0.,1.), by=None, manual='', fromdata=None, m=1.0, prior=None, verbose=None, **defaultargs): # "type" data needed for parameter table, but doesn't need to be stored
         ''' To initialize with a prior, prior should be a dict with keys 'dist' and 'pars' '''
