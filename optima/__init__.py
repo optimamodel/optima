@@ -56,7 +56,7 @@ from copy import deepcopy as dcp
 
 # Utilities -- import alphabetically
 from .utils import blank, boxoff, checkmem, checktype, compareversions, dataindex, dataframe, defaultrepr
-from .utils import drprint, findinds, findnearest, getdate, getfilelist, getvaliddata, getvalidinds, gitinfo, indent, isnumber, isiterable
+from .utils import drprint, findinds, findnearest, getdate, getfilelist, getvaliddata, getvalidinds, gitinfo, inclusiverange, indent, isnumber, isiterable
 from .utils import Link, LinkException, loadbalancer, makefilepath, objectid, objatt, objmeth, objrepr
 from .utils import odict, percentcomplete, perturb, printarr, printdata as pd, printv, printtologfile
 from .utils import promotetoarray, promotetolist, promotetoodict, quantile, runcommand, sanitize, scaleratio

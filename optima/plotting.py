@@ -168,7 +168,7 @@ def getplotselections(results, advanced=False):
                     plotepikeys.append(key+'-'+subkey)
         for name in epinames: # e.g. 'HIV prevalence'
             for subname in epiplottypes: # e.g. 'total'
-                if not(ismultisim and subname=='stacked'): # Stacked multisim plots don't make sense -- WARNING, this is clunky!!!
+                if not(ismultisim and subname=='stacked'): # Stacked multisim plots don't make sense -- TODO: handle this better
                     plotepinames.append(name+' - '+subname)
     else:
         plotepikeys = dcp(epikeys)
@@ -575,7 +575,7 @@ def plotimprovement(results=None, figsize=globalfigsize, lw=2, titlesize=globalt
     
     NOTE: do not call this function directly; instead, call via plotresults().
     
-    Version: 2016jan23 by cliffk    
+    Version: 2016jan23 
     '''
 
     if hasattr(results, 'improvement'): improvement = results.improvement # Get improvement attribute of object if it exists
@@ -782,9 +782,9 @@ def plotcoverage(multires=None, die=True, figsize=globalfigsize, legendsize=glob
             for i,x in enumerate(toplot[plt][:]):
                 if hasattr(x, '__len__'): 
                     try: progdata[i] = x[y]
-                    except: 
-                        try: progdata[i] = x[-1] # If not enough data points, just use last -- WARNING, KLUDGY
-                        except: progdata[i] = 0. # If not enough data points, just use last -- WARNING, KLUDGY
+                    except:# TODO: May break in some circumstances
+                        try: progdata[i] = x[-1] # If not enough data points, just use last 
+                        except: progdata[i] = 0. 
                 else:                     progdata[i] = x
             progdata *= 100 
             xbardata = arange(nprogs)+.75+barwidth*y
@@ -871,6 +871,7 @@ def plotcascade(results=None, aspercentage=False, cascadecolors=None, figsize=gl
         cascinds = [startind, endind]
         baselabel = '%4i' % plotstartyear
         endlabel  = '%4i' % plotendyear
+        if baselabel==endlabel: endlabel += ' ' # Small hack to avoid bug if both are the same
         yearlabels = [baselabel, endlabel]
         casclabels  = ['PLHIV', 'Diagnosed', 'Treated', 'Suppressed']
         casckeys    = ['numplhiv',  'numdiag',   'numtreat','numsuppressed']

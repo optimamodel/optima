@@ -49,6 +49,7 @@ def setmigrations(which='migrations'):
         ('2.3.7', ('2.3.8', '2017-05-23', None,              'Malawi: Many minor changes to plotting, parameters, etc.')),
         ('2.3.8', ('2.4',   '2017-06-05', None,              'Ukraine: ICER analysis; cascade bar plot; GUI tools; summary() and fixprops() methdods')),
         ('2.4',   ('2.5',   '2017-07-03', None,              'Made registration public')),
+        ('2.5',   ('2.6',   '2017-10-23', None,              'Public code release')),
         ])
     
     # Define changelog
@@ -464,7 +465,7 @@ def fixsettings(project, resetversion=True, **kwargs):
         try: oldsettings[setting] = getattr(project.settings, setting) # Try to pull out the above settings...
         except: pass # But don't worry if they don't exist
     
-    project.settings = op.Settings() # Completely refresh -- WARNING, will mean future migrations to settings aren't necessary!
+    project.settings = op.Settings() # Completely refresh -- NOTE, will mean future migrations to settings aren't necessary!
     
     # Replace with original settings
     for settingkey,settingval in oldsettings.items(): 
@@ -822,7 +823,7 @@ def removegaoptim(portfolio):
         if len(portfolio.gaoptims)>1:
             print('WARNING, this portfolio has %i GAOptims but only the last one will be migrated! If you need the others, then use F = loadobj(<filename>) and save what you need manually.')
         portfolio.objectives = portfolio.gaoptims[-1].objectives
-        portfolio.results = portfolio.gaoptims[-1].resultpairs # WARNING, unlikely to work
+        portfolio.results = portfolio.gaoptims[-1].resultpairs # TODO: robustify
     for attr in ['gaoptims', 'outputstring']:
         try: delattr(portfolio, attr)
         except: pass

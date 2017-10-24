@@ -25,9 +25,9 @@ define(['angular', 'ui.router'], function (angular) {
         $scope.projectService = projectService;
         // Set up a watcher to check when the projectService has things loaded in
         // and when it is, select the first project for the select list.
-        $scope.$watch('projectService.optimaliteprojects[0]', function() {
-          if (projectService.optimaliteprojects.length > 0) {
-            $scope.olselectedproject = projectService.optimaliteprojects[0];
+        $scope.$watch('projectService.optimademoprojects[0]', function() {
+          if (projectService.optimademoprojects.length > 0) {
+            $scope.olselectedproject = projectService.optimademoprojects[0];
           }
         });
       }
@@ -100,14 +100,14 @@ define(['angular', 'ui.router'], function (angular) {
           });
       };
 
-      $scope.copyOptimaLiteProject = function(project) {
+      $scope.copyOptimaDemoProject = function(project) {
         var name =
         projectService
           .copyProject(
             project.id,
             rpcService.getUniqueName(project.name, getProjectNames()))
           .then(function() {
-            toastr.success('Project "'+project.name+'" loaded from database. Please proceed directly to analysis (scenarios and/or optimizations)');
+            toastr.success('Project "'+project.name+'" loaded from database. Note: The Optima Consortium does not ensure that this project is comprehensive.');
             $state.reload();
           });
       };
@@ -186,8 +186,8 @@ define(['angular', 'ui.router'], function (angular) {
           });
       };
 
-      $scope.openOptimaLiteProjectList = function() {
-        modalService.optimaLiteProjectList();
+      $scope.openOptimaDemoProjectList = function() {
+        modalService.optimaDemoProjectList();
       };
 
       initialize();

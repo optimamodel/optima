@@ -354,7 +354,7 @@ def get_parameters_from_parset(parset, advanced=False):
     mflists = parset.manualfitlists(advanced=advanced)
     parameters = []
     for p in range(len(mflists['keys'])):
-        parameters.append({ # WARNING, stupid name inconsistencies
+        parameters.append({ # Note, some name inconsistencies
             'key':    mflists['keys'][p],
             'subkey': mflists['subkeys'][p],
             'type':   mflists['types'][p],
@@ -512,7 +512,7 @@ def get_parameters_for_outcomes(project, progset_id, parset_id):
             'name': pars[par_short].name,
             'coverage': (pars[par_short].limits[1]=='maxpopsize'), # Replaces "coverage" by testing if the upper limit is maxpopsize
             'limits': get_par_limits(project, pars[par_short]),
-            'interact': 'additive', # WARNING, temporary fix
+            'interact': 'additive', # TODO: Allow different interactivity options
             'populations': [
                 {
                     'pop': popKey,
@@ -1442,7 +1442,7 @@ def set_optimization_summaries_on_project(project, optimization_summaries):
         optim.progsetname = get_progset_from_project(project, summary["progset_id"]).name
 
         for objkey in optim.objectives.keys(): # Update by keys so we preserve order
-            if objkey in summary["objectives"]: # WARNING, this shouldn't be necessary, but just in case...
+            if objkey in summary["objectives"]: # This shouldn't be necessary, but just in case...
                 optim.objectives[objkey] = summary["objectives"][objkey]
         optim.objectives["which"] = summary["which"]
 
@@ -1526,7 +1526,7 @@ def set_portfolio_summary_on_portfolio(portfolio, summary):
     Saves the summary result onto the portfolio and returns
     a list of project_ids of projects that are not in the portfolio
     """
-    portfolio.objectives = op.odict(summary['objectives']) # WARNING, this destroys order
+    portfolio.objectives = op.odict(summary['objectives']) # Note, this destroys order
     
     print("> set_portfolio_summary_on_portfolio")
     project_ids = [s["id"] for s in summary["projects"]]

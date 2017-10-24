@@ -358,7 +358,7 @@ class TitledRange(object):
                     if self.content.assumption_data is not None:
                         try:
                             assumptiondata = self.content.assumption_data[i]
-                            if isinstance(assumptiondata, list): # Check to see if it's a list -- WARNING, maybe kudgy?
+                            if isinstance(assumptiondata, list): # Check to see if it's a list 
                                 if len(assumptiondata)!=1: # Check to see if it has the right length
                                     errormsg = 'WARNING, assumption "%s" appears to have the wrong length:\n%s' % (self.content.name, assumptiondata)
                                     print(errormsg)
@@ -416,7 +416,7 @@ class OptimaSpreadsheet:
         return current_row
         
     def emit_matrix_block(self, name, current_row, row_names=None, column_names=None, data=None, **kwargs):
-        if column_names is None: column_names = self.getrange('allpops') # WARNING, not great to hardcode this, but this is always the case!
+        if column_names is None: column_names = self.getrange('allpops') # Not great to hardcode this, but this is always the case!
         content = OptimaContent(name=name, row_names=row_names, column_names=column_names, data=data)
         content.assumption = False
         the_range = TitledRange(self.current_sheet, current_row, content)

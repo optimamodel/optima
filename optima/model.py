@@ -317,10 +317,10 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
     ### Set initial epidemic conditions 
     #################################################################################################################
     
-    # Set parameters
-    averagedurationinfected = 10.0/2.0   # Assumed duration of undiagnosed HIV pre-AIDS...used for calculating ratio of diagnosed to undiagnosed. WARNING, KLUDGY
-    averagedurationdiagnosed = 1.   # Assumed duration of diagnosed HIV pre-treatment...used for calculating ratio of lost to in care. WARNING, KLUDGY
-    averagedurationincare = 3.   # Assumed duration of diagnosed HIV pre-treatment...used for calculating ratio of lost to in care. WARNING, KLUDGY
+    # TODO: Set parameters, remove hard-coding
+    averagedurationinfected = 10.0/2.0   # Assumed duration of undiagnosed HIV pre-AIDS...used for calculating ratio of diagnosed to undiagnosed
+    averagedurationdiagnosed = 1.   # Assumed duration of diagnosed HIV pre-treatment...used for calculating ratio of lost to in care
+    averagedurationincare = 3.   # Assumed duration of diagnosed HIV pre-treatment...used for calculating ratio of lost to in care
 
     # Check wither the initial distribution was specified
     if initpeople is not None:
@@ -687,7 +687,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
 
         # Precalculate proportion on PMTCT, whether numpmtct or proppmtct is used
         numhivpospregwomen = 0
-        timestepsonpmtct = 1./dt # Specify the number of timesteps on which mothers are on PMTCT -- WARNING, KLUDGY -- at the moment, hard-coded to 1 year
+        timestepsonpmtct = 1./dt # Specify the number of timesteps on which mothers are on PMTCT -- # TODO: remove hard-coding
         for p1,p2,birthrates,alleligbirthrate in birthslist: # p1 is mothers, p2 is children
             numhivpospregwomen += birthrates[t]*people[alldx, p1, t].sum()*timestepsonpmtct # Divide by dt to get number of women
         if isnan(proppmtct[t]): calcproppmtct = numpmtct[t]/(eps+numhivpospregwomen) # Proportion on PMTCT is not specified: use number
@@ -897,7 +897,7 @@ def runmodel(project=None, simpars=None, pars=None, parsetname=None, progsetname
     Convenience function for running the model. Requires input of either "simpars" or "pars"; and for including the data,
     requires input of either "project" or "data". All other inputs are optional.
     
-    Version: 2017jun04 by cliffk    
+    Version: 2017jun04
     '''
     if settings is None:
         try:    settings = project.settings 
