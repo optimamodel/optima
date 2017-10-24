@@ -1,6 +1,16 @@
 # 1. Quick start guide
 
-This README describes the steps involved in installing and running Optima. Follow the instructions in this section. Unless you're a developer, you won't need to follow the rest of the instructions.
+## 1.1. Introduction
+
+Optima HIV is a software tool that assists national decision-makers and program managers in achieving maximum impact for every dollar invested in the HIV response. Optima HIV was developed by the Optima Consortium for Decision Science (www.ocds.co), in partnership with the World Bank.
+
+This repository contains all the code required to run the Optima HIV software tool. For general information on Optima HIV, please see the User Guide (http://optimamodel.com/user-guide) For specific instructions on how to use the tool, please see the Reference Manual (http://optimamodel.com/manual).
+
+If you have any questions, please email us at info@optimamodel.com.
+
+## 1.2 Installation
+
+This section describes the steps involved in installing and running Optima. Follow the instructions in this section. **Unless you're a developer, you won't need to follow the rest of the instructions.**
 
 1. Download and install Anaconda, using default options (https://store.continuum.io/cshop/anaconda/).  
  **Make sure you download Python 2.7, not 3.6.**
@@ -28,7 +38,7 @@ This README describes the steps involved in installing and running Optima. Follo
 
 
 
-# 2. Setting up Optima on Windows
+# 2. Setting up Optima on Windows (for developers only)
 
 There are four steps to get full Optima set up:
 
