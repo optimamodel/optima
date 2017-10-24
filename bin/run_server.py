@@ -1,12 +1,12 @@
+# Ensure that the current folder is used, not the global defaults
 import sys
 import os
+optimafolder = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
+sys.path.insert(0, optimafolder) 
 
-try:
-    import server
-except:
-    sys.path.insert(0, os.path.abspath("server/src/"))
+# Load Optima
+from server import _autoreload
+from server import _twisted_wsgi
 
-import _autoreload
-import _twisted_wsgi
-
+# Run the server
 _autoreload.main(_twisted_wsgi.run)
