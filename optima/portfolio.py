@@ -16,7 +16,7 @@ class Portfolio(object):
 
     The super Optima portfolio class  -- this contains Projects and GA optimizations.
 
-    Version: 2016jan20 by davidkedz
+    Version: 2016jan20 
     """
     
     #######################################################################################################
