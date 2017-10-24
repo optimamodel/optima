@@ -1,7 +1,7 @@
 """
 This module defines the classes for stores the results of a single simulation run.
 
-Version: 2016oct28
+Version: 2017oct23
 """
 
 from optima import OptimaException, Link, Settings, odict, pchip, plotpchip, sigfig # Classes/functions
@@ -383,7 +383,7 @@ class Resultset(object):
 
         
         # Calculate DALYs
-        yearslostperdeath = 15 # WARNING, KLUDGY -- this gives roughly a 5:1 ratio of YLL:YLD
+        yearslostperdeath = 15 # TODO: this gives roughly a 5:1 ratio of YLL:YLD; calculate more precisely
         disutiltx = self.pars['disutiltx'].y
         disutils = [self.pars['disutil'+key].y for key in self.settings.hivstates]
 

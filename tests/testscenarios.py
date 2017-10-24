@@ -227,7 +227,7 @@ if '90-90-90' in tests:
     
     P = defaultproject('best')
     P.cleanresults() # Check that scenarios can be run even if no results stored
-    P.pars()['fixproptx'].t = 2100 # WARNING, kludgy
+    P.parset().fixprops(False) # To ensure the scenarios have an effect
     
     pops = P.data['pops']['short']
     

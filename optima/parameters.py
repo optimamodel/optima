@@ -353,7 +353,7 @@ class Parameterset(object):
         
         output = ''
         for parname,par in self.pars.items():
-            prefix2 = None # WARNING, kludgy way of handling fact that some parameters need more than one line to print
+            prefix2 = None # Handle the fact that some parameters need more than one line to print
             values2 = None
             cvalues2 = None
             if hasattr(par,'manual'):
@@ -1130,7 +1130,7 @@ def makepars(data=None, verbose=2, die=True, fixprops=None):
 
     # Fix treatment from final data year
     for key in ['fixproptx', 'fixpropsupp', 'fixpropdx', 'fixpropcare', 'fixproppmtct']:
-        pars[key].t = 2100 # WARNING, KLUDGY -- don't use these, so just set to well past the end of the analysis
+        pars[key].t = 2100 # TODO: don't use these, so just set to (hopefully) well past the end of the analysis
     pars = togglefixprops(pars, fix=fixprops) # Optionally fix the proportions
 
     # Set the values of parameters that aren't from data

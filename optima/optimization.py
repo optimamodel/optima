@@ -408,7 +408,7 @@ def outcomecalc(budgetvec=None, which=None, project=None, parsetname=None, progs
         if outputresults:
             results.outcome = outcome
             results.rawoutcomes = rawoutcomes
-            results.budgetyears = [objectives['start']] # WARNING, this is ugly, should be made less kludgy
+            results.budgetyears = [objectives['start']] # Use the starting year
             results.budget = constrainedbudget # Convert to budget
             output = results
         else:
@@ -433,7 +433,7 @@ def outcomecalc(budgetvec=None, which=None, project=None, parsetname=None, progs
         # Output results
         if outputresults:
             results.outcomes = odict([('baseline',baseline), ('final',final), ('target',target), ('targetfrac',targetfrac)])
-            results.budgetyears = [objectives['start']] # WARNING, this is ugly, should be made less kludgy
+            results.budgetyears = [objectives['start']] # Use the starting year
             results.budget = constrainedbudget # Convert to budget
             results.targetsmet = targetsmet
             results.target = target
@@ -844,7 +844,7 @@ def minoutcomes(project=None, optim=None, tvec=None, verbose=None, maxtime=None,
             args['initpeople'] = None # Do this so it runs for the full time series, and is comparable to the optimization result
             args['totalbudget'] = origbudget[:].sum() # Need to reset this since constraining the budget
             doconstrainbudget = True # This is needed so it returns the full budget odict, not just the budget vector
-            inds = optiminds # WARNING, super kludgy
+            inds = optiminds # Reset to only optimizable indices
         else:
             args['initpeople'] = initpeople # Do this so saves a lot of time (runs twice as fast for all the budget scenarios)
             args['totalbudget'] = origtotalbudget
