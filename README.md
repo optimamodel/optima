@@ -8,7 +8,7 @@ This repository contains all the code required to run the Optima HIV software to
 
 If you have any questions, please email us at info@optimamodel.com.
 
-## 1.2 Installation
+## 1.2. Installation
 
 This section describes the steps involved in installing and running Optima. Follow the instructions in this section. **Unless you're a developer, you won't need to follow the rest of the instructions.**
 
