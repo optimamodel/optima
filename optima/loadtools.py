@@ -465,7 +465,7 @@ def fixsettings(project, resetversion=True, **kwargs):
         try: oldsettings[setting] = getattr(project.settings, setting) # Try to pull out the above settings...
         except: pass # But don't worry if they don't exist
     
-    project.settings = op.Settings() # Completely refresh -- WARNING, will mean future migrations to settings aren't necessary!
+    project.settings = op.Settings() # Completely refresh -- NOTE, will mean future migrations to settings aren't necessary!
     
     # Replace with original settings
     for settingkey,settingval in oldsettings.items(): 
@@ -823,7 +823,7 @@ def removegaoptim(portfolio):
         if len(portfolio.gaoptims)>1:
             print('WARNING, this portfolio has %i GAOptims but only the last one will be migrated! If you need the others, then use F = loadobj(<filename>) and save what you need manually.')
         portfolio.objectives = portfolio.gaoptims[-1].objectives
-        portfolio.results = portfolio.gaoptims[-1].resultpairs # WARNING, unlikely to work
+        portfolio.results = portfolio.gaoptims[-1].resultpairs # TODO: robustify
     for attr in ['gaoptims', 'outputstring']:
         try: delattr(portfolio, attr)
         except: pass

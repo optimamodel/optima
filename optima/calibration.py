@@ -60,7 +60,7 @@ def autofit(project=None, name=None, fitwhat=None, fitto=None, method='wape', ma
 
 
 
-## WARNING -- the following two functions must be updated together! Annoying, I know...
+## WARNING -- the following two functions must be updated together! 
 
 # Populate lists of what to fit
 def makeparlist(pars, fitwhat):
@@ -152,7 +152,7 @@ def objectivecalc(parvec=None, pars=None, parlist=None, project=None, fitto='pre
     TODO: replace 'bestindex' with upper and lower limits for the data
     '''
     
-    if doplot: # Store global information for debugging -- WARNING, is this the best way of doing this?
+    if doplot: # Store global information for debugging -- TODO, consider better ways of doing this
         global autofitfig, autofitresults
         from pylab import figure, ceil, sqrt, subplot, scatter, xlabel, ylabel, plot, show, pause, ylim, bar, arange
         if autofitfig is None: 
@@ -188,7 +188,7 @@ def objectivecalc(parvec=None, pars=None, parlist=None, project=None, fitto='pre
             if tmpdata is not None: # If it actually exists, proceed
                 tmpmodel = getattr(this, attr) # Get this result, e.g. results.main['prev'].tot
                 datarows = tmpdata[bestindex] # Pull out data without uncertainty
-                modelrows = tmpmodel[bestindex] # Pull out just the best result (likely only 1 index) -- WARNING, should be another index!
+                modelrows = tmpmodel[bestindex] # Pull out just the best result (likely only 1 index) -- TODO: check if should be another index
                 nrows = len(datarows)
                 for row in range(nrows): # Loop over each available row
                     datarow = datarows[row]
