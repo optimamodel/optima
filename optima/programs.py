@@ -1075,7 +1075,7 @@ class CCOF(object):
         else:
             if (not self.ccopars['t']) or (ccopar['t'] not in self.ccopars['t']):
                 for ccopartype in self.ccopars.keys():
-                    if ccopartype in ccopar.keys():
+                    if ccopartype in ccopar.keys() and ccopar[ccopartype] is not None: #Treatment progs can have an empty list for saturation
                         self.ccopars[ccopartype].append(ccopar[ccopartype])
                 printv('\nAdded CCO parameters "%s". \nCCO parameters are: %s' % (ccopar, self.ccopars), 4, verbose)
             else:
