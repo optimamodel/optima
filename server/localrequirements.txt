@@ -1,0 +1,9 @@
+flask-login
+flask-sqlalchemy
+flask-restful-swagger
+mpld3
+celery
+redis
+twisted
+validate-email
+psycopg2

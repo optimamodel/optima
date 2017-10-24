@@ -22,3 +22,22 @@
     color: #BE2222;
   }
 }
+
+.fat-modal .modal-dialog {
+  width: auto;
+  max-width: 900px;
+}
+
+.modal-content {
+  overflow: auto;
+}
+
+.delete {
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.chart-box td {
+  vertical-align: top;
+}

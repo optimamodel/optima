@@ -1,0 +1,143 @@
+<div style="
+       display: flex;
+       flex-direction: row;
+       width: 100%;
+       height: 100%;">
+
+  <div class="allcharts"
+       style="
+         flex: 1 1;
+         overflow: auto;
+         padding: 0;">
+
+    <div
+      style="
+        display: flex;
+        flex-wrap: wrap;">
+      <div
+          ng-repeat="chart in graphs.mpld3_graphs"
+          class="repeat-box">
+        <div
+            style="
+              padding: 15px 0px 5px 0px;
+              margin: 0;
+              border-right: 1px solid #EEE;
+              border-bottom: 1px solid #EEE;"
+            class="chart-container ">
+          <div
+              mpld3-chart="chart"
+              chart-id="{{ chart.id }}"
+              result-id="{{ graphs.resultId }}"
+              which="{{ chart.graphKey }}"
+              graph-selectors="{{ getSelectors() }}"
+              graph-index="{{ $index }}">
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div ng-if="graphs.selectors.length > 0"
+       style="
+         flex: 0 0 270px;
+         border-left: 1px solid #DDD;
+         padding: 0px 20px 5px 20px;
+         overflow: auto;">
+    <div>
+
+      <div ng-hide="!(graphs.mpld3_graphs.length > 0)"
+           style="width:100%;
+         border-bottom: 1px solid #EEE">
+        <br>
+        <button
+          type="button"
+          class="btn"
+          ng-click="exportAllFigures()">
+          Export figures
+        </button>
+        <button
+          type="button"
+          class="btn"
+          ng-click="exportAllData()">
+          Export data
+        </button>
+        <br clear="all">
+        <br>
+      </div>
+
+      <br>
+
+      <div style="display:table">
+        <div style="display:table-row">
+          <div style="display:table-cell; text-align:right; padding-right:10px; vertical-align: middle;">
+            <b>Size:</b>
+          </div>
+          <div style="display:table-cell; width:90%">
+            <rzslider
+              rz-slider-model="state.slider1.value"
+              rz-slider-options="state.slider1.options">
+            </rzslider>
+          </div>
+        </div>
+        <div style="display:table-row">
+          <div style="display:table-cell; text-align:right; padding-right:10px; vertical-align: middle;">
+            <b>Font:</b>
+          </div>
+          <div style="display:table-cell; width:90%">
+            <rzslider
+              rz-slider-model="state.slider2.value"
+              rz-slider-options="state.slider2.options">
+            </rzslider>
+          </div>
+        </div>
+      </div>
+
+      <br>
+
+      <button
+          style="margin-bottom: 10px;"
+          class="btn"
+          ng-click="updateGraphs()">
+        Update
+      </button>
+      <button
+          style="margin-bottom: 10px;"
+          class="btn"
+          ng-click="clearSelectors()">
+        Clear
+      </button>
+      <button
+        style="margin-bottom: 10px;"
+        class="btn"
+        ng-click="defaultSelectors()">
+        Default
+      </button>
+
+    </div>
+    <div
+        style="
+            text-indent: -15px;
+            padding-left: 15px;"
+        ng-repeat="selector in graphs.selectors"
+        class="option">
+      <input
+          type="checkbox"
+          ng-model="selector.checked">
+        {{selector.name}}
+      </input>
+    </div>
+    <div>
+      <br>
+      <button
+        style="margin-bottom: 10px;"
+        class="btn"
+        ng-click="toggleAdvanced()">
+        {{graphs.advanced ? 'Normal options': 'Advanced options'}}
+      </button>
+    </div>
+
+  </div>
+
+
+</div>

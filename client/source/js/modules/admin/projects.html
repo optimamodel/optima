@@ -1,0 +1,69 @@
+<div class="rish">
+  <h3>Manage projects</h3>
+  <div class="section" ng-show="!users.length"> No other users have projects. </div>
+  <div class="section" ng-show="users.length" ng-repeat="user in ::users">
+    <h4>
+      {{ ::user.data.username }}
+      {{ ::user.data.displayName }}
+      <span ng-show="user.data.email">{{ ::user.data.email }}</span>
+    </h4>
+    <table
+        ng-show="user.projects.length"
+        class="table table-bordered table-hover table-striped"
+        style="width: auto">
+      <thead>
+      <tr>
+        <th>Name</th>
+        <th>Version</th>
+        <th>Created on</th>
+        <th>Updated on</th>
+        <th>Data uploaded on</th>
+        <th colspan="7">Actions</th>
+      </tr>
+      </thead>
+      <tbody>
+      <tr
+          ng-repeat="project in user.projects | orderBy: 'name'"
+          ng-class="{highlighted: projectService.project.id === project.id}">
+        <td>
+          {{ ::project.name }}
+        </td>
+        <td>
+          {{ ::project.version }}
+        </td>
+        <td>
+          {{ ::project.creationTime| date:'yyyy-MM-dd HH:mm:ss'}}
+        </td>
+        <td>
+          {{ ::project.updatedTime ? (project.updatedTime | date:'yyyy-MM-dd HH:mm:ss') : 'No modification'}}
+        </td>
+        <td>
+          {{ project.dataUploadTime ? (project.dataUploadTime | date:'yyyy-MM-dd HH:mm:ss') : 'No data uploaded'}}
+        </td>
+        <td>
+          <button class="btn" ng-click="open(project.name, project.id)">Open</button>
+        </td>
+        <td>
+          <button class="btn" ng-click="editProjectName(project)">Rename</button>
+        </td>
+        <td>
+          <button class="btn" ng-click="copy(project.name, project.id)">Copy</button>
+        </td>
+        <td>
+          <button class="btn" ng-click="downloadSpreadsheet(project.name, project.id)">Download spreadsheet</button>
+        </td>
+        <td>
+          <button class="btn" ng-click="downloadProject(project.name, project.id)">Download project
+          </button>
+        </td>
+        <td>
+          <button class="btn" ng-click="deleteProject(project.id)">Delete</button>
+        </td>
+      </tr>
+      </tbody>
+    </table>
+    <div ng-show="user.projects.length === 0">
+      <i>No projects found for this user</i>
+    </div>
+  </div>
+</div>

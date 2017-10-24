@@ -1,64 +1,50 @@
 var _ = require('underscore');
-var assets  = require('postcss-assets');
 var autoprefixer = require('autoprefixer');
 var es = require('event-stream');
 var gulp = require('gulp');
-var karma = require('gulp-karma');
 var livereload = require('gulp-livereload');
 var ngAnnotate = require('gulp-ng-annotate');
 var postcss = require('gulp-postcss');
 var replace = require('gulp-replace');
 var rjs = require('gulp-requirejs');
 var sass = require('gulp-sass');
-var spawn = require('child_process').spawn;
+var spawnSync = require('child_process').spawnSync;
 var uglify = require('gulp-uglify');
 var plumber = require('gulp-plumber');
+var fs = require('fs');
+var regexreplace = require('gulp-regex-replace');
 
 var handleError = function (err) {
   console.log(err.name, ' in ', err.plugin, ': ', err.message);
   process.exit(1);
 };
 
-// Bump version
-gulp.task('bump-version', function () {
-  spawn('git', ['rev-parse', '--abbrev-ref', 'HEAD']).stdout.on('data', function (data) {
-
-    // Get current branch name
-    var branch = data.toString();
-
-    // Verify we're on a release branch
-    if (/^(release|hotfix)\/.*/.test(branch)) {
-      var newVersion = branch.split('/')[1].trim();
-
-      // Update client index.html
-      gulp.src('./source/index.html')
-        .pipe(replace(/(bust=v)(\d*\.?)*/g, '$1' + newVersion))
-        .pipe(gulp.dest('./source'));
-
-      var updateJson = function (file) {
-        gulp.src(file)
-          .pipe(replace(/("version" *: *")([^"]*)(",)/g, '$1' + newVersion + '$3'))
-          .pipe(gulp.dest('./'));
-      };
-
-      updateJson('./bower.json');
-      updateJson('./package.json');
-
-      console.log('Successfully bumped to ' + newVersion);
-    } else {
-      console.error('This task should be executed on a release branch!');
-    }
-  });
+// Write version.js with the git version and date info
+gulp.task('write-version-js', function() {
+  try {
+    var data = spawnSync('git', ['rev-parse', '--short', 'HEAD']).output;
+    var version = data.toString().split(',')[1].trim();
+    var data2 = spawnSync('git', ['show', '-s', '--format=%ci', 'HEAD']).output;
+    var date = data2.toString().split(' ')[0].split(',')[1].trim();
+    var versionStr = version + " from " + date;
+  }
+  catch(err) {
+    versionStr = 'Git version information not available';
+  }
+  fs.writeFileSync(
+    'source/js/version.js',
+    "define([], function () { return '" + versionStr + "'; });");
+  console.log('Updated version.js to ' + versionStr);
 });
 
-// Copy
-gulp.task('copy', ['sass'], function () {
+// Copy assets, and vendor js files to the build directory
+gulp.task('copy-assets-and-vendor-js', ['compile-sass'], function () {
   return es.concat(
     // update index.html to work when built
     gulp.src(['source/index.html'])
       .pipe(gulp.dest('build')),
     // copy config-require
-    gulp.src(['source/js/config-require.js'])
+    gulp.src(['source/js/config.js'])
       .pipe(uglify().on('error', handleError))
       .pipe(gulp.dest('build/js')),
     // copy template files
@@ -75,55 +61,44 @@ gulp.task('copy', ['sass'], function () {
       .pipe(uglify().on('error', handleError))
       .pipe(gulp.dest('build/vendor/requirejs')),
     // copy mpld3, instead of minifying because we're using constructor names for plugin identification
-    gulp.src(['source/js/modules/d3-charts/mpld3.v0.3-patched.js'])
-      .pipe(gulp.dest('build/js/modules/d3-charts'))
+    gulp.src(['source/js/modules/charts/mpld3.v0.3.1.dev1.js'])
+      .pipe(gulp.dest('build/js/modules/charts'))
   );
 });
 
-// JavaScript
-gulp.task('js', function () {
-  var configRequire = require('./source/js/config-require.js');
+// Optimize the app into the build/js directory
+// NOTE: Something is not completed correctly here because the console never registers
+// a Finished for this task (which will cause any gulp tasks with dependencies on
+// 'compile-build-js-client-uglify' to also not complete. Possible reason: if any
+// @import dependencies in the sass fail, this will silently fail (argh!).
+gulp.task('compile-build-js-client-uglify', ['write-version-js'], function () {
+  var configRequire = require('./source/js/config.js');
   var configBuild = {
     baseUrl: 'source',
     insertRequire: ['js/main'],
     name: 'js/main',
+    out: 'main.js',
     optimize: 'none',
     wrap: true,
     excludeShallow: ['mpld3'] // excludes mpld3 from requirejs build
   };
   var config = _(configBuild).extend(configRequire);
 
-  return gulp.src(['source/js/main.js'])
-    .pipe(rjs(config).on('error', handleError))
+  return rjs(config)
+    .on('error', handleError)
     .pipe(ngAnnotate())
-    .pipe(uglify().on('error', handleError))
+    .pipe(uglify().on('error', handleError)) // This is key -- it compresses the JS, but takes a long time
     .pipe(gulp.dest('build/js/'));
 });
 
-// Karma
-gulp.task('karma', function () {
-  return gulp.src(['no need to supply files because everything is in config file'])
-    .pipe(karma({
-      configFile: 'karma.conf.js',
-      action: 'watch'
-    }).on('error', handleError));
-});
-
-gulp.task('karma-ci', function () {
-  return gulp.src(['no need to supply files because everything is in config file'])
-    .pipe(karma({
-      configFile: 'karma-compiled.conf.js',
-      action: 'run'
-    }).on('error', handleError));
-});
-
-gulp.task('font-awesome', function() {
+// Copy font-awesome files for icons
+gulp.task('copy-font-awesome-icons', function() {
   return gulp.src('source/vendor/font-awesome/fonts/*')
     .pipe(gulp.dest('source/assets/fonts'))
-})
+});
 
-// Sass
-gulp.task('sass', ['font-awesome'], function () {
+// Process SASS to generate the CSS files
+gulp.task('compile-sass', ['copy-font-awesome-icons'], function () {
   var cssGlobbing = require('gulp-css-globbing');
   var postcss = require('gulp-postcss');
   var sass = require('gulp-sass');
@@ -152,23 +127,60 @@ gulp.task('sass', ['font-awesome'], function () {
 });
 
 // Watch
-gulp.task('watch', ['sass'], function () {
+gulp.task('watch', [], function () {
   gulp.watch('source/sass/**/*.scss', ['sass']);
+  gulp.watch('source/js/**/*.js', ['compile-build-js-client-uglify']);
 
-  // enable Livereload
+  // enable livereload
   livereload.listen();
+
   gulp.watch([
-    'source/assets/*.css',
-    'source/index.html',
-    'source/js/**/*',
-    '!source/js/**/*.spec.js'
-  ]).on('change', livereload.changed);
+      'source/assets/*.css',
+      'source/index.html',
+      'source/js/**/*'])
+    .on(
+      'change', livereload.changed);
 });
 
-gulp.task('default', ['js', 'copy'], function () {
-  try {
-    gulp.run('karma-ci'); // CK: Put in a try-catch block because sometimes fails
-  }
-  catch(err) {
-  }
+// Task for doing cache-busting on the build files.
+// Note, there should be a ['compile-build-js-client-uglify'] set here as a dependency, but
+// this does not terminate correctly, so I can't use it.
+// So, currently a separate gulp call (gulp cache-bust)
+// needs to be made after the main call by the building scripts.
+gulp.task('cache-bust', function () {
+    // Grab the current date, returning 'unknown' if this doesn't work.
+    try {
+    	var today = new Date();
+		var version = today.getFullYear()+'.'+(today.getMonth()+1)+'.'+today.getDate()+'_'+today.getHours()+'.'+today.getMinutes()+'.'+today.getSeconds();
+    }
+    catch(err) {
+        version = 'unknown';
+    }
+    return es.concat(
+        // Do a regular expression replace "cacheBust=xxx" -> "cacheBust=_version_" for just index.html.
+        gulp.src(['build/index.html'])
+            .pipe(regexreplace({
+                regex: 'cacheBust=xxx',
+                replace: ('cacheBust=' + version)
+            }))
+            .pipe(gulp.dest('build/')),
+        // Do a regular expression replace "cacheBust=xxx" -> "cacheBust=_version_" for js files in modules.
+        gulp.src(['build/js/**/*.html', 'build/js/**/*.js'])
+            .pipe(regexreplace({
+                regex: 'cacheBust=xxx',
+                replace: ('cacheBust=' + version)
+            }))
+            .pipe(gulp.dest('build/js/'))
+    )
 });
+
+// Defaults
+gulp.task(
+  'default',
+  [
+    'copy-assets-and-vendor-js',
+    'compile-build-js-client-uglify',
+    //'cache-bust'  // uncomment once we can figure out how to fix 'compile-build-js-client-uglify' to halt correctly
+  ]
+);
+

@@ -14,4 +14,9 @@
   &.__foot {
     margin-bottom: $layout-gutter;
   }
+
+  > .row{
+  	width: 100%;
+  	float: left;
+  }
 }

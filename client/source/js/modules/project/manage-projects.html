@@ -1,0 +1,125 @@
+
+<div class="rich">
+
+  <h2>Create projects
+    <help ref="create-projects"/>
+  </h2>
+
+  <div style="padding-top:1em">
+    Choose a demonstration project from our database:
+  </div>
+
+  <select
+    ng-model="olselectedproject"
+    ng-options="p as p.name for p in projectService.optimademoprojects">
+  </select> &nbsp; &nbsp;
+  <a class="btn" ng-click="copyOptimaDemoProject(olselectedproject)">Add this project</a> &nbsp; &nbsp;
+
+  <br>
+
+  <div style="padding-top:1em">
+    Or create/upload a new project:
+  </div>
+
+  <a class="btn" ui-sref="createproject">Create new project</a> &nbsp; &nbsp;
+  <a class="btn" ng-click="uploadProject()">Upload project from file</a> &nbsp; &nbsp;
+  <a class="btn" ng-click="uploadProjectFromSpreadsheet()">Upload project from spreadsheet</a> &nbsp; &nbsp;
+
+  <br>
+  <br>
+  <br>
+
+  <div class="section" ng-show="projects.length">
+
+    <h2>Manage projects
+      <help ref="manage-projects"/>
+    </h2>
+
+    <input type="text"
+           class="txbox"
+           style="margin-bottom: 20px"
+           placeholder="&#x1f50e; Filter Projects" ng-model="searchTerm">
+
+    <table class="table table-bordered table-hover table-striped" style="width: auto">
+      <thead>
+      <tr>
+        <th>
+          <input type="checkbox" ng-click="selectAll()" ng-model="allSelected"/>
+        </th>
+        <th ng-click="updateSorting('name')" class="sortable">
+          Name
+          <span ng-show="sortType == 'name' && !sortReverse" class="fa fa-caret-down"></span>
+          <span ng-show="sortType == 'name' && sortReverse" class="fa fa-caret-up"></span>
+          <span ng-show="sortType != 'name'" class="fa fa-caret-up" style="visibility: hidden"></span>
+        </th>
+        <th>
+          Select
+        </th>
+        <th ng-click="updateSorting('creationTime')" class="sortable">
+          Created on
+          <span ng-show="sortType == 'creationTime' && !sortReverse" class="fa fa-caret-down"></span>
+          <span ng-show="sortType == 'creationTime' && sortReverse" class="fa fa-caret-up"></span>
+          <span ng-show="sortType != 'creationTime'" class="fa fa-caret-up" style="visibility: hidden"></span>
+        </th>
+        <th ng-click="updateSorting('updatedTime')" class="sortable">
+          Updated on
+          <span ng-show="sortType == 'updatedTime' && !sortReverse" class="fa fa-caret-down"></span>
+          <span ng-show="sortType == 'updatedTime' && sortReverse" class="fa fa-caret-up"></span>
+          <span ng-show="sortType != 'updatedTime'" class="fa fa-caret-up" style="visibility: hidden"></span>
+        </th>
+        <th ng-click="updateSorting('dataUploadTime')" class="sortable">
+          Data uploaded on
+          <span ng-show="sortType == 'dataUploadTime' && !sortReverse" class="fa fa-caret-down"></span>
+          <span ng-show="sortType == 'dataUploadTime' && sortReverse" class="fa fa-caret-up"></span>
+          <span ng-show="sortType != 'dataUploadTime'" class="fa fa-caret-up" style="visibility: hidden"></span>
+        </th>
+        <th>Actions</th>
+        <th>Data spreadsheet</th>
+        <th>Project file</th>
+      </tr>
+      </thead>
+      <tbody>
+      <tr ng-repeat="project in projectService.projects | orderBy:sortType:sortReverse | filter:filterByName" ng-class="{highlighted: projectService.project.id === project.id}">
+        <td>
+          <input type="checkbox" ng-model="project.selected"/>
+        </td>
+        <td>
+          {{ ::project.name }}</i>
+        </td>
+        <td>
+          <button class="btn __green" ng-click="open(project.name, project.id)">Open</button>
+        </td>
+        <td>
+          {{ ::project.creationTime| date:'yyyy-MMM-dd hh:mm a'}}
+        </td>
+        <td>
+          {{ ::project.updatedTime ? (project.updatedTime | date:'yyyy-MMM-dd hh:mm a') : 'No modification'}}
+        </td>
+        <td>
+          {{ ::project.dataUploadTime ? (project.dataUploadTime | date:'yyyy-MMM-dd hh:mm a') : 'No data uploaded'}}
+        </td>
+        <td style="white-space: nowrap">
+          <button class="btn" ng-click="copy(project.name, project.id)">Copy</button>
+          <button class="btn" ng-click="editProjectName(project)">Rename</button>
+        </td>
+        <td style="white-space: nowrap">
+          <button class="btn" ng-click="uploadSpreadsheet(project.name, project.id)">Upload</button>
+          <button class="btn" ng-click="downloadSpreadsheet(project.name, project.id)">Download</button>
+        </td>
+        <td style="white-space: nowrap">
+          <button class="btn" ng-click="downloadProject(project.name, project.id)">Download</button>
+          <button class="btn" ng-click="downloadPrjWithResults(project.name, project.id)">Download with results</button>
+        </td>
+      </tr>
+      </tbody>
+    </table>
+
+    <div style="display: flex; margin-left: -2%;" ng-show="projects.length">
+      <button ng-click="deleteSelected()" type="button" class="btn" style="margin-left:2%">Delete selected</button>
+      <button ng-click="downloadSelected()" type="button" class="btn" style="margin-left:2%">Download selected</button>
+    </div>
+
+  </div>
+
+</div>
+

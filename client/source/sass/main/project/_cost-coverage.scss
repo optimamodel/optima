@@ -1,0 +1,97 @@
+.c-cost-coverage {
+  &__button {
+    width: 90px;
+    &--submit {
+      width: 120px;
+      margin-top: 50px;
+      transition: all linear 100ms;
+    }
+    &--add-year {
+      margin-top: 15px;
+    }
+  }
+}
+
+.c-tab {
+  padding-top: 2%;
+}
+
+.c-select {
+  &__input {
+    margin-top: 3px;
+    width: auto;
+  }
+}
+
+.c-populations {
+  margin-top: 50px;
+}
+
+.c-population-form {
+  max-width: 760px;
+  width: 100%;
+}
+
+.c-table {
+  width: 100%;
+
+  &__header {
+    border-bottom: 1px solid #9C9C9C;
+    padding-left: 10px;
+    height: 45px;
+    &--centered {
+      text-align: center;
+    }
+  }
+
+  &__range-hint {
+    font-size: 11px;
+    font-weight: normal;
+    color: gray;
+  }
+
+  &__column {
+    padding: 8px;
+
+    &--year {
+      width: 17%;
+    }
+    &--text {
+      width: 63%;
+    }
+    &--inputs {
+
+    }
+  }
+
+  &__input {
+    width: 60px;
+
+    &.ng-invalid.ng-dirty {
+      border: 1px solid #CE7A7A;
+      color: #CE7A7A;
+    }
+
+    &--half {
+      width: 50px;
+    }
+  }
+
+  &__between-input {
+    margin: 0 2px;
+  }
+
+}
+
+.c-checkbox {
+  margin-right: 40px;
+}
+
+&.invalid {
+  border: solid #FF0000 1px;
+  outline: 0px;
+}
+
+.c-caption {
+  text-align: center;
+}

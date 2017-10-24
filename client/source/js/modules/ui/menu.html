@@ -1,0 +1,114 @@
+<div class="menu">
+
+  <div
+      ng-if="isAdmin"
+      ng-click="showAdminMenu = !showAdminMenu"
+      ng-mouseleave="showAdminMenu = false">
+    <div
+        class="menu-item"
+        ng-class="{'menu-active': isState('admin')}">
+      Admin
+      <i class="fa fa-caret-up" ng-if="showAdminMenu"></i>
+      <i class="fa fa-caret-down" ng-if="!showAdminMenu"></i>
+    </div>
+    <div
+        ng-if="showAdminMenu"
+        class="menu-dropdown">
+      <div
+          ui-sref="adminusers"
+          ng-click="updateMenuSelection('showAdminMenu')">
+        Manage users
+      </div>
+      <div
+          ui-sref="adminprojects"
+          ng-click="updateMenuSelection('showAdminMenu')">
+        Manage user projects
+      </div>
+    </div>
+  </div>
+
+  <div
+      ui-sref="home"
+      class="menu-item"
+      ng-class="{'menu-active': isState('home')}">
+    Projects
+  </div>
+
+  <div
+      ng-click="goIfProjectActive('calibration')"
+      ng-class="{'menu-active': isState('model')}"
+      class="menu-item">
+    Calibration <i class="fa fa-check" ng-if="checkCalibration()"></i>
+  </div>
+
+  <div
+      ng-click="goIfProjectActive('programs')"
+      ng-class="{'menu-active': isState('manageProgramSet')}"
+      class="menu-item">
+    Programs <i class="fa fa-check" ng-if="checkPrograms()"></i>
+  </div>
+
+  <div
+      ng-click="goIfProjectActive('costfunction')"
+      ng-class="{'menu-active': isState('cost-coverage')}"
+      class="menu-item">
+    Cost functions <i class="fa fa-check" ng-if="checkCostFuncs()"></i>
+  </div>
+
+  <div
+      ng-click="goIfProjectActive('scenarios')"
+      ng-class="{'menu-active': isState('scenarios')}"
+      class="menu-item">
+    Scenarios
+  </div>
+
+  <div
+      ng-click="goIfProjectActive('optimization')"
+      ng-class="{'menu-active': isState('optimization')}"
+      class="menu-item">
+    Optimization
+  </div>
+
+  <div
+      ui-sref="geospatial"
+      class="menu-item"
+      ng-class="{'menu-active': isState('portfolio')}">
+    Geospatial
+  </div>
+
+  <div
+      ng-click="showAccountHelpMenu = !showAccountHelpMenu"
+      ng-mouseleave="showAccountHelpMenu = false">
+    <div
+        class="menu-item"
+        ng-class="{'menu-active': isState('help') || isState('edit') || isState('feedback')}">
+      Account/help
+      <i class="fa fa-caret-up" ng-if="showAccountHelpMenu"></i>
+      <i class="fa fa-caret-down" ng-if="!showAccountHelpMenu"></i>
+    </div>
+    <div
+        ng-if="showAccountHelpMenu"
+        class="menu-dropdown">
+      <div ui-sref="edit">Edit account</div>
+      <div>
+        <a href="https://docs.google.com/document/d/18hGjBb1GO8cR_sZRTjMqBvBb0Fkmsz-DwzslstaqG-Y/edit#"
+           target="_blank"
+           style="color: #53646F; text-decoration: none">
+          Open user guide
+        </a>
+      </div>
+      <div ui-sref="help">Help</div>
+      <div ui-sref="feedback">Feedback</div>
+      <div>
+        <a href="http://optima-consortium.com"
+           target="_blank"
+           style="color: #53646F; text-decoration: none">
+          Optima website
+        </a>
+      </div>
+      <div ng-click="logout()">Logout</div>
+    </div>
+  </div>
+
+
+</div>

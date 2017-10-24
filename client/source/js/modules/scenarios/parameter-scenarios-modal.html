@@ -1,0 +1,138 @@
+
+<div class="modal-header">
+  CREATE OR EDIT A PARAMETER SCENARIO
+  <help ref="parameter-scenarios"/>
+</div>
+
+<div class="c-parsce-modal__field-wrap">
+  <label> Name </label>
+  <input
+      class="txbox"
+      type="text"
+      ng-model="scenario.name"
+      required/>
+  <div
+      class="error-hint"
+      ng-show="isNameClash(scenario.name)">
+    Scenario with this name already exists, please choose a different name.
+  </div>
+</div>
+
+<div class="c-parsce-modal__field-wrap">
+  <label>Parameter set:</label>
+  <select
+      class="txbox"
+      type="text"
+      ng-model="scenario.parset_id"
+      ng-change = "selectParset()"
+      required
+      ng-options="parset.id as parset.name for parset in parsets">
+  </select>
+</div>
+
+<table class="table" style="width:100%;">
+  <tr>
+    <th>Model parameters</th>
+    <th>Population</th>
+    <th>Start year</th>
+    <th>Final year</th>
+    <th>Start value</th>
+    <th>Final value</th>
+    <th></th>
+  </tr>
+
+  <tr ng-repeat="scenPar in scenario.pars">
+    <td>
+      <select
+          class="txbox __inline"
+          style="width: 300px;"
+          type="text"
+          ng-model="scenPar.name"
+          ng-options="p.short as p.name for p in parSelectors"
+          ng-change="selectNewPar($index)">
+      </select>
+    </td>
+    <td>
+      <select
+          class="txbox __inline"
+          style="width: 100px;"
+          type="text"
+          ng-model="scenPar.forLabel"
+          ng-change="resetStartValue($index)"
+          ng-options="pop.popLabel as pop.popLabel for pop in popsOfPar[$index]">
+      </select>
+    </td>
+    <td>
+      <select
+          class="txbox __inline"
+          style="width:70px;"
+          ng-model="scenPar.startyear"
+          ng-change="selectNewYear($index)"
+          ng-options="year for year in years"
+          type="number">
+      </select>
+    </td>
+    <td>
+      <select
+          class="txbox __inline"
+          style="width:70px;"
+          ng-model="scenPar.endyear"
+          ng-options="year for year in years"
+          type="number">
+      </select>
+    </td>
+    <td>
+      <input
+          class="txbox __inline"
+          style="width:70px;"
+          ng-model="scenPar.startval"
+          type="number"/>
+    </td>
+    <td>
+      <input
+          class="txbox __inline"
+          style="width:70px;"
+          ng-model="scenPar.endval"
+          type="number"/>
+    </td>
+    <td>
+      <span
+          class="fa fa-times"
+          style="float: right"
+          ng-click="removePar($index)">
+      </span>
+    </td>
+  </tr>
+</table>
+
+<a
+  class="modal-close fa fa-times"
+  ng-click="cancel()">
+</a>
+
+<div style="width: 100%; text-align: left">
+  <button
+      type="button"
+      class="btn"
+      ng-click="addPar()">
+    Add parameter
+  </button>
+</div>
+
+<div
+  style="
+    width: 100%;
+    text-align: center;
+    padding-top: 2em;">
+  <button
+      class="btn"
+      ng-click="cancel()">
+    Cancel
+  </button>
+  <button
+      class="btn"
+      ng-click="save()" >
+    Save
+  </button>
+</div>
+

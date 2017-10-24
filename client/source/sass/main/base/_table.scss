@@ -39,7 +39,7 @@ th {
       > td {
         padding: $table-cell-padding;
         line-height: $line-height-base;
-        vertical-align: top;
+        vertical-align: middle;
         border-top: 1px solid $table-border-color;
       }
     }
@@ -85,6 +85,10 @@ th {
       border: 0;
       padding: 2px 8px;;
     }
+  }
+
+  .wide {
+    width: 100px;
   }
 }
 
@@ -139,6 +143,11 @@ th {
     > td,
     > th {
       background-color: $table-bg-accent;
+    }
+  }
+  tr.highlighted {
+    > td {
+      background-color: #80ffaa !important;
     }
   }
 }

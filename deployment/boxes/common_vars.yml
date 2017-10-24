@@ -1,7 +1,0 @@
----
-  git_repository: git@github.com:optimamodel/Optima.git
-  install_dir: /opt/optima
-  log_file_path: "{{install_dir}}/server"
-  log_file_name: log
-  install_dir_client: "{{install_dir}}/client"
-  install_dir_api: "{{install_dir}}/server"

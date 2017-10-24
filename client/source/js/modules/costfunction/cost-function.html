@@ -1,0 +1,572 @@
+<div class="page rich c-cost-coverage">
+
+  <p></p>
+  <div class="error-hint" ng-show="vm.isMissingData">
+    No parameter sets, you need to <a ui-sref="home">upload a data spreadsheet</a> for this project.
+  </div>
+
+  <div class="error-hint" ng-show="vm.hasNoProgram">
+    No programs selected, you need to <a ui-sref="programs">select some programs</a> for this project.
+  </div>
+
+  <div ng-if="!vm.isMissingData && !vm.hasNoProgram">
+
+    <div style="width: 100%">
+
+      Parameter set:
+      <select
+        class="txbox"
+        style="
+          width: 12em;
+          display: inline;
+          margin-left: 0.5em;
+          margin-right: 2em; "
+        ng-options="parset as parset.name for parset in vm.parsets"
+        ng-change="vm.changeProgsetAndParset()"
+        ng-model="vm.state.parset">
+      </select>
+
+      Program set:
+      <select
+        class="txbox"
+        style="
+          width: 12em;
+          display: inline;
+          margin-left: 0.5em;"
+        ng-options="progset as progset.name for progset in vm.progsets"
+        ng-change="vm.changeProgsetAndParset()"
+        ng-model="vm.state.progset">
+      </select>
+
+      <icon action="undo" click="vm.undo()"/>
+      <icon action="redo" click="vm.redo()"/>
+
+    </div>
+
+    <div ng-if="vm.programs.length == 0">
+      <br>
+      <br>
+      No programs selected, you need to <a ui-sref="programs">select some programs</a> for this project.
+    </div>
+
+    <div ng-if="vm.programs.length > 0">
+
+      <style>
+        .selectTab {
+          border-top: 1px solid #999;
+          border-left: 1px solid #999;
+          border-right: 1px solid #999;
+          border-radius: 5px 5px 0 0;
+        }
+        .notSelectTab {
+          border-bottom: 1px solid #999;
+          padding-bottom: 2px;
+          color: #999;
+        }
+      </style>
+
+      <div
+          style="
+            margin-top: 50px;
+            display: flex;
+            width: 100%;
+            ">
+        <div style="flex: 0 0 10px;" class="notSelectTab"></div>
+        <div
+            style="
+              flex: 0 0 20em;
+              text-align: center;
+              cursor: pointer;
+              padding: 15px 10px 5px 10px;"
+            ng-repeat="tab in vm.tabs"
+            ng-class="(vm.activeTab != tab.slug) ? 'notSelectTab' : 'selectTab'"
+            ng-click="vm.selectTab(tab.slug)">
+          <h2>{{tab.name}}</h2>
+        </div>
+        <div style="flex: 1 1;" class="notSelectTab"></div>
+      </div>
+
+
+      <div style="width: 100%;">
+
+        <!-- Cost functions tab window -->
+        <div style="width: 100%;"
+             class="c-tab"
+             ng-if="vm.activeTab === 'cost'">
+
+          <div style="
+                width: 100%;
+                margin: 10px 0px 30px;">
+            <label>Program</label>
+            <select
+                style="
+                  margin-left: 0.5em;
+                  display: inline;
+                  width: 30em;"
+                class="txbox"
+                ng-options="p.name for p in vm.programs"
+                ng-change="vm.changeProgram()"
+                ng-model="vm.state.program">
+            </select>
+          </div>
+
+          <form name="bigForm"
+               ng-if="vm.state.program"
+               style="
+                  display: flex;
+                  width: 100%;
+                  margin-top: 10px">
+
+            <div style="flex: 0 0 540px;">
+
+              <h3>Define cost function
+                <help ref="define-cost-function"/>
+              </h3>
+
+              <table
+                  class="section table table-bordered">
+                <tr>
+                  <td>Year</td>
+                  <td>Estimated<br>population</td>
+                  <td>Saturation %</td>
+                  <td>Unit cost</td>
+                  <td></td>
+                </tr>
+                <tr ng-repeat="row in vm.state.ccoparsTable.rows">
+                  <td>
+                    <select
+                        ng-model="row[0]"
+                        ng-change="vm.setEstPopulationForCcopar()"
+                        ng-options="year for year in vm.state.yearSelector"
+                        class="txbox"/>
+                  </td>
+                  <td valign="center">
+                    <div class="txbox">
+                      {{row[1]}}
+                    </div>
+                  </td>
+                  <td>
+                    <ng-form name="saturationForm">
+                      <input
+                          ng-class="{ invalid: saturationForm.low.$invalid }"
+                          name="low"
+                          ng-model="row[2]"
+                          min="0"
+                          max="100"
+                          type="number"
+                          style="width: 50px"
+                          class="txbox __inline"
+                          required/>
+                      -
+                      <input
+                          ng-class="{ invalid: saturationForm.high.$invalid }"
+                          name="high"
+                          ng-model="row[3]"
+                          min="0"
+                          max="100"
+                          type="number"
+                          style="width: 50px"
+                          class="txbox __inline"
+                          required/>
+                      <div class="error-hint" ng-show="saturationForm.$invalid">
+                        Invalid values
+                      </div>
+                      <div class="error-hint" ng-show="vm.checkLowHighViolation(row[2], row[3])">
+                        Please ensure low < high
+                      </div>
+                    </ng-form>
+                  </td>
+                  <td>
+                    <ng-form name="unitForm">
+                      <input
+                          ng-class="{ invalid: unitForm.low.$invalid }"
+                          name="low"
+                          ng-model="row[4]"
+                          min="0"
+                          type="number"
+                          step="any"
+                          style="width: 85px"
+                          class="txbox __inline"
+                          required/>
+                      -
+                      <input
+                          ng-class="{ invalid: unitForm.high.$invalid }"
+                          name="high"
+                          ng-model="row[5]"
+                          min="0"
+                          type="number"
+                          step="any"
+                          style="width: 85px"
+                          class="txbox __inline"
+                          required/>
+                      <div class="error-hint" ng-show="unitForm.$invalid">
+                        Invalid values
+                      </div>
+                      <div class="error-hint" ng-show="vm.checkLowHighViolation(row[4], row[5])">
+                        Please ensure low < high
+                      </div>
+                    </ng-form>
+                  </td>
+                  <td>
+                    <icon action="delete" click="vm.deleteCccoparYear($index)"/>
+                  </td>
+                </tr>
+                <tr>
+                  <td colspan="5">
+                    <a class="btn" ng-click="vm.addCcoparYear()">
+                      Add year
+                    </a>
+                  </td>
+                </tr>
+              </table>
+
+              <h3>Past spending and coverage data
+                <help ref="spending-and-coverage"/>
+              </h3>
+
+              <table
+                  class="section table table-bordered">
+                <tr>
+                  <td>Year</td>
+                  <td>Spending</td>
+                  <td>Coverage</td>
+                  <td></td>
+                </tr>
+                <tr ng-repeat="costcovYear in vm.state.program.costcov">
+                  <td>
+                    <select
+                        ng-model="costcovYear.year"
+                        ng-options="year for year in vm.state.yearSelector"
+                        class="txbox __inline"/>
+                  </td>
+                  <td>
+                    <ng-form name="spendingForm">
+                      <input
+                          ng-class="{ invalid: spendingForm.spending.$invalid }"
+                          name="spending"
+                          ng-model="costcovYear.cost"
+                          min="0"
+                          type="number"
+                          step="any"
+                          style="width: 120px"
+                          class="txbox __inline"/>
+                        <div class="error-hint" ng-show="spendingForm.$invalid">
+                          Invalid value
+                        </div>
+                    </ng-form>
+                  </td>
+                  <td>
+                    <ng-form name="coverageForm">
+                      <input
+                          ng-class="{ invalid: coverageForm.coverage.$invalid }"
+                          name="coverage"
+                          ng-model="costcovYear.coverage"
+                          min="0"
+                          style="width: 120px"
+                          type="number"
+                          step="any"
+                          class="txbox __inline"/>
+                        <div class="error-hint" ng-show="coverageForm.$invalid">
+                          Invalid value
+                        </div>
+                    </ng-form>
+                  </td>
+                  <td>
+                    <icon action="delete" click="vm.deleteCostCovDataYear($index)"/>
+                  </td>
+                </tr>
+                <tr>
+                  <td colspan="4">
+                    <a class="btn" ng-click="vm.addCostCovDataYear()">
+                      Add year
+                    </a>
+                  </td>
+                </tr>
+              </table>
+
+              <div style="text-align: left">
+                <button
+                    ng-click="vm.saveProgram()"
+                    class="btn __green"
+                    ng-disabled="bigForm.$invalid || vm.checkLowHighValidationForAllCcopars()"
+                    style="margin-left: 0em; margin-bottom: 3em">
+                  Save & update
+                </button>
+              </div>
+
+
+            </div>
+
+            <div
+                ng-if="!vm.chartData"
+                style=" margin-left: 30px;">
+              <i>Parameters need to be defined to show graph</i>
+
+            </div>
+            <div
+                ng-if="vm.chartData"
+                class="costcov-chart-container"
+                style="
+                   margin-left: 30px;
+                   max-width: 700px;
+                   flex-basis: auto;
+                   flex-grow: 1;
+                   overflow: hidden;">
+
+              <div
+                  style="overflow: hidden"
+                  mpld3-chart="vm.state.chartData"
+                  chart-id="{{ vm.state.chartData.id }}"
+                  buttons-off
+                  ng-if="vm.state.chartData">
+              </div>
+
+              <br>
+              <br>
+
+              Maximum spending shown:
+              <input
+                  placeholder="e.g. 1000000"
+                  sytle="width: 150px"
+                  ng-model="vm.state.program.attr.xupperlim"
+                  type="number"/>
+
+              <br>
+              <br>
+              Remarks
+              <br>
+              <textarea
+                  style="width: 100%; height:4em;"
+                  ng-model="vm.state.program.attr.caption">
+              </textarea>
+              <br>
+
+            </div>
+
+          </form>
+        </div>
+
+        <!-- Outcome functions tab window -->
+        <div style="width: 100%;"
+             ng-if="vm.activeTab === 'outcome'">
+
+          <div style="margin: 30px 0 20px 0;">
+            <label>
+              Select parameter
+            </label>
+            <select
+              class="txbox c-select__input"
+              style="
+                display: inline;
+                width: 30em;
+                margin-left: 0.5em; "
+              ng-options="parameter.name for parameter in vm.parameters"
+              ng-change="vm.changeTargetParameter()"
+              ng-model="vm.state.parameter">
+            </select>
+            <help ref="define-outcome-functions"/>
+          </div>
+
+          <button
+              class="btn __green __m"
+              ng-click="vm.saveProgsetOutcomes()"
+              ng-disabled="vm.checkLowHighValidationForAllOutcomes()">
+            Save
+          </button>
+          <br>
+          <br>
+
+          <div ng-repeat="outcome in vm.state.targetedOutcomes">
+
+            <style>
+              .mytable th, .mytable td {
+                padding: 10px;
+                vertical-align: top;
+              }
+            </style>
+
+            <table
+                class="mytable"
+                ng-repeat="yearEntry in outcome.years"
+                cellpadding="10px"
+                style="
+                    max-width: 900px;
+                    border-top: 1px solid #999;
+                    border-bottom: 1px solid #999;
+                    border-spacing: 10px;">
+              <tr style="border-bottom: 1px solid #DDD">
+                <th>{{vm.state.parameter.name}} for {{vm.makePopKeyLabel(outcome.pop)}}</th>
+                <th>
+                  Parameter value
+                  <br>
+                  ({{vm.state.parameter.limits[0]}}
+                  -
+                  {{vm.state.parameter.limits[1]}})
+                </th>
+              </tr>
+
+              <tr>
+                <td>
+                  in the absence of any programs targeting this parameter
+                  <br>
+                  <div
+                      class="error-hint"
+                      ng-show="
+                        vm.checkLowHighViolation(yearEntry.intercept_lower, yearEntry.intercept_upper)">
+                      Please ensure low < high
+                  </div>
+                  <div
+                      class="error-hint"
+                      ng-show="
+                        vm.checkLimitViolation(yearEntry.intercept_lower, vm.state.parameter.limits)
+                          || vm.checkLimitViolation(yearEntry.intercept_upper, vm.state.parameter.limits)">
+                      Please ensure values are within limits
+                  </div>
+                  <br>
+                  <i ng-if="vm.state.parameter.coverage != 1">Value for maximum attainable coverage of each program acting in isolation:</i>
+                </td>
+                <td style="width:12em">
+                  <input
+                    style="width:4em"
+                    type="number"
+                    ng-model="yearEntry.intercept_lower">
+                  -
+                  <input
+                    style="width:4em"
+                    type="number"
+                    ng-model="yearEntry.intercept_upper">
+                </td>
+              </tr>
+
+              <tr ng-if="vm.state.parameter.coverage != 1" ng-repeat="program in yearEntry.programs">
+                <td>
+                  <ul>
+                    <li>
+                  {{vm.getProgramName(program.name)}}
+                    </li>
+                    <li
+                        class="error-hint"
+                        ng-show="vm.checkLowHighViolation(program.intercept_lower, program.intercept_upper)">
+                        Please ensure low < high
+                    </li>
+                  </ul>
+                </td>
+                <td style="width:12em">
+                  <input
+                    style="width:4em"
+                    type="number"
+                    ng-model="program.intercept_lower">
+                  -
+                  <input
+                    style="width:4em"
+                    type="number"
+                    ng-model="program.intercept_upper">
+                </td>
+              </tr>
+
+              <!--<tr ng-if="vm.state.parameter.coverage != 1">-->
+                <!--<td>-->
+                  <!--<i>Program interactions</i>:-->
+                  <!--&nbsp; &nbsp;-->
+                  <!--<input-->
+                      <!--type="radio"-->
+                      <!--ng-model="outcome.interact"-->
+                      <!--value="random">-->
+                  <!--<label> random </label> &nbsp; &nbsp;-->
+                  <!--<input-->
+                      <!--type="radio"-->
+                      <!--ng-model="outcome.interact"-->
+                      <!--ng-value="nested">-->
+                  <!--<label> nested </label> &nbsp; &nbsp;-->
+                  <!--<input-->
+                      <!--type="radio"-->
+                      <!--ng-model="outcome.interact"-->
+                      <!--value="additive">-->
+                  <!--<label> additive </label>-->
+                  <!--<br>-->
+                  <!--<br>-->
+                <!--</td>-->
+                <!--<td></td>-->
+              <!--</tr>-->
+
+            </table>
+
+          </div>
+
+        </div>
+
+        <!--Summary tab window-->
+        <div style="width: 100%;"
+             class="c-tab"
+             ng-if="vm.activeTab === 'summary'">
+          <h1>Most recent budget
+            <help ref="most-recent-budget"/>
+          </h1>
+          <table
+              class="section table table-bordered"
+              style="max-width: 500px">
+            <tr>
+              <th style="width: 15em;">Program</th>
+              <th>Budget</th>
+            </tr>
+            <tr ng-repeat="(programShort, budget) in vm.state.summary.budgets">
+              <td style="width: 15em;">{{programShort}}</td>
+              <td>{{budget}}</td>
+            </tr>
+          </table>
+
+          <h1>Parameters
+            <help ref="program-parameters"/>
+          </h1>
+          Year:
+          <select
+              ng-model="vm.state.year"
+              ng-options="year for year in vm.state.yearSelector"
+              ng-change="vm.updateSummary()"
+              class="txbox __inline"/>
+          <br><br>
+          <table
+              class="section table table-bordered"
+              style="max-width: 900px">
+            <tr>
+              <th>Parameter</th>
+              <th>Population</th>
+              <th>Calibration value</th>
+              <th>Coverage value</th>
+            </tr>
+            <tr ng-repeat="par in vm.state.summary.pars">
+              <td>{{par[0]}}</td>
+              <td>{{par[1]}}</td>
+              <td>{{par[2]|number:2}}</td>
+              <td>{{par[3]|number:2}}</td>
+            </tr>
+          </table>
+
+          <button ng-click="vm.reconcilePrograms()" class="btn">Reconcile</button>
+
+          &nbsp; for &nbsp;
+
+          <select ng-init="vm.state.maxtime=30" ng-model="vm.state.maxtime">
+            <option value=15>15 seconds</option>
+            <option value=30>30 seconds</option>
+            <option value=60>1 minute</option>
+            <option value=300>5 minutes</option>
+            <option value=9999>unlimited</option>
+          </select>
+
+          <help ref="program-parameters"/>
+
+          <span style="color: #00aeef; padding-left: 1em"> {{ vm.state.statusMessage }} </span>
+
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+
+
+

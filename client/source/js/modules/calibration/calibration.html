@@ -1,0 +1,176 @@
+
+<div class="rich">
+
+  <div
+    class="error-hint"
+    ng-show="isMissingData">
+    No parameter sets, you need to
+    <a ui-sref="home">upload a data spreadsheet</a>
+    for this project.
+  </div>
+
+  <form
+    name="calibrateForm"
+    ng-if="!isMissingData">
+
+    <div style="display: table;">
+      <div style="display: table-row;">
+        <div style="display: table-cell; padding-right: 50px">
+          <div
+            style="
+              display: flex;
+              align-items: center;
+              padding-top: 10px;
+              padding-bottom: 15px;">
+
+            <button
+              type="submit"
+              class="btn __green __m"
+              ng-disabled="calibrateForm.$invalid"
+              ng-click="saveAndUpdateGraphs()">
+              Save & run
+            </button>
+
+            &nbsp; from &nbsp;
+
+            <select
+              ng-model="state.startYear"
+              ng-options="year for year in years"></select>
+
+            &nbsp; to &nbsp;
+
+            <select
+              ng-model="state.endYear"
+              ng-options="year for year in years"></select>
+			 
+            <icon action="undo" click="undo()"/>
+            <icon action="redo" click="redo()"/>
+			
+			<!--<button-->
+            <!--class="btn"-->
+            <!--ng-click="refreshParset()">Set to default</button>-->
+          </div>
+        </div>
+        <div style="display: table-cell; padding-right: 80px;">
+
+          <div
+            style="
+              display: flex;
+              align-items: center">
+
+            Parameter set:
+            &nbsp;
+            <select
+              class="txbox"
+              ng-model="state.parset"
+              ng-change="setActiveParset()"
+              ng-options="parset.name for parset in parsets"
+              style="width: 300px;">
+            </select>
+
+            <icon action="new" click="addParameterSet()"/>
+            <icon action="edit" click="renameParameterSet()"/>
+            <icon action="copy" click="copyParameterSet()"/>
+            <icon action="download" click="downloadParameterSet()"/>
+            <icon action="upload" click="uploadParameterSet()"/>
+            <icon action="delete" click="deleteParameterSet()"/>
+            <help ref="parameter-sets"/>
+          </div>
+
+        </div>
+        <div style="display: table-cell">
+          <span style="color: #00aeef;"> {{ statusMessage }} </span>
+        </div>
+      </div>
+
+    </div>
+
+    <style>
+      /* Hide HTML5 Up and Down arrows. */
+      input[type="number"]::-webkit-outer-spin-button,
+      input[type="number"]::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+      }
+      input[type="number"] {
+        -moz-appearance: textfield;
+      }
+    </style>
+
+    <div
+      style="
+          display: flex;
+          flex-direction: row;
+          justify-content: space-between;
+          width: 100%;
+          height: calc(100vh - 210px)">
+      <div
+        class="small_bordered_list"
+        style="
+         flex: 0 0 360px;
+         overflow: auto;"
+        ng-if="parameters.length > 0">
+        <div
+          class="option_list"
+          style="height: 100%;">
+
+          <br>
+          <div class="art-projection-assumptions">
+            &nbsp;&nbsp;<b>ART projection assumption</b><help ref="art-projection-assumptions"/><br>
+            &nbsp;&nbsp;<button class="btn" ng-click="constantProportionART()">Proportion</button>
+            &nbsp;&nbsp;
+            <button class="btn" ng-click="constantNumberART()">Number</button>
+          </div>
+          <br>
+          <div class="automatic-calibration">
+            &nbsp;&nbsp;<b>Automatic calibration</b><help ref="automatic-calibration"/><br>
+            &nbsp;&nbsp;<button class="btn" ng-click="startAutoCalibration()" ng-disabled="checkNotRunnable()">Calibrate</button>
+            &nbsp; for &nbsp;
+            <select ng-init="state.maxtime=10" ng-model="state.maxtime">
+              <option value=10>10 seconds</option>
+              <option value=30>30 seconds</option>
+              <option value=60>1 minute</option>
+              <option value=300>5 minutes</option>
+              <option value=9999>unlimited</option>
+            </select>
+          </div>
+          <br>
+          &nbsp;&nbsp;<b>Manual calibration</b><help ref="manual-calibration"/><br>
+          <div
+            ng-repeat="parameter in parameters"
+            style="justify-content: space-around"
+            class="option">
+            <span
+              style="width: 45%">
+              {{parameter.label}}
+            </span>
+            <span style="width: 45%">
+              <ng-form name="inputForm">
+                <input
+                  ng-class="{ invalid: inputForm.value.$invalid }"
+                  name="value"
+                  type="number"
+                  min="0"
+                  step="any"
+                  class="txbox __m"
+                  ng-model="parameter.value"
+                  required>
+                </ng-form>
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <div
+        style="
+             margin-left: 10px;
+             border: 1px solid #DDD;
+             flex: 1 1 auto;
+             height:100%;
+             width: 100%;">
+        <optima-graphs graphs="state.graphs"></optima-graphs>
+      </div>
+
+    </div>
+  </form>
+</div>

@@ -1,21 +1,29 @@
 .chart-container {
-  padding: 40px 10px 10px;
+  padding: 0px;
   position: relative;
-  border: 1px dashed #999;
-  margin: 5px 0;
+  border: 0px dashed #999;
+  margin: 0px;
 
   &.__small {
     float: left;
-    width: 350px;
-    margin: 10px;
-    padding: 60px 10px 10px;
+    /* width: 575px;
+    height: 340px; */
+    /*margin: 2px;*/
+    /*padding: 45px 5px 5px;*/
+  }
+
+  &.__medium {
+    float: left;
+    /*width: 700px;*/
+    /*margin: 2px;*/
+    /*padding: 45px 5px 5px;*/
   }
 
   &.__large {
     float: left;
-    width: 720px;
-    margin: 10px;
-    padding: 60px 10px 10px;
+    /*width: 720px;*/
+    /*margin: 10px;*/
+    /*padding: 60px 10px 10px;*/
   }
 }
 
@@ -50,4 +58,13 @@
   top: 4px;
   display: inline-block;
 
+}
+
+.chart_wrapper {
+  height: 100%;
+  overflow: auto;
+  display: flex;
+  width: 60%;
+  flex-wrap: wrap;
+  justify-content: space-around;
 }

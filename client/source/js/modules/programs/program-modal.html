@@ -1,0 +1,273 @@
+<div>
+
+  <div class="modal-header">
+    <a class="modal-close"
+       ng-click="$dismiss('cancel')">
+      <i class="fa fa-times"></i>
+    </a>
+    <h4 class="modal-title">
+      {{ state.isNew ? 'Create' : 'Edit'}} program
+    </h4>
+  </div>
+
+  <style>
+    .title {
+      font-weight: normal;
+      padding-top: 1em;
+    }
+  </style>
+
+
+  <form
+      class="modal-body"
+      name="programForm"
+      novalidate="novalidate"
+      ng-submit="submit(programForm)">
+
+
+    <div class="title">
+      Name
+    </div>
+    <div class="8 1++">
+      <input
+          class="txbox __block"
+          ng-model="state.program.name"
+          required autofocus name="programName">
+      <div class="error-hint"
+           ng-show="checkClashingProgramName(state.program.name, programForm)">
+        A program set with this name already exists,
+        please choose a different one.
+      </div>
+    </div>
+
+
+    <div class="title">
+      Short name
+    </div>
+    <div class="5 4++">
+      <input
+          class="txbox __block"
+          ng-model="state.program.short"
+          required>
+      </input>
+    </div>
+
+
+    <div class="title">
+      Category
+    </div>
+    <div class="5 1++">
+      <select
+          class="txbox"
+          ng-model="state.program.category"
+          ng-options="category for category in state.categories">
+      </select>
+    </div>
+
+
+    <div class="title">
+      Target populations
+      <help ref="programs-target-populations"/>
+    </div>
+
+    <div class="section_dashed_border"
+         ng-show="state.program.targetpars.length">
+
+      <div>
+        <span class="option">
+          <input
+              type="checkbox"
+              ng-click="clickAllTargetPopulations()"
+              ng-model="state.selectAll"
+              ng-disabled="state.progPopReadOnly">
+          <span>All populations</span>
+        </span>
+        <span
+            ng-repeat="population in state.populations"
+            class="option">
+          <input
+              type="checkbox"
+              ng-model="population.active"
+              ng-click="clickAnyTargetPopulation()"
+              ng-disabled="state.progPopReadOnly"/>
+          <span>{{population.name}}</span>
+        </span>
+      </div>
+    </div>
+
+
+    <div class="title" style="padding-bottom: 0em">
+      Parameters in model influenced by this program
+      <help ref="programs-target-parameters"/>
+    </div>
+
+    <div class="section_dashed_border">
+
+      <div class="well" ng-repeat="targetpar in state.program.targetpars">
+
+        <div class="section grid">
+
+          <a style="float: right;"
+             ng-click="removeParameter($index)">
+            <i class="fa fa-times"></i>
+          </a>
+
+          Parameter &nbsp;
+          <select
+              class="txbox"
+              style="width: 400px;
+                    display: inline;"
+              ng-model="targetpar.param"
+              ng-options="p.param as p.name for p in state.parameters"
+              ng-change="changeParameter(targetpar)" required>
+          </select>
+
+          <br clear="all">
+        </div>
+
+        <div class="section grid"
+             ng-if="targetpar.attr.pships.length === 0
+                    && targetpar.attr.populations
+                    && targetpar.attr.populations.length > 0">
+          <div style="
+                  padding-top: 0.2em;
+                  padding-bottom: 0.5em;
+                  font-style: italic;">
+            Populations
+          </div>
+          <div>
+            <div
+                class="error-hint"
+                ng-show="isPopulationSelected(targetpar, targetpar.attr.populations) && targetpar.attr">
+              Please select population
+            </div>
+            <div class="section_dashed_border no-border">
+              <span class="option">
+                <input
+                    type="checkbox"
+                    ng-click="clickAllPopulationsOfParameter(targetpar)"
+                    ng-model="targetpar.attr.selectAll">
+                <span>All populations</span>
+              </span>
+              <span
+                  ng-repeat="population in targetpar.attr.populations"
+                  class="option">
+                <input
+                    type="checkbox"
+                    ng-model="population.added"
+                    ng-click="clickAnyPopulationOfParameter(targetpar, targetpar.attr.populations)"/>
+                <span>{{population.name}}</span>
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div class="section grid"
+             ng-if="targetpar.attr.pships.length > 0">
+          <div style="
+                padding-top: 0.25em;
+                padding-bottom: 0.5em;
+                font-style: italic;">
+            Partnerships
+          </div>
+          <div
+              class="error-hint"
+              ng-show="isPopulationSelected(targetpar, targetpar.attr.pships) && targetpar.attr">
+            Please select partnership
+          </div>
+          <div class="section_dashed_border no-border"
+               ng-if="targetpar.attr.pships.length > 0">
+            <span class="option">
+              <input
+                 type="checkbox"
+                 ng-click="clickAllPartnershipsOfParameter(targetpar)"
+                 ng-model="targetpar.attr.selectAll">
+              <span>All partnerships</span>
+            </span>
+            <span ng-repeat="pship in targetpar.attr.pships"
+                  class="option">
+              <input type="checkbox"
+                     ng-model="pship.added"
+                     ng-click="clickAnyPartnershipOfParameter(targetpar, targetpar.attr.pships)"/>
+              <span>{{pship[0] + '/' + pship[1]}}</span>
+            </span>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="well section text-center" style="padding-top: 1em;">
+        <button type="button" class="btn" ng-click="addParameter()">Add parameter</button>
+      </div>
+
+    </div>
+
+
+    <div class="title" style="padding-bottom: 0em">
+       Past spending and coverage data
+    </div>
+
+    <div
+        class="section_dashed_border"
+        style="padding: 10px;">
+      <table
+          style="
+            border-spacing: 10px;
+            border-collapse: separate;">
+        <tr>
+          <td>Year</td>
+          <td>Spending</td>
+          <td>Coverage</td>
+          <td></td>
+        </tr>
+        <tr ng-repeat="costcovData in state.program.costcov">
+          <td>
+            <select
+                ng-model="costcovData.year"
+                type="number"
+                style="width: 120px"
+                ng-options="year for year in years"
+                class="txbox __inline"/>
+          </td>
+          <td>
+            <input
+                name="cost"
+                ng-model="costcovData.cost"
+                type="number"
+                style="width: 120px"
+                class="txbox __inline"/>
+          </td>
+          <td>
+            <input
+                name="coverage"
+                ng-model="costcovData.coverage"
+                style="width: 120px"
+                type="number"
+                class="txbox __inline"/>
+          </td>
+          <td>
+            <span
+                style="padding-left: 1em"
+                class="fa fa-trash-o"
+                ng-click="deleteAddData(costcovData)">
+            </span>
+          </td>
+        </tr>
+        <tr>
+          <td colspan="3">
+            <a class="btn" ng-click="addHistoricalYearCostcovData()">
+              + Year
+            </a>
+          </td>
+        </tr>
+      </table>
+    </div>
+
+    <div class="section text-center" style="margin-top: 20px">
+      <button type="button" class="btn __white" ng-click="state.showAddData = false;$dismiss('Closed')">Dismiss</button>
+      <button type="submit" class="btn" ng-disabled="programForm.$invalid">Save</button>
+    </div>
+
+  </form>
+
+</div>

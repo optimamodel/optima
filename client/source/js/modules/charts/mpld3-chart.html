@@ -1,0 +1,42 @@
+<div class="mpld3-chart"></div>
+<div style="padding-left: 10px; padding-right: 10px;">
+  <div style="float:left">
+    <i class="fa fa-refresh chart-icon"
+       ng-click="resetZoomAndPanInChart({$event:$event})">
+    </i>
+    <i class="fa fa-search chart-icon"
+       ng-click="toggleZoomInChart({$event:$event})"
+       ng-class="{'active-icon': zoomEnabled}">
+    </i>
+    <i class="fa fa-arrows chart-icon"
+       ng-click="togglePanInChart({$event:$event})"
+       ng-class="{'active-icon': panEnabled}">
+    </i>
+  </div>
+  <div
+      style="float: right;"
+      ng-if="!buttonsOff">
+    <button
+        class="btn __tiny"
+        ng-click="exportFigure('png')">
+      PNG
+    </button>
+    <button
+      class="btn __tiny"
+      ng-click="exportFigure('pdf')">
+      PDF
+    </button>
+    <button
+        class="btn __tiny"
+        ng-click="exportFigure('svg')">
+      SVG
+    </button>
+    <button
+      class="btn __tiny"
+      ng-click="exportFigure('fig')">
+      FIG
+    </button>
+    <help ref='export-single-figure'/>
+  </div>
+  <br clear="all">
+</div>

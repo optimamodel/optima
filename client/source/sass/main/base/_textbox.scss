@@ -77,6 +77,21 @@
       width: 85px;
     }
 
+    &.__ll {
+      width: 100px;
+    }
+
+    &.__lm {
+      width: 85px;
+      height: 80%;
+    }
+
+    &.__ls {
+      width: 85px;
+      height: 100%;
+      padding: 0;
+    }
+
     &.__m {
       width: 65px;
     }
@@ -94,7 +109,7 @@
 //
 
 select.txbox {
-  background: inline('base/textbox/arrows.svg') no-repeat 100% 50%;
+  background: inline('icons/arrows.svg') no-repeat 100% 50%;
   cursor: default;
   border-radius: 3px;
   -webkit-appearance: none; // 1

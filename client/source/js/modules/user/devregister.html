@@ -1,0 +1,57 @@
+<form name="RegisterForm" ng-submit="register()" novalidate="novalidate"
+      style="max-width: 500px; min-width: 200px; margin: 0 auto">
+  <h1>Registration</h1>
+
+  <div class="section text-error" ng-show="error">
+    {{ error }}
+  </div>
+
+  <div class="section form-input-validate flex__medium_space_between">
+    <span class="text_bold_medium" style="width: 30%">Username</span>
+    <input class="txbox __l"
+           style="width: 70%"
+           type="text"
+           name="username"
+           ng-model="username"
+           placeholder="User name"
+           required="required">
+  </div>
+
+  <div class="section form-input-validate flex__medium_space_between">
+    <span class="text_bold_medium" style="width: 30%">Password</span>
+    <input class="txbox __m"
+           style="width: 70%"
+           type="password"
+           name="password"
+           ng-model="password"
+           placeholder="Password"
+           required="required">
+  </div>
+
+  <div class="section form-input-validate flex__medium_space_between">
+    <span class="text_bold_medium" style="width: 30%">Display Name</span>
+    <input class="txbox __m"
+           style="width: 70%"
+           type="text"
+           name="displayName"
+           ng-model="displayName"
+           placeholder="Display name">
+  </div>
+
+  <div class="section form-input-validate flex__medium_space_between">
+    <span class="text_bold_medium" style="width: 30%">Email</span>
+    <input class="txbox __m"
+           style="width: 70%"
+           type="email"
+           name="email"
+           ng-model="email"
+           placeholder="Email">
+  </div>
+
+  <button type="submit" class="section btn __l __block">Join</button>
+
+  <div class="section text-right">
+    Already have an account? <a class="link __blue" ui-sref="login">Log in</a>
+  </div>
+
+</form>

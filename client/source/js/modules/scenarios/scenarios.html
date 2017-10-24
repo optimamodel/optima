@@ -1,0 +1,141 @@
+<div class="rich" xmlns="http://www.w3.org/1999/html">
+
+  <div class="error-hint" ng-show="isMissingData">
+    No parameter sets, you need to <a ui-sref="home">upload a data spreadsheet</a> for this project.
+  </div>
+
+  <div ng-if="!isMissingData">
+
+    <div
+        style="
+          display: flex;
+          flex-direction: column;
+          align-items: flex-start;
+          width: 100%;
+          ">
+
+      <div
+        style="
+          flex: 0 0 auto;
+          width: 100%">
+
+        <div style="border: 0px solid #AAA;">
+
+          <table
+              class="table table-bordered table-hover table-striped"
+              style="width: 100%;">
+
+            <tr>
+              <th style="width: 50px">Active</th>
+              <th>Scenario name</th>
+              <th>Parameter set</th>
+              <th>Program set</th>
+              <th>Scenario type</th>
+              <th style="width:200px; max-width:200px">Manage</th>
+            </tr>
+
+            <tr ng-repeat="scenario in scenarios">
+              <td style="width: 50px" class="text-center">
+                <input
+                    type="checkbox"
+                    ng-model="scenario.active"
+                    ng-change="saveScenarios(scenarios, 'Saved changes')">
+              </td>
+              <td>{{ scenario.name }}</td>
+              <td>{{ getParsetName(scenario) }}</td>
+              <td>{{ getProgramSetName(scenario) }}</td>
+              <td>{{ scenario.scenario_type }}</td>
+
+              <td style="white-space: nowrap; width:200px; max-width:200px">
+                <icon action="edit" click="openModal(scenario, 'edit', $event)"/>
+                <icon action="copy" click="openModal(scenario, 'copy', $event)"/>
+                <icon action="download" click="downloadScenario(scenario)"/>
+                <icon action="upload" click="uploadScenario(scenario)"/>
+                <icon action="delete" click="openModal(scenario, 'delete', $event)"/>
+              </td>
+            </tr>
+          </table>
+        </div>
+
+        <div
+          style="
+            width: 100%;
+            margin-top: 1em;
+            margin-bottom: 1.5em;">
+
+          <div style="float: left">
+            <button
+                class="btn __green __m"
+                ng-click="graphScenarios(true)"
+                ng-disabled="!isRunnable()">
+              Run scenarios
+            </button>
+
+            &nbsp; from &nbsp;
+
+            <select
+              ng-model="state.start"
+              ng-options="year for year in years"></select>
+
+            &nbsp; to &nbsp;
+
+            <select
+              ng-model="state.end"
+              ng-options="year for year in years"></select>
+            <help ref="viewing-scenarios"/>
+
+          </div>
+
+          <div style="float: right">
+            <button
+              class="btn"
+              ng-click="openModal({'scenario_type': 'parameter'}, 'add', $event)">
+              Add parameter scenario
+            </button>
+            <help ref="parameter-scenarios"/> &nbsp; &nbsp;
+            <button
+                class="btn"
+                ng-click="openModal({'scenario_type': 'budget'}, 'add', $event)"
+                ng-disabled="!anyOptimizable">
+              Add budget scenario
+            </button>
+            <help ref="budget-scenarios"/> &nbsp; &nbsp;
+            <button
+                class="btn"
+                ng-click="openModal({'scenario_type': 'coverage'}, 'add', $event)"
+                ng-disabled="!anyOptimizable">
+              Add coverage scenario
+            </button>
+            <help ref="coverage-scenarios"/>
+          </div>
+
+          <br clear="all">
+
+          <div class="error-hint" ng-show="isMissingProgset">
+            Please <a ui-sref="programs">add programs to a program set</a> for budget and coverage scenario.
+          </div>
+
+          <div class="error-hint" ng-show="!anyOptimizable">
+            Programs not ready, you need to <a ui-sref="costfunction">define cost and outcome functions</a>.
+          </div>
+
+        </div>
+
+      </div>
+
+      <div
+        ng-if="state.graphs"
+        style="
+          flex: 1 1 auto;
+          border: 1px solid #DDD;
+          height:100%;
+          width: 100%;
+          overflow:auto">
+
+        <optima-graphs graphs="state.graphs"/>
+
+      </div>
+
+  </div>
+
+</div>

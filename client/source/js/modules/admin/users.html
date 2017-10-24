@@ -1,0 +1,26 @@
+<div class="rich">
+  <h3>Manage users</h3>
+  <div class="section">
+    <table class="table table-bordered table-hover table-striped" style="width: auto">
+      <tr>
+        <th style="min-width:200px;"> Username </th>
+        <th style="min-width:200px;"> Name </th>
+        <th style="min-width:200px;"> E-Mail </th>
+        <th style="min-width:200px;"> Admin? </th>
+        <th> Actions </th>
+      </tr>
+      <tr ng-repeat="user in users">
+        <td>{{ ::user.username }}</td>
+        <td>{{ ::user.displayName }}</td>
+        <td>{{ ::user.email }}</td>
+        <td>{{ ::user.is_admin }}</td>
+        <td>
+          <button ng-click="grantAdmin(user)"    type="button" class="btn __green">Grant admin</button>
+          <button ng-click="revokeAdmin(user)"   type="button" class="btn __blue">Revoke admin</button>
+          <button ng-click="resetPassword(user)" type="button" class="btn __red">Reset password</button>
+          <button ng-click="deleteUser(user)"    type="button" class="btn __black">Delete user</button>
+        </td>
+      </tr>
+    </table>
+  </div>
+</div>

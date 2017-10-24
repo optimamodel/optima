@@ -1,0 +1,71 @@
+
+<div class="rich" style="max-width: 900px">
+
+  <div class="error-hint" ng-show="isMissingData">
+    No parameter sets, you need to <a ui-sref="home">upload a data spreadsheet</a> for this project.
+  </div>
+
+  <div ng-if="!isMissingData">
+
+    <div style="float: right; text-align: right">
+      Program set: &nbsp;
+
+      <select
+          class="txbox"
+          ng-model="state.activeProgramSet"
+          ng-options="p.name for p in programSetList"
+          style="width: 150px; display: inline">
+      </select>
+
+      <icon action="new" click="addProgramSet()"/>
+      <icon action="edit" click="renameProgramSet()"/>
+      <icon action="copy" click="copyProgramSet()"/>
+      <icon action="download" click="downloadProgramSet()"/>
+      <icon action="upload" click="uploadProgramSet()"/>
+      <icon action="delete" click="deleteProgramSet()"/>
+      <help ref="program-sets"/>
+    </div>
+
+    <h2>Manage programs
+      <icon action="undo" click="undo()"/>
+      <icon action="redo" click="redo()"/>
+      <help ref="programs"/>
+    </h2>
+
+    <div
+        class="6"
+        ng-if="state.activeProgramSet.programs && state.activeProgramSet.programs.length > 0"
+        style="padding-top: 1em">
+
+      <div class="section" ng-repeat="category in getCategories()">
+        <table class="section table table-bordered">
+          <tr>
+            <td colspan="5"><b>{{category}}</b></td>
+          </tr>
+          <tr>
+            <td><b>Active</b></td>
+            <td><b>Name</b></td>
+            <td><b>Short name</b></td>
+            <td>&nbsp;</td>
+            <td>&nbsp;</td>
+          </tr>
+          <tr ng-repeat="program in state.activeProgramSet.programs | orderBy : 'name'" ng-if="program.category==category">
+            <td class="text-center" style="width: 50px">
+              <input type="checkbox" ng-change="saveActiveProgramSet('Program set updated')" ng-model="program.active">
+            </td>
+            <td style="width: 450px">{{ program.name }}</td>
+            <td style="width: 300px">{{ program.short }}</td>
+            <td>
+              <button type="button" class="btn" ng-click="openEditProgramModal($event, program)">Edit</button>
+            </td>
+            <td>
+              <button type="button" class="btn" ng-click="copyProgram($event, program)">Copy</button>
+            </td>
+          </tr>
+        </table>
+        </td>
+      </div>
+      <button type="button" class="btn" ng-click="openAddProgramModal($event)">Add program</button>
+    </div>
+  </div>
+</div>

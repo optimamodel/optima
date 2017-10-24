@@ -1,1 +1,0 @@
-ALTER TABLE projects ADD COLUMN econ_dataend integer;

@@ -1,110 +1,148 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <meta charset="utf-8">
-    <title>Optima</title>
+  <meta charset="utf-8">
+  <title>Optima HIV</title>
 
-    <!-- Favicons -->
-    <link rel="shortcut icon" href="assets/images/project/favicon.ico">
-    <link rel="apple-touch-icon" sizes="57x57" href="assets/images/project/apple-touch-icon-57x57.png">
-    <link rel="apple-touch-icon" sizes="114x114" href="assets/images/project/apple-touch-icon-114x114.png">
-    <link rel="apple-touch-icon" sizes="72x72" href="assets/images/project/apple-touch-icon-72x72.png">
-    <link rel="apple-touch-icon" sizes="60x60" href="assets/images/project/apple-touch-icon-60x60.png">
-    <link rel="apple-touch-icon" sizes="120x120" href="assets/images/project/apple-touch-icon-120x120.png">
-    <link rel="apple-touch-icon" sizes="76x76" href="assets/images/project/apple-touch-icon-76x76.png">
-    <link rel="icon" type="image/png" href="assets/images/project/favicon-96x96.png" sizes="96x96">
-    <link rel="icon" type="image/png" href="assets/images/project/favicon-16x16.png" sizes="16x16">
-    <link rel="icon" type="image/png" href="assets/images/project/favicon-32x32.png" sizes="32x32">
-    <meta name="msapplication-TileColor" content="#ffffff">
-    <meta name="msapplication-config" content="assets/images/project/browserconfig.xml">
-    <link rel="stylesheet" href="assets/css/main.css?bust=v0.4.0">
-    <link rel="stylesheet" href="assets/css/chart.css?bust=v0.4.0">
+  <!-- Favicons -->
+  <link rel="shortcut icon" href="assets/images/optimalogo/favicon.ico">
+  <link rel="apple-touch-icon" sizes="57x57" href="assets/images/optimalogo/apple-touch-icon-57x57.png">
+  <link rel="apple-touch-icon" sizes="114x114" href="assets/images/optimalogo/apple-touch-icon-114x114.png">
+  <link rel="apple-touch-icon" sizes="72x72" href="assets/images/optimalogo/apple-touch-icon-72x72.png">
+  <link rel="apple-touch-icon" sizes="60x60" href="assets/images/optimalogo/apple-touch-icon-60x60.png">
+  <link rel="apple-touch-icon" sizes="120x120" href="assets/images/optimalogo/apple-touch-icon-120x120.png">
+  <link rel="apple-touch-icon" sizes="76x76" href="assets/images/optimalogo/apple-touch-icon-76x76.png">
+  <link rel="icon" type="image/png" href="assets/images/optimalogo/favicon-96x96.png" sizes="96x96">
+  <link rel="icon" type="image/png" href="assets/images/optimalogo/favicon-16x16.png" sizes="16x16">
+  <link rel="icon" type="image/png" href="assets/images/optimalogo/favicon-32x32.png" sizes="32x32">
+  <meta name="msapplication-TileColor" content="#ffffff">
+  <meta name="msapplication-config" content="assets/images/optimalogo/browserconfig.xml">
 
-    <style>
-        [ng\:cloak], [ng-cloak], [data-ng-cloak], [x-ng-cloak], .ng-cloak, .x-ng-cloak, .ng-hide {
-            display: none !important;
-        }
+  <link rel="stylesheet" href="assets/css/main.css?cacheBust=xxx">
+  <link rel="stylesheet" href="assets/css/chart.css?cacheBust=xxx">
+  <style>
+    [ng\:cloak], [ng-cloak], [data-ng-cloak], [x-ng-cloak], .ng-cloak, .x-ng-cloak, .ng-hide {
+      display: none !important;
+    }
+    ng\:form {
+      display: block;
+    }
+    .ng-animate-block-transitions {
+      -webkit-transition: 0s all !important;
+      transition: 0s all !important;
+    }
+    .ng-hide-add-active, .ng-hide-remove {
+      display: block !important;
+    }
+  </style>
 
-        ng\:form {
-            display: block;
-        }
+  <!-- Show animation while window loads -- from http://smallenvelop.com/display-loading-icon-page-loads-completely/ -->
+  <style>
+    .loading-screen {
+      position: fixed;
+      width: 100%;
+      height: 100%;
+      z-index: 9999;
+      background: url(assets/images/icons/loading-animation.gif?cacheBust=xxx) center no-repeat #fff;
+    }
+  </style>
 
-        .ng-animate-block-transitions {
-            -webkit-transition: 0s all !important;
-            transition: 0s all !important;
-        }
-
-        .ng-hide-add-active, .ng-hide-remove {
-            display: block !important;
-        }
-    </style>
-</head>
-<body ng-controller="MainCtrl">
-
-<div class="actionbar">
-    <div class="elastic header">
-        <div ng-cloak ng-if="userLogged()" class="header_left">
-            Logged in as: <b>{{ user.name }}</b>
-            <div ng-show="activeProject.isSet()">
-                Project: <b>{{ activeProject.name }}</b>
-            </div>
-        </div>
-        <div class="header_right">
-          <a class="btn __blue" ui-sref="contact">Feedback</a>
-        </div>
-        <div class="header_right">
-          <a class="btn __blue" ui-sref="help">Help</a>
-        </div>
-        <div class="header_right">
-          <a class="btn __blue" href="http://optimamodel.com" target="_blank">Website</a>
-        </div>
-        <div ng-cloak ng-if="userLogged()" class="header_right">
-          <form action="/api/user/logout">
-            <button class="btn __blue" type="submit">Log out</button>
-          </form>
-        </div>
-        <div ng-cloak ng-if="!userLogged()" class="header_right">
-          <a class="btn __blue" ui-sref="login">Login</a>
-        </div>
-        <div class="header_center">
-            <i class="header_logo logo"></i>
-        </div>
-    </div>
-</div>
-
-
-<div class="elastic layout">
-    <div class="elastic_col layout_aside __shrink" style="min-width: 265px" ng-if="userLogged()">
-        <div data-menu="asideMenuSettings" template="accordion">
-        </div>
-    </div>
-    <div class="elastic_col layout_cnt">
-        <div ui-view></div>
-    </div>
-</div>
-
-<div class="actionbar layout_footer" ng-cloak>
-    <div class="elastic __fluid">
-      <div class="elastic_col __va-middle">
-        <i class="ic __world-bank-logo"></i>
-      </div>
-        <div class="elastic_col __va-middle" style="padding-left:100px;">
-            <i class="ic __kirby-logo"></i>
-        </div>
-        <div class="elastic_col __va-middle">
-            <i class="ic __unsw-logo"></i>
-        </div>
-    </div>
-</div>
-
-<!-- Scripts -->
-<script src="vendor/requirejs/require.js"></script>
-<script>
-    require(['require', './js/config-require'], function (require, config) {
-        config.urlArgs = 'bust=v1.0.1';
+  <!-- Load main scripts -- takes a long time! -->
+  <script src="vendor/requirejs/require.js"></script>
+  <script>
+    function loadScripts() {
+      require(['require', './js/config'], function(require, config) {
+        config.urlArgs = 'cacheBust=xxx';  // The gulp cache buster will replace the assigned value.
         window.require.config(config);
         require(['./js/main.js']);
-    });
+      });
+    }
+  </script>
+
+  <!--Loading script-->
+  <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.5.2/jquery.min.js"></script>
+  <script src="http://cdnjs.cloudflare.com/ajax/libs/modernizr/2.8.2/modernizr.js"></script>
+  <script>
+    function closeAnimation() {
+      $(".loading-screen").fadeOut("slow");
+    }
+  </script>
+</head>
+
+
+
+<body ng-controller="MainCtrl">
+
+<script>
+  // Check the heftier functions from config.js and make sure they're all loaded -- you'd think this could be automated, no!?!?
+  function checkDefined() {
+    return (require.defined("angular") && require.defined("d3") && require.defined("mpld3") && require.defined("jquery") && require.defined("toastr"));
+  }
+  // Check in a loop, every 500 ms, to see if the required libraries have loaded
+  function checkLoaded() {
+    setTimeout(function() {
+      console.log('Loading scripts');
+      if (checkDefined()) {
+        closeAnimation();
+      } else {
+        checkLoaded();
+      }
+    }, 500);
+  }
+  loadScripts(); // Start loading the scripts
+  checkLoaded(); // Don't display the page until they're done
 </script>
+
+<!--Top header-->
+<div class="actionbar">
+  <div class="elastic header">
+    <div style="display:table-cell; width:160px">
+      <img src="assets/images/optimalogo/optima-hiv-logo.png?cacheBust=xxx">
+    </div>
+    <div style="display:table-cell; vertical-align: middle;" data-menu ng-cloak ng-if="userLogged()">
+    </div>
+
+    <div style="display:table-cell; float:right; vertical-align: middle">
+      <div style="display:table" ng-cloak ng-if="userLogged()">
+        <div style="display:table-row">
+          <div style="display:table-cell; text-align:right; padding-right:10px">
+            <b>user:</b>
+          </div>
+          <div style="display:table-cell">
+            <span ng-show="user.displayName">{{ user.displayName }}</span>
+            <span ng-show="!user.displayName">{{ user.username }}</span>
+          </div>
+        </div>
+        <div style="display:table-row">
+          <div style="display:table-cell; text-align:right; padding-right:10px">
+            <b>project:</b>
+          </div>
+          <div style="display:table-cell">
+            <select
+                class="txbox"
+                style="width: auto"
+                ng-model="projectService.project.id"
+                ng-options="p.id as p.name for p in projects"
+                ng-change="changeProject(projectService.project.id)">
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Wait for everything to load -->
+<div class="loading-screen"></div>
+
+<!-- Optima content -- e.g., login screen initially -->
+<div
+  style="flex: 1 1;"
+  class="layout_cnt">
+  <div ui-view></div>
+</div>
+
 </body>
+
 </html>

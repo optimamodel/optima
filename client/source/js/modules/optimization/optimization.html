@@ -1,0 +1,132 @@
+<div class="rich">
+
+  <div class="error-hint" ng-show="isMissingData">
+    No parameter sets, you need to <a ui-sref="home">upload a data spreadsheet</a> for this project.
+  </div>
+
+  <div class="error-hint" ng-show="!anyOptimizable">
+    Programs not ready, you need to <a ui-sref="costfunction">define cost and outcome functions</a>.
+  </div>
+
+  <div
+      style="
+        display: flex;
+        flex-direction: column"
+      ng-if="!isMissingData && anyOptimizable">
+
+    <div
+        style="
+          flex: 0 0 auto;">
+
+      <div style="border: 0px solid #AAA;">
+        <table
+            class="table table-bordered table-hover table-striped"
+            style="margin: 0; border: 0">
+          <tr>
+            <td><b>Name</b></td>
+            <td><b>Select</b></td>
+            <td><b>Type</b></td>
+            <td><b>Parameter set</b></td>
+            <td><b>Program set</b></td>
+            <td><b>Manage</b></td>
+          </tr>
+          <tr ng-repeat="optimization in state.optimizations track by $index"
+              ng-class="{highlighted: optimization.id === state.optimization.id}">
+            <td>
+              {{optimization.name}}
+            </td>
+            <td>
+              <button
+                  class="btn __green"
+                  ng-click="setActiveOptimization(optimization)">
+                Select
+              </button>
+            </td>
+            <td>
+              {{optimization.which}}
+            </td>
+            <td>
+              {{getParsetName(optimization)}}
+            </td>
+            <td>
+              {{getProgsetName(optimization)}}
+            </td>
+            <td>
+              <icon action="edit" click="editOptimization(optimization)"/>
+              <icon action="copy" click="copyOptimization(optimization)"/>
+              <icon action="download" click="downloadOptimization(optimization)"/>
+              <icon action="upload" click="uploadOptimization(optimization)"/>
+              <icon action="delete" click="deleteOptimization(optimization)"/>
+            </td>
+          </tr>
+
+        </table>
+      </div>
+
+      <div style="display:table;
+            width: 100%;
+            margin-top: 1em;
+            margin-bottom: 1.5em;">
+        <div style="display: table-row; width=100%">
+          <div style="display: table-cell;">
+            <button
+              class="btn __green __m"
+              ng-click="startOptimization(state.optimization)"
+              ng-disabled="checkNotRunnable()">
+              Optimize
+            </button>
+            &nbsp; for &nbsp;
+            <select ng-init="state.maxtime=300" ng-model="state.maxtime">
+              <option value=10>10 seconds</option>
+              <option value=30>30 seconds</option>
+              <option value=60>1 minute</option>
+              <option value=300>5 minutes</option>
+              <option value=600>10 minutes</option>
+              <option value=1800>30 minutes</option>
+              <option value=9999>unlimited</option>
+            </select>
+            <help ref='viewing-optimizations'/>
+            &nbsp
+          <span style="color: #00aeef; margin-top: 25px; margin-left: 15px">
+            {{ statusMessage }}
+          </span>
+
+            <div class="error-hint" ng-show="isMissingProgset">
+              Please <a ui-sref="programs">add programs to a program set</a> for budget and coverage scenario.
+            </div>
+            <div class="error-hint" ng-show="!anyOptimizable">
+              Programs not ready, you need to <a ui-sref="costfunction">define cost and outcome functions</a>.
+            </div>
+          </div>
+          <div style="display: table-cell; text-align: right">
+            <input
+              type="button"
+              value="Add outcomes optimization"
+              class="btn"
+              ng-click="addOptimization('outcomes')">
+            <help ref='outcomes-optimization'/> &nbsp; &nbsp;
+            <input
+              type="button"
+              value="Add money optimization"
+              class="btn"
+              ng-click="addOptimization('money')">
+            <help ref='money-optimization'/>
+
+          </div>
+          </div>
+        </div>
+      </div>
+
+    <div
+      ng-if="state.graphs"
+      style="
+        margin-top: 1em;
+        flex: 1 1 auto;
+        border: 1px solid #DDD;
+        height:100%;
+        width: 100%;
+        overflow:auto">
+      <optima-graphs graphs="state.graphs"></optima-graphs>
+    </div>
+  </div>
+</div>

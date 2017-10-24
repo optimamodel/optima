@@ -1,0 +1,74 @@
+.o-form {
+  &__wrap {
+    background-color: #fbfbfb;
+    border: 1px solid #E2E2E2;
+    padding: 15px;
+    max-width: 760px;
+    margin: 35px 0;
+  }
+  &__title {
+    font-size: 17px;
+    margin-bottom: 15px;
+  }
+}
+
+.o-card {
+  background-color: white;
+  border: 1px solid #E0E0E0;
+  border-radius: 3px;
+  transition: all linear 100ms;
+  padding: 10px;
+  position: relative;
+  margin-bottom: 15px;
+
+  &:hover {
+    border: 1px solid #C7C7C7;
+    .o-card__delete {
+      opacity: 1;
+    }
+  }
+
+  &__delete {
+    background-color: #d46060;
+    color: white;
+    position: absolute;
+    top: -13px;
+    right: -12px;
+    width: 25px;
+    height: 25px;
+    text-align: center;
+    border-radius: 100%;
+    font-size: 15px;
+    line-height: 24px;
+    cursor: pointer;
+    transition: all linear 100ms;
+    opacity: 0;
+
+    &:hover {
+      background-color: #bf444f;
+    }
+  }
+}
+
+.o-form {
+  &__field-wrap {
+    margin-bottom: 10px;
+  }
+
+  &__input {
+    margin-top: 5px;
+    &--small {
+      width: 55px;
+    }
+  }
+
+  &__buttons {
+    justify-content: flex-end;
+  }
+
+  &__button {
+    &--dismiss {
+      margin-right: 10px;
+    }
+  }
+}

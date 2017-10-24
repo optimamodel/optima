@@ -1,0 +1,51 @@
+<div>
+  <div class="modal-header">{{ isNew ? 'Create' : 'Edit'}} population</div>
+
+  <form class="modal-body" name="PopulationForm" novalidate="novalidate" ng-submit="submit(PopulationForm)">
+    <div class="section grid">
+      <div class="++1 2">
+        Name
+      </div>
+      <div class="8 1++">
+        <input class="txbox __block" ng-model="population.name" required autofocus>
+        <div class="error-hint" ng-show="doesPopulationAttrClash('name')"> Population with this name already exists, please choose a different name. </div>
+      </div>
+    </div>
+
+    <div class="section grid">
+      <div class="++1 2">
+        Short name
+      </div>
+      <div class="5 4++">
+        <input class="txbox __block" ng-model="population.short" required>
+        <div class="error-hint" ng-show="doesPopulationAttrClash('short')"> Population with this short name already exists, please choose a different short name. </div>
+      </div>
+    </div>
+
+    <div class="section grid">
+      <div class="row">
+        <div class="cols-2">Sex</div>
+      </div>
+      <div class="row">
+        <div class="cols-2"><label><input type="checkbox" ng-model="population.male"> Male</label></div>
+        <div class="cols-2"><label><input type="checkbox" ng-model="population.female"> Female</label></div>
+      </div>
+    </div>
+
+    <div class="section grid">
+      <div class="row">
+        <div class="cols-2">Age from (years)</div>
+        <div class="cols-2">Age to (years)</div>
+      </div>
+      <div class="row">
+        <div class="cols-2"><input type="number" class="txbox __block" type="text" ng-model="population.age_from" required></div>
+        <div class="cols-2"><input type="number" class="txbox __block" type="text" ng-model="population.age_to" required></div>
+      </div>
+    </div>
+
+    <div class="section text-center">
+      <button type="button" class="btn __white" ng-click="$dismiss('Closed')">Dismiss</button>
+      <button type="submit" class="btn" ng-disabled="!isFormValid()">Save</button>
+    </div>
+  </form>
+</div>

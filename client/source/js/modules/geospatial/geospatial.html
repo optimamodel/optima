@@ -1,0 +1,298 @@
+<div class="rich">
+  <div class="section">
+
+
+    <h2>Manage portfolios
+      <help ref="portfolios"/>
+    </h2>
+
+    <div ng-if="portfolios.length == 0" style="font-weight: bold; color: red">
+      Please create a portfolio first<br><br>
+    </div>
+
+    Portfolio:
+    &nbsp;
+
+    <select
+      ng-model="state.portfolio"
+      ng-options="portfolio as portfolio.name for portfolio in portfolios"
+      ng-change="chooseNewPortfolio()"
+      style="width: 230px;">
+      <option style="display:none" value="">{ No portfolios found }</option>
+    </select>
+
+    <icon action="new" click="createPortfolio()"/>
+    <icon action="edit" click="renamePortfolio()"/>
+    <icon action="copy" click="copyPortfolio()"/>
+    <icon action="download" click="downloadPortfolio()"/>
+    <icon action="upload" click="uploadPortfolio()"/>
+    <icon action="delete" click="deletePortfolio()"/>
+
+    <div style="
+        width: 100%;
+        border-bottom: 1px solid #AAA;
+        padding-top: 30px;
+        margin-bottom: 30px">
+    </div>
+
+
+    <h2>Create regions
+      <help ref="create-regions"/>
+    </h2>
+
+    <button
+      class="btn __m __inline"
+      ng-click="chooseTemplateProject()">Choose project
+    </button>
+
+    &nbsp; as template: &nbsp;
+    <i ng-if="!state.templateProject.name">No template project selected</i>
+    <i ng-if="state.templateProject.name">&nbsp; {{ state.templateProject.name}}</i>
+
+
+
+    <div
+      style="
+              border: 1px solid #DDD;
+              padding: 20px;"
+      ng-show="isSelectTemplateProject">
+
+      <i>Select from optimizable projects:</i>
+      <br>
+      <div ng-repeat="project in projects">
+        <input
+          type="radio"
+          ng-model="state.templateProject"
+          ng-value="project">
+        {{project.name}}
+      </div>
+      <br>
+      <br>
+      <button class="btn"
+              ng-click="dismissSelectTemplateProject()">
+        Dismiss
+      </button>
+
+      <button class="btn"
+              ng-click="saveTemplateProject()">
+        Save
+      </button>
+    </div>
+
+
+    <br>
+    <br>
+
+    <button
+      class="btn __m __inline"
+      ng-click="generateTemplateSpreadsheet()"
+      ng-disabled=" !state.templateProject || isSelectTemplateProject">
+      Generate spreadsheet
+    </button>
+
+    &nbsp; with &nbsp;
+
+    <select
+      ng-model="state.nRegion"
+      ng-init="2"
+      ng-options="n for n in [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50]">
+    </select>
+
+    &nbsp; regions for the year &nbsp;
+
+    <select
+      ng-model="state.templateYear"
+      ng-options="year for year in years">
+    </select>
+
+
+    <br>
+    <br>
+
+    <button
+      class="btn __m __inline"
+      ng-click="spawnRegionsFromSpreadsheet()"
+      ng-disabled=" !state.templateProject || isSelectTemplateProject">
+      Upload spreadsheet
+    </button>
+
+    &nbsp; to create region projects &nbsp;
+
+    <div
+      style="font-style: italic"
+      ng-if="state.prjNames.length > 0">
+      New region projects:
+      <ul>
+        <li ng-repeat="prjName in state.prjNames">{{prjName}}</li>
+      </ul>
+    </div>
+
+    <div style="
+        width: 100%;
+        border-bottom: 1px solid #AAA;
+        padding-top: 30px;
+        margin-bottom: 30px">
+    </div>
+
+    <h2>Geospatial analysis
+      <help ref="running-geo-analyses"/>
+    </h2>
+
+    <div
+      style="
+        display: flex;
+        padding-top: 0em;">
+
+      <div style="flex: 0 0 370px">
+
+
+        <div
+          style="
+            width: 300px;
+            padding-bottom: 0.1em;"
+          ng-repeat="entry in objectiveKeyLabels">
+          <label>
+            {{entry.label}}
+          </label>
+          <input
+              class="txbox __inline"
+              style="
+          float: right;
+          width:160px;"
+              ng-model="state.objectives[entry.key]"
+              type="number"/>
+          <br clear="all">
+        </div>
+
+        <button
+            style="
+              margin-top: 1em"
+              class="btn"
+            ng-click="savePortfolio()">
+          Save
+        </button>
+      </div>
+
+      <div style="flex: 0 1 auto; min-width: 50%">
+
+        <table class="table table-bordered table-hover table-striped">
+          <tr>
+            <th>Regions</th>
+            <th>Budget-objective curve</th>
+            <th></th>
+          </tr>
+          <tr ng-repeat="project in state.portfolio.projects">
+            <td>
+              {{project.name}}
+            </td>
+            <td width="180px">
+              <span style="color: #00aeef;">
+                  {{bocStatusMessage[project.id]}}
+              </span>
+            </td>
+            <td width="30px">
+              <icon action="delete" click="deleteProject(project.id)"/>
+            </td>
+          </tr>
+          <tr>
+            <td colspan="4">
+              <button class="btn"
+                ng-click="addProject()">
+                Add region
+              </button>
+              <help ref="adding-regions"/>
+
+              <div
+                  style="
+                    border: 1px solid #DDD;
+                    padding: 20px;"
+                  ng-show="isSelectNewProject">
+
+                <i>Select from optimizable projects:</i>
+                <br>
+                <label ng-repeat="project in projects">
+                  <input type="checkbox"
+                         ng-model="project.selected">
+                  {{project.name}}
+                  <br>
+                </label>
+                <br>
+                <br>
+                <button class="btn"
+                  ng-click="dismissAddProject()">
+                  Dismiss
+                </button>
+
+                <button class="btn"
+                  ng-click="saveSelectedProject()">
+                  Save
+                </button>
+            </div>
+            </td>
+          </tr>
+        </table>
+
+        <button
+            style="
+              margin-bottom: 1em"
+            class="btn __green __m"
+            ng-click="calculateAllBocCurves()"
+            ng-disabled="checkProjectsMissing()">
+          Run budget-objective curves
+        </button>
+
+        &nbsp; for &nbsp;
+
+        <select ng-init="state.bocMaxtime='300'" ng-model="state.bocMaxtime">
+          <option value="2">2 seconds</option>
+          <option value="10">10 seconds</option>
+          <option value="30">30 seconds</option>
+          <option value="60">1 minute</option>
+          <option value="300">5 minutes</option>
+          <option value="600">10 minutes</option>
+          <option value="1800">30 minutes</option>
+        </select>
+
+        &nbsp; per optimization
+        <help ref="running-budget-objective-curves"/>
+
+        <br>
+        <button
+            class="btn __green __m"
+            ng-click="runFullGa()"
+            ng-disabled="checkProjectsMissing() || checkBocCurvesNotCalculated()">
+          Run geospatial optimization
+        </button>
+
+        &nbsp; for &nbsp;
+
+        <select ng-init="state.maxtime='300'" ng-model="state.maxtime">
+          <option value="2">2 seconds</option>
+          <option value="10">10 seconds</option>
+          <option value="30">30 seconds</option>
+          <option value="60">1 minute</option>
+          <option value="300">5 minutes</option>
+          <option value="600">10 minutes</option>
+          <option value="1800">30 minutes</option>
+        </select>
+        &nbsp; per optimization
+        <help ref="running-geospatial-analysis"/>
+        &nbsp; &nbsp;
+        <span style="color: #00aeef; margin-top: 25px; margin-left: 15px">
+          {{ statusMessage }}
+        </span>
+
+        <br>
+        <br>
+        <button
+            class="btn __green __m"
+            ng-disabled="!state.portfolio.hasResult"
+            ng-click="exportResults()">
+          Export results
+        </button>
+        <help ref="exporting-geospatial-results"/>
+      </div>
+
+    </div>
+
+</div>

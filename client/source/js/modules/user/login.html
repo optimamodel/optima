@@ -1,0 +1,40 @@
+<form name="LogInForm" ng-submit="login()" novalidate="novalidate" style="max-width: 500px; min-width: 200px; margin: 0 auto">
+  <h1>Log in</h1>
+
+  <div class="modal-body">
+    <div class="section" ng-show="error">{{ error }}</div>
+
+    <div class="section form-input-validate">
+      <input class="txbox __l"
+             type="text"
+             name="username"
+             ng-model="username"
+             saved-login-form="saved-login-form"
+             placeholder="User name"
+             required="required">
+    </div>
+
+    <div class="section form-input-validate">
+      <input class="txbox __l"
+             type="password"
+             name="password"
+             ng-model="password"
+             saved-login-form="saved-login-form"
+             placeholder="Password"
+             required="required">
+    </div>
+
+    <button type="submit" class="section btn __l __scarlett __block">Log in</button>
+	
+    <div class="section">
+      New user?
+      <a class="link __blue" ui-sref="register">Register here</a>
+    </div>
+	
+    <div class="section">
+      Forgot your login details?
+      <a class="link __blue" href="mailto:info@optimamodel.com?Subject=Optima account">Contact us</a>
+    </div>
+
+  </div>
+</form>
