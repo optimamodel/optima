@@ -1107,7 +1107,23 @@ def makefilepath(filename=None, folder=None, ext=None, default=None, split=False
 
 
 def loadbalancer(maxload=None, index=None, interval=None, maxtime=None, label=None, verbose=True):
-    ''' A little function to delay execution while CPU load is too high -- a poor man's load balancer '''
+    '''
+    A little function to delay execution while CPU load is too high -- a very simple load balancer.
+
+    Arguments:
+        maxload:  the maximum load to allow for the task to still start (default 0.5)
+        index:    the index of the task -- used to start processes asynchronously (default None)
+        interval: the time delay to poll to see if CPU load is OK (default 5 seconds)
+        maxtime:  maximum amount of time to wait to start the task (default 36000 seconds (10 hours))
+        label:    the label to print out when outputting information about task delay or start (default None)
+        verbose:  whether or not to print information about task delay or start (default True)
+
+    Usage examples:
+        loadbalancer() # Simplest usage -- delay while load is >50%
+        for nproc in processlist: loadbalancer(maxload=0.9, index=nproc) # Use a maximum load of 90%, and stagger the start by process number
+
+    Version: 2017oct25
+     '''
     from psutil import cpu_percent
     from time import sleep
     from numpy.random import random
@@ -1115,11 +1131,14 @@ def loadbalancer(maxload=None, index=None, interval=None, maxtime=None, label=No
     # Set up processes to start asynchronously
     if maxload is None: maxload = 0.5
     if interval is None: interval = 5.0
-    if maxtime is None: maxtime = 3600
+    if maxtime is None: maxtime = 36000
     if label is None: label = ''
     else: label += ': '
-    if index is None:  pause = random()*interval
-    else:              pause = index*interval
+    if index is None:  
+        pause = random()*interval
+        index = ''
+    else:              
+        pause = index*interval
     if maxload>1: maxload/100. # If it's >1, assume it was given as a percent
     sleep(pause) # Give it time to asynchronize
     
