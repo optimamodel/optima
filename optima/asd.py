@@ -45,8 +45,11 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
         from asd import asd
         from numpy.linalg import norm
         x, fval, details = asd(norm, [1, 2, 3])
+
+    Please use the following citation for this method:
+        Kerr CC, Dura-Bernal S, Smolinski TG, Chadderdon GL, Wilson DP (under review). Optimization by adaptive stochastic descent. Available from: thekerrlab.com/asd.
     
-    Version: 2017may17 by Cliff Kerr (cliff@thekerrlab.com)
+    Version: 2017may17 
     """
     
     from numpy import array, shape, reshape, ones, zeros, mean, cumsum, mod, concatenate, floor, flatnonzero, isnan, inf

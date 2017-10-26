@@ -179,7 +179,7 @@ def smoothingfunc(x=None, y=None, npts=10, smooth=10, monotonic=True):
     
     Returns new values of x and y as a tuple.
     
-    Version: 2017mar02 by cliffk
+    Version: 2017mar02 
     '''
     
     print('WARNING, has strange behavior sometimes still :(')

@@ -1,7 +1,7 @@
 """
 This module defines the classes for stores the results of a single simulation run.
 
-Version: 2016oct28
+Version: 2017oct23
 """
 
 from optima import OptimaException, Link, Settings, odict, pchip, plotpchip, sigfig # Classes/functions
@@ -333,27 +333,27 @@ class Resultset(object):
         self.main['numaids'].pops = process(allpeople[:,allaids,:,:][:,:,:,indices].sum(axis=1)) # Axis 1 is health state
         self.main['numaids'].tot  = process(allpeople[:,allaids,:,:][:,:,:,indices].sum(axis=(1,2))) # Axis 2 is populations
 
-        self.main['numdiag'].pops = process(allpeople[:,alldx,:,:][:,:,:,indices].sum(axis=1)) # WARNING, this is ugly, but allpeople[:,txinds,:,indices] produces an error
+        self.main['numdiag'].pops = process(allpeople[:,alldx,:,:][:,:,:,indices].sum(axis=1)) # Note that allpeople[:,txinds,:,indices] produces an error
         self.main['numdiag'].tot = process(allpeople[:,alldx,:,:][:,:,:,indices].sum(axis=(1,2))) # Axis 1 is populations
         
         self.main['propdiag'].pops = process(allpeople[:,alldx,:,:][:,:,:,indices].sum(axis=1)/maximum(allpeople[:,allplhiv,:,:][:,:,:,indices].sum(axis=1),eps), percent=True) 
         self.main['propdiag'].tot  = process(allpeople[:,alldx,:,:][:,:,:,indices].sum(axis=(1,2))/maximum(allpeople[:,allplhiv,:,:][:,:,:,indices].sum(axis=(1,2)),eps), percent=True) # Axis 1 is populations
         if data is not None: self.main['propdiag'].datatot = processdata(data['optpropdx'])
         
-        self.main['numevercare'].pops = process(allpeople[:,allevercare,:,:][:,:,:,indices].sum(axis=1)) # WARNING, this is ugly, but allpeople[:,txinds,:,indices] produces an error
+        self.main['numevercare'].pops = process(allpeople[:,allevercare,:,:][:,:,:,indices].sum(axis=1)) #  Note that allpeople[:,txinds,:,indices] produces an error
         self.main['numevercare'].tot  = process(allpeople[:,allevercare,:,:][:,:,:,indices].sum(axis=(1,2))) # Axis 1 is populations
 
         self.main['propevercare'].pops = process(allpeople[:,allevercare,:,:][:,:,:,indices].sum(axis=1)/maximum(allpeople[:,alldx,:,:][:,:,:,indices].sum(axis=1),eps), percent=True) 
         self.main['propevercare'].tot  = process(allpeople[:,allevercare,:,:][:,:,:,indices].sum(axis=(1,2))/maximum(allpeople[:,alldx,:,:][:,:,:,indices].sum(axis=(1,2)),eps), percent=True) # Axis 1 is populations
 
-        self.main['numincare'].pops = process(allpeople[:,allcare,:,:][:,:,:,indices].sum(axis=1)) # WARNING, this is ugly, but allpeople[:,txinds,:,indices] produces an error
+        self.main['numincare'].pops = process(allpeople[:,allcare,:,:][:,:,:,indices].sum(axis=1)) #  Note that allpeople[:,txinds,:,indices] produces an error
         self.main['numincare'].tot  = process(allpeople[:,allcare,:,:][:,:,:,indices].sum(axis=(1,2))) # Axis 1 is populations
 
         self.main['propincare'].pops = process(allpeople[:,allcare,:,:][:,:,:,indices].sum(axis=1)/maximum(allpeople[:,alldx,:,:][:,:,:,indices].sum(axis=1),eps), percent=True) 
         self.main['propincare'].tot  = process(allpeople[:,allcare,:,:][:,:,:,indices].sum(axis=(1,2))/maximum(allpeople[:,alldx,:,:][:,:,:,indices].sum(axis=(1,2)),eps), percent=True) # Axis 1 is populations
         if data is not None: self.main['propincare'].datatot = processdata(data['optpropcare'])
 
-        self.main['numtreat'].pops = process(allpeople[:,alltx,:,:][:,:,:,indices].sum(axis=1)) # WARNING, this is ugly, but allpeople[:,txinds,:,indices] produces an error
+        self.main['numtreat'].pops = process(allpeople[:,alltx,:,:][:,:,:,indices].sum(axis=1)) #  Note that allpeople[:,txinds,:,indices] produces an error
         self.main['numtreat'].tot = process(allpeople[:,alltx,:,:][:,:,:,indices].sum(axis=(1,2))) # Axis 1 is populations
         if data is not None: self.main['numtreat'].datatot = processdata(data['numtx'])
 
@@ -383,7 +383,7 @@ class Resultset(object):
 
         
         # Calculate DALYs
-        yearslostperdeath = 15 # WARNING, KLUDGY -- this gives roughly a 5:1 ratio of YLL:YLD
+        yearslostperdeath = 15 # TODO: this gives roughly a 5:1 ratio of YLL:YLD; calculate more precisely
         disutiltx = self.pars['disutiltx'].y
         disutils = [self.pars['disutil'+key].y for key in self.settings.hivstates]
 

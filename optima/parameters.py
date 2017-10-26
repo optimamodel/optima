@@ -353,7 +353,7 @@ class Parameterset(object):
         
         output = ''
         for parname,par in self.pars.items():
-            prefix2 = None # WARNING, kludgy way of handling fact that some parameters need more than one line to print
+            prefix2 = None # Handle the fact that some parameters need more than one line to print
             values2 = None
             cvalues2 = None
             if hasattr(par,'manual'):
@@ -434,7 +434,7 @@ class Par(object):
         * Popsizepars have sample() = msample, interp() = m*i[]*exp(e[])
         * Yearpars have no sampling methods, and interp() = t
     
-    Version: 2016nov06 by cliffk    
+    Version: 2016nov06 
     '''
     def __init__(self, short=None, name=None, limits=(0.,1.), by=None, manual='', fromdata=None, m=1.0, prior=None, verbose=None, **defaultargs): # "type" data needed for parameter table, but doesn't need to be stored
         ''' To initialize with a prior, prior should be a dict with keys 'dist' and 'pars' '''
@@ -1130,7 +1130,7 @@ def makepars(data=None, verbose=2, die=True, fixprops=None):
 
     # Fix treatment from final data year
     for key in ['fixproptx', 'fixpropsupp', 'fixpropdx', 'fixpropcare', 'fixproppmtct']:
-        pars[key].t = 2100 # WARNING, KLUDGY -- don't use these, so just set to well past the end of the analysis
+        pars[key].t = 2100 # TODO: don't use these, so just set to (hopefully) well past the end of the analysis
     pars = togglefixprops(pars, fix=fixprops) # Optionally fix the proportions
 
     # Set the values of parameters that aren't from data

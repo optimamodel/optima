@@ -1,6 +1,5 @@
 """
-Create a good test project -- WARNING, this should be combined with testworkflow,
-which is an outdated version of the same thing!
+Create a good test project.
 
 Version: 2016feb08
 """

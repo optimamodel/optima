@@ -43,7 +43,7 @@ def plotresults(results, toplot=None, fig=None, figargs=None, **kwargs):
         results = P.runsim('default')
         plotresults(results)
         
-    Version: 1.3 (2016jan25) by cliffk
+    Version: 2016jan25
     '''
     
     if figargs is None: figargs = dict()
@@ -112,7 +112,7 @@ def pygui(tmpresults, toplot=None, advanced=False, verbose=2, figargs=None, **kw
     toplot = promotetolist(toplot) # Ensure it's a list
     if toplot[0] is None or toplot[0]=='default': 
         toplot.pop(0) # Remove the first element
-        defaultboxes = [checkboxes[i] for i,tf in enumerate(plotselections['defaults']) if tf] # WARNING, ugly -- back-convert defaults from true/false list to list of keys
+        defaultboxes = [checkboxes[i] for i,tf in enumerate(plotselections['defaults']) if tf] # Back-convert defaults from true/false list to list of keys
         toplot.extend(defaultboxes)
     if len(toplot):
         tmptoplot = dcp(toplot) # Make a copy to compare arguments
@@ -436,7 +436,7 @@ def plotpeople(project=None, people=None, tvec=None, ind=None, simind=None, star
     nstates = len(labels)
     colors = gridcolors(nstates)
     if tvec is None:
-        tvec = project.settings.maketvec() # WARNING, won't necessarily match this ppl, supply as argument if so
+        tvec = project.settings.maketvec() # Won't necessarily match this ppl, supply as argument if so
     bottom = 0*tvec
     makenewfigure(**kwargs)
     ax = subplot(111)
@@ -457,7 +457,7 @@ def plotpeople(project=None, people=None, tvec=None, ind=None, simind=None, star
             bottom += this
         
             # Legend stuff
-            ax.plot((0, 0), (0, 0), color=thiscolor, linewidth=10, label=labels[st], marker=linestyles[st]) # This loop is JUST for the legends! since fill_between doesn't count as a plot object, stupidly... -- WARNING, copied from plotepi()
+            ax.plot((0, 0), (0, 0), color=thiscolor, linewidth=10, label=labels[st], marker=linestyles[st]) # This loop is JUST for the legends! since fill_between doesn't count as a plot object... -- TODO: this is copied from plotepi(), perhaps streamline
             handles, legendlabels = ax.get_legend_handles_labels()
             legend(reversed(handles), reversed(legendlabels), **legendsettings)
             if animate:
@@ -483,7 +483,7 @@ def plotpars(parslist=None, start=None, end=None, verbose=2, rows=6, cols=5, fig
     global position, plotparsbackbut, plotparsnextbut, plotparslider
     position = 0
     
-    # In case the user tries to enter a project or parset -- WARNING, needs to be made more flexible!
+    # In case the user tries to enter a project or parset -- TODO: make more flexible
     tmp = parslist
     try:  parslist = tmp.parsets[-1].pars # If it's a project
     except:
@@ -503,7 +503,7 @@ def plotpars(parslist=None, start=None, end=None, verbose=2, rows=6, cols=5, fig
         for i,key1 in enumerate(pars):
             par = pars[key1]
             if isinstance(par, Par):
-                if   hasattr(par,'y'): pardata = par.y # WARNING, add par.m as well?
+                if   hasattr(par,'y'): pardata = par.y # TODO: consider adding par.m as well
                 elif hasattr(par,'p'): pardata = par.p # Population size
                 else: raise Exception('???')
                 if hasattr(pardata, 'keys') and len(pardata.keys())>0: # Only ones that don't have a len are temp pars

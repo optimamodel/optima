@@ -228,7 +228,7 @@ def printarr(arr, arrformat='%0.2f  '):
         from numpy import random
         printarr(rand(3,7,4))
     
-    Version: 2014dec01 by cliffk
+    Version: 2014dec01
     '''
     from numpy import ndim
     if ndim(arr)==1:
@@ -359,12 +359,12 @@ def slacknotification(to=None, message=None, fromuser=None, token=None, verbose=
     
     Example usage:
         slacknotification('#athena', 'Long process is finished')
-        slacknotification(token='/.slackurl', channel='@cliffk', message='Hi, how are you going?')
+        slacknotification(token='/.slackurl', channel='@username', message='Hi, how are you going?')
     
     What's the point? Add this to the end of a very long-running script to notify
     your loved ones that the script has finished.
         
-    Version: 2017feb09 by cliffk    
+    Version: 2017feb09
     '''
     
     # Imports
@@ -660,7 +660,7 @@ def findinds(val1, val2=None, eps=1e-6):
         findinds(rand(10)<0.5) # e.g. array([2, 4, 5, 9])
         findinds([2,3,6,3], 6) # e.g. array([2])
     
-    Version: 2016jun06 by cliffk
+    Version: 2016jun06 
     '''
     from numpy import nonzero, array, ndim
     if val2==None: # Check for equality
@@ -685,7 +685,7 @@ def findnearest(series=None, value=None):
         findnearest([2,3,6,3], 6) # returns 2
         findnearest([0,2,4,6,8,10], [3, 4, 5]) # returns array([1, 2, 2])
     
-    Version: 2017jan07 by cliffk
+    Version: 2017jan07
     '''
     from numpy import argmin
     series = promotetoarray(series)
@@ -724,7 +724,7 @@ def smoothinterp(newx=None, origx=None, origy=None, smoothness=None, growth=None
         hold(True)
         scatter(origx,origy)
     
-    Version: 2016nov02 by cliffk
+    Version: 2016nov02
     '''
     from numpy import array, interp, convolve, linspace, concatenate, ones, exp, isnan, argsort, ceil
     
@@ -1057,7 +1057,7 @@ def makefilepath(filename=None, folder=None, ext=None, default=None, split=False
     
     Assuming project.filename is None and project.name is "soggyrice" and ./congee doesn't exist:
         * Makes folder ./congee
-        * Returns e.g. ('/home/cliffk/optima/congee', 'soggyrice.prj')
+        * Returns e.g. ('/home/optima/congee', 'soggyrice.prj')
     
     Actual code example from project.py:
         fullpath = makefilepath(filename=filename, folder=folder, default=[self.filename, self.name], ext='prj')
@@ -1107,7 +1107,23 @@ def makefilepath(filename=None, folder=None, ext=None, default=None, split=False
 
 
 def loadbalancer(maxload=None, index=None, interval=None, maxtime=None, label=None, verbose=True):
-    ''' A little function to delay execution while CPU load is too high -- a poor man's load balancer '''
+    '''
+    A little function to delay execution while CPU load is too high -- a very simple load balancer.
+
+    Arguments:
+        maxload:  the maximum load to allow for the task to still start (default 0.5)
+        index:    the index of the task -- used to start processes asynchronously (default None)
+        interval: the time delay to poll to see if CPU load is OK (default 5 seconds)
+        maxtime:  maximum amount of time to wait to start the task (default 36000 seconds (10 hours))
+        label:    the label to print out when outputting information about task delay or start (default None)
+        verbose:  whether or not to print information about task delay or start (default True)
+
+    Usage examples:
+        loadbalancer() # Simplest usage -- delay while load is >50%
+        for nproc in processlist: loadbalancer(maxload=0.9, index=nproc) # Use a maximum load of 90%, and stagger the start by process number
+
+    Version: 2017oct25
+     '''
     from psutil import cpu_percent
     from time import sleep
     from numpy.random import random
@@ -1115,11 +1131,14 @@ def loadbalancer(maxload=None, index=None, interval=None, maxtime=None, label=No
     # Set up processes to start asynchronously
     if maxload is None: maxload = 0.5
     if interval is None: interval = 5.0
-    if maxtime is None: maxtime = 3600
+    if maxtime is None: maxtime = 36000
     if label is None: label = ''
     else: label += ': '
-    if index is None:  pause = random()*interval
-    else:              pause = index*interval
+    if index is None:  
+        pause = random()*interval
+        index = ''
+    else:              
+        pause = index*interval
     if maxload>1: maxload/100. # If it's >1, assume it was given as a percent
     sleep(pause) # Give it time to asynchronize
     
@@ -1273,7 +1292,7 @@ Example 2:
         count += 1
         setnested(foo, twig, count)   # {'a': {'y': 1, 'x': 2, 'z': 3}, 'b': {'a': {'y': 4, 'x': 5}}}
 
-Version: 2014nov29 by cliffk
+Version: 2014nov29 
 '''
 
 def getnested(nesteddict, keylist, safe=False): 
@@ -1823,7 +1842,7 @@ class odict(OrderedDict):
 ##############################################################################
 
 # Some of these are repeated to make this frationally more self-contained
-from numpy import array, zeros, empty, vstack, hstack, matrix, argsort, argmin # analysis:ignore
+from numpy import array, zeros, empty, vstack, hstack, matrix, argsort, argmin, floor, log10 # analysis:ignore
 from numbers import Number # analysis:ignore
 
 class dataframe(object):
@@ -1881,10 +1900,7 @@ class dataframe(object):
                         outputlist[col].append(output)
                 outputformats[col] = '%'+'%i'%(maxlen+spacing)+'s'
             
-            if   nrows<10:   indformat = '%2s' # WARNING, KLUDGY, but easier to do explicitly than to find the general solution!
-            elif nrows<100:  indformat = '%3s'
-            elif nrows<1000: indformat = '%4s'
-            else:            indformat = '%6s'
+            indformat = '%%%is' % (floor(log10(nrows))+1) # Choose the right number of digits to print
             
             # Assemble output
             output = indformat % '' # Empty column for index
@@ -1892,7 +1908,7 @@ class dataframe(object):
                 output += outputformats[col] % col
             output += '\n'
             
-            for ind in range(nrows): # WARNING, KLUDGY
+            for ind in range(nrows): # Loop over rows to print out
                 output += indformat % flexstr(ind)
                 for col in self.cols: # Print out data
                     output += outputformats[col] % outputlist[col][ind]

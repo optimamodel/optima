@@ -16,7 +16,7 @@ class Portfolio(object):
 
     The super Optima portfolio class  -- this contains Projects and GA optimizations.
 
-    Version: 2016jan20 by davidkedz
+    Version: 2016jan20 
     """
     
     #######################################################################################################
@@ -75,7 +75,7 @@ class Portfolio(object):
         projects = promotetolist(projects, objtype=Project) # Make sure it's a list, but confirm type first
         if replace: self.projects = odict() # Wipe clean before adding new projects
         for project in projects:
-            project.uid = uuid() # TEMPPPP WARNING overwrite UUID
+            project.uid = uuid() # WARNING overwrite UUID
             keyname = project.name if project.name not in self.projects.keys() else str(project.uid) # Only fall back on UID if the project name is taken
             self.projects[keyname] = project        
             printv('Added project %s to portfolio %s' % (project.name, self.name), 2, verbose)
