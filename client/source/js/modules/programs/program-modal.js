@@ -26,7 +26,7 @@ define(['angular', 'underscore'], function (angular, _) {
       $scope.state = {
         selectAll: false,
         isNew: !program.name,
-        populations: deepCopy(populations), // all possible populations in the program
+        populations: populations, // all possible populations in the program
         parameters: parameters, // all possible parameters
         categories: categories,
         program: program,
@@ -59,25 +59,20 @@ define(['angular', 'underscore'], function (angular, _) {
       console.log('ProgramModalController.init costcov', $scope.state.program.costcov);
       $scope.years = _.range(openProject.startYear, openProject.endYear+1);
 
-      if (isAnyTargetparForTotal) {
-        $scope.state.progPopReadOnly = true;
-        $scope.state.selectAll = true;
-        $scope.clickAllTargetPopulations();
+      console.log('ProgramModalController.init program', $scope.state.program);
+      if (isNonemptyList($scope.state.program.populations)) {
+        _.forEach($scope.state.populations, function(population) {
+          population.active = (
+            $scope.state.program.populations.length === 0)
+            || ($scope.state.program.populations.indexOf(population.short) > -1);
+        });
+        $scope.state.selectAll = !_.find($scope.state.populations, function(population) {
+          return !population.active;
+        })
       } else {
-        console.log('ProgramModalController.init program', $scope.state.program);
-        if (isNonemptyList($scope.state.program.populations)) {
-          _.forEach($scope.state.populations, function(population) {
-            population.active = (
-              $scope.state.program.populations.length === 0)
-               || ($scope.state.program.populations.indexOf(population.short) > -1);
-          });
-          $scope.state.selectAll = !_.find($scope.state.populations, function(population) {
-            return !population.active;
-          })
-        } else {
-          $scope.state.program.populations = [];
-        }
+        $scope.state.program.populations = [];
       }
+
 
       _.forEach($scope.state.program.targetpars, setAttrOfPar);
       console.log('ProgramModalController.init targetpars', $scope.state.program.targetpars);
