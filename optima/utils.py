@@ -422,18 +422,19 @@ def printtologfile(message=None, filename=None):
     return None
     
 
-class colorize(object):
+def colorize(color=None, string=None, output=False):
     '''
-    Colorize output text -- can be used to color all output via "with",
-    or to modify a string.
+    Colorize output text. Arguments:
+        color = the color you want (use 'bg' with background colors, e.g. 'bgblue')
+        string = the text to be colored
+        output = whether to return the modified version of the string
     
     Examples:
-        colorize('green', 'hi')
-        with colorize(['yellow', 'bgblack']): print('Hello world')
-        colorize(['yellow', 'bgblack']); print('Hello world'); colorize()
-        bluearray = colorize(color='blue', string=str(range(5)), doprint=False).output(); print('hi, this is blue: ' + bluearray)
-        colorize('blue') # Now type in blue for a while
-        colorize() # Stop typing in blue
+        colorize('green', 'hi') # Simple example
+        colorize(['yellow', 'bgblack']); print('Hello world'); print('Goodbye world'); colorize() # Colorize all output in between
+        bluearray = colorize(color='blue', string=str(range(5)), output=True); print("c'est bleu: " + bluearray)
+        colorize('magenta') # Now type in magenta for a while
+        colorize() # Stop typing in magenta
     
     To get available colors, type colorize('help').
     
@@ -443,77 +444,49 @@ class colorize(object):
     Version: 2017oct27
     '''
     
-    def __init__(self, color=None, string=None, doprint=True):
-        ''' Initialize, and act like a function if so desired '''   
+    # Define ANSI colors
+    ansicolors = odict([
+                  ('black', '30'),
+                  ('red', '31'),
+                  ('green', '32'),
+                  ('yellow', '33'),
+                  ('blue', '34'),
+                  ('magenta', '35'),
+                  ('cyan', '36'),
+                  ('gray', '37'),
+                  ('bgblack', '40'),
+                  ('bgred', '41'),
+                  ('bggreen', '42'),
+                  ('bgyellow', '43'),
+                  ('bgblue', '44'),
+                  ('bgmagenta', '45'),
+                  ('bgcyan', '46'),
+                  ('bggray', '47'),
+                  ('reset', '0'),
+                  ])
+    for key,val in ansicolors.items(): ansicolors[key] = '\033['+val+'m'
     
-        # Define ANSI colors
-        self.ansicolors = odict([
-                      ('bold','01'),
-                      ('underline', '04'),
-                      ('strikethrough', '09'),
-                      ('black', '30'),
-                      ('red', '31'),
-                      ('green', '32'),
-                      ('yellow', '33'),
-                      ('blue', '34'),
-                      ('magenta', '35'),
-                      ('cyan', '36'),
-                      ('gray', '37'),
-                      ('bgblack', '40'),
-                      ('bgred', '41'),
-                      ('bggreen', '42'),
-                      ('bgyellow', '43'),
-                      ('bgblue', '44'),
-                      ('bgmagenta', '45'),
-                      ('bgcyan', '46'),
-                      ('bggray', '47'),
-                      ('reset', '0'),
-                      ])
-        for key,val in self.ansicolors.items(): self.ansicolors[key] = '\033['+val+'m'
-        
-        # Determine what color to use
-        if color is None: color = 'reset' # By default, reset
-        self.colorlist = promotetolist(color) # Make sure it's a list
-        for color in self.colorlist:
-            if color not in self.ansicolors.keys(): 
-                self.help()
-                return None # Don't proceed if no color supplied
-        self.ansicolor = ''
-        for color in self.colorlist:
-            self.ansicolor += self.ansicolors[color]
-        
-        # Modify string, if supplied
-        if string is None: self.string = self.ansicolor # Just return the color
-        else:              self.string = self.ansicolor + str(string) + self.ansicolors['reset'] # Add to start and end of the string
+    # Determine what color to use
+    if color is None: color = 'reset' # By default, reset
+    colorlist = promotetolist(color) # Make sure it's a list
+    for color in colorlist:
+        if color not in ansicolors.keys(): 
+            if color!='help': print('Color "%s" is not available.' % color)
+            print('Available colors are:  \n%s' % '\n  '.join(ansicolors.keys()))
+            return None # Don't proceed if no color supplied
+    ansicolor = ''
+    for color in colorlist:
+        ansicolor += ansicolors[color]
     
-        if doprint: print(self.string) # Unless requested not to, print
-        
+    # Modify string, if supplied
+    if string is None: ansistring = ansicolor # Just return the color
+    else:              ansistring = ansicolor + str(string) + ansicolors['reset'] # Add to start and end of the string
+
+    if output: 
+        return ansistring # Return the modified string
+    else:
+        print(ansistring) # Content, so print with newline
         return None
-    
-    def __repr__(self):
-        ''' To avoid confusing returns '''
-        return str()
-    
-    def __enter__(self):
-        ''' Start printing in this color -- for use with "with" '''
-        print(self.ansicolor),
-        return None
-    
-    def __exit__(self, type, value, traceback):
-        ''' Stop printing in this color -- for use with "with" '''
-        import sys
-        print(self.ansicolors['reset']),
-        sys.stdout.flush()
-        return None
-    
-    def help(self):
-        ''' Print options '''
-        print('Valid choices are:\n%s' % '\n'.join(self.ansicolors.keys()))
-        return None
-    
-    def output(self):
-        ''' Return the stored string '''
-        return self.string
     
   
         
