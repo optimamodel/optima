@@ -428,8 +428,9 @@ class colorize(object):
     or to modify a string.
     
     Examples:
+        colorize('green', 'hi')
         with colorize('yellow'): print('Hello world')
-        bluearray = colorize(color='blue', string=str(range(5)), output=True); print(bluearray)
+        bluearray = colorize(color='blue', string=str(range(5))).output(); print(bluearray)
     
     To get available colors, type colorize('help').
     
@@ -482,24 +483,20 @@ class colorize(object):
         self.output = output # Store whether or not to output
         
         # Modify string, if supplied
-        if string is None: self.string = self.ansicolors[color] # Just return the color
-        else:              self.string = self.ansicolors[color] + str(string) + self.ansicolors['end'] # Add to start and end of the string
+        if string is None: self.string = self.ansicolors[self.color] # Just return the color
+        else:              self.string = self.ansicolors[self.color] + str(string) + self.ansicolors['end'] # Add to start and end of the string
     
         if not output: # If not outputting, then print instead
-            print(string),
+            print(self.string)
         
         return None
     
-    def __new__(self):
-        ''' Return the string if output is requested, otherwise return None '''
-        if self.output: return self.string
-        else:           return None
-    
     def __enter__(self):
-        print(self.color),
+        print(self.ansicolors[self.color]),
         return None
     
     def __exit__(self, type, value, traceback):
+        import sys
         print(self.ansicolors['end']),
         sys.stdout.flush()
         return None
