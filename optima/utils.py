@@ -429,8 +429,11 @@ class colorize(object):
     
     Examples:
         colorize('green', 'hi')
-        with colorize('yellow'): print('Hello world')
-        bluearray = colorize(color='blue', string=str(range(5))).output(); print(bluearray)
+        with colorize(['yellow', 'bgblack']): print('Hello world')
+        colorize(['yellow', 'bgblack']); print('Hello world'); colorize()
+        bluearray = colorize(color='blue', string=str(range(5)), doprint=False).output(); print('hi, this is blue: ' + bluearray)
+        colorize('blue') # Now type in blue for a while
+        colorize() # Stop typing in blue
     
     To get available colors, type colorize('help').
     
@@ -440,70 +443,72 @@ class colorize(object):
     Version: 2017oct27
     '''
     
-    def __init__(self, color=None, string=None, output=False):
+    def __init__(self, color=None, string=None, doprint=True):
         ''' Initialize, and act like a function if so desired '''   
-        
+    
         # Define ANSI colors
         self.ansicolors = odict([
-                      ('end', '0'),
                       ('bold','01'),
                       ('underline', '04'),
                       ('strikethrough', '09'),
                       ('black', '30'),
                       ('red', '31'),
-                      ('orange', '33'),
-                      ('yellow', '93'),
                       ('green', '32'),
-                      ('cyan', '36'),
+                      ('yellow', '33'),
                       ('blue', '34'),
-                      ('purple', '35'),
-                      ('lightgrey', '37'),
-                      ('darkgrey', '90'),
-                      ('lightred', '91'),
-                      ('lightgreen', '92'),
-                      ('lightblue', '94'),
-                      ('pink', '95'),
-                      ('lightcyan', '96'),
+                      ('magenta', '35'),
+                      ('cyan', '36'),
+                      ('gray', '37'),
                       ('bgblack', '40'),
                       ('bgred', '41'),
                       ('bggreen', '42'),
-                      ('bgorange', '43'),
+                      ('bgyellow', '43'),
                       ('bgblue', '44'),
-                      ('bgpurple', '45'),
+                      ('bgmagenta', '45'),
                       ('bgcyan', '46'),
-                      ('bglightgrey', '47'),
+                      ('bggray', '47'),
+                      ('reset', '0'),
                       ])
         for key,val in self.ansicolors.items(): self.ansicolors[key] = '\033['+val+'m'
         
         # Determine what color to use
-        if color not in self.ansicolors.keys(): 
-            self.help()
-            return None # Don't proceed if no color supplied
-        self.color = color # Store color
-        self.output = output # Store whether or not to output
+        if color is None: color = 'reset' # By default, reset
+        self.colorlist = promotetolist(color) # Make sure it's a list
+        for color in self.colorlist:
+            if color not in self.ansicolors.keys(): 
+                self.help()
+                return None # Don't proceed if no color supplied
+        self.ansicolor = ''
+        for color in self.colorlist:
+            self.ansicolor += self.ansicolors[color]
         
         # Modify string, if supplied
-        if string is None: self.string = self.ansicolors[self.color] # Just return the color
-        else:              self.string = self.ansicolors[self.color] + str(string) + self.ansicolors['end'] # Add to start and end of the string
+        if string is None: self.string = self.ansicolor # Just return the color
+        else:              self.string = self.ansicolor + str(string) + self.ansicolors['reset'] # Add to start and end of the string
     
-        if not output: # If not outputting, then print instead
-            print(self.string)
+        if doprint: print(self.string) # Unless requested not to, print
         
         return None
     
+    def __repr__(self):
+        ''' To avoid confusing returns '''
+        return str()
+    
     def __enter__(self):
-        print(self.ansicolors[self.color]),
+        ''' Start printing in this color -- for use with "with" '''
+        print(self.ansicolor),
         return None
     
     def __exit__(self, type, value, traceback):
+        ''' Stop printing in this color -- for use with "with" '''
         import sys
-        print(self.ansicolors['end']),
+        print(self.ansicolors['reset']),
         sys.stdout.flush()
         return None
     
     def help(self):
         ''' Print options '''
-        print('Valid choices are: %s' % ', '.join(self.ansicolors.keys()))
+        print('Valid choices are:\n%s' % '\n'.join(self.ansicolors.keys()))
         return None
     
     def output(self):
