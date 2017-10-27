@@ -378,7 +378,8 @@ def outcomecalc(budgetvec=None, which=None, project=None, parsetname=None, progs
     thiscoverage = progset.getprogcoverage(budget=constrainedbudget, t=paryears, parset=parset, sample=ccsample)
     thisparsdict = progset.getpars(coverage=thiscoverage, t=paryears, parset=parset, sample=ccsample)
     
-    print thisparsdict['condcas'].y
+    print thisparsdict['hivtest'].y
+    print thisparsdict['numtx'].y
     print 'uufufufufufuf'
     
     if initpeople is None: startyear = None

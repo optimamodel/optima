@@ -421,7 +421,100 @@ def printtologfile(message=None, filename=None):
     
     return None
     
+
+class colorize(object):
+    '''
+    Colorize output text -- can be used to color all output via "with",
+    or to modify a string.
     
+    Examples:
+        with colorize('yellow'): print('Hello world')
+        bluearray = colorize(color='blue', string=str(range(5)), output=True); print(bluearray)
+    
+    To get available colors, type colorize('help').
+    
+    Note: although implemented as a class (to allow the "with" syntax),
+    this actually functions more like a function.
+    
+    Version: 2017oct27
+    '''
+    
+    def __init__(self, color=None, string=None, output=False):
+        ''' Initialize, and act like a function if so desired '''   
+        
+        # Define ANSI colors
+        self.ansicolors = odict([
+                      ('end', '0'),
+                      ('bold','01'),
+                      ('underline', '04'),
+                      ('strikethrough', '09'),
+                      ('black', '30'),
+                      ('red', '31'),
+                      ('orange', '33'),
+                      ('yellow', '93'),
+                      ('green', '32'),
+                      ('cyan', '36'),
+                      ('blue', '34'),
+                      ('purple', '35'),
+                      ('lightgrey', '37'),
+                      ('darkgrey', '90'),
+                      ('lightred', '91'),
+                      ('lightgreen', '92'),
+                      ('lightblue', '94'),
+                      ('pink', '95'),
+                      ('lightcyan', '96'),
+                      ('bgblack', '40'),
+                      ('bgred', '41'),
+                      ('bggreen', '42'),
+                      ('bgorange', '43'),
+                      ('bgblue', '44'),
+                      ('bgpurple', '45'),
+                      ('bgcyan', '46'),
+                      ('bglightgrey', '47'),
+                      ])
+        for key,val in self.ansicolors.items(): self.ansicolors[key] = '\033['+val+'m'
+        
+        # Determine what color to use
+        if color not in self.ansicolors.keys(): 
+            self.help()
+            return None # Don't proceed if no color supplied
+        self.color = color # Store color
+        self.output = output # Store whether or not to output
+        
+        # Modify string, if supplied
+        if string is None: self.string = self.ansicolors[color] # Just return the color
+        else:              self.string = self.ansicolors[color] + str(string) + self.ansicolors['end'] # Add to start and end of the string
+    
+        if not output: # If not outputting, then print instead
+            print(string),
+        
+        return None
+    
+    def __new__(self):
+        ''' Return the string if output is requested, otherwise return None '''
+        if self.output: return self.string
+        else:           return None
+    
+    def __enter__(self):
+        print(self.color),
+        return None
+    
+    def __exit__(self, type, value, traceback):
+        print(self.ansicolors['end']),
+        sys.stdout.flush()
+        return None
+    
+    def help(self):
+        ''' Print options '''
+        print('Valid choices are: %s' % ', '.join(self.ansicolors.keys()))
+        return None
+    
+    def output(self):
+        ''' Return the stored string '''
+        return self.string
+    
+  
+        
     
 ##############################################################################
 ### TYPE FUNCTIONS
@@ -1310,19 +1403,19 @@ def makenested(nesteddict, keylist,item=None):
     ''' Insert item into nested dictionary, creating keys if required '''
     currentlevel = nesteddict
     for i,key in enumerate(keylist[:-1]):
-    	if not(key in currentlevel):
-    		currentlevel[key] = {}
-    	currentlevel = currentlevel[key]
+        if not(key in currentlevel):
+            currentlevel[key] = {}
+        currentlevel = currentlevel[key]
     currentlevel[keylist[-1]] = item
 
 def iternested(nesteddict,previous = []):
-	output = []
-	for k in nesteddict.items():
-		if isinstance(k[1],dict):
-			output += iternested(k[1],previous+[k[0]]) # Need to add these at the first level
-		else:
-			output.append(previous+[k[0]])
-	return output
+    output = []
+    for k in nesteddict.items():
+        if isinstance(k[1],dict):
+            output += iternested(k[1],previous+[k[0]]) # Need to add these at the first level
+        else:
+            output.append(previous+[k[0]])
+    return output
 
 
 
