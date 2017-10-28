@@ -334,7 +334,9 @@ def handletv(budgetvec=None, tvsettings=None, optiminds=None):
     else:
         tvcontrolvec = None
         tvenvelope = None
-    return budgetvec, tvcontrolvec, tvenvelope
+    returnkeys = ['budgetvec', 'tvcontrolvec', 'tvenvelope']
+    output = odict().fromdict(keys=returnkeys, vals=locals())
+    return output
 
 
 

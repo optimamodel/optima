@@ -1453,7 +1453,12 @@ class odict(OrderedDict):
     def __init__(self, *args, **kwargs):
         ''' See collections.py '''
         if len(args)==1 and args[0] is None: args = [] # Remove a None argument
-        OrderedDict.__init__(self, *args, **kwargs) # Standard init
+        try: 
+            OrderedDict.__init__(self, *args, **kwargs) # Standard init
+        except:
+            OrderedDict.__init__(self) # If that fails, try a more flexible way of populating
+            self.makefrom(*args, **kwargs) # Flexible way of populating an odict
+        return None
 
     def __slicekey(self, key, slice_end):
         shift = int(slice_end=='stop')
@@ -1461,10 +1466,13 @@ class odict(OrderedDict):
         elif type(key) is str: return self.index(key)+shift # +1 since otherwise confusing with names (CK)
         elif key is None: return (len(self) if shift else 0)
         else: raise Exception('To use a slice, %s must be either int or str (%s)' % (slice_end, key))
+        return None
 
 
-    def __is_odict_iterable(self, v):
-        return type(v)==list or type(v)==type(array([]))
+    def __is_odict_iterable(self, key):
+        ''' Check to see whether the "key" is actually an iterable '''
+        output = isinstance(key, [list, type(array([]))]) # Do *not* include dict, since that would be recursive
+        return output
 
 
     def __getitem__(self, key):
@@ -1910,6 +1918,44 @@ class odict(OrderedDict):
                 self.__setitem__(key, val)
         
         return self # A bit weird, but usually would use this return an odict
+    
+    
+    def makefrom(self, source=None, keys=None, keynames=None, *args, **kwargs):
+        '''
+        Create an odict from entries in another dictionary. If keys is None, then
+        use all keys from the current dictionary.
+        
+        Examples:
+            a = 'cat'; b = 'dog'; o = odict().makefrom(source=locals(), keys=['a','b'])
+            d = {'a':'cat', 'b':'dog'}; o = odict().makefrom(d) # Same as odict(d)
+            l = ['cat', 'monkey', 'dog']; o = odict().makefrom(source=l, keys=[0,2], keynames=['a','b'])
+        '''
+        
+        # Make sure it's iterable
+        if source is not None: # Don't do anything if there's nothing there
+            if not(isiterable(source)): # Make sure it's iterable
+                source = promotetolist(source)
+            
+            if len(source)==0:
+                return self # Nothing to do here
+            else:
+                # Handle cases where keys or keynames are not supplied
+                if keys is None:
+                    if isinstance(source, list):   keys = range(len(source))
+                    elif isinstance(source, dict): keys = source.keys()
+                    else:                          raise Exception('Unable to guess keys for object of type %s' % type(source))
+                keys = promotetolist(keys) # Make sure it's a list
+                if keynames is None: keynames = keys # Use key names
+                
+                # Loop over supplied keys
+                for key,keyname in zip(keys,keynames):
+                    try: 
+                        self.__setitem__(str(keyname), source[key])
+                    except Exception as E: 
+                        raise Exception('Key "%s" not found: %s' % (key, E.__repr__()))
+                
+        return self # As with make()
+        
     
     
     def enumkeys(self):
