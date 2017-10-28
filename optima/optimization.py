@@ -716,14 +716,13 @@ def tvoptimize(project=None, optim=None, tvec=None, verbose=None, maxtime=None, 
     
     # Set up budgets to run
     tvbudgetvec = dcp(constrainedbudgetvec)
-    tvcontrolvec = zeros(len(tvbudgetvec)+tvsettings['tvtotalbudget']) # Generate vector of zeros for correct length, including an optional extra one for the total budget
+    tvcontrolvec = zeros(noptimprogs+tvsettings['tvtotalbudget']) # Generate vector of zeros for correct length, including an optional extra one for the total budget
     tvvec = concatenate([tvbudgetvec, tvcontrolvec])
     if randseed is None: randseed = int((time()-floor(time()))*1e4) # Make sure a seed is used
             
     # Actually run the optimizations
     bestfval = inf # Value of outcome
     asdresults = odict()
-    k = 0 # TEMP
     key = 'Baseline'
     printv('Running time-varying optimization with maxtime=%s, maxiters=%s' % (maxtime, maxiters), 2, verbose)
     if label: thislabel = '"'+label+'-'+key+'"'
@@ -731,7 +730,8 @@ def tvoptimize(project=None, optim=None, tvec=None, verbose=None, maxtime=None, 
     args['tvsettings'] = tvsettings
     
     xmin = concatenate([zeros(noptimprogs), -inf+tvcontrolvec])
-    tvvecnew, fvals, details = asd(outcomecalc, tvvec, args=args, xmin=xmin, maxtime=maxtime, maxiters=maxiters, verbose=verbose, randseed=randseed, label=thislabel, **kwargs)
+    sinitial = concatenate([tvsettings['asdstep']*tvbudgetvec, tvsettings['asdstep']+zeros(noptimprogs)]) # Set the step size
+    tvvecnew, fvals, details = asd(outcomecalc, tvvec, args=args, xmin=xmin, sinitial=sinitial, maxtime=maxtime, maxiters=maxiters, verbose=verbose, randseed=randseed, label=thislabel, **kwargs)
     budgetvec, tvcontrolvec, tvenvelope = handletv(budgetvec=tvvecnew, tvsettings=tvsettings, optiminds=optiminds)
     constrainedbudgetnew, constrainedbudgetvecnew, lowerlim, upperlim = constrainbudget(origbudget=optimconstbudget, budgetvec=budgetvec, totalbudget=totalbudget, budgetlims=optim.constraints, optiminds=optiminds, outputtype='full', tvsettings=tvsettings)
     asdresults[key] = {'budget':tvvecnew, 'fvals':fvals, 'tvcontrolvec':tvcontrolvec}
