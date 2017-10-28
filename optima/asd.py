@@ -26,7 +26,7 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
       sdec           2       Step size learning rate (decrease)
       pinc           2       Parameter selection learning rate (increase)
       pdec           2       Parameter selection learning rate (decrease)
-      pinitial       None    Set initial parameter selection probabilities
+      pinitial       None    Set initial parameter selection probabilities (ordered x_0+, x_0-, x_1+, x_1- ... x_n+, x_n-)
       sinitial       None    Set initial step sizes; if empty, calculated from stepsize instead
       xmin           None    Min value allowed for each parameter  
       xmax           None    Max value allowed for each parameter 
@@ -142,8 +142,8 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
         inrange = False
         for r in range(maxrangeiters): # Try to find parameters within range
             choice = flatnonzero(cumprobs > random())[0] # Choose a parameter and upper/lower at random
-            par = mod(choice,nparams) # Which parameter was chosen
-            pm = floor((choice)/nparams) # Plus or minus
+            par = int(floor(choice/2)) # Which parameter was chosen
+            pm =  int(mod(choice, 2)) # Plus or minus
             newval = x[par] + ((-1)**pm)*stepsizes[choice] # Calculate the new vector
             if not(newval<xmin[par] or newval>xmax[par]): # Make sure it's in range
                 inrange = True
@@ -164,7 +164,7 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
         if verbose>=3: print(offset+label+'step=%i, elapsed=%s, fval=%s, choice=%s, par=%s, pm=%s, origval=%s, newval=%s, inrange=%s' % (count, time()-start, fval, choice, par, pm, x[par], xnew[par], inrange))
         from optima import colorize
         colorize('blue')
-        if verbose>=4: print('probabilities=%s\n\nstepsizes=%s\n\nxnew=%sxmin=%s\n\nxmax=%s' % (probabilities, stepsizes, xnew, xmin, xmax))
+        if verbose>=4: print('probabilities=%s\n\nstepsizes=%s\n\nxnew=%s\n\nxmin=%s\n\nxmax=%s' % (probabilities, stepsizes, xnew, xmin, xmax))
         colorize()
 
         # Check if this step was an improvement

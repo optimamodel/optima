@@ -652,7 +652,8 @@ def tvoptimize(project=None, optim=None, tvec=None, verbose=None, maxtime=None, 
     if not isinstance(tvsettings, dict): # Dictionary already supplied: just use
         tvsettings = {'tvtotalbudget': False, # Whether or not to let the budget itself change
                       'tvstep': 1, # NUmber of years per step
-                      'asdstep': 0.1} # Default ASD step size
+                      'asdstep': 0.1, # Default ASD step size
+                      'asdlim': 1,} # Minimum/maximum limit
     
     # Do a preliminary non-time-varying optimization
     prelim = optimize(optim=optim, maxtime=maxtime, maxiters=maxiters, verbose=verbose, 
@@ -729,9 +730,13 @@ def tvoptimize(project=None, optim=None, tvec=None, verbose=None, maxtime=None, 
     else: thislabel = '"'+key+'"'
     args['tvsettings'] = tvsettings
     
-    xmin = concatenate([zeros(noptimprogs), -inf+tvcontrolvec])
-    sinitial = concatenate([tvsettings['asdstep']*tvbudgetvec, tvsettings['asdstep']+zeros(noptimprogs)]) # Set the step size
-    tvvecnew, fvals, details = asd(outcomecalc, tvvec, args=args, xmin=xmin, sinitial=sinitial, maxtime=maxtime, maxiters=maxiters, verbose=verbose, randseed=randseed, label=thislabel, **kwargs)
+    
+    xmin = concatenate([zeros(noptimprogs), -tvsettings['asdlim']+dcp(tvcontrolvec)])
+    xmax = concatenate([totalbudget+zeros(noptimprogs), tvsettings['asdlim']+dcp(tvcontrolvec)])
+    stepbudget = tvsettings['asdstep']*tvbudgetvec
+    steptvcontrol = tvsettings['asdstep']+dcp(tvcontrolvec)
+    sinitial = concatenate([stepbudget]*2+[steptvcontrol]*2) # Set the step size -- duplicate for +/-
+    tvvecnew, fvals, details = asd(outcomecalc, tvvec, args=args, xmin=xmin, xmax=xmax, sinitial=sinitial, maxtime=maxtime, maxiters=maxiters, verbose=verbose, randseed=randseed, label=thislabel, **kwargs)
     budgetvec, tvcontrolvec, tvenvelope = handletv(budgetvec=tvvecnew, tvsettings=tvsettings, optiminds=optiminds)
     constrainedbudgetnew, constrainedbudgetvecnew, lowerlim, upperlim = constrainbudget(origbudget=optimconstbudget, budgetvec=budgetvec, totalbudget=totalbudget, budgetlims=optim.constraints, optiminds=optiminds, outputtype='full', tvsettings=tvsettings)
     asdresults[key] = {'budget':tvvecnew, 'fvals':fvals, 'tvcontrolvec':tvcontrolvec}
