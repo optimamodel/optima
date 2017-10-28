@@ -1456,8 +1456,9 @@ class odict(OrderedDict):
         try: 
             OrderedDict.__init__(self, *args, **kwargs) # Standard init
         except:
-            OrderedDict.__init__(self) # If that fails, try a more flexible way of populating
-            self.makefrom(*args, **kwargs) # Flexible way of populating an odict
+            print('NOOOOOOOOOOOOOOOOOOOOOOOOOO')
+#            OrderedDict.__init__(self) # If that fails, try a more flexible way of populating
+#            self.makefrom(*args, **kwargs) # Flexible way of populating an odict
         return None
 
     def __slicekey(self, key, slice_end):
@@ -1471,7 +1472,7 @@ class odict(OrderedDict):
 
     def __is_odict_iterable(self, key):
         ''' Check to see whether the "key" is actually an iterable '''
-        output = isinstance(key, [list, type(array([]))]) # Do *not* include dict, since that would be recursive
+        output = type(key==list) or type(key)==type(array([])) # Do *not* include dict, since that would be recursive
         return output
 
 
@@ -1920,41 +1921,41 @@ class odict(OrderedDict):
         return self # A bit weird, but usually would use this return an odict
     
     
-    def makefrom(self, source=None, keys=None, keynames=None, *args, **kwargs):
-        '''
-        Create an odict from entries in another dictionary. If keys is None, then
-        use all keys from the current dictionary.
-        
-        Examples:
-            a = 'cat'; b = 'dog'; o = odict().makefrom(source=locals(), keys=['a','b'])
-            d = {'a':'cat', 'b':'dog'}; o = odict().makefrom(d) # Same as odict(d)
-            l = ['cat', 'monkey', 'dog']; o = odict().makefrom(source=l, keys=[0,2], keynames=['a','b'])
-        '''
-        
-        # Make sure it's iterable
-        if source is not None: # Don't do anything if there's nothing there
-            if not(isiterable(source)): # Make sure it's iterable
-                source = promotetolist(source)
-            
-            if len(source)==0:
-                return self # Nothing to do here
-            else:
-                # Handle cases where keys or keynames are not supplied
-                if keys is None:
-                    if isinstance(source, list):   keys = range(len(source))
-                    elif isinstance(source, dict): keys = source.keys()
-                    else:                          raise Exception('Unable to guess keys for object of type %s' % type(source))
-                keys = promotetolist(keys) # Make sure it's a list
-                if keynames is None: keynames = keys # Use key names
-                
-                # Loop over supplied keys
-                for key,keyname in zip(keys,keynames):
-                    try: 
-                        self.__setitem__(str(keyname), source[key])
-                    except Exception as E: 
-                        raise Exception('Key "%s" not found: %s' % (key, E.__repr__()))
-                
-        return self # As with make()
+#    def makefrom(self, source=None, keys=None, keynames=None, *args, **kwargs):
+#        '''
+#        Create an odict from entries in another dictionary. If keys is None, then
+#        use all keys from the current dictionary.
+#        
+#        Examples:
+#            a = 'cat'; b = 'dog'; o = odict().makefrom(source=locals(), keys=['a','b'])
+#            d = {'a':'cat', 'b':'dog'}; o = odict().makefrom(d) # Same as odict(d)
+#            l = ['cat', 'monkey', 'dog']; o = odict().makefrom(source=l, keys=[0,2], keynames=['a','b'])
+#        '''
+#        
+#        # Make sure it's iterable
+#        if source is not None: # Don't do anything if there's nothing there
+#            if not(isiterable(source)): # Make sure it's iterable
+#                source = promotetolist(source)
+#            
+#            if len(source)==0:
+#                return self # Nothing to do here
+#            else:
+#                # Handle cases where keys or keynames are not supplied
+#                if keys is None:
+#                    if isinstance(source, list):   keys = range(len(source))
+#                    elif isinstance(source, dict): keys = source.keys()
+#                    else:                          raise Exception('Unable to guess keys for object of type %s' % type(source))
+#                keys = promotetolist(keys) # Make sure it's a list
+#                if keynames is None: keynames = keys # Use key names
+#                
+#                # Loop over supplied keys
+#                for key,keyname in zip(keys,keynames):
+#                    try: 
+#                        self.__setitem__(str(keyname), source[key])
+#                    except Exception as E: 
+#                        raise Exception('Key "%s" not found: %s' % (key, E.__repr__()))
+#                
+#        return self # As with make()
         
     
     
