@@ -288,7 +288,7 @@ def constrainbudget(origbudget=None, budgetvec=None, totalbudget=None, budgetlim
 
 
 
-def tvfunction(budget=None, years=None, pars=None):
+def tvfunction(budget=None, years=None, pars=None, constraint=None):
     '''
     Convert a budget, vector of years, and a vector of parameters (of same
     length as the budget) into a corresponding normalized dictionary of
@@ -415,6 +415,14 @@ def outcomecalc(budgetvec=None, which=None, project=None, parsetname=None, progs
             results.rawoutcomes = rawoutcomes
             results.budgetyears = [objectives['start']] # Use the starting year
             results.budget = constrainedbudget # Convert to budget
+            
+            # Store time-varying part
+            if tvsettings is not None:
+                results.timevarying = odict() # One-liner: multires.timevarying = odict().makefrom(locals(), ['tvyears', 'tvpars', 'tvbudgets'])
+                results.timevarying['tvyears'] = dcp(paryears)
+                results.timevarying['tvpars'] = dcp(tvcontrolvec)
+                results.timevarying['tvbudgets'] = dcp(constrainedbudget)
+                
             output = results
         else:
             output = outcome
@@ -748,7 +756,7 @@ def tvoptimize(project=None, optim=None, tvec=None, verbose=None, maxtime=None, 
         bestfval = fvals[-1] # Reset fval
     
     ## Calculate outcomes
-    args['initpeople'] = None # Set to None to get full results, not just from strat year
+    args['initpeople'] = None # Set to None to get full results, not just from start year
     args['tvsettings'] = None
     new = outcomecalc(asdresults[bestkey]['budget'], outputresults=True, **args)
     new.name = 'Optimal (time-varying)' # Else, say what the budget is
@@ -771,16 +779,6 @@ def tvoptimize(project=None, optim=None, tvec=None, verbose=None, maxtime=None, 
     except:
         multires.outcome = None
         multires.budget = None
-    
-    # Store time-varying part
-    tvyears = inclusiverange(start=optim.objectives['start'], stop=optim.objectives['end'], step=tvsettings['tvstep']) # Create the time vector
-    tvpars = dcp(tvcontrolvec)
-    tvbudgets = tvfunction(budget=multires.budget, years=tvyears, pars=tvpars)
-    multires.timevarying = odict() # One-liner: multires.timevarying = odict().makefrom(locals(), ['tvyears', 'tvpars', 'tvbudgets'])
-    multires.timevarying['tvyears'] = tvyears
-    multires.timevarying['tvpars'] = tvpars
-    multires.timevarying['tvbudgets'] = tvbudgets
-    
     
     # Store optimization settings
     multires.optimsettings = odict([('maxiters',maxiters),('maxtime',maxtime),('mc',mc),('randseed',randseed),('tvsettings',tvsettings)])
