@@ -692,6 +692,7 @@ def tvoptimize(project=None, optim=None, tvec=None, verbose=None, maxtime=None, 
     origtotalbudget = dcp(optim.objectives['budget']) # Should be a float, but dcp just in case
     totalbudget = origtotalbudget
     optimconstbudget = dcp(prelim.budget)
+    origbudget = dcp(prelim.budgets[0]) # OK to do this since if supplied as an argument, will be the same; else, it will be populated here
     project = optim.projectref()
 
     ## Handle budget and remove fixed costs
