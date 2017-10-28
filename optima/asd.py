@@ -145,7 +145,7 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
             par = mod(choice,nparams) # Which parameter was chosen
             pm = floor((choice)/nparams) # Plus or minus
             newval = x[par] + ((-1)**pm)*stepsizes[choice] # Calculate the new vector
-            if newval>=xmin[par] and newval<=xmax[par]: # Make sure it's in range
+            if not(newval<xmin[par] or newval>xmax[par]): # Make sure it's in range
                 inrange = True
                 break
             else:
@@ -162,7 +162,10 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
         abserrorhistory[mod(count,stalliters)] = max(0, fval-fvalnew) # Keep track of improvements in the error
         relerrorhistory[mod(count,stalliters)] = max(0, fval/float(fvalnew)-1.0) # Keep track of improvements in the error  
         if verbose>=3: print(offset+label+'step=%i, elapsed=%s, fval=%s, choice=%s, par=%s, pm=%s, origval=%s, newval=%s, inrange=%s' % (count, time()-start, fval, choice, par, pm, x[par], xnew[par], inrange))
-        if verbose>=4: print('
+        from optima import colorize
+        colorize('blue')
+        if verbose>=4: print('probabilities=%s\nstepsizes=%s\nxmin=%s\nxmax=%s' % (probabilities, stepsizes, xmin, xmax))
+        colorize()
 
         # Check if this step was an improvement
         fvalold = fval # Store old fval

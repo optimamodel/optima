@@ -730,7 +730,7 @@ def tvoptimize(project=None, optim=None, tvec=None, verbose=None, maxtime=None, 
     else: thislabel = '"'+key+'"'
     args['tvsettings'] = tvsettings
     
-    xmin = concatenate([zeros(noptimprogs), -inf*tvcontrolvec])
+    xmin = concatenate([zeros(noptimprogs), -inf+tvcontrolvec])
     tvvecnew, fvals, details = asd(outcomecalc, tvvec, args=args, xmin=xmin, maxtime=maxtime, maxiters=maxiters, verbose=verbose, randseed=randseed, label=thislabel, **kwargs)
     budgetvec, tvcontrolvec, tvenvelope = handletv(budgetvec=tvvecnew, tvsettings=tvsettings, optiminds=optiminds)
     constrainedbudgetnew, constrainedbudgetvecnew, lowerlim, upperlim = constrainbudget(origbudget=optimconstbudget, budgetvec=budgetvec, totalbudget=totalbudget, budgetlims=optim.constraints, optiminds=optiminds, outputtype='full', tvsettings=tvsettings)
