@@ -146,13 +146,12 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
             break
 
         # Calculate the new value
+        xold = deepcopy(x) # Keep a copy of the old parameter set
         xnew = deepcopy(x) # Initialize the new parameter set
         xnew[par] = newval # Update the new parameter set
         fvalnew = function(xnew, **args) # Calculate the objective function for the new parameter set
         abserrorhistory[mod(count,stalliters)] = max(0, fval-fvalnew) # Keep track of improvements in the error
         relerrorhistory[mod(count,stalliters)] = max(0, fval/float(fvalnew)-1.0) # Keep track of improvements in the error  
-        if verbose>=3: print(offset+label+'step=%i, elapsed=%s, fval=%s, choice=%s, par=%s, pm=%s, origval=%s, newval=%s, inrange=%s' % (count, time()-start, fval, choice, par, pm, x[par], xnew[par], inrange))
-        if verbose>=4: print('\nprobabilities=%s\n\nstepsizes=%s\n\nxnew=%s\n\nxmin=%s\n\nxmax=%s\n' % (probabilities, stepsizes, xnew, xmin, xmax))
 
         # Check if this step was an improvement
         fvalold = fval # Store old fval
@@ -169,7 +168,9 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
         else:
             exitreason = 'Objective function returned NaN'
             break
-        if verbose>=2: print(offset + label + ' step %i (%0.1f s) %s (orig: %s | best:%s | new:%s | diff:%s)' % ((count, time()-start, flag)+multisigfig([fvalorig, fvalold, fvalnew, fvalnew-fvalold])))
+        if verbose==2: print(offset + label + ' step %i (%0.1f s) %s (orig: %s | best:%s | new:%s | diff:%s)' % ((count, time()-start, flag)+multisigfig([fvalorig, fvalold, fvalnew, fvalnew-fvalold])))
+        if verbose>=3: print(label + '\nstep = %i\nelapsed = %s\nfval = %s\nchoice = %s\npar = %s\npm = %s\norigval = %s\nnewval = %s\ninrange = %s' % (count, time()-start, fval, choice, par, pm, xold[par], xnew[par], inrange))
+        if verbose>=4: print('probabilities = %s\nstepsizes = %s\nxnew = %s\nxmin = %s\nxmax = %s\n' % (probabilities, stepsizes, xnew, xmin, xmax))
         
         # Store output information
         fvals[count] = fval # Store objective function evaluations

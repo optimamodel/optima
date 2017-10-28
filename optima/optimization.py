@@ -10,9 +10,6 @@ from numpy import zeros, empty, arange, maximum, array, inf, isfinite, argmin, a
 from numpy.random import random, seed
 from time import time
 
-# TEMP
-from optima import colorize, printvars
-
 ################################################################################################################################################
 ### The container class
 ################################################################################################################################################
@@ -170,16 +167,11 @@ def defaultconstraints(project=None, progsetname=None, which='outcomes', verbose
 def constrainbudget(origbudget=None, budgetvec=None, totalbudget=None, budgetlims=None, optiminds=None, tolerance=1e-2, overalltolerance=1.0, outputtype=None, tvsettings=None):
     """ Take an unnormalized/unconstrained budgetvec and normalize and constrain it """
     
-    printvars(locals(), ['origbudget', 'budgetvec', 'totalbudget', 'budgetlims', 'optiminds', 'tolerance', 'overalltolerance', 'outputtype', 'tvsettings'], color='blue', spaces=2)
-
     # Handle time-varying optimization if required
     budgetvec, tvcontrolvec, tvenvelope = handletv(budgetvec=budgetvec, tvsettings=tvsettings, optiminds=optiminds)
 
-
-    todebug = (round(origbudget[0])==9493776 and budgetvec[0]==20000000)
     # Prepare this budget for later scaling and the like
     constrainedbudget = dcp(origbudget)
-    if todebug: print('Z1: %s' % constrainedbudget)
     
     # Handle zeros
     if sum(constrainedbudget[:])==0: constrainedbudget[:] += tolerance
@@ -193,7 +185,7 @@ def constrainbudget(origbudget=None, budgetvec=None, totalbudget=None, budgetlim
     rescaledbudget = dcp(constrainedbudget)
     for key in rescaledbudget.keys(): rescaledbudget[key] *= scaleratio # This is the original budget scaled to the total budget
     if abs(sum(rescaledbudget[:])-totalbudget)>overalltolerance:
-        errormsg = 'rescaling budget failed (%f != %f)' % (sum(rescaledbudget[:]), totalbudget)
+        errormsg = 'Rescaling budget failed (%f != %f)' % (sum(rescaledbudget[:]), totalbudget)
         raise OptimaException(errormsg)
 
     # Calculate the minimum amount that can be spent on the fixed costs
@@ -211,9 +203,8 @@ def constrainbudget(origbudget=None, budgetvec=None, totalbudget=None, budgetlim
 
     # Scale the supplied budgetvec to meet this available amount
     scaledbudgetvec = dcp(budgetvec*optimscaleratio)
-    if todebug: print('Z2: %s' % scaledbudgetvec)
     if abs(sum(scaledbudgetvec)-optimbudget)>overalltolerance:
-        errormsg = 'rescaling budget failed (%f != %f)' % (sum(scaledbudgetvec), optimbudget)
+        errormsg = 'Rescaling budget failed (%f != %f)' % (sum(scaledbudgetvec), optimbudget)
         raise OptimaException(errormsg)
 
     # Calculate absolute limits from relative limits
@@ -230,7 +221,6 @@ def constrainbudget(origbudget=None, budgetvec=None, totalbudget=None, budgetlim
     noptimprogs = len(optiminds) # Number of optimizable programs
     limlow = zeros(noptimprogs, dtype=bool)
     limhigh = zeros(noptimprogs, dtype=bool)
-    if todebug: print('Z3: %s' % scaledbudgetvec)
     for oi,oind in enumerate(optiminds):
         if scaledbudgetvec[oi] <= abslimits['min'][oind]:
             scaledbudgetvec[oi] = abslimits['min'][oind]
@@ -242,18 +232,11 @@ def constrainbudget(origbudget=None, budgetvec=None, totalbudget=None, budgetlim
     # Too high
     count = 0
     countmax = 1e4
-    if todebug: print('Z4: %s' % scaledbudgetvec)
     while sum(scaledbudgetvec) > optimbudget+tolerance:
         count += 1
         if count>countmax: raise OptimaException('Tried %i times to fix budget and failed! (wanted: %g; actual: %g' % (count, optimbudget, sum(scaledbudgetvec)))
         overshoot = sum(scaledbudgetvec) - optimbudget
         toomuch = sum(scaledbudgetvec[~limlow]) / float((sum(scaledbudgetvec[~limlow]) - overshoot))
-        colorize('green')
-        print limlow
-        print scaledbudgetvec
-        print overshoot
-        print toomuch
-        colorize()
         for oi,oind in enumerate(optiminds):
             if not(limlow[oi]):
                 proposed = scaledbudgetvec[oi] / float(toomuch)
@@ -263,7 +246,6 @@ def constrainbudget(origbudget=None, budgetvec=None, totalbudget=None, budgetlim
                 scaledbudgetvec[oi] = proposed
 
     # Too low
-    if todebug: print('Z5: %s' % scaledbudgetvec)
     while sum(scaledbudgetvec) < optimbudget-tolerance:
         count += 1
         if count>countmax: raise OptimaException('Tried %i times to fix budget and failed! (wanted: %g; actual: %g' % (count, optimbudget, sum(scaledbudgetvec)))
@@ -279,17 +261,12 @@ def constrainbudget(origbudget=None, budgetvec=None, totalbudget=None, budgetlim
 
     # Reconstruct the budget odict using the rescaled budgetvec and the rescaled original amount
     constrainedbudget = dcp(rescaledminfixed) # This budget has the right fixed costs
-    if todebug: print('Z6: %s' % constrainedbudget)
     for oi,oind in enumerate(optiminds):
         constrainedbudget[oind] = scaledbudgetvec[oi]
     if abs(sum(constrainedbudget[:])-totalbudget)>overalltolerance:
         errormsg = 'final budget amounts differ (%f != %f)' % (sum(constrainedbudget[:]), totalbudget)
         raise OptimaException(errormsg)
     
-    if todebug:
-        print('Z7: %s' % constrainedbudget)
-        import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
-
     # Optionally return the calculated upper and lower limits as well as the original budget and vector
     constrainedbudgetvec = dcp(constrainedbudget[optiminds])
     if outputtype=='odict':
@@ -301,7 +278,7 @@ def constrainbudget(origbudget=None, budgetvec=None, totalbudget=None, budgetlim
         upperlim = dcp(abslimits['min'][optiminds])
         return constrainedbudget, constrainedbudgetvec, lowerlim, upperlim
     else:
-        raise OptimaException('must specify an output type of "odict", "vec", or "full"; you specified "%s"' % outputtype)
+        raise OptimaException('Must specify an output type of "odict", "vec", or "full"; you specified "%s"' % outputtype)
 
 
 
@@ -377,12 +354,10 @@ def outcomecalc(budgetvec=None, which=None, project=None, parsetname=None, progs
     # Normalize budgetvec and convert to budget -- WARNING, is there a better way of doing this?
     if doconstrainbudget:
         constrainedbudget = constrainbudget(origbudget=origbudget, budgetvec=budgetvec, totalbudget=totalbudget, budgetlims=constraints, optiminds=optiminds, outputtype='odict')
-        colorize('magenta'); print('a: %s' % constrainedbudget); colorize()
     else:
         constrainedbudget = dcp(origbudget)
         if len(budgetvec)==len(optiminds): constrainedbudget[optiminds] = budgetvec # Assume it's just the optimizable programs
         else:                              constrainedbudget[:]         = budgetvec # Assume it's all programs
-        colorize('magenta'); print('b: %s' % constrainedbudget); colorize()
         
     # Run model
     if tvsettings is None: # If not running time-varying optimization, it's easy
@@ -391,21 +366,12 @@ def outcomecalc(budgetvec=None, which=None, project=None, parsetname=None, progs
         paryears = inclusiverange(start=objectives['start'], stop=objectives['end'], step=tvsettings['tvstep']) # Create the time vector
         for i,ind in enumerate(optiminds): # Loop over the programs and calculate the budget for each
             constrainedbudget[ind] = constrainedbudget[ind]*tvfunction(years=paryears, par=tvcontrolvec[i])
-    colorize('magenta'); print('c: %s' % constrainedbudget); colorize()
     
-    print 'HEYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY'
-    print budgetvec, tvcontrolvec, tvenvelope
-    print constrainedbudget
-#    for k,b in constrainedbudget.items():
-#        print('%s: %s' % k,promotetoarray(b)[0])
-    print 'okkkkkkkkkkkkkkk'
+    # Get coverage and actual dictionary, in preparation for running
     thiscoverage = progset.getprogcoverage(budget=constrainedbudget, t=paryears, parset=parset, sample=ccsample)
     thisparsdict = progset.getpars(coverage=thiscoverage, t=paryears, parset=parset, sample=ccsample)
     
-    print thisparsdict['hivtest'].y
-    print thisparsdict['numtx'].y
-    print 'uufufufufufuf'
-    
+    # Actually run the model
     if initpeople is None: startyear = None
     else:                  startyear = objectives['start']
     tvec = project.settings.maketvec(start=startyear, end=objectives['end'])
@@ -427,7 +393,6 @@ def outcomecalc(budgetvec=None, which=None, project=None, parsetname=None, progs
             thisoutcome = results.main['num'+key].tot[0][indices].sum() # the instantaneous outcome e.g. objectives['numdeath'] -- 0 is since best
             rawoutcomes['num'+key] = thisoutcome*results.dt
             outcome += thisoutcome*thisweight*results.dt # Calculate objective
-            print key, thisoutcome, thisweight, outcome
 
         # Output results
         if outputresults:
@@ -436,10 +401,6 @@ def outcomecalc(budgetvec=None, which=None, project=None, parsetname=None, progs
             results.budgetyears = [objectives['start']] # Use the starting year
             results.budget = constrainedbudget # Convert to budget
             output = results
-            colorize('yellow')
-            print budgetvec
-            print constrainedbudget
-            colorize()
         else:
             output = outcome
 
@@ -729,12 +690,13 @@ def tvoptimize(project=None, optim=None, tvec=None, verbose=None, maxtime=None, 
             'initpeople':initpeople,
             'tvsettings':None} # Complicated; see below
     
-    doconstrainbudget = True; print 'WARNING doconstrain'
     tmpresults = odict()
     tmpimprovements = odict()
     tmpfullruninfo = odict()
-    tmpresults['MyBaseline']       = outcomecalc(prelim.budgets['Baseline'], outputresults=True, doconstrainbudget=doconstrainbudget, **args)
-    tmpresults['Non-time-varying'] = outcomecalc(prelim.budgets['Optimal'],  outputresults=True, doconstrainbudget=doconstrainbudget, **args)
+    
+    # This generates the baseline results
+    tmpresults['Baseline']       = outcomecalc(prelim.budgets['Baseline'], outputresults=True, doconstrainbudget=False, **args)
+    tmpresults['Non-time-varying'] = outcomecalc(prelim.budgets['Optimal'],  outputresults=True, doconstrainbudget=False, **args)
     for key,result in tmpresults.items(): 
         result.name = key # Update names
         tmpimprovements[key] = [tmpresults[key].outcome] # Hacky, since expects a list
@@ -767,7 +729,6 @@ def tvoptimize(project=None, optim=None, tvec=None, verbose=None, maxtime=None, 
     sinitial = concatenate([stepbudget]*2+[steptvcontrol]*2) # Set the step size -- duplicate for +/-
     tvvecnew, fvals, details = asd(outcomecalc, tvvec, args=args, xmin=xmin, xmax=xmax, sinitial=sinitial, maxtime=maxtime, maxiters=maxiters, verbose=verbose, randseed=randseed, label=thislabel, **kwargs)
     budgetvec, tvcontrolvec, tvenvelope = handletv(budgetvec=tvvecnew, tvsettings=tvsettings, optiminds=optiminds)
-    colorize('bgred', 'HEREEEEEEEEEEEEEEEEE')
     constrainedbudgetnew, constrainedbudgetvecnew, lowerlim, upperlim = constrainbudget(origbudget=origbudget, budgetvec=budgetvec, totalbudget=totalbudget, budgetlims=optim.constraints, optiminds=optiminds, outputtype='full', tvsettings=tvsettings)
     asdresults[key] = {'budget':tvvecnew, 'fvals':fvals, 'tvcontrolvec':tvcontrolvec}
     if fvals[-1]<bestfval: 

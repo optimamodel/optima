@@ -704,8 +704,8 @@ def makegeoprojects(project=None, spreadsheetpath=None, destination=None, dosave
                 popratio[popname].append(wspopsize.cell_value(rowindex, colindex))
                 prevfactors[popname].append(wsprev.cell_value(rowindex, colindex))
                 plhivratio[popname].append(wspopsize.cell_value(rowindex, colindex)*wsprev.cell_value(rowindex, colindex))
-    print('Districts...')
-    print districtlist
+    print('Districts:')
+    print(districtlist)
     ndistricts = len(districtlist)
     
     # Workout the reference year for the spreadsheet for later 'datapoint inclusion'.
