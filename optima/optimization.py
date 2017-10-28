@@ -172,6 +172,10 @@ def constrainbudget(origbudget=None, budgetvec=None, totalbudget=None, budgetlim
     
     printvars(locals(), ['origbudget', 'budgetvec', 'totalbudget', 'budgetlims', 'optiminds', 'tolerance', 'overalltolerance', 'outputtype', 'tvsettings'], color='blue', spaces=2)
 
+    # Handle time-varying optimization if required
+    budgetvec, tvcontrolvec, tvenvelope = handletv(budgetvec=budgetvec, tvsettings=tvsettings, optiminds=optiminds)
+
+
     todebug = (round(origbudget[0])==9493776 and budgetvec[0]==20000000)
     # Prepare this budget for later scaling and the like
     constrainedbudget = dcp(origbudget)
@@ -318,25 +322,18 @@ def tvfunction(years=None, par=None):
 
 def handletv(budgetvec=None, tvsettings=None, optiminds=None):
     ''' Decide if the budget vector includes time-varying information '''
-    timevarying = (tvsettings is not None) # Set boolean
-    if timevarying:
-        noptimprogs = len(optiminds) # Number of optimized programs
-        ndims = 2 # Semi-hard-code the number of dimensions of the time-varying optimization
-        if len(budgetvec)>=ndims*noptimprogs:
-            tvcontrolvec = dcp(budgetvec[noptimprogs:ndims*noptimprogs]) # Pull out control vector
-            if   len(budgetvec)==(ndims*noptimprogs):   tvenvelope = None # No budget shape
-            elif len(budgetvec)==(ndims*noptimprogs+1): tvenvelope = budgetvec[ndims*noptimprogs] # Pull out overall budget shape
-            else: raise OptimaException('Length not understood')
-            budgetvec = dcp(budgetvec[:noptimprogs]) # Replace the budget vector with the ordinary budget vector
-        else:
-            errormsg = 'Time-varying optimization requested, but budget vector too short (length %i, %i expected)' % (noptimprogs, ndims*noptimprogs)
-            raise OptimaException(errormsg)
+    noptimprogs = len(optiminds) # Number of optimized programs
+    ndims = 2 # Semi-hard-code the number of dimensions of the time-varying optimization
+    if len(budgetvec)>=ndims*noptimprogs:
+        tvcontrolvec = dcp(budgetvec[noptimprogs:ndims*noptimprogs]) # Pull out control vector
+        if   len(budgetvec)==(ndims*noptimprogs):   tvenvelope = None # No budget shape
+        elif len(budgetvec)==(ndims*noptimprogs+1): tvenvelope = budgetvec[ndims*noptimprogs] # Pull out overall budget shape
+        else: raise OptimaException('Length not understood')
+        budgetvec = dcp(budgetvec[:noptimprogs]) # Replace the budget vector with the ordinary budget vector
     else:
         tvcontrolvec = None
         tvenvelope = None
-    returnkeys = ['budgetvec', 'tvcontrolvec', 'tvenvelope']
-    output = odict().fromdict(keys=returnkeys, vals=locals())
-    return output
+    return (budgetvec, tvcontrolvec, tvenvelope)
 
 
 
@@ -770,6 +767,7 @@ def tvoptimize(project=None, optim=None, tvec=None, verbose=None, maxtime=None, 
     sinitial = concatenate([stepbudget]*2+[steptvcontrol]*2) # Set the step size -- duplicate for +/-
     tvvecnew, fvals, details = asd(outcomecalc, tvvec, args=args, xmin=xmin, xmax=xmax, sinitial=sinitial, maxtime=maxtime, maxiters=maxiters, verbose=verbose, randseed=randseed, label=thislabel, **kwargs)
     budgetvec, tvcontrolvec, tvenvelope = handletv(budgetvec=tvvecnew, tvsettings=tvsettings, optiminds=optiminds)
+    colorize('bgred', 'HEREEEEEEEEEEEEEEEEE')
     constrainedbudgetnew, constrainedbudgetvecnew, lowerlim, upperlim = constrainbudget(origbudget=origbudget, budgetvec=budgetvec, totalbudget=totalbudget, budgetlims=optim.constraints, optiminds=optiminds, outputtype='full', tvsettings=tvsettings)
     asdresults[key] = {'budget':tvvecnew, 'fvals':fvals, 'tvcontrolvec':tvcontrolvec}
     if fvals[-1]<bestfval: 

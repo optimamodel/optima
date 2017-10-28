@@ -1922,7 +1922,7 @@ class odict(OrderedDict):
         use all keys from the current dictionary.
         
         Examples:
-            a = 'cat'; b = 'dog'; o = odict().makefrom(source=locals(), keys=['a','b'])
+            a = 'cat'; b = 'dog'; o = odict().makefrom(source=locals(), keys=['a','b']) # Make use of fact that variables are stored in a dictionary
             d = {'a':'cat', 'b':'dog'}; o = odict().makefrom(d) # Same as odict(d)
             l = ['cat', 'monkey', 'dog']; o = odict().makefrom(source=l, keys=[0,2], keynames=['a','b'])
         '''
