@@ -26,7 +26,7 @@ define(['angular', 'underscore'], function (angular, _) {
       $scope.state = {
         selectAll: false,
         isNew: !program.name,
-        populations: populations, // all possible populations in the program
+        populations: deepCopy(populations), // all possible populations in the program
         parameters: parameters, // all possible parameters
         categories: categories,
         program: program,
@@ -59,20 +59,25 @@ define(['angular', 'underscore'], function (angular, _) {
       console.log('ProgramModalController.init costcov', $scope.state.program.costcov);
       $scope.years = _.range(openProject.startYear, openProject.endYear+1);
 
-      console.log('ProgramModalController.init program', $scope.state.program);
-      if (isNonemptyList($scope.state.program.populations)) {
-        _.forEach($scope.state.populations, function(population) {
-          population.active = (
-            $scope.state.program.populations.length === 0)
-            || ($scope.state.program.populations.indexOf(population.short) > -1);
-        });
-        $scope.state.selectAll = !_.find($scope.state.populations, function(population) {
-          return !population.active;
-        })
+      if (isAnyTargetparForTotal) {
+        $scope.state.progPopReadOnly = true;
+        $scope.state.selectAll = true;
+        $scope.clickAllTargetPopulations();
       } else {
-        $scope.state.program.populations = [];
+        console.log('ProgramModalController.init program', $scope.state.program);
+        if (isNonemptyList($scope.state.program.populations)) {
+          _.forEach($scope.state.populations, function(population) {
+            population.active = (
+              $scope.state.program.populations.length === 0)
+               || ($scope.state.program.populations.indexOf(population.short) > -1);
+          });
+          $scope.state.selectAll = !_.find($scope.state.populations, function(population) {
+            return !population.active;
+          })
+        } else {
+          $scope.state.program.populations = [];
+        }
       }
-
 
       _.forEach($scope.state.program.targetpars, setAttrOfPar);
       console.log('ProgramModalController.init targetpars', $scope.state.program.targetpars);
@@ -310,17 +315,15 @@ define(['angular', 'underscore'], function (angular, _) {
 
         $scope.state.showAddData = false;
 
-        if ($scope.state.program.attr) {
-          $scope.state.program.populations =
-            _.filter(
-              $scope.state.populations,
-              function(population) {
-                return population.active;
-              })
-            .map(function(population) {
-                return population.short;
-              });
-        }
+        $scope.state.program.populations =
+          _.filter(
+            $scope.state.populations,
+            function(population) {
+              return population.active;
+            })
+          .map(function(population) {
+              return population.short;
+            });
 
         $scope.state.program.criteria.hivstatus = '';
         if ($scope.state.allHivStates) {
