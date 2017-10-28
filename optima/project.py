@@ -502,6 +502,16 @@ class Project(object):
         try:    return self.progsets[key]
         except: return printv('Warning, program set not found!', 1, verbose) # Returns None
     
+    def scen(self, key=-1, verbose=2):
+        ''' Shortcut for getting the latest scenario, i.e. self.scens[-1]'''
+        try:    return self.scens[key]
+        except: return printv('Warning, scenario not found!', 1, verbose) # Returns None
+
+    def optim(self, key=-1, verbose=2):
+        ''' Shortcut for getting the latest optimization, i.e. self.optims[-1]'''
+        try:    return self.optims[key]
+        except: return printv('Warning, optimization not found!', 1, verbose) # Returns None
+
     def result(self, key=-1, verbose=2):
         ''' Shortcut for getting the latest active results, i.e. self.results[-1]'''
         try:    return self.results[key]
