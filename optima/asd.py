@@ -61,16 +61,6 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
         seed(int(randseed)) # Don't reset it if not supplied
         if verbose>=3: print('Launching ASD with random seed %i; sample: %f' % (randseed, random()))
     
-    # Print intputs
-    if verbose>=3:
-        spacer = '#'*40
-        print('\n\nLaunching ASD with the following arguments:\n')
-        print(spacer)
-        arglist = ['args', 'stepsize', 'sinc', 'sdec', 'pinc', 'pdec', 'pinitial', 'sinitial', 'absinitial', 'xmin', 'xmax', 'maxiters', 'maxtime', 'abstol', 'reltol', 'stalliters', 'stoppingfunc', 'randseed', 'label', 'fulloutput', 'verbose']
-        for argnum,argname in enumerate(arglist):
-            print('%i.    %s: %s\n\n' % (argnum, argname, eval(argname)))
-        print(spacer)
-    
     # Function to ensure objects are consistent
     def consistentshape(userinput, origshape=False):
         """
@@ -162,10 +152,7 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
         abserrorhistory[mod(count,stalliters)] = max(0, fval-fvalnew) # Keep track of improvements in the error
         relerrorhistory[mod(count,stalliters)] = max(0, fval/float(fvalnew)-1.0) # Keep track of improvements in the error  
         if verbose>=3: print(offset+label+'step=%i, elapsed=%s, fval=%s, choice=%s, par=%s, pm=%s, origval=%s, newval=%s, inrange=%s' % (count, time()-start, fval, choice, par, pm, x[par], xnew[par], inrange))
-        from optima import colorize
-        colorize('blue')
-        if verbose>=4: print('probabilities=%s\n\nstepsizes=%s\n\nxnew=%s\n\nxmin=%s\n\nxmax=%s' % (probabilities, stepsizes, xnew, xmin, xmax))
-        colorize()
+        if verbose>=4: print('\nprobabilities=%s\n\nstepsizes=%s\n\nxnew=%s\n\nxmin=%s\n\nxmax=%s\n' % (probabilities, stepsizes, xnew, xmin, xmax))
 
         # Check if this step was an improvement
         fvalold = fval # Store old fval
