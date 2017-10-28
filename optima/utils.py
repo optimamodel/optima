@@ -109,7 +109,7 @@ def defaultrepr(obj, maxlen=None):
     return output
 
 
-def drprint(obj, maxlen=None):
+def printdr(obj, maxlen=None):
     ''' Shortcut for printing the default repr for an object '''
     print(defaultrepr(obj, maxlen=maxlen))
     return None
@@ -301,6 +301,45 @@ def printdata(data, name='Variable', depth=1, maxlen=40, indent='', level=0, sho
                     printdata(getattr(data,key), name=key, depth=depth-1, indent=indent+thisindent, level=level)
         print('\n')
     return None
+
+
+def printvars(localvars=None, varlist=None, label=None, divider=True, spaces=1, color=None):
+    '''
+    Print out a list of variables. Note that the first argument must be locals().
+    
+    Arguments:
+        localvars = function must be called with locals() as first argument
+        varlist = the list of variables to print out
+        label = optional label to print out, so you know where the variables came from
+        divider = whether or not to offset the printout with a spacer (i.e. ------)
+        spaces = how many spaces to use between variables
+        color = optionally label the variable names in color so they're easier to see
+    
+    Simple usage example:
+        a = range(5); b = 'example'; printvars(locals(), ['a','b'], color='blue')
+    
+    Another useful usage case is to print out the kwargs for a function:
+        printvars(locals(), kwargs.keys())
+        
+    Version: 2017oct28
+    '''
+    
+    varlist = promotetolist(varlist) # Make sure it's actually a list
+    dividerstr = '-'*40
+    
+    if label:  print('Variables for %s:' % label)
+    if divider: print(dividerstr)
+    for varnum,varname in enumerate(varlist):
+        controlstr = '%i. "%s": ' % (varnum, varname) # Basis for the control string -- variable number and name
+        if color: controlstr = colorize(color, output=True) + controlstr + colorize('reset', output=True) # Optionally add color
+        if spaces>1: controlstr += '\n' # Add a newline if the variables are going to be on different lines
+        try:    controlstr += '%s' % localvars[varname] # The variable to be printed
+        except: controlstr += 'WARNING, could not be printed' # In case something goes wrong
+        controlstr += '\n' * spaces # The number of spaces to add between variables
+        print(controlstr), # Print it out
+    if divider: print(dividerstr) # If necessary, print the divider again
+    return None
+
 
 def today():
     ''' Get the current time, in UTC time '''
