@@ -447,13 +447,17 @@ class Resultset(object):
                     else:                           outputstr += ('%i'+sep) % data[t]
        
         if hasattr(self, 'budgets'):
-            if len(self.budgets):      thisbudget = self.budgets[ind]
-            else:                      thisbudget = [] 
-        else:                          thisbudget = self.budget
+            if len(self.budgets):        thisbudget = self.budgets[ind]
+            else:                        thisbudget = [] 
+        else:                            thisbudget = self.budget
         if hasattr(self, 'coverages'):
-            if len(self.coverages):    thiscoverage = self.coverages[ind]
-            else:                      thiscoverage = [] 
-        else:                          thiscoverage = self.coverage
+            if len(self.coverages):      thiscoverage = self.coverages[ind]
+            else:                        thiscoverage = [] 
+        else:                            thiscoverage = self.coverage
+        if hasattr(self, 'timevarying'): 
+            try:                         tvbudget = self.timevarying[self.keys[ind]] # Call by key rather than index
+            except:                      tvbudget = None
+        else:                            tvbudget = None
         
         if len(thisbudget): # WARNING, does not support multiple years
             outputstr += '\n\n\n'
@@ -471,6 +475,16 @@ class Resultset(object):
             outputstr += sep*2+'Coverage\n'
             outputstr += sep*2+sep.join(thiscoverage.keys()) + '\n'
             outputstr += sep*2+sep.join([str(val) for val in covvals]) + '\n' # WARNING, should have this val[0] but then dies with None entries
+
+        if tvbudget:
+            tvyears  = tvbudget['tvyears']
+            progkeys = tvbudget['tvbudgets'].keys()
+            tvdata   = tvbudget['tvbudgets'][:]
+            outputstr += '\n\n\n'
+            outputstr += sep*2+'Time-varying budget\n'
+            outputstr += sep*2+sep.join(['Year']+progkeys) + '\n'
+            for y,year in enumerate(tvyears): # Loop over years as rows
+                outputstr += sep*2+str(year)+sep+sep.join([str(val) for val in tvdata[:,y]]) + '\n' # Join together programs as columns
             
         if writetofile: 
             ext = 'xlsx' if asexcel else 'csv'
@@ -957,6 +971,7 @@ def exporttoexcel(filename=None, outdict=None):
         worksheet = workbook.add_worksheet(sanitizefilename(key)) # A valid filename should also be a valid Excel key
         
         # Define formatting
+        budcovformats = ['Budget', 'Coverage', 'Tme-varying']
         colors = {'gentlegreen':'#3c7d3e', 'fadedstrawberry':'#ffeecb', 'edgyblue':'#bcd5ff','accountantgrey':'#f6f6f6', 'white':'#ffffff'}
         formats = dict()
         formats['plain'] = workbook.add_format({})
@@ -986,10 +1001,10 @@ def exporttoexcel(filename=None, outdict=None):
                     numbercell = True
                 except:
                     numbercell = False
-                if row==0:                                     thisformat = 'budcov'
-                elif str(thistxt) in ['Budget', 'Coverage']:   thisformat = 'budcov'
-                elif not emptycell and not numbercell:         thisformat = 'bold'
-                elif numbercell:                               thisformat = 'number'
+                if row==0:                             thisformat = 'budcov'
+                elif str(thistxt) in budcovformats:    thisformat = 'budcov'
+                elif not emptycell and not numbercell: thisformat = 'bold'
+                elif numbercell:                       thisformat = 'number'
                 worksheet.write(row, col, thistxt, formats[thisformat])
         
         worksheet.set_column(2, maxcol, 15) # Make wider

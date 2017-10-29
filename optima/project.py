@@ -725,7 +725,7 @@ class Project(object):
         if objectives  is not None: optim.objectives  = objectives # Update optim structure with inputs
         if constraints is not None: optim.constraints = constraints
         if tvsettings  is not None: optim.tvsettings  = tvsettings
-        if timevarying: optim.tvsettings['timevarying'] = True # Set time-varying optimization
+        if timevarying is not None: optim.tvsettings['timevarying'] = timevarying # Set time-varying optimization
         
         # Run the optimization
         if optim.tvsettings['timevarying']: # Call time-varying optimization
