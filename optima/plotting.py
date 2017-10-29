@@ -629,14 +629,15 @@ def plotimprovement(results=None, figsize=globalfigsize, lw=2, titlesize=globalt
 def plotbudget(multires=None, die=True, figsize=globalfigsize, legendsize=globallegendsize, position=None,
                usepie=False, verbose=2, interactive=False, fig=None, **kwargs):
     ''' 
-    Plot multiple allocations on bar charts -- intended for scenarios and optimizations.
+    Plot multiple allocations on bar or pie charts -- intended for scenarios and optimizations.
 
     Results object must be of Multiresultset type.
     
-    Version: 2017jun04
+    Version: 2017oct29
     '''
     
     # Preliminaries: process inputs and extract needed data
+    if type(multires)==Resultset: multires = Multiresultset([multires]) # Force it to be a multiresultset
     budgets = dcp(multires.budgets)
     for b,budget in enumerate(budgets.values()): # Loop over all budgets
         for p,prog in enumerate(budget.values()): # Loop over all programs in the budget
@@ -661,36 +662,73 @@ def plotbudget(multires=None, die=True, figsize=globalfigsize, legendsize=global
     for k,key in enumerate(allprogkeys):
         colordict[key] = allprogcolors[k]
     
+    # Handle plotting
     budgetplots = odict()
+    fig, naxes = makefigure(figsize=figsize, interactive=interactive, fig=fig)
+    ax = fig.add_subplot(naxes, 1, naxes)
     
-    # Make pie plots
-    if usepie:
-        for i in range(nallocs):
-            fig, naxes = makefigure(figsize=figsize, interactive=interactive, fig=fig)
-            ax = fig.add_subplot(naxes, 1, naxes)
+    # Usual usage case -- not time-varying
+    if not(hasattr(multires, 'timevarying')): 
+    
+        # Make pie plots
+        if usepie:
+            for i in range(nallocs):
+                # Make a pie
+                setposition(ax, position, interactive)
+                ydata = budgets[i][:]
+                piecolors = [colordict[key] for key in budgets[i].keys()]
+                ax.pie(ydata, colors=piecolors)
+                
+                # Set up legend
+                labels = dcp(allprogkeys)
+                labels.reverse() # Wrong order otherwise, don't know why
+                legendsettings = {'loc':'upper left', 'bbox_to_anchor':(1.05, 1), 'fontsize':legendsize, 'title':'', 'frameon':False}
+                ax.legend(labels, **legendsettings) # Multiple entries, all populations
+                
+                budgetplots['budget-%s'%i] = fig
+          
+        # Make bar plots
+        else:
+            if position == globalposition: # If defaults, reset
+                position = dcp(position)
+                position[0] = 0.25 # More room on left side for y-tick labels
+                position[2] = 0.5 # Make narrower
             setposition(ax, position, interactive)
             
-            # Make a pie
-            ydata = budgets[i][:]
-            piecolors = [colordict[key] for key in budgets[i].keys()]
-            ax.pie(ydata, colors=piecolors)
-            
+            # Need to build up piece by piece since need to loop over budgets and then budgets
+            for b,budget in enumerate(budgets.values()):
+                for p in range(nprogslist[b]-1,-1,-1): # Loop in reverse order over programs
+                    progkey = budget.keys()[p]
+                    ydata = budget[p]
+                    xdata = b+0.6 # 0.6 is 1 nimunus 0.4, which is half the bar width
+                    bottomdata = sum(budget[:p])
+                    label = None
+                    if progkey in allprogkeys:
+                        label = progkey # Only add legend if not already added
+                        allprogkeys.remove(progkey) # Pop label so it doesn't get added to legend multiple times
+                    ax.barh(xdata, ydata, left=bottomdata, color=colordict[progkey], linewidth=0, label=label)
+        
             # Set up legend
-            labels = dcp(allprogkeys)
-            labels.reverse() # Wrong order otherwise, don't know why
-            legendsettings = {'loc':'upper left', 'bbox_to_anchor':(1.05, 1), 'fontsize':legendsize, 'title':'', 'frameon':False}
-            ax.legend(labels, **legendsettings) # Multiple entries, all populations
+            legendsettings = {'loc':'upper left', 'bbox_to_anchor':(1.07, 1), 'fontsize':legendsize, 'title':'', 'frameon':False}
+            handles, legendlabels = ax.get_legend_handles_labels()
+            ax.legend(reversed(handles), reversed(legendlabels), **legendsettings)
+        
+            # Set up other things
+            ax.set_xlabel('Spending')
+            ax.set_yticks(arange(nallocs)+1)
+            ax.set_yticklabels(alloclabels)
+            ax.set_ylim(0,nallocs+1)
+            ax.set_title('Budget')
             
-            budgetplots['budget-%s'%i] = fig
-      
-    # Make bar plots
+            SIticks(ax=ax, axis='x')
+            budgetplots['budget'] = fig
+    
+    # Other case: it is time-varying
     else:
-        fig, naxes = makefigure(figsize=figsize, interactive=interactive, fig=fig)
-        ax = fig.add_subplot(naxes, 1, naxes)
-        if position == globalposition: # If defaults, reset
-            position = dcp(position)
-            position[0] = 0.25 # More room on left side for y-tick labels
-            position[2] = 0.5 # Make narrower
+#        if position == globalposition: # If defaults, reset
+#            position = dcp(position)
+#            position[0] = 0.25 # More room on left side for y-tick labels
+#            position[2] = 0.5 # Make narrower
         setposition(ax, position, interactive)
         
         # Need to build up piece by piece since need to loop over budgets and then budgets
@@ -704,7 +742,7 @@ def plotbudget(multires=None, die=True, figsize=globalfigsize, legendsize=global
                 if progkey in allprogkeys:
                     label = progkey # Only add legend if not already added
                     allprogkeys.remove(progkey) # Pop label so it doesn't get added to legend multiple times
-                ax.barh(xdata, ydata, left=bottomdata, color=colordict[progkey], linewidth=0, label=label)
+                ax.bar(xdata, ydata, bottom=bottomdata, color=colordict[progkey], linewidth=0, label=label)
     
         # Set up legend
         legendsettings = {'loc':'upper left', 'bbox_to_anchor':(1.07, 1), 'fontsize':legendsize, 'title':'', 'frameon':False}

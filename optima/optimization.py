@@ -433,6 +433,7 @@ def outcomecalc(budgetvec=None, which=None, project=None, parsetname=None, progs
             results.rawoutcomes = rawoutcomes
             results.budgetyears = [objectives['start']] # Use the starting year
             results.budget = constrainedbudget # Convert to budget
+            results.budgets = odict({'outcomecalc':constrainedbudget}) # For plotting
             
             # Store time-varying part
             if tvsettings is not None:
