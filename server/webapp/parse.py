@@ -1386,6 +1386,13 @@ def get_optimization_summaries(project):
                     - inci
                 start: 2017,
                 which: outcomes,
+            tvsettings:
+                "timevarying": False
+                "tvconstrain": True
+                "tvstep":      1.0
+                "tvinit":      None
+                "asdstep":     0.1
+                "asdlim":      5.0
         -...
      '''
     optim_summaries = []
@@ -1397,6 +1404,7 @@ def get_optimization_summaries(project):
             "name": str(optim.name),
             "objectives": normalize_obj(optim.objectives),
             "constraints": parse_constraints(optim.constraints, project=project),
+            "tvsettings": normalize_obj(optim.tvsettings),
         }
 
         optim_summary["which"] = str(optim.objectives["which"])
@@ -1448,6 +1456,10 @@ def set_optimization_summaries_on_project(project, optimization_summaries):
 
         if "constraints" in summary:
             optim.constraints = revert_constraints(summary['constraints'])
+        
+        for tvkey in optim.tvsettings.keys():
+            if tvkey in summary["tvsettings"]: # This shouldn't be necessary, but just in case...
+                optim.tvsettings[tvkey] = summary["tvsettings"][tvkey]
 
         new_optims[summary["name"]] = optim
 
