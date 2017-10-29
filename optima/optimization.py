@@ -361,7 +361,7 @@ def outcomecalc(budgetvec=None, which=None, project=None, parsetname=None, progs
 
     color = 'blue' if tvsettings and tvsettings['timevarying'] else 'green'
     import optima as op
-    op.printvars(locals(), ['budgetvec', 'which', 'objectives', 'constraints', 'totalbudget', 'optiminds', 'origbudget', 'tvec', 'initpeople', 'doconstrainbudget', 'tvsettings', 'tvcontrolvec'], color=color)
+    op.printvars(locals(), ['budgetvec', 'which', 'objectives', 'constraints', 'totalbudget', 'optiminds', 'origbudget', 'tvec', 'doconstrainbudget', 'tvsettings', 'tvcontrolvec'], color=color)
     
     # Set up defaults
     if which is None: 
