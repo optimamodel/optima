@@ -726,7 +726,7 @@ def tvoptimize(project=None, optim=None, tvec=None, verbose=None, maxtime=None, 
             'tvec':tvec, 
             'ccsample':ccsample, 
             'verbose':verbose, 
-            'initpeople':initpeople,
+            'initpeople':None, # For now, run full time series
             'tvsettings':None} # Complicated; see below
     
     tmpresults = odict()
