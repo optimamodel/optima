@@ -481,10 +481,10 @@ class Resultset(object):
             progkeys = tvbudget['tvbudgets'].keys()
             tvdata   = tvbudget['tvbudgets'][:]
             outputstr += '\n\n\n'
-            outputstr += sep*2+'Time-varying budget\n'
-            outputstr += sep*2+sep.join(['Year']+progkeys) + '\n'
+            outputstr += sep*2+'Time-varying'
+            outputstr += sep+sep.join(['Year']+progkeys) + '\n'
             for y,year in enumerate(tvyears): # Loop over years as rows
-                outputstr += sep*2+str(year)+sep+sep.join([str(val) for val in tvdata[:,y]]) + '\n' # Join together programs as columns
+                outputstr += sep+str(year)+sep+sep.join([str(val) for val in tvdata[:,y]]) + '\n' # Join together programs as columns
             
         if writetofile: 
             ext = 'xlsx' if asexcel else 'csv'
@@ -1004,6 +1004,7 @@ def exporttoexcel(filename=None, outdict=None):
                 if row==0:                             thisformat = 'budcov'
                 elif str(thistxt) in budcovformats:    thisformat = 'budcov'
                 elif not emptycell and not numbercell: thisformat = 'bold'
+                elif col<3:                            thisformat = 'bold'
                 elif numbercell:                       thisformat = 'number'
                 worksheet.write(row, col, thistxt, formats[thisformat])
         
