@@ -40,8 +40,8 @@ interactiveposition = [0.15,0.1,0.55,0.75] # Use slightly larger margnis for int
 
 def getdefaultplots(ismulti='both'):
     ''' Since these can get overwritten otherwise '''
-    defaultplots = ['cascadebars', 'budgets', 'numplhiv-stacked', 'numinci-stacked', 'numdeath-stacked', 'numtreat-stacked', 'numnewdiag-stacked', 'prev-population'] # Default epidemiological plots
-    defaultmultiplots = ['budgets', 'numplhiv-total', 'numinci-total', 'numdeath-total', 'numtreat-total', 'numnewdiag-total', 'prev-population'] # Default epidemiological plots
+    defaultplots = ['cascadebars', 'budgets', 'tvbudget', 'numplhiv-stacked', 'numinci-stacked', 'numdeath-stacked', 'numtreat-stacked', 'numnewdiag-stacked', 'prev-population'] # Default epidemiological plots
+    defaultmultiplots = ['budgets', 'tvbudget', 'numplhiv-total', 'numinci-total', 'numdeath-total', 'numtreat-total', 'numnewdiag-total', 'prev-population'] # Default epidemiological plots
     if ismulti==False:  return defaultplots
     elif ismulti==True: return defaultmultiplots
     else:               return defaultplots,defaultmultiplots
@@ -138,6 +138,11 @@ def getplotselections(results, advanced=False):
                 plotselections['keys'].append(bckey) # e.g. 'budget'
                 plotselections['names'].append(bclabel) # e.g. 'Budget allocation'
     
+    ## Add time-varying budget results
+    if hasattr(results, 'timevarying') and results.timevarying is not None:
+        plotselections['keys'].append('tvbudget') # WARNING, maybe more standard to do append()...
+        plotselections['names'].append('Budget (time-varying)')
+        
     ## Cascade plot is always available, since epi is always available
     plotselections['keys'].append('cascade')
     plotselections['names'].append('Care cascade')
@@ -228,6 +233,17 @@ def makeplots(results=None, toplot=None, die=False, verbose=2, plotstartyear=Non
         except OptimaException as E: 
             if die: raise E
             else: printv('Could not plot budgets: "%s"' % (E.__repr__()), 1, verbose)
+    
+    ## Add time-varying budget plot
+    if 'tvbudget' in toplot:
+        toplot.remove('tvbudget') # Because everything else is passed to plotepi()
+        try: 
+            if hasattr(results, 'timevarying') and results.timevarying: # WARNING, duplicated from getplotselections()
+                tvbudgetplots = plottvbudget(results, die=die, fig=fig, **kwargs)
+                allplots.update(tvbudgetplots)
+        except OptimaException as E: 
+            if die: raise E
+            else: printv('Could not plot time-varying budget: "%s"' % (E.__repr__()), 1, verbose)
     
     ## Add coverage plot(s)
     if 'coverage' in toplot:
@@ -622,7 +638,7 @@ def plotimprovement(results=None, figsize=globalfigsize, lw=2, titlesize=globalt
 
 
 ##################################################################
-## Coverage plot
+## Budget plot
 ##################################################################
     
     
@@ -667,68 +683,29 @@ def plotbudget(multires=None, die=True, figsize=globalfigsize, legendsize=global
     fig, naxes = makefigure(figsize=figsize, interactive=interactive, fig=fig)
     ax = fig.add_subplot(naxes, 1, naxes)
     
-    # Usual usage case -- not time-varying
-    if not(hasattr(multires, 'timevarying')): 
-    
-        # Make pie plots
-        if usepie:
-            for i in range(nallocs):
-                # Make a pie
-                setposition(ax, position, interactive)
-                ydata = budgets[i][:]
-                piecolors = [colordict[key] for key in budgets[i].keys()]
-                ax.pie(ydata, colors=piecolors)
-                
-                # Set up legend
-                labels = dcp(allprogkeys)
-                labels.reverse() # Wrong order otherwise, don't know why
-                legendsettings = {'loc':'upper left', 'bbox_to_anchor':(1.05, 1), 'fontsize':legendsize, 'title':'', 'frameon':False}
-                ax.legend(labels, **legendsettings) # Multiple entries, all populations
-                
-                budgetplots['budget-%s'%i] = fig
-          
-        # Make bar plots
-        else:
-            if position == globalposition: # If defaults, reset
-                position = dcp(position)
-                position[0] = 0.25 # More room on left side for y-tick labels
-                position[2] = 0.5 # Make narrower
+    # Make pie plots
+    if usepie:
+        for i in range(nallocs):
+            # Make a pie
             setposition(ax, position, interactive)
+            ydata = budgets[i][:]
+            piecolors = [colordict[key] for key in budgets[i].keys()]
+            ax.pie(ydata, colors=piecolors)
             
-            # Need to build up piece by piece since need to loop over budgets and then budgets
-            for b,budget in enumerate(budgets.values()):
-                for p in range(nprogslist[b]-1,-1,-1): # Loop in reverse order over programs
-                    progkey = budget.keys()[p]
-                    ydata = budget[p]
-                    xdata = b+0.6 # 0.6 is 1 nimunus 0.4, which is half the bar width
-                    bottomdata = sum(budget[:p])
-                    label = None
-                    if progkey in allprogkeys:
-                        label = progkey # Only add legend if not already added
-                        allprogkeys.remove(progkey) # Pop label so it doesn't get added to legend multiple times
-                    ax.barh(xdata, ydata, left=bottomdata, color=colordict[progkey], linewidth=0, label=label)
-        
             # Set up legend
-            legendsettings = {'loc':'upper left', 'bbox_to_anchor':(1.07, 1), 'fontsize':legendsize, 'title':'', 'frameon':False}
-            handles, legendlabels = ax.get_legend_handles_labels()
-            ax.legend(reversed(handles), reversed(legendlabels), **legendsettings)
-        
-            # Set up other things
-            ax.set_xlabel('Spending')
-            ax.set_yticks(arange(nallocs)+1)
-            ax.set_yticklabels(alloclabels)
-            ax.set_ylim(0,nallocs+1)
-            ax.set_title('Budget')
+            labels = dcp(allprogkeys)
+            labels.reverse() # Wrong order otherwise, don't know why
+            legendsettings = {'loc':'upper left', 'bbox_to_anchor':(1.05, 1), 'fontsize':legendsize, 'title':'', 'frameon':False}
+            ax.legend(labels, **legendsettings) # Multiple entries, all populations
             
-            SIticks(ax=ax, axis='x')
-            budgetplots['budget'] = fig
-    
-    # Other case: it is time-varying
+            budgetplots['budget-%s'%i] = fig
+      
+    # Make bar plots
     else:
-#        if position == globalposition: # If defaults, reset
-#            position = dcp(position)
-#            position[0] = 0.25 # More room on left side for y-tick labels
-#            position[2] = 0.5 # Make narrower
+        if position == globalposition: # If defaults, reset
+            position = dcp(position)
+            position[0] = 0.25 # More room on left side for y-tick labels
+            position[2] = 0.5 # Make narrower
         setposition(ax, position, interactive)
         
         # Need to build up piece by piece since need to loop over budgets and then budgets
@@ -742,26 +719,84 @@ def plotbudget(multires=None, die=True, figsize=globalfigsize, legendsize=global
                 if progkey in allprogkeys:
                     label = progkey # Only add legend if not already added
                     allprogkeys.remove(progkey) # Pop label so it doesn't get added to legend multiple times
-                ax.bar(xdata, ydata, bottom=bottomdata, color=colordict[progkey], linewidth=0, label=label)
+                ax.barh(xdata, ydata, left=bottomdata, color=colordict[progkey], linewidth=0, label=label)
     
         # Set up legend
         legendsettings = {'loc':'upper left', 'bbox_to_anchor':(1.07, 1), 'fontsize':legendsize, 'title':'', 'frameon':False}
         handles, legendlabels = ax.get_legend_handles_labels()
-        ax.legend(handles, legendlabels, **legendsettings)
+        ax.legend(reversed(handles), reversed(legendlabels), **legendsettings)
     
         # Set up other things
-        ax.set_ylabel('Spending')
-        ax.set_xticks(arange(nallocs)+1)
-        ax.set_xticklabels(alloclabels)
-        ax.set_xlim(0,nallocs+1)
+        ax.set_xlabel('Spending')
+        ax.set_yticks(arange(nallocs)+1)
+        ax.set_yticklabels(alloclabels)
+        ax.set_ylim(0,nallocs+1)
         ax.set_title('Budget')
         
-        SIticks(ax=ax, axis='y')
+        SIticks(ax=ax, axis='x')
         budgetplots['budget'] = fig
     
     return budgetplots
 
 
+
+def plottvbudget(multires=None, die=True, figsize=globalfigsize, legendsize=globallegendsize, position=None,
+               usepie=False, verbose=2, interactive=False, fig=None, **kwargs):
+    ''' 
+    Plot time-varying budget.
+    
+    Version: 2017oct29
+    '''
+    
+    # Preliminaries: process inputs and extract needed data
+    if type(multires)==Resultset: multires = Multiresultset([multires]) # Force it to be a multiresultset
+    tv = multires.timevarying[0] # There shouldn't be more than one...
+    tvyears  = tv['tvyears']
+    progkeys = tv['tvbudgets'].keys()
+    tvdata   = tv['tvbudgets'][:]
+    nyears = len(tvyears)
+    nprogs = len(progkeys)
+    allprogcolors = gridcolors(nprogs, hueshift=proghueshift)
+    colordict = odict()
+    for k,key in enumerate(progkeys):
+        colordict[key] = allprogcolors[k]
+    
+    # Handle plotting
+    tvbudgetplots = odict()
+    fig, naxes = makefigure(figsize=figsize, interactive=interactive, fig=fig)
+    ax = fig.add_subplot(naxes, 1, naxes)
+    setposition(ax, position, interactive)
+    
+    # Need to build up piece by piece since need to loop over budgets and then budgets
+    legendkeys = []
+    for y,year in enumerate(tvyears):
+        for p in range(nprogs-1,-1,-1): # Loop in reverse order over programs
+            progkey = progkeys[p]
+            ydata = tvdata[p,y]
+            xdata = y+0.6 # 0.6 is 1 nimunus 0.4, which is half the bar width
+            bottomdata = sum(tvdata[:p,y])
+            label = None
+            if progkey not in legendkeys:
+                label = progkey # Only add legend if not already added
+                legendkeys.append(progkey) # Add label so it doesn't get added to legend multiple times
+            ax.bar(xdata, ydata, bottom=bottomdata, color=colordict[progkey], linewidth=0, label=label)
+
+    # Set up legend
+    legendsettings = {'loc':'upper left', 'bbox_to_anchor':(1.07, 1), 'fontsize':legendsize, 'title':'', 'frameon':False}
+    handles, legendlabels = ax.get_legend_handles_labels()
+    ax.legend(handles, legendlabels, **legendsettings)
+
+    # Set up other things
+    ax.set_ylabel('Spending')
+    ax.set_xticks([1,nyears])
+    ax.set_xticklabels(['%i'%i for i in tvyears[[0,-1]]])
+    ax.set_xlim(0,nyears+1)
+    ax.set_title('Time-varying budget')
+    
+    SIticks(ax=ax, axis='y')
+    tvbudgetplots['tvbudget'] = fig
+    
+    return tvbudgetplots
 
 
 

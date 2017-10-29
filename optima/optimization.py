@@ -735,7 +735,7 @@ def tvoptimize(project=None, optim=None, tvec=None, verbose=None, maxtime=None, 
     
     # This generates the baseline results
     tmpresults['Baseline']       = outcomecalc(prelim.budgets['Baseline'], outputresults=True, doconstrainbudget=False, **args)
-    tmpresults['Non-time-varying'] = outcomecalc(prelim.budgets['Optimal'],  outputresults=True, doconstrainbudget=False, **args)
+    tmpresults['Optimal'] = outcomecalc(prelim.budgets['Optimal'],  outputresults=True, doconstrainbudget=False, **args)
     for key,result in tmpresults.items(): 
         result.name = key # Update names
         tmpimprovements[key] = [tmpresults[key].outcome] # Hacky, since expects a list
@@ -778,7 +778,7 @@ def tvoptimize(project=None, optim=None, tvec=None, verbose=None, maxtime=None, 
     ## Calculate outcomes
     args['initpeople'] = None # Set to None to get full results, not just from start year
     new = outcomecalc(asdresults[bestkey]['budget'], tvcontrolvec=tvcontrolvec, outputresults=True, **args)
-    new.name = 'Optimal (time-varying)' # Else, say what the budget is
+    new.name = 'Time-varying' # Else, say what the budget is
     tmpresults[new.name] = new
     tmpimprovements[new.name] = asdresults[bestkey]['fvals']
     tmpfullruninfo[new.name] = asdresults # Store everything
