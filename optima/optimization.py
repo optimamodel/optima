@@ -181,9 +181,6 @@ def defaulttvsettings(**kwargs):
 def constrainbudget(origbudget=None, budgetvec=None, totalbudget=None, budgetlims=None, optiminds=None, tolerance=1e-2, overalltolerance=1.0, outputtype=None, tvsettings=None):
     """ Take an unnormalized/unconstrained budgetvec and normalize and constrain it """
     
-    # Handle time-varying optimization if required
-    budgetvec, tvcontrolvec = handletv(budgetvec=budgetvec, tvsettings=tvsettings, optiminds=optiminds)
-
     # Prepare this budget for later scaling and the like
     constrainedbudget = dcp(origbudget)
     
@@ -332,7 +329,7 @@ def tvfunction(budgetdict=None, years=None, pars=None, optiminds=None, tvsetting
     return output
 
 
-def handletv(budgetvec=None, tvsettings=None, optiminds=None):
+def separatetv(budgetvec=None, tvsettings=None, optiminds=None):
     ''' Decide if the budget vector includes time-varying information '''
     noptimprogs = len(optiminds) # Number of optimized programs
     ndims = 2 # Semi-hard-code the number of dimensions of the time-varying optimization
@@ -380,7 +377,7 @@ def outcomecalc(budgetvec=None, which=None, project=None, parsetname=None, progs
         raise OptimaException(errormsg)
     
     # Handle time-varying optimization
-    budgetvec, tvcontrolvec = handletv(budgetvec=budgetvec, tvsettings=tvsettings, optiminds=optiminds)
+    budgetvec, tvcontrolvec = separatetv(budgetvec=budgetvec, tvsettings=tvsettings, optiminds=optiminds)
     
     # Normalize budgetvec and convert to budget -- WARNING, is there a better way of doing this?
     if doconstrainbudget:
@@ -764,7 +761,7 @@ def tvoptimize(project=None, optim=None, tvec=None, verbose=None, maxtime=None, 
     
     # Now run the optimization
     tvvecnew, fvals, details = asd(outcomecalc, tvvec, args=args, xmin=xmin, xmax=xmax, sinitial=sinitial, maxtime=maxtime, maxiters=maxiters, verbose=verbose, randseed=randseed, label=thislabel, **kwargs)
-    budgetvec, tvcontrolvec = handletv(budgetvec=tvvecnew, tvsettings=tvsettings, optiminds=optiminds)
+    budgetvec, tvcontrolvec = separatetv(budgetvec=tvvecnew, tvsettings=tvsettings, optiminds=optiminds)
     constrainedbudgetnew, constrainedbudgetvecnew, lowerlim, upperlim = constrainbudget(origbudget=origbudget, budgetvec=budgetvec, totalbudget=totalbudget, budgetlims=optim.constraints, optiminds=optiminds, outputtype='full', tvsettings=tvsettings)
     asdresults[key] = {'budget':constrainedbudgetnew, 'fvals':fvals, 'tvcontrolvec':tvcontrolvec}
     if fvals[-1]<bestfval: 
