@@ -747,16 +747,16 @@ def plotbudget(multires=None, die=True, figsize=globalfigsize, legendsize=global
         # Set up legend
         legendsettings = {'loc':'upper left', 'bbox_to_anchor':(1.07, 1), 'fontsize':legendsize, 'title':'', 'frameon':False}
         handles, legendlabels = ax.get_legend_handles_labels()
-        ax.legend(reversed(handles), reversed(legendlabels), **legendsettings)
+        ax.legend(handles, legendlabels, **legendsettings)
     
         # Set up other things
-        ax.set_xlabel('Spending')
-        ax.set_yticks(arange(nallocs)+1)
-        ax.set_yticklabels(alloclabels)
-        ax.set_ylim(0,nallocs+1)
+        ax.set_ylabel('Spending')
+        ax.set_xticks(arange(nallocs)+1)
+        ax.set_xticklabels(alloclabels)
+        ax.set_xlim(0,nallocs+1)
         ax.set_title('Budget')
         
-        SIticks(ax=ax, axis='x')
+        SIticks(ax=ax, axis='y')
         budgetplots['budget'] = fig
     
     return budgetplots
