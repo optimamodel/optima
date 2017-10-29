@@ -728,7 +728,7 @@ class Project(object):
             multires = multioptimize(optim=optim, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, 
                                      die=die, origbudget=origbudget, randseed=randseed, mc=mc, nchains=nchains, nblocks=nblocks, 
                                      blockiters=blockiters, batch=batch, **kwargs)      
-        elif timevarying:
+        elif timevarying or tvsettings is not None:
             multires = tvoptimize(optim=optim, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, 
                                      die=die, origbudget=origbudget, randseed=randseed, mc=mc, tvsettings=tvsettings, **kwargs)
         else:
