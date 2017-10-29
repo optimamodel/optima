@@ -722,15 +722,19 @@ class Project(object):
                 optim = self.optims[optimname] 
             else: # If neither an optim nor an optimname is supplied, create one
                 optim = Optim(project=self, name=name, objectives=objectives, constraints=constraints, parsetname=parsetname, progsetname=progsetname, timevarying=timevarying, tvsettings=tvsettings)
+        if objectives  is not None: optim.objectives  = objectives # Update optim structure with inputs
+        if constraints is not None: optim.constraints = constraints
+        if tvsettings  is not None: optim.tvsettings  = tvsettings
+        if timevarying: optim.tvsettings['timevarying'] = True # Set time-varying optimization
         
         # Run the optimization
-        if multi: # It's a multi-run optimization
+        if optim.tvsettings['timevarying']: # Call time-varying optimization
+            multires = tvoptimize(optim=optim, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, 
+                                     die=die, origbudget=origbudget, randseed=randseed, mc=mc, **kwargs)
+        elif multi: # It's a multi-run optimization
             multires = multioptimize(optim=optim, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, 
                                      die=die, origbudget=origbudget, randseed=randseed, mc=mc, nchains=nchains, nblocks=nblocks, 
                                      blockiters=blockiters, batch=batch, **kwargs)      
-        elif timevarying or tvsettings is not None or (hasattr(optim, 'timevarying') and optim.timevarying): # All the different ways of calling time-varying optimization
-            multires = tvoptimize(optim=optim, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, 
-                                     die=die, origbudget=origbudget, randseed=randseed, mc=mc, tvsettings=tvsettings, **kwargs)
         else: # Neither special case
             multires = optimize(optim=optim, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, 
                                 die=die, origbudget=origbudget, randseed=randseed, mc=mc, **kwargs)
