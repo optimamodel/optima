@@ -359,6 +359,10 @@ def outcomecalc(budgetvec=None, which=None, project=None, parsetname=None, progs
                 initpeople=None, outputresults=False, verbose=2, ccsample='best', doconstrainbudget=True, tvsettings=None, tvcontrolvec=None):
     ''' Function to evaluate the objective for a given budget vector (note, not time-varying) '''
 
+    color = 'blue' if tvsettings and tvsettings['timevarying'] else 'green'
+    import optima as op
+    op.printvars(locals(), ['budgetvec', 'which', 'objectives', 'constraints', 'totalbudget', 'optiminds', 'origbudget', 'tvec', 'initpeople', 'doconstrainbudget', 'tvsettings', 'tvcontrolvec'], color=color)
+    
     # Set up defaults
     if which is None: 
         if objectives is not None: which = objectives['which']
