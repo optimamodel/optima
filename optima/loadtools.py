@@ -50,7 +50,7 @@ def setmigrations(which='migrations'):
         ('2.3.8', ('2.4',   '2017-06-05', None,              'Ukraine: ICER analysis; cascade bar plot; GUI tools; summary() and fixprops() methdods')),
         ('2.4',   ('2.5',   '2017-07-03', None,              'Made registration public')),
         ('2.5',   ('2.6',   '2017-10-23', None,              'Public code release')),
-        ('2.6',   ('2.7',   '2017-10-27', None,              'Time-varying optimization')),
+        ('2.6',   ('2.7',   '2017-10-29', addtimevarying,    'Time-varying optimization')),
         ])
     
     # Define changelog
@@ -728,6 +728,12 @@ def redotranstable(project, **kwargs):
     
     return None
 
+
+def addtimevarying(project, **kwargs):
+    ''' Update optimization objects to include time-varying settings '''
+    for opt in project.optims.values():
+        opt.tvsettings = op.defaulttvsettings()
+    return None
 
 #def redoprograms(project, **kwargs):
 #    """

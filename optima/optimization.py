@@ -16,12 +16,13 @@ from time import time
 class Optim(object):
     ''' An object for storing an optimization '''
 
-    def __init__(self, project=None, name='default', objectives=None, constraints=None, parsetname=None, progsetname=None):
+    def __init__(self, project=None, name='default', objectives=None, constraints=None, parsetname=None, progsetname=None, timevarying=None, tvsettings=None):
         if project     is None: raise OptimaException('To create an optimization, you must supply a project')
         if parsetname  is None: parsetname  = -1 # If none supplied, assume defaults
         if progsetname is None: progsetname = -1
         if objectives  is None: objectives  = defaultobjectives(project=project,  progsetname=progsetname, verbose=0)
         if constraints is None: constraints = defaultconstraints(project=project, progsetname=progsetname, verbose=0)
+        if tvsettings  is None: tvsettings  = defaulttvsettings(timevarying=timevarying) # Create the time-varying settings
         self.name         = name # Name of the optimization, e.g. 'default'
         self.uid          = uuid() # ID
         self.projectref   = Link(project) # Store pointer for the project, if available
@@ -31,6 +32,7 @@ class Optim(object):
         self.progsetname  = progsetname # Program set name
         self.objectives   = objectives # List of dicts holding Parameter objects -- only one if no uncertainty
         self.constraints  = constraints # List of populations
+        self.tvsettings   = tvsettings # The settings for being time-varying
         self.resultsref   = None # Store pointer to results
 
 
@@ -40,6 +42,7 @@ class Optim(object):
         output += ' Optimization name: %s\n'    % self.name
         output += 'Parameter set name: %s\n'    % self.parsetname
         output += '  Program set name: %s\n'    % self.progsetname
+        output += '      Time-varying: %s\n'    % self.timevarying
         output += '      Date created: %s\n'    % getdate(self.created)
         output += '     Date modified: %s\n'    % getdate(self.modified)
         output += '               UID: %s\n'    % self.uid
@@ -169,6 +172,7 @@ def defaulttvsettings(**kwargs):
     Version: 2017oct29
     '''
     tvsettings = odict()
+    tvsettings['timevarying'] = False # By default, do not use time-varying optimization
     tvsettings['tvconstrain'] = True # Whether or not to constrain the budget at each point in time
     tvsettings['tvstep'] = 1.0 # NUmber of years per step
     tvsettings['tvinit'] = None # Optional array with the same length as the budget vector to initialize to; if None, will default to 0
@@ -680,8 +684,10 @@ def tvoptimize(project=None, optim=None, tvec=None, verbose=None, maxtime=None, 
 
     printv('Starting a time-varying optimization...', 1, verbose)
     
+    optim.tvsettings['timevarying'] = True
     if not isinstance(tvsettings, dict): # Dictionary already supplied: just use
-        tvsettings = defaulttvsettings()
+        tvsettings = defaulttvsettings(timevarying=True) # Set up a default set with
+    
     
     # Do a preliminary non-time-varying optimization
     prelim = optimize(optim=optim, maxtime=maxtime, maxiters=maxiters, verbose=verbose, 
