@@ -481,7 +481,7 @@ class Resultset(object):
             progkeys = tvbudget['tvbudgets'].keys()
             tvdata   = tvbudget['tvbudgets'][:]
             outputstr += '\n\n\n'
-            outputstr += sep*2+'Time-varying'
+            outputstr += sep*2+'Time-varying' + '\n'
             outputstr += sep+sep.join(['Year']+progkeys) + '\n'
             for y,year in enumerate(tvyears): # Loop over years as rows
                 outputstr += sep+str(year)+sep+sep.join([str(val) for val in tvdata[:,y]]) + '\n' # Join together programs as columns
@@ -971,13 +971,13 @@ def exporttoexcel(filename=None, outdict=None):
         worksheet = workbook.add_worksheet(sanitizefilename(key)) # A valid filename should also be a valid Excel key
         
         # Define formatting
-        budcovformats = ['Budget', 'Coverage', 'Tme-varying']
+        budcovformats = ['Budget', 'Coverage', 'Time-varying']
         colors = {'gentlegreen':'#3c7d3e', 'fadedstrawberry':'#ffeecb', 'edgyblue':'#bcd5ff','accountantgrey':'#f6f6f6', 'white':'#ffffff'}
         formats = dict()
         formats['plain'] = workbook.add_format({})
         formats['bold'] = workbook.add_format({'bg_color': colors['edgyblue'], 'bold': True})
         formats['number'] = workbook.add_format({'bg_color': colors['fadedstrawberry'], 'num_format':0x04})
-        formats['budcov'] = workbook.add_format({'bg_color': colors['gentlegreen'], 'color': colors['white'], 'bold': True})
+        formats['header'] = workbook.add_format({'bg_color': colors['gentlegreen'], 'color': colors['white'], 'bold': True})
         
         # Convert from a string to a 2D array
         outlist = []
@@ -1001,10 +1001,10 @@ def exporttoexcel(filename=None, outdict=None):
                     numbercell = True
                 except:
                     numbercell = False
-                if row==0:                             thisformat = 'budcov'
-                elif str(thistxt) in budcovformats:    thisformat = 'budcov'
+                if row==0:                             thisformat = 'header'
+                elif str(thistxt) in budcovformats:    thisformat = 'header'
                 elif not emptycell and not numbercell: thisformat = 'bold'
-                elif col<3:                            thisformat = 'bold'
+                elif col<2 and not emptycell:          thisformat = 'bold'
                 elif numbercell:                       thisformat = 'number'
                 worksheet.write(row, col, thistxt, formats[thisformat])
         
