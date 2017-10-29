@@ -695,12 +695,8 @@ class Multiresultset(Resultset):
             for rsetattr in rsetattrs:
                 if not(hasattr(self, rsetattr)): # If it hasn't been processed already, make an empty odict
                     if rsetattr not in missingattrs.keys(): # Add to the list if it's not there already
-                        print('TEMP')
-                        print('Attribute %s found in rset %i' % (rsetattr, i))
                         missingattrs[rsetattr] = [i] # It doesn't exist: create a list of indices to loop over
                     else:
-                        print('TEMP')
-                        print('Attribute %s found in rset %i' % (rsetattr, i))
                         missingattrs[rsetattr].append(i) # It exists already: append this index
         for attr,indlist in missingattrs.items(): # Loop over all of the attributes identified as missing
             setattr(self, attr, odict()) # Create a new odict -- e.g. self.rawoutcomes = odict()

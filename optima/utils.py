@@ -1824,7 +1824,7 @@ class odict(OrderedDict):
             if not isiterable(sortby): raise Exception('Please provide a list to determine the sort order.')
             if all([isinstance(x,basestring) for x in sortby]): # Going to sort by keys
                 allkeys = sortby # Assume the user knows what s/he is doing
-            elif all([isinstance(x,bool) for x in sortby]) or all([(x==0 or x==1) for x in sortby]): # Using Boolean values
+            elif all([isinstance(x,bool) for x in sortby]): # Using Boolean values
                 allkeys = []
                 for i,x in enumerate(sortby):
                      if x: allkeys.append(origkeys[i])
