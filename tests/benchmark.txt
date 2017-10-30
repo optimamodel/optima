@@ -96,3 +96,4 @@
 0.585 2017-Mar-02_23:34:39 d05c6d7 rethink-GA (benchmark:unknown)
 0.868 2017-Oct-30_18:14:10 49e8971 time-varying-optimization (benchmark:18.94m)
 0.552 2017-Oct-30_18:27:40 2f93690 time-varying-optimization (benchmark:18.64m)
+0.505 2017-Oct-30_18:50:53 2035162 time-varying-optimization (benchmark:18.87m)
