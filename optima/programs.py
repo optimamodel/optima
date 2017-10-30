@@ -967,7 +967,7 @@ class Program(object):
                         if die: 
                             raise E
                         else:
-                            print('Failed to extract results because "%s", using default' % E.__repr__())
+                            print('Failed to extract results because "%s", using default' % repr(E))
                             initpopsizes = defaultinitpopsizes
             
             else: # ... or if it's a program for pregnant women.
@@ -983,7 +983,7 @@ class Program(object):
                         if die: 
                             raise E
                         else: 
-                            print('Failed to extract results because "%s", using default' % E.__repr__())
+                            print('Failed to extract results because "%s", using default' % repr(E))
                             initpopsizes = defaultinitpopsizes
         for popno, pop in enumerate(parset.pars['popkeys']):
             popsizes[pop] = initpopsizes[popno,:]

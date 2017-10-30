@@ -133,7 +133,7 @@ import parameters as _parameters; del parameters
 
 # Create a blank spreadsheet
 try: from .makespreadsheet import makespreadsheet, makeprogramspreadsheet, default_datastart, default_dataend
-except Exception as E: _failed.append('makespreadsheet: %s' % E.__repr__())
+except Exception as E: _failed.append('makespreadsheet: %s' % repr(E))
 
 # Load a completed a spreadsheet
 from .loadspreadsheet import loadspreadsheet, loadprogramspreadsheet
@@ -195,12 +195,12 @@ import defaults as _defaults; del defaults
 try: 
     from .gui import plotresults, pygui, plotpeople, plotpars, manualfit, showplots, loadplot, geogui
     import gui as _gui; del gui
-except Exception as E: _failed.append('gui: %s' % E.__repr__())
+except Exception as E: _failed.append('gui: %s' % repr(E))
 
 try: 
     from .webserver import browser
     import webserver as _webserver; del webserver
-except Exception as E: _failed.append('webserver: %s' % E.__repr__())
+except Exception as E: _failed.append('webserver: %s' % repr(E))
 
 
 if len(_failed): print('The following import errors were encountered:\n%s' % _failed)

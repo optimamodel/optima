@@ -1478,10 +1478,8 @@ class odict(OrderedDict):
                 output = OrderedDict.__getitem__(self, key)
                 return output
             except Exception as E: # WARNING, should be KeyError, but this can't print newlines!!!
-                if len(self.keys()): 
-                    errormsg = E.__repr__()+'\n'
-                    errormsg += 'odict key "%s" not found; available keys are:\n%s' % (flexstr(key), '\n'.join([flexstr(k) for k in self.keys()]))
-                else: errormsg = 'Key "%s" not found since odict is empty'% key
+                if len(self.keys()): errormsg = '%s\nodict key "%s" not found; available keys are:\n%s' % (repr(E), flexstr(key), '\n'.join([flexstr(k) for k in self.keys()]))
+                else:                errormsg = 'Key "%s" not found since odict is empty'% key
                 raise Exception(errormsg)
         elif isinstance(key, Number): # Convert automatically from float...dangerous?
             thiskey = self.keys()[int(key)]
@@ -1582,8 +1580,8 @@ class odict(OrderedDict):
                         thisvalstr = sigfig(thisval, sigfigs=sigfigs)
                     else:
                         thisvalstr = str(thisval) # To avoid numpy's stupid 0.4999999999945
-                else: # Otherwise, do the normal __repr__() read.
-                    thisvalstr = thisval.__repr__()
+                else: # Otherwise, do the normal repr() read.
+                    thisvalstr = repr(thisval)
 
                 # Add information to the lists to retrace afterwards.
                 keystrs.append(thiskeystr)
@@ -1665,13 +1663,11 @@ class odict(OrderedDict):
         output = start
         
         for key in self.keys():
-            output += '('+key.__repr__()
+            output += '('+repr(key)
             output += ', '
             child = self.get(key)
-            if isinstance(child, odict):
-                output += child.export(doprint=False) # Handle nested odicts -- WARNING, can't doesn't work for e.g. lists of odicts!
-            else:
-                output += child.__repr__()
+            if isinstance(child, odict): output += child.export(doprint=False) # Handle nested odicts -- WARNING, can't doesn't work for e.g. lists of odicts!
+            else:                        output += repr(child)
             output += '), '
         
         output += end
@@ -1949,7 +1945,7 @@ class odict(OrderedDict):
                     try: 
                         self.__setitem__(str(keyname), source[key])
                     except Exception as E: 
-                        raise Exception('Key "%s" not found: %s' % (key, E.__repr__()))
+                        raise Exception('Key "%s" not found: %s' % (key, repr(E)))
                 
         return self # As with make()
     

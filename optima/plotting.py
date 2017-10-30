@@ -1296,7 +1296,7 @@ def plotcostcov(program=None, year=None, parset=None, results=None, plotoptions=
         y_u = program.getcoverage(x=xlinedata, t=year, parset=parset, results=results, total=True, proportion=False, toplot=True, sample='u')
     except Exception as E:
         y_l,y_m,y_u = None,None,None
-        print('Warning, could not get program coverage: %s' % E.__repr__())
+        print('Warning, could not get program coverage: %s' % repr(E))
     plotdata['ylinedata_l'] = y_l
     plotdata['ylinedata_m'] = y_m
     plotdata['ylinedata_u'] = y_u

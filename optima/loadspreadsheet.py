@@ -113,7 +113,7 @@ def loadspreadsheet(filename=None, folder=None, verbose=2):
     ## Actually open workbook
     try:  workbook = open_workbook(fullpath) # Open workbook
     except Exception as E: 
-        errormsg = 'Failed to load spreadsheet "%s": %s' % (fullpath, E.__repr__())
+        errormsg = 'Failed to load spreadsheet "%s": %s' % (fullpath, repr(E))
         raise OptimaException(errormsg)
     
     ## Open workbook and calculate columns for which data are entered, and store the year ranges

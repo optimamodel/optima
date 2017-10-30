@@ -50,7 +50,7 @@ def setmigrations(which='migrations'):
         ('2.3.8', ('2.4',   '2017-06-05', None,              'Ukraine: ICER analysis; cascade bar plot; GUI tools; summary() and fixprops() methdods')),
         ('2.4',   ('2.5',   '2017-07-03', None,              'Made registration public')),
         ('2.5',   ('2.6',   '2017-10-23', None,              'Public code release')),
-        ('2.6',   ('2.7',   '2017-10-29', addtimevarying,    'Time-varying optimization')),
+        ('2.6',   ('2.7',   '2017-10-31', addtimevarying,    'Time-varying optimization')),
         ])
     
     # Define changelog
@@ -773,8 +773,7 @@ def migrate(project, verbose=2, die=False):
             try: 
                 migrator(project, verbose=verbose, die=die) # Sometimes there is no upgrader
             except Exception as E:
-                errormsg = 'WARNING, migrating "%s" from %6s -> %6s failed:\n' % (project.name, currentversion, newversion)
-                errormsg += E.__repr__()
+                errormsg = 'WARNING, migrating "%s" from %6s -> %6s failed:\n%s' % (project.name, currentversion, newversion, repr(E))
                 if not hasattr(project, 'failedmigrations'): project.failedmigrations = [] # Create if it doesn't already exist
                 project.failedmigrations.append(errormsg)
                 if die: raise op.OptimaException(errormsg)

@@ -157,7 +157,7 @@ def autofit_task(project, ind, outputqueue, name, fitwhat, fitto, maxtime, maxit
     try:
         project.autofit(name=name, orig=name, fitwhat=fitwhat, fitto=fitto, maxtime=maxtime, maxiters=maxiters, verbose=verbose, randseed=randseed)
     except Exception as E:
-        project.addwarning('Exception: batchautofit() failed for %s: %s' % (project.name, E.__repr__()))
+        project.addwarning('Exception: batchautofit() failed for %s: %s' % (project.name, repr(E)))
         project.getwarnings()
     
     # Standardized close
@@ -282,7 +282,7 @@ def boc_task(project, ind, outputqueue, budgetratios, name, parsetname, progsetn
                            constraints=constraints, maxiters=maxiters, maxtime=maxtime,
                            verbose=verbose, stoppingfunc=stoppingfunc, mc=mc, die=die, randseed=randseed)
         except Exception as E:
-            project.addwarning('Exception: batchBOC() failed for %s: %s' % (project.name, E.__repr__()))
+            project.addwarning('Exception: batchBOC() failed for %s: %s' % (project.name, repr(E)))
             project.getwarnings()
     
     # Standardized close
@@ -391,7 +391,7 @@ def reoptimizeprojects_task(project, objectives, pind, outputqueue, maxtime, max
         resultpair['opt'].name = project.name+' GA optimal'
         resultpair['key'] = project.name # Store the project name to avoid mix-ups
     except Exception as E:
-        project.addwarning('Exception: reoptimizeprojects() failed for %s: %s' % (project.name, E.__repr__()))
+        project.addwarning('Exception: reoptimizeprojects() failed for %s: %s' % (project.name, repr(E)))
         project.getwarnings()
     
     if batch: 
