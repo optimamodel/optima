@@ -702,6 +702,8 @@ class Project(object):
         Function to minimize outcomes or money.
         
         Usage examples:
+            P = op.demo(0); P.parset().fixprops(False) # Initialize project so ART has an effect
+            
             P.optimize() # Use defaults
             P.optimize(maxiters=5, mc=0) # Do a very simple run
             P.optimize(parsetname=0, progsetname=0) # Use first parset and progset
@@ -710,7 +712,9 @@ class Project(object):
             P.optimize(multi=True) # Do a multi-chain optimization
             P.optimize(multi=True, nchains=8, nblocks=10, blockiters=50) # Do a very large multi-chain optimization
             P.optimize(timevarying=True, mc=0, maxiters=30) # Do a short time-varying optimization
-            P.optimize(timevarying=True, tvconstrain=False) # Do a short time-varying optimization, allowing total annual budget to vary
+            P.optimize(timevarying=True, mc=0, maxiters=200, tvconstrain=False, randseed=1) # Do a time-varying optimization, allowing total annual budget to vary
+            
+            pygui(P) # To plot results
         '''
         
         # Check inputs

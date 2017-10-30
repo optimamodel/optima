@@ -672,15 +672,13 @@ def tvoptimize(project=None, optim=None, tvec=None, verbose=None, maxtime=None, 
     Run a time-varying optimization. See project.optimize() for usage examples, and optimize()
     for kwarg explanation.
     
-    Small usage example:
+    Simple example:
         import optima as op
-        P = op.demo(0)
-        results = P.optimize(timevarying=True, randseed=1)
-        op.pygui(P, toplot=['improvement', 'budgets', 'numinci'])
-        pl.figure(); pl.plot(results.multiimprovement.transpose())
+        P = op.demo(0, which='simple'); P.parset().fixprops(False) # Create the project, and allow ART to be optimized
+        P.optimize(timevarying=1, mc=0, maxiters=30, randseed=1, tvconstrain=False)
+        op.pygui(P)
     
-    You can see how after 10 iterations, the blocks talk to each other, and the optimization
-    for each thread restarts from the best solution found for each.
+    Version: 2017oct30
     '''
 
     printv('Preparing to run a time-varying optimization...', 1, verbose)

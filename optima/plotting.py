@@ -758,7 +758,6 @@ def plottvbudget(multires=None, die=True, figsize=globalfigsize, legendsize=glob
     tvyears  = tv['tvyears']
     progkeys = tv['tvbudgets'].keys()
     tvdata   = tv['tvbudgets'][:]
-    nyears = len(tvyears)
     nprogs = len(progkeys)
     allprogcolors = gridcolors(nprogs, hueshift=proghueshift)
     colordict = odict()
@@ -777,7 +776,7 @@ def plottvbudget(multires=None, die=True, figsize=globalfigsize, legendsize=glob
         for p in range(nprogs-1,-1,-1): # Loop in reverse order over programs
             progkey = progkeys[p]
             ydata = tvdata[p,y]
-            xdata = y+0.6 # 0.6 is 1 nimunus 0.4, which is half the bar width
+            xdata = year - 0.4
             bottomdata = sum(tvdata[:p,y])
             label = None
             if progkey not in legendkeys:
@@ -792,9 +791,9 @@ def plottvbudget(multires=None, die=True, figsize=globalfigsize, legendsize=glob
 
     # Set up other things
     ax.set_ylabel('Spending')
-    ax.set_xticks([1,nyears])
-    ax.set_xticklabels(['%i'%i for i in tvyears[[0,-1]]])
-    ax.set_xlim(0,nyears+1)
+#    ax.set_xticks([1,nyears])
+#    ax.set_xticklabels(['%i'%i for i in tvyears[[0,-1]]])
+    ax.set_xlim(tvyears[0]-1,tvyears[-1]+1) # 0.6 is 1 minus 0.4, which is half the bar width
     ax.set_title('Time-varying budget')
     
     SIticks(ax=ax, axis='y')
