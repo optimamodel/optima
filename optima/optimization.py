@@ -417,6 +417,8 @@ def outcomecalc(budgetvec=None, which=None, project=None, parsetname=None, progs
     thisparsdict = progset.getpars(coverage=thiscoverage, t=paryears, parset=parset, sample=ccsample)
     
     # Actually run the model
+#    print('TEMP')
+#    initpeople = None
     if initpeople is None: startyear = None
     else:                  startyear = objectives['start']
     tvec = project.settings.maketvec(start=startyear, end=objectives['end'])
@@ -494,8 +496,10 @@ def outcomecalc(budgetvec=None, which=None, project=None, parsetname=None, progs
 #    for key in savekeys: obj[key] = locals()[key]
 #    op.saveobj(filename, obj)
     
-    if round(outcome)==90463.0:
-        import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+#     very slow
+#    
+#    if round(outcome)==90463.0:
+#        import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
     
     return output
 
