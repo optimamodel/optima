@@ -396,7 +396,7 @@ def outcomecalc(budgetvec=None, which=None, project=None, parsetname=None, progs
         if len(budgetvec)==len(optiminds): constrainedbudget[optiminds] = budgetvec # Assume it's just the optimizable programs
         else:                              constrainedbudget[:]         = budgetvec # Assume it's all programs
         
-    # Run model
+    # Get the budget array to run
     if tvsettings is None or not tvsettings['timevarying'] or tvcontrolvec is None: # If not running time-varying optimization, it's easy
         paryears = objectives['start']
         budgetarray = dcp(constrainedbudget) # Just copy the constrained budget (may not be an array)

@@ -282,14 +282,14 @@ class Resultset(object):
         data         = self.data
 
         # Actually do calculations
-        self.main['prev'].pops = process(allpeople[:,allplhiv,:,:][:,:,:,indices].sum(axis=1) / allpeople[:,:,:,indices].sum(axis=1), percent=True) # Axis 1 is health state
-        self.main['prev'].tot  = process(allpeople[:,allplhiv,:,:][:,:,:,indices].sum(axis=(1,2)) / allpeople[:,:,:,indices].sum(axis=(1,2)), percent=True) # Axis 2 is populations
+        self.main['prev'].pops = process(allpeople[:,allplhiv,:,:][:,:,:,indices].sum(axis=1) / (eps+allpeople[:,:,:,indices].sum(axis=1)), percent=True) # Axis 1 is health state
+        self.main['prev'].tot  = process(allpeople[:,allplhiv,:,:][:,:,:,indices].sum(axis=(1,2)) / (eps+allpeople[:,:,:,indices].sum(axis=(1,2))), percent=True) # Axis 2 is populations
         if data is not None: 
             self.main['prev'].datapops = processdata(data['hivprev'], uncertainty=True)
             self.main['prev'].datatot  = processdata(data['optprev'])
         
-        self.main['force'].pops = process(allinci[:,:,indices] / allpeople[:,:,:,indices].sum(axis=1), percent=True) # Axis 1 is health state
-        self.main['force'].tot  = process(allinci[:,:,indices].sum(axis=1) / allpeople[:,:,:,indices].sum(axis=(1,2)), percent=True) # Axis 2 is populations
+        self.main['force'].pops = process(allinci[:,:,indices] / (eps+allpeople[:,:,:,indices].sum(axis=1)), percent=True) # Axis 1 is health state
+        self.main['force'].tot  = process(allinci[:,:,indices].sum(axis=1) / (eps+allpeople[:,:,:,indices].sum(axis=(1,2))), percent=True) # Axis 2 is populations
 
         self.main['numinci'].pops = process(allinci[:,:,indices])
         self.main['numinci'].tot  = process(allinci[:,:,indices].sum(axis=1)) # Axis 1 is populations
@@ -405,9 +405,9 @@ class Resultset(object):
         upperagelims = self.pars['age'][:,1] # All populations, but upper range
         adultpops = findinds(upperagelims>=15)
         childpops = findinds(upperagelims<15)
-        if len(adultpops): self.other['adultprev'].tot = process(allpeople[:,allplhiv,:,:][:,:,adultpops,:][:,:,:,indices].sum(axis=(1,2)) / allpeople[:,:,adultpops,:][:,:,:,indices].sum(axis=(1,2)), percent=True) # Axis 2 is populations
+        if len(adultpops): self.other['adultprev'].tot = process(allpeople[:,allplhiv,:,:][:,:,adultpops,:][:,:,:,indices].sum(axis=(1,2)) / (eps+allpeople[:,:,adultpops,:][:,:,:,indices].sum(axis=(1,2))), percent=True) # Axis 2 is populations
         else:              self.other['adultprev'].tot = self.main['prev'].tot # In case it's not available, use population average
-        if len(childpops): self.other['childprev'].tot = process(allpeople[:,allplhiv,:,:][:,:,childpops,:][:,:,:,indices].sum(axis=(1,2)) / allpeople[:,:,childpops,:][:,:,:,indices].sum(axis=(1,2)), percent=True) # Axis 2 is populations
+        if len(childpops): self.other['childprev'].tot = process(allpeople[:,allplhiv,:,:][:,:,childpops,:][:,:,:,indices].sum(axis=(1,2)) / (eps+allpeople[:,:,childpops,:][:,:,:,indices].sum(axis=(1,2))), percent=True) # Axis 2 is populations
         else:              self.other['childprev'].tot = self.main['prev'].tot
         self.other['adultprev'].pops = self.main['prev'].pops # This is silly, but avoids errors from a lack of consistency of these results not having pop attributes
         self.other['childprev'].pops = self.main['prev'].pops
