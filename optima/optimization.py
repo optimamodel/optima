@@ -820,16 +820,10 @@ def tvoptimize(project=None, optim=None, tvec=None, verbose=None, maxtime=None, 
     for k,key in enumerate(multires.keys): multires.budgetyears[key] = tmpresults[k].budgetyears # WARNING, this is ugly
     multires.improvement = tmpimprovements # Store full function evaluation information -- only use last one
     multires.fullruninfo = tmpfullruninfo # And the budgets/outcomes for every different run
-    multires.outcomes = odict() # Initialize
-    for key in multires.outcomes.keys():
-        multires.outcomes[key] = tmpresults[key].outcome # Get best value
+    multires.outcomes = dcp(multires.outcome) # Copy to more robust place
+    multires.outcome = multires.outcomes[-1] # Store these defaults in a convenient place
+    multires.budget = multires.budgets[-1]
     optim.resultsref = multires.name # Store the reference for this result
-    try:
-        multires.outcome = multires.outcomes[new.name] # Store these defaults in a convenient place
-        multires.budget = multires.budgets[new.name]
-    except:
-        multires.outcome = None
-        multires.budget = None
     
     # Store optimization settings
     multires.optimsettings = odict([('maxiters',maxiters),('maxtime',maxtime),('mc',mc),('randseed',randseed),('tvsettings',optim.tvsettings)])
@@ -1018,16 +1012,10 @@ def minoutcomes(project=None, optim=None, tvec=None, verbose=None, maxtime=None,
     multires.improvement = tmpimprovements # Store full function evaluation information -- only use last one
     multires.extremeoutcomes = extremeoutcomes # Store all of these
     multires.fullruninfo = tmpfullruninfo # And the budgets/outcomes for every different run
-    multires.outcomes = odict() # Initialize
-    for key in multires.outcomes.keys():
-        multires.outcomes[key] = tmpresults[key].outcome # Get best value
+    multires.outcomes = dcp(multires.outcome) # Initialize
+    multires.outcome = multires.outcomes[-1] # Store these defaults in a convenient place
+    multires.budget = multires.budgets[-1]
     optim.resultsref = multires.name # Store the reference for this result
-    try:
-        multires.outcome = multires.outcomes['Optimal'] # Store these defaults in a convenient place
-        multires.budget = multires.budgets['Optimal']
-    except:
-        multires.outcome = None
-        multires.budget = None
     
     # Store optimization settings
     multires.optimsettings = odict([('maxiters',maxiters),('maxtime',maxtime),('mc',mc),('randseed',randseed)])
