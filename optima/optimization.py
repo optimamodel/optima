@@ -350,6 +350,7 @@ def separatetv(inputvec=None, optiminds=None):
 
 
 
+
 ################################################################################################################################################
 ### The main meat of the matter
 ################################################################################################################################################
@@ -402,7 +403,13 @@ def outcomecalc(budgetvec=None, which=None, project=None, parsetname=None, progs
         budgetarray = dcp(constrainedbudget) # Just copy the constrained budget (may not be an array)
     else: # Otherwise, it's not easy
         paryears = inclusiverange(start=objectives['start'], stop=objectives['end'], step=tvsettings['tvstep']) # Create the time vector
+        nyears = len(paryears) # Figure out how many years we're doing this for
         budgetarray = tvfunction(budgetdict=constrainedbudget, years=paryears, pars=tvcontrolvec, optiminds=optiminds, tvsettings=tvsettings)
+        if doconstrainbudget and tvsettings['tvconstrain']: # Do additional constraints
+            for y in range(nyears):
+                budgetvec = budgetarray.fromeach(ind=y, asdict=False)
+                constrainedbudget = constrainbudget(origbudget=origbudget, budgetvec=budgetvec, totalbudget=totalbudget, budgetlims=constraints, optiminds=optiminds, outputtype='odict')
+                budgetarray.toeach(ind=y, val=constrainedbudget[:])
     
     # Get coverage and actual dictionary, in preparation for running
     thiscoverage = progset.getprogcoverage(budget=budgetarray, t=paryears, parset=parset, sample=ccsample)

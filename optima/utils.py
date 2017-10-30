@@ -1952,8 +1952,62 @@ class odict(OrderedDict):
                         raise Exception('Key "%s" not found: %s' % (key, E.__repr__()))
                 
         return self # As with make()
+    
+    
+    def map(self, func=None):
+        '''
+        Apply a function to each element of the odict, returning
+        a new odict with the same keys.
+        
+        Example:
+            cat = odict({'a':[1,2], 'b':[3,4]})
+            def myfunc(mylist): return [i**2 for i in mylist]
+            dog = cat.map(myfunc) # Returns odict({'a':[1,4], 'b':[9,16]})
+        '''
+        output = odict()
+        for key in self.keys():
+            output[key] = func(self.__getitem__(key))
+        return output
+    
+    
+    def fromeach(self, ind=None, asdict=True):
+        '''
+        Take a "slice" across all the keys of an odict, applying the same
+        operation to entry. The simplest usage is just to pick an index.
+        However, you can also use it to apply a function to each key.
+        
+        Example:
+            z = odict({'a':array([1,2,3,4]), 'b':array([5,6,7,8])})
+            z.fromeach(2) # Returns array([3,7])
+            z.fromeach(ind=[1,3], asdict=True) # Returns odict({'a':array([2,4]), 'b':array([6,8])})
+        '''
+        output = odict()
+        for key in self.keys():
+            output[key] = self.__getitem__(key)[ind]
+        if asdict: return output # Output as a slimmed-down odict
+        else:      return output[:] # Output as just the entries
         
     
+    def toeach(self, ind=None, val=None):
+        '''
+        The inverse of fromeach: partially reset elements within
+        each odict key.
+        
+        Example:
+            z = odict({'a':[1,2,3,4], 'b':[5,6,7,8]})
+            z.toeach(2, [10,20])    # z is now odict({'a':[1,2,10,4], 'b':[5,6,20,8]})
+            z.toeach(ind=3,val=666) #  z is now odict({'a':[1,2,10,666], 'b':[5,6,20,666]})
+        '''
+        nkeys = len(self.keys())
+        if not(isiterable(val)): # Assume it's meant to be populated in each
+            val = [val]*nkeys # Duplicated
+        if len(val)!=nkeys:
+            errormsg = 'To map values onto each key, they must be the same length (%i vs. %i)' % (len(val), nkeys)
+            raise Exception(errormsg)
+        for k,key in self.enumkeys():
+            self.__getitem__(key)[ind] = val[k]
+        return None
+        
     
     def enumkeys(self):
         ''' Shortcut for enumerate(odict.keys()) '''
