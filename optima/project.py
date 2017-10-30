@@ -697,7 +697,7 @@ class Project(object):
 
     def optimize(self, name=None, parsetname=None, progsetname=None, objectives=None, constraints=None, maxiters=None, maxtime=None, 
                  verbose=2, stoppingfunc=None, die=False, origbudget=None, randseed=None, mc=None, optim=None, optimname=None, multi=False, 
-                 nchains=None, nblocks=None, blockiters=None, batch=None, timevarying=None, tvsettings=None, **kwargs):
+                 nchains=None, nblocks=None, blockiters=None, batch=None, timevarying=None, tvsettings=None, tvconstrain=None, **kwargs):
         '''
         Function to minimize outcomes or money.
         
@@ -709,8 +709,8 @@ class Project(object):
             P.optimize(optimname=-1) # Same as previous
             P.optimize(multi=True) # Do a multi-chain optimization
             P.optimize(multi=True, nchains=8, nblocks=10, blockiters=50) # Do a very large multi-chain optimization
-            P.optimize(timevarying=True, mc=0, maxtime=30) # Do a short time-varying optimization
-            P.optimize(timevarying='budget') # Do a short time-varying optimization including allowing the budget to vary
+            P.optimize(timevarying=True, mc=0, maxiters=30) # Do a short time-varying optimization
+            P.optimize(timevarying=True, tvconstrain=False) # Do a short time-varying optimization, allowing total annual budget to vary
         '''
         
         # Check inputs
@@ -726,6 +726,7 @@ class Project(object):
         if constraints is not None: optim.constraints = constraints
         if tvsettings  is not None: optim.tvsettings  = tvsettings
         if timevarying is not None: optim.tvsettings['timevarying'] = timevarying # Set time-varying optimization
+        if tvconstrain is not None: optim.tvsettings['tvconstrain'] = tvconstrain # Set whether programs should be constrained to their time-varying values
         
         # Run the optimization
         if optim.tvsettings['timevarying']: # Call time-varying optimization

@@ -359,12 +359,6 @@ def outcomecalc(budgetvec=None, which=None, project=None, parsetname=None, progs
                 initpeople=None, outputresults=False, verbose=2, ccsample='best', doconstrainbudget=True, tvsettings=None, tvcontrolvec=None, **kwargs):
     ''' Function to evaluate the objective for a given budget vector (note, not time-varying) '''
 
-#    color = 'blue' if tvsettings and tvsettings['timevarying'] else 'green'
-#    import optima as op
-#    printkeys = ['budgetvec', 'which', 'objectives', 'constraints', 'totalbudget', 'optiminds', 'origbudget', 'tvec', 'doconstrainbudget', 'tvsettings', 'tvcontrolvec']
-#    savekeys = printkeys + ['project', 'initpeople', 'results']
-#    op.printvars(locals(), printkeys, color=color)
-    
     # Set up defaults
     if which is None: 
         if objectives is not None: which = objectives['which']
@@ -411,14 +405,10 @@ def outcomecalc(budgetvec=None, which=None, project=None, parsetname=None, progs
         budgetarray = tvfunction(budgetdict=constrainedbudget, years=paryears, pars=tvcontrolvec, optiminds=optiminds, tvsettings=tvsettings)
     
     # Get coverage and actual dictionary, in preparation for running
-#    import optima as op
-#    op.printvars(locals(), ['budgetarray'], color='blue')
     thiscoverage = progset.getprogcoverage(budget=budgetarray, t=paryears, parset=parset, sample=ccsample)
     thisparsdict = progset.getpars(coverage=thiscoverage, t=paryears, parset=parset, sample=ccsample)
     
     # Actually run the model
-#    print('TEMP')
-#    initpeople = None
     if initpeople is None: startyear = None
     else:                  startyear = objectives['start']
     tvec = project.settings.maketvec(start=startyear, end=objectives['end'])
@@ -489,17 +479,6 @@ def outcomecalc(budgetvec=None, which=None, project=None, parsetname=None, progs
         else:
             summary = 'Baseline: %0.0f %0.0f %0.0f | Target: %0.0f %0.0f %0.0f | Final: %0.0f %0.0f %0.0f' % tuple(baseline.values()+target.values()+final.values())
             output = (targetsmet, summary)
-    
-#    from time import time
-#    filename = 'TZMP-'+str(int(time()*10-15093160000))+'-'+str(int(outcome))+'.obj'
-#    obj = odict()
-#    for key in savekeys: obj[key] = locals()[key]
-#    op.saveobj(filename, obj)
-    
-#     very slow
-#    
-#    if round(outcome)==90463.0:
-#        import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
     
     return output
 
@@ -694,7 +673,6 @@ def tvoptimize(project=None, optim=None, tvec=None, verbose=None, maxtime=None, 
     
     Small usage example:
         import optima as op
-        import pylab as pl
         P = op.demo(0)
         results = P.optimize(timevarying=True, randseed=1)
         op.pygui(P, toplot=['improvement', 'budgets', 'numinci'])
@@ -709,8 +687,7 @@ def tvoptimize(project=None, optim=None, tvec=None, verbose=None, maxtime=None, 
     # Do a preliminary non-time-varying optimization
     optim.tvsettings['timevarying'] = False # Turn off for the first run
     prelim = optimize(optim=optim, maxtime=maxtime, maxiters=maxiters, verbose=verbose, 
-                origbudget=origbudget, ccsample=ccsample, randseed=randseed, mc=mc, label=label, die=die, keepraw=True, **kwargs)
-    rawresults = prelim.raw['Baseline'][0] # Store the raw results; "Baseline" vs. "Optimal" shouldn't matter, and [0] is the first/best run -- not sure if there is a more robut way
+                origbudget=origbudget, ccsample=ccsample, randseed=randseed, mc=mc, label=label, die=die, **kwargs)
     
     # Add in the time-varying component
     origtotalbudget = dcp(optim.objectives['budget']) # Should be a float, but dcp just in case
@@ -727,10 +704,6 @@ def tvoptimize(project=None, optim=None, tvec=None, verbose=None, maxtime=None, 
     noptimprogs = len(budgetvec) # Number of optimizable programs
     if label is None: label = ''
     
-    # Calculate the initial people distribution
-    initialind = findinds(rawresults['tvec'], optim.objectives['start'])
-    initpeople = rawresults['people'][:,:,initialind] # Pull out the people array corresponding to the start of the optimization -- there shouldn't be multiple raw arrays here
-
     # Set up arguments which are shared between outcomecalc and asd
     optim.tvsettings['timevarying'] = True # Turn it back on for everything else
     args = {'which':'outcomes', 
@@ -759,16 +732,6 @@ def tvoptimize(project=None, optim=None, tvec=None, verbose=None, maxtime=None, 
         result.name = key # Update names
         tmpimprovements[key] = [tmpresults[key].outcome] # Hacky, since expects a list
     
-    
-    import optima as op
-    myargs = odict()
-    for key,val in args.items(): myargs[key] = val
-    myargs.update({'outputresults':True, 'doconstrainbudget':False})
-    myargs['budgetvec'] = prelim.budgets['Baseline']
-    op.saveobj('args-baseline.obj', myargs)
-    myargs['budgetvec'] = prelim.budgets['Optimal']
-    op.saveobj('args-optimal.obj', myargs)
-
     # Get the total budget & constrain it 
     args['totalbudget'] = totalbudget
     
@@ -802,30 +765,20 @@ def tvoptimize(project=None, optim=None, tvec=None, verbose=None, maxtime=None, 
         bestfval = fvals[-1] # Reset fval
     
     ## Calculate outcomes
-    print('HIIIIIIIIIIII')
-    args['initpeople'] = None # Set to None to get full results, not just from start year
     new = outcomecalc(asdresults[bestkey]['budget'], tvcontrolvec=tvcontrolvec, outputresults=True, **args)
-    print('FOOOOOO')
-    print new.outcome
-    print('OK')
-    new.name = 'Time-varying' # Else, say what the budget is
+    new.name = 'Time-varying' # Note: could all be simplified
     tmpresults[new.name] = new
     tmpimprovements[new.name] = asdresults[bestkey]['fvals']
     tmpfullruninfo[new.name] = asdresults # Store everything
     
-    myargs['budgetvec'] = asdresults[bestkey]['budget']
-    myargs['tvcontrolvec'] = tvcontrolvec
-    op.saveobj('args-timevarying.obj', myargs)
-    op.saveobj('args-timevarying-orig.obj', args)
-
     ## Output
     multires = Multiresultset(resultsetlist=tmpresults.values(), name='optim-%s' % optim.name)
-    for k,key in enumerate(multires.keys): multires.budgetyears[key] = tmpresults[k].budgetyears # WARNING, this is ugly
+    for k,key in enumerate(multires.keys): multires.budgetyears[key] = tmpresults[k].budgetyears # Copy budget years
     multires.improvement = tmpimprovements # Store full function evaluation information -- only use last one
     multires.fullruninfo = tmpfullruninfo # And the budgets/outcomes for every different run
-    multires.outcomes = dcp(multires.outcome) # Copy to more robust place
-    multires.outcome = multires.outcomes[-1] # Store these defaults in a convenient place
-    multires.budget = multires.budgets[-1]
+    multires.outcomes = dcp(multires.outcome) # Copy to more robust place, and...
+    multires.outcome = multires.outcomes[-1] # ...store these defaults in a convenient place
+    multires.budget = multires.budgets[-1] # Likewise here
     optim.resultsref = multires.name # Store the reference for this result
     
     # Store optimization settings
