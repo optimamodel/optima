@@ -409,6 +409,7 @@ def outcomecalc(budgetvec=None, which=None, project=None, parsetname=None, progs
     thisparsdict = progset.getpars(coverage=thiscoverage, t=paryears, parset=parset, sample=ccsample)
     
     # Actually run the model
+    print('FIX WITH STARTIND')
     if initpeople is None: startyear = None
     else:                  startyear = objectives['start']
     tvec = project.settings.maketvec(start=startyear, end=objectives['end'])

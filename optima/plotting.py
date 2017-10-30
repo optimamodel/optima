@@ -432,7 +432,7 @@ def plotepi(results, toplot=None, uncertainty=True, die=True, showdata=True, ver
                     databest = None
                     datalow = None
                     datahigh = None
-            if ndim(best)==1: # Wrap so right number of dimensions -- happens if not by population
+            if not ismultisim and ndim(best)==1: # Wrap so right number of dimensions -- happens if not by population
                 best  = array([best])
                 lower = array([lower])
                 upper = array([upper])
@@ -501,15 +501,19 @@ def plotepi(results, toplot=None, uncertainty=True, die=True, showdata=True, ver
                 # e.g. scenario, prev-tot; since stacked plots aren't possible with multiple lines, just plot the same in this case
                 if ismultisim and (istotal or isstacked):
                     for l in range(nlinesperplot):
-                        ydata = factor*best[nlinesperplot-1-l]
+                        ind = nlinesperplot-1-l
+                        thisxdata = results.setup[ind]['tvec']
+                        ydata = factor*best[ind]
                         allydata.append(ydata)
-                        ax.plot(xdata, ydata, lw=lw, c=colors[nlinesperplot-1-l], zorder=linezorder, label=labels[l]) # Index is each different e.g. scenario
+                        ax.plot(thisxdata, ydata, lw=lw, c=colors[ind], zorder=linezorder, label=labels[l]) # Index is each different e.g. scenario
                 
                 if ismultisim and isperpop:
                     for l in range(nlinesperplot):
-                        ydata = factor*best[nlinesperplot-1-l][i]
+                        ind = nlinesperplot-1-l
+                        thisxdata = results.setup[ind]['tvec']
+                        ydata = factor*best[ind][i]
                         allydata.append(ydata)
-                        ax.plot(xdata, ydata, lw=lw, c=colors[nlinesperplot-1-l], zorder=linezorder, label=labels[l]) # Indices are different populations (i), then different e..g scenarios (l)
+                        ax.plot(thisxdata, ydata, lw=lw, c=colors[ind], zorder=linezorder, label=labels[l]) # Indices are different populations (i), then different e..g scenarios (l)
 
 
 

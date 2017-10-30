@@ -35,7 +35,7 @@ class Project(object):
         3. copy -- copy a structure in the odict
         4. rename -- rename a structure in the odict
 
-    Version: 2017jun03
+    Version: 2017oct30
     """
 
 

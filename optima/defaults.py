@@ -352,7 +352,7 @@ def defaultproject(which='best', addprogset=True, addcostcovdata=True, usestanda
     Options for easily creating default projects based on different spreadsheets, including
     program information -- useful for testing 
     
-    Version: 2016mar24
+    Version: 2017oct30
     '''
     
     
@@ -370,8 +370,8 @@ def defaultproject(which='best', addprogset=True, addcostcovdata=True, usestanda
         dorun = kwargs.get('dorun',True) # Use specified dorun setting, otherwise assume true
         kwargs['dorun'] = False # Don't run now, run after calibration
         P = Project(name='Simple (demo)', spreadsheet=spreadsheetpath+'simple.xlsx', verbose=verbose, **kwargs)
-        P.pars()['transnorm'].y = 0.8 # "Calibration"
-        P.pars()['fixproptx'].t = 2100 # For optimization to work
+        P.pars()['transnorm'].y = 0.6 # "Calibration"
+        P.parset().fixprops(False) # For optimization to work
         if dorun: P.runsim() # Run after calibration
         
         # Programs

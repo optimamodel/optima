@@ -666,11 +666,11 @@ class Multiresultset(Resultset):
         # Main and other results -- time series, by population -- get right structure, but clear out results -- WARNING, must match format above!
         self.main  = dcp(resultsetlist[0].main) # For storing main results -- get the format from the first entry, since should be the same for all
         self.other = dcp(resultsetlist[0].other) 
-        for at in ['pops', 'tot']:
+        for poptot in ['pops', 'tot']:
             for key in self.main.keys():
-                setattr(self.main[key], at, odict()) # Turn all of these into an odict -- e.g. self.main['prev'].pops = odict()
+                setattr(self.main[key], poptot, odict()) # Turn all of these into an odict -- e.g. self.main['prev'].pops = odict()
             for key in self.other.keys():
-                setattr(self.other[key], at, odict()) # Turn all of these into an odict -- e.g. self.main['prev'].pops = odict()
+                setattr(self.other[key], poptot, odict()) # Turn all of these into an odict -- e.g. self.main['prev'].pops = odict()
 
         for i,rset in enumerate(resultsetlist):
             while rset.name is None or rset.name in self.keys:
@@ -678,12 +678,13 @@ class Multiresultset(Resultset):
                 if rset.name in self.keys: rset.name += '-new'
             key = rset.name
             self.keys.append(key)
+            self.setup[key] = odict() # For storing the setup attributes (e.g. tvec)
             
             # First, loop over (presumably) shared setup attributes, and hope they match, but store them separately if they don't
             for attr in setupattrs:
                 orig = getattr(self, attr)
                 new = getattr(rset, attr)
-                self.setup[key] = new # Copy here too
+                self.setup[key][attr] = new # Copy here too
                 if orig is None: setattr(self, attr, new) # For most purposes, only need one copy of these things since won't differ
             
             # Now, the real deal: fix self.main and self.other
