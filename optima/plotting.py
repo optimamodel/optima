@@ -750,7 +750,7 @@ def plottvbudget(multires=None, die=True, figsize=globalfigsize, legendsize=glob
     
     # Preliminaries: process inputs and extract needed data
     if type(multires)==Resultset: multires = Multiresultset([multires]) # Force it to be a multiresultset
-    tv = multires.timevarying[0] # There shouldn't be more than one...
+    tv = multires.timevarying[-1] # Have to choose one -- assume it will be the last one
     tvyears  = tv['tvyears']
     progkeys = tv['tvbudgets'].keys()
     tvdata   = tv['tvbudgets'][:]
