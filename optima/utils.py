@@ -1030,16 +1030,12 @@ def toc(start=None, label=None, sigfigs=None, filename=None, output=False):
     else:         base = 'Elapsed time for %s: ' % label
     logmessage = base + '%s s' % sigfig(elapsed, sigfigs=sigfigs)
     
-    # If we passed in a filename, append the message to that file.
-    if filename is not None:
-        printtologfile(logmessage, filename)
-        
-    # Otherwise, print the message.
+    if output:
+        return elapsed
     else:
-        print(logmessage)
-        
-    if output: return elapsed
-    else:      return None
+        if filename is not None: printtologfile(logmessage, filename) # If we passed in a filename, append the message to that file.
+        else: print(logmessage) # Otherwise, print the message.
+        return None
     
 
 
