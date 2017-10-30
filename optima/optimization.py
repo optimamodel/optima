@@ -408,23 +408,19 @@ def outcomecalc(budgetvec=None, which=None, project=None, parsetname=None, progs
     thiscoverage = progset.getprogcoverage(budget=budgetarray, t=paryears, parset=parset, sample=ccsample)
     thisparsdict = progset.getpars(coverage=thiscoverage, t=paryears, parset=parset, sample=ccsample)
     
-    # Actually run the model
-    if initpeople is None: startyear = None
-    else:                  startyear = objectives['start']
-    tvec = project.settings.maketvec(start=startyear, end=objectives['end'])
-    results = runmodel(pars=thisparsdict, project=project, parsetname=parsetname, progsetname=progsetname, tvec=tvec, initpeople=initpeople, verbose=0, label=project.name+'-optim-outcomecalc', doround=False, **kwargs)
-
-    # Figure out which indices to use
-    initialind = findinds(results.tvec, objectives['start'])
-    finalind = findinds(results.tvec, objectives['end'])
-    if which=='money': baseind = findinds(results.tvec, objectives['base']) # Only used for money minimization
-    if which=='outcomes': indices = arange(initialind, finalind) # Only used for outcomes minimization
+    # Figure out which indices to run for and actually run the model
+    tvec       = project.settings.maketvec(end=objectives['end'])
+    initialind = findinds(tvec, objectives['start'])
+    finalind   = findinds(tvec, objectives['end'])
+    startind   = initialind if initpeople is not None else None
+    results = runmodel(pars=thisparsdict, project=project, parsetname=parsetname, progsetname=progsetname, tvec=tvec, initpeople=initpeople, startind=startind, verbose=0, label=project.name+'-optim-outcomecalc', doround=False, **kwargs)
 
     ## Here, we split depending on whether it's a outcomes or money minimization:
     if which=='outcomes':
         # Calculate outcome
         outcome = 0 # Preallocate objective value
         rawoutcomes = odict()
+        indices = arange(initialind, finalind) # Only used for outcomes minimization
         for key in objectives['keys']:
             thisweight = objectives[key+'weight'] # e.g. objectives['inciweight']
             thisoutcome = results.main['num'+key].tot[0][indices].sum() # the instantaneous outcome e.g. objectives['numdeath'] -- 0 is since best
@@ -451,8 +447,10 @@ def outcomecalc(budgetvec=None, which=None, project=None, parsetname=None, progs
         else:
             output = outcome
 
+    ## It's money
     elif which=='money':
         # Calculate outcome
+        baseind = findinds(results.tvec, objectives['base']) # Only used for money minimization
         targetsmet = True # Assume success until proven otherwise (since operator is AND, not OR)
         baseline = odict()
         final = odict()
