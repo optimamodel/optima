@@ -687,8 +687,9 @@ def tvoptimize(project=None, optim=None, tvec=None, verbose=None, maxtime=None, 
     
     # Do a preliminary non-time-varying optimization
     optim.tvsettings['timevarying'] = False # Turn off for the first run
-    prelim = optimize(optim=optim, maxtime=maxtime, maxiters=maxiters, verbose=verbose, 
-                origbudget=origbudget, ccsample=ccsample, randseed=randseed, mc=mc, label=label, die=die, **kwargs)
+    prelim = optimize(optim=optim, maxtime=maxtime, maxiters=maxiters, verbose=verbose, origbudget=origbudget,
+                ccsample=ccsample, randseed=randseed, mc=mc, label=label, die=die, keepraw=True, **kwargs)
+    rawresults = prelim.raw['Baseline'][0] # Store the raw results; "Baseline" vs. "Optimal" shouldn't matter, and [0] is the first/best run -- not sure if there is a more robut way
     
     # Add in the time-varying component
     origtotalbudget = dcp(optim.objectives['budget']) # Should be a float, but dcp just in case
@@ -733,14 +734,12 @@ def tvoptimize(project=None, optim=None, tvec=None, verbose=None, maxtime=None, 
         result.name = key # Update names
         tmpimprovements[key] = [tmpresults[key].outcome] # Hacky, since expects a list
     
-    # Get the total budget & constrain it 
-    args['totalbudget'] = totalbudget
-    
     # Set up budgets to run
     tvbudgetvec = dcp(budgetvec)
     tvcontrolvec = zeros(noptimprogs) # Generate vector of zeros for correct length
     tvvec = concatenate([tvbudgetvec, tvcontrolvec])
     if randseed is None: randseed = int((time()-floor(time()))*1e4) # Make sure a seed is used
+    args['totalbudget'] = totalbudget
             
     # Set up the optimizations to run
     bestfval = inf # Value of outcome
@@ -749,12 +748,17 @@ def tvoptimize(project=None, optim=None, tvec=None, verbose=None, maxtime=None, 
     printv('Running time-varying optimization with maxtime=%s, maxiters=%s' % (maxtime, maxiters), 2, verbose)
     if label: thislabel = '"'+label+'-'+key+'"'
     else: thislabel = '"'+key+'"'
-    args['origbudget'] = optimconstbudget
     xmin = concatenate([zeros(noptimprogs), -optim.tvsettings['asdlim']+dcp(tvcontrolvec)])
     xmax = concatenate([inf+zeros(noptimprogs), optim.tvsettings['asdlim']+dcp(tvcontrolvec)])
     stepbudget = optim.tvsettings['asdstep']*tvbudgetvec # Step size for budgets
     steptvcontrol = optim.tvsettings['asdstep']+dcp(tvcontrolvec) # Step size for TV parameter
     sinitial = concatenate([stepbudget]*2+[steptvcontrol]*2) # Set the step size -- duplicate for +/-
+    args['origbudget'] = optimconstbudget
+    
+    # Set the initial people
+    initialind = findinds(rawresults['tvec'], optim.objectives['start'])
+    initpeople = rawresults['people'][:,:,initialind] # Pull out the people array corresponding to the start of the optimization -- there shouldn't be multiple raw arrays here
+    args['initpeople'] = initpeople
     
     # Now run the optimization
     tvvecnew, fvals, details = asd(outcomecalc, tvvec, args=args, xmin=xmin, xmax=xmax, sinitial=sinitial, maxtime=maxtime, maxiters=maxiters, verbose=verbose, randseed=randseed, label=thislabel, **kwargs)
@@ -766,6 +770,7 @@ def tvoptimize(project=None, optim=None, tvec=None, verbose=None, maxtime=None, 
         bestfval = fvals[-1] # Reset fval
     
     ## Calculate outcomes
+    args['initpeople'] = None # Turn off again to get full results
     new = outcomecalc(asdresults[bestkey]['budget'], tvcontrolvec=tvcontrolvec, outputresults=True, **args)
     new.name = 'Time-varying' # Note: could all be simplified
     tmpresults[new.name] = new
