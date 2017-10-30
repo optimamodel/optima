@@ -771,7 +771,6 @@ def tvoptimize(project=None, optim=None, tvec=None, verbose=None, maxtime=None, 
 
     # Get the total budget & constrain it 
     args['totalbudget'] = totalbudget
-    args['initpeople'] = initpeople # Set so only runs the part of the optimization required
     
     # Set up budgets to run
     tvbudgetvec = dcp(budgetvec)
