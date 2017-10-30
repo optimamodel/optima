@@ -16,7 +16,7 @@ or:
 Version: 2017oct30
 """
 
-dobenchmark = False
+dobenchmark = True
 doprofile = True
 
 # If running profiling, choose which function to line profile. Choices are: model, runsim, makesimpars, interp
@@ -30,7 +30,7 @@ if dobenchmark:
     print('Benchmarking...')
     
     from pylab import loadtxt, savetxt, vstack, array
-    from optima import Project, gitinfo, sigfig, today, getdate
+    from optima import demo, gitinfo, today, getdate
     from time import time
     
     # Settings
@@ -47,7 +47,7 @@ if dobenchmark:
         return performance
     
     # Run the model
-    P = Project(spreadsheet='generalized.xlsx', dorun=False)
+    P = demo(0)
     performance1 = cpubenchmark()
     t = time()
     P.runsim()
@@ -58,7 +58,7 @@ if dobenchmark:
     print(benchmarktxt)
     
     # Gather the output data
-    elapsedstr = sigfig(elapsed, 3)
+    elapsedstr = '%0.3f' % elapsed
     todaystr = getdate(today()).replace(' ','_')
     gitbranch, gitversion = gitinfo()
     gitversion = gitversion[:hashlen]
