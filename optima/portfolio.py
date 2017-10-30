@@ -1,4 +1,4 @@
-from optima import OptimaException, Link, gitinfo, tic, toc, odict, getdate, today, uuid, dcp, objrepr, makefilepath, printv, findinds, saveobj, loadproj, promotetolist # Import utilities
+from optima import OptimaException, Link, gitinfo, tic, toc, odict, getdate, today, uuid, dcp, objrepr, makefilepath, printv, findnearest, saveobj, loadproj, promotetolist # Import utilities
 from optima import version, defaultobjectives, Project, pchip, getfilelist, batchBOC, reoptimizeprojects
 from numpy import arange, argsort, zeros, nonzero, linspace, log, exp, inf, argmax, array
 from xlsxwriter import Workbook
@@ -369,8 +369,8 @@ class Portfolio(object):
             tvector, initial, final, indices, alloc, outcome, sumalloc = [odict() for o in range(7)] # Allocate all dicts
             for io in iokeys:
                 tvector[io]  = self.results[key][io].tvec # WARNING, can differ between initial and optimized!
-                initial[io]  = findinds(tvector[io], self.objectives['start'])
-                final[io]    = findinds(tvector[io], self.objectives['end'])
+                initial[io]  = findnearest(tvector[io], self.objectives['start'])
+                final[io]    = findnearest(tvector[io], self.objectives['end'])
                 indices[io]  = arange(initial[io], final[io])
                 alloc[io]    = self.results[key][io].budget
                 outcome[io]  = self.results[key][io].outcome 

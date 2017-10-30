@@ -782,9 +782,12 @@ def findinds(val1, val2=None, eps=1e-6):
     return output
 
 
+
 def findnearest(series=None, value=None):
     '''
-    Return the index of the nearest match in series to value
+    Return the index of the nearest match in series to value -- like findinds, but
+    always returns an object with the same time as value (i.e. findnearest with
+    a number returns a number, findnearest with an array returns an array).
     
     Examples:
         findnearest(rand(10), 0.5) # returns whichever index is closest to 0.5
@@ -797,7 +800,7 @@ def findnearest(series=None, value=None):
     from numpy import argmin
     series = promotetoarray(series)
     if isnumber(value):
-        output = argmin(abs(promotetoarray(series)-value))
+        output = argmin(abs(series-value))
     else:
         output = []
         for val in value: output.append(findnearest(series, val))

@@ -410,17 +410,21 @@ def outcomecalc(budgetvec=None, which=None, project=None, parsetname=None, progs
     
     # Figure out which indices to run for and actually run the model
     tvec       = project.settings.maketvec(end=objectives['end'])
-    initialind = findinds(tvec, objectives['start'])
-    finalind   = findinds(tvec, objectives['end'])
-    startind   = initialind if initpeople is not None else None
+    if initpeople is None: startind = None
+    else:                  startind = findnearest(tvec, objectives['start']) # Only start running the simulation from the starting point
     results = runmodel(pars=thisparsdict, project=project, parsetname=parsetname, progsetname=progsetname, tvec=tvec, initpeople=initpeople, startind=startind, verbose=0, label=project.name+'-optim-outcomecalc', doround=False, **kwargs)
 
+    # Figure out which indices to use
+    initialind = findnearest(results.tvec, objectives['start'])
+    finalind   = findnearest(results.tvec, objectives['end'])
+    if which=='money': baseind = findnearest(results.tvec, objectives['base']) # Only used for money minimization
+    if which=='outcomes': indices = arange(initialind, finalind) # Only used for outcomes minimization
+    
     ## Here, we split depending on whether it's a outcomes or money minimization:
     if which=='outcomes':
         # Calculate outcome
         outcome = 0 # Preallocate objective value
         rawoutcomes = odict()
-        indices = arange(initialind, finalind) # Only used for outcomes minimization
         for key in objectives['keys']:
             thisweight = objectives[key+'weight'] # e.g. objectives['inciweight']
             thisoutcome = results.main['num'+key].tot[0][indices].sum() # the instantaneous outcome e.g. objectives['numdeath'] -- 0 is since best
@@ -450,7 +454,6 @@ def outcomecalc(budgetvec=None, which=None, project=None, parsetname=None, progs
     ## It's money
     elif which=='money':
         # Calculate outcome
-        baseind = findinds(results.tvec, objectives['base']) # Only used for money minimization
         targetsmet = True # Assume success until proven otherwise (since operator is AND, not OR)
         baseline = odict()
         final = odict()
@@ -817,7 +820,7 @@ def minoutcomes(project=None, optim=None, tvec=None, verbose=None, maxtime=None,
     
     # Calculate the initial people distribution
     results = runmodel(pars=parset.pars, project=project, parsetname=optim.parsetname, progsetname=optim.progsetname, tvec=tvec, keepraw=True, verbose=0, label=project.name+'-minoutcomes')
-    initialind = findinds(results.raw[0]['tvec'], optim.objectives['start'])
+    initialind = findnearest(results.raw[0]['tvec'], optim.objectives['start'])
     initpeople = results.raw[0]['people'][:,:,initialind] # Pull out the people array corresponding to the start of the optimization -- there shouldn't be multiple raw arrays here
 
     # Calculate original things
@@ -1211,7 +1214,7 @@ def icers(name=None, project=None, parsetname=None, progsetname=None, objective=
     
     # Calculate the initial people distribution
     initresults = runmodel(project=project, parsetname=parsetname, progsetname=progsetname, keepraw=True, verbose=0, label=project.name+'-minoutcomes')
-    initialind  = findinds(initresults.raw[0]['tvec'], objectives['start'])
+    initialind  = findnearest(initresults.raw[0]['tvec'], objectives['start'])
     initpeople  = initresults.raw[0]['people'][:,:,initialind] # Pull out the people array corresponding to the start of the optimization -- there shouldn't be multiple raw arrays here
 
     # Define arguments that don't change in the loop
