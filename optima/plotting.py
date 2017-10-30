@@ -1492,8 +1492,11 @@ def sanitizeresults(results):
     return output
 
 
-def SItickformatter(x, pos):  # formatter function takes tick label and tick position
+def SItickformatter(x, pos, *args, **kwargs):  # formatter function takes tick label and tick position
     ''' Formats axis ticks so that e.g. 34,243 becomes 34K '''
+#    from pylab import gca, log10, diff
+#    ylims = gca().get_ylim() # To change it for zooming
+#    extrasigfigs = round(log10(max(ylims)/diff(ylims))) # For future -- this works, kind of, but is applied to the wrong plots!
     return sigfig(x, sigfigs=2, SI=True)
 
 
