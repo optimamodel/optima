@@ -1498,7 +1498,7 @@ def commaticks(fig=None, ax=None, axis='y'):
 def getplotinds(plotstartyear=None, plotendyear=None, tvec=None, die=False, verbose=2):
     ''' Little function to convert the requested start and end years to indices '''
     if plotstartyear is not None:
-        try: startind = findnearest(tvec,plotstartyear)[0] # Get the index of the year to start the plots
+        try: startind = findnearest(tvec,plotstartyear) # Get the index of the year to start the plots
         except: 
             errormsg = 'Unable to find year %s in resultset; falling back on %s'% (plotstartyear, tvec[0])
             if die: raise OptimaException(errormsg)
@@ -1508,7 +1508,7 @@ def getplotinds(plotstartyear=None, plotendyear=None, tvec=None, die=False, verb
     else: startind = 0
 
     if plotendyear is not None:
-        try: endind = findnearest(tvec,plotendyear)[0] # Get the index of the year to end the plots
+        try: endind = findnearest(tvec,plotendyear) # Get the index of the year to end the plots
         except: 
             errormsg = 'Unable to find year %s in resultset; falling back on %s'% (plotendyear, tvec[-1])
             if die: raise OptimaException(errormsg)
