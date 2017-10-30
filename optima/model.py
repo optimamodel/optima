@@ -2,87 +2,12 @@
 from numpy import zeros, exp, maximum, minimum, inf, array, isnan, einsum, floor, ones, power as npow, concatenate as cat, interp, nan, squeeze
 from optima import OptimaException, printv, dcp, odict, findinds, makesimpars, Resultset
 
-
-
-global notprinted
-notprinted = True
-
-
-
-
 def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False, debug=False, label=None, startind=None):
     """
     Runs Optima's epidemiological model.
     
     Version: 1.8 (2017mar03)
     """
-    
-    def TESTPEOPLE(people, label=''):
-        global notprinted
-#        thisind = findinds(people[:,:,:].sum((0,1)))[-1]
-#        thisyear = 2000+thisind/5.
-#        TESTINIT = array([[8.04748435e+05, 9.56797110e+05],
-#            [0.00000000e+00, 0.00000000e+00],
-#            [1.25379658e+02, 2.00555861e+02],
-#            [4.24956940e+02, 6.82118739e+02],
-#            [1.07096733e+03, 1.71209014e+03],
-#            [1.08684179e+03, 1.71331303e+03],
-#            [2.27822713e+02, 3.57674720e+02],
-#            [1.33131327e+02, 2.07781513e+02],
-#            [1.29862725e+00, 2.08182468e+00],
-#            [2.53076487e+01, 4.06541221e+01],
-#            [1.49484237e+02, 2.38178782e+02],
-#            [2.06146039e+02, 3.23623788e+02],
-#            [3.64607508e+01, 5.71869978e+01],
-#            [1.98931868e+01, 3.10478122e+01],
-#            [6.91186624e-02, 1.10919473e-01],
-#            [1.40650174e+01, 2.30557082e+01],
-#            [1.91303715e+02, 3.07115042e+02],
-#            [7.96793284e+01, 1.26203584e+02],
-#            [3.88757908e-04, 6.11242092e-04],
-#            [3.89483046e-04, 6.10516954e-04],
-#            [2.04415812e-03, 3.28262282e-03],
-#            [3.74863842e+01, 6.20032688e+01],
-#            [1.52582463e+02, 2.47832560e+02],
-#            [2.65130861e+02, 4.23502771e+02],
-#            [1.56594884e+01, 2.49502586e+01],
-#            [1.20185923e+00, 1.87940592e+00],
-#            [3.17851355e-36, 5.68500182e-36],
-#            [1.06300862e+01, 1.74929925e+01],
-#            [9.55607620e+00, 1.52834739e+01],
-#            [1.38806395e+02, 2.19811766e+02],
-#            [1.75369311e+02, 2.75628223e+02],
-#            [1.02594056e+02, 1.60506037e+02],
-#            [6.47705610e-35, 1.15846842e-34],
-#            [2.21042791e+02, 3.63572522e+02],
-#            [2.01484808e+02, 3.22058577e+02],
-#            [4.60767070e+02, 7.28909085e+02],
-#            [9.23369663e+02, 1.45021324e+03],
-#            [5.23497770e+02, 8.18526013e+02]])
-#        
-#        testqual = abs((people[:,:,85] - squeeze(TESTINIT))).max()
-#        if testqual>1e-6:
-#            print('%0.1f (%i). NO %s (%s)' % (thisyear, thisind, label, testqual))
-#            if testqual<1 and notprinted:
-#                notprinted = False
-#                from optima import colorize
-#                colorize('blue')
-#                print(people[:,:,85].__repr__())
-#                print('campyshit')
-#                print(TESTINIT.__repr__())
-#                print('andthatsnotallfolks')
-#                print((people[:,:,85] - squeeze(TESTINIT)).__repr__())
-#                print('amilosing my mind?')
-#                foo = people[:,:,85]
-#                bar = TESTINIT
-#                print(foo-bar)
-#                colorize()
-#                import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
-#                
-#        else:
-#            print('%0.1f (%i). passed! %s' % (thisyear, thisind, label))
-        
-        return None
     
     ##################################################################################################################
     ### Setup 
@@ -476,7 +401,6 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
             
             
     people[:,:,startind] = initpeople
-    TESTPEOPLE(people, 'a')
 
     
     ##################################################################################################################
@@ -610,8 +534,6 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
         ## Calculate probability of getting infected
         ###############################################################################
         
-        TESTPEOPLE(people, 'preforce')
-        
         # Probability of getting infected. In the first stage of construction, we actually store this as the probability of NOT getting infected
         # First dimension: infection acquired by (circumcision status). Second dimension:  infection acquired by (pop). Third dimension: infection caused by (pop). Fourth dimension: infection caused by (health/treatment state)
         forceinffull = ones((len(sus), npops, nstates, npops))
@@ -679,10 +601,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
         ### Calculate probabilities of shifting along cascade (if programmatically determined)
         ##############################################################################################################
 
-        TESTPEOPLE(people, 'preshifts')
-        
         # Undiagnosed to diagnosed
-        TESTPEOPLE(people, 'zoom1')
         if isnan(propdx[t]):
             dxprob = [hivtest[:,t]]*ncd4
             for cd4 in range(aidsind, ncd4): dxprob[cd4] = maximum(aidstest[t],hivtest[:,t])
@@ -697,7 +616,6 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                     raw_diag[:,t] += people[fromstate,:,t]*thistransit[fromstate,tostate,:]/dt
 
         # Diagnosed/lost to care
-        TESTPEOPLE(people, 'zoom2')
         if isnan(propcare[t]):
             careprob = [linktocare[:,t]]*ncd4
             for cd4 in range(aidsind, ncd4): careprob[cd4] = maximum(aidslinktocare[t],linktocare[:,t])
@@ -711,7 +629,6 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                     thistransit[fromstate,tostate,:] *= careprob[cd4]
 
         # Care/USVL/SVL to lost
-        TESTPEOPLE(people, 'zoom3')
         if isnan(propcare[t]):
             lossprob = [leavecare[:,t]]*ncd4 
             for cd4 in range(aidsind, ncd4): lossprob[cd4] = minimum(aidsleavecare[t],leavecare[:,t])
@@ -725,7 +642,6 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                     thistransit[fromstate,tostate,:] *= lossprob[cd4]
     
         # SVL to USVL
-        TESTPEOPLE(people, 'zoom4')
         usvlprob = treatfail if isnan(propsupp[t]) else 0.
         for fromstate in svl:
             for tostate in fromto[fromstate]:
@@ -735,7 +651,6 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                     thistransit[fromstate,tostate,:] *= usvlprob
         
         # USVL to SVL
-        TESTPEOPLE(people, 'zoom5')
         svlprob = min(numvlmon[t]/(eps+numtx[t]*requiredvl),1) if isnan(propsupp[t]) else 0.
         for fromstate in usvl:
             for tostate in fromto[fromstate]:
@@ -745,7 +660,6 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                     thistransit[fromstate,tostate,:] *= svlprob
         
         # Check that probabilities all sum to 1
-        TESTPEOPLE(people, 'zoom6')
         if debug:
             transtest = array([(abs(thistransit[j,:,:].sum(axis=0)/(1.-background[:,t])+deathprob[j]-ones(npops))>eps).any() for j in range(nstates)])
             if any(transtest):
@@ -756,7 +670,6 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                 raise OptimaException(errormsg)
                 
         # Check that no probabilities are less than 0
-        TESTPEOPLE(people, 'zoom7')
         if debug and any([(thistransit[k]<0).any() for k in range(nstates)]):
             wrongstatesindices = [k for k in range(nstates) if (thistransit[k]<0.).any()]
             wrongstates = [settings.statelabels[j] for j in wrongstatesindices]
@@ -765,18 +678,15 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
             raise OptimaException(errormsg)
             
         ## Shift people as required
-        TESTPEOPLE(people, 'zoom8')
         if t<npts-1:
             for fromstate,tostates in enumerate(fromto):
                 people[tostates,:,t+1] += people[fromstate,:,t]*thistransit[fromstate,tostates,:]
-        TESTPEOPLE(people, 'zoom9')
+
 
         ##############################################################################################################
         ### Calculate births
         ##############################################################################################################
 
-        TESTPEOPLE(people, 'prebirths')
-        
         # Precalculate proportion on PMTCT, whether numpmtct or proppmtct is used
         numhivpospregwomen = 0
         timestepsonpmtct = 1./dt # Specify the number of timesteps on which mothers are on PMTCT -- # TODO: remove hard-coding
@@ -825,7 +735,6 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
         ###############################################################################
         ## Shift numbers of people (circs, treatment, age transitions, risk transitions, prop scenarios)
         ###############################################################################
-        TESTPEOPLE(people, 'preshift')
         if t<npts-1:
             
             ## Births 
@@ -864,8 +773,6 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
             ###############################################################################
             ## Reconcile population sizes
             ###############################################################################
-
-            TESTPEOPLE(people, 'prepopsize')
             
             # Reconcile population sizes for populations with no inflows
             thissusreg = people[susreg,noinflows,t+1] # WARNING, will break if susreg is not a scalar index!
@@ -905,8 +812,6 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
             ## Proportions -- these happen after the Euler step, which is why it's t+1 instead of t
             #######################################################################################
 
-            TESTPEOPLE(people, 'preprops')
-
             for name,prop,lowerstate,tostate,num,denom,raw_new,fixyear in [propdx_list,propcare_list,proptx_list,propsupp_list]:
                 
                 if ~isnan(fixyear) and fixyear==t: # Fixing the proportion from this timepoint
@@ -929,7 +834,6 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                     wanted = prop[t+1]*available
                 
                 # Reconcile the differences between the number we have and the number we want
-                TESTPEOPLE(people, 'pre-reconcile')
                 if wanted is not None:
                     diff = wanted - actual # Wanted number minus actual number 
                     if diff>eps: # We need to move people forwards along the cascade 
@@ -992,8 +896,6 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
     raw['costtreat']    = people[alltx,:,:].sum(axis=0)*simpars['costtx'] # Calculate this here since otherwise results depends on simpars
     
     checkfornegativepeople(people) # Check only once for negative people, right before finishing
-    
-    TESTPEOPLE(people, 'end')
     
     return raw # Return raw results
 
