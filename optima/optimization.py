@@ -411,8 +411,8 @@ def outcomecalc(budgetvec=None, which=None, project=None, parsetname=None, progs
         budgetarray = tvfunction(budgetdict=constrainedbudget, years=paryears, pars=tvcontrolvec, optiminds=optiminds, tvsettings=tvsettings)
     
     # Get coverage and actual dictionary, in preparation for running
-    import optima as op
-    op.printvars(locals(), ['budgetarray'], 'blue')
+#    import optima as op
+#    op.printvars(locals(), ['budgetarray'], color='blue')
     thiscoverage = progset.getprogcoverage(budget=budgetarray, t=paryears, parset=parset, sample=ccsample)
     thisparsdict = progset.getpars(coverage=thiscoverage, t=paryears, parset=parset, sample=ccsample)
     
@@ -493,6 +493,9 @@ def outcomecalc(budgetvec=None, which=None, project=None, parsetname=None, progs
 #    obj = odict()
 #    for key in savekeys: obj[key] = locals()[key]
 #    op.saveobj(filename, obj)
+    
+    if round(outcome)==90463.0:
+        import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
     
     return output
 
@@ -751,6 +754,16 @@ def tvoptimize(project=None, optim=None, tvec=None, verbose=None, maxtime=None, 
     for key,result in tmpresults.items(): 
         result.name = key # Update names
         tmpimprovements[key] = [tmpresults[key].outcome] # Hacky, since expects a list
+    
+    
+    import optima as op
+    myargs = odict()
+    for key,val in args.items(): myargs[key] = val
+    myargs.update({'outputresults':True, 'doconstrainbudget':False})
+    myargs['budgetvec'] = prelim.budgets['Baseline']
+    op.saveobj('args-baseline.obj', myargs)
+    myargs['budgetvec'] = prelim.budgets['Optimal']
+    op.saveobj('args-optimal.obj', myargs)
 
     # Get the total budget & constrain it 
     args['totalbudget'] = totalbudget
@@ -786,12 +799,21 @@ def tvoptimize(project=None, optim=None, tvec=None, verbose=None, maxtime=None, 
         bestfval = fvals[-1] # Reset fval
     
     ## Calculate outcomes
+    print('HIIIIIIIIIIII')
     args['initpeople'] = None # Set to None to get full results, not just from start year
     new = outcomecalc(asdresults[bestkey]['budget'], tvcontrolvec=tvcontrolvec, outputresults=True, **args)
+    print('FOOOOOO')
+    print new.outcome
+    print('OK')
     new.name = 'Time-varying' # Else, say what the budget is
     tmpresults[new.name] = new
     tmpimprovements[new.name] = asdresults[bestkey]['fvals']
     tmpfullruninfo[new.name] = asdresults # Store everything
+    
+    myargs['budgetvec'] = asdresults[bestkey]['budget']
+    myargs['tvcontrolvec'] = tvcontrolvec
+    op.saveobj('args-timevarying.obj', myargs)
+    op.saveobj('args-timevarying-orig.obj', args)
 
     ## Output
     multires = Multiresultset(resultsetlist=tmpresults.values(), name='optim-%s' % optim.name)
@@ -799,8 +821,8 @@ def tvoptimize(project=None, optim=None, tvec=None, verbose=None, maxtime=None, 
     multires.improvement = tmpimprovements # Store full function evaluation information -- only use last one
     multires.fullruninfo = tmpfullruninfo # And the budgets/outcomes for every different run
     multires.outcomes = odict() # Initialize
-    for key in tmpimprovements.keys():
-        multires.outcomes[key] = tmpimprovements[key][-1] # Get best value
+    for key in multires.outcomes.keys():
+        multires.outcomes[key] = tmpresults[key].outcome # Get best value
     optim.resultsref = multires.name # Store the reference for this result
     try:
         multires.outcome = multires.outcomes[new.name] # Store these defaults in a convenient place
@@ -997,8 +1019,8 @@ def minoutcomes(project=None, optim=None, tvec=None, verbose=None, maxtime=None,
     multires.extremeoutcomes = extremeoutcomes # Store all of these
     multires.fullruninfo = tmpfullruninfo # And the budgets/outcomes for every different run
     multires.outcomes = odict() # Initialize
-    for key in tmpimprovements.keys():
-        multires.outcomes[key] = tmpimprovements[key][-1] # Get best value
+    for key in multires.outcomes.keys():
+        multires.outcomes[key] = tmpresults[key].outcome # Get best value
     optim.resultsref = multires.name # Store the reference for this result
     try:
         multires.outcome = multires.outcomes['Optimal'] # Store these defaults in a convenient place

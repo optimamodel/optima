@@ -653,14 +653,15 @@ class Multiresultset(Resultset):
         self.budgets = odict()
         self.coverages = odict()
         self.budgetyears = odict() 
+        self.setup = odict() # For storing the setup attributes (e.g. tvec)
         if type(resultsetlist)==list: pass # It's already a list, carry on
         elif type(resultsetlist) in [odict, dict]: resultsetlist = resultsetlist.values() # Convert from odict to list
         elif resultsetlist is None: raise OptimaException('To generate multi-results, you must feed in a list of result sets: none provided')
         else: raise OptimaException('Resultsetlist type "%s" not understood' % str(type(resultsetlist)))
         
         # Fundamental quantities -- populated by project.runsim()
-        sameattrs = ['tvec', 'dt', 'popkeys', 'projectinfo', 'projectref', 'parsetname', 'progsetname', 'pars', 'data', 'datayears', 'settings'] # Attributes that should be the same across all results sets
-        for attr in sameattrs: setattr(self, attr, None) # Shared attributes across all resultsets
+        setupattrs = ['tvec', 'dt', 'popkeys', 'projectinfo', 'projectref', 'parsetname', 'progsetname', 'pars', 'data', 'datayears', 'settings'] # Attributes that should be the same across all results sets
+        for attr in setupattrs: setattr(self, attr, None) # Shared attributes across all resultsets
 
         # Main and other results -- time series, by population -- get right structure, but clear out results -- WARNING, must match format above!
         self.main  = dcp(resultsetlist[0].main) # For storing main results -- get the format from the first entry, since should be the same for all
@@ -678,11 +679,12 @@ class Multiresultset(Resultset):
             key = rset.name
             self.keys.append(key)
             
-            # First, loop over shared attributes, and ensure they match
-            for attr in sameattrs:
+            # First, loop over (presumably) shared setup attributes, and hope they match, but store them separately if they don't
+            for attr in setupattrs:
                 orig = getattr(self, attr)
                 new = getattr(rset, attr)
-                if orig is None: setattr(self, attr, new) # Pray that they match, since too hard to compare
+                self.setup[key] = new # Copy here too
+                if orig is None: setattr(self, attr, new) # For most purposes, only need one copy of these things since won't differ
             
             # Now, the real deal: fix self.main and self.other
             best = 0 # Key for best data -- discard uncertainty
