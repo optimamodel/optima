@@ -216,83 +216,51 @@ def makeplots(results=None, toplot=None, die=False, verbose=2, plotstartyear=Non
     ## Add improvement plot
     if 'improvement' in toplot:
         toplot.remove('improvement') # Because everything else is passed to plotepi()
-        try: 
-            if hasattr(results, 'improvement') and results.improvement is not None: # WARNING, duplicated from getplotselections()
-                allplots['improvement'] = plotimprovement(results, die=die, fig=fig, **kwargs)
-        except OptimaException as E: 
-            if die: raise E
-            else: printv('Could not plot improvement: "%s"' % E.__repr__(), 1, verbose)
+        if hasattr(results, 'improvement') and results.improvement is not None: # WARNING, duplicated from getplotselections()
+            allplots['improvement'] = plotimprovement(results, die=die, fig=fig, **kwargs)
     
     ## Add budget plot
     if 'budgets' in toplot:
         toplot.remove('budgets') # Because everything else is passed to plotepi()
-        try: 
-            if hasattr(results, 'budgets') and results.budgets: # WARNING, duplicated from getplotselections()
-                budgetplots = plotbudget(results, die=die, fig=fig, **kwargs)
-                allplots.update(budgetplots)
-        except OptimaException as E: 
-            if die: raise E
-            else: printv('Could not plot budgets: "%s"' % (E.__repr__()), 1, verbose)
+        if hasattr(results, 'budgets') and results.budgets: # WARNING, duplicated from getplotselections()
+            budgetplots = plotbudget(results, die=die, fig=fig, **kwargs)
+            allplots.update(budgetplots)
     
     ## Add time-varying budget plot
     if 'tvbudget' in toplot:
         toplot.remove('tvbudget') # Because everything else is passed to plotepi()
-        try: 
-            if hasattr(results, 'timevarying') and results.timevarying: # WARNING, duplicated from getplotselections()
-                tvbudgetplots = plottvbudget(results, die=die, fig=fig, **kwargs)
-                allplots.update(tvbudgetplots)
-        except OptimaException as E: 
-            if die: raise E
-            else: printv('Could not plot time-varying budget: "%s"' % (E.__repr__()), 1, verbose)
+        if hasattr(results, 'timevarying') and results.timevarying: # WARNING, duplicated from getplotselections()
+            tvbudgetplots = plottvbudget(results, die=die, fig=fig, **kwargs)
+            allplots.update(tvbudgetplots)
     
     ## Add coverage plot(s)
     if 'coverage' in toplot:
         toplot.remove('coverage') # Because everything else is passed to plotepi()
-        try: 
-            if hasattr(results, 'coverages') and results.coverages: # WARNING, duplicated from getplotselections()
-                coverageplots = plotcoverage(results, die=die, fig=fig, **kwargs)
-                allplots.update(coverageplots)
-        except OptimaException as E: 
-            if die: raise E
-            else: printv('Could not plot coverages: "%s"' % (E.__repr__()), 1, verbose)
+        if hasattr(results, 'coverages') and results.coverages: # WARNING, duplicated from getplotselections()
+            coverageplots = plotcoverage(results, die=die, fig=fig, **kwargs)
+            allplots.update(coverageplots)
     
     ## Add cascade plot(s)
     if 'cascade' in toplot:
         toplot.remove('cascade') # Because everything else is passed to plotepi()
-        try: 
-            cascadeplots = plotcascade(results, die=die, plotstartyear=plotstartyear, plotendyear=plotendyear, fig=fig, **kwargs)
-            allplots.update(cascadeplots)
-        except OptimaException as E: 
-            if die: raise E
-            else: printv('Could not plot cascade: "%s"' % E.__repr__(), 1, verbose)
+        cascadeplots = plotcascade(results, die=die, plotstartyear=plotstartyear, plotendyear=plotendyear, fig=fig, **kwargs)
+        allplots.update(cascadeplots)
     
     ## Add cascade plot(s) with bars
     if 'cascadebars' in toplot:
         toplot.remove('cascadebars') # Because everything else is passed to plotepi()
-        try: 
-            cascadebarplots = plotcascade(results, die=die, plotstartyear=plotstartyear, plotendyear=plotendyear, fig=fig, asbars=True, **kwargs)
-            allplots.update(cascadebarplots)
-        except OptimaException as E: 
-            if die: raise E
-            else: printv('Could not plot cascade bars: "%s"' % E.__repr__(), 1, verbose)
+        cascadebarplots = plotcascade(results, die=die, plotstartyear=plotstartyear, plotendyear=plotendyear, fig=fig, asbars=True, **kwargs)
+        allplots.update(cascadebarplots)
     
     ## Add deaths by CD4 plot -- WARNING, only available if results includes raw
     if 'deathbycd4' in toplot:
         toplot.remove('deathbycd4') # Because everything else is passed to plotepi()
-        try: 
-            allplots['deathbycd4'] = plotbycd4(results, whattoplot='death', die=die, fig=fig, **kwargs)
-        except OptimaException as E: 
-            if die: raise E
-            else: printv('Could not plot deaths by CD4: "%s"' % E.__repr__(), 1, verbose)
+        allplots['deathbycd4'] = plotbycd4(results, whattoplot='death', die=die, fig=fig, **kwargs)
     
     ## Add PLHIV by CD4 plot -- WARNING, only available if results includes raw
     if 'plhivbycd4' in toplot:
         toplot.remove('plhivbycd4') # Because everything else is passed to plotepi()
-        try: 
-            allplots['plhivbycd4'] = plotbycd4(results, whattoplot='people', die=die, fig=fig, **kwargs)
-        except OptimaException as E: 
-            if die: raise E
-            else: printv('Could not plot PLHIV by CD4: "%s"' % E.__repr__(), 1, verbose)
+        allplots['plhivbycd4'] = plotbycd4(results, whattoplot='people', die=die, fig=fig, **kwargs)
     
     
     ## Add epi plots -- WARNING, I hope this preserves the order! ...It should...
