@@ -16,7 +16,7 @@ or:
 Version: 2017oct30
 """
 
-dobenchmark = True
+dobenchmark = False
 doprofile = True
 
 # If running profiling, choose which function to line profile. Choices are: model, runsim, makesimpars, interp
