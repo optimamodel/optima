@@ -672,7 +672,10 @@ class Multiresultset(Resultset):
                 setattr(self.other[key], at, odict()) # Turn all of these into an odict -- e.g. self.main['prev'].pops = odict()
 
         for i,rset in enumerate(resultsetlist):
-            key = rset.name if rset.name is not None else str(i)
+            while rset.name is None or rset.name in self.keys:
+                if rset.name is None: rset.name = str(i)
+                if rset.name in self.keys: rset.name += '-new'
+            key = rset.name
             self.keys.append(key)
             
             # First, loop over shared attributes, and ensure they match

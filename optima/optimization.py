@@ -359,9 +359,11 @@ def outcomecalc(budgetvec=None, which=None, project=None, parsetname=None, progs
                 initpeople=None, outputresults=False, verbose=2, ccsample='best', doconstrainbudget=True, tvsettings=None, tvcontrolvec=None):
     ''' Function to evaluate the objective for a given budget vector (note, not time-varying) '''
 
-    color = 'blue' if tvsettings and tvsettings['timevarying'] else 'green'
-    import optima as op
-    op.printvars(locals(), ['budgetvec', 'which', 'objectives', 'constraints', 'totalbudget', 'optiminds', 'origbudget', 'tvec', 'doconstrainbudget', 'tvsettings', 'tvcontrolvec'], color=color)
+#    color = 'blue' if tvsettings and tvsettings['timevarying'] else 'green'
+#    import optima as op
+#    printkeys = ['budgetvec', 'which', 'objectives', 'constraints', 'totalbudget', 'optiminds', 'origbudget', 'tvec', 'doconstrainbudget', 'tvsettings', 'tvcontrolvec']
+#    savekeys = printkeys + ['project', 'initpeople', 'results']
+#    op.printvars(locals(), printkeys, color=color)
     
     # Set up defaults
     if which is None: 
@@ -442,6 +444,7 @@ def outcomecalc(budgetvec=None, which=None, project=None, parsetname=None, progs
             results.budgetyears = [objectives['start']] # Use the starting year
             results.budget = constrainedbudget # Convert to budget
             results.budgets = odict({'outcomecalc':constrainedbudget}) # For plotting
+            results.outcomesettings = odict([('objectives', objectives), ('constraints', constraints), ('tvsettings', tvsettings)])
             
             # Store time-varying part
             if tvsettings and tvsettings['timevarying']:
@@ -482,6 +485,12 @@ def outcomecalc(budgetvec=None, which=None, project=None, parsetname=None, progs
         else:
             summary = 'Baseline: %0.0f %0.0f %0.0f | Target: %0.0f %0.0f %0.0f | Final: %0.0f %0.0f %0.0f' % tuple(baseline.values()+target.values()+final.values())
             output = (targetsmet, summary)
+    
+#    from time import time
+#    filename = 'TZMP-'+str(int(time()*10-15093160000))+'-'+str(int(outcome))+'.obj'
+#    obj = odict()
+#    for key in savekeys: obj[key] = locals()[key]
+#    op.saveobj(filename, obj)
     
     return output
 
