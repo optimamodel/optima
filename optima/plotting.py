@@ -836,7 +836,9 @@ def plotcoverage(multires=None, die=True, figsize=globalfigsize, legendsize=glob
 ##################################################################
 def plotcascade(results=None, aspercentage=False, cascadecolors=None, figsize=globalfigsize, lw=2, titlesize=globaltitlesize, 
                 labelsize=globallabelsize, ticksize=globalticksize, legendsize=globallegendsize, position=None, useSIticks=True, 
-                showdata=True, dotsize=50, plotstartyear=None, plotendyear=None, die=False, verbose=2, interactive=False, fig=None, asbars=False, **kwargs):
+                showdata=True, dotsize=50, plotstartyear=None, plotendyear=None, die=False, verbose=2, interactive=False, fig=None,
+                asbars=False, allbars=True, **kwargs):
+
     ''' 
     Plot the treatment cascade.
     
@@ -865,26 +867,38 @@ def plotcascade(results=None, aspercentage=False, cascadecolors=None, figsize=gl
     # Set up figure and do plot
     cascadeplots = odict()
     if asbars:
-        if plotstartyear is None: plotstartyear = results.pars['numtx'].t['tot'][-1]
-        if plotendyear   is None: plotendyear   = results.tvec[-1]
-        startind, endind = getplotinds(plotstartyear=plotstartyear, plotendyear=plotendyear, tvec=results.tvec, die=die, verbose=verbose) # Get year indices for producing plots
-        cascinds = [startind, endind]
-        baselabel = '%4i' % plotstartyear
-        endlabel  = '%4i' % plotendyear
-        if baselabel==endlabel: endlabel += ' ' # Small hack to avoid bug if both are the same
-        yearlabels = [baselabel, endlabel]
-        casclabels  = ['PLHIV', 'Diagnosed', 'Treated', 'Suppressed']
-        casckeys    = ['numplhiv',  'numdiag',   'numtreat','numsuppressed']
+        if allbars: # Reset cascade labels for bar plot if plotting all bars
+            casclabels  = ['PLHIV', 'Diagnosed', 'Linked', 'Retained', 'Treated', 'Suppressed']
+            casckeys    = ['numplhiv',  'numdiag',  'numevercare', 'numincare', 'numtreat','numsuppressed']
+        else:
+            casclabels  = ['PLHIV', 'Diagnosed', 'Treated', 'Suppressed']
+            casckeys    = ['numplhiv',  'numdiag', 'numtreat','numsuppressed']
         ncategories = len(casclabels)
         darken = array([1.0, 1.3, 1.3]) # Amount by which to darken succeeding cascade stages -- can't use 0.2 since goes negative!!
         targetcolor   = array([0,0,0])
         origbasecolor = array([0.5,0.60,0.9])
         origendcolor  = array([0.3,0.85,0.6])
+        if plotendyear   is None: plotendyear   = results.tvec[-1]
+        if plotstartyear is None:
+            try: # Try making a plot with the last year of treatment data as the first year
+                plotstartyear = results.pars['numtx'].t['tot'][-1]
+                startind, endind = getplotinds(plotstartyear=plotstartyear, plotendyear=plotendyear, tvec=results.tvec, die=die, verbose=verbose) # Get year indices for producing plots
+            except: # The above options won't work if, for example, the last year of treatment data is greater than or equal to the last sim year, so in that case we use alternative defaults
+                plotstartyear = results.tvec[0]
+                startind, endind = getplotinds(plotstartyear=plotstartyear, plotendyear=plotendyear, tvec=results.tvec, die=die, verbose=verbose) # Get year indices for producing plots
+
+        cascinds = [startind, endind]
+        baselabel = '%4i' % plotstartyear
+        endlabel  = '%4i' % plotendyear
+        if baselabel==endlabel: endlabel += ' ' # Small hack to avoid bug if both are the same
+        labels = [baselabel, endlabel]
         casccolors = odict([(baselabel,[origbasecolor]), (endlabel, [origendcolor])])
+            
         for k in range(len(casckeys)-1):
             for label in casccolors.keys():
                 darker = dcp(casccolors[label][-1]**darken) # Make each color slightly darker than the one before
                 casccolors[label].append(darker)
+
     else:
         # Get year indices for producing plots
         startind, endind = getplotinds(plotstartyear=plotstartyear, plotendyear=plotendyear, tvec=results.tvec, die=die, verbose=verbose)
@@ -908,7 +922,7 @@ def plotcascade(results=None, aspercentage=False, cascadecolors=None, figsize=gl
     
     # Actually do the plotting
     for plt in range(nsims): # WARNING, copied from plotallocs()
-        
+    
         # Create the figure and axes
         fig,naxes = makefigure(figsize=figsize, interactive=interactive, fig=fig)
         ax = fig.add_subplot(naxes, 1, naxes)
@@ -918,27 +932,32 @@ def plotcascade(results=None, aspercentage=False, cascadecolors=None, figsize=gl
             dx = 1.0
             space = 4.0
             basex = arange(ncategories)*space
+#            import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
             for k,key in enumerate(casckeys):
                 for i,ind in enumerate(cascinds):
                     if ismultisim: 
                         thisbar = 100.*results.main[key].tot[plt][ind]/results.main['numplhiv'].tot[plt][ind] # If it's a multisim, need an extra index for the plot number
                     else:
                         thisbar = 100.*results.main[key].tot[0][ind]/results.main['numplhiv'].tot[0][ind] # Get the best estimate
-                    if k==len(casckeys)-1: yearlabel = yearlabels[i]
-                    else:                  yearlabel = None
-                    ax.bar(basex[k]+i*dx, thisbar, width=1., color=casccolors[i][k], linewidth=0, label=yearlabel)
+                    if k==len(casckeys)-1: label = labels[i]
+                    else:                  label = None
+                    ax.bar(basex[k]+i*dx, thisbar, width=1., color=casccolors[i][k], linewidth=0, label=label)
             
             targetxpos = 2.0
             labelxpos  = 3.2
             dy = -1
             lineargs = {'c':targetcolor, 'linewidth':2}
             txtargs = {'fontsize':legendsize, 'color':targetcolor, 'horizontalalignment':'center'}
-            ax.plot([basex[1], basex[1]+targetxpos], [90,90], **lineargs)
-            ax.plot([basex[2], basex[2]+targetxpos], [81,81], **lineargs)
-            ax.plot([basex[3], basex[3]+targetxpos], [73,73], **lineargs)
-            ax.text(basex[1]+labelxpos,90+dy,'90%', **txtargs)
-            ax.text(basex[2]+labelxpos,81+dy,'81%', **txtargs)
-            ax.text(basex[3]+labelxpos,73+dy,'73%', **txtargs)
+            dxind = 1
+            txind = 4 if allbars else 2
+            supind = 5 if allbars else 5
+            ax.plot([basex[dxind], basex[dxind]+targetxpos], [90,90], **lineargs)
+            ax.plot([basex[txind], basex[txind]+targetxpos], [81,81], **lineargs)
+            ax.plot([basex[supind], basex[supind]+targetxpos], [73,73], **lineargs)
+
+            ax.text(basex[dxind]+labelxpos,90+dy,'90%', **txtargs)
+            ax.text(basex[txind]+labelxpos,81+dy,'81%', **txtargs)
+            ax.text(basex[supind]+labelxpos,73+dy,'73%', **txtargs)
             
             ax.set_xticks(basex+1.0)
             ax.set_xticklabels(casclabels)
@@ -977,7 +996,7 @@ def plotcascade(results=None, aspercentage=False, cascadecolors=None, figsize=gl
             
             if ismultisim: thistitle = 'Cascade - %s' % titles[plt]
             else:          thistitle = 'Cascade'
-        
+            
         ## General plotting fixes
         if useSIticks: SIticks(ax=ax)
         else:          commaticks(ax=ax)
@@ -995,7 +1014,7 @@ def plotcascade(results=None, aspercentage=False, cascadecolors=None, figsize=gl
             
         ax.set_title(thistitle)
         cascadeplots[thistitle] = fig
-    
+        
     return cascadeplots
 
 
