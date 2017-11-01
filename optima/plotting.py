@@ -890,6 +890,7 @@ def plotcascade(results=None, aspercentage=False, cascadecolors=None, figsize=gl
         cascinds = [startind, endind]
         baselabel = '%4i' % plotstartyear
         endlabel  = '%4i' % plotendyear
+        if baselabel==endlabel: endlabel += ' ' # Small hack to avoid bug if both are the same
         labels = [baselabel, endlabel]
         casccolors = odict([(baselabel,[origbasecolor]), (endlabel, [origendcolor])])
             
@@ -931,6 +932,7 @@ def plotcascade(results=None, aspercentage=False, cascadecolors=None, figsize=gl
             dx = 1.0
             space = 4.0
             basex = arange(ncategories)*space
+#            import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
             for k,key in enumerate(casckeys):
                 for i,ind in enumerate(cascinds):
                     if ismultisim: 
