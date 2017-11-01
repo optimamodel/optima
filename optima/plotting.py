@@ -920,7 +920,6 @@ def plotcascade(results=None, aspercentage=False, cascadecolors=None, figsize=gl
         else: colors = cascadecolors
     
     # Actually do the plotting
-    import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
     for plt in range(nsims): # WARNING, copied from plotallocs()
     
         # Create the figure and axes
@@ -940,8 +939,7 @@ def plotcascade(results=None, aspercentage=False, cascadecolors=None, figsize=gl
                         thisbar = 100.*results.main[key].tot[0][ind]/results.main['numplhiv'].tot[0][ind] # Get the best estimate
                     if k==len(casckeys)-1: label = labels[i]
                     else:                  label = None
-                    try: ax.bar(basex[k]+i*dx, thisbar, width=1., color=casccolors[i][k], linewidth=0, label=label)
-                    except: import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+                    ax.bar(basex[k]+i*dx, thisbar, width=1., color=casccolors[i][k], linewidth=0, label=label)
             
             targetxpos = 2.0
             labelxpos  = 3.2
@@ -997,23 +995,23 @@ def plotcascade(results=None, aspercentage=False, cascadecolors=None, figsize=gl
             if ismultisim: thistitle = 'Cascade - %s' % titles[plt]
             else:          thistitle = 'Cascade'
             
-    ## General plotting fixes
-    if useSIticks: SIticks(ax=ax)
-    else:          commaticks(ax=ax)
-    
-    ## Configure plot -- WARNING, copied from plotepi()
-    boxoff(ax)
-    ax.title.set_fontsize(titlesize)
-    ax.xaxis.label.set_fontsize(labelsize)
-    ax.yaxis.label.set_fontsize(labelsize)
-    for item in ax.get_xticklabels() + ax.get_yticklabels(): item.set_fontsize(ticksize)
-    
-    # Configure legend
-    legendsettings = {'loc':'upper left', 'bbox_to_anchor':(1.05, 1), 'fontsize':legendsize, 'title':'', 'frameon':False, 'scatterpoints':1}
-    ax.legend(**legendsettings) # Multiple entries, all populations
+        ## General plotting fixes
+        if useSIticks: SIticks(ax=ax)
+        else:          commaticks(ax=ax)
         
-    ax.set_title(thistitle)
-    cascadeplots[thistitle] = fig
+        ## Configure plot -- WARNING, copied from plotepi()
+        boxoff(ax)
+        ax.title.set_fontsize(titlesize)
+        ax.xaxis.label.set_fontsize(labelsize)
+        ax.yaxis.label.set_fontsize(labelsize)
+        for item in ax.get_xticklabels() + ax.get_yticklabels(): item.set_fontsize(ticksize)
+        
+        # Configure legend
+        legendsettings = {'loc':'upper left', 'bbox_to_anchor':(1.05, 1), 'fontsize':legendsize, 'title':'', 'frameon':False, 'scatterpoints':1}
+        ax.legend(**legendsettings) # Multiple entries, all populations
+            
+        ax.set_title(thistitle)
+        cascadeplots[thistitle] = fig
         
     return cascadeplots
 
