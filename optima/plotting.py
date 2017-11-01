@@ -837,7 +837,7 @@ def plotcoverage(multires=None, die=True, figsize=globalfigsize, legendsize=glob
 def plotcascade(results=None, aspercentage=False, cascadecolors=None, figsize=globalfigsize, lw=2, titlesize=globaltitlesize, 
                 labelsize=globallabelsize, ticksize=globalticksize, legendsize=globallegendsize, position=None, useSIticks=True, 
                 showdata=True, dotsize=50, plotstartyear=None, plotendyear=None, die=False, verbose=2, interactive=False, fig=None,
-                asbars=False, allbars=True, finalbars=False, **kwargs):
+                asbars=False, allbars=True, **kwargs):
 
     ''' 
     Plot the treatment cascade.
@@ -860,7 +860,6 @@ def plotcascade(results=None, aspercentage=False, cascadecolors=None, figsize=gl
         ismultisim = True
         titles = results.keys # Figure out the labels for the different lines
         nsims = len(titles) # How ever many things are in results
-        finalbars = True # Plot the state of the cascade for all sims for the final plot year only, on a single plot
     else: 
         errormsg = 'Results input to plotcascade() must be either Resultset or Multiresultset, not "%s".' % type(results)
         raise OptimaException(errormsg)
@@ -869,7 +868,7 @@ def plotcascade(results=None, aspercentage=False, cascadecolors=None, figsize=gl
     cascadeplots = odict()
     if asbars:
         if allbars: # Reset cascade labels for bar plot if plotting all bars
-            casclabels  = ['PLHIV', 'Diagnosed', 'Linked to care', 'Retained in care', 'Treated', 'Suppressed']
+            casclabels  = ['PLHIV', 'Diagnosed', 'Linked', 'Retained', 'Treated', 'Suppressed']
             casckeys    = ['numplhiv',  'numdiag',  'numevercare', 'numincare', 'numtreat','numsuppressed']
         else:
             casclabels  = ['PLHIV', 'Diagnosed', 'Treated', 'Suppressed']
@@ -878,24 +877,21 @@ def plotcascade(results=None, aspercentage=False, cascadecolors=None, figsize=gl
         darken = array([1.0, 1.3, 1.3]) # Amount by which to darken succeeding cascade stages -- can't use 0.2 since goes negative!!
         targetcolor   = array([0,0,0])
         origbasecolor = array([0.5,0.60,0.9])
+        origendcolor  = array([0.3,0.85,0.6])
         if plotendyear   is None: plotendyear   = results.tvec[-1]
+        if plotstartyear is None:
+            try: # Try making a plot with the last year of treatment data as the first year
+                plotstartyear = results.pars['numtx'].t['tot'][-1]
+                startind, endind = getplotinds(plotstartyear=plotstartyear, plotendyear=plotendyear, tvec=results.tvec, die=die, verbose=verbose) # Get year indices for producing plots
+            except: # The above options won't work if, for example, the last year of treatment data is greater than or equal to the last sim year, so in that case we use alternative defaults
+                plotstartyear = results.tvec[0]
+                startind, endind = getplotinds(plotstartyear=plotstartyear, plotendyear=plotendyear, tvec=results.tvec, die=die, verbose=verbose) # Get year indices for producing plots
 
-        if not finalbars: # Plot the current year & final year on the same graph
-            if plotstartyear is None: plotstartyear = results.pars['numtx'].t['tot'][-1]
-            startind, endind = getplotinds(plotstartyear=plotstartyear, plotendyear=plotendyear, tvec=results.tvec, die=die, verbose=verbose) # Get year indices for producing plots
-            cascinds = [startind, endind]
-            baselabel = '%4i' % plotstartyear
-            endlabel  = '%4i' % plotendyear
-            labels = [baselabel, endlabel]
-            origendcolor  = array([0.3,0.85,0.6])
-            casccolors = odict([(baselabel,[origbasecolor]), (endlabel, [origendcolor])])
-        else: # Just plot the final year
-            if ismultisim: labels = titles
-            else: labels = [results.name]
-            cascinds = labels
-            colordict = gridcolors(nsims)
-            casccolors = odict(zip(labels,colordict))
-            for label in casccolors.keys(): casccolors[label] = [promotetoarray(casccolors[label])]
+        cascinds = [startind, endind]
+        baselabel = '%4i' % plotstartyear
+        endlabel  = '%4i' % plotendyear
+        labels = [baselabel, endlabel]
+        casccolors = odict([(baselabel,[origbasecolor]), (endlabel, [origendcolor])])
             
         for k in range(len(casckeys)-1):
             for label in casccolors.keys():
@@ -924,127 +920,82 @@ def plotcascade(results=None, aspercentage=False, cascadecolors=None, figsize=gl
         else: colors = cascadecolors
     
     # Actually do the plotting
-    if asbars and finalbars:
-        
+    import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+    for plt in range(nsims): # WARNING, copied from plotallocs()
+    
         # Create the figure and axes
         fig,naxes = makefigure(figsize=figsize, interactive=interactive, fig=fig)
         ax = fig.add_subplot(naxes, 1, naxes)
         setposition(ax, position, interactive)
-        
-        dx = 1.0
-        space = 4.0
-        basex = arange(ncategories)*space
-        for k,key in enumerate(casckeys):
-            for i,ind in enumerate(cascinds):
-                if ismultisim: 
-                    thisbar = 100.*results.main[key].tot[ind][-1]/results.main['numplhiv'].tot[ind][-1] 
-                else:
-                    thisbar = 100.*results.main[key].tot[0][-1]/results.main['numplhiv'].tot[0][-1] 
-                if k==len(casckeys)-1: label = labels[i]
-                else:                  label = None
-                ax.bar(basex[k]+i*dx, thisbar, width=1., color=casccolors[i][k], linewidth=0, label=label)
-        
-        targetxpos = 2.0
-        labelxpos  = 3.2
-        dy = -1
-        lineargs = {'c':targetcolor, 'linewidth':2}
-        txtargs = {'fontsize':legendsize, 'color':targetcolor, 'horizontalalignment':'center'}
-        dxind = 1
-        txind = 4 if allbars else 2
-        supind = 5 if allbars else 5
-        ax.plot([basex[dxind], basex[dxind]+targetxpos], [90,90], **lineargs)
-        ax.plot([basex[txind], basex[txind]+targetxpos], [81,81], **lineargs)
-        ax.plot([basex[supind], basex[supind]+targetxpos], [73,73], **lineargs)
-
-        ax.text(basex[dxind]+labelxpos,90+dy,'90%', **txtargs)
-        ax.text(basex[txind]+labelxpos,81+dy,'81%', **txtargs)
-        ax.text(basex[supind]+labelxpos,73+dy,'73%', **txtargs)
-        
-        ax.set_xticks(basex+1.0)
-        ax.set_xticklabels(casclabels)
-        ax.set_ylabel('Percentage of PLHIV')
-        ax.set_xlim((basex[0]-1,basex[-1]+space))
-        ax.spines['top'].set_visible(False)
-        ax.spines['right'].set_visible(False)
-        ax.yaxis.set_ticks_position('left')
-        ax.xaxis.set_ticks_position('bottom')
-        thistitle = 'Final care cascade'
-        
-    else:
-        for plt in range(nsims): # WARNING, copied from plotallocs()
-        
-            # Create the figure and axes
-            fig,naxes = makefigure(figsize=figsize, interactive=interactive, fig=fig)
-            ax = fig.add_subplot(naxes, 1, naxes)
-            setposition(ax, position, interactive)
-                
-            if asbars:
-                dx = 1.0
-                space = 4.0
-                basex = arange(ncategories)*space
-                for k,key in enumerate(casckeys):
-                    for i,ind in enumerate(cascinds):
-                        if ismultisim: 
-                            thisbar = 100.*results.main[key].tot[plt][ind]/results.main['numplhiv'].tot[plt][ind] # If it's a multisim, need an extra index for the plot number
-                        else:
-                            thisbar = 100.*results.main[key].tot[0][ind]/results.main['numplhiv'].tot[0][ind] # Get the best estimate
-                        if k==len(casckeys)-1: label = labels[i]
-                        else:                  label = None
-                        ax.bar(basex[k]+i*dx, thisbar, width=1., color=casccolors[i][k], linewidth=0, label=label)
-                
-                targetxpos = 2.0
-                labelxpos  = 3.2
-                dy = -1
-                lineargs = {'c':targetcolor, 'linewidth':2}
-                txtargs = {'fontsize':legendsize, 'color':targetcolor, 'horizontalalignment':'center'}
-                dxind = 1
-                txind = 4 if allbars else 2
-                supind = 5 if allbars else 5
-                ax.plot([basex[dxind], basex[dxind]+targetxpos], [90,90], **lineargs)
-                ax.plot([basex[txind], basex[txind]+targetxpos], [81,81], **lineargs)
-                ax.plot([basex[supind], basex[supind]+targetxpos], [73,73], **lineargs)
-    
-                ax.text(basex[dxind]+labelxpos,90+dy,'90%', **txtargs)
-                ax.text(basex[txind]+labelxpos,81+dy,'81%', **txtargs)
-                ax.text(basex[supind]+labelxpos,73+dy,'73%', **txtargs)
-                
-                ax.set_xticks(basex+1.0)
-                ax.set_xticklabels(casclabels)
-                ax.set_ylabel('Percentage of PLHIV')
-                ax.set_xlim((basex[0]-1,basex[-1]+space))
-                ax.spines['top'].set_visible(False)
-                ax.spines['right'].set_visible(False)
-                ax.yaxis.set_ticks_position('left')
-                ax.xaxis.set_ticks_position('bottom')
-                if ismultisim: thistitle = 'Care cascade - %s' % titles[plt]
-                else:          thistitle = 'Care cascade'
             
-            else: # Not bars
-                bottom = 0*results.tvec # Easy way of setting to 0...
-                for k,key in enumerate(reversed(cascadelist)): # Loop backwards so correct ordering -- first one at the top, not bottom
+        if asbars:
+            dx = 1.0
+            space = 4.0
+            basex = arange(ncategories)*space
+            for k,key in enumerate(casckeys):
+                for i,ind in enumerate(cascinds):
                     if ismultisim: 
-                        thisdata = results.main[key].tot[plt] # If it's a multisim, need an extra index for the plot number
-                        if aspercentage: thisdata *= 100./results.main['numplhiv'].tot[plt]
+                        thisbar = 100.*results.main[key].tot[plt][ind]/results.main['numplhiv'].tot[plt][ind] # If it's a multisim, need an extra index for the plot number
                     else:
-                        thisdata = results.main[key].tot[0] # Get the best estimate
-                        if aspercentage: thisdata *= 100./results.main['numplhiv'].tot[0]
-                    ax.fill_between(results.tvec, bottom, thisdata, facecolor=colors[k], alpha=1, lw=0)
-                    bottom = dcp(thisdata) # Set the bottom so it doesn't overwrite
-                    ax.plot((0, 0), (0, 0), color=colors[len(colors)-k-1], linewidth=10, label=cascadenames[k]) # Colors are in reverse order
-                if showdata and not aspercentage: # Don't try to plot if it's a percentage
-                    thisdata = results.main['numtreat'].datatot[0]
-                    ax.scatter(results.datayears, thisdata, c=(0,0,0), s=dotsize, lw=0)
-                
-                # Configure rest of the plot
-                if aspercentage: ax.set_ylabel('Percentage of PLHIV')
-                else:            ax.set_ylabel('Number of PLHIV')
-                        
-                if aspercentage: ax.set_ylim((0,100))
-                else:            setylim(0, ax)
-                ax.set_xlim((results.tvec[startind], results.tvec[endind]))
-                
-                if ismultisim: thistitle = 'Cascade - %s' % titles[plt]
-                else:          thistitle = 'Cascade'
+                        thisbar = 100.*results.main[key].tot[0][ind]/results.main['numplhiv'].tot[0][ind] # Get the best estimate
+                    if k==len(casckeys)-1: label = labels[i]
+                    else:                  label = None
+                    try: ax.bar(basex[k]+i*dx, thisbar, width=1., color=casccolors[i][k], linewidth=0, label=label)
+                    except: import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+            
+            targetxpos = 2.0
+            labelxpos  = 3.2
+            dy = -1
+            lineargs = {'c':targetcolor, 'linewidth':2}
+            txtargs = {'fontsize':legendsize, 'color':targetcolor, 'horizontalalignment':'center'}
+            dxind = 1
+            txind = 4 if allbars else 2
+            supind = 5 if allbars else 5
+            ax.plot([basex[dxind], basex[dxind]+targetxpos], [90,90], **lineargs)
+            ax.plot([basex[txind], basex[txind]+targetxpos], [81,81], **lineargs)
+            ax.plot([basex[supind], basex[supind]+targetxpos], [73,73], **lineargs)
+
+            ax.text(basex[dxind]+labelxpos,90+dy,'90%', **txtargs)
+            ax.text(basex[txind]+labelxpos,81+dy,'81%', **txtargs)
+            ax.text(basex[supind]+labelxpos,73+dy,'73%', **txtargs)
+            
+            ax.set_xticks(basex+1.0)
+            ax.set_xticklabels(casclabels)
+            ax.set_ylabel('Percentage of PLHIV')
+            ax.set_xlim((basex[0]-1,basex[-1]+space))
+            ax.spines['top'].set_visible(False)
+            ax.spines['right'].set_visible(False)
+            ax.yaxis.set_ticks_position('left')
+            ax.xaxis.set_ticks_position('bottom')
+            if ismultisim: thistitle = 'Care cascade - %s' % titles[plt]
+            else:          thistitle = 'Care cascade'
+        
+        else: # Not bars
+            bottom = 0*results.tvec # Easy way of setting to 0...
+            for k,key in enumerate(reversed(cascadelist)): # Loop backwards so correct ordering -- first one at the top, not bottom
+                if ismultisim: 
+                    thisdata = results.main[key].tot[plt] # If it's a multisim, need an extra index for the plot number
+                    if aspercentage: thisdata *= 100./results.main['numplhiv'].tot[plt]
+                else:
+                    thisdata = results.main[key].tot[0] # Get the best estimate
+                    if aspercentage: thisdata *= 100./results.main['numplhiv'].tot[0]
+                ax.fill_between(results.tvec, bottom, thisdata, facecolor=colors[k], alpha=1, lw=0)
+                bottom = dcp(thisdata) # Set the bottom so it doesn't overwrite
+                ax.plot((0, 0), (0, 0), color=colors[len(colors)-k-1], linewidth=10, label=cascadenames[k]) # Colors are in reverse order
+            if showdata and not aspercentage: # Don't try to plot if it's a percentage
+                thisdata = results.main['numtreat'].datatot[0]
+                ax.scatter(results.datayears, thisdata, c=(0,0,0), s=dotsize, lw=0)
+            
+            # Configure rest of the plot
+            if aspercentage: ax.set_ylabel('Percentage of PLHIV')
+            else:            ax.set_ylabel('Number of PLHIV')
+                    
+            if aspercentage: ax.set_ylim((0,100))
+            else:            setylim(0, ax)
+            ax.set_xlim((results.tvec[startind], results.tvec[endind]))
+            
+            if ismultisim: thistitle = 'Cascade - %s' % titles[plt]
+            else:          thistitle = 'Cascade'
             
     ## General plotting fixes
     if useSIticks: SIticks(ax=ax)
