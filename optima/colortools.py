@@ -64,7 +64,7 @@ def gridcolors(ncolors=10, limits=None, nsteps=10, asarray=False, reverse=False,
         gridcolors(ncolors, doplot=True)
         show()
 
-    Version: 1.2 (2015dec29) by cliffk
+    Version: 1.2 (2015dec29) 
     """
 
     ## Imports
@@ -155,7 +155,7 @@ def alpinecolormap(gap=0.1,mingreen=0.2,redbluemix=0.5,epsilon=0.01):
    imshow(randn(20,20),interpolation='none',cmap=alpinecolormap())
    show()
 
-   Version: 2014aug06 by Cliff Kerr (cliff@thekerrlab.com)
+   Version: 2014aug06 
    """
    from matplotlib.colors import LinearSegmentedColormap as makecolormap
    from numpy import array
@@ -259,7 +259,7 @@ def vectocolor(vector, cmap=None, asarray=True, reverse=False):
    c = vectocolor(y);
    scatter(x,y,20,c)
 
-   Version: 1.1 (2016sep28 by cliffk)
+   Version: 2016sep28 
    """
    from numpy import array, zeros
    from pylab import cm
@@ -313,7 +313,7 @@ def bicolormap(gap=0.1,mingreen=0.2,redbluemix=0.5,epsilon=0.01):
      bicolormap(gap=0,mingreen=0,redbluemix=0,epsilon=0.1) # Red -> yellow -> gray -> turquoise -> blue
      bicolormap(gap=0.3,mingreen=0.2,redbluemix=0,epsilon=0.01) # Red and blue with a sharp distinction between
 
-   Version: 1.0 (2013sep13 by cliffk)
+   Version: 2013sep13 
    """
    from matplotlib.colors import LinearSegmentedColormap as makecolormap
    

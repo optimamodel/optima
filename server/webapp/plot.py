@@ -37,7 +37,7 @@ def convert_to_mpld3(figure, zoom=None, graph_pos=None):
     if zoom is None: zoom = 0.8
     zoom = 1.8 - zoom
     figsize = (frontendfigsize[0]*zoom, frontendfigsize[1]*zoom)
-    figure.set_size_inches(figsize) # WARNING, all of this should come from makeplots() instead
+    figure.set_size_inches(figsize)
 
     if len(figure.axes) == 1:
         ax = figure.axes[0]

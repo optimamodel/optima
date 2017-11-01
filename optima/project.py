@@ -1,5 +1,5 @@
-from optima import OptimaException, Settings, Parameterset, Programset, Resultset, BOC, Parscen, Optim, Link # Import classes
-from optima import odict, getdate, today, uuid, dcp, makefilepath, objrepr, printv, isnumber, saveobj, promotetolist, sigfig # Import utilities
+from optima import OptimaException, Settings, Parameterset, Programset, Resultset, BOC, Parscen, Budgetscen, Coveragescen, Progscen, Optim, Link # Import classes
+from optima import odict, getdate, today, uuid, dcp, makefilepath, objrepr, printv, isnumber, saveobj, promotetolist, promotetoodict, sigfig # Import utilities
 from optima import loadspreadsheet, model, gitinfo, defaultscenarios, makesimpars, makespreadsheet
 from optima import defaultobjectives, runmodel, autofit, runscenarios, optimize, multioptimize, outcomecalc, icers # Import functions
 from optima import version # Get current version
@@ -133,12 +133,13 @@ class Project(object):
     ### Methods for I/O and spreadsheet loading
     #######################################################################################################
 
-    def loadspreadsheet(self, filename, name='default', overwrite=True, makedefaults=True, dorun=True, **kwargs):
+    def loadspreadsheet(self, filename=None, folder=None, name=None, overwrite=True, makedefaults=True, dorun=True, **kwargs):
         ''' Load a data spreadsheet -- enormous, ugly function so located in its own file '''
         ## Load spreadsheet and update metadata
-        self.data = loadspreadsheet(filename, verbose=self.settings.verbose) # Do the hard work of actually loading the spreadsheet
+        self.data = loadspreadsheet(filename=filename, folder=folder, verbose=self.settings.verbose) # Do the hard work of actually loading the spreadsheet
         self.spreadsheetdate = today() # Update date when spreadsheet was last loaded
         self.modified = today()
+        if name is None: name = 'default'
         self.makeparset(name=name, overwrite=overwrite)
         if makedefaults: self.makedefaults(name)
         self.settings.start = self.data['years'][0] # Reset the default simulation start to initial year of data
@@ -199,18 +200,26 @@ class Project(object):
         return None
 
 
-    def makedefaults(self, name='default', overwrite=False):
+    def makedefaults(self, name=None, scenname=None, overwrite=False):
         ''' When creating a project, create a default program set, scenario, and optimization to begin with '''
-        scenname = 'Baseline conditions'
+
+        # Handle inputs
+        if name is None: name = 'default'
+        if scenname is None: scenname = 'default'
+
+        # Make default progset, scenarios and optimizations
         if overwrite or name not in self.progsets:
             progset = Programset(name=name, project=self)
             self.addprogset(progset)
+
         if overwrite or scenname not in self.scens:
-            scen = Parscen(name=scenname)
-            self.addscen(scen)
+            scenlist = [Parscen(name=scenname, parsetname=name,pars=[])]
+            self.addscens(scenlist)
+
         if overwrite or name not in self.optims:
             optim = Optim(project=self, name=name)
             self.addoptim(optim)
+
         return None
 
 
@@ -267,11 +276,24 @@ class Project(object):
         if name is None:
             try: name = item.name # Try getting name from the item
             except: name = 'default' # If not, revert to default
-        if item is None and type(name)!=str: # Maybe an item has been supplied as the only argument
-            try: 
-                item = name # It's actully an item, not a name
-                name = item.name # Try getting name from the item
-            except: raise OptimaException('Could not figure out how to add item with name "%s" and item "%s"' % (name, item))
+        if item is None:
+            if type(name)!=str: # Maybe an item has been supplied as the only argument
+                try: 
+                    item = name # It's actully an item, not a name
+                    name = item.name # Try getting name from the item
+                except: raise OptimaException('Could not figure out how to add item with name "%s" and item "%s"' % (name, item))
+            else: # No item has been supplied, add a default one
+                if what=='parset':  
+                    item = Parameterset(name=name, project=self)
+                    item.makepars(self.data, verbose=self.settings.verbose) # Create parameters
+                elif what=='progset': 
+                    item = Programset(name=name, project=self)
+                elif what=='scen':
+                    item = Parscen(name=name)
+                elif what=='optim': 
+                    item = Optim(project=self, name=name)
+                else:
+                    raise OptimaException('Unable to add item of type "%s", please supply explicitly' % what)
         structlist = self.getwhat(item=item, what=what)
         self.checkname(structlist, checkabsent=name, overwrite=overwrite)
         structlist[name] = item
@@ -390,7 +412,7 @@ class Project(object):
     
     def save(self, filename=None, folder=None, saveresults=False, verbose=2):
         ''' Save the current project, by default using its name, and without results '''
-        fullpath = makefilepath(filename=filename, folder=folder, default=[self.filename, self.name], ext='prj')
+        fullpath = makefilepath(filename=filename, folder=folder, default=[self.filename, self.name], ext='prj', sanitize=True)
         self.filename = fullpath # Store file path
         if saveresults:
             saveobj(fullpath, self, verbose=verbose)
@@ -491,7 +513,7 @@ class Project(object):
     #######################################################################################################
 
 
-    def runsim(self, name=None, simpars=None, start=None, end=None, dt=None, addresult=True, die=True, debug=False, overwrite=True, n=1, sample=False, tosample=None, randseed=None, verbose=None, keepraw=False, **kwargs):
+    def runsim(self, name=None, simpars=None, start=None, end=None, dt=None, addresult=True, die=True, debug=False, overwrite=True, n=1, sample=None, tosample=None, randseed=None, verbose=None, keepraw=False, **kwargs):
         ''' 
         This function runs a single simulation, or multiple simulations if n>1.
         
@@ -532,7 +554,7 @@ class Project(object):
         return results
 
 
-    def sensitivity(self, name='perturb', orig='default', n=5, tosample=None, randseed=None, **kwargs): # orig=default or orig=0?
+    def sensitivity(self, name='perturb', orig=-1, n=5, tosample=None, randseed=None, **kwargs): # orig=default or orig=0?
         '''
         Function to perform sensitivity analysis over the parameters as a proxy for "uncertainty".
         
@@ -650,7 +672,7 @@ class Project(object):
     def icers(self, parsetname=None, progsetname=None, objective=None, startyear=None, endyear=None, budgetratios=None, verbose=2, marginal=None, **kwargs):
         '''
         Calculate ICERs. Example:
-            from optima import op
+            import optima as op
             P = op.demo(0)
             P.parset().fixprops(False)
             P.icers()
@@ -706,6 +728,106 @@ class Project(object):
         return multires
     
     
+    def makescript(self, filename=None, folder=None, spreadsheetpath=None, verbose=2):
+        '''
+        Export a script that, when run, generates this project. Example:
+            import optima as op
+            P = op.demo(0)
+            P.makescript(filename='demo.py')
+        
+        If a spreadsheet path isn't supplied, then export the spreadsheet as well.
+        '''
+        
+        fullpath = makefilepath(filename=filename, folder=folder, default=self.name, ext='py', sanitize=True)
+        
+        if spreadsheetpath is None:
+            spreadsheetpath = self.name+'.xlsx'
+            self.makespreadsheet(filename=spreadsheetpath, folder=folder)
+            printv('Generated spreadsheet from project %s and saved to file %s' % (self.name, spreadsheetpath), 2, verbose)
+
+        output = "'''\nSCRIPT TO GENERATE PROJECT %s\n" %(self.name)
+        output += "Created %s\n\n\n'''\n\n\n" %(today())
+        output += "### Imports\n" 
+        output += "from optima import Project, Program, Programset, Parscen, Budgetscen, Coveragescen, Optim, odict, dcp \n" 
+        output += "from numpy import nan, array \n\n" 
+        output += "### Define analyses to run\n"
+        output += "torun = ['makeproject',\n'calibrate',\n'makeprograms',\n'scens',\n'optims',\n'saveproject',\n]\n\n"
+        output += "### Filepaths and global variables\n"
+        output += "dorun = True\n" # Run things by default
+        output += "spreadsheetfile = '%s'\n\n\n" %(spreadsheetpath)
+        output += "### Make project\n" 
+        output += "if 'makeproject' in torun:\n"
+        output += "    P = Project(spreadsheet=spreadsheetfile, dorun=False)\n\n"
+        output += "### Calibrate\n" 
+        output += "if 'calibrate' in torun:\n"
+        output += "    defaultps = dcp(P.parsets[0]) # Copy the default parset\n"
+        output += "    P.rmparset(0) # Remove the default parset\n\n"
+        for psn,ps in self.parsets.iteritems():
+            output += "    parset = dcp(defaultps)\n"
+            output += "    parset.name = '"+psn+"'\n"
+            output += "    pars = parset.pars\n"
+            output += "    "+ps.export().replace("\n","\n    ")+"\n"
+            output += "    P.addparset(name='"+psn+"',parset=parset)\n\n"
+        output += "### Make programs\n" 
+        output += "if 'makeprograms' in torun:\n"
+        output += "    P.rmprogset(0) # Remove the default progset\n\n"
+        for prn,pr in self.progsets.iteritems():
+            pi = 0
+            plist = "["
+            for pn,p in pr.programs.iteritems():
+                output += "    p"+str(pi)+" = Program(short='"+p.short+"',name='"+p.name+"',targetpars="+str(p.targetpars)+",targetpops="+str(p.targetpops)+")\n"
+                output += "    p"+str(pi)+".costcovfn.ccopars = "+p.costcovfn.ccopars.export(doprint=False)+"\n"
+                output += "    p"+str(pi)+".costcovdata = "+promotetoodict(p.costcovdata).export(doprint=False)+"\n\n"
+                plist += "p"+str(pi)+","
+                pi += 1
+            plist += "]"
+            output += "    R = Programset(programs="+plist+")\n"
+            for partype in pr.covout.keys():
+                for popname in pr.covout[partype].keys():
+                    strpopname = str(popname) if isinstance(popname,tuple) else "'"+popname+"'"
+                    output += "    R.covout['"+partype+"']["+strpopname+"].ccopars = "+pr.covout[partype][popname].ccopars.export(doprint=False)+"\n"
+                    output += "    R.covout['"+partype+"']["+strpopname+"].interaction = '"+pr.covout[partype][popname].interaction+"'\n\n"
+
+            output += "    P.addprogset(name='"+prn+"',progset=R)\n\n"
+        
+        output += "### Scenarios\n" 
+        output += "if 'scens' in torun:\n"
+        slist = "["
+        for sn,s in self.scens.iteritems():
+            parsetname = "'"+s.parsetname+"'" if isinstance(s.parsetname,str) else str(s.parsetname)
+            if isinstance(s,Parscen):
+                scentoadd = "Parscen(name='"+s.name+"',parsetname="+parsetname+",pars="+str(s.pars)+")"
+            elif isinstance(s,Progscen):
+                progsetname = "'"+s.progsetname+"'" if isinstance(s.progsetname,str) else str(s.progsetname)
+                t = str(s.t)
+                if isinstance(s,Budgetscen):
+                    scentoadd = "Budgetscen(name='"+s.name+"',parsetname="+parsetname+",progsetname="+progsetname+",budget="+promotetoodict(s.budget).export(doprint=False)+",t="+t+")"
+                elif isinstance(s,Coveragescen):
+                    scentoadd = "Coveragescen(name='"+s.name+"',parsetname="+parsetname+",progsetname="+progsetname+",coverage="+promotetoodict(s.coverage).export(doprint=False)+",t="+t+")"
+            slist += scentoadd+",\n                "
+        slist += "]"
+            
+        output += "    P.addscens("+slist+")\n"
+        output += "    if dorun: P.runscenarios()\n\n\n"
+
+        output += "### Optimizations\n" 
+        output += "if 'optims' in torun:\n"
+        for on,o in self.optims.iteritems():
+            parsetname = "'"+o.parsetname+"'" if isinstance(o.parsetname,str) else str(o.parsetname)
+            progsetname = "'"+o.progsetname+"'" if isinstance(o.progsetname,str) else str(o.progsetname)
+            constraints = promotetoodict(o.constraints).export(doprint=False) if o.constraints is not None else 'None'
+            output += "    P.addoptim(name='"+on+"',\n               optim=Optim(project=P,\n                           parsetname="+parsetname+",\n                           progsetname="+progsetname+",\n                           objectives="+promotetoodict(o.objectives).export(doprint=False)+",\n                           constraints="+constraints+"))\n\n"
+
+        output += "    if dorun: P.optimize() # Run the most recent optimization\n\n\n"
+
+        output += "### Save project\n" 
+        output += "if 'saveproject' in torun:\n"
+        output += "    P.save(filename='"+self.name+"-scripted.prj')\n\n"
+
+        f = open(fullpath, 'w')
+        f.write( output )
+        f.close()
+        printv('Saved project %s to script file %s' % (self.name, fullpath), 2, verbose)
 
 
     #######################################################################################################
@@ -715,7 +837,9 @@ class Project(object):
     def genBOC(self, budgetratios=None, name=None, parsetname=None, progsetname=None, objectives=None, constraints=None, maxiters=1000, 
                maxtime=None, verbose=2, stoppingfunc=None, mc=3, die=False, randseed=None, **kwargs):
         ''' Function to generate project-specific budget-outcome curve for geospatial analysis '''
-        boc = BOC(name='BOC '+self.name)
+        if name is None:
+            name = 'BOC ' + self.name
+        boc = BOC(name=name)
         if objectives is None:
             printv('Warning, genBOC "%s" did not get objectives, using defaults...' % (self.name), 2, verbose)
             objectives = defaultobjectives(project=self, progsetname=progsetname)

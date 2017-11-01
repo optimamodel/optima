@@ -25,7 +25,7 @@ define(['angular', '../common/local-storage-polyfill'], function (angular) {
 
     var projectService = {
       projects: [],
-      optimaliteprojects: [],
+      optimademoprojects: [],
       project: {},
       calibrationOK: false,
       programsOK: false,
@@ -125,19 +125,19 @@ define(['angular', '../common/local-storage-polyfill'], function (angular) {
       return deferred.promise;
     }
 
-    function getOptimaLiteProjectList() {
+    function getOptimaDemoProjectList() {
       var deferred = $q.defer();
       rpcService
         .rpcRun(
-          'get_optimalite_projects')
+          'get_optimademo_projects')
         .then(
           function(response) {
-            clearList(projectService.optimaliteprojects);
+            clearList(projectService.optimademoprojects);
             _.each(response.data.projects, function(project) {
               project.creationTime = Date.parse(project.creationTime);
               project.updatedTime = Date.parse(project.updatedTime);
               project.dataUploadTime = Date.parse(project.dataUploadTime);
-              projectService.optimaliteprojects.push(project);
+              projectService.optimademoprojects.push(project);
             });
             deferred.resolve(response);
           },
@@ -172,13 +172,19 @@ define(['angular', '../common/local-storage-polyfill'], function (angular) {
       rpcService
         .rpcUpload(
           'create_project_from_prj_file',
-          [userManager.user.id, otherNames])
+          [userManager.user.id, otherNames], 
+		  {},
+		  '.prj')
         .then(
           function(response) {
-            getProjectAndMakeActive(response.data.projectId)
-              .then(
-                function(response) { deferred.resolve(response); },
-                function(response) { deferred.reject(response); });
+			if (response.data.projectId == 'BadFileFormatError') {
+			  deferred.reject(response);
+			} else {
+              getProjectAndMakeActive(response.data.projectId)
+                .then(
+                  function(response) { deferred.resolve(response); },
+                  function(response) { deferred.reject(response); });
+			}
           },
           function(response) {
             deferred.reject(response);
@@ -192,13 +198,19 @@ define(['angular', '../common/local-storage-polyfill'], function (angular) {
       rpcService
         .rpcUpload(
           'create_project_from_spreadsheet',
-          [userManager.user.id, otherNames])
+          [userManager.user.id, otherNames], 
+		  {},
+		  '.xlsx')
         .then(
           function(response) {
-            getProjectAndMakeActive(response.data.projectId)
-              .then(
-                function(response) { deferred.resolve(response); },
-                function(response) { deferred.reject(response); });
+			if (response.data.projectId == 'BadFileFormatError') {
+			  deferred.reject(response);
+            } else {			  
+              getProjectAndMakeActive(response.data.projectId)
+                .then(
+                  function(response) { deferred.resolve(response); },
+                  function(response) { deferred.reject(response); });
+			}
           },
           function(response) {
             deferred.reject(response);
@@ -225,11 +237,11 @@ define(['angular', '../common/local-storage-polyfill'], function (angular) {
       return deferred.promise;
     }
 
-    function copyOptimaLiteProject(projectId, newName) {
+    function copyOptimaDemoProject(projectId, newName) {
       var deferred = $q.defer();
       rpcService
         .rpcRun(
-          'copy_optimalite_project', [projectId, newName])
+          'copy_optimademo_project', [projectId, newName])
         .then(
           function(response) {
             console.log('copyProject', response);
@@ -287,7 +299,7 @@ define(['angular', '../common/local-storage-polyfill'], function (angular) {
     }
 
       getProjectList();
-      getOptimaLiteProjectList();
+      getOptimaDemoProjectList();
 
       function getActiveProject() {
         var projectId = projectService.project.id;
@@ -298,14 +310,14 @@ define(['angular', '../common/local-storage-polyfill'], function (angular) {
 
     _.assign(projectService, {
       getProjectList: getProjectList,
-      getOptimaLiteProjectList: getOptimaLiteProjectList,
+      getOptimaDemoProjectList: getOptimaDemoProjectList,
       setActiveProjectId: setActiveProjectId,
       loadActiveProject: loadActiveProject,
       clearProjectIdIfActive: clearProjectIdIfActive,
       clearProjectForUserId: clearProjectForUserId,
       isActiveProjectSet: isActiveProjectSet,
       copyProject: copyProject,
-      copyOptimaLiteProject: copyOptimaLiteProject,
+      copyOptimaDemoProject: copyOptimaDemoProject,
       renameProject: renameProject,
       createProject: createProject,
       deleteProjects: deleteProjects,

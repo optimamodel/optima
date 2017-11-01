@@ -34,8 +34,7 @@
            type="password"
            name="password"
            ng-model="password"
-           placeholder="Password"
-           required="required">
+           placeholder="(Unchanged)">
   </div>
 
   <div class="section form-input-validate flex__medium_space_between">
@@ -58,6 +57,36 @@
            placeholder="Email">
   </div>
 
+  <div class="section form-input-validate flex__medium_space_between">
+    <span class="text_bold_medium" style="width: 30%">Country</span>
+    <input class="txbox __m"
+           style="width: 70%"
+           type="text"
+           name="country"
+           ng-model="country"
+           placeholder="Country">
+  </div>
+  
+  <div class="section form-input-validate flex__medium_space_between">
+    <span class="text_bold_medium" style="width: 30%">Organization</span>
+    <input class="txbox __m"
+           style="width: 70%"
+           type="text"
+           name="organization"
+           ng-model="organization"
+           placeholder="Organization">
+  </div>
+  
+  <div class="section form-input-validate flex__medium_space_between">
+    <span class="text_bold_medium" style="width: 30%">Position</span>
+    <input class="txbox __m"
+           style="width: 70%"
+           type="text"
+           name="position"
+           ng-model="position"
+           placeholder="Position / Title">
+  </div>
+  
   <button type="submit" class="section btn __s">Update</button>
 
 </form>

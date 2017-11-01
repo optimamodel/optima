@@ -144,13 +144,17 @@ define(['angular', 'underscore'], function( angular, _) {
 
       $scope.uploadPortfolio = function() {
         rpcService
-          .rpcUpload('update_portfolio_from_prt')
+          .rpcUpload('update_portfolio_from_prt', [], {}, '.prt')		  
           .then(function(response) {
-            console.log('uploadPortfolio response.data', response.data);
-            $scope.portfolios.push(response.data);
-            $scope.state.portfolio = response.data;
-            loadPortfolios($scope.portfolios);
-            toastr.success('Uploaded portfolio');
+		    if (response.data.created == 'BadFileFormatError') {
+			  toastr.error('The file you have chosen is not valid for uploading');  
+		    } else {
+              console.log('uploadPortfolio response.data', response.data);
+              $scope.portfolios.push(response.data);
+              $scope.state.portfolio = response.data;
+              loadPortfolios($scope.portfolios);
+              toastr.success('Uploaded portfolio');
+			}
           });
       };
 
@@ -391,14 +395,17 @@ define(['angular', 'underscore'], function( angular, _) {
       $scope.spawnRegionsFromSpreadsheet = function() {
         rpcService
           .rpcUpload(
-            'make_region_projects', [$scope.state.templateProject.id])
+            'make_region_projects', [$scope.state.templateProject.id], {}, '.xlsx')
           .then(function(response) {
-            $scope.state.prjNames = response.data.prjNames;
-            console.log('$scope.state.prjNames', $scope.state.prjNames);
-            _.each($scope.state.prjNames, function(prjName) {
-              toastr.success('Project created: ' + prjName);
-            });
-
+		    if (response.data.prjNames == 'BadFileFormatError') {
+			  toastr.error('The file you have chosen is not valid for uploading');  
+		    } else {
+              $scope.state.prjNames = response.data.prjNames;
+              console.log('$scope.state.prjNames', $scope.state.prjNames);
+              _.each($scope.state.prjNames, function(prjName) {
+                toastr.success('Project created: ' + prjName);
+              })
+			};
           });
       };
 

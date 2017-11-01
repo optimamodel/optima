@@ -47,7 +47,9 @@ def setmigrations(which='migrations'):
         ('2.3.5', ('2.3.6', '2017-04-21', None,              'Fixed PMTCT calculations')),
         ('2.3.6', ('2.3.7', '2017-05-13', None,              'Changed plotting syntax')),
         ('2.3.7', ('2.3.8', '2017-05-23', None,              'Malawi: Many minor changes to plotting, parameters, etc.')),
-        ('2.3.8', ('2.4',   '2017-07-05', None,              'Ukraine: ICER analysis; cascade bar plot; GUI tools; summary() and fixprops() methdods')),
+        ('2.3.8', ('2.4',   '2017-06-05', None,              'Ukraine: ICER analysis; cascade bar plot; GUI tools; summary() and fixprops() methdods')),
+        ('2.4',   ('2.5',   '2017-07-03', None,              'Made registration public')),
+        ('2.5',   ('2.6',   '2017-10-23', None,              'Public code release')),
         ])
     
     # Define changelog
@@ -345,7 +347,7 @@ def redotransitions(project, dorun=False, **kwargs):
             pd['usvlrecovlt50']     = op.Constant(0.111,   limits=(0,'maxrate'),       by='tot', auto='const', fittable='const', name='Recovery from CD4<50 to CD4>50 on unsuppressive ART',               short='usvlrecovlt50')
 
             # Add transitions matrix
-            pd['fromto'], pd['transmatrix'] = op.loadtranstable(npops = project.data['npops'])
+            pd['fromto'], pd['transmatrix'] = op.loadtranstable(npops=project.data['npops'])
             
             # Convert rates to durations
             for transitkey in ['agetransit','risktransit']:
@@ -463,7 +465,7 @@ def fixsettings(project, resetversion=True, **kwargs):
         try: oldsettings[setting] = getattr(project.settings, setting) # Try to pull out the above settings...
         except: pass # But don't worry if they don't exist
     
-    project.settings = op.Settings() # Completely refresh -- WARNING, will mean future migrations to settings aren't necessary!
+    project.settings = op.Settings() # Completely refresh -- NOTE, will mean future migrations to settings aren't necessary!
     
     # Replace with original settings
     for settingkey,settingval in oldsettings.items(): 
@@ -653,7 +655,7 @@ def redovlmon(project, **kwargs):
     kwargs['dataname'] = 'Number of VL tests recommended per person per year'
     kwargs['datashort'] = 'requiredvl'
     kwargs['y'] = requiredvldata[0]
-    kwargs['prior'] = {'dist':'uniform', 'pars':(requiredvldata[1], requiredvldata[2])}
+    kwargs['prior'] = op.Dist(dist='uniform', pars=(requiredvldata[1], requiredvldata[2]))
     addparameter(project=project, copyfrom=copyfrom, short=short, **kwargs)
 
     return None
@@ -690,7 +692,7 @@ def redoparamattr(project, **kwargs):
     kwargs['y'] = project.settings.transnorm
     kwargs['fromdata'] = 0
     kwargs['limits'] = (0, 'maxmeta')
-    kwargs['prior'] = {'dist':'uniform', 'pars':project.settings.transnorm*array([ 0.9,  1.1])}
+    kwargs['prior'] = op.Dist(dist='uniform', pars=project.settings.transnorm*array([ 0.9,  1.1]))
     addparameter(project=project, copyfrom=copyfrom, short=short, **kwargs)
     
     return None
@@ -717,7 +719,7 @@ def redotranstable(project, **kwargs):
     
     # Add transitions matrix
     for ps in project.parsets.values():
-        ps.pars['fromto'], ps.pars['transmatrix'] = op.loadtranstable(npops = project.data['npops'])
+        ps.pars['fromto'], ps.pars['transmatrix'] = op.loadtranstable(npops=project.data['npops'])
         ps.pars.pop('rawtransit', None) # If it's really old, it won't actually have this
     
     # Even though fixed by fixsettings above, just make it explicit that we're adding this as well
@@ -789,16 +791,16 @@ def migrate(project, verbose=2, die=False):
     return project
 
 
-def loadproj(filename=None, verbose=2, die=False, fromdb=False, domigrate=True):
+def loadproj(filename=None, folder=None, verbose=2, die=False, fromdb=False, domigrate=True, updatefilename=True):
     ''' Load a saved project file -- wrapper for loadobj using legacy classes '''
     
     if fromdb:    origP = op.loadstr(filename) # Load from database
-    else:         origP = op.loadobj(filename, verbose=verbose) # Normal usage case: load from file
+    else:         origP = op.loadobj(filename=filename, folder=folder, verbose=verbose) # Normal usage case: load from file
 
     if domigrate: 
         try: 
             P = migrate(origP, verbose=verbose, die=die)
-            if not fromdb: P.filename = filename # Update filename if not being loaded from a database
+            if not fromdb and updatefilename: P.filename = filename # Update filename if not being loaded from a database
         except Exception as E:
             if die: raise E
             else:   P = origP # Fail: return unmigrated version
@@ -821,7 +823,7 @@ def removegaoptim(portfolio):
         if len(portfolio.gaoptims)>1:
             print('WARNING, this portfolio has %i GAOptims but only the last one will be migrated! If you need the others, then use F = loadobj(<filename>) and save what you need manually.')
         portfolio.objectives = portfolio.gaoptims[-1].objectives
-        portfolio.results = portfolio.gaoptims[-1].resultpairs # WARNING, unlikely to work
+        portfolio.results = portfolio.gaoptims[-1].resultpairs # TODO: robustify
     for attr in ['gaoptims', 'outputstring']:
         try: delattr(portfolio, attr)
         except: pass
@@ -844,11 +846,11 @@ def migrateportfolio(portfolio=None, verbose=2):
     return portfolio
 
 
-def loadportfolio(filename=None, verbose=2):
+def loadportfolio(filename=None, folder=None, verbose=2):
     ''' Load a saved portfolio, migrating constituent projects -- NB, portfolio itself is not migrated (no need yet), only the projects '''
     
     op.printv('Loading portfolio %s...' % filename, 2, verbose)
-    portfolio = op.loadobj(filename, verbose=verbose) # Load portfolio
+    portfolio = op.loadobj(filename=filename, folder=folder, verbose=verbose) # Load portfolio
     portfolio = migrateportfolio(portfolio)
     
     for i in range(len(portfolio.projects)): # Migrate projects one by one

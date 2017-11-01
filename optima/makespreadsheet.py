@@ -357,12 +357,21 @@ class TitledRange(object):
                     saveassumptiondata = False
                     if self.content.assumption_data is not None:
                         try:
-                            formats.write_unlocked(self.sheet, current_row, self.data_range.last_col+2+index, self.content.assumption_data[i], row_format)
+                            assumptiondata = self.content.assumption_data[i]
+                            if isinstance(assumptiondata, list): # Check to see if it's a list 
+                                if len(assumptiondata)!=1: # Check to see if it has the right length
+                                    errormsg = 'WARNING, assumption "%s" appears to have the wrong length:\n%s' % (self.content.name, assumptiondata)
+                                    print(errormsg)
+                                    saveassumptiondata = False
+                                else: # It has length 1, it's good to go
+                                    assumptiondata = assumptiondata[0] # Just pull out the only element
+                            formats.write_unlocked(self.sheet, current_row, self.data_range.last_col+2+index, assumptiondata, row_format)
                             saveassumptiondata = True
-                        except:
-                            errormsg = 'WARNING, failed to save assumption "%s" with data:\n%s' % (self.content.name, self.content.assumption_data)
+                        except Exception as E:
+                            errormsg = 'WARNING, failed to save assumption "%s" with data:\n%s\nError message:\n (%s)' % (self.content.name, self.content.assumption_data, E.__repr__())
                             print(errormsg)
                             saveassumptiondata = False
+                            raise E
                     if not saveassumptiondata:
                         formats.write_empty_unlocked(self.sheet, current_row, self.data_range.last_col+2+index, row_format)
             current_row+=1
@@ -407,7 +416,7 @@ class OptimaSpreadsheet:
         return current_row
         
     def emit_matrix_block(self, name, current_row, row_names=None, column_names=None, data=None, **kwargs):
-        if column_names is None: column_names = self.getrange('allpops') # WARNING, not great to hardcode this, but this is always the case!
+        if column_names is None: column_names = self.getrange('allpops') # Not great to hardcode this, but this is always the case!
         content = OptimaContent(name=name, row_names=row_names, column_names=column_names, data=data)
         content.assumption = False
         the_range = TitledRange(self.current_sheet, current_row, content)

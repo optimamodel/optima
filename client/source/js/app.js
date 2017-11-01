@@ -134,7 +134,7 @@ define([
       projectService.loadActiveProject();
 
       function isStatePublic(stateName) {
-        var publicStates = ['contact', 'login', 'register'];
+        var publicStates = ['contact', 'login', 'register', 'devregister'];
         return publicStates.indexOf(stateName) !== -1;
       }
 

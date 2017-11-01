@@ -34,7 +34,7 @@ from .dbconn import db
 from . import parse
 from .exceptions import ProjectDoesNotExist, ParsetAlreadyExists, \
     UserAlreadyExists, UserDoesNotExist, InvalidCredentials
-from .dbmodels import UserDb, ProjectDb, ResultsDb, PyObjectDb
+from .dbmodels import UserDb, ProjectDb, ResultsDb, PyObjectDb, UndoStackDb
 from .plot import make_mpld3_graph_dict, convert_to_mpld3
 
 
@@ -115,6 +115,9 @@ def parse_user_record(user_record):
         'displayName': user_record.name,
         'username': user_record.username,
         'email': user_record.email,
+        'country': user_record.country, 
+        'organization': user_record.organization,
+        'position': user_record.position,
         'is_admin': user_record.is_admin,
     }
     return user_record_dict
@@ -138,8 +141,16 @@ def nullable_email(email_str):
 
 
 def hashed_password(password_str):
+    # If we have something that looks like a hash ID, use it.
     if isinstance(password_str, basestring) and len(password_str) == 56:
         return password_str
+    
+    # If we have a blank string, use it.  (It's being used to specify no
+    # update of the password field for update_user().)
+    if password_str == '':
+        return password_str
+    
+    # Throw an error related to an invalid password string format.
     raise ValueError(
         'Invalid password - expecting SHA224 - Received {} of length {} and type {}'.format(
             password_str, len(password_str), type(password_str)))
@@ -151,6 +162,9 @@ def parse_user_args(args):
         'name': args.get('displayName', ''),
         'username': args.get('username', ''),
         'password': hashed_password(args.get('password')),
+        'country': args.get('country', ''),
+        'organization': args.get('organization', ''),
+        'position': args.get('position', ''),
     }
 
 
@@ -181,10 +195,8 @@ def update_user(user_id, args):
     if user is None:
         raise UserDoesNotExist(user_id)
 
-    try:
-        userisanonymous = current_user.is_anonymous()  # CK: WARNING, SUPER HACKY way of dealing with different Flask versions
-    except:
-        userisanonymous = current_user.is_anonymous
+    try:    userisanonymous = current_user.is_anonymous() # Required for handling different Flask versions
+    except: userisanonymous = current_user.is_anonymous
 
     if userisanonymous or (str(user_id) != str(current_user.id) and not current_user.is_admin):
         secret = request.args.get('secret', '')
@@ -193,6 +205,12 @@ def update_user(user_id, args):
             abort(403)
 
     for key, value in args.iteritems():
+        # Skip update of the password if a '' value is passed in for it.
+        if key == 'password' and value == '':
+            continue
+        
+        # If we have a value for the key, set the appropriate field for the 
+        # user record.
         if value is not None:
             setattr(user, key, value)
 
@@ -202,10 +220,8 @@ def update_user(user_id, args):
 
 
 def do_login_user(args):
-    try:
-        userisanonymous = current_user.is_anonymous()  # CK: WARNING, SUPER HACKY way of dealing with different Flask versions
-    except:
-        userisanonymous = current_user.is_anonymous
+    try:    userisanonymous = current_user.is_anonymous()  # For handling different Flask versions
+    except: userisanonymous = current_user.is_anonymous
 
     if userisanonymous:
         current_app.logger.debug("current user anonymous, proceed with logging in")
@@ -331,24 +347,39 @@ def verify_admin_request_decorator(api_call):
 
 
 #############################################################################################
-### OPTIMA LITE
+### OPTIMA DEMO PROJECTS
 #############################################################################################
 
-def get_optimalite_user(name='_OptimaLite'):
-    ''' Get the Optima Lite user ID, from its name -- default is '_OptimaLite' '''
+def get_optimademo_user(name='_OptimaDemo'):
+    ''' Get the Optima Demo user ID, from its name -- default is '_OptimaDemo' '''
     user = UserDb.query.filter_by(username=name).first()
-    return user.id
+    if user is None:
+        raise Exception('No Optima demo user found; demo projects not available') # Could quote name, but (minor) security risk
+        return None
+    else:
+        return user.id
 
 
-def get_optimalite_projects():
-    ''' Return the projects associated with the Optima Lite user '''
-    user_id = get_optimalite_user()
+def get_optimademo_projects():
+    '''
+    Return the projects associated with the Optima Demo user.
+    
+    Note that these should be stored in the analyses repo under the name optimademo.    
+    '''
+    user_id = get_optimademo_user()
     query = ProjectDb.query.filter_by(user_id=user_id)
     projectlist = map(load_project_summary_from_project_record, query.all())
     sortedprojectlist = sorted(projectlist, key=lambda proj: proj['name']) # Sorts by project name
-    output = {'projects': sortedprojectlist}
+    demoprojectlist = []
+    nationalprojectlist = []
+    regionalprojectlist = []
+    for proj in sortedprojectlist:
+        if   proj['name'].find('(demo)')>=0:   demoprojectlist.append(proj) # It's a demo project
+        elif proj['name'].find('regional')>=0: regionalprojectlist.append(proj) # It's a regional project
+        else:                                  nationalprojectlist.append(proj)
+    projects = demoprojectlist + regionalprojectlist + nationalprojectlist # Combine project lists into one sorted list
+    output = {'projects': projects}
     return output
-    
 
 
 
@@ -475,11 +506,7 @@ def create_project_with_spreadsheet_download(user_id, project_summary):
     new_project_template = secure_filename(
         "{}.xlsx".format(project_summary['name']))
     path = templatepath(new_project_template)
-    op.makespreadsheet(
-        path,
-        pops=project_summary['populations'],
-        datastart=project_summary['startYear'],
-        dataend=project_summary['endYear'])
+    op.makespreadsheet(path, pops=project_summary['populations'], datastart=project_summary['startYear'], dataend=project_summary['endYear'])
 
     print("> create_project_with_spreadsheet_download %s" % new_project_template)
 
@@ -553,26 +580,49 @@ def download_data_spreadsheet(project_id, is_blank=True):
             datastart=project_summary["startYear"],
             dataend=project_summary["endYear"])
     else:
-        op.makespreadsheet(path, data=project.data)
+        project.makespreadsheet(filename=path)
     return path
 
 
 def save_project_as_new(project, user_id):
+    # Create a new Postgres projects table record, and add and flush it.
     project_record = ProjectDb(user_id)
     db.session.add(project_record)
     db.session.flush()
 
     print(">> save_project_as_new '%s'" % project.name)
+    
+    # Set the UID of the Project object passed in to the UID created in the 
+    # new Postgres record.
     project.uid = project_record.id
     
+    # For each of the embedded Resultsets...
     for result in project.results.values():
+        # Grab the result name.
         name = result.name
-        result.uid = op.uuid() # Reset UID since stored separately in DB
-        if 'scenarios' in name: update_or_create_result_record_by_id(result, project.uid, None, 'scenarios')
-        if 'optim' in name:     update_or_create_result_record_by_id(result, project.uid, None, 'optimization')
-        if 'parset' in name:    update_or_create_result_record_by_id(result, project.uid, result.parset.uid, 'calibration')
+        
+        # Set a new UID to be used for the DB entries.
+        result.uid = op.uuid()
+        
+        # For results that should be cached, create or update a Postgres 
+        # record for the result.
+        if 'scenarios' in name: 
+            update_or_create_result_record_by_id(result, project.uid, None, 
+                'scenarios')
+        if 'optim' in name:     
+            update_or_create_result_record_by_id(result, project.uid, None, 
+                'optimization')
+        if 'parset' in name:    
+            update_or_create_result_record_by_id(result, project.uid, 
+                project.parsets[result.parsetname].uid, 
+                'calibration')
+            
+    # Commit the Postgres changes.
     db.session.commit()
+    
+    # Save the changed Project object to Redis.
     save_project(project)
+    
     return None
 
 
@@ -580,42 +630,90 @@ def copy_project(project_id, new_project_name):
     """
     Returns the project_id of the copied project
     """
-    project_record = load_project_record(
-        project_id, raise_exception=True)
-    user_id = current_user.id # Save as the current user always
+    print(">> copy_project args project_id %s" % project_id)
+    print(">> copy_project args new_project_name %s" % new_project_name)     
+    
+    # Get the Project object for the project to be copied.
+    project_record = load_project_record(project_id, raise_exception=True)
     project = load_project_from_record(project_record)
+    
+    # Just change the project name, and we have the new version of the 
+    # Project object to be saved as a copy.
     project.name = new_project_name
+    
+    # Set the user UID for the new projects record to be the current user.
+    user_id = current_user.id 
+    
+    # Save a Postgres projects record for the copy project.
     save_project_as_new(project, user_id)
 
-    parset_name_by_id = {parset.uid: name for name, parset in project.parsets.items()}
+    # Grab a dictionary of parset UIDs, pointing to names for each.
+    # This line is not neessary if the block below is removed.
+    #parset_name_by_id = {parset.uid: name for name, parset in project.parsets.items()}
+    
+    # Remember the new project UID (created in save_project_as_new()).
     copy_project_id = project.uid
 
-    # copy each result
-    result_records = project_record.results
-    if result_records:
-        for result_record in result_records:
-            # reset the parset_id in results to new project
-            result = result_record.load()
-            parset_id = result_record.parset_id
-            if parset_id not in parset_name_by_id:
-                continue
-            parset_name = parset_name_by_id[parset_id]
-            new_parset = [r for r in project.parsets.values() if r.name == parset_name]
-            if not new_parset:
-                continue
-            copy_parset_id = new_parset[0].uid
+    # I'm not convinced any of this code below is necessary to the 
+    # functionality of project copying, and it frequently causes extra 
+    # Postgres results records to be created that are just copies of the 
+    # Postgres records made from the Resultsets embedded in the Project 
+    # objects.  At worst, 1 runsim() ends up getting done when a copy of a 
+    # cached result is missing. [GLC, 6/26/17]
+#    # Copy each matching Postgres results record to a new record.
+#    
+#    # Grab all of the Postgres results records matching the project record.
+#    result_records = project_record.results
+#    
+#    # If any results match...
+#    if result_records:
+#        # For each matching recsult record...
+#        for result_record in result_records:
+#            # reset the parset_id in results to new project
+#            
+#            # Load the Result object from the record.
+#            result = result_record.load()
+#            
+#            # Pull the parset ID from the record's UID.
+#            parset_id = result_record.parset_id
+#            
+#            # If the old project lacks the record UID, skip over this result 
+#            # record.  We don't want to copy it.
+#            if parset_id not in parset_name_by_id:
+#                continue
+#            
+#            # Get the parset name matching what's in the Project object.
+#            parset_name = parset_name_by_id[parset_id]
+#            
+#            # Get a list of all matching parsets where the name matches what 
+#            # we are looking for.
+#            new_parset = [r for r in project.parsets.values() if r.name == parset_name]
+#            
+#            # If there is no match, skip this results record.  We don't want 
+#            # to copy it.
+#            if not new_parset:
+#                continue
+#            
+#            # Get the parset UID just of the first match.
+#            copy_parset_id = new_parset[0].uid
+#
+#            # Create a new results record for the copy project for this results 
+#            # record from the old project.
+#            copy_result_record = ResultsDb(
+#                copy_parset_id, copy_project_id, result_record.calculation_type)
+#            
+#            # Add and flush the new record to Postgres.
+#            db.session.add(copy_result_record)
+#            db.session.flush()
+#
+#            # Write out the result with new UID to Redis.
+#            result.uid = copy_result_record.id
+#            copy_result_record.save_obj(result)
 
-            copy_result_record = ResultsDb(
-                copy_parset_id, copy_project_id, result_record.calculation_type)
-            db.session.add(copy_result_record)
-            db.session.flush()
-
-            # serializes result with new
-            result.uid = copy_result_record.id
-            copy_result_record.save_obj(result)
-
+    # Commit the Postgres changes.
     db.session.commit()
 
+    # Return the UID for the new projects record.
     return { 'projectId': copy_project_id }
 
 
@@ -635,7 +733,10 @@ def create_project_from_prj_file(prj_filename, user_id, other_names):
     Returns the project id of the new project.
     """
     print(">> create_project_from_prj_file '%s'" % prj_filename)
-    project = op.loadproj(prj_filename)
+    try:
+        project = op.loadproj(prj_filename)
+    except Exception:
+        return { 'projectId': 'BadFileFormatError' }
     project.name = get_unique_name(project.name, other_names)
     save_project_as_new(project, user_id)
     return { 'projectId': str(project.uid) }
@@ -688,6 +789,7 @@ def update_project_from_uploaded_spreadsheet(spreadsheet_fname, project_id):
     def modify(project):
         project.loadspreadsheet(spreadsheet_fname, name='default', overwrite=True, makedefaults=True)
     update_project_with_fn(project_id, modify)
+    return { 'success': True }
 
 
 def load_zip_of_prj_files(project_ids):
@@ -793,7 +895,7 @@ def get_server_filename(basename):
     dirname = upload_dir_user(TEMPLATEDIR)
     if not dirname:
         dirname = TEMPLATEDIR
-    return os.path.join(dirname, basename)
+    return os.path.join(dirname, op.sanitizefilename(basename))
 
 
 def download_project_object(project_id, obj_type, obj_id):
@@ -837,16 +939,18 @@ def upload_project_object(filename, project_id, obj_type):
         server filename
     """
     project = load_project(project_id)
-    obj = op.loadobj(filename)
-    obj.uid = op.uuid()
-    if obj_type == "parset":
-        project.addparset(parset=obj, overwrite=True)
-    elif obj_type == "progset":
-        project.addprogset(progset=obj, overwrite=True)
-    elif obj_type == "scenario":
-        project.addscen(scen=obj, overwrite=True)
-    elif obj_type == "optimization":
-        project.addoptim(optim=obj, overwrite=True)
+    try:
+        obj = op.loadobj(filename)
+        if obj_type == "parset":
+            project.addparset(parset=obj, overwrite=True)
+        elif obj_type == "progset":
+            project.addprogset(progset=obj, overwrite=True)
+        elif obj_type == "scenario":
+            project.addscen(scen=obj, overwrite=True)
+        elif obj_type == "optimization":
+            project.addoptim(optim=obj, overwrite=True)
+    except Exception:
+        return { 'name': 'BadFileFormatError' }
     save_project(project)
     return { 'name': obj.name }
 
@@ -893,6 +997,8 @@ def update_or_create_result_record_by_id(
     if db_session is None:
         db_session = db.session
 
+    print(">> update_or_create_result_record_by_id args project_id %s" % project_id)
+    print(">> update_or_create_result_record_by_id args parset_id %s" % parset_id)
     result_record = db_session.query(ResultsDb).get(result.uid)
     if result_record is not None:
         print(">> update_or_create_result_record_by_id update '%s'" % (result.name))
@@ -940,11 +1046,24 @@ def delete_result_by_name(
             record.cleanup()
             db_session.delete(record)
     db_session.commit()
+    
+    
+def delete_result_by_project_id(
+        project_id, db_session=None):
+    if db_session is None:
+        db_session = db.session
 
+    records = db_session.query(ResultsDb).filter_by(project_id=project_id)
+    for record in records:
+        print(">> delete_result_by_project_id '%s'" % project_id)
+        record.cleanup()
+        db_session.delete(record)
+    db_session.commit()
+    
 
 def download_result_data(result_id):
     """
-    Returns (dirname, basename) of the the result.csv on the server -- WARNING, deprecated function name!
+    Returns (dirname, basename) of the the result.csv on the server
     """
     dirname = upload_dir_user(TEMPLATEDIR)
     if not dirname:
@@ -1114,6 +1233,9 @@ def save_parameters(project_id, parset_id, parameters):
 
 def load_parset_graphs(project_id, parset_id, calculation_type, which=None, parameters=None, zoom=None, startYear=None, endYear=None):
 
+    print(">> load_parset_graphs args project_id %s" % project_id)
+    print(">> load_parset_graphs args parset_id %s" % parset_id)
+    print(">> load_parset_graphs args calculation_type %s" % calculation_type)
     project = load_project(project_id)
     parset = parse.get_parset_from_project(project, parset_id)
 
@@ -1195,6 +1317,16 @@ def create_progset(project_id, progset_summary):
     parse.set_progset_summary_on_project(project, progset_summary)
     save_project(project)
     return parse.get_progset_summary(project, progset_summary["name"])
+
+
+def create_default_progset(project_id, new_progset_name):
+
+    def update_project_fn(project):
+        project.addprogset(name=new_progset_name)
+        project.progsets[new_progset_name].uid = op.uuid()
+
+    update_project_with_fn(project_id, update_project_fn)
+    return load_progset_summaries(project_id)
 
 
 def save_progset(project_id, progset_id, progset_summary):
@@ -1399,6 +1531,10 @@ def save_optimization_summaries(project_id, optimization_summaries):
     """
     Returns all optimization summaries
     """
+    
+    print('save_optimization_summaries() for %s' % project_id)
+    print('%s' % optimization_summaries)
+    
     project = load_project(project_id)
     old_names = [o.name for o in project.optims.values()]
     parse.set_optimization_summaries_on_project(project, optimization_summaries)
@@ -1609,8 +1745,11 @@ def portfolio_results_ready(portfolio_id):
 
 
 def update_portfolio_from_prt(prt_filename):
-    portfolio = op.loadportfolio(prt_filename)
-    create_portfolio(portfolio.name, portfolio=portfolio)
+    try:
+        portfolio = op.loadportfolio(prt_filename)
+        create_portfolio(portfolio.name, portfolio=portfolio)
+    except Exception:
+        return { 'created': 'BadFileFormatError' }
     return parse.get_portfolio_summary(portfolio)
 
 
@@ -1662,7 +1801,10 @@ def make_region_projects(spreadsheet_fname, project_id):
     print("> make_region_projects from %s %s" % (project_id, spreadsheet_fname))
     baseproject = load_project(project_id)
 
-    projects = op.makegeoprojects(project=baseproject, spreadsheetpath=spreadsheet_fname, dosave=False)
+    try:
+        projects = op.makegeoprojects(project=baseproject, spreadsheetpath=spreadsheet_fname, dosave=False)
+    except Exception:
+        return { 'prjNames': 'BadFileFormatError' }
 
     prj_names = []
     for project in projects:
@@ -1680,3 +1822,627 @@ def make_region_projects(spreadsheet_fname, project_id):
 
 
 
+#############################################################################################
+### UNDO STACKS
+#############################################################################################
+
+class UndoStack(object):
+    """
+    A stack of Project objects for allowing Undo and Redo functionality in 
+    Optima.
+    
+    Methods:
+        __init__(theProjectUID: UUID): void -- constructor, taking the project's 
+            UID
+        pushNewVersion(newVersion: Project): bool -- if we can, push a Project 
+            object as a new save version on the stack and return True; 
+            otherwise return False
+        getUndoVersion(): Project -- index the stack back to the previous 
+            version and return the Project object saved there
+        getRedoVersion(): Project -- index the stack forward to the next 
+            version and return the Project object saved there
+        getSelectedVersion(): Project -- return the Project object saved in 
+            the selected stack entry
+        getProjectUID(): UUID -- returns the project UID
+        isDirty(): bool -- is there pending data to be saved?
+        isClean(): bool -- is there no pending data yet to be saved?
+        setDirtyFlagUse(useDirtyFlag: bool): void -- sets whether the stack 
+            uses the dirty flag or not
+        setDirty(): void -- set the dirty flag dirty
+        setClean(): void -- set the dirty flag clean
+        canSave(): void -- can we save to this stack?
+        canUndo(): bool -- can we do an Undo from this stack?
+        canRedo(): bool -- can we do an Redo from this stack? 
+        isEmpty(): bool -- is the stack empty?
+        atStackTop(): bool -- are we at the top of the stack (latest version)?
+        atStackBottom(): bool -- are we at the bottom of the stack (oldest version)?
+        showContents(): void -- print out the contents of the stack
+                    
+    Attributes:
+        projectUID: UUID -- UID of the project, indexing the Postgres and 
+            Redis tables
+        useDirtyFlag: bool -- should we use the dirty flag?
+        dirtyFlag: bool -- do we have pending information waiting to be saved?
+        projectVersions: list of Project objects -- Python list holding 
+            the Project objects we want to be able to revert to
+        currentIndex: int [or None] -- the index into the current project 
+            version on the stack
+        
+    Usage:
+        >>> undoStack = UndoStack(project_id)                      
+    """
+    
+    def __init__(self, theProjectUID):
+        # Set up the project UID we pass in.
+        self.projectUID = theProjectUID 
+        
+        # Set the dirtyFlag to be used to start with.
+        self.setDirtyFlagUse(True)
+        
+        # Set the dirtyFlag to clean.
+        self.setClean()
+        
+        # Start with an empty list of Projects and index None.
+        self.projectVersions = []
+        self.currentIndex = None       
+        
+    def pushNewVersion(self, newVersion):
+        # Exit if we cannot save to the stack yet.
+        if not self.canSave():
+            return False
+        
+        # If we are not at the stack top, trim out all indices after the 
+        # current one.
+        if not self.atStackTop():
+            self.projectVersions = self.projectVersions[:(self.currentIndex + 1)]
+            
+        # Append the Project object for the new version.
+        self.projectVersions.append(newVersion)
+        
+        # Move the index up so we point to the new version.
+        if self.currentIndex == None:
+            self.currentIndex = 0
+        else:
+            self.currentIndex += 1
+            
+        # Set the dirty flag clean.
+        self.setClean()
+        
+        # Return success.
+        return True
+    
+    def getUndoVersion(self):
+        # Exit if we cannot undo from the stack yet.
+        if not self.canUndo():
+            return None
+        
+        # If we are using the dirty flag...
+        if self.useDirtyFlag:
+            # If we have stuff pending to save, set the clean flag and 
+            # return the current version.
+            if self.isDirty():
+                self.setClean()
+                return self.getSelectedVersion()
+            
+            # If nothing is pending to save...
+            else:
+                # Move the index back to the previous version.
+                self.currentIndex -= 1
+                
+                # Return the now-pointed-to version of the Project.
+                return self.projectVersions[self.currentIndex]
+        
+        # Otherwise (not using the dirty flag)...
+        else:
+            # Move the index back to the previous version.
+            self.currentIndex -= 1
+            
+            # Return the now-pointed-to version of the Project.
+            return self.projectVersions[self.currentIndex]
+    
+    def getRedoVersion(self):
+        # Exit if we cannot redo from the stack yet.
+        if not self.canRedo():
+            return None
+        
+        # Move the index forward to the next version.
+        self.currentIndex += 1
+        
+        # Set the clean flag.  (We'll lose any changes pending for saving.)
+        self.setClean()
+        
+        # Return the now-pointed-to version of the Project.
+        return self.projectVersions[self.currentIndex]
+    
+    def getSelectedVersion(self):
+        return self.projectVersions[self.currentIndex]
+    
+    def getProjectUID(self):
+        return self.projectUID
+    
+    def isDirty(self):
+        return self.dirtyFlag
+    
+    def isClean(self):
+        return not self.dirtyFlag
+    
+    def setDirtyFlagUse(self, useDirtyFlag):
+        self.useDirtyFlag = useDirtyFlag
+        
+    def setDirty(self):
+        self.dirtyFlag = True
+    
+    def setClean(self):
+        self.dirtyFlag = False
+        
+    def canSave(self):
+        # You can only save to the stack if the dirty flag is not being used or 
+        # it is set.
+        if not self.useDirtyFlag:
+            return True
+        else:
+            return self.isDirty()
+    
+    def canUndo(self):
+        # If we don't have a valid index, we can't undo.
+        if self.currentIndex is None:
+            return False
+        
+        # If we are using the dirty flag...
+        if self.useDirtyFlag:
+            # If the dirty flag is clean, we can undo only if we are at least 
+            # one stack entry from the bottom.
+            if self.isClean():
+                return self.currentIndex > 0
+            
+            # Otherwise (dirty flag dirty), we're good just by having a valid 
+            # index.
+            else:
+                return True            
+            
+        # Otherwise (we're not using dirty flag), we're good only if we are 
+        # at least one stack entry from the bottom.
+        else:
+            return self.currentIndex > 0
+    
+    def canRedo(self):
+        return (not self.atStackTop())
+    
+    def isEmpty(self):
+        return len(self.projectVersions) == 0
+    
+    def atStackTop(self):
+        if self.currentIndex == None:
+            return True
+        else:
+            return (self.currentIndex == (len(self.projectVersions) - 1))
+        
+    def atStackBottom(self):
+        return self.currentIndex == 0
+        
+    def showContents(self):
+        print 'Undo Stack Contents'
+        print '-------------------'
+        print "Project UID: '%s'" % self.projectUID
+        if self.useDirtyFlag:
+            print 'Uses Dirty Flag?: Yes'
+            if self.dirtyFlag:
+                print 'Dirty Flag State: Dirty'
+            else:
+                print 'Dirty Flag State: Clean'
+        else:
+            print 'Uses Dirty Flag?: No'
+        if self.isEmpty():
+            print 'Contents: Empty'
+        else:
+            print 'Contents: %d Project versions' % len(self.projectVersions)
+            print 'Stack Index: %d' % self.currentIndex
+        print
+        
+
+def load_undo_stack(project_id):
+    print(">> load_undo_stack project_id %s" % project_id)
+    
+    # Pull out all undo_stacks rows with matching Project UIDs.
+    undo_stack_records = db.session.query(UndoStackDb).filter_by(project_id=project_id)
+    
+    # For each match, go until we find the first Project UID match.  (There 
+    # should only be one.)
+    for undo_stack_record in undo_stack_records:
+        # Pull the UndoStack object out of Redis.
+        undoStack = undo_stack_record.load()
+        
+        # If we have a valid match of the project UID in the UndoStack object, 
+        # return the UndoStack object.
+        if undoStack.getProjectUID() == project_id:
+            print(">> load_undo_stack loaded '%s'" % project_id)
+            return undoStack
+        
+    # Failure, return no match.
+    print(">> load_undo_stack: no matching undo_stacks entry")
+    return None
+
+
+def update_or_create_undo_stack_record(undoStack, project_id, db_session=None):
+    print(">> update_or_create_undo_stack project_id '%s'" % project_id)
+    
+    # If no session is passed in, grab the db module one.
+    if db_session is None:
+        db_session = db.session
+  
+    # Pull out the first undo_stacks row with Project UID matching project_id.
+    undo_stack_record = db_session.query(UndoStackDb).filter_by(project_id=project_id).first()
+    
+    # If we have no matches, create a new record to be added, and give it a 
+    # new UID.
+    if undo_stack_record is None:
+        print(">> update_or_create_undo_stack create '%s'" % project_id)
+        undo_stack_record = UndoStackDb(project_id=project_id)
+        undo_stack_record.id = op.uuid()
+        
+    # Otherwise, just denote an update.
+    else:
+        print(">> update_or_create_undo_stack update '%s'" % project_id)
+            
+    # Write the UndoStack object to Redis.
+    undo_stack_record.save_obj(undoStack)
+    
+    # Add the updated or created undo_stacks record.
+    db_session.add(undo_stack_record)
+    
+    # Commit the database session.
+    db_session.commit()
+
+
+def delete_undo_stack_record(project_id, db_session=None):
+    print(">> delete_undo_stack_record project_id %s" % project_id)
+    
+    # If no session is passed in, grab the db module one.    
+    if db_session is None:
+        db_session = db.session
+        
+    # Pull out all undo_stacks rows with Project UID matching project_id.
+    undo_stack_records = db_session.query(UndoStackDb).filter_by(project_id=project_id)
+
+    # Call the cleanup for each record (i.e., deleting the Redis entries).
+    for undo_stack_record in undo_stack_records:
+        undo_stack_record.cleanup()
+        
+    # Delete all of the matching records.
+    undo_stack_records.delete()
+    
+    # Commit the database session.
+    db_session.commit()
+    
+    
+def delete_undo_stack_zombie_records(db_session=None):
+    print(">> delete_undo_stack_zombie_records")
+    
+    # If no session is passed in, grab the db module one.    
+    if db_session is None:
+        db_session = db.session  
+        
+    # Pull out all undo_stacks rows with NULL Project UID.
+    undo_stack_records = db_session.query(UndoStackDb).filter_by(project_id=None)
+
+    # Call the cleanup for each record (i.e., deleting the Redis entries).
+    for undo_stack_record in undo_stack_records:
+        undo_stack_record.cleanup()
+        
+    # Delete all of the matching records.
+    undo_stack_records.delete()
+    
+    # Commit the database session.
+    db_session.commit()
+
+    
+def init_new_undo_stack(project_id):
+    """
+    Given a project UID, if we have a valid project record, set up a new 
+    UndoStack object, create or update an undo_stacks (Postgres) record for it, 
+    and return True; return False otherwise.
+    
+    Args:
+        project_id: UID of the project
+        
+    Returns:
+        True if the project gets written to a new UndoStack, False otherwise
+    """   
+    print(">> init_new_undo_stack project_id '%s'" % project_id)
+
+    # Load the Project object from the UID.
+    project = load_project(project_id)
+    
+    # If we don't have a valid project, return a failure.
+    if project is None:
+        return { 'updatedundostack': False }
+        
+    # Create a new UndoStack object which is empty and owned by the UID.
+    undoStack = UndoStack(project_id)
+    
+    # Turn off the use of the dirty flag.
+    undoStack.setDirtyFlagUse(False)
+    
+    # Push the project object to the UndoStack, so we have the first save in it.
+    undoStack.pushNewVersion(project)
+    
+    # Update the undo_stacks entry (including the Redis stored data).
+    update_or_create_undo_stack_record(undoStack, project_id)
+    
+    # Return success.
+    return { 'updatedundostack': True }
+
+
+def push_project_to_undo_stack(project_id):
+    """
+    Given a project UID, if the UndoStack has an ID match, load the Project 
+    object and push it to the UndoStack.
+    
+    Args:
+        project_id: UID of the project
+        
+    Returns:
+        True if a successful push is done, False otherwise           
+    """
+    print(">> push_project_to_undo_stack project_id '%s'" % project_id)
+    
+    # Load the Project object from the UID.
+    project = load_project(project_id)
+    
+    # If we don't have a valid project, return a failure.
+    if project is None:
+        return { 'didpush': False }
+    
+    # Load the saved UndoStack object indexed by the project UID.
+    undoStack = load_undo_stack(project_id)     
+    
+    # If we cannot save to the Undo stack, return a failure.
+    if not undoStack.canSave():
+        return { 'didpush': False }
+    
+    # Push the project to the stack.
+    undoStack.pushNewVersion(project)
+    
+    # Update the undo_stacks entry (including the Redis stored data).
+    update_or_create_undo_stack_record(undoStack, project_id)
+    
+    # Return success.
+    return { 'didpush': True }
+
+
+def fetch_undo_project(project_id):
+    """
+    Given a project UID, if the UndoStack has an ID match, and it can do a 
+    valid Undo, grab the appropriate Project object and update Postgres and 
+    Redis and return True; otherwise return False.
+    
+    Args:
+        project_id: UID of the project
+        
+    Returns:
+        True if a successful undo is done, False otherwise    
+    """
+    print(">> fetch_undo_project project_id '%s'" % project_id)
+    
+    #return unit_test_build_undo_stack(project_id, useDirtyFlag=False)
+
+    # Load the saved UndoStack object indexed by the project UID.
+    undoStack = load_undo_stack(project_id) 
+    
+    # If we cannot do an undo on the Undo stack, return a failure.
+    if not undoStack.canUndo():
+        return { 'didundo': False }
+    
+    # Pull out the Undo version of the project and update the stack.
+    project = undoStack.getUndoVersion()
+    
+    # If we don't have a valid project, return a failure.
+    if project is None:
+        return { 'didundo': False }  
+    
+    # Save the withdrawn version of the project to the databases.
+    save_project(project)
+    
+    # Update the undo_stacks entry (including the Redis stored data).
+    update_or_create_undo_stack_record(undoStack, project_id)
+    
+    # Delete any result records with the corresponding project UID.  This 
+    # will force the client to rerun the simulation rather than mistakenly
+    # using the cached result for the graphs.
+    delete_result_by_project_id(project_id)
+    
+    # Return success.
+    return { 'didundo': True }
+
+
+def fetch_redo_project(project_id):
+    """
+    Given a project UID, if the UndoStack has an ID match, and it can do a 
+    valid Redo, grab the appropriate Project object and update Postgres and 
+    Redis and return True; otherwise return False.
+    
+    Args:
+        project_id: UID of the project
+        
+    Returns:
+        True if a successful redo is done, False otherwise      
+    """
+    print(">> fetch_redo_project project_id '%s'" % project_id)
+    
+    #unit_test_show_and_delete_undo_stack(project_id)
+    
+    # Load the saved UndoStack object indexed by the project UID.
+    undoStack = load_undo_stack(project_id)
+    
+    # If we cannot do an redo on the Undo stack, return a failure.
+    if not undoStack.canRedo():
+        return { 'didredo': False } 
+    
+    # Pull out the Redo version of the project and update the stack.
+    project = undoStack.getRedoVersion() 
+    
+    # If we don't have a valid project, return a failure.
+    if project is None:
+        return { 'didredo': False }  
+    
+    # Save the withdrawn version of the project to the databases.
+    save_project(project)
+    
+    # Update the undo_stacks entry (including the Redis stored data).
+    update_or_create_undo_stack_record(undoStack, project_id)
+    
+    # Delete any result records with the corresponding project UID.  This 
+    # will force the client to rerun the simulation rather than mistakenly
+    # using the cached result for the graphs.
+    delete_result_by_project_id(project_id)
+    
+    # Return success.
+    return { 'didredo': True }
+
+
+def unit_test_build_undo_stack(project_id, useDirtyFlag=True):
+    def push_new_version(project, useDirtyFlag=True):
+        # Set the dirty flag to enable pushing if it's needed.
+        if useDirtyFlag:
+            # Set the dirty flag.
+            set_dirty_flag_dirty()
+            
+        # Show whether we can save to the stack or not.
+        if undoStack.canSave():
+            print('Can we save to the stack?: Yes')
+            print
+        else:
+            print('Can we save to the stack?: No')
+            print  
+            
+        # Try to push the project to the stack.
+        undoStack.pushNewVersion(project)
+        
+        # Tell what we've done.
+        print('Pushed version...')
+        print
+        
+        # Show undoStack contents.
+        undoStack.showContents()
+        
+    def do_undo():
+        # Show whether we can undo from the stack or not.
+        if undoStack.canUndo():
+            print('Can we do an Undo on this stack?: Yes')
+            print
+        else:
+            print('Can we do an Undo on this stack?: No')
+            print 
+            
+        # Try to push the project to the stack.
+        project = undoStack.getUndoVersion()
+        
+        # Tell what we've done.
+        print('Got Undo version...')
+        print
+        
+        # Show undoStack contents.
+        undoStack.showContents()
+        
+        # Return the project.
+        return project
+        
+    def do_redo():
+        # Show whether we can redo from the stack or not.
+        if undoStack.canRedo():
+            print('Can we do an Redo on this stack?: Yes')
+            print
+        else:
+            print('Can we do an Redo on this stack?: No')
+            print 
+            
+        # Try to push the project to the stack.
+        project = undoStack.getRedoVersion()
+        
+        # Tell what we've done.
+        print('Got Redo version...')
+        print
+        
+        # Show undoStack contents.
+        undoStack.showContents() 
+        
+        # Return the project.
+        return project
+    
+    def set_dirty_flag_dirty():
+        # Set the dirty flag.
+        undoStack.setDirty()
+        
+        # Tell what we've done.
+        print('Set the dirty flag dirty...')
+        print
+        
+        # Show undoStack contents.
+        undoStack.showContents()
+        
+    def set_dirty_flag_clean():
+        # Set the dirty flag.
+        undoStack.setClean()
+        
+        # Tell what we've done.
+        print('Set the dirty flag clean...')
+        print
+        
+        # Show undoStack contents.
+        undoStack.showContents() 
+        
+    print(">> unit_test_build_undo_stack project_id '%s'" % project_id)
+    
+    # Load the Project object from the UID.
+    project = load_project(project_id)
+    
+    # Create a new UndoStack object which is empty and owned by the UID.
+    undoStack = UndoStack(project_id)
+    
+    # Tell what we've done.
+    print('Created initial UndoStack...')
+    print    
+    
+    # Set whether we want to use the dirty flag.
+    undoStack.setDirtyFlagUse(useDirtyFlag)
+    
+    # Tell what we've done.
+    print('Set up whether to use dirty flag or not...')
+    print
+    
+    # Show undoStack contents.
+    undoStack.showContents()
+    
+    # Perform tests.
+    push_new_version(project, useDirtyFlag)
+    push_new_version(project, useDirtyFlag)
+    push_new_version(project, useDirtyFlag)
+    push_new_version(project, useDirtyFlag)
+    do_undo()
+    do_undo()
+    do_redo()
+    do_undo()
+    do_undo()
+    push_new_version(project, useDirtyFlag)
+            
+    # Update the undo_stacks entry (including the Redis stored data).
+    update_or_create_undo_stack_record(undoStack, project_id)
+
+
+def unit_test_show_and_delete_undo_stack(project_id):
+    print(">> unit_test_show_and_delete_undo_stack project_id '%s'" % project_id)
+    
+    # Load the saved UndoStack object indexed by the project UID.
+    undoStack = load_undo_stack(project_id)
+    
+    # If we succeeded, give a message and show the contents, then delete the 
+    # entry.
+    if undoStack is not None:
+        print('>> unit_test_show_and_delete_undo_stack: undoStack successfully loaded.')
+        undoStack.showContents()
+        delete_undo_stack_record(project_id)
+        
+    # Otherwise, 
+    else:
+        print('>> unit_test_show_and_delete_undo_stack: undoStack did not load!')
+    

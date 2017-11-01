@@ -228,7 +228,7 @@ def printarr(arr, arrformat='%0.2f  '):
         from numpy import random
         printarr(rand(3,7,4))
     
-    Version: 2014dec01 by cliffk
+    Version: 2014dec01
     '''
     from numpy import ndim
     if ndim(arr)==1:
@@ -359,12 +359,12 @@ def slacknotification(to=None, message=None, fromuser=None, token=None, verbose=
     
     Example usage:
         slacknotification('#athena', 'Long process is finished')
-        slacknotification(token='/.slackurl', channel='@cliffk', message='Hi, how are you going?')
+        slacknotification(token='/.slackurl', channel='@username', message='Hi, how are you going?')
     
     What's the point? Add this to the end of a very long-running script to notify
     your loved ones that the script has finished.
         
-    Version: 2017feb09 by cliffk    
+    Version: 2017feb09
     '''
     
     # Imports
@@ -598,7 +598,8 @@ def sanitize(data=None, returninds=False):
         if returninds: 
             inds = nonzero(~isnan(data))[0] # WARNING, nonzero returns tuple :(
             return sanitized, inds
-        else:          return sanitized
+        else:
+            return sanitized
 
 
 
@@ -628,6 +629,26 @@ def getvaliddata(data=None, filterdata=None, defaultind=0):
 
 
 
+def getvalidinds(data=None, filterdata=None):
+    '''
+    Return the years that are valid based on the validity of the input data from an arbitrary number
+    of 1-D vector inputs. Warning, closely related to getvaliddata()!
+    
+    Example:
+        getvalidinds([3,5,8,13], [2000, nan, nan, 2004]) # Returns array([0,3])
+    '''
+    from numpy import array, isnan, intersect1d
+    data = array(data)
+    if filterdata is None: filterdata = data # So it can work on a single input -- more or less replicates sanitize() then
+    filterdata = array(filterdata)
+    if filterdata.dtype=='bool': filterindices = filterdata # It's already boolean, so leave it as is
+    else:                        filterindices = ~isnan(filterdata) # Else, assume it's nans that need to be removed
+    dataindices = ~isnan(data) # Also check validity of data
+    validindices = intersect1d(dataindices, filterindices)
+    return findinds(validindices) # Only return indices -- WARNING, not consistent with sanitize()
+
+
+
 def findinds(val1, val2=None, eps=1e-6):
     '''
     Little function to find matches even if two things aren't eactly equal (eg. 
@@ -639,7 +660,7 @@ def findinds(val1, val2=None, eps=1e-6):
         findinds(rand(10)<0.5) # e.g. array([2, 4, 5, 9])
         findinds([2,3,6,3], 6) # e.g. array([2])
     
-    Version: 2016jun06 by cliffk
+    Version: 2016jun06 
     '''
     from numpy import nonzero, array, ndim
     if val2==None: # Check for equality
@@ -664,7 +685,7 @@ def findnearest(series=None, value=None):
         findnearest([2,3,6,3], 6) # returns 2
         findnearest([0,2,4,6,8,10], [3, 4, 5]) # returns array([1, 2, 2])
     
-    Version: 2017jan07 by cliffk
+    Version: 2017jan07
     '''
     from numpy import argmin
     series = promotetoarray(series)
@@ -703,7 +724,7 @@ def smoothinterp(newx=None, origx=None, origy=None, smoothness=None, growth=None
         hold(True)
         scatter(origx,origy)
     
-    Version: 2016nov02 by cliffk
+    Version: 2016nov02
     '''
     from numpy import array, interp, convolve, linspace, concatenate, ones, exp, isnan, argsort, ceil
     
@@ -814,6 +835,49 @@ def vec2obj(orig=None, newvec=None, inds=None):
     return new
 
 
+def inclusiverange(*args, **kwargs):
+    '''
+    Like arange/linspace, but includes the start and stop points. 
+    Accepts 0-3 args, or the kwargs start, stop, step. Examples:
+    
+    x = inclusiverange(3,5,0.2)
+    x = inclusiverange(stop=5)
+    x = inclusiverange(6, step=2)
+    '''
+    
+    from numpy import linspace
+    
+    # Handle args
+    if len(args)==0:
+        start, stop, step = None, None, None
+    elif len(args)==1:
+        stop = args[0]
+        start, step = None
+    elif len(args)==2:
+        start = args[0]
+        stop   = args[1]
+        step = None
+    elif len(args)==3:
+        start = args[0]
+        stop = args[1]
+        step = args[2]
+    else:
+        raise Exception('Too many arguments supplied: inclusiverange() accepts 0-3 arguments')
+    
+    # Handle kwargs
+    start = kwargs.get('start', start)
+    stop  = kwargs.get('stop',  stop)
+    step  = kwargs.get('step',  step)
+    
+    # Finalize defaults
+    if start is None: start = 0
+    if stop  is None: stop  = 1
+    if step  is None: step  = 1
+    
+    # OK, actually generate
+    x = linspace(start, stop, int(round((stop-start)/float(step))+1)) # Can't use arange since handles floating point arithmetic badly, e.g. compare arange(2000, 2020, 0.2) with arange(2000, 2020.2, 0.2)
+    
+    return x
 
 
 ##############################################################################
@@ -879,6 +943,7 @@ def percentcomplete(step=None, maxsteps=None, indent=1):
         thispercent = round(step/maxsteps*100) # Calculate what percent it is
         print('%s%i%%\n'% (' '*indent, thispercent)) # Display the output
     return None
+
 
 
 def checkmem(origvariable, descend=0, order='n', plot=False, verbose=0):
@@ -950,6 +1015,7 @@ def checkmem(origvariable, descend=0, order='n', plot=False, verbose=0):
     return None
 
 
+
 def getfilelist(folder=None, ext=None):
     ''' A short-hand since glob is annoying '''
     from glob import glob
@@ -960,7 +1026,20 @@ def getfilelist(folder=None, ext=None):
     return filelist
 
 
-def makefilepath(filename=None, folder=None, ext=None, default=None, split=False, abspath=True, makedirs=True, verbose=False):
+
+def sanitizefilename(rawfilename):
+    '''
+    Takes a potentially Linux- and Windows-unfriendly candidate file name, and 
+    returns a "sanitized" version that is more usable.
+    '''
+    import re # Import regular expression package.
+    filtername = re.sub('[\!\?\"\'<>]', '', rawfilename) # Erase certain characters we don't want at all: !, ?, ", ', <, >
+    filtername = re.sub('[:/\\\*\|,]', '_', filtername) # Change certain characters that might be being used as separators from what they were to underscores: space, :, /, \, *, |, comma
+    return filtername # Return the sanitized file name.
+
+
+
+def makefilepath(filename=None, folder=None, ext=None, default=None, split=False, abspath=True, makedirs=True, verbose=False, sanitize=False):
     '''
     Utility for taking a filename and folder -- or not -- and generating a valid path from them.
     
@@ -978,7 +1057,7 @@ def makefilepath(filename=None, folder=None, ext=None, default=None, split=False
     
     Assuming project.filename is None and project.name is "soggyrice" and ./congee doesn't exist:
         * Makes folder ./congee
-        * Returns e.g. ('/home/cliffk/optima/congee', 'soggyrice.prj')
+        * Returns e.g. ('/home/optima/congee', 'soggyrice.prj')
     
     Actual code example from project.py:
         fullpath = makefilepath(filename=filename, folder=folder, default=[self.filename, self.name], ext='prj')
@@ -1007,8 +1086,11 @@ def makefilepath(filename=None, folder=None, ext=None, default=None, split=False
     if verbose:
         print('From filename="%s", default="%s", extension="%s", made basename "%s"' % (filename, default, ext, filebasename))
     
+    # Sanitize base filename
+    if sanitize: filebasename = sanitizefilename(filebasename)
+    
     # Process folder
-    if folder: # Replace with specified folder, if defined
+    if folder is not None: # Replace with specified folder, if defined
         filefolder = folder 
     if abspath: # Convert to absolute path
         filefolder = os.path.abspath(filefolder) 
@@ -1025,7 +1107,23 @@ def makefilepath(filename=None, folder=None, ext=None, default=None, split=False
 
 
 def loadbalancer(maxload=None, index=None, interval=None, maxtime=None, label=None, verbose=True):
-    ''' A little function to delay execution while CPU load is too high -- a poor man's load balancer '''
+    '''
+    A little function to delay execution while CPU load is too high -- a very simple load balancer.
+
+    Arguments:
+        maxload:  the maximum load to allow for the task to still start (default 0.5)
+        index:    the index of the task -- used to start processes asynchronously (default None)
+        interval: the time delay to poll to see if CPU load is OK (default 5 seconds)
+        maxtime:  maximum amount of time to wait to start the task (default 36000 seconds (10 hours))
+        label:    the label to print out when outputting information about task delay or start (default None)
+        verbose:  whether or not to print information about task delay or start (default True)
+
+    Usage examples:
+        loadbalancer() # Simplest usage -- delay while load is >50%
+        for nproc in processlist: loadbalancer(maxload=0.9, index=nproc) # Use a maximum load of 90%, and stagger the start by process number
+
+    Version: 2017oct25
+     '''
     from psutil import cpu_percent
     from time import sleep
     from numpy.random import random
@@ -1033,11 +1131,14 @@ def loadbalancer(maxload=None, index=None, interval=None, maxtime=None, label=No
     # Set up processes to start asynchronously
     if maxload is None: maxload = 0.5
     if interval is None: interval = 5.0
-    if maxtime is None: maxtime = 3600
+    if maxtime is None: maxtime = 36000
     if label is None: label = ''
     else: label += ': '
-    if index is None:  pause = random()*interval
-    else:              pause = index*interval
+    if index is None:  
+        pause = random()*interval
+        index = ''
+    else:              
+        pause = index*interval
     if maxload>1: maxload/100. # If it's >1, assume it was given as a percent
     sleep(pause) # Give it time to asynchronize
     
@@ -1191,7 +1292,7 @@ Example 2:
         count += 1
         setnested(foo, twig, count)   # {'a': {'y': 1, 'x': 2, 'z': 3}, 'b': {'a': {'y': 4, 'x': 5}}}
 
-Version: 2014nov29 by cliffk
+Version: 2014nov29 
 '''
 
 def getnested(nesteddict, keylist, safe=False): 
@@ -1741,7 +1842,7 @@ class odict(OrderedDict):
 ##############################################################################
 
 # Some of these are repeated to make this frationally more self-contained
-from numpy import array, zeros, empty, vstack, hstack, matrix, argsort, argmin # analysis:ignore
+from numpy import array, zeros, empty, vstack, hstack, matrix, argsort, argmin, floor, log10 # analysis:ignore
 from numbers import Number # analysis:ignore
 
 class dataframe(object):
@@ -1799,10 +1900,7 @@ class dataframe(object):
                         outputlist[col].append(output)
                 outputformats[col] = '%'+'%i'%(maxlen+spacing)+'s'
             
-            if   nrows<10:   indformat = '%2s' # WARNING, KLUDGY, but easier to do explicitly than to find the general solution!
-            elif nrows<100:  indformat = '%3s'
-            elif nrows<1000: indformat = '%4s'
-            else:            indformat = '%6s'
+            indformat = '%%%is' % (floor(log10(nrows))+1) # Choose the right number of digits to print
             
             # Assemble output
             output = indformat % '' # Empty column for index
@@ -1810,7 +1908,7 @@ class dataframe(object):
                 output += outputformats[col] % col
             output += '\n'
             
-            for ind in range(nrows): # WARNING, KLUDGY
+            for ind in range(nrows): # Loop over rows to print out
                 output += indformat % flexstr(ind)
                 for col in self.cols: # Print out data
                     output += outputformats[col] % outputlist[col][ind]

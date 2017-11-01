@@ -56,11 +56,11 @@ from copy import deepcopy as dcp
 
 # Utilities -- import alphabetically
 from .utils import blank, boxoff, checkmem, checktype, compareversions, dataindex, dataframe, defaultrepr
-from .utils import drprint, findinds, findnearest, getdate, getfilelist, getvaliddata, gitinfo, indent, isnumber, isiterable
+from .utils import drprint, findinds, findnearest, getdate, getfilelist, getvaliddata, getvalidinds, gitinfo, inclusiverange, indent, isnumber, isiterable
 from .utils import Link, LinkException, loadbalancer, makefilepath, objectid, objatt, objmeth, objrepr
 from .utils import odict, percentcomplete, perturb, printarr, printdata as pd, printv, printtologfile
 from .utils import promotetoarray, promotetolist, promotetoodict, quantile, runcommand, sanitize, scaleratio
-from .utils import sigfig, slacknotification, smoothinterp, tic, toc, today, vec2obj
+from .utils import sigfig, slacknotification, smoothinterp, tic, toc, today, vec2obj, sanitizefilename
 import utils as _utils; del utils
 
 # Optimization algorithm
@@ -115,7 +115,7 @@ class OptimaException(Exception):
 #####################################################################################################################
 
 # File I/O
-from .fileio import loadobj, saveobj, loadstr, dumpstr, loadpartable, loadtranstable, loaddatapars # CK: may want to tidy up
+from .fileio import loadobj, saveobj, loadstr, dumpstr, optimafolder, loadpartable, loadtranstable, loaddatapars # CK: may want to tidy up
 import fileio as _fileio; del fileio
 
 # Project settings
@@ -171,7 +171,7 @@ import loadtools as _loadtools; del loadtools
 changelog = _loadtools.setmigrations('changelog')
 
 # Load batch functions (has to load projects, so has to come after migration)
-from .batchtools import batchautofit, batchBOC, reoptimizeprojects
+from .batchtools import batchautofit, batchBOC, reoptimizeprojects, getprojects
 import batchtools as _batchtools; del batchtools
 
 # Import the Project class that ties everything together

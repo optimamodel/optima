@@ -259,7 +259,7 @@ def boc_task(project, ind, outputqueue, budgetratios, name, parsetname, progsetn
     if batch: loadbalancer(index=ind, maxload=maxload, interval=interval, label=project.name)
     printv('Running BOC generation...', 1, verbose)
     if prerun:
-        if parsetname is None: parsetname = -1 # WARNING, not fantastic, but have to explicitly handle this now
+        if parsetname is None: parsetname = -1 # TODO: improve handling of this
         rerun = False
         try:
             results = project.parsets[parsetname].getresults() # First, try getting results 

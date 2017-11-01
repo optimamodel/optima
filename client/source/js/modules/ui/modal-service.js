@@ -101,7 +101,11 @@ define(['angular', 'ui.bootstrap'], function(angular) {
         });
         return modalInstance;
       },
-
+	  
+      /**
+       * Opens a modal that displays the Optima Lite projects that are 
+	   * available to the user.
+       */
       optimaLiteProjectList: function() {
 
         var onModalKeyDown = function(event) {
@@ -114,7 +118,7 @@ define(['angular', 'ui.bootstrap'], function(angular) {
         };
 
         var modalInstance = $modal.open({
-          templateUrl: 'js/modules/ui/modal-optimalite.html?cacheBust=xxx',
+		  templateUrl: 'js/modules/ui/modal-optimalite.html?cacheBust=xxx',
           controller: ['$scope', '$document', function($scope, $document) {
             $document.on('keydown', onModalKeyDown); // observe
             $scope.$on('$destroy', function() {
@@ -124,7 +128,34 @@ define(['angular', 'ui.bootstrap'], function(angular) {
         });
         return modalInstance;
       },
+	  
+      /**
+       * Opens a modal that displays the Optima Terms and Conditions for 
+	   * user registration.
+       */	  
+      termsAndConditions: function() {
 
+        var onModalKeyDown = function(event) {
+          if (event.keyCode == 79) {
+            return modalInstance.dismiss('O');
+          } // O of OK
+          if (event.keyCode == 13) {
+            return modalInstance.close('ENTER');
+          }
+        };
+
+        var modalInstance = $modal.open({
+          templateUrl: 'js/modules/ui/modal-termsconditions.html?cacheBust=xxx',
+          controller: ['$scope', '$document', function($scope, $document) {
+            $document.on('keydown', onModalKeyDown); // observe
+            $scope.$on('$destroy', function() {
+              $document.off('keydown', onModalKeyDown);
+            });  // unobserve
+          }]
+        });
+        return modalInstance;
+      },
+	  
       /**
        * This function opens a modal that will ask user to enter a value.
        */

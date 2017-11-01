@@ -11,7 +11,7 @@ plotting to this file.
 Version: 2017jun03
 '''
 
-from optima import OptimaException, Resultset, Multiresultset, ICER, odict, printv, gridcolors, vectocolor, alpinecolormap, makefilepath, sigfig, dcp, findinds, promotetolist, saveobj, promotetoodict, promotetoarray, boxoff
+from optima import OptimaException, Resultset, Multiresultset, ICER, odict, printv, gridcolors, vectocolor, alpinecolormap, makefilepath, sigfig, dcp, findinds, promotetolist, saveobj, promotetoodict, promotetoarray, boxoff, getvalidinds
 from numpy import array, ndim, maximum, arange, zeros, mean, shape, isnan, linspace, minimum # Numeric functions
 from pylab import gcf, get_fignums, close, ion, ioff, isinteractive, figure # Plotting functions
 from matplotlib.backends.backend_agg import new_figure_manager_given_figure as nfmgf # Warning -- assumes user has agg on their system, but should be ok. Use agg since doesn't require an X server
@@ -168,7 +168,7 @@ def getplotselections(results, advanced=False):
                     plotepikeys.append(key+'-'+subkey)
         for name in epinames: # e.g. 'HIV prevalence'
             for subname in epiplottypes: # e.g. 'total'
-                if not(ismultisim and subname=='stacked'): # Stacked multisim plots don't make sense -- WARNING, this is clunky!!!
+                if not(ismultisim and subname=='stacked'): # Stacked multisim plots don't make sense -- TODO: handle this better
                     plotepinames.append(name+' - '+subname)
     else:
         plotepikeys = dcp(epikeys)
@@ -575,7 +575,7 @@ def plotimprovement(results=None, figsize=globalfigsize, lw=2, titlesize=globalt
     
     NOTE: do not call this function directly; instead, call via plotresults().
     
-    Version: 2016jan23 by cliffk    
+    Version: 2016jan23 
     '''
 
     if hasattr(results, 'improvement'): improvement = results.improvement # Get improvement attribute of object if it exists
@@ -782,9 +782,9 @@ def plotcoverage(multires=None, die=True, figsize=globalfigsize, legendsize=glob
             for i,x in enumerate(toplot[plt][:]):
                 if hasattr(x, '__len__'): 
                     try: progdata[i] = x[y]
-                    except: 
-                        try: progdata[i] = x[-1] # If not enough data points, just use last -- WARNING, KLUDGY
-                        except: progdata[i] = 0. # If not enough data points, just use last -- WARNING, KLUDGY
+                    except:# TODO: May break in some circumstances
+                        try: progdata[i] = x[-1] # If not enough data points, just use last 
+                        except: progdata[i] = 0. 
                 else:                     progdata[i] = x
             progdata *= 100 
             xbardata = arange(nprogs)+.75+barwidth*y
@@ -889,7 +889,7 @@ def plotcascade(results=None, aspercentage=False, cascadecolors=None, figsize=gl
             labels = [baselabel, endlabel]
             origendcolor  = array([0.3,0.85,0.6])
             casccolors = odict([(baselabel,[origbasecolor]), (endlabel, [origendcolor])])
-        else: # Just plot the final year, but maybe multiple resultsets
+        else: # Just plot the final year
             if ismultisim: labels = titles
             else: labels = [results.name]
             cascinds = labels
@@ -1279,7 +1279,7 @@ def ploticers(results=None, figsize=globalfigsize, lw=2, dotsize=30, titlesize=g
 
 
 
-def plotcostcov(program=None, year=None, parset=None, results=None, plotoptions=None, existingFigure=None, plotbounds=True, npts=100, maxupperlim=1e8, doplot=False):
+def plotcostcov(program=None, year=None, parset=None, results=None, plotoptions=None, existingFigure=None, plotbounds=True, npts=100, maxupperlim=1e8, doplot=False, interactive=False):
     ''' Plot the cost-coverage curve for a single program'''
     
     # Put plotting imports here so fails at the last possible moment
@@ -1290,12 +1290,23 @@ def plotcostcov(program=None, year=None, parset=None, results=None, plotoptions=
     # Get caption & scatter data 
     caption = plotoptions['caption'] if plotoptions and plotoptions.get('caption') else ''
     costdata = dcp(program.costcovdata['cost']) if program.costcovdata.get('cost') else []
+    covdata  = dcp(program.costcovdata['coverage']) if program.costcovdata.get('coverage') else []
+    timedata = dcp(program.costcovdata['t']) if program.costcovdata.get('t') else []
+    
+    # Sanitize for nans
+    costdata = promotetoarray(costdata)
+    covdata = promotetoarray(covdata)
+    timedata = promotetoarray(timedata)
+    validindices = getvalidinds(costdata, covdata)
+    costdata = costdata[validindices]
+    covdata = covdata[validindices]
+    timedata = timedata[validindices]
 
     # Make x data... 
     if plotoptions and plotoptions.get('xupperlim') and ~isnan(plotoptions['xupperlim']):
         xupperlim = plotoptions['xupperlim']
     else:
-        if costdata: xupperlim = 1.5*max(costdata)
+        if len(costdata): xupperlim = 1.5*max(costdata)
         else: xupperlim = maxupperlim
     xlinedata = linspace(0,xupperlim,npts)
 
@@ -1307,8 +1318,9 @@ def plotcostcov(program=None, year=None, parset=None, results=None, plotoptions=
         y_l = program.getcoverage(x=xlinedata, t=year, parset=parset, results=results, total=True, proportion=False, toplot=True, sample='l')
         y_m = program.getcoverage(x=xlinedata, t=year, parset=parset, results=results, total=True, proportion=False, toplot=True, sample='best')
         y_u = program.getcoverage(x=xlinedata, t=year, parset=parset, results=results, total=True, proportion=False, toplot=True, sample='u')
-    except:
+    except Exception as E:
         y_l,y_m,y_u = None,None,None
+        print('Warning, could not get program coverage: %s' % E.__repr__())
     plotdata['ylinedata_l'] = y_l
     plotdata['ylinedata_m'] = y_m
     plotdata['ylinedata_u'] = y_u
@@ -1317,21 +1329,21 @@ def plotcostcov(program=None, year=None, parset=None, results=None, plotoptions=
 
     # Flag to indicate whether we will adjust by population or not
     if plotoptions and plotoptions.get('perperson'):
-        if costdata:
-            for yrno, yr in enumerate(program.costcovdata['t']):
+        if len(costdata):
+            for yrno,yr in enumerate(timedata):
                 targetpopsize = program.gettargetpopsize(t=yr, parset=parset, results=results)
                 costdata[yrno] /= targetpopsize[0]
         if not (plotoptions and plotoptions.get('xupperlim') and ~isnan(plotoptions['xupperlim'])):
-            if costdata: xupperlim = 1.5*max(costdata) 
+            if len(costdata): xupperlim = 1.5*max(costdata) 
             else: xupperlim = 1e3
         plotdata['xlinedata'] = linspace(0,xupperlim,npts)
     else:
         plotdata['xlinedata'] = xlinedata
-        
-    fig = existingFigure if existingFigure else Figure()
+    
+    fig,naxes = makefigure(figsize=None, interactive=interactive, fig=existingFigure)
     fig.hold(True)
     ax = fig.add_subplot(111)
-
+    
     ax.set_position((0.1, 0.35, .8, .6)) # to make a bit of room for extra text
     fig.text(.1, .05, textwrap.fill(caption))
     
@@ -1351,10 +1363,8 @@ def plotcostcov(program=None, year=None, parset=None, results=None, plotoptions=
                                   facecolor=colors[yr],
                                   alpha=.1,
                                   lw=0)
-    ax.scatter(
-        costdata,
-        program.costcovdata['coverage'],
-        color='#666666')
+    
+    ax.scatter(costdata, covdata, color='#666666')
     
     setylim(0, ax) # Equivalent to ax.set_ylim(bottom=0)
     ax.set_xlim([0, xupperlim])

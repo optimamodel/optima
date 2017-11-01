@@ -111,8 +111,11 @@ define([
         .rpcUpload(
           'upload_project_object', [projectService.project.id, 'scenario'], {}, '.scn')
         .then(function(response) {
-          toastr.success('Scenario uploaded');
-          $state.reload()
+		  if (response.data.name == 'BadFileFormatError') {
+			toastr.error('The file you have chosen is not valid for uploading');  
+		  } else {
+            toastr.success('Scenario uploaded');
+            $state.reload() }
         });
     };
 

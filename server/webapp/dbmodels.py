@@ -17,14 +17,21 @@ class UserDb(db.Model):
     name = db.Column(db.String(60))
     email = db.Column(db.String(200))
     password = db.Column(db.String(200))
+    country = db.Column(db.String(60))
+    organization = db.Column(db.String(60))
+    position = db.Column(db.String(60)) 
     is_admin = db.Column(db.Boolean, server_default=text('FALSE'))
     projects = db.relationship('ProjectDb', backref='user', lazy='dynamic')
-
-    def __init__(self, name, email, password, username, is_admin=False):
+    
+    def __init__(self, name, email, password, username, country, organization, 
+        position, is_admin=False):
         self.name = name
         self.email = email
         self.password = password
         self.username = username
+        self.country = country
+        self.organization = organization
+        self.position = position
         self.is_admin = is_admin
 
     def get_id(self):
@@ -101,9 +108,27 @@ class ProjectDb(db.Model):
         return project.name + ".prj"
 
     def delete_dependent_objects(self, synchronize_session=False):
-        str_project_id = str(self.id)
-        # delete all relevant entries explicitly
-        db.session.query(ResultsDb).filter_by(project_id=str_project_id).delete(synchronize_session)
+        str_project_id = str(self.id)        
+        # Pull out all results rows with Project UID matching str_project_id.
+        result_records = db.session.query(ResultsDb).filter_by(project_id=str_project_id)
+        
+        # Call the cleanup for each record (i.e., deleting the Redis entries).
+        for result_record in result_records:
+            result_record.cleanup()
+            
+        # Now delete the Postgres results entries.
+        result_records.delete(synchronize_session)
+        
+        # Pull out all undo_stacks rows with Project UID matching str_project_id.
+        undo_stack_records = db.session.query(UndoStackDb).filter_by(project_id=str_project_id)
+        
+        # Call the cleanup for each record (i.e., deleting the Redis entries).
+        for undo_stack_record in undo_stack_records:
+            undo_stack_record.cleanup()
+            
+        # Now delete the Postgres undo_stacks entries.
+        undo_stack_records.delete(synchronize_session)
+        
         db.session.flush()
 
     def recursive_delete(self, synchronize_session=False):
@@ -157,3 +182,27 @@ class WorkLogDb(db.Model):  # pylint: disable=R0903
     status = db.Column(work_status, default='started')
     error = db.Column(db.Text, default=None)
 
+
+class UndoStackDb(db.Model):
+
+    __tablename__ = 'undo_stacks'
+
+    id = db.Column(UUID(True), server_default=text("uuid_generate_v1mc()"), primary_key=True)
+    project_id = db.Column(UUID(True), db.ForeignKey('projects.id', ondelete='SET NULL'))
+
+    def __init__(self, project_id, id=None):
+        self.project_id = project_id
+        if id:
+            self.id = id
+
+    def load(self):
+        print(">> UndoStackDb.load undo-stack-" + self.id.hex)
+        return op.loadstr(redis.get("undo-stack-" + self.id.hex))
+
+    def save_obj(self, obj):
+        print(">> UndoStackDb.save undo-stack-" + self.id.hex)
+        redis.set("undo-stack-" + self.id.hex, op.dumpstr(obj))
+
+    def cleanup(self):
+        print(">> UndoStackDb.cleanup undo-stack-" + self.id.hex)
+        redis.delete("undo-stack-" + self.id.hex)

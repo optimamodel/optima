@@ -31,17 +31,18 @@ define(['angular', 'underscore'], function (angular, _) {
         graphs: undefined,
       };
 
-      reloadActiveProject();
+	  // Load the active project, telling the function we're not using an Undo stack.
+      reloadActiveProject(false);
 
       $scope.projectService = projectService;
       $scope.$watch('projectService.project.id', function() {
         if (!_.isUndefined($scope.project) && ($scope.project.id !== projectService.project.id)) {
-          reloadActiveProject();
+          reloadActiveProject(false);  // we're not using an Undo stack here, either
         }
       });
     }
 
-    function reloadActiveProject() {
+    function reloadActiveProject(useUndoStack) {
       projectService
         .getActiveProject()
         .then(function(response) {
@@ -73,6 +74,14 @@ define(['angular', 'underscore'], function (angular, _) {
                 $scope.setActiveParset();
               }
             });
+			
+          // Initialize a new UndoStack on the server if we are not using an UndoStack in this 
+          // call.
+		  if (!useUndoStack) {
+            rpcService
+              .rpcRun(
+                'init_new_undo_stack', [$scope.project.id]);
+		  }
         });
     }
 
@@ -113,11 +122,15 @@ define(['angular', 'underscore'], function (angular, _) {
 
     $scope.getCalibrationGraphs = function() {
       console.log('active parset id', $scope.state.parset.id);
+	  rpc_args = 
+	    [
+		  projectService.project.id, 
+		  $scope.state.parset.id,
+          "calibration", 
+	      getSelectors()
+	    ]		  
       rpcService
-        .rpcRun(
-          'load_parset_graphs',
-          [projectService.project.id, $scope.state.parset.id,
-          "calibration", getSelectors()])
+        .rpcRun('load_parset_graphs', rpc_args)
         .then(
           function(response) {
             loadParametersAndGraphs(response.data);
@@ -155,9 +168,13 @@ define(['angular', 'underscore'], function (angular, _) {
           function(response) {
             loadParametersAndGraphs(response.data);
             toastr.success('Loaded graphs');
-            console.log('getCalibrationGraphs', response.graphs);
+            console.log('saveAndUpdateGraphs', response.graphs);
             $scope.statusMessage = '';
             $scope.state.isRunnable = true;
+            rpcService
+              .rpcRun(
+                'push_project_to_undo_stack', 
+                [projectService.project.id]);
           },
           function(response) {
             $scope.state.isRunnable = false;
@@ -179,6 +196,10 @@ define(['angular', 'underscore'], function (angular, _) {
             $scope.state.parset = $scope.parsets[$scope.parsets.length - 1];
             toastr.success('Created parset');
             $scope.setActiveParset();
+            rpcService
+              .rpcRun(
+                'push_project_to_undo_stack',
+                [projectService.project.id]);
           });
       }
       modalService.rename(
@@ -206,6 +227,10 @@ define(['angular', 'underscore'], function (angular, _) {
             $scope.parsets = response.data.parsets;
             $scope.state.parset = $scope.parsets[$scope.parsets.length - 1];
             toastr.success('Copied parset');
+            rpcService
+              .rpcRun(
+                'push_project_to_undo_stack',
+                [projectService.project.id]);
           });
       }
     };
@@ -234,6 +259,10 @@ define(['angular', 'underscore'], function (angular, _) {
           .then(function(response) {
             $scope.state.parset.name = name;
             toastr.success('Renamed parset');
+            rpcService
+              .rpcRun(
+                'push_project_to_undo_stack',
+                [projectService.project.id]);
           });
       }
 
@@ -273,6 +302,10 @@ define(['angular', 'underscore'], function (angular, _) {
               $scope.state.parset = $scope.parsets[0];
               toastr.success('Deleted parset');
               $scope.setActiveParset();
+              rpcService
+                .rpcRun(
+                  'push_project_to_undo_stack',
+                  [projectService.project.id]);
             }
           });
       }
@@ -305,20 +338,28 @@ define(['angular', 'underscore'], function (angular, _) {
         .rpcUpload(
           'upload_project_object', [$scope.project.id, 'parset'], {}, '.par')
         .then(function(response) {
-          toastr.success('Parameter set uploaded');
-          var name = response.data.name;
+		  if (response.data.name == 'BadFileFormatError') {
+			toastr.error('The file you have chosen is not valid for uploading');  
+		  } else {
+            toastr.success('Parameter set uploaded');
+            var name = response.data.name;
 
-          rpcService
-            .rpcRun('load_parset_summaries', [$scope.project.id])
-            .then(function(response) {
-              var parsets = response.data.parsets;
-              if (parsets) {
-                $scope.parsets = parsets;
-                $scope.state.parset = _.findWhere($scope.parsets, {name: name});
-                $scope.setActiveParset();
-              }
-            });
-        });
+            rpcService
+              .rpcRun('load_parset_summaries', [$scope.project.id])
+              .then(function(response) {
+                var parsets = response.data.parsets;
+                if (parsets) {
+                  $scope.parsets = parsets;
+                  $scope.state.parset = _.findWhere($scope.parsets, {name: name});
+                  $scope.setActiveParset();
+                  rpcService
+                    .rpcRun(
+                      'push_project_to_undo_stack',
+                      [projectService.project.id]);
+                }
+              });	
+		  }			  
+		});
     };
 
     $scope.refreshParset = function() {
@@ -330,6 +371,10 @@ define(['angular', 'underscore'], function (angular, _) {
             .then(function(response) {
               toastr.success('Parameter set refreshed');
               $scope.getCalibrationGraphs();
+              rpcService
+                .rpcRun(
+                  'push_project_to_undo_stack',
+                  [projectService.project.id]);
             });
         },
         function () { },
@@ -350,6 +395,10 @@ define(['angular', 'underscore'], function (angular, _) {
         .then(function(response) {
           toastr.success('Using constant proportion on ART');
           $scope.getCalibrationGraphs();
+          rpcService
+            .rpcRun(
+              'push_project_to_undo_stack',
+              [projectService.project.id]);
         });
     };
 
@@ -363,9 +412,35 @@ define(['angular', 'underscore'], function (angular, _) {
         .then(function(response) {
           toastr.success('Using constant number on ART');
           $scope.getCalibrationGraphs();
+          rpcService
+            .rpcRun(
+              'push_project_to_undo_stack',
+              [projectService.project.id]);
         });
     };
 
+	$scope.undo = function() {
+      rpcService
+        .rpcRun(
+          'fetch_undo_project',
+          [projectService.project.id])
+        .then(function(response) {
+		  if (response.data.didundo)
+		    reloadActiveProject(true);
+        });		
+	}
+	
+	$scope.redo = function() {
+      rpcService
+        .rpcRun(
+          'fetch_redo_project',
+          [projectService.project.id])
+        .then(function(response) {
+		  if (response.data.didredo)
+		    reloadActiveProject(true);		  
+        });      		
+	}
+	
     // autofit routines
 
     $scope.checkNotRunnable = function() {
@@ -437,6 +512,10 @@ define(['angular', 'underscore'], function (angular, _) {
             $scope.statusMessage = '';
             toastr.success('Autofit completed');
             $scope.getCalibrationGraphs();
+			rpcService
+			  .rpcRun(
+			    'push_project_to_undo_stack', 
+				[projectService.project.id]);
           } else if (status === 'started') {
             var start = new Date(response.data.start_time);
             var now = new Date(response.data.current_time);

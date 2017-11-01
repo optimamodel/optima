@@ -31,11 +31,11 @@ CLASSIFIERS = [
 setup(
     name='optima',
     version=version,
-    author='Cliff Kerr, Robyn Stuart, David Kedziora, Romesh Abeysuriya, Madhura Killedar, Anna Nachesa',
+    author='Cliff Kerr, Robyn Stuart, David Kedziora, Amber Brown, Romesh Abeysuriya, George Chadderdon, Anna Nachesa, David Wilson, and others',
     author_email='info@optimamodel.com',
     description='Software package for modeling HIV epidemics',
     long_description=convert('README.md', 'md'),
-    url='http://github.com/optimamodel/Optima',
+    url='http://github.com/optimamodel/optima',
     keywords=['optima'],
     platforms=['OS Independent'],
     classifiers=CLASSIFIERS,
