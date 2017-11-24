@@ -102,7 +102,7 @@ def setylim(data=None, ax=None):
     return lowerlim,upperlim
 
 
-def getplotselections(results, advanced=False):
+def getplotselections(results, advanced=False, excludedalys=True):
     ''' 
     From the inputted results structure, figure out what the available kinds of plots are. List results-specific
     plot types first (e.g., allocations), followed by the standard epi plots, and finally (if available) other
@@ -118,6 +118,9 @@ def getplotselections(results, advanced=False):
         errormsg = 'Results input to plotepi() must be either Resultset or Multiresultset, not "%s".' % type(results)
         raise OptimaException(errormsg)
     
+    # Default is to exclude DALYs from results. Note, we do it this way instead of making DALYs a non-main result because this will be easier to revert and will not affect back-end users so much
+    if excludedalys: excludelist = ['numdaly'] 
+
     ## Set up output structure
     plotselections = dict()
     plotselections['keys'] = list()
@@ -158,8 +161,8 @@ def getplotselections(results, advanced=False):
     plotepikeys = list()
     plotepinames = list()
     
-    epikeys = results.main.keys() # e.g. 'prev'
-    epinames = [result.name for result in results.main.values()]
+    epikeys = [k for k in results.main.keys() if k not in excludelist] # e.g. 'prev'
+    epinames = [result.name for rk,result in results.main.iteritems() if rk not in excludelist]
     
     if advanced: # Loop has to be written this way so order is correct
         for key in epikeys: # e.g. 'prev'
@@ -181,7 +184,7 @@ def getplotselections(results, advanced=False):
     plotselections['names'] += plotepinames
     for key in plotselections['keys']: # Loop over each key
         plotselections['defaults'].append(key in defaultplots) # Append True if it's in the defaults; False otherwise
-
+    
     return plotselections
 
 
