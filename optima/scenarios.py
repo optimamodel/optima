@@ -66,14 +66,10 @@ class Coveragescen(Progscen):
         self.coverage = coverage
 
 
-def runscenarios(project=None, verbose=2, name=None, defaultparset=-1, debug=False, nruns=1, storediffs=True, base=0, ccsample=False, randseed=None, **kwargs):
+def runscenarios(project=None, verbose=2, name=None, defaultparset=-1, debug=False, nruns=1, base=0, ccsample=False, randseed=None, **kwargs):
     """
     Run all the scenarios.
-<<<<<<< HEAD
     Version: 2017aug15
-=======
-    Version: 2017jun04
->>>>>>> fix/validindices-calc
     """
     
     printv('Running scenarios...', 1, verbose)
@@ -104,37 +100,18 @@ def runscenarios(project=None, verbose=2, name=None, defaultparset=-1, debug=Fal
         progsetname = scenlist[scenno].progsetname if isinstance(scenlist[scenno], Progscen) else None
 
         # Run model and add results
-        if storediffs: # If calculating and storing the differences, we have to kepe the raw results
-            result = project.runsim(pars=scenparset.pars, name=scenlist[scenno].parsetname, progsetname=progsetname, budget=budget, coverage=coverage, budgetyears=budgetyears, verbose=0, debug=debug, resultname=project.name+'-scenarios', addresult=False, keepraw=True, n=nruns, **kwargs)
-        else:
-            result = project.runsim(pars=scenparset.pars, name=scenlist[scenno].parsetname, progsetname=progsetname, budget=budget, coverage=coverage, budgetyears=budgetyears, verbose=0, debug=debug, resultname=project.name+'-scenarios', addresult=False, n=nruns, **kwargs)
+        result = project.runsim(pars=scenparset.pars, name=scenlist[scenno].parsetname, progsetname=progsetname, budget=budget, coverage=coverage, budgetyears=budgetyears, verbose=0, debug=debug, resultname=project.name+'-scenarios', addresult=False, n=nruns, **kwargs)
 
         result.name = scenlist[scenno].name # Give a name to these results so can be accessed for the plot legend
         allresults.append(result) 
         printv('... completed scenario: %i/%i' % (scenno+1, nscens), 3, verbose)
     
-    # Calculate diffs
-    #import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
-    if storediffs:
-        alldiffresults = []
-        for rn,thisresult in enumerate(allresults):
-            thisrawlist = []
-            if base!=rn:
-                for n in range(nruns):
-                    thisrawdiff = rawdiff(allresults[base].raw[n],thisresult.raw[n])
-                    thisrawlist.append(thisrawdiff)
-                thisdiffresult = Resultset(pars=allresults[base].pars,raw=thisrawlist, project=project, verbose=verbose) 
-                thisdiffresult.name = thisresult.name+' vs '+allresults[base].name
-                alldiffresults.append(thisdiffresult) 
-        multiresdiff = Multiresultset(resultsetlist=alldiffresults, name='scenario diffs against '+allresults[base].name)
-
     if name is None: name='scenarios'
 
     multires = Multiresultset(resultsetlist=allresults, name=name)
     for scen in scenlist: scen.resultsref = multires.uid # Copy results into each scenario that's been run
     scenres = odict()
     scenres[name] = multires
-    if storediffs: scenres['scenariodiffs'] = multiresdiff
     return scenres
 
 
