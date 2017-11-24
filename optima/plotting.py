@@ -11,7 +11,7 @@ plotting to this file.
 Version: 2017jun03
 '''
 
-from optima import OptimaException, Resultset, Multiresultset, ICER, odict, printv, gridcolors, vectocolor, alpinecolormap, makefilepath, sigfig, dcp, findinds, promotetolist, saveobj, promotetoodict, promotetoarray, boxoff
+from optima import OptimaException, Resultset, Multiresultset, ICER, odict, printv, gridcolors, vectocolor, alpinecolormap, makefilepath, sigfig, dcp, findinds, promotetolist, saveobj, promotetoodict, promotetoarray, boxoff, getvalidinds
 from numpy import array, ndim, maximum, arange, zeros, mean, shape, isnan, linspace, minimum # Numeric functions
 from pylab import gcf, get_fignums, close, ion, ioff, isinteractive, figure # Plotting functions
 from matplotlib.backends.backend_agg import new_figure_manager_given_figure as nfmgf # Warning -- assumes user has agg on their system, but should be ok. Use agg since doesn't require an X server
@@ -102,7 +102,7 @@ def setylim(data=None, ax=None):
     return lowerlim,upperlim
 
 
-def getplotselections(results, advanced=False):
+def getplotselections(results, advanced=False, excludedalys=True):
     ''' 
     From the inputted results structure, figure out what the available kinds of plots are. List results-specific
     plot types first (e.g., allocations), followed by the standard epi plots, and finally (if available) other
@@ -118,6 +118,9 @@ def getplotselections(results, advanced=False):
         errormsg = 'Results input to plotepi() must be either Resultset or Multiresultset, not "%s".' % type(results)
         raise OptimaException(errormsg)
     
+    # Default is to exclude DALYs from results. Note, we do it this way instead of making DALYs a non-main result because this will be easier to revert and will not affect back-end users so much
+    if excludedalys: excludelist = ['numdaly'] 
+
     ## Set up output structure
     plotselections = dict()
     plotselections['keys'] = list()
@@ -158,8 +161,8 @@ def getplotselections(results, advanced=False):
     plotepikeys = list()
     plotepinames = list()
     
-    epikeys = results.main.keys() # e.g. 'prev'
-    epinames = [result.name for result in results.main.values()]
+    epikeys = [k for k in results.main.keys() if k not in excludelist] # e.g. 'prev'
+    epinames = [result.name for rk,result in results.main.iteritems() if rk not in excludelist]
     
     if advanced: # Loop has to be written this way so order is correct
         for key in epikeys: # e.g. 'prev'
@@ -168,7 +171,7 @@ def getplotselections(results, advanced=False):
                     plotepikeys.append(key+'-'+subkey)
         for name in epinames: # e.g. 'HIV prevalence'
             for subname in epiplottypes: # e.g. 'total'
-                if not(ismultisim and subname=='stacked'): # Stacked multisim plots don't make sense -- WARNING, this is clunky!!!
+                if not(ismultisim and subname=='stacked'): # Stacked multisim plots don't make sense -- TODO: handle this better
                     plotepinames.append(name+' - '+subname)
     else:
         plotepikeys = dcp(epikeys)
@@ -181,7 +184,7 @@ def getplotselections(results, advanced=False):
     plotselections['names'] += plotepinames
     for key in plotselections['keys']: # Loop over each key
         plotselections['defaults'].append(key in defaultplots) # Append True if it's in the defaults; False otherwise
-
+    
     return plotselections
 
 
@@ -581,7 +584,7 @@ def plotimprovement(results=None, figsize=globalfigsize, lw=2, titlesize=globalt
     
     NOTE: do not call this function directly; instead, call via plotresults().
     
-    Version: 2016jan23 by cliffk    
+    Version: 2016jan23 
     '''
 
     if hasattr(results, 'improvement'): improvement = results.improvement # Get improvement attribute of object if it exists
@@ -788,9 +791,9 @@ def plotcoverage(multires=None, die=True, figsize=globalfigsize, legendsize=glob
             for i,x in enumerate(toplot[plt][:]):
                 if hasattr(x, '__len__'): 
                     try: progdata[i] = x[y]
-                    except: 
-                        try: progdata[i] = x[-1] # If not enough data points, just use last -- WARNING, KLUDGY
-                        except: progdata[i] = 0. # If not enough data points, just use last -- WARNING, KLUDGY
+                    except:# TODO: May break in some circumstances
+                        try: progdata[i] = x[-1] # If not enough data points, just use last 
+                        except: progdata[i] = 0. 
                 else:                     progdata[i] = x
             progdata *= 100 
             xbardata = arange(nprogs)+.75+barwidth*y
@@ -842,7 +845,9 @@ def plotcoverage(multires=None, die=True, figsize=globalfigsize, legendsize=glob
 ##################################################################
 def plotcascade(results=None, aspercentage=False, cascadecolors=None, figsize=globalfigsize, lw=2, titlesize=globaltitlesize, 
                 labelsize=globallabelsize, ticksize=globalticksize, legendsize=globallegendsize, position=None, useSIticks=True, 
-                showdata=True, dotsize=50, plotstartyear=None, plotendyear=None, die=False, verbose=2, interactive=False, fig=None, asbars=False, **kwargs):
+                showdata=True, dotsize=50, plotstartyear=None, plotendyear=None, die=False, verbose=2, interactive=False, fig=None,
+                asbars=False, allbars=True, **kwargs):
+
     ''' 
     Plot the treatment cascade.
     
@@ -871,25 +876,38 @@ def plotcascade(results=None, aspercentage=False, cascadecolors=None, figsize=gl
     # Set up figure and do plot
     cascadeplots = odict()
     if asbars:
-        if plotstartyear is None: plotstartyear = results.pars['numtx'].t['tot'][-1]
-        if plotendyear   is None: plotendyear   = results.tvec[-1]
-        startind, endind = getplotinds(plotstartyear=plotstartyear, plotendyear=plotendyear, tvec=results.tvec, die=die, verbose=verbose) # Get year indices for producing plots
-        cascinds = [startind, endind]
-        baselabel = '%4i' % plotstartyear
-        endlabel  = '%4i' % plotendyear
-        yearlabels = [baselabel, endlabel]
-        casclabels  = ['PLHIV', 'Diagnosed', 'Treated', 'Suppressed']
-        casckeys    = ['numplhiv',  'numdiag',   'numtreat','numsuppressed']
+        if allbars: # Reset cascade labels for bar plot if plotting all bars
+            casclabels  = ['PLHIV', 'Diagnosed', 'Linked', 'Retained', 'Treated', 'Suppressed']
+            casckeys    = ['numplhiv',  'numdiag',  'numevercare', 'numincare', 'numtreat','numsuppressed']
+        else:
+            casclabels  = ['PLHIV', 'Diagnosed', 'Treated', 'Suppressed']
+            casckeys    = ['numplhiv',  'numdiag', 'numtreat','numsuppressed']
         ncategories = len(casclabels)
         darken = array([1.0, 1.3, 1.3]) # Amount by which to darken succeeding cascade stages -- can't use 0.2 since goes negative!!
         targetcolor   = array([0,0,0])
         origbasecolor = array([0.5,0.60,0.9])
         origendcolor  = array([0.3,0.85,0.6])
+        if plotendyear   is None: plotendyear   = results.tvec[-1]
+        if plotstartyear is None:
+            try: # Try making a plot with the last year of treatment data as the first year
+                plotstartyear = results.pars['numtx'].t['tot'][-1]
+                startind, endind = getplotinds(plotstartyear=plotstartyear, plotendyear=plotendyear, tvec=results.tvec, die=die, verbose=verbose) # Get year indices for producing plots
+            except: # The above options won't work if, for example, the last year of treatment data is greater than or equal to the last sim year, so in that case we use alternative defaults
+                plotstartyear = results.tvec[0]
+                startind, endind = getplotinds(plotstartyear=plotstartyear, plotendyear=plotendyear, tvec=results.tvec, die=die, verbose=verbose) # Get year indices for producing plots
+
+        cascinds = [startind, endind]
+        baselabel = '%4i' % plotstartyear
+        endlabel  = '%4i' % plotendyear
+        if baselabel==endlabel: endlabel += ' ' # Small hack to avoid bug if both are the same
+        labels = [baselabel, endlabel]
         casccolors = odict([(baselabel,[origbasecolor]), (endlabel, [origendcolor])])
+            
         for k in range(len(casckeys)-1):
             for label in casccolors.keys():
                 darker = dcp(casccolors[label][-1]**darken) # Make each color slightly darker than the one before
                 casccolors[label].append(darker)
+
     else:
         # Get year indices for producing plots
         startind, endind = getplotinds(plotstartyear=plotstartyear, plotendyear=plotendyear, tvec=results.tvec, die=die, verbose=verbose)
@@ -913,7 +931,7 @@ def plotcascade(results=None, aspercentage=False, cascadecolors=None, figsize=gl
     
     # Actually do the plotting
     for plt in range(nsims): # WARNING, copied from plotallocs()
-        
+    
         # Create the figure and axes
         fig,naxes = makefigure(figsize=figsize, interactive=interactive, fig=fig)
         ax = fig.add_subplot(naxes, 1, naxes)
@@ -923,27 +941,32 @@ def plotcascade(results=None, aspercentage=False, cascadecolors=None, figsize=gl
             dx = 1.0
             space = 4.0
             basex = arange(ncategories)*space
+#            import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
             for k,key in enumerate(casckeys):
                 for i,ind in enumerate(cascinds):
                     if ismultisim: 
                         thisbar = 100.*results.main[key].tot[plt][ind]/results.main['numplhiv'].tot[plt][ind] # If it's a multisim, need an extra index for the plot number
                     else:
                         thisbar = 100.*results.main[key].tot[0][ind]/results.main['numplhiv'].tot[0][ind] # Get the best estimate
-                    if k==len(casckeys)-1: yearlabel = yearlabels[i]
-                    else:                  yearlabel = None
-                    ax.bar(basex[k]+i*dx, thisbar, width=1., color=casccolors[i][k], linewidth=0, label=yearlabel)
+                    if k==len(casckeys)-1: label = labels[i]
+                    else:                  label = None
+                    ax.bar(basex[k]+i*dx, thisbar, width=1., color=casccolors[i][k], linewidth=0, label=label)
             
             targetxpos = 2.0
             labelxpos  = 3.2
             dy = -1
             lineargs = {'c':targetcolor, 'linewidth':2}
             txtargs = {'fontsize':legendsize, 'color':targetcolor, 'horizontalalignment':'center'}
-            ax.plot([basex[1], basex[1]+targetxpos], [90,90], **lineargs)
-            ax.plot([basex[2], basex[2]+targetxpos], [81,81], **lineargs)
-            ax.plot([basex[3], basex[3]+targetxpos], [73,73], **lineargs)
-            ax.text(basex[1]+labelxpos,90+dy,'90%', **txtargs)
-            ax.text(basex[2]+labelxpos,81+dy,'81%', **txtargs)
-            ax.text(basex[3]+labelxpos,73+dy,'73%', **txtargs)
+            dxind = 1
+            txind = 4 if allbars else 2
+            supind = 5 if allbars else 5
+            ax.plot([basex[dxind], basex[dxind]+targetxpos], [90,90], **lineargs)
+            ax.plot([basex[txind], basex[txind]+targetxpos], [81,81], **lineargs)
+            ax.plot([basex[supind], basex[supind]+targetxpos], [73,73], **lineargs)
+
+            ax.text(basex[dxind]+labelxpos,90+dy,'90%', **txtargs)
+            ax.text(basex[txind]+labelxpos,81+dy,'81%', **txtargs)
+            ax.text(basex[supind]+labelxpos,73+dy,'73%', **txtargs)
             
             ax.set_xticks(basex+1.0)
             ax.set_xticklabels(casclabels)
@@ -982,7 +1005,7 @@ def plotcascade(results=None, aspercentage=False, cascadecolors=None, figsize=gl
             
             if ismultisim: thistitle = 'Cascade - %s' % titles[plt]
             else:          thistitle = 'Cascade'
-        
+            
         ## General plotting fixes
         if useSIticks: SIticks(ax=ax)
         else:          commaticks(ax=ax)
@@ -1000,7 +1023,7 @@ def plotcascade(results=None, aspercentage=False, cascadecolors=None, figsize=gl
             
         ax.set_title(thistitle)
         cascadeplots[thistitle] = fig
-    
+        
     return cascadeplots
 
 
@@ -1227,12 +1250,23 @@ def plotcostcov(program=None, year=None, parset=None, results=None, plotoptions=
     # Get caption & scatter data 
     caption = plotoptions['caption'] if plotoptions and plotoptions.get('caption') else ''
     costdata = dcp(program.costcovdata['cost']) if program.costcovdata.get('cost') else []
+    covdata  = dcp(program.costcovdata['coverage']) if program.costcovdata.get('coverage') else []
+    timedata = dcp(program.costcovdata['t']) if program.costcovdata.get('t') else []
+    
+    # Sanitize for nans
+    costdata = promotetoarray(costdata)
+    covdata = promotetoarray(covdata)
+    timedata = promotetoarray(timedata)
+    validindices = getvalidinds(costdata, covdata)
+    costdata = costdata[validindices]
+    covdata = covdata[validindices]
+    timedata = timedata[validindices]
 
     # Make x data... 
     if plotoptions and plotoptions.get('xupperlim') and ~isnan(plotoptions['xupperlim']):
         xupperlim = plotoptions['xupperlim']
     else:
-        if costdata: xupperlim = 1.5*max(costdata)
+        if len(costdata): xupperlim = 1.5*max(costdata)
         else: xupperlim = maxupperlim
     xlinedata = linspace(0,xupperlim,npts)
 
@@ -1244,8 +1278,9 @@ def plotcostcov(program=None, year=None, parset=None, results=None, plotoptions=
         y_l = program.getcoverage(x=xlinedata, t=year, parset=parset, results=results, total=True, proportion=False, toplot=True, sample='l')
         y_m = program.getcoverage(x=xlinedata, t=year, parset=parset, results=results, total=True, proportion=False, toplot=True, sample='best')
         y_u = program.getcoverage(x=xlinedata, t=year, parset=parset, results=results, total=True, proportion=False, toplot=True, sample='u')
-    except:
+    except Exception as E:
         y_l,y_m,y_u = None,None,None
+        print('Warning, could not get program coverage: %s' % E.__repr__())
     plotdata['ylinedata_l'] = y_l
     plotdata['ylinedata_m'] = y_m
     plotdata['ylinedata_u'] = y_u
@@ -1254,12 +1289,12 @@ def plotcostcov(program=None, year=None, parset=None, results=None, plotoptions=
 
     # Flag to indicate whether we will adjust by population or not
     if plotoptions and plotoptions.get('perperson'):
-        if costdata:
-            for yrno, yr in enumerate(program.costcovdata['t']):
+        if len(costdata):
+            for yrno,yr in enumerate(timedata):
                 targetpopsize = program.gettargetpopsize(t=yr, parset=parset, results=results)
                 costdata[yrno] /= targetpopsize[0]
         if not (plotoptions and plotoptions.get('xupperlim') and ~isnan(plotoptions['xupperlim'])):
-            if costdata: xupperlim = 1.5*max(costdata) 
+            if len(costdata): xupperlim = 1.5*max(costdata) 
             else: xupperlim = 1e3
         plotdata['xlinedata'] = linspace(0,xupperlim,npts)
     else:
@@ -1268,7 +1303,7 @@ def plotcostcov(program=None, year=None, parset=None, results=None, plotoptions=
     fig,naxes = makefigure(figsize=None, interactive=interactive, fig=existingFigure)
     fig.hold(True)
     ax = fig.add_subplot(111)
-
+    
     ax.set_position((0.1, 0.35, .8, .6)) # to make a bit of room for extra text
     fig.text(.1, .05, textwrap.fill(caption))
     
@@ -1288,10 +1323,8 @@ def plotcostcov(program=None, year=None, parset=None, results=None, plotoptions=
                                   facecolor=colors[yr],
                                   alpha=.1,
                                   lw=0)
-    ax.scatter(
-        costdata,
-        program.costcovdata['coverage'],
-        color='#666666')
+    
+    ax.scatter(costdata, covdata, color='#666666')
     
     setylim(0, ax) # Equivalent to ax.set_ylim(bottom=0)
     ax.set_xlim([0, xupperlim])

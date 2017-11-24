@@ -247,7 +247,6 @@ def autofit(project_id, parset_id, maxtime):
     )
 
     result = project.parsets[autofit_parset_name].getresults()
-    result.uid = op.uuid()
     result_name = 'parset-' + orig_parset_name
     result.name = result_name
 
@@ -302,18 +301,9 @@ def optimize(project_id, optimization_id, maxtime):
         raise Exception(error_text)
 
     print(">> optimize start")
-    result = project.optimize(
-        name=optim.name,
-        parsetname=optim.parsetname,
-        progsetname=optim.progsetname,
-        objectives=optim.objectives,
-        constraints=optim.constraints,
-        maxtime=float(maxtime),
-        mc=0,  # Set this to zero for now while we decide how to handle uncertainties etc.
-    )
+    result = project.optimize(optim=optim, maxtime=float(maxtime), mc=0)  # Set this to zero for now while we decide how to handle uncertainties etc.
 
     print(">> optimize budgets %s" % result.budgets)
-    result.uid = op.uuid()
     
     # save project
     db_session = init_db_session()
@@ -372,7 +362,7 @@ def boc(portfolio_id, project_id, maxtime=2, objectives=None):
     else:
         raise Exception("Couldn't find project in portfolio")
 
-    project.genBOC(maxtime=float(maxtime), objectives=objectives, mc=0) # WARNING, might want to run with MC one day
+    project.genBOC(maxtime=float(maxtime), objectives=objectives, mc=0) # TODO: Enable MC
 
     project_id = str(project.uid)
     db_session = init_db_session()

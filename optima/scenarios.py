@@ -69,7 +69,11 @@ class Coveragescen(Progscen):
 def runscenarios(project=None, verbose=2, name=None, defaultparset=-1, debug=False, nruns=1, storediffs=True, base=0, ccsample=False, randseed=None, **kwargs):
     """
     Run all the scenarios.
+<<<<<<< HEAD
     Version: 2017aug15
+=======
+    Version: 2017jun04
+>>>>>>> fix/validindices-calc
     """
     
     printv('Running scenarios...', 1, verbose)
@@ -145,7 +149,7 @@ def makescenarios(project=None, scenlist=None, verbose=2, ccsample=False, randse
         
         try: 
             thisparset = dcp(project.parsets[scen.parsetname])
-            thisparset.projectref = Link(project) # Replace copy of project with pointer -- WARNING, hacky
+            thisparset.projectref = Link(project) # Replace copy of project with pointer -- TODO: improve logic
         except: raise OptimaException('Failed to extract parset "%s" from this project:\n%s' % (scen.parsetname, project))
         npops = len(thisparset.popkeys)
 
@@ -179,7 +183,7 @@ def makescenarios(project=None, scenlist=None, verbose=2, ccsample=False, randse
                     errormsg = 'Unrecognized population or partnership type: %s' % scenpar['for']
                     raise OptimaException(errormsg)
 
-                # Find last good value # WARNING, FIX!!!!
+                # Find last good value 
                 last_t = scenpar['startyear'] - project.settings.dt # Last timestep before the scenario starts
                 last_y = thispar.interp(tvec=last_t, dt=project.settings.dt, asarray=False, sample=False) # Find what the model would get for this value
 
@@ -237,7 +241,7 @@ def makescenarios(project=None, scenlist=None, verbose=2, ccsample=False, randse
                 if not isinstance(scen.budget,dict): raise OptimaException('Currently only accepting budgets as dictionaries.')
                 if not isinstance(scen.budget,odict): scen.budget = odict(scen.budget)
 
-                # Update, ensuring a consistent number of programs, using defaults where not provided -- WARNING, ugly
+                # Update, ensuring a consistent number of programs, using defaults where not provided 
                 tmpbudget.update(scen.budget)
                 scen.budget = tmpbudget
                 
@@ -253,14 +257,14 @@ def makescenarios(project=None, scenlist=None, verbose=2, ccsample=False, randse
                 
                 # If the coverage levels have been passed in as a vector, convert it to an odict & sort by program names
                 tmpbudget = dcp(thisprogset.getdefaultbudget())
-                tmpcoverage = thisprogset.getprogcoverage(budget=tmpbudget, t=2000, parset=thisparset) # WARNING, IT DOES NOT MATTER THE VALUE OF t YOU USE HERE!!!
+                tmpcoverage = thisprogset.getprogcoverage(budget=tmpbudget, t=2000, parset=thisparset) # NOTE, IT DOES NOT MATTER THE VALUE OF t YOU USE HERE!!!
 
                 if isinstance(scen.coverage, list) or isinstance(scen.coverage, type(array([]))):
                     scen.coverage = vec2obj(scen.progset.getdefaultbuget(), newvec=scen.coverage) # It seems to be a vector: convert to odict -- WARNING, super dangerous!!
                 if not isinstance(scen.coverage,dict): raise OptimaException('Currently only accepting coverage as dictionaries.')
                 if not isinstance(scen.coverage,odict): scen.coverage = odict(scen.coverage)
 
-                # Update, ensuring a consistent number of programs, using defaults where not provided -- WARNING, ugly
+                # Update, ensuring a consistent number of programs, using defaults where not provided 
                 tmpcoverage.update(scen.coverage)
                 scen.coverage = tmpcoverage
 

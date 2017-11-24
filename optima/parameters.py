@@ -8,7 +8,7 @@ Version: 2.1 (2017apr04)
 
 from numpy import array, nan, isnan, zeros, argmax, mean, log, polyfit, exp, maximum, minimum, Inf, linspace, median, shape
 from numpy.random import uniform, normal, seed
-from optima import OptimaException, Link, odict, dataframe, printv, sanitize, uuid, today, getdate, makefilepath, smoothinterp, dcp, defaultrepr, isnumber, findinds, getvaliddata, promotetoarray, promotetolist # Utilities 
+from optima import OptimaException, Link, odict, dataframe, printv, sanitize, uuid, today, getdate, makefilepath, smoothinterp, dcp, defaultrepr, isnumber, findinds, getvaliddata, promotetoarray, promotetolist, inclusiverange # Utilities 
 from optima import Settings, getresults, convertlimits, gettvecdt, loadpartable, loadtranstable # Heftier functions
 import optima as op
 
@@ -356,7 +356,7 @@ class Parameterset(object):
         
         output = ''
         for parname,par in self.pars.items():
-            prefix2 = None # WARNING, kludgy way of handling fact that some parameters need more than one line to print
+            prefix2 = None # Handle the fact that some parameters need more than one line to print
             values2 = None
             cvalues2 = None
             if hasattr(par,'manual'):
@@ -437,7 +437,7 @@ class Par(object):
         * Popsizepars have sample() = msample, interp() = m*i[]*exp(e[])
         * Yearpars have no sampling methods, and interp() = t
     
-    Version: 2016nov06 by cliffk    
+    Version: 2016nov06 
     '''
     def __init__(self, short=None, name=None, limits=(0.,1.), by=None, manual='', fromdata=None, m=1.0, prior=None, verbose=None, **defaultargs): # "type" data needed for parameter table, but doesn't need to be stored
         ''' To initialize with a prior, prior should be a dict with keys 'dist' and 'pars' '''
@@ -1133,7 +1133,7 @@ def makepars(data=None, verbose=2, die=True, fixprops=None):
 
     # Fix treatment from final data year
     for key in ['fixproptx', 'fixpropsupp', 'fixpropdx', 'fixpropcare', 'fixproppmtct']:
-        pars[key].t = 2100 # WARNING, KLUDGY -- don't use these, so just set to well past the end of the analysis
+        pars[key].t = 2100 # TODO: don't use these, so just set to (hopefully) well past the end of the analysis
     pars = togglefixprops(pars, fix=fixprops) # Optionally fix the proportions
 
     # Set the values of parameters that aren't from data
@@ -1207,7 +1207,7 @@ def makesimpars(pars, name=None, keys=None, start=None, end=None, dt=None, tvec=
     if type(keys)==str: keys = [keys] # Listify if string
     if tvec is not None: simpars['tvec'] = tvec
     elif settings is not None: simpars['tvec'] = settings.maketvec(start=start, end=end, dt=dt)
-    else: simpars['tvec'] = linspace(start, end, int(round((end-start)/dt)+1)) # Store time vector with the model parameters -- use linspace rather than arange because Python can't handle floats properly
+    else: simpars['tvec'] = inclusiverange(start=start, stop=end, step=dt) # Store time vector with the model parameters
     if len(simpars['tvec'])>1: dt = simpars['tvec'][1] - simpars['tvec'][0] # Recalculate dt since must match tvec
     simpars['dt'] = dt  # Store dt
     if smoothness is None: smoothness = int(defaultsmoothness/dt)

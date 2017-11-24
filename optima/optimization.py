@@ -149,6 +149,7 @@ def defaultconstraints(project=None, progsetname=None, verbose=2):
     constraints['max'] = odict() # Maximum budgets
     for prog in progset.programs.values():
         constraints['name'][prog.short] = prog.name
+
         if prog.optimizable():
             constraints['min'][prog.short] = 0.0
             constraints['max'][prog.short] = None
@@ -210,7 +211,7 @@ def constrainbudget(origbudget=None, budgetvec=None, totalbudget=None, budgetlim
     # Calculate the minimum amount that can be spent on the fixed costs
     rescaledminfixed = dcp(rescaledbudget) # This is the rescaled budget, but with the minimum fixed costs -- should be <= totalbudget
     proginds = arange(len(origbudget)) # Array of all allowable indices
-    fixedinds = array([p for p in proginds if p not in optiminds]) # WARNING, weird way of getting the complement of optiminds
+    fixedinds = array([p for p in proginds if p not in optiminds]) # Get the complement of optiminds
     minfixed = 0.0
     for ind in fixedinds:
         rescaledminfixed[ind] = rescaledbudget[ind]*budgetlims['min'][ind]
@@ -395,7 +396,7 @@ def outcomecalc(budgetvec=None, which=None, project=None, parsetname=None, progs
         if outputresults:
             results.outcome = outcome
             results.rawoutcomes = rawoutcomes
-            results.budgetyears = [objectives['start']] # WARNING, this is ugly, should be made less kludgy
+            results.budgetyears = [objectives['start']] # Use the starting year
             results.budget = constrainedbudget # Convert to budget
             output = results
         else:
@@ -420,7 +421,7 @@ def outcomecalc(budgetvec=None, which=None, project=None, parsetname=None, progs
         # Output results
         if outputresults:
             results.outcomes = odict([('baseline',baseline), ('final',final), ('target',target), ('targetfrac',targetfrac)])
-            results.budgetyears = [objectives['start']] # WARNING, this is ugly, should be made less kludgy
+            results.budgetyears = [objectives['start']] # Use the starting year
             results.budget = constrainedbudget # Convert to budget
             results.targetsmet = targetsmet
             results.target = target
@@ -489,10 +490,10 @@ def optimize(optim=None, maxiters=None, maxtime=None, verbose=2, stoppingfunc=No
         optim.paretoconstraints = defaultparetoconstraints(project=project, parsetname=optim.parsetname, verbose=verbose)
 
     # Process inputs
-    if not optim.objectives['budget']: # Handle 0 or None -- WARNING, temp?
+    if not optim.objectives['budget']: # Handle 0 or None 
         try: optim.objectives['budget'] = sum(progset.getdefaultbudget()[:])
         except:  raise OptimaException('Could not get default budget for optimization')
-    tvec = project.settings.maketvec(end=optim.objectives['end']) # WARNING, this could be done better most likely
+    tvec = project.settings.maketvec(end=optim.objectives['end']) 
     if not progset.readytooptimize():
         detail_costcov = progset.hasallcostcovpars(detail=True)
         detail_covout = progset.hasallcovoutpars(detail=True)
@@ -705,10 +706,26 @@ def minoutcomes(project=None, optim=None, tvec=None, verbose=None, maxtime=None,
     inds = arange(nprogs)
     
     for key,exbudget in extremebudgets.items():
+<<<<<<< HEAD
         if key!='Baseline':  # We already did this one
             extremeresults[key] = outcomecalc(budgetvec=exbudget[inds], outputresults=True, doconstrainbudget=doconstrainbudget, **args)
             extremeresults[key].name = key
             extremeoutcomes[key] = extremeresults[key].outcome
+=======
+        if key=='Baseline': 
+            args['initpeople'] = None # Do this so it runs for the full time series, and is comparable to the optimization result
+            args['totalbudget'] = origbudget[:].sum() # Need to reset this since constraining the budget
+            doconstrainbudget = True # This is needed so it returns the full budget odict, not just the budget vector
+            inds = optiminds # Reset to only optimizable indices
+        else:
+            args['initpeople'] = initpeople # Do this so saves a lot of time (runs twice as fast for all the budget scenarios)
+            args['totalbudget'] = origtotalbudget
+            doconstrainbudget = False
+            inds = arange(nprogs)
+        extremeresults[key] = outcomecalc(exbudget[inds], outputresults=True, doconstrainbudget=doconstrainbudget, **args)
+        extremeresults[key].name = key
+        extremeoutcomes[key] = extremeresults[key].outcome
+>>>>>>> fix/validindices-calc
     if mc: bestprogram = argmin(extremeoutcomes[:][len(firstkeys):])+len(firstkeys) # Don't include no funding or infinite funding examples
     
     # Print out results of the run
@@ -835,7 +852,7 @@ def minoutcomes(project=None, optim=None, tvec=None, verbose=None, maxtime=None,
 
     ## Output
     multires = Multiresultset(resultsetlist=tmpresults.values(), name='optim-%s' % optim.name)
-    for k,key in enumerate(multires.keys): multires.budgetyears[key] = tmpresults[k].budgetyears # WARNING, this is ugly
+    for k,key in enumerate(multires.keys): multires.budgetyears[key] = tmpresults[k].budgetyears 
     multires.improvement = tmpimprovements # Store full function evaluation information -- only use last one
     multires.extremeoutcomes = extremeoutcomes # Store all of these
     multires.fullruninfo = tmpfullruninfo # And the budgets/outcomes for every different run
@@ -1013,7 +1030,7 @@ def minmoney(project=None, optim=None, tvec=None, verbose=None, maxtime=None, ma
     new.name = 'Optimal'
     tmpresults = [orig, new]
     multires = Multiresultset(resultsetlist=tmpresults, name='optim-%s' % optim.name)
-    for k,key in enumerate(multires.keys): multires.budgetyears[key] = tmpresults[k].budgetyears # WARNING, this is ugly
+    for k,key in enumerate(multires.keys): multires.budgetyears[key] = tmpresults[k].budgetyears 
     optim.resultsref = multires.name # Store the reference for this result
     
     # Store optimization settings

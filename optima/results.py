@@ -1,11 +1,15 @@
 """
 This module defines the classes for stores the results of a single simulation run.
 
+<<<<<<< HEAD
 Version: 2016oct28
+=======
+Version: 2017oct23
+>>>>>>> fix/validindices-calc
 """
 
 from optima import OptimaException, Link, Settings, odict, pchip, plotpchip, sigfig # Classes/functions
-from optima import uuid, today, makefilepath, getdate, printv, dcp, objrepr, defaultrepr # Printing utilities
+from optima import uuid, today, makefilepath, getdate, printv, dcp, objrepr, defaultrepr, sanitizefilename # Printing/file utilities
 from optima import quantile, findinds, findnearest, promotetolist, promotetoarray, checktype # Numeric utilities
 from numpy import array, nan, zeros, arange, shape, maximum
 from numbers import Number
@@ -333,27 +337,27 @@ class Resultset(object):
         self.main['numaids'].pops = process(allpeople[:,allaids,:,:][:,:,:,indices].sum(axis=1)) # Axis 1 is health state
         self.main['numaids'].tot  = process(allpeople[:,allaids,:,:][:,:,:,indices].sum(axis=(1,2))) # Axis 2 is populations
 
-        self.main['numdiag'].pops = process(allpeople[:,alldx,:,:][:,:,:,indices].sum(axis=1)) # WARNING, this is ugly, but allpeople[:,txinds,:,indices] produces an error
+        self.main['numdiag'].pops = process(allpeople[:,alldx,:,:][:,:,:,indices].sum(axis=1)) # Note that allpeople[:,txinds,:,indices] produces an error
         self.main['numdiag'].tot = process(allpeople[:,alldx,:,:][:,:,:,indices].sum(axis=(1,2))) # Axis 1 is populations
         
         self.main['propdiag'].pops = process(allpeople[:,alldx,:,:][:,:,:,indices].sum(axis=1)/maximum(allpeople[:,allplhiv,:,:][:,:,:,indices].sum(axis=1),eps), percent=True) 
         self.main['propdiag'].tot  = process(allpeople[:,alldx,:,:][:,:,:,indices].sum(axis=(1,2))/maximum(allpeople[:,allplhiv,:,:][:,:,:,indices].sum(axis=(1,2)),eps), percent=True) # Axis 1 is populations
         if data is not None: self.main['propdiag'].datatot = processdata(data['optpropdx'])
         
-        self.main['numevercare'].pops = process(allpeople[:,allevercare,:,:][:,:,:,indices].sum(axis=1)) # WARNING, this is ugly, but allpeople[:,txinds,:,indices] produces an error
+        self.main['numevercare'].pops = process(allpeople[:,allevercare,:,:][:,:,:,indices].sum(axis=1)) #  Note that allpeople[:,txinds,:,indices] produces an error
         self.main['numevercare'].tot  = process(allpeople[:,allevercare,:,:][:,:,:,indices].sum(axis=(1,2))) # Axis 1 is populations
 
         self.main['propevercare'].pops = process(allpeople[:,allevercare,:,:][:,:,:,indices].sum(axis=1)/maximum(allpeople[:,alldx,:,:][:,:,:,indices].sum(axis=1),eps), percent=True) 
         self.main['propevercare'].tot  = process(allpeople[:,allevercare,:,:][:,:,:,indices].sum(axis=(1,2))/maximum(allpeople[:,alldx,:,:][:,:,:,indices].sum(axis=(1,2)),eps), percent=True) # Axis 1 is populations
 
-        self.main['numincare'].pops = process(allpeople[:,allcare,:,:][:,:,:,indices].sum(axis=1)) # WARNING, this is ugly, but allpeople[:,txinds,:,indices] produces an error
+        self.main['numincare'].pops = process(allpeople[:,allcare,:,:][:,:,:,indices].sum(axis=1)) #  Note that allpeople[:,txinds,:,indices] produces an error
         self.main['numincare'].tot  = process(allpeople[:,allcare,:,:][:,:,:,indices].sum(axis=(1,2))) # Axis 1 is populations
 
         self.main['propincare'].pops = process(allpeople[:,allcare,:,:][:,:,:,indices].sum(axis=1)/maximum(allpeople[:,alldx,:,:][:,:,:,indices].sum(axis=1),eps), percent=True) 
         self.main['propincare'].tot  = process(allpeople[:,allcare,:,:][:,:,:,indices].sum(axis=(1,2))/maximum(allpeople[:,alldx,:,:][:,:,:,indices].sum(axis=(1,2)),eps), percent=True) # Axis 1 is populations
         if data is not None: self.main['propincare'].datatot = processdata(data['optpropcare'])
 
-        self.main['numtreat'].pops = process(allpeople[:,alltx,:,:][:,:,:,indices].sum(axis=1)) # WARNING, this is ugly, but allpeople[:,txinds,:,indices] produces an error
+        self.main['numtreat'].pops = process(allpeople[:,alltx,:,:][:,:,:,indices].sum(axis=1)) #  Note that allpeople[:,txinds,:,indices] produces an error
         self.main['numtreat'].tot = process(allpeople[:,alltx,:,:][:,:,:,indices].sum(axis=(1,2))) # Axis 1 is populations
         if data is not None: self.main['numtreat'].datatot = processdata(data['numtx'])
 
@@ -383,7 +387,7 @@ class Resultset(object):
 
         
         # Calculate DALYs
-        yearslostperdeath = 15 # WARNING, KLUDGY -- this gives roughly a 5:1 ratio of YLL:YLD
+        yearslostperdeath = 15 # TODO: this gives roughly a 5:1 ratio of YLL:YLD; calculate more precisely
         disutiltx = self.pars['disutiltx'].y
         disutils = [self.pars['disutil'+key].y for key in self.settings.hivstates]
 
@@ -475,7 +479,7 @@ class Resultset(object):
         if writetofile: 
             ext = 'xlsx' if asexcel else 'csv'
             defaultname = self.projectinfo['name']+'-'+self.name # Default filename if none supplied
-            fullpath = makefilepath(filename=filename, folder=folder, default=defaultname, ext=ext)
+            fullpath = makefilepath(filename=filename, folder=folder, default=defaultname, ext=ext, sanitize=True)
             if asexcel:
                 outputdict = {'Results':outputstr}
                 exporttoexcel(fullpath, outputdict)
@@ -954,7 +958,7 @@ def exporttoexcel(filename=None, outdict=None):
     workbook = Workbook(filename)
     
     for key,outstr in outdict.items():
-        worksheet = workbook.add_worksheet(key)
+        worksheet = workbook.add_worksheet(sanitizefilename(key)) # A valid filename should also be a valid Excel key
         
         # Define formatting
         colors = {'gentlegreen':'#3c7d3e', 'fadedstrawberry':'#ffeecb', 'edgyblue':'#bcd5ff','accountantgrey':'#f6f6f6', 'white':'#ffffff'}

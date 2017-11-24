@@ -2,7 +2,7 @@
 ## Preliminaries
 ###########################################################################
 
-from optima import OptimaException, loaddatapars, odict, printv, today, isnumber
+from optima import OptimaException, loaddatapars, odict, printv, today, isnumber, makefilepath
 from numpy import nan, isnan, array, nonzero, shape # For reading in empty values
 from xlrd import open_workbook # For opening Excel workbooks
 
@@ -71,7 +71,7 @@ def getyears(sheetdata):
 ## Define the workbook and parameter names -- should match makespreadsheet.py and partable in parameters.py
 ###########################################################################################################
         
-def loadspreadsheet(filename='simple.xlsx', verbose=2):
+def loadspreadsheet(filename=None, folder=None, verbose=2):
     '''
     Loads the spreadsheet (i.e. reads its contents into the data).
     This data sheet is used in the next step to update the corresponding model.
@@ -79,7 +79,9 @@ def loadspreadsheet(filename='simple.xlsx', verbose=2):
     Version: 1.5 (2017feb09)
     '''
     
-    printv('Loading data from %s...' % filename, 1, verbose)
+    fullpath = makefilepath(filename=filename, folder=folder, ext='xlsx', default='simple.xlsx')
+    
+    printv('Loading data from %s...' % fullpath, 1, verbose)
     
     # Create dictionary of parameters to load
     pardefinitions = loaddatapars(verbose=verbose)
@@ -109,9 +111,9 @@ def loadspreadsheet(filename='simple.xlsx', verbose=2):
     data['pships']['inj'] = [] # Store injecting partnerships
     
     ## Actually open workbook
-    try:  workbook = open_workbook(filename) # Open workbook
+    try:  workbook = open_workbook(fullpath) # Open workbook
     except Exception as E: 
-        errormsg = 'Failed to load spreadsheet "%s": %s' % (filename, E.__repr__())
+        errormsg = 'Failed to load spreadsheet "%s": %s' % (fullpath, E.__repr__())
         raise OptimaException(errormsg)
     
     ## Open workbook and calculate columns for which data are entered, and store the year ranges
@@ -179,7 +181,7 @@ def loadspreadsheet(filename='simple.xlsx', verbose=2):
                     if assumptiondata != '': # There's an assumption entered
                         thesedata = [assumptiondata] # Replace the (presumably blank) data if a non-blank assumption has been entered
                     data[thispar].append(thesedata) # Store data
-                    checkblank = False if sheetname in ['Optional indicators', 'Cascade'] or thispar=='numcirc' else True # Don't check optional indicators, check everything else
+                    checkblank = False if sheetname in ['Optional indicators', 'Cascade'] or thispar in ['numcirc', 'costtx'] else True # Don't check optional indicators, check everything else
                     validatedata(thesedata, sheetname, thispar, row, checkblank=checkblank, checkupper=checkupper[thispar])
 
                 # It's a matrix, append the data                                     

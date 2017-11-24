@@ -7,7 +7,7 @@ Version: 2016feb06
 """
 
 from optima import OptimaException, Link, printv, uuid, today, sigfig, getdate, dcp, smoothinterp, findinds, odict, Settings, sanitize, defaultrepr, isnumber, promotetoarray, vec2obj, asd, convertlimits
-from numpy import ones, prod, array, zeros, exp, log, append, nan, maximum, minimum, sort, concatenate as cat, transpose, mean
+from numpy import ones, prod, array, zeros, exp, log, append, nan, isnan, maximum, minimum, sort, concatenate as cat, transpose, mean
 from random import uniform
 import abc
 
@@ -359,15 +359,20 @@ class Programset(object):
         for program in self.programs:
             totalbudget[program] = dcp(emptyarray)
             selectbudget[program] = []
+<<<<<<< HEAD
             if 't' in self.programs[program].costcovdata.keys():
+=======
+            try:
+>>>>>>> fix/validindices-calc
                 for yrno, yr in enumerate(self.programs[program].costcovdata['t']):
                     yrindex = findinds(tvec,yr)
                     totalbudget[program][yrindex] = self.programs[program].costcovdata['cost'][yrno]
                 lastbudget[program] = sanitize(totalbudget[program])[-1]
-            else: 
+            except:
+                lastbudget[program] = nan # Initialize, to overwrite if there's data
+            if isnan(lastbudget[program]): 
                 printv('WARNING: no cost data defined for program "%s"...' % program, 1, verbose)
-                lastbudget[program] = nan
-
+                
             # Extract cost data for particular years, if requested 
             if t is not None:
                 for yr in t:
@@ -1075,7 +1080,7 @@ class CCOF(object):
         else:
             if (not self.ccopars['t']) or (ccopar['t'] not in self.ccopars['t']):
                 for ccopartype in self.ccopars.keys():
-                    if ccopartype in ccopar.keys():
+                    if ccopartype in ccopar.keys() and ccopar[ccopartype] is not None: #Treatment progs can have an empty list for saturation
                         self.ccopars[ccopartype].append(ccopar[ccopartype])
                 printv('\nAdded CCO parameters "%s". \nCCO parameters are: %s' % (ccopar, self.ccopars), 4, verbose)
             else:

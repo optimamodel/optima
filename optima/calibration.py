@@ -16,7 +16,7 @@ def autofit(project=None, name=None, fitwhat=None, fitto=None, method='wape', ma
         method = which method of calculating the objective/goodness-of-fit to use; default weighted absolute percentage error to place less weight on outliers
     Others should be self-explanatory.
     
-    Version: 2017may22 by cliffk
+    Version: 2017may22 
     '''
     if doplot: # Store global information for debugging
         global autofitfig, autofitresults
@@ -60,7 +60,7 @@ def autofit(project=None, name=None, fitwhat=None, fitto=None, method='wape', ma
 
 
 
-## WARNING -- the following two functions must be updated together! Annoying, I know...
+## WARNING -- the following two functions must be updated together! 
 
 # Populate lists of what to fit
 def makeparlist(pars, fitwhat):
@@ -149,10 +149,10 @@ def objectivecalc(parvec=None, pars=None, parlist=None, project=None, fitto='pre
     related to the likelihood. Either way, it's very uncertain what this function
     does.
     
-    WARNING, 'bestindex' is kludgy -- discard upper and lower limits for the data
+    TODO: replace 'bestindex' with upper and lower limits for the data
     '''
     
-    if doplot: # Store global information for debugging -- WARNING, is this the best way of doing this?
+    if doplot: # Store global information for debugging -- TODO, consider better ways of doing this
         global autofitfig, autofitresults
         from pylab import figure, ceil, sqrt, subplot, scatter, xlabel, ylabel, plot, show, pause, ylim, bar, arange
         if autofitfig is None: 
@@ -168,7 +168,7 @@ def objectivecalc(parvec=None, pars=None, parlist=None, project=None, fitto='pre
 
     printv(parvec, 4, verbose)
     
-    eps = project.settings.eps # 'eps' is also kludgy -- specify absolute error -- can't be larger than ~0.001 because then general population prevalence might get screwed
+    eps = project.settings.eps # Specify absolute error -- can't be larger than ~0.001 because then general population prevalence might be weighted incorrectly
     pars = convert(pars, parlist, parvec)
     results = runmodel(pars=pars, start=project.data['years'][0], end=project.data['years'][-1], project=project, verbose=0, label=project.name+'-autofit')
     
@@ -188,7 +188,7 @@ def objectivecalc(parvec=None, pars=None, parlist=None, project=None, fitto='pre
             if tmpdata is not None: # If it actually exists, proceed
                 tmpmodel = getattr(this, attr) # Get this result, e.g. results.main['prev'].tot
                 datarows = tmpdata[bestindex] # Pull out data without uncertainty
-                modelrows = tmpmodel[bestindex] # Pull out just the best result (likely only 1 index) -- WARNING, should be another index!
+                modelrows = tmpmodel[bestindex] # Pull out just the best result (likely only 1 index) -- TODO: check if should be another index
                 nrows = len(datarows)
                 for row in range(nrows): # Loop over each available row
                     datarow = datarows[row]

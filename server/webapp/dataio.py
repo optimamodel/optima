@@ -195,10 +195,8 @@ def update_user(user_id, args):
     if user is None:
         raise UserDoesNotExist(user_id)
 
-    try:
-        userisanonymous = current_user.is_anonymous()  # CK: WARNING, SUPER HACKY way of dealing with different Flask versions
-    except:
-        userisanonymous = current_user.is_anonymous
+    try:    userisanonymous = current_user.is_anonymous() # Required for handling different Flask versions
+    except: userisanonymous = current_user.is_anonymous
 
     if userisanonymous or (str(user_id) != str(current_user.id) and not current_user.is_admin):
         secret = request.args.get('secret', '')
@@ -222,10 +220,8 @@ def update_user(user_id, args):
 
 
 def do_login_user(args):
-    try:
-        userisanonymous = current_user.is_anonymous()  # CK: WARNING, SUPER HACKY way of dealing with different Flask versions
-    except:
-        userisanonymous = current_user.is_anonymous
+    try:    userisanonymous = current_user.is_anonymous()  # For handling different Flask versions
+    except: userisanonymous = current_user.is_anonymous
 
     if userisanonymous:
         current_app.logger.debug("current user anonymous, proceed with logging in")
@@ -351,23 +347,39 @@ def verify_admin_request_decorator(api_call):
 
 
 #############################################################################################
-### OPTIMA LITE
+### OPTIMA DEMO PROJECTS
 #############################################################################################
 
-def get_optimalite_user(name='_OptimaLite'):
-    ''' Get the Optima Lite user ID, from its name -- default is '_OptimaLite' '''
+def get_optimademo_user(name='_OptimaDemo'):
+    ''' Get the Optima Demo user ID, from its name -- default is '_OptimaDemo' '''
     user = UserDb.query.filter_by(username=name).first()
-    return user.id
+    if user is None:
+        raise Exception('No Optima demo user found; demo projects not available') # Could quote name, but (minor) security risk
+        return None
+    else:
+        return user.id
 
 
-def get_optimalite_projects():
-    ''' Return the projects associated with the Optima Lite user '''
-    user_id = get_optimalite_user()
+def get_optimademo_projects():
+    '''
+    Return the projects associated with the Optima Demo user.
+    
+    Note that these should be stored in the analyses repo under the name optimademo.    
+    '''
+    user_id = get_optimademo_user()
     query = ProjectDb.query.filter_by(user_id=user_id)
     projectlist = map(load_project_summary_from_project_record, query.all())
     sortedprojectlist = sorted(projectlist, key=lambda proj: proj['name']) # Sorts by project name
-    output = {'projects': sortedprojectlist}
-    return output   
+    demoprojectlist = []
+    nationalprojectlist = []
+    regionalprojectlist = []
+    for proj in sortedprojectlist:
+        if   proj['name'].find('(demo)')>=0:   demoprojectlist.append(proj) # It's a demo project
+        elif proj['name'].find('regional')>=0: regionalprojectlist.append(proj) # It's a regional project
+        else:                                  nationalprojectlist.append(proj)
+    projects = demoprojectlist + regionalprojectlist + nationalprojectlist # Combine project lists into one sorted list
+    output = {'projects': projects}
+    return output
 
 
 
@@ -494,11 +506,7 @@ def create_project_with_spreadsheet_download(user_id, project_summary):
     new_project_template = secure_filename(
         "{}.xlsx".format(project_summary['name']))
     path = templatepath(new_project_template)
-    op.makespreadsheet(
-        path,
-        pops=project_summary['populations'],
-        datastart=project_summary['startYear'],
-        dataend=project_summary['endYear'])
+    op.makespreadsheet(path, pops=project_summary['populations'], datastart=project_summary['startYear'], dataend=project_summary['endYear'])
 
     print("> create_project_with_spreadsheet_download %s" % new_project_template)
 
@@ -572,7 +580,7 @@ def download_data_spreadsheet(project_id, is_blank=True):
             datastart=project_summary["startYear"],
             dataend=project_summary["endYear"])
     else:
-        op.makespreadsheet(path, data=project.data)
+        project.makespreadsheet(filename=path)
     return path
 
 
@@ -739,10 +747,7 @@ def create_project_from_spreadsheet(xlsx_filename, user_id, other_names):
     Returns the project id of the new project.
     """
     print(">> create_project_from_spreadsheet '%s'" % xlsx_filename)
-    try:
-        project = op.Project(spreadsheet=xlsx_filename)
-    except Exception:
-        return { 'projectId': 'BadFileFormatError' }        
+    project = op.Project(spreadsheet=xlsx_filename)
     project.name = get_unique_name(project.name, other_names)
     save_project_as_new(project, user_id)
     return { 'projectId': str(project.uid) }
@@ -783,10 +788,7 @@ def download_project_with_result(project_id):
 def update_project_from_uploaded_spreadsheet(spreadsheet_fname, project_id):
     def modify(project):
         project.loadspreadsheet(spreadsheet_fname, name='default', overwrite=True, makedefaults=True)
-    try:
-        update_project_with_fn(project_id, modify)
-    except Exception:
-        return { 'success': False }
+    update_project_with_fn(project_id, modify)
     return { 'success': True }
 
 
@@ -939,7 +941,6 @@ def upload_project_object(filename, project_id, obj_type):
     project = load_project(project_id)
     try:
         obj = op.loadobj(filename)
-        obj.uid = op.uuid()
         if obj_type == "parset":
             project.addparset(parset=obj, overwrite=True)
         elif obj_type == "progset":
@@ -1062,7 +1063,7 @@ def delete_result_by_project_id(
 
 def download_result_data(result_id):
     """
-    Returns (dirname, basename) of the the result.csv on the server -- WARNING, deprecated function name!
+    Returns (dirname, basename) of the the result.csv on the server
     """
     dirname = upload_dir_user(TEMPLATEDIR)
     if not dirname:
@@ -1530,6 +1531,10 @@ def save_optimization_summaries(project_id, optimization_summaries):
     """
     Returns all optimization summaries
     """
+    
+    print('save_optimization_summaries() for %s' % project_id)
+    print('%s' % optimization_summaries)
+    
     project = load_project(project_id)
     old_names = [o.name for o in project.optims.values()]
     parse.set_optimization_summaries_on_project(project, optimization_summaries)
