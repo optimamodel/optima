@@ -728,16 +728,6 @@ def redotranstable(project, **kwargs):
     return None
 
 
-def addpareto(project, **kwargs):
-    ''' Add Pareto conditions to optimization '''
-    
-    # Add Pareto objective
-    for o in project.optims.values():
-        o.objectives['pareto'] = False # For old projects, assume that the Pareto condition is set to False.
-        
-    return None
-
-
 #def redoprograms(project, **kwargs):
 #    """
 #    Migration between Optima 2.2.1 and 2.3 -- convert CCO objects from simple dictionaries to parameters.

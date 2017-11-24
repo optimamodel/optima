@@ -22,9 +22,6 @@ class Optim(object):
         if progsetname is None: progsetname = -1
         if objectives  is None: objectives  = defaultobjectives(project=project,  progsetname=progsetname, verbose=0)
         if constraints is None: constraints = defaultconstraints(project=project, progsetname=progsetname, verbose=0)
-        if objectives.get('pareto'): 
-            self.paretoconstraints = defaultparetoconstraints(project=project, parsetname=parsetname, verbose=0)
-
         self.name         = name # Name of the optimization, e.g. 'default'
         self.uid          = uuid() # ID
         self.projectref   = Link(project) # Store pointer for the project, if available
@@ -164,26 +161,6 @@ def defaultconstraints(project=None, progsetname=None, verbose=2):
     return constraints
 
 
-def defaultparetoconstraints(project=None, parsetname=None, verbose=2):
-    """
-    Define Pareto constraints for minimize outcomes optimization.
-    """
-
-    printv('Defining Pareto constraints...', 3, verbose=verbose)
-
-    if parsetname is None: 
-        parsetname = -1
-        printv('paretoconstraints() did not get a parsetname input, so using default', 3, verbose)
-    try:    parset = project.parsets[parsetname]
-    except: raise OptimaException('To define constraints, you must supply a parset as an input')
-
-    paretoconstraints = odict() 
-    for popkey in parset.popkeys:
-        paretoconstraints[popkey] = 1.01 # By default, specify that outcomes can't be more than 101% of their current value
-
-    return paretoconstraints
-
-
 
 
 
@@ -308,7 +285,7 @@ def constrainbudget(origbudget=None, budgetvec=None, totalbudget=None, budgetlim
 ################################################################################################################################################
 
 def outcomecalc(budgetvec=None, which=None, project=None, parsetname=None, progsetname=None, 
-                objectives=None, constraints=None, paretoconstraints=None, baselineresults=None, baselineoutcome=None, totalbudget=None, optiminds=None, origbudget=None, tvec=None, 
+                objectives=None, constraints=None, totalbudget=None, optiminds=None, origbudget=None, tvec=None, 
                 initpeople=None, outputresults=False, verbose=2, ccsample='best', doconstrainbudget=True):
     ''' Function to evaluate the objective for a given budget vector (note, not time-varying) '''
 
@@ -327,17 +304,7 @@ def outcomecalc(budgetvec=None, which=None, project=None, parsetname=None, progs
     if optiminds   is None: optiminds   = findinds(progset.optimizable())
     if budgetvec   is None: budgetvec   = dcp(origbudget[:][optiminds])
     if type(budgetvec)==odict: budgetvec = dcp(budgetvec[:][optiminds])
-
-    # Handle Pareto constraints
-    if objectives['pareto']:
-        if paretoconstraints is None: 
-            paretoconstraints = defaultparetoconstraints(project=project, parsetname=parsetname, verbose=verbose)
-        if baselineresults is None or baselineoutcome is None:
-            raise OptimaException('Need to have a baseline to calculate Pareto optimum') 
-    else:
-        if paretoconstraints is not None:
-            raise OptimaException('Pareto constraints supplied, but objectives[''pareto''] is False') # Is this required, or should it overwrite?
-        
+       
     # Validate input    
     arglist = [budgetvec, which, parset, progset, objectives, totalbudget, constraints, optiminds, origbudget]
     if any([arg is None for arg in arglist]):  # WARNING, this kind of obscures which of these is None -- is that ok? Also a little too hard-coded...
@@ -381,16 +348,6 @@ def outcomecalc(budgetvec=None, which=None, project=None, parsetname=None, progs
             thisoutcome = results.main['num'+key].tot[0][indices].sum() # the instantaneous outcome e.g. objectives['numdeath'] -- 0 is since best
             rawoutcomes['num'+key] = thisoutcome*results.dt
             outcome += thisoutcome*thisweight*results.dt # Calculate objective
-
-        # See whether things have gotten worse than allowed for any population
-        if objectives['pareto']:
-            for key in objectives['keys']:
-                if objectives[key+'weight']: 
-                    for pn,pop in enumerate(results.popkeys):
-                        origval = baselineresults.main['num'+key].pops[0][pn,indices].sum()
-                        newval = results.main['num'+key].pops[0][pn,indices].sum()
-                        if newval > paretoconstraints[pop]*origval:
-                            outcome = dcp(baselineoutcome) # If things are worse than allowed, we don't want to accept this step... 
 
         # Output results
         if outputresults:
@@ -486,8 +443,6 @@ def optimize(optim=None, maxiters=None, maxtime=None, verbose=2, stoppingfunc=No
         optim.objectives = defaultobjectives(project=project, progsetname=optim.progsetname, which=which, verbose=verbose)
     if not(hasattr(optim, 'constraints')) or optim.constraints is None:
         optim.constraints = defaultconstraints(project=project, progsetname=optim.progsetname, verbose=verbose)
-    if optim.objectives.get('pareto'):
-        optim.paretoconstraints = defaultparetoconstraints(project=project, parsetname=optim.parsetname, verbose=verbose)
 
     # Process inputs
     if not optim.objectives['budget']: # Handle 0 or None 
@@ -641,7 +596,7 @@ def minoutcomes(project=None, optim=None, tvec=None, verbose=None, maxtime=None,
     xmin = zeros(noptimprogs)
     if label is None: label = ''
     
-    # Calculate the initial people distribution using pars
+    # Calculate the initial people distribution
     results = runmodel(pars=parset.pars, project=project, parsetname=optim.parsetname, progsetname=optim.progsetname, tvec=tvec, keepraw=True, verbose=0, label=project.name+'-minoutcomes')
     initialind = findinds(results.raw[0]['tvec'], optim.objectives['start'])
     initpeople = results.raw[0]['people'][:,:,initialind] # Pull out the people array corresponding to the start of the optimization -- there shouldn't be multiple raw arrays here
@@ -659,12 +614,10 @@ def minoutcomes(project=None, optim=None, tvec=None, verbose=None, maxtime=None,
             'totalbudget':origtotalbudget, # Complicated, see below
             'optiminds':optiminds, 
             'origbudget':origbudget, 
+            'tvec': tvec, 
             'ccsample':ccsample, 
             'verbose':verbose, 
-            'tvec': None, # Set below
-            'baselineresults':None, # Set below
-            'baselineoutcome':None, # Set below
-            'initpeople':None} # Set below
+            'initpeople':initpeople} # Set below
     
     # Set up extremes
     extremebudgets = odict()
@@ -684,27 +637,6 @@ def minoutcomes(project=None, optim=None, tvec=None, verbose=None, maxtime=None,
     extremeresults  = odict()
     extremeoutcomes = odict()
 
-    # Set baseline
-    dopareto = dcp(optim.objectives['pareto']) # Store whether Pareto condition is being used or not
-    args['objectives']['pareto'] = False # Don't use Pareto condition on the baseline run, because we need to know the baseline before we can run the Pareto condition
-    args['totalbudget'] = origbudget[:].sum() # Need to reset this since constraining the budget
-    args['tvec'] = tvec # Do this so it runs for the full time series, and is comparable to the optimization result
-    doconstrainbudget = True # This is needed so it returns the full budget odict, not just the budget vector
-    inds = optiminds # WARNING, super kludgy
-    extremeresults['Baseline'] = outcomecalc(budgetvec=extremebudgets['Baseline'][inds], outputresults=True, doconstrainbudget=doconstrainbudget, **args)
-    extremeresults['Baseline'].name = 'Baseline'
-    extremeoutcomes['Baseline'] = extremeresults['Baseline'].outcome 
-    
-    # From now on, we start with the initpeople array
-    baselinetvec = project.settings.maketvec(start=optim.objectives['start'], end=optim.objectives['end'])
-    args['initpeople'] = initpeople # Do this so saves a lot of time (runs twice as fast for all the budget scenarios)
-    args['tvec'] = baselinetvec
-    
-    # Set conditions for all other runs
-    args['totalbudget'] = origtotalbudget
-    doconstrainbudget = False
-    inds = arange(nprogs)
-    
     for key,exbudget in extremebudgets.items():
         if key=='Baseline': 
             args['initpeople'] = None # Do this so it runs for the full time series, and is comparable to the optimization result
@@ -758,23 +690,7 @@ def minoutcomes(project=None, optim=None, tvec=None, verbose=None, maxtime=None,
         totalbudget = origtotalbudget*scalefactor
         constrainedbudget, constrainedbudgetvec, lowerlim, upperlim = constrainbudget(origbudget=origbudget, budgetvec=budgetvec, totalbudget=totalbudget, budgetlims=optim.constraints, optiminds=optiminds, outputtype='full')
         args['totalbudget'] = totalbudget
-
-        # If using Pareto conditions, calculate baseline for this budget
-        if dopareto:
-
-            # Run once over the optimization dates- this is the baseline that will be used over each optimization step
-            args['objectives']['pareto'] = False # Don't use Pareto condition on the baseline run, because we need to know the baseline before we can run the Pareto condition
-            args['baselineresults'] = outcomecalc(budgetvec=constrainedbudgetvec, outputresults=True, **args)
-            args['baselineoutcome'] = args['baselineresults'].outcome
-
-            # Run once over the entire set of sim dates- this is the baseline that will be used for the final checks
-            args['initpeople'] = None # Turn off initpeople to run for the whole time period
-            args['tvec'] = tvec # Set timevec to full timevec
-            fullbaselineresults = outcomecalc(budgetvec=constrainedbudgetvec, outputresults=True, **args)
-
-            args['initpeople'] = initpeople # Reset initpeople
-            args['tvec'] = baselinetvec # Reset tvec
-            args['objectives']['pareto'] = dopareto # Reset the Pareto condition    
+        args['initpeople'] = initpeople # Reset initpeople
         
         # Set up budgets to run
         if totalbudget: # Budget is nonzero, run
@@ -816,23 +732,8 @@ def minoutcomes(project=None, optim=None, tvec=None, verbose=None, maxtime=None,
             
             ## Calculate final outcomes for the full time vector
             args['initpeople'] = None # Set to None to get full results, not just from strat year
-            args['baselineresults'] = fullbaselineresults if dopareto else None # Get the full results
-            args['tvec'] = tvec 
             new = outcomecalc(asdresults[bestkey]['budget'], outputresults=True, **args)
             
-            ## Check that the new allocation is Pareto superior to the baseline
-            if dopareto:
-                initialind = findinds(new.tvec, optim.objectives['start']) # Different indices for different result sets... maybe can think of a better way of handling this
-                finalind = findinds(new.tvec, optim.objectives['end'])
-                indices = arange(initialind, finalind) 
-                for pn,pop in enumerate(new.popkeys):
-                    for key in optim.objectives['keys']:
-                        origval = args['baselineresults'].main['num'+key].pops[0][pn,indices].sum()
-                        newval = new.main['num'+key].pops[0][pn,indices].sum()
-                        if newval > optim.paretoconstraints[pop]*origval:
-                            errormsg = 'Outcome %s got worse for population %s: %s vs. %s' % (key, pop, newval, origval)
-                            raise OptimaException(errormsg)
-
             ## Name and store outputs
             if len(scalefactors)==1: new.name = 'Optimal' # If there's just one optimization, just call it optimal
             else: new.name = 'Optimal (%.0f%% budget)' % (scalefactor*100.) # Else, say what the budget is
