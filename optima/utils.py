@@ -637,15 +637,15 @@ def getvalidinds(data=None, filterdata=None):
     Example:
         getvalidinds([3,5,8,13], [2000, nan, nan, 2004]) # Returns array([0,3])
     '''
-    from numpy import array, isnan, intersect1d
-    data = array(data)
+    from numpy import isnan, intersect1d
+    data = promotetoarray(data)
     if filterdata is None: filterdata = data # So it can work on a single input -- more or less replicates sanitize() then
-    filterdata = array(filterdata)
+    filterdata = promotetoarray(filterdata)
     if filterdata.dtype=='bool': filterindices = filterdata # It's already boolean, so leave it as is
-    else:                        filterindices = ~isnan(filterdata) # Else, assume it's nans that need to be removed
-    dataindices = ~isnan(data) # Also check validity of data
+    else:                        filterindices = findinds(~isnan(filterdata)) # Else, assume it's nans that need to be removed
+    dataindices = findinds(~isnan(data)) # Also check validity of data
     validindices = intersect1d(dataindices, filterindices)
-    return findinds(validindices) # Only return indices -- WARNING, not consistent with sanitize()
+    return validindices # Only return indices -- WARNING, not consistent with sanitize()
 
 
 
