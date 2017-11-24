@@ -1,11 +1,7 @@
 """
 This module defines the classes for stores the results of a single simulation run.
 
-<<<<<<< HEAD
-Version: 2016oct28
-=======
 Version: 2017oct23
->>>>>>> fix/validindices-calc
 """
 
 from optima import OptimaException, Link, Settings, odict, pchip, plotpchip, sigfig # Classes/functions
