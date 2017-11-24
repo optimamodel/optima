@@ -359,11 +359,7 @@ class Programset(object):
         for program in self.programs:
             totalbudget[program] = dcp(emptyarray)
             selectbudget[program] = []
-<<<<<<< HEAD
-            if 't' in self.programs[program].costcovdata.keys():
-=======
             try:
->>>>>>> fix/validindices-calc
                 for yrno, yr in enumerate(self.programs[program].costcovdata['t']):
                     yrindex = findinds(tvec,yr)
                     totalbudget[program][yrindex] = self.programs[program].costcovdata['cost'][yrno]
