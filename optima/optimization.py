@@ -706,12 +706,6 @@ def minoutcomes(project=None, optim=None, tvec=None, verbose=None, maxtime=None,
     inds = arange(nprogs)
     
     for key,exbudget in extremebudgets.items():
-<<<<<<< HEAD
-        if key!='Baseline':  # We already did this one
-            extremeresults[key] = outcomecalc(budgetvec=exbudget[inds], outputresults=True, doconstrainbudget=doconstrainbudget, **args)
-            extremeresults[key].name = key
-            extremeoutcomes[key] = extremeresults[key].outcome
-=======
         if key=='Baseline': 
             args['initpeople'] = None # Do this so it runs for the full time series, and is comparable to the optimization result
             args['totalbudget'] = origbudget[:].sum() # Need to reset this since constraining the budget
@@ -725,7 +719,6 @@ def minoutcomes(project=None, optim=None, tvec=None, verbose=None, maxtime=None,
         extremeresults[key] = outcomecalc(exbudget[inds], outputresults=True, doconstrainbudget=doconstrainbudget, **args)
         extremeresults[key].name = key
         extremeoutcomes[key] = extremeresults[key].outcome
->>>>>>> fix/validindices-calc
     if mc: bestprogram = argmin(extremeoutcomes[:][len(firstkeys):])+len(firstkeys) # Don't include no funding or infinite funding examples
     
     # Print out results of the run
