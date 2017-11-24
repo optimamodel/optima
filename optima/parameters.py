@@ -26,7 +26,7 @@ staticmatrixkeys = ['birthtransit','agetransit','risktransit'] # Static keys tha
 class Parameterset(object):
     ''' Class to hold all parameters and information on how they were generated, and perform operations on them'''
     
-    def __init__(self, name='default', project=None, progsetname=None, budget=None):
+    def __init__(self, name='default', project=None, progsetname=None, budget=None, start=None):
         self.name = name # Name of the parameter set, e.g. 'default'
         self.uid = uuid() # ID
         self.projectref = Link(project) # Store pointer for the project, if available
@@ -38,6 +38,7 @@ class Parameterset(object):
         self.resultsref = None # Store pointer to results
         self.progsetname = progsetname # Store the name of the progset that generated the parset, if any
         self.budget = budget # Store the budget that generated the parset, if any
+        self.start = start # Store the startyear of the parset
         
     
     def __repr__(self):

@@ -101,9 +101,7 @@ def defaultobjectives(project=None, progsetname=None, which=None, verbose=2):
         objectives['deathfrac']   = None # Fraction of deaths to get to
         objectives['incifrac']    = None # Fraction of incidence to get to
         objectives['dalyfrac']    = None # Fraction of DALYs to get to
-        objectives['pareto']      = True # Find Pareto optimum
     elif which=='money':
-        objectives['pareto']      = False # For now
         objectives['base']        = 2015 # "Baseline year to compare outcomes to"
         objectives['start']       = 2017 # "Year to begin optimization"
         objectives['end']         = 2027 # "Year by which to achieve objectives"
