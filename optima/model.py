@@ -916,11 +916,8 @@ def runmodel(project=None, simpars=None, pars=None, parsetname=None, progsetname
     ''' 
     Convenience function for running the model. Requires input of either "simpars" or "pars"; and for including the data,
     requires input of either "project" or "data". All other inputs are optional.
-<<<<<<< HEAD
-=======
     
     Version: 2017jun04
->>>>>>> fix/validindices-calc
     '''
     if settings is None:
         try:    settings = project.settings 
