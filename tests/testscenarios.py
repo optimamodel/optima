@@ -10,8 +10,8 @@ tests = [
 #'standardscen',
 #'maxcoverage',
 #'budget',
-'90-90-90',
-#'sensitivity',
+#'90-90-90',
+'sensitivity',
 #'VMMC'
 ]
 

@@ -600,17 +600,14 @@ class Project(object):
         return None
     
     
-    def runscenarios(self, scenlist=None, name=None, verbose=2, debug=False, nruns=1, storediffs=True, base=0, ccsample=False, randseed=None, **kwargs):
+    def runscenarios(self, scenlist=None, name=None, verbose=2, debug=False, nruns=1, base=0, ccsample=False, randseed=None, **kwargs):
         ''' Function to run scenarios '''
 
         if scenlist is not None: self.addscens(scenlist) # Replace existing scenario list with a new one
         if name is None: name='scenarios' 
     
-        scenres = runscenarios(project=self, verbose=verbose, name=name, debug=debug, nruns=nruns, storediffs=storediffs, base=base, ccsample=ccsample, randseed=randseed, **kwargs)
-#        import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+        scenres = runscenarios(project=self, verbose=verbose, name=name, debug=debug, nruns=nruns, base=base, ccsample=ccsample, randseed=randseed, **kwargs)
         self.addresult(result=scenres[name])
-        if storediffs:
-            self.addresult(result=scenres['scenariodiffs'])
         self.modified = today()
         return scenres
     
