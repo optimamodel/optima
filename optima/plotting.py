@@ -888,7 +888,9 @@ def plotcascade(results=None, aspercentage=False, cascadecolors=None, figsize=gl
         origbasecolor = array([0.5,0.60,0.9])
         origendcolor  = array([0.3,0.85,0.6])
         if plotendyear   is None: plotendyear   = results.tvec[-1]
-        if plotstartyear is None:
+        if plotstartyear is not None:
+            startind, endind = getplotinds(plotstartyear=plotstartyear, plotendyear=plotendyear, tvec=results.tvec, die=die, verbose=verbose) # Get year indices for producing plots
+        else:
             try: # Try making a plot with the last year of treatment data as the first year
                 plotstartyear = results.pars['numtx'].t['tot'][-1]
                 startind, endind = getplotinds(plotstartyear=plotstartyear, plotendyear=plotendyear, tvec=results.tvec, die=die, verbose=verbose) # Get year indices for producing plots
