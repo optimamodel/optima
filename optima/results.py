@@ -80,10 +80,10 @@ class Resultset(object):
         self.settings = settings if settings is not None else Settings()
         
         # Main results -- time series, by population
-        self.main['numinci']        = Result('New infections acquired')
-        self.main['numdeath']       = Result('HIV-related deaths')
+        self.main['numinci']        = Result('New HIV infections')
+        self.main['numdeath']       = Result('AIDS-related deaths')
         self.main['numdaly']        = Result('HIV-related DALYs')
-        self.main['numincibypop']   = Result('New infections caused')
+        self.main['numincibypop']   = Result('New HIV infections caused')
         
         self.main['numplhiv']       = Result('PLHIV')
         self.main['numaids']        = Result('People with AIDS')
