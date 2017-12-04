@@ -35,8 +35,9 @@ def validatedata(thesedata, sheetname, thispar, row, checkupper=False, checklowe
         if checklower: valid *= array(validdata)>=0
         if checkupper: valid *= array(validdata)<=1
         if not valid.all():
+            invalid = validdata[valid==False]
             errormsg = 'Invalid entry in sheet "%s", parameter "%s":\n' % (sheetname, thispar) 
-            errormsg += 'row=%i, values="%s"\n' % (row+1, validdata)
+            errormsg += 'row=%i, invalid="%s", values="%s"\n' % (row+1, invalid, validdata)
             errormsg += 'Be sure that all values are >=0 (and <=1 if a probability)'
             raise OptimaException(errormsg)
     elif checkblank: # No data entered
