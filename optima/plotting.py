@@ -189,7 +189,7 @@ def getplotselections(results, advanced=False, excludedalys=True):
 
 
 
-def makeplots(results=None, toplot=None, die=False, verbose=2, plotstartyear=None, plotendyear=None, fig=None, **kwargs):
+def makeplots(results=None, toplot=None, die=False, verbose=2, plotstartyear=None, plotendyear=None, fig=None, addtitle=True, **kwargs):
     ''' 
     Function that takes all kinds of plots and plots them -- this is the only plotting function the user should use 
     
@@ -216,7 +216,7 @@ def makeplots(results=None, toplot=None, die=False, verbose=2, plotstartyear=Non
         toplot.remove('improvement') # Because everything else is passed to plotepi()
         try: 
             if hasattr(results, 'improvement') and results.improvement is not None: # WARNING, duplicated from getplotselections()
-                allplots['improvement'] = plotimprovement(results, die=die, fig=fig, **kwargs)
+                allplots['improvement'] = plotimprovement(results, die=die, fig=fig, addtitle=addtitle, **kwargs)
         except OptimaException as E: 
             if die: raise E
             else: printv('Could not plot improvement: "%s"' % E.__repr__(), 1, verbose)
@@ -226,7 +226,7 @@ def makeplots(results=None, toplot=None, die=False, verbose=2, plotstartyear=Non
         toplot.remove('budgets') # Because everything else is passed to plotepi()
         try: 
             if hasattr(results, 'budgets') and results.budgets: # WARNING, duplicated from getplotselections()
-                budgetplots = plotbudget(results, die=die, fig=fig, **kwargs)
+                budgetplots = plotbudget(results, die=die, fig=fig, addtitle=addtitle, **kwargs)
                 allplots.update(budgetplots)
         except OptimaException as E: 
             if die: raise E
@@ -237,7 +237,7 @@ def makeplots(results=None, toplot=None, die=False, verbose=2, plotstartyear=Non
         toplot.remove('coverage') # Because everything else is passed to plotepi()
         try: 
             if hasattr(results, 'coverages') and results.coverages: # WARNING, duplicated from getplotselections()
-                coverageplots = plotcoverage(results, die=die, fig=fig, **kwargs)
+                coverageplots = plotcoverage(results, die=die, fig=fig, addtitle=addtitle, **kwargs)
                 allplots.update(coverageplots)
         except OptimaException as E: 
             if die: raise E
@@ -247,7 +247,7 @@ def makeplots(results=None, toplot=None, die=False, verbose=2, plotstartyear=Non
     if 'cascade' in toplot:
         toplot.remove('cascade') # Because everything else is passed to plotepi()
         try: 
-            cascadeplots = plotcascade(results, die=die, plotstartyear=plotstartyear, plotendyear=plotendyear, fig=fig, **kwargs)
+            cascadeplots = plotcascade(results, die=die, plotstartyear=plotstartyear, plotendyear=plotendyear, fig=fig, addtitle=addtitle, **kwargs)
             allplots.update(cascadeplots)
         except OptimaException as E: 
             if die: raise E
@@ -257,7 +257,7 @@ def makeplots(results=None, toplot=None, die=False, verbose=2, plotstartyear=Non
     if 'cascadebars' in toplot:
         toplot.remove('cascadebars') # Because everything else is passed to plotepi()
         try: 
-            cascadebarplots = plotcascade(results, die=die, plotstartyear=plotstartyear, plotendyear=plotendyear, fig=fig, asbars=True, **kwargs)
+            cascadebarplots = plotcascade(results, die=die, plotstartyear=plotstartyear, plotendyear=plotendyear, fig=fig, asbars=True, addtitle=addtitle, **kwargs)
             allplots.update(cascadebarplots)
         except OptimaException as E: 
             if die: raise E
@@ -267,7 +267,7 @@ def makeplots(results=None, toplot=None, die=False, verbose=2, plotstartyear=Non
     if 'deathbycd4' in toplot:
         toplot.remove('deathbycd4') # Because everything else is passed to plotepi()
         try: 
-            allplots['deathbycd4'] = plotbycd4(results, whattoplot='death', die=die, fig=fig, **kwargs)
+            allplots['deathbycd4'] = plotbycd4(results, whattoplot='death', die=die, fig=fig, addtitle=addtitle, **kwargs)
         except OptimaException as E: 
             if die: raise E
             else: printv('Could not plot deaths by CD4: "%s"' % E.__repr__(), 1, verbose)
@@ -276,14 +276,14 @@ def makeplots(results=None, toplot=None, die=False, verbose=2, plotstartyear=Non
     if 'plhivbycd4' in toplot:
         toplot.remove('plhivbycd4') # Because everything else is passed to plotepi()
         try: 
-            allplots['plhivbycd4'] = plotbycd4(results, whattoplot='people', die=die, fig=fig, **kwargs)
+            allplots['plhivbycd4'] = plotbycd4(results, whattoplot='people', die=die, fig=fig, addtitle=addtitle, **kwargs)
         except OptimaException as E: 
             if die: raise E
             else: printv('Could not plot PLHIV by CD4: "%s"' % E.__repr__(), 1, verbose)
     
     
     ## Add epi plots -- WARNING, I hope this preserves the order! ...It should...
-    epiplots = plotepi(results, toplot=toplot, die=die, plotstartyear=plotstartyear, plotendyear=plotendyear, fig=fig, **kwargs)
+    epiplots = plotepi(results, toplot=toplot, die=die, plotstartyear=plotstartyear, plotendyear=plotendyear, fig=fig, addtitle=addtitle, **kwargs)
     allplots.update(epiplots)
     
     return allplots
@@ -294,7 +294,8 @@ def makeplots(results=None, toplot=None, die=False, verbose=2, plotstartyear=Non
 
 def plotepi(results, toplot=None, uncertainty=True, die=True, showdata=True, verbose=2, figsize=globalfigsize, 
             alpha=0.2, lw=2, dotsize=30, titlesize=globaltitlesize, labelsize=globallabelsize, ticksize=globalticksize, 
-            legendsize=globallegendsize, position=None, useSIticks=True, colors=None, reorder=None, plotstartyear=None, plotendyear=None, interactive=None, fig=None, **kwargs):
+            legendsize=globallegendsize, position=None, useSIticks=True, colors=None, reorder=None, 
+            plotstartyear=None, plotendyear=None, addtitle=True, interactive=None, fig=None, **kwargs):
         '''
         Render the plots requested and store them in a list. Argument "toplot" should be a list of form e.g.
         ['prev-tot', 'inci-pop']
@@ -551,7 +552,8 @@ def plotepi(results, toplot=None, uncertainty=True, die=True, showdata=True, ver
                     plotylabel = plottitle
                     plottitle  = results.popkeys[i] # Add extra information to plot if by population
                     ax.set_ylabel(plotylabel)
-                ax.set_title(plottitle)
+                if addtitle: ax.set_title(plottitle)
+                else: ax.set_title('')
                 setylim(allydata, ax=ax)
                 ax.set_xlim((results.tvec[startind], results.tvec[endind]))
                 if not ismultisim:
@@ -573,7 +575,8 @@ def plotepi(results, toplot=None, uncertainty=True, die=True, showdata=True, ver
 ##################################################################
 ## Plot improvements
 ##################################################################
-def plotimprovement(results=None, figsize=globalfigsize, lw=2, titlesize=globaltitlesize, labelsize=globallabelsize, ticksize=globalticksize, position=None, interactive=False, fig=None, **kwargs):
+def plotimprovement(results=None, figsize=globalfigsize, lw=2, titlesize=globaltitlesize, labelsize=globallabelsize, 
+                    ticksize=globalticksize, position=None, interactive=False, fig=None, addtitle=True, **kwargs):
     ''' 
     Plot the result of an optimization or calibration -- WARNING, should not duplicate from plotepi()! 
     
@@ -619,7 +622,8 @@ def plotimprovement(results=None, figsize=globalfigsize, lw=2, titlesize=globalt
     ax.set_xlabel('Iteration')
     abschange = sigfig(mean(absimprove), sigfigs)
     relchange = sigfig(mean(relimprove), sigfigs)
-    ax.set_title('Change in outcome: %s (%s%%)' % (abschange, relchange)) # WARNING -- use mean or best?
+    if addtitle: ax.set_title('Change in outcome: %s (%s%%)' % (abschange, relchange)) # WARNING -- use mean or best?
+    else: ax.set_title('')
     setylim(0, ax=ax)
     ax.set_xlim((0, maxiters))
     
@@ -636,7 +640,7 @@ def plotimprovement(results=None, figsize=globalfigsize, lw=2, titlesize=globalt
     
     
 def plotbudget(multires=None, die=True, figsize=globalfigsize, legendsize=globallegendsize, position=None,
-               usepie=False, verbose=2, interactive=False, fig=None, **kwargs):
+               usepie=False, verbose=2, interactive=False, fig=None, addtitle=True, **kwargs):
     ''' 
     Plot multiple allocations on bar charts -- intended for scenarios and optimizations.
 
@@ -725,7 +729,8 @@ def plotbudget(multires=None, die=True, figsize=globalfigsize, legendsize=global
         ax.set_yticks(arange(nallocs)+1)
         ax.set_yticklabels(alloclabels)
         ax.set_ylim(0,nallocs+1)
-        ax.set_title('Budget')
+        if addtitle: ax.set_title('Budget')
+        else: ax.set_title('')
         
         SIticks(ax=ax, axis='x')
         budgetplots['budget'] = fig
@@ -746,7 +751,8 @@ def plotbudget(multires=None, die=True, figsize=globalfigsize, legendsize=global
 ##################################################################
     
     
-def plotcoverage(multires=None, die=True, figsize=globalfigsize, legendsize=globallegendsize, position=None, verbose=2, interactive=False, fig=None, **kwargs):
+def plotcoverage(multires=None, die=True, figsize=globalfigsize, legendsize=globallegendsize, position=None,
+                 verbose=2, interactive=False, fig=None, addtitle=True, **kwargs):
     ''' 
     Plot multiple allocations on bar charts -- intended for scenarios and optimizations.
 
@@ -813,7 +819,8 @@ def plotcoverage(multires=None, die=True, figsize=globalfigsize, legendsize=glob
          
         if nallocs>1: thistitle = 'Coverage - %s' % alloclabels[plt]
         else:         thistitle = 'Program coverage'
-        ax[-1].set_title(thistitle)
+        if addtitle: ax[-1].set_title(thistitle)
+        else: ax[-1].set_title('')
         ymin = min(ymin, ax[-1].get_ylim()[0])
         ymax = max(ymax, ax[-1].get_ylim()[1])
         
@@ -846,7 +853,7 @@ def plotcoverage(multires=None, die=True, figsize=globalfigsize, legendsize=glob
 def plotcascade(results=None, aspercentage=False, cascadecolors=None, figsize=globalfigsize, lw=2, titlesize=globaltitlesize, 
                 labelsize=globallabelsize, ticksize=globalticksize, legendsize=globallegendsize, position=None, useSIticks=True, 
                 showdata=True, dotsize=50, plotstartyear=None, plotendyear=None, die=False, verbose=2, interactive=False, fig=None,
-                asbars=False, allbars=True, **kwargs):
+                asbars=False, allbars=True, addtitle=True, **kwargs):
 
     ''' 
     Plot the treatment cascade.
@@ -943,7 +950,6 @@ def plotcascade(results=None, aspercentage=False, cascadecolors=None, figsize=gl
             dx = 1.0
             space = 4.0
             basex = arange(ncategories)*space
-#            import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
             for k,key in enumerate(casckeys):
                 for i,ind in enumerate(cascinds):
                     if ismultisim: 
@@ -1023,14 +1029,15 @@ def plotcascade(results=None, aspercentage=False, cascadecolors=None, figsize=gl
         legendsettings = {'loc':'upper left', 'bbox_to_anchor':(1.05, 1), 'fontsize':legendsize, 'title':'', 'frameon':False, 'scatterpoints':1}
         ax.legend(**legendsettings) # Multiple entries, all populations
             
-        ax.set_title(thistitle)
+        if addtitle: ax.set_title(thistitle)
+        else: ax.set_title('')
         cascadeplots[thistitle] = fig
         
     return cascadeplots
 
 
 
-def plotallocations(project=None, budgets=None, colors=None, factor=1e6, compare=True, plotfixed=False, interactive=False):
+def plotallocations(project=None, budgets=None, colors=None, factor=1e6, compare=True, plotfixed=False, interactive=False, addtitle=True):
     ''' Plot allocations in bar charts -- not part of weboptima '''
     
     if budgets is None:
@@ -1082,7 +1089,8 @@ def plotallocations(project=None, budgets=None, colors=None, factor=1e6, compare
         if factor==1:     ax[-1].set_ylabel('Spending (US$)')
         elif factor==1e3: ax[-1].set_ylabel("Spending (US$'000s)")
         elif factor==1e6: ax[-1].set_ylabel('Spending (US$m)')
-        ax[-1].set_title(labels[plt])
+        if addtitle: ax[-1].set_title(labels[plt])
+        else: ax[-1].set_title('')
         ymin = min(ymin, ax[-1].get_ylim()[0])
         ymax = max(ymax, ax[-1].get_ylim()[1])
     for a in ax:
@@ -1095,7 +1103,7 @@ def plotallocations(project=None, budgets=None, colors=None, factor=1e6, compare
 ## Plot things by CD4
 ##################################################################
 def plotbycd4(results=None, whattoplot='people', figsize=globalfigsize, lw=2, titlesize=globaltitlesize, labelsize=globallabelsize, 
-                ticksize=globalticksize, legendsize=globallegendsize, ind=0, interactive=False, **kwargs):
+                ticksize=globalticksize, legendsize=globallegendsize, ind=0, interactive=False, addtitle=True, **kwargs):
     ''' 
     Plot deaths or people by CD4
     NOTE: do not call this function directly; instead, call via plotresults().
@@ -1149,8 +1157,12 @@ def plotbycd4(results=None, whattoplot='people', figsize=globalfigsize, lw=2, ti
         # Configure plot specifics
         legendsettings = {'loc':'upper left', 'bbox_to_anchor':(1.05, 1), 'fontsize':legendsize, 'title':'',
                           'frameon':False}
-        if ismultisim: ax[-1].set_title(titlemap[whattoplot]+'- %s' % titles[plt])
-        else: ax[-1].set_title(titlemap[whattoplot])
+
+        if addtitle: 
+            if ismultisim: ax[-1].set_title(titlemap[whattoplot]+'- %s' % titles[plt])
+            else: ax[-1].set_title(titlemap[whattoplot])
+        else: ax[-1].set_title('')
+
         setylim(allydata, ax[-1])
         ax[-1].set_xlim((results.tvec[0], results.tvec[-1]))
         ax[-1].legend(results.settings.hivstatesfull, **legendsettings) # Multiple entries, all populations
@@ -1166,7 +1178,7 @@ def plotbycd4(results=None, whattoplot='people', figsize=globalfigsize, lw=2, ti
 ## Plot things by CD4
 ##################################################################
 def ploticers(results=None, figsize=globalfigsize, lw=2, dotsize=30, titlesize=globaltitlesize, labelsize=globallabelsize, 
-             ticksize=globalticksize, legendsize=globallegendsize, position=None, interactive=False, **kwargs):
+             ticksize=globalticksize, legendsize=globallegendsize, position=None, interactive=False, addtitle=True, **kwargs):
     ''' 
     Plot ICERs. Not part of weboptima yet.
     '''
@@ -1226,7 +1238,8 @@ def ploticers(results=None, figsize=globalfigsize, lw=2, dotsize=30, titlesize=g
     for item in ax.get_xticklabels() + ax.get_yticklabels(): item.set_fontsize(ticksize)
 
     # Configure plot specifics
-    ax.set_title('ICERs')
+    if addtitle: ax.set_title('ICERs')
+    else: ax.set_title('')
     ax.set_ylabel('Cost per %s averted' % objectivestr)
     ax.set_xlabel('Program spending relative to baseline (%)')
     ax.set_ylim(0, newupper*1.05)
@@ -1241,7 +1254,7 @@ def ploticers(results=None, figsize=globalfigsize, lw=2, dotsize=30, titlesize=g
 
 
 
-def plotcostcov(program=None, year=None, parset=None, results=None, plotoptions=None, existingFigure=None, plotbounds=True, npts=100, maxupperlim=1e8, doplot=False, interactive=False):
+def plotcostcov(program=None, year=None, parset=None, results=None, plotoptions=None, existingFigure=None, plotbounds=True, npts=100, maxupperlim=1e8, interactive=False, addtitle=True):
     ''' Plot the cost-coverage curve for a single program'''
     
     # Put plotting imports here so fails at the last possible moment
@@ -1334,7 +1347,8 @@ def plotcostcov(program=None, year=None, parset=None, results=None, plotoptions=
     ax.set_xlabel(plotdata['xlabel'], fontsize=11)
     ax.set_ylabel(plotdata['ylabel'], fontsize=11)
     ax.get_xaxis().set_major_locator(ticker.MaxNLocator(nbins=3))
-    ax.set_title(program.short)
+    if addtitle: ax.set_title(program.short)
+    else: ax.set_title('')
     ax.get_xaxis().get_major_formatter().set_scientific(False)
     ax.get_yaxis().get_major_formatter().set_scientific(False)
     if len(year)>1: ax.legend(loc=4)
@@ -1344,7 +1358,8 @@ def plotcostcov(program=None, year=None, parset=None, results=None, plotoptions=
 
 
 
-def saveplots(results=None, toplot=None, filetype=None, filename=None, folder=None, savefigargs=None, index=None, verbose=2, plots=None, **kwargs):
+def saveplots(results=None, toplot=None, filetype=None, filename=None, folder=None, savefigargs=None, 
+              index=None, verbose=2, plots=None, addtitle=True, **kwargs):
     '''
     Save the requested plots to disk.
     
@@ -1379,7 +1394,7 @@ def saveplots(results=None, toplot=None, filetype=None, filename=None, folder=No
     
     # Either take supplied plots, or generate them
     if plots is None: # NB, this is actually a figure or a list of figures
-        plots = makeplots(results=results, toplot=toplot, **kwargs)
+        plots = makeplots(results=results, toplot=toplot, addtitle=addtitle, **kwargs)
     plots = promotetoodict(plots)
     nplots = len(plots)
     
