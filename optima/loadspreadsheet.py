@@ -3,8 +3,8 @@
 ###########################################################################
 
 from optima import OptimaException, loaddatapars, odict, printv, today, isnumber, makefilepath
-from numpy import nan, isnan, array, nonzero, shape # For reading in empty values
-from xlrd import open_workbook # For opening Excel workbooks
+from numpy import nan, isnan, array, shape # For reading in empty values
+from xlrd import open_workbook, colname # For opening Excel workbooks
 
 
 def forcebool(entry, location=''):
@@ -16,15 +16,16 @@ def forcebool(entry, location=''):
         raise OptimaException(errormsg)
     
     
-def validatedata(thesedata, sheetname, thispar, row, checkupper=False, checklower=True, checkblank=True):
+def validatedata(thesedata, sheetname, thispar, row, checkupper=False, checklower=True, checkblank=True, startcol=0):
     ''' Do basic validation on the data: at least one point entered, between 0 and 1 or just above 0 if checkupper=False '''
     
     # Check that only numeric data have been entered
     for column,datum in enumerate(thesedata):
         if not isnumber(datum):
             errormsg = 'Invalid entry in sheet "%s", parameter "%s":\n' % (sheetname, thispar) 
-            errormsg += 'row=%i, column=%s, value=%s\n' % (row+1, column, datum)
+            errormsg += 'row=%i, column=%s, value="%s"\n' % (row+1, colname(column+startcol), datum)
             errormsg += 'Be sure all entries are numeric'
+            if ' ' or '\t' in datum: errormsg +=' (there seems to be a space or tab)'
             raise OptimaException(errormsg)
     
     # Now check integrity of data itself
@@ -34,18 +35,15 @@ def validatedata(thesedata, sheetname, thispar, row, checkupper=False, checklowe
         if checklower: valid *= array(validdata)>=0
         if checkupper: valid *= array(validdata)<=1
         if not valid.all():
-            column = nonzero(valid==False)[0]
             errormsg = 'Invalid entry in sheet "%s", parameter "%s":\n' % (sheetname, thispar) 
-            errormsg += 'row=%i, column(s)=%s, value(s)=%s\n' % (row+1, column, validdata)
+            errormsg += 'row=%i, values="%s"\n' % (row+1, validdata)
             errormsg += 'Be sure that all values are >=0 (and <=1 if a probability)'
             raise OptimaException(errormsg)
-    
-    # No data entered
-    elif checkblank:
+    elif checkblank: # No data entered
         errormsg = 'No data or assumption entered for sheet "%s", parameter "%s", row=%i' % (sheetname, thispar, row) 
         raise OptimaException(errormsg)
-    
-    return None
+    else:
+        return None
 
 
 def blank2nan(thesedata):
@@ -110,6 +108,11 @@ def loadspreadsheet(filename=None, folder=None, verbose=2):
     data['pships']['com'] = [] # Store commercial partnerships
     data['pships']['inj'] = [] # Store injecting partnerships
     
+    ## Initialize other quantities
+    blhindices = {'best':0, 'low':1, 'high':2} # Define best-low-high indices
+    skipblanksheets = ['Optional indicators', 'Cascade'] # Don't check optional indicators, check everything else
+    skipblankpars = ['numcirc', 'costtx']
+    
     ## Actually open workbook
     try:  workbook = open_workbook(fullpath) # Open workbook
     except Exception as E: 
@@ -164,37 +167,41 @@ def loadspreadsheet(filename=None, folder=None, verbose=2):
                     
                 # It's key data, save both the values and uncertainties
                 elif sheettype=='key':
+                    startcol = 3 # Extra column for high/best/low
                     if len(data[thispar])==0: 
                         data[thispar] = [[] for z in range(3)] # Create new variable for best, low, high
-                    thesedata = blank2nan(sheetdata.row_values(row, start_colx=3, end_colx=lastdatacol)) # Data starts in 4th column -- need room for high/best/low
+                    thesedata = blank2nan(sheetdata.row_values(row, start_colx=startcol, end_colx=lastdatacol)) # Data starts in 4th column -- need room for high/best/low
                     assumptiondata = sheetdata.cell_value(row, assumptioncol)
                     if assumptiondata != '': thesedata = [assumptiondata] # Replace the (presumably blank) data if a non-blank assumption has been entered
-                    blhindices = {'best':0, 'low':1, 'high':2} # Define best-low-high indices
                     blh = sheetdata.cell_value(row, 2) # Read in whether indicator is best, low, or high
                     data[thispar][blhindices[blh]].append(thesedata) # Actually append the data
-                    validatedata(thesedata, sheetname, thispar, row, checkblank=(blh=='best'), checkupper=checkupper[thispar])  # Make sure at least the best estimate isn't blank
+                    validatedata(thesedata, sheetname, thispar, row, checkblank=(blh=='best'), checkupper=checkupper[thispar], startcol=startcol)  # Make sure at least the best estimate isn't blank
                     
                 # It's basic data, append the data and check for programs
                 elif sheettype=='time': 
-                    thesedata = blank2nan(sheetdata.row_values(row, start_colx=2, end_colx=lastdatacol-1)) # Data starts in 3rd column, and ends lastdatacol-1
+                    startcol = 2
+                    thesedata = blank2nan(sheetdata.row_values(row, start_colx=startcol, end_colx=lastdatacol-1)) # Data starts in 3rd column, and ends lastdatacol-1
                     assumptiondata = sheetdata.cell_value(row, assumptioncol-1)
                     if assumptiondata != '': # There's an assumption entered
                         thesedata = [assumptiondata] # Replace the (presumably blank) data if a non-blank assumption has been entered
                     data[thispar].append(thesedata) # Store data
-                    checkblank = False if sheetname in ['Optional indicators', 'Cascade'] or thispar in ['numcirc', 'costtx'] else True # Don't check optional indicators, check everything else
-                    validatedata(thesedata, sheetname, thispar, row, checkblank=checkblank, checkupper=checkupper[thispar])
+                    checkblank = False if sheetname in skipblanksheets or thispar in skipblankpars else True # Don't check optional indicators, check everything else
+                    validatedata(thesedata, sheetname, thispar, row, checkblank=checkblank, checkupper=checkupper[thispar], startcol=startcol)
 
                 # It's a matrix, append the data                                     
                 elif sheettype=='matrix':
-                    thesedata = sheetdata.row_values(row, start_colx=2, end_colx=sheetdata.ncols) # Data starts in 3rd column
+                    startcol = 2
+                    thesedata = sheetdata.row_values(row, start_colx=startcol, end_colx=sheetdata.ncols) # Data starts in 3rd column
                     thesedata = list(map(lambda val: 0 if val=='' else val, thesedata)) # Replace blanks with 0
                     data[thispar].append(thesedata) # Store data
-                    validatedata(thesedata, sheetname, thispar, row)
+                    validatedata(thesedata, sheetname, thispar, row, startcol=startcol)
                 
                 # It's a constant, create a new dictionary entry
                 elif sheettype=='constant':
+                    startcol = 2
+                    endcol = 5
                     thispar = subparlist.pop(0) # Get the first item in this list
-                    thesedata = blank2nan(sheetdata.row_values(row, start_colx=2, end_colx=5)) # Data starts in 3rd column, finishes in 5th column
+                    thesedata = blank2nan(sheetdata.row_values(row, start_colx=startcol, end_colx=endcol)) # Data starts in 3rd column, finishes in 5th column
                     validatedata(thesedata, sheetname, thispar, row)
                     data[thispar] = thesedata # Store data
                 
