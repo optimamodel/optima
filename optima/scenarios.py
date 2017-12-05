@@ -6,7 +6,7 @@ Version: 2017jun03
 
 ## Imports
 from numpy import append, array
-from optima import OptimaException, Link, Multiresultset, runmodel # Core classes/functions
+from optima import OptimaException, Link, Multiresultset # Core classes/functions
 from optima import dcp, today, odict, printv, findinds, defaultrepr, getresults, vec2obj, isnumber, uuid, promotetoarray # Utilities
 
 class Scen(object):
