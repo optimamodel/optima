@@ -81,7 +81,7 @@ class Resultset(object):
         
         # Main results -- time series, by population
         self.main['numinci']        = Result('New HIV infections')
-        self.main['numdeath']       = Result('AIDS-related deaths')
+        self.main['numdeath']       = Result('HIV-related deaths')
         self.main['numdaly']        = Result('HIV-related DALYs')
         self.main['numincibypop']   = Result('New HIV infections caused')
         
