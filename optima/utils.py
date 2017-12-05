@@ -1016,13 +1016,15 @@ def checkmem(origvariable, descend=0, order='n', plot=False, verbose=0):
 
 
 
-def getfilelist(folder=None, ext=None):
+def getfilelist(folder=None, ext=None, pattern=None):
     ''' A short-hand since glob is annoying '''
     from glob import glob
     import os
     if folder is None: folder = os.getcwd()
-    if ext is None: ext = '*'
-    filelist = sorted(glob(os.path.join(folder, '*.'+ext)))
+    if pattern is None:
+        if ext is None: ext = '*'
+        pattern = '*.'+ext
+    filelist = sorted(glob(os.path.join(folder, pattern)))
     return filelist
 
 
