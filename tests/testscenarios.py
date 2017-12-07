@@ -10,8 +10,8 @@ tests = [
 #'standardscen',
 #'maxcoverage',
 #'budget',
-#'90-90-90',
-'sensitivity',
+'90-90-90',
+#'sensitivity',
 #'VMMC'
 ]
 
@@ -327,6 +327,8 @@ if '90-90-90' in tests:
 #        ppl = P.results[-1].raw['90-90-90'][0]['people']
 #        plotpeople(P, ppl)
         pygui(P.results[-1], toplot='default')
+
+    P.result().summary()
 
     done(t)
 
