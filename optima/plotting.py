@@ -853,7 +853,7 @@ def plotcoverage(multires=None, die=True, figsize=globalfigsize, legendsize=glob
 def plotcascade(results=None, aspercentage=False, cascadecolors=None, figsize=globalfigsize, lw=2, titlesize=globaltitlesize, 
                 labelsize=globallabelsize, ticksize=globalticksize, legendsize=globallegendsize, position=None, useSIticks=True, 
                 showdata=True, dotsize=50, plotstartyear=None, plotendyear=None, die=False, verbose=2, interactive=False, fig=None,
-                asbars=False, allbars=True, addtitle=True, **kwargs):
+                asbars=False, allbars=True, addtitle=True, blhind=None, **kwargs):
 
     ''' 
     Plot the treatment cascade.
@@ -867,6 +867,9 @@ def plotcascade(results=None, aspercentage=False, cascadecolors=None, figsize=gl
     
     Version: 2017jun02 
     '''
+    
+    # Set defaults
+    if blhind is None: blhind = 0 # Just plot best for now - TODO, add errorbars
     
     # Figure out what kind of result it is
     if type(results)==Resultset: 
@@ -953,7 +956,7 @@ def plotcascade(results=None, aspercentage=False, cascadecolors=None, figsize=gl
             for k,key in enumerate(casckeys):
                 for i,ind in enumerate(cascinds):
                     if ismultisim: 
-                        thisbar = 100.*results.main[key].tot[plt][ind]/results.main['numplhiv'].tot[plt][ind] # If it's a multisim, need an extra index for the plot number
+                        thisbar = 100.*results.main[key].tot[plt][blhind][ind]/results.main['numplhiv'].tot[plt][blhind][ind] # If it's a multisim, need an extra index for the plot number
                     else:
                         thisbar = 100.*results.main[key].tot[0][ind]/results.main['numplhiv'].tot[0][ind] # Get the best estimate
                     if k==len(casckeys)-1: label = labels[i]
