@@ -711,7 +711,7 @@ def plotbudget(multires=None, die=True, figsize=globalfigsize, legendsize=global
             for p in range(nprogslist[b]-1,-1,-1): # Loop in reverse order over programs
                 progkey = budget.keys()[p]
                 ydata = budget[p]
-                xdata = b+0.6 # 0.6 is 1 nimunus 0.4, which is half the bar width
+                xdata = b+1.0#.6 # 0.6 is 1 nimunus 0.4, which is half the bar width
                 bottomdata = sum(budget[:p])
                 label = None
                 if progkey in allprogkeys:
@@ -817,9 +817,9 @@ def plotcoverage(multires=None, die=True, figsize=globalfigsize, legendsize=glob
         ylabel = 'Coverage (%)'
         ax[-1].set_ylabel(ylabel)
          
-        if nallocs>1: thistitle = 'Coverage - %s' % alloclabels[plt]
-        else:         thistitle = 'Program coverage'
-        if addtitle: ax[-1].set_title(thistitle)
+        if addtitle: 
+            if nallocs>1: thistitle = 'Coverage - %s' % alloclabels[plt]
+            else:         thistitle = 'Program coverage'
         else: ax[-1].set_title('')
         ymin = min(ymin, ax[-1].get_ylim()[0])
         ymax = max(ymax, ax[-1].get_ylim()[1])
