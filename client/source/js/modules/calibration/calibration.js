@@ -130,7 +130,7 @@ define(['angular', 'underscore'], function (angular, _) {
           "calibration", 
 	      getSelectors(),
         null,
-        $scope.advancedPars
+        $scope.state.advancedPars
 	    ]
       rpcService
         .rpcRun('load_parset_graphs', rpc_args)
@@ -162,7 +162,7 @@ define(['angular', 'underscore'], function (angular, _) {
             "calibration",
             getSelectors(),
             $scope.parameters,
-            $scope.advancedPars
+            $scope.state.advancedPars
           ],
           {
             startYear: $scope.state.startYear,
@@ -191,8 +191,8 @@ define(['angular', 'underscore'], function (angular, _) {
     };
 
     $scope.toggleAdvancedPars = function() {
-      $scope.advancedPars = !$scope.advancedPars; // Do the actual toggle
-      console.log('toggleAdvancedPars', $scope.advancedPars);
+      $scope.state.advancedPars = !$scope.state.advancedPars; // Do the actual toggle
+      console.log('toggleAdvancedPars', $scope.state.advancedPars);
       $scope.saveAndUpdateGraphs(); // Update the graphs
     };
 
