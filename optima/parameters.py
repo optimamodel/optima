@@ -251,40 +251,40 @@ class Parameterset(object):
                     if advanced: # By default, don't include these
                         keylist.append(key)
                         subkeylist.append(None)
-                        typelist.append(par.manual)
+                        typelist.append('meta')
                         valuelist.append(par.m)
                         labellist.append('%s: meta' % par.name)
-                elif par.manual in 'const':
+                elif par.manual=='const':
                     keylist.append(key)
                     subkeylist.append(None)
-                    typelist.append(par.manual)
+                    typelist.append('const')
                     valuelist.append(par.y)
                     labellist.append(par.name)
                 elif par.manual=='advanced': # These are also constants, but skip by default
                     if advanced:
                         keylist.append(key)
                         subkeylist.append(None)
-                        typelist.append(par.manual)
+                        typelist.append('const')
                         valuelist.append(par.y)
                         labellist.append(par.name)
                 elif par.manual=='year':
                     keylist.append(key)
                     subkeylist.append(None)
-                    typelist.append(par.manual)
+                    typelist.append('year')
                     valuelist.append(par.t)
                     labellist.append(par.name)
                 elif par.manual=='pop':
                     for subkey in par.keys():
                         keylist.append(key)
                         subkeylist.append(subkey)
-                        typelist.append(par.manual)
+                        typelist.append('pop')
                         valuelist.append(par.y[subkey])
                         labellist.append('%s: %s' % (par.name, str(subkey)))
                 elif par.manual=='exp':
                     for subkey in par.keys():
                         keylist.append(key)
                         subkeylist.append(subkey)
-                        typelist.append(par.manual)
+                        typelist.append('exp')
                         valuelist.append(par.i[subkey])
                         labellist.append('%s: %s' % (par.name, str(subkey)))
                 else:

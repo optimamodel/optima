@@ -123,7 +123,7 @@ define(['angular', 'underscore'], function (angular, _) {
 
     $scope.getCalibrationGraphs = function() {
       console.log('active parset id', $scope.state.parset.id);
-	  var rpc_args = 
+	  var rpc_args =
 	    [
 		  projectService.project.id, 
 		  $scope.state.parset.id,
