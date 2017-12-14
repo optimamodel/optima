@@ -1231,7 +1231,7 @@ def save_parameters(project_id, parset_id, parameters):
 
 
 
-def load_parset_graphs(project_id, parset_id, calculation_type, which=None, parameters=None, zoom=None, startYear=None, endYear=None, advanced=None):
+def load_parset_graphs(project_id, parset_id, calculation_type, which=None, parameters=None, advanced_pars=None, zoom=None, startYear=None, endYear=None):
 
     print(">> load_parset_graphs args project_id %s" % project_id)
     print(">> load_parset_graphs args parset_id %s" % parset_id)
@@ -1268,7 +1268,7 @@ def load_parset_graphs(project_id, parset_id, calculation_type, which=None, para
     graph_dict = make_mpld3_graph_dict(result=result, which=which, zoom=zoom, startYear=startYear, endYear=endYear)
 
     return {
-        "parameters": parse.get_parameters_from_parset(parset, advanced=advanced),
+        "parameters": parse.get_parameters_from_parset(parset, advanced=advanced_pars),
         "graphs": graph_dict["graphs"]
     }
 

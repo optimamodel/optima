@@ -29,6 +29,7 @@ define(['angular', 'underscore'], function (angular, _) {
         startYear: 1900,
         endYear: 2020,
         graphs: undefined,
+        advancedPars: false
       };
 
 	  // Load the active project, telling the function we're not using an Undo stack.
@@ -127,8 +128,10 @@ define(['angular', 'underscore'], function (angular, _) {
 		  projectService.project.id, 
 		  $scope.state.parset.id,
           "calibration", 
-	      getSelectors()
-	    ]		  
+	      getSelectors(),
+        null,
+        $scope.advancedPars
+	    ]
       rpcService
         .rpcRun('load_parset_graphs', rpc_args)
         .then(
@@ -158,7 +161,8 @@ define(['angular', 'underscore'], function (angular, _) {
             $scope.state.parset.id,
             "calibration",
             getSelectors(),
-            $scope.parameters
+            $scope.parameters,
+            $scope.advancedPars
           ],
           {
             startYear: $scope.state.startYear,
@@ -184,6 +188,13 @@ define(['angular', 'underscore'], function (angular, _) {
 
     $scope.changeParameter = function(parameter) {
       console.log(parameter);
+    };
+
+    $scope.toggleAdvancedPars = function() {
+      $scope.advancedPars = !$scope.advancedPars; // Do the actual toggle
+      console.log('toggleAdvancedPars', $scope.advancedPars);
+      $scope.saveAndUpdateGraphs();
+      toastr.success('Toggled TEMP');
     };
 
     $scope.addParameterSet = function() {
