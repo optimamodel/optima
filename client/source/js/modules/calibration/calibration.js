@@ -193,8 +193,7 @@ define(['angular', 'underscore'], function (angular, _) {
     $scope.toggleAdvancedPars = function() {
       $scope.advancedPars = !$scope.advancedPars; // Do the actual toggle
       console.log('toggleAdvancedPars', $scope.advancedPars);
-      $scope.saveAndUpdateGraphs();
-      toastr.success('Toggled TEMP');
+      $scope.saveAndUpdateGraphs(); // Update the graphs
     };
 
     $scope.addParameterSet = function() {
