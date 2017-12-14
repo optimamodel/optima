@@ -29,6 +29,7 @@ define(['angular', 'underscore'], function (angular, _) {
         startYear: 1900,
         endYear: 2020,
         graphs: undefined,
+        advancedPars: false
       };
 
 	  // Load the active project, telling the function we're not using an Undo stack.
@@ -122,13 +123,15 @@ define(['angular', 'underscore'], function (angular, _) {
 
     $scope.getCalibrationGraphs = function() {
       console.log('active parset id', $scope.state.parset.id);
-	  rpc_args = 
+	  var rpc_args =
 	    [
 		  projectService.project.id, 
 		  $scope.state.parset.id,
           "calibration", 
-	      getSelectors()
-	    ]		  
+	      getSelectors(),
+        null,
+        $scope.state.advancedPars
+	    ];
       rpcService
         .rpcRun('load_parset_graphs', rpc_args)
         .then(
@@ -158,7 +161,8 @@ define(['angular', 'underscore'], function (angular, _) {
             $scope.state.parset.id,
             "calibration",
             getSelectors(),
-            $scope.parameters
+            $scope.parameters,
+            $scope.state.advancedPars
           ],
           {
             startYear: $scope.state.startYear,
@@ -184,6 +188,12 @@ define(['angular', 'underscore'], function (angular, _) {
 
     $scope.changeParameter = function(parameter) {
       console.log(parameter);
+    };
+
+    $scope.toggleAdvancedPars = function() {
+      $scope.state.advancedPars = !$scope.state.advancedPars; // Do the actual toggle
+      console.log('toggleAdvancedPars', $scope.state.advancedPars);
+      $scope.saveAndUpdateGraphs(); // Update the graphs
     };
 
     $scope.addParameterSet = function() {

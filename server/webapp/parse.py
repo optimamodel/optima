@@ -338,7 +338,7 @@ def get_project_summary_from_project(project):
 ### PARSETS
 #############################################################################################
 
-def get_parameters_from_parset(parset, advanced=False):
+def get_parameters_from_parset(parset, advanced=None):
     """
     Returns a flat dictionary of parameters for the calibration
     page from an optima parameter set object. Extracts subkey's
