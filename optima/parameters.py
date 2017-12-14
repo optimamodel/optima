@@ -220,7 +220,7 @@ class Parameterset(object):
         return None
 
 
-    def manualfitlists(self, parsubset=None, advanced=False):
+    def manualfitlists(self, parsubset=None, advanced=None):
         ''' WARNING -- not sure if this function is needed; if it is needed, it should be combined with manualgui,py '''
         if not self.pars:
             raise OptimaException("No parameters available!")
@@ -243,7 +243,7 @@ class Parameterset(object):
         typelist = mflists['types']
         valuelist = mflists['values']
         labellist = mflists['labels']
-
+        
         for key in tmppars.keys():
             par = tmppars[key]
             if hasattr(par, 'manual') and par.manual != 'no':  # Don't worry if it doesn't work, not everything in tmppars is actually a parameter
