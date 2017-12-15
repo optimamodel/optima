@@ -47,10 +47,13 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
     # Initialize raw arrays -- reporting annual quantities (so need to divide by dt!)
     raw_inci        = zeros((npops, npts))          # Total incidence acquired by each population
     raw_incibypop   = zeros((npops, npts))          # Total incidence caused by each population
+    raw_txincibypop = zeros((npops, npts))          # Total incidence caused by each population on treatment
     raw_births      = zeros((npops, npts))          # Total number of births to each population
+    raw_birthsto    = zeros((npops, npts))          # Total births by each population 
     raw_mtct        = zeros((npops, npts))          # Number of mother-to-child transmissions to each population
     raw_mtctfrom    = zeros((npops, npts))          # Number of mother-to-child transmissions from each population
     raw_hivbirths   = zeros((npops, npts))          # Number of births to HIV+ pregnant women
+    raw_hivdxbirths = zeros((npops, npts))          # Number of births to diagnosed HIV+ pregnant women
     raw_receivepmtct= zeros((npops, npts))          # Initialise a place to store the number of people in each population receiving PMTCT
     raw_diag        = zeros((npops, npts))          # Number diagnosed per timestep
     raw_newcare     = zeros((npops, npts))          # Number newly in care per timestep
@@ -533,7 +536,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
         ###############################################################################
         
         # Probability of getting infected. In the first stage of construction, we actually store this as the probability of NOT getting infected
-        # First dimension: infection acquired by (circumcision status). Second dimension:  infection acquired by (pop). Third dimension: infection caused by (pop). Fourth dimension: infection caused by (health/treatment state)
+        # First dimension: infection acquired by (circumcision status). Second dimension:  infection acquired by (pop). Third dimension: infection caused by (health/treatment state) Fourth dimension: infection caused by (pop). 
         forceinffull = ones((len(sus), npops, nstates, npops))
 
         # Loop over all acts (partnership pairs) -- probability of pop1 getting infected by pop2
@@ -581,6 +584,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
         # Calculate infections acquired and transmitted
         raw_inci[:,t]       = einsum('ij,ijkl->j', people[sus,:,t], forceinffull)/dt
         raw_incibypop[:,t]  = einsum('ij,ijkl->l', people[sus,:,t], forceinffull)/dt
+        raw_txincibypop[:,t]  = einsum('ij,ijkl->l', people[sus,:,t], forceinffull[:,:,alltx,:])/dt
 
             
         ##############################################################################################################
@@ -697,11 +701,10 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
         # Calculate actual births, MTCT, and PMTCT
         for p1,p2,birthrates,alleligbirthrate in birthslist:
             thisbirthrate = birthrates[t]
-            peopledx = people[alldx, p1, t].sum() # Assign to a variable since used twice
             popbirths      = thisbirthrate * people[:, p1, t].sum()
             mtctundx       = thisbirthrate * people[undx, p1, t].sum() * effmtct[t] # Births to undiagnosed mothers
             mtcttx         = thisbirthrate * people[alltx, p1, t].sum()  * pmtcteff[t] # Births to mothers on treatment
-            thiseligbirths = thisbirthrate * peopledx # Births to diagnosed mothers eligible for PMTCT
+            thiseligbirths = thisbirthrate * people[alldx, p1, t].sum() # Births to diagnosed mothers eligible for PMTCT
 
             mtctdx = (thiseligbirths * (1-calcproppmtct)) * effmtct[t] # MTCT from those diagnosed not receiving PMTCT
             mtctpmtct = (thiseligbirths * calcproppmtct) * pmtcteff[t] # MTCT from those receiving PMTCT
@@ -712,7 +715,9 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
             raw_mtct[p2, t] += popmtct/dt
             raw_mtctfrom[p1, t] += popmtct/dt
             raw_births[p2, t] += popbirths/dt
+            raw_birthsto[p1, t] += thisbirthrate*people[:, p1, t].sum()/dt
             raw_hivbirths[p1, t] += thisbirthrate*people[allplhiv, p1, t].sum()/dt
+            raw_hivdxbirths[p1, t] += thisbirthrate*people[alldx, p1, t].sum()/dt
             
         raw_inci[:,t] += raw_mtct[:,t] # Update infections acquired based on PMTCT calculation
         raw_incibypop[:,t] += raw_mtctfrom[:,t] # Update infections caused based on PMTCT calculation
@@ -875,9 +880,12 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
     raw['people']       = people
     raw['inci']         = raw_inci
     raw['incibypop']    = raw_incibypop
+    raw['txincibypop']  = raw_txincibypop 
     raw['mtct']         = raw_mtct
     raw['births']       = raw_births
+    raw['birthsto']     = raw_birthsto
     raw['hivbirths']    = raw_hivbirths
+    raw['hivdxbirths']  = raw_hivdxbirths
     raw['pmtct']        = raw_receivepmtct
     raw['diag']         = raw_diag
     raw['newtreat']     = raw_newtreat

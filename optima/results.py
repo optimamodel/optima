@@ -80,44 +80,52 @@ class Resultset(object):
         self.settings = settings if settings is not None else Settings()
         
         # Main results -- time series, by population
-        self.main['numinci']        = Result('New HIV infections')
-        self.main['numdeath']       = Result('HIV-related deaths')
-        self.main['numdaly']        = Result('HIV-related DALYs')
-        self.main['numincibypop']   = Result('New HIV infections caused')
-        
+        self.main['popsize']        = Result('Population size')
         self.main['numplhiv']       = Result('PLHIV')
-        self.main['numaids']        = Result('People with AIDS')
         self.main['numdiag']        = Result('Diagnosed PLHIV')
-        self.main['numevercare']    = Result('PLHIV initially linked to care')
-        self.main['numincare']      = Result('PLHIV in care')
         self.main['numtreat']       = Result('PLHIV on treatment')
         self.main['numsuppressed']  = Result('Virally suppressed PLHIV')
-        
-        self.main['propdiag']       = Result('Diagnosed PLHIV (%)',                      ispercentage=True, defaultplot='total')
-        self.main['propplhivtreat'] = Result('Treated PLHIV (%)',                        ispercentage=True, defaultplot='total')
-        self.main['propplhivsupp']  = Result('Virally suppressed PLHIV (%)',             ispercentage=True, defaultplot='total')
-        self.main['propevercare']   = Result('Diagnosed PLHIV linked to care (%)',       ispercentage=True, defaultplot='total')
-        self.main['propincare']     = Result('Diagnosed PLHIV retained in care (%)',     ispercentage=True, defaultplot='total')
-        self.main['proptreat']      = Result('Diagnosed PLHIV on treatment (%)',         ispercentage=True, defaultplot='total')
-        self.main['propsuppressed'] = Result('Treated PLHIV with viral suppression (%)', ispercentage=True, defaultplot='total')
-        
-        self.main['prev']           = Result('HIV prevalence (%)',       ispercentage=True, defaultplot='population')
-        self.main['force']          = Result('Incidence (per 100 p.y.)', ispercentage=True, defaultplot='population')
-        self.main['numnewdiag']     = Result('New diagnoses')
-        self.main['nummtct']        = Result('HIV+ births')
-        self.main['numhivbirths']   = Result('Births to HIV+ women')
-        self.main['numpmtct']       = Result('HIV+ women receiving PMTCT')
-        self.main['popsize']        = Result('Population size')
-        self.main['costtreat']      = Result('Annual treatment spend', defaultplot='total')
 
-        self.other['adultprev']     = Result('Adult HIV prevalence (%)', ispercentage=True)
-        self.other['childprev']     = Result('Child HIV prevalence (%)', ispercentage=True)
-        self.other['numotherdeath'] = Result('Non-HIV-related deaths)')
-        self.other['numbirths']     = Result('Total births)')
+        self.main['numinci']        = Result('New HIV infections')
+        self.main['numincibypop']   = Result('New HIV transmissions')
+        self.main['numinciartbypop']= Result('New HIV infections transmissions on ART')
+
+        self.main['numotherdeath']  = Result('Non-HIV-related deaths')
+        self.main['numdeath']       = Result('HIV-related deaths')
+        self.main['numartdeath']    = Result('HIV-related deaths on ART')
         
-        # Add all health states
-        for healthkey,healthname in zip(self.settings.healthstates, self.settings.healthstatesfull): # Health keys: ['susreg', 'progcirc', 'undx', 'dx', 'care', 'lost', 'usvl', 'svl']
-            self.other['only'+healthkey]   = Result(healthname) # Pick out only people in these health states
+        self.main['numnewdiag']     = Result('New diagnoses')
+        self.main['numnewtreat']    = Result('PLHIV newly initiated on treatment')
+
+        self.main['numpreg']        = Result('Total pregancies')
+        self.main['numhivbirths']   = Result('Pregancies to HIV+ women')
+        self.main['numhivdxbirths'] = Result('Pregancies to diagnosed HIV+ women')
+
+#        self.main['numpmtct']       = Result('HIV+ women receiving PMTCT')
+#        self.other['adultprev']     = Result('Adult HIV prevalence (%)', ispercentage=True)
+#        self.other['childprev']     = Result('Child HIV prevalence (%)', ispercentage=True)
+
+#        self.main['numbirths']      = Result('Total births')
+#        self.main['prev']           = Result('HIV prevalence (%)',       ispercentage=True, defaultplot='population')
+#        self.main['costtreat']      = Result('Annual treatment spend', defaultplot='total')
+#        self.main['numdaly']        = Result('HIV-related DALYs')
+#        self.main['numaids']        = Result('People with AIDS')
+#        self.main['numevercare']    = Result('PLHIV initially linked to care')
+#        self.main['numincare']      = Result('PLHIV in care')
+        
+#        self.main['propdiag']       = Result('Diagnosed PLHIV (%)',                      ispercentage=True, defaultplot='total')
+#        self.main['propplhivtreat'] = Result('Treated PLHIV (%)',                        ispercentage=True, defaultplot='total')
+#        self.main['propplhivsupp']  = Result('Virally suppressed PLHIV (%)',             ispercentage=True, defaultplot='total')
+#        self.main['propevercare']   = Result('Diagnosed PLHIV linked to care (%)',       ispercentage=True, defaultplot='total')
+#        self.main['propincare']     = Result('Diagnosed PLHIV retained in care (%)',     ispercentage=True, defaultplot='total')
+#        self.main['proptreat']      = Result('Diagnosed PLHIV on treatment (%)',         ispercentage=True, defaultplot='total')
+#        self.main['propsuppressed'] = Result('Treated PLHIV with viral suppression (%)', ispercentage=True, defaultplot='total')
+#        self.main['force']          = Result('Incidence (per 100 p.y.)', ispercentage=True, defaultplot='population')
+        
+        
+#        # Add all health states
+#        for healthkey,healthname in zip(self.settings.healthstates, self.settings.healthstatesfull): # Health keys: ['susreg', 'progcirc', 'undx', 'dx', 'care', 'lost', 'usvl', 'svl']
+#            self.other['only'+healthkey]   = Result(healthname) # Pick out only people in these health states
             
         if domake: self.make(raw, verbose=verbose, quantiles=quantiles, doround=doround)
     
@@ -264,32 +272,48 @@ class Resultset(object):
         allpeople    = assemble('people')
         allinci      = assemble('inci')
         allincibypop = assemble('incibypop')
+        alltxincibypop = assemble('txincibypop')
         alldeaths    = assemble('death')
         otherdeaths  = assemble('otherdeath') 
         alldiag      = assemble('diag')
-        allmtct      = assemble('mtct')
+        allnewtreat  = assemble('newtreat')
         allhivbirths = assemble('hivbirths')
-        allbirths    = assemble('births')
-        allpmtct     = assemble('pmtct')
-        allcosttreat = assemble('costtreat')
+        allhivdxbirths = assemble('hivdxbirths')
+        allbirthsto    = assemble('birthsto')
         allplhiv     = self.settings.allplhiv
-        allaids      = self.settings.allaids
         alldx        = self.settings.alldx
-        allevercare  = self.settings.allevercare
-        allcare      = self.settings.allcare
         alltx        = self.settings.alltx
         svl          = self.settings.svl
+#        allmtct      = assemble('mtct')
+#        allbirths    = assemble('births')
+#        allpmtct     = assemble('pmtct')
+#        allcosttreat = assemble('costtreat')
+#        allaids      = self.settings.allaids
+#        allevercare  = self.settings.allevercare
+#        allcare      = self.settings.allcare
         data         = self.data
+        
 
         # Actually do calculations
-        self.main['prev'].pops = process(allpeople[:,allplhiv,:,:][:,:,:,indices].sum(axis=1) / allpeople[:,:,:,indices].sum(axis=1), percent=True) # Axis 1 is health state
-        self.main['prev'].tot  = process(allpeople[:,allplhiv,:,:][:,:,:,indices].sum(axis=(1,2)) / allpeople[:,:,:,indices].sum(axis=(1,2)), percent=True) # Axis 2 is populations
+        self.main['popsize'].pops = process(allpeople[:,:,:,indices].sum(axis=1))
+        self.main['popsize'].tot = process(allpeople[:,:,:,indices].sum(axis=(1,2)))
+        if data is not None: self.main['popsize'].datapops = processdata(data['popsize'], uncertainty=True)
+
+        self.main['numplhiv'].pops = process(allpeople[:,allplhiv,:,:][:,:,:,indices].sum(axis=1)) # Axis 1 is health state
+        self.main['numplhiv'].tot  = process(allpeople[:,allplhiv,:,:][:,:,:,indices].sum(axis=(1,2))) # Axis 2 is populations
         if data is not None: 
-            self.main['prev'].datapops = processdata(data['hivprev'], uncertainty=True)
-            self.main['prev'].datatot  = processdata(data['optprev'])
+            self.main['numplhiv'].datatot = processdata(data['optplhiv'])
+            self.main['numplhiv'].estimate = True # It's not real data, just an estimate
         
-        self.main['force'].pops = process(allinci[:,:,indices] / allpeople[:,:,:,indices].sum(axis=1), percent=True) # Axis 1 is health state
-        self.main['force'].tot  = process(allinci[:,:,indices].sum(axis=1) / allpeople[:,:,:,indices].sum(axis=(1,2)), percent=True) # Axis 2 is populations
+        self.main['numdiag'].pops = process(allpeople[:,alldx,:,:][:,:,:,indices].sum(axis=1)) # Note that allpeople[:,txinds,:,indices] produces an error
+        self.main['numdiag'].tot = process(allpeople[:,alldx,:,:][:,:,:,indices].sum(axis=(1,2))) # Axis 1 is populations
+        
+        self.main['numtreat'].pops = process(allpeople[:,alltx,:,:][:,:,:,indices].sum(axis=1)) #  Note that allpeople[:,txinds,:,indices] produces an error
+        self.main['numtreat'].tot = process(allpeople[:,alltx,:,:][:,:,:,indices].sum(axis=(1,2))) # Axis 1 is populations
+        if data is not None: self.main['numtreat'].datatot = processdata(data['numtx'])
+
+        self.main['numsuppressed'].pops = process(allpeople[:,svl,:,:][:,:,:,indices].sum(axis=1)) # WARNING, this is ugly, but allpeople[:,txinds,:,indices] produces an error
+        self.main['numsuppressed'].tot = process(allpeople[:,svl,:,:][:,:,:,indices].sum(axis=(1,2))) # Axis 1 is populations
 
         self.main['numinci'].pops = process(allinci[:,:,indices])
         self.main['numinci'].tot  = process(allinci[:,:,indices].sum(axis=1)) # Axis 1 is populations
@@ -303,20 +327,11 @@ class Resultset(object):
             self.main['numincibypop'].datatot = processdata(data['optnuminfect'])
             self.main['numincibypop'].estimate = True # It's not real data, just an estimate
         
-        self.main['nummtct'].pops = process(allmtct[:,:,indices])
-        self.main['nummtct'].tot  = process(allmtct[:,:,indices].sum(axis=1))
+        self.main['numinciartbypop'].pops = process(alltxincibypop[:,:,indices])
+        self.main['numinciartbypop'].tot  = process(alltxincibypop[:,:,indices].sum(axis=1)) # Axis 1 is populations
 
-        self.main['numhivbirths'].pops = process(allhivbirths[:,:,indices])
-        self.main['numhivbirths'].tot  = process(allhivbirths[:,:,indices].sum(axis=1))
-
-        self.main['numpmtct'].pops = process(allpmtct[:,:,indices])
-        self.main['numpmtct'].tot  = process(allpmtct[:,:,indices].sum(axis=1))
-
-        self.main['numnewdiag'].pops = process(alldiag[:,:,indices])
-        self.main['numnewdiag'].tot  = process(alldiag[:,:,indices].sum(axis=1)) # Axis 1 is populations
-        if data is not None: 
-            self.main['numnewdiag'].datatot = processdata(data['optnumdiag'])
-            self.main['numnewdiag'].estimate = False # It's real data, not just an estimate
+        self.main['numotherdeath'].pops = process(otherdeaths[:,:,indices])
+        self.main['numotherdeath'].tot = process(otherdeaths[:,:,indices].sum(axis=1)) # Axis 1 is populations
         
         self.main['numdeath'].pops = process(alldeaths[:,:,:,indices].sum(axis=1))
         self.main['numdeath'].tot  = process(alldeaths[:,:,:,indices].sum(axis=(1,2))) # Axis 1 is populations
@@ -324,62 +339,78 @@ class Resultset(object):
             self.main['numdeath'].datatot = processdata(data['optdeath'])
             self.main['numdeath'].estimate = True # It's not real data, just an estimate
         
-        self.main['numplhiv'].pops = process(allpeople[:,allplhiv,:,:][:,:,:,indices].sum(axis=1)) # Axis 1 is health state
-        self.main['numplhiv'].tot  = process(allpeople[:,allplhiv,:,:][:,:,:,indices].sum(axis=(1,2))) # Axis 2 is populations
+        self.main['numartdeath'].pops = process(alldeaths[:,alltx,:,:][:,:,:,indices].sum(axis=1))
+        self.main['numartdeath'].tot  = process(alldeaths[:,alltx,:,:][:,:,:,indices].sum(axis=(1,2))) # Axis 1 is populations
+
+        self.main['numnewdiag'].pops = process(alldiag[:,:,indices])
+        self.main['numnewdiag'].tot  = process(alldiag[:,:,indices].sum(axis=1)) # Axis 1 is populations
         if data is not None: 
-            self.main['numplhiv'].datatot = processdata(data['optplhiv'])
-            self.main['numplhiv'].estimate = True # It's not real data, just an estimate
+            self.main['numnewdiag'].datatot = processdata(data['optnumdiag'])
+            self.main['numnewdiag'].estimate = False # It's real data, not just an estimate
         
-        self.main['numaids'].pops = process(allpeople[:,allaids,:,:][:,:,:,indices].sum(axis=1)) # Axis 1 is health state
-        self.main['numaids'].tot  = process(allpeople[:,allaids,:,:][:,:,:,indices].sum(axis=(1,2))) # Axis 2 is populations
+        self.main['numnewtreat'].pops = process(allnewtreat[:,:,indices])
+        self.main['numnewtreat'].tot  = process(allnewtreat[:,:,indices].sum(axis=1)) # Axis 1 is populations
 
-        self.main['numdiag'].pops = process(allpeople[:,alldx,:,:][:,:,:,indices].sum(axis=1)) # Note that allpeople[:,txinds,:,indices] produces an error
-        self.main['numdiag'].tot = process(allpeople[:,alldx,:,:][:,:,:,indices].sum(axis=(1,2))) # Axis 1 is populations
+        self.main['numpreg'].pops = process(allbirthsto[:,:,indices])
+        self.main['numpreg'].tot = process(allbirthsto[:,:,indices].sum(axis=1))
         
-        self.main['propdiag'].pops = process(allpeople[:,alldx,:,:][:,:,:,indices].sum(axis=1)/maximum(allpeople[:,allplhiv,:,:][:,:,:,indices].sum(axis=1),eps), percent=True) 
-        self.main['propdiag'].tot  = process(allpeople[:,alldx,:,:][:,:,:,indices].sum(axis=(1,2))/maximum(allpeople[:,allplhiv,:,:][:,:,:,indices].sum(axis=(1,2)),eps), percent=True) # Axis 1 is populations
-        if data is not None: self.main['propdiag'].datatot = processdata(data['optpropdx'])
+        self.main['numhivbirths'].pops = process(allhivbirths[:,:,indices])
+        self.main['numhivbirths'].tot  = process(allhivbirths[:,:,indices].sum(axis=1))
+
+        self.main['numhivdxbirths'].pops = process(allhivdxbirths[:,:,indices])
+        self.main['numhivdxbirths'].tot  = process(allhivdxbirths[:,:,indices].sum(axis=1))
+
+#        self.main['prev'].pops = process(allpeople[:,allplhiv,:,:][:,:,:,indices].sum(axis=1) / allpeople[:,:,:,indices].sum(axis=1), percent=True) # Axis 1 is health state
+#        self.main['prev'].tot  = process(allpeople[:,allplhiv,:,:][:,:,:,indices].sum(axis=(1,2)) / allpeople[:,:,:,indices].sum(axis=(1,2)), percent=True) # Axis 2 is populations
+#        if data is not None: 
+#            self.main['prev'].datapops = processdata(data['hivprev'], uncertainty=True)
+#            self.main['prev'].datatot  = processdata(data['optprev'])
         
-        self.main['numevercare'].pops = process(allpeople[:,allevercare,:,:][:,:,:,indices].sum(axis=1)) #  Note that allpeople[:,txinds,:,indices] produces an error
-        self.main['numevercare'].tot  = process(allpeople[:,allevercare,:,:][:,:,:,indices].sum(axis=(1,2))) # Axis 1 is populations
+#        self.main['force'].pops = process(allinci[:,:,indices] / allpeople[:,:,:,indices].sum(axis=1), percent=True) # Axis 1 is health state
+#        self.main['force'].tot  = process(allinci[:,:,indices].sum(axis=1) / allpeople[:,:,:,indices].sum(axis=(1,2)), percent=True) # Axis 2 is populations
 
-        self.main['propevercare'].pops = process(allpeople[:,allevercare,:,:][:,:,:,indices].sum(axis=1)/maximum(allpeople[:,alldx,:,:][:,:,:,indices].sum(axis=1),eps), percent=True) 
-        self.main['propevercare'].tot  = process(allpeople[:,allevercare,:,:][:,:,:,indices].sum(axis=(1,2))/maximum(allpeople[:,alldx,:,:][:,:,:,indices].sum(axis=(1,2)),eps), percent=True) # Axis 1 is populations
+#        self.main['nummtct'].pops = process(allmtct[:,:,indices])
+#        self.main['nummtct'].tot  = process(allmtct[:,:,indices].sum(axis=1))
 
-        self.main['numincare'].pops = process(allpeople[:,allcare,:,:][:,:,:,indices].sum(axis=1)) #  Note that allpeople[:,txinds,:,indices] produces an error
-        self.main['numincare'].tot  = process(allpeople[:,allcare,:,:][:,:,:,indices].sum(axis=(1,2))) # Axis 1 is populations
+#        self.main['numpmtct'].pops = process(allpmtct[:,:,indices])
+#        self.main['numpmtct'].tot  = process(allpmtct[:,:,indices].sum(axis=1))
 
-        self.main['propincare'].pops = process(allpeople[:,allcare,:,:][:,:,:,indices].sum(axis=1)/maximum(allpeople[:,alldx,:,:][:,:,:,indices].sum(axis=1),eps), percent=True) 
-        self.main['propincare'].tot  = process(allpeople[:,allcare,:,:][:,:,:,indices].sum(axis=(1,2))/maximum(allpeople[:,alldx,:,:][:,:,:,indices].sum(axis=(1,2)),eps), percent=True) # Axis 1 is populations
-        if data is not None: self.main['propincare'].datatot = processdata(data['optpropcare'])
+#        self.main['numaids'].pops = process(allpeople[:,allaids,:,:][:,:,:,indices].sum(axis=1)) # Axis 1 is health state
+#        self.main['numaids'].tot  = process(allpeople[:,allaids,:,:][:,:,:,indices].sum(axis=(1,2))) # Axis 2 is populations
 
-        self.main['numtreat'].pops = process(allpeople[:,alltx,:,:][:,:,:,indices].sum(axis=1)) #  Note that allpeople[:,txinds,:,indices] produces an error
-        self.main['numtreat'].tot = process(allpeople[:,alltx,:,:][:,:,:,indices].sum(axis=(1,2))) # Axis 1 is populations
-        if data is not None: self.main['numtreat'].datatot = processdata(data['numtx'])
+#        self.main['propdiag'].pops = process(allpeople[:,alldx,:,:][:,:,:,indices].sum(axis=1)/maximum(allpeople[:,allplhiv,:,:][:,:,:,indices].sum(axis=1),eps), percent=True) 
+#        self.main['propdiag'].tot  = process(allpeople[:,alldx,:,:][:,:,:,indices].sum(axis=(1,2))/maximum(allpeople[:,allplhiv,:,:][:,:,:,indices].sum(axis=(1,2)),eps), percent=True) # Axis 1 is populations
+#        if data is not None: self.main['propdiag'].datatot = processdata(data['optpropdx'])
+        
+#        self.main['numevercare'].pops = process(allpeople[:,allevercare,:,:][:,:,:,indices].sum(axis=1)) #  Note that allpeople[:,txinds,:,indices] produces an error
+#        self.main['numevercare'].tot  = process(allpeople[:,allevercare,:,:][:,:,:,indices].sum(axis=(1,2))) # Axis 1 is populations
 
-        self.main['costtreat'].pops = process(allcosttreat[:,:,indices])
-        self.main['costtreat'].tot  = process(allcosttreat[:,:,indices].sum(axis=1)) # Axis 1 is populations
+#        self.main['propevercare'].pops = process(allpeople[:,allevercare,:,:][:,:,:,indices].sum(axis=1)/maximum(allpeople[:,alldx,:,:][:,:,:,indices].sum(axis=1),eps), percent=True) 
+#        self.main['propevercare'].tot  = process(allpeople[:,allevercare,:,:][:,:,:,indices].sum(axis=(1,2))/maximum(allpeople[:,alldx,:,:][:,:,:,indices].sum(axis=(1,2)),eps), percent=True) # Axis 1 is populations
 
-        self.main['proptreat'].pops = process(allpeople[:,alltx,:,:][:,:,:,indices].sum(axis=1)/maximum(allpeople[:,alldx,:,:][:,:,:,indices].sum(axis=1),eps), percent=True) 
-        self.main['proptreat'].tot  = process(allpeople[:,alltx,:,:][:,:,:,indices].sum(axis=(1,2))/maximum(allpeople[:,alldx,:,:][:,:,:,indices].sum(axis=(1,2)),eps), percent=True) # Axis 1 is populations
-        if data is not None: self.main['proptreat'].datatot = processdata(data['optproptx'])
+#        self.main['numincare'].pops = process(allpeople[:,allcare,:,:][:,:,:,indices].sum(axis=1)) #  Note that allpeople[:,txinds,:,indices] produces an error
+#        self.main['numincare'].tot  = process(allpeople[:,allcare,:,:][:,:,:,indices].sum(axis=(1,2))) # Axis 1 is populations
 
-        self.main['propplhivtreat'].pops = process(allpeople[:,alltx,:,:][:,:,:,indices].sum(axis=1)/maximum(allpeople[:,allplhiv,:,:][:,:,:,indices].sum(axis=1),eps), percent=True) 
-        self.main['propplhivtreat'].tot = process(allpeople[:,alltx,:,:][:,:,:,indices].sum(axis=(1,2))/maximum(allpeople[:,allplhiv,:,:][:,:,:,indices].sum(axis=(1,2)),eps), percent=True) # Axis 1 is populations
+#        self.main['propincare'].pops = process(allpeople[:,allcare,:,:][:,:,:,indices].sum(axis=1)/maximum(allpeople[:,alldx,:,:][:,:,:,indices].sum(axis=1),eps), percent=True) 
+#        self.main['propincare'].tot  = process(allpeople[:,allcare,:,:][:,:,:,indices].sum(axis=(1,2))/maximum(allpeople[:,alldx,:,:][:,:,:,indices].sum(axis=(1,2)),eps), percent=True) # Axis 1 is populations
+#        if data is not None: self.main['propincare'].datatot = processdata(data['optpropcare'])
 
-        self.main['numsuppressed'].pops = process(allpeople[:,svl,:,:][:,:,:,indices].sum(axis=1)) # WARNING, this is ugly, but allpeople[:,txinds,:,indices] produces an error
-        self.main['numsuppressed'].tot = process(allpeople[:,svl,:,:][:,:,:,indices].sum(axis=(1,2))) # Axis 1 is populations
+#        self.main['costtreat'].pops = process(allcosttreat[:,:,indices])
+#        self.main['costtreat'].tot  = process(allcosttreat[:,:,indices].sum(axis=1)) # Axis 1 is populations
 
-        self.main['propsuppressed'].pops = process(allpeople[:,svl,:,:][:,:,:,indices].sum(axis=1)/maximum(allpeople[:,alltx,:,:][:,:,:,indices].sum(axis=1),eps), percent=True) 
-        self.main['propsuppressed'].tot = process(allpeople[:,svl,:,:][:,:,:,indices].sum(axis=(1,2))/maximum(allpeople[:,alltx,:,:][:,:,:,indices].sum(axis=(1,2)),eps), percent=True) # Axis 1 is populations
-        if data is not None: self.main['propsuppressed'].datatot = processdata(data['optpropsupp'])
+#        self.main['proptreat'].pops = process(allpeople[:,alltx,:,:][:,:,:,indices].sum(axis=1)/maximum(allpeople[:,alldx,:,:][:,:,:,indices].sum(axis=1),eps), percent=True) 
+#        self.main['proptreat'].tot  = process(allpeople[:,alltx,:,:][:,:,:,indices].sum(axis=(1,2))/maximum(allpeople[:,alldx,:,:][:,:,:,indices].sum(axis=(1,2)),eps), percent=True) # Axis 1 is populations
+#        if data is not None: self.main['proptreat'].datatot = processdata(data['optproptx'])
 
-        self.main['propplhivsupp'].pops = process(allpeople[:,svl,:,:][:,:,:,indices].sum(axis=1)/maximum(allpeople[:,allplhiv,:,:][:,:,:,indices].sum(axis=1),eps), percent=True) 
-        self.main['propplhivsupp'].tot = process(allpeople[:,svl,:,:][:,:,:,indices].sum(axis=(1,2))/maximum(allpeople[:,allplhiv,:,:][:,:,:,indices].sum(axis=(1,2)),eps), percent=True) # Axis 1 is populations
+#        self.main['propplhivtreat'].pops = process(allpeople[:,alltx,:,:][:,:,:,indices].sum(axis=1)/maximum(allpeople[:,allplhiv,:,:][:,:,:,indices].sum(axis=1),eps), percent=True) 
+#        self.main['propplhivtreat'].tot = process(allpeople[:,alltx,:,:][:,:,:,indices].sum(axis=(1,2))/maximum(allpeople[:,allplhiv,:,:][:,:,:,indices].sum(axis=(1,2)),eps), percent=True) # Axis 1 is populations
 
-        self.main['popsize'].pops = process(allpeople[:,:,:,indices].sum(axis=1))
-        self.main['popsize'].tot = process(allpeople[:,:,:,indices].sum(axis=(1,2)))
-        if data is not None: self.main['popsize'].datapops = processdata(data['popsize'], uncertainty=True)
+#        self.main['propsuppressed'].pops = process(allpeople[:,svl,:,:][:,:,:,indices].sum(axis=1)/maximum(allpeople[:,alltx,:,:][:,:,:,indices].sum(axis=1),eps), percent=True) 
+#        self.main['propsuppressed'].tot = process(allpeople[:,svl,:,:][:,:,:,indices].sum(axis=(1,2))/maximum(allpeople[:,alltx,:,:][:,:,:,indices].sum(axis=(1,2)),eps), percent=True) # Axis 1 is populations
+#        if data is not None: self.main['propsuppressed'].datatot = processdata(data['optpropsupp'])
+
+#        self.main['propplhivsupp'].pops = process(allpeople[:,svl,:,:][:,:,:,indices].sum(axis=1)/maximum(allpeople[:,allplhiv,:,:][:,:,:,indices].sum(axis=1),eps), percent=True) 
+#        self.main['propplhivsupp'].tot = process(allpeople[:,svl,:,:][:,:,:,indices].sum(axis=(1,2))/maximum(allpeople[:,allplhiv,:,:][:,:,:,indices].sum(axis=(1,2)),eps), percent=True) # Axis 1 is populations
 
         
         # Calculate DALYs
@@ -397,32 +428,26 @@ class Resultset(object):
             healthstates = array(list(hivstateindices & notonart)) # Find the intersection of this HIV state and not on ART states
             dalypops += allpeople[:,healthstates,:,:].sum(axis=1) * disutils[h]
             dalytot += allpeople[:,healthstates,:,:].sum(axis=(1,2)) * disutils[h]
-        self.main['numdaly'].pops = process(dalypops[:,:,indices])
-        self.main['numdaly'].tot  = process(dalytot[:,indices])
+#        self.main['numdaly'].pops = process(dalypops[:,:,indices])
+#        self.main['numdaly'].tot  = process(dalytot[:,indices])
         
         
         # Other indicators
-        upperagelims = self.pars['age'][:,1] # All populations, but upper range
-        adultpops = findinds(upperagelims>=15)
-        childpops = findinds(upperagelims<15)
-        if len(adultpops): self.other['adultprev'].tot = process(allpeople[:,allplhiv,:,:][:,:,adultpops,:][:,:,:,indices].sum(axis=(1,2)) / allpeople[:,:,adultpops,:][:,:,:,indices].sum(axis=(1,2)), percent=True) # Axis 2 is populations
-        else:              self.other['adultprev'].tot = self.main['prev'].tot # In case it's not available, use population average
-        if len(childpops): self.other['childprev'].tot = process(allpeople[:,allplhiv,:,:][:,:,childpops,:][:,:,:,indices].sum(axis=(1,2)) / allpeople[:,:,childpops,:][:,:,:,indices].sum(axis=(1,2)), percent=True) # Axis 2 is populations
-        else:              self.other['childprev'].tot = self.main['prev'].tot
-        self.other['adultprev'].pops = self.main['prev'].pops # This is silly, but avoids errors from a lack of consistency of these results not having pop attributes
-        self.other['childprev'].pops = self.main['prev'].pops
-        
-        self.other['numotherdeath'].pops = process(otherdeaths[:,:,indices])
-        self.other['numotherdeath'].tot = process(otherdeaths[:,:,indices].sum(axis=1)) # Axis 1 is populations
-        
-        self.other['numbirths'].pops = process(allbirths[:,:,indices])
-        self.other['numbirths'].tot = process(allbirths[:,:,indices].sum(axis=1))
-        
-        # Add in each health state
-        for healthkey in self.settings.healthstates: # Health keys: ['susreg', 'progcirc', 'undx', 'dx', 'care', 'lost', 'usvl', 'svl']
-            healthinds = getattr(self.settings, healthkey)
-            self.other['only'+healthkey].pops = process(allpeople[:,healthinds,:,:][:,:,:,indices].sum(axis=1)) # WARNING, this is ugly, but allpeople[:,txinds,:,indices] produces an error
-            self.other['only'+healthkey].tot =  process(allpeople[:,healthinds,:,:][:,:,:,indices].sum(axis=(1,2))) # Axis 1 is populations
+#        upperagelims = self.pars['age'][:,1] # All populations, but upper range
+#        adultpops = findinds(upperagelims>=15)
+#        childpops = findinds(upperagelims<15)
+#        if len(adultpops): self.other['adultprev'].tot = process(allpeople[:,allplhiv,:,:][:,:,adultpops,:][:,:,:,indices].sum(axis=(1,2)) / allpeople[:,:,adultpops,:][:,:,:,indices].sum(axis=(1,2)), percent=True) # Axis 2 is populations
+#        else:              self.other['adultprev'].tot = self.main['prev'].tot # In case it's not available, use population average
+#        if len(childpops): self.other['childprev'].tot = process(allpeople[:,allplhiv,:,:][:,:,childpops,:][:,:,:,indices].sum(axis=(1,2)) / allpeople[:,:,childpops,:][:,:,:,indices].sum(axis=(1,2)), percent=True) # Axis 2 is populations
+#        else:              self.other['childprev'].tot = self.main['prev'].tot
+#        self.other['adultprev'].pops = self.main['prev'].pops # This is silly, but avoids errors from a lack of consistency of these results not having pop attributes
+#        self.other['childprev'].pops = self.main['prev'].pops
+#        
+#        # Add in each health state
+#        for healthkey in self.settings.healthstates: # Health keys: ['susreg', 'progcirc', 'undx', 'dx', 'care', 'lost', 'usvl', 'svl']
+#            healthinds = getattr(self.settings, healthkey)
+#            self.other['only'+healthkey].pops = process(allpeople[:,healthinds,:,:][:,:,:,indices].sum(axis=1)) # WARNING, this is ugly, but allpeople[:,txinds,:,indices] produces an error
+#            self.other['only'+healthkey].tot =  process(allpeople[:,healthinds,:,:][:,:,:,indices].sum(axis=(1,2))) # Axis 1 is populations
 
         return None
         
@@ -439,8 +464,11 @@ class Resultset(object):
             else:     popkeys = ['tot']
             for pk,popkey in enumerate(popkeys):
                 outputstr += '\n'
-                if bypop and popkey!='tot': data = self.main[key].pops[ind][pk-1,:] # WARNING, assumes 'tot' is always the first entry
-                else:                       data = self.main[key].tot[ind][:]
+                try:
+                    if bypop and popkey!='tot': data = self.main[key].pops[ind][pk-1,:] # WARNING, assumes 'tot' is always the first entry
+                    else:                       data = self.main[key].tot[ind][:]
+                except:
+                    import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
                 outputstr += self.main[key].name+sep+popkey+sep
                 for t in range(npts):
                     if self.main[key].ispercentage: outputstr += ('%s'+sep) % sigfig(data[t], sigfigs=sigfigs)
