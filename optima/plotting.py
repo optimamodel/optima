@@ -707,7 +707,7 @@ def plotbudget(multires=None, die=True, figsize=globalfigsize, legendsize=global
             for p in range(nprogslist[b]-1,-1,-1): # Loop in reverse order over programs
                 progkey = budget.keys()[p]
                 ydata = budget[p]
-                xdata = b+1.0#.6 # 0.6 is 1 nimunus 0.4, which is half the bar width
+                xdata = b+0.6 # 0.6 is 1 munus 0.4, which is half the bar width
                 bottomdata = sum(budget[:p])
                 label = None
                 if progkey in allprogkeys:
