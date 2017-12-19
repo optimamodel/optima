@@ -66,7 +66,7 @@ class Coveragescen(Progscen):
         self.coverage = coverage
 
 
-def runscenarios(project=None, verbose=2, name=None, defaultparset=-1, debug=False, nruns=1, base=0, ccsample=False, randseed=None, **kwargs):
+def runscenarios(project=None, verbose=2, name=None, defaultparset=-1, debug=False, nruns=None, base=None, ccsample=None, randseed=None, **kwargs):
     """
     Run all the scenarios.
     Version: 2017aug15
@@ -81,6 +81,11 @@ def runscenarios(project=None, verbose=2, name=None, defaultparset=-1, debug=Fal
         project.addscens(baselinescen)
     scenlist = [scen for scen in project.scens.values() if scen.active==True]
     nscens = len(scenlist)
+    
+    # Handle inputs
+    if ccsample is None: ccsample = 'best' 
+    if nruns is None:    nruns = 1
+    if base is None:     base = 0
     
     # Convert the list of scenarios to the actual parameters to use in the model
     scenparsets = makescenarios(project=project, scenlist=scenlist, ccsample=ccsample, randseed=randseed, verbose=verbose)        

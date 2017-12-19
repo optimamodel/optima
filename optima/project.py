@@ -600,12 +600,11 @@ class Project(object):
         return None
     
     
-    def runscenarios(self, scenlist=None, name=None, verbose=2, debug=False, nruns=1, base=0, ccsample=None, randseed=None, **kwargs):
+    def runscenarios(self, scenlist=None, name=None, verbose=2, debug=False, nruns=None, base=None, ccsample=None, randseed=None, **kwargs):
         ''' Function to run scenarios '''
 
         if scenlist is not None: self.addscens(scenlist) # Replace existing scenario list with a new one
-        if name is None: name='scenarios' 
-        if ccsample is None: ccsample='best' 
+        if name is None: name = 'scenarios' 
     
         scenres = runscenarios(project=self, verbose=verbose, name=name, debug=debug, nruns=nruns, base=base, ccsample=ccsample, randseed=randseed, **kwargs)
         self.addresult(result=scenres[name])
