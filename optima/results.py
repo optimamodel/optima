@@ -515,7 +515,7 @@ class Resultset(object):
             return outputstr
         
     
-    def get(self, what=None, year=None, key=None, pop=None, dosum=False):
+    def get(self, what=None, year=None, key=None, pop=None, dosum=False, blhkey=None):
         '''
         A small function to make it easier to access results. For example, to 
         get the number of deaths in the current year, just do
@@ -534,9 +534,10 @@ class Resultset(object):
         For non-multiresultsets, [0,1,2] will choose [best, low, high].
         '''
         # If kwargs aren't specified, use now
-        if key  is None: key  = 0
-        if year is None: year = self.projectref().settings.now
-        if pop  is None: pop = 'tot'
+        if key    is None: key  = 0
+        if year   is None: year = self.projectref().settings.now
+        if pop    is None: pop = 'tot'
+        if blhkey is None: blhkey = 0
         
         # Figure out which dictionary to use
         if   what in self.main.keys():   resultobj = self.main[what]
@@ -545,21 +546,37 @@ class Resultset(object):
             errormsg = 'Key %s not found; must be one of:\n%s' % (what, self.main.keys()+self.other.keys())
             raise OptimaException(errormsg)
             
-        # Use either total (by default) or a given population
-        if pop=='tot':
-            timeseries = resultobj.tot[key]
+        # Figure out if it's a Multiresultset or a Resultset
+        if type(self)==Multiresultset:
+            # Use either total (by default) or a given population
+            if pop=='tot':
+                timeseries = resultobj.tot[key][blhkey]
+            else:
+                if isinstance(pop,str): 
+                    try:
+                        pop = self.popkeys.index(pop) # Convert string to number
+                    except:
+                        errormsg = 'Population key %s not found; must be one of: %s' % (pop, self.popkeys)
+                        raise OptimaException(errormsg)
+                timeseries = resultobj.pops[key][blhkey,pop,:]
         else:
-            if isinstance(pop,str): 
-                try:
-                    pop = self.popkeys.index(pop) # Convert string to number
-                except:
-                    errormsg = 'Population key %s not found; must be one of: %s' % (pop, self.popkeys)
-                    raise OptimaException(errormsg)
-            timeseries = resultobj.pops[key][pop,:]
+            # Use either total (by default) or a given population
+            if pop=='tot':
+                timeseries = resultobj.tot[key]
+            else:
+                if isinstance(pop,str): 
+                    try:
+                        pop = self.popkeys.index(pop) # Convert string to number
+                    except:
+                        errormsg = 'Population key %s not found; must be one of: %s' % (pop, self.popkeys)
+                        raise OptimaException(errormsg)
+                timeseries = resultobj.pops[key][pop,:]
+            
         
         # Get the index and return the result
         if checktype(year, 'number'):
             index = findnearest(self.tvec, year)
+            
             result = timeseries[index]
         elif checktype(year, 'arraylike'):
             startind = findnearest(self.tvec, year[0])
@@ -577,7 +594,7 @@ class Resultset(object):
         return result
     
     
-    def summary(self, year=None, key=None, doprint=True):
+    def summary(self, year=None, key=None, blhkey=None, doprint=True):
         '''
         Get a text summary of key results for a given year.
         
@@ -590,8 +607,9 @@ class Resultset(object):
             P.result().summary(year=2020) # For a multiresultset, show default results for current year for all simulations
             P.result().summary(year=[2015,2020], key=['Baseline', 'Zero budget']) # Show multiple results for multiple years
         '''
-        if key  is None: key  = dcp(self.keys)
-        if year is None: year = self.projectref().settings.now
+        if key    is None: key  = dcp(self.keys)
+        if year   is None: year = self.projectref().settings.now
+        if blhkey is None: blhkey = 0 # Only get best result
         yearlist = promotetolist(year)
         keylist  = promotetolist(key)
         nyears = len(yearlist)
@@ -634,7 +652,7 @@ class Resultset(object):
                 output += pad + label
                 for year in yearlist:
                     for key in keylist:
-                        thisnumber = self.get(what=epikey, year=year, key=key)
+                        thisnumber = self.get(what=epikey, year=year, key=key, blhkey=blhkey)
                         if thisresult.ispercentage: resultstr = percentctrl % (thisnumber*100.0)
                         else:                       resultstr = numberctrl  % (thisnumber)
                         output += resultstr
@@ -696,12 +714,11 @@ class Multiresultset(Resultset):
                 if orig is None: setattr(self, attr, new) # Pray that they match, since too hard to compare
             
             # Now, the real deal: fix self.main and self.other
-            best = 0 # Key for best data -- discard uncertainty
             for at in ['pops', 'tot']:
                 for key2 in self.main.keys():
-                    getattr(self.main[key2], at)[key] = getattr(rset.main[key2], at)[best] # Add data: e.g. self.main['prev'].pops['foo'] = rset.main['prev'].pops[0] -- WARNING, the 0 discards uncertainty data
+                    getattr(self.main[key2], at)[key] = getattr(rset.main[key2], at) # Add data: e.g. self.main['prev'].pops['foo'] = rset.main['prev'].pops
                 for key2 in self.other.keys():
-                    getattr(self.other[key2], at)[key] = getattr(rset.other[key2], at)[best] # Add data: e.g. self.main['prev'].pops['foo'] = rset.main['prev'].pops[0] -- WARNING, the 0 discards uncertainty data
+                    getattr(self.other[key2], at)[key] = getattr(rset.other[key2], at) # Add data: e.g. self.main['prev'].pops['foo'] = rset.main['prev'].pops
 
             # Finally, process the budget and budgetyears -- these  are only needed for the budget/coverage conversions
             if len(rset.budget) or len(rset.coverage):
@@ -772,8 +789,9 @@ class Multiresultset(Resultset):
         resultsobjs = []
         for typekey in resultsdiff.main.keys():
             resultsobjs.append(resultsdiff.main[typekey])
-        for typekey in resultsdiff.other.keys():
-            resultsobjs.append(resultsdiff.other[typekey])
+        if hasattr(resultsdiff,'other'):
+            for typekey in resultsdiff.other.keys():
+                resultsobjs.append(resultsdiff.other[typekey])
         
         # Calculate the differences
         for resultsobj in resultsobjs:

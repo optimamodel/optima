@@ -9,8 +9,9 @@ Version: 2016feb07
 tests = [
 #'standardscen',
 #'maxcoverage',
-#'maxbudget',
-'90-90-90'
+#'budget',
+'90-90-90',
+#'sensitivity',
 #'VMMC'
 ]
 
@@ -196,26 +197,55 @@ if 'standardscen' in tests:
         from optima import pygui
         pygui(P.results[-1], toplot='default')
 
-    if showstats:
-        from optima import Settings, findinds
-        from numpy import arange
-        settings = Settings()
-        tvec = arange(settings.start,settings.end+settings.dt,settings.dt)
-        yr = 2020
-        blank()
-        for scenno, scen in enumerate([scen for scen in P.scens.values() if scen.active]):
-            output = '===================================\n'
-            output += scen.name
-            output += '\n'           
-            output += 'PLHIV: %s\n' % (P.results[-1].raw[scenno][0]['people'][settings.allplhiv,:,findinds(tvec,yr)].sum(axis=(0,1)))
-            output += 'Prop aware: %s\n' % (P.results[-1].raw[scenno][0]['people'][settings.alldx,:,findinds(tvec,yr)].sum(axis=(0,1))/P.results[-1].raw[scenno][0]['people'][settings.allplhiv,:,findinds(tvec,yr)].sum(axis=(0,1)))
-            output += 'Number treated: %s\n' % (P.results[-1].raw[scenno][0]['people'][settings.alltx,:,findinds(tvec,yr)].sum(axis=(0,1)))
-            output += 'Prop treated: %s\n' % (P.results[-1].raw[scenno][0]['people'][settings.alltx,:,findinds(tvec,yr)].sum(axis=(0,1))/P.results[-1].raw[scenno][0]['people'][settings.allplhiv,:,findinds(tvec,yr)].sum(axis=(0,1)))
-            print output
+    done(t)
 
+
+## Test scenario sensitivity feature
+if 'sensitivity' in tests:
+    t = tic()
+
+    print('Testing scenario sensitivity...')
+    from optima import Parscen, defaultproject, pygui, findinds
+    from numpy import array
+    
+    P = defaultproject('best')
+    P.cleanresults() 
+    P.pars()['fixproptx'].t = 2100 # WARNING, kludgy
+    
+    ## Define scenarios
+    scenlist = [
+        Parscen(name='Current conditions',
+                parsetname='default',
+                pars=[]),
+
+        Parscen(name='Increase numtx',
+              parsetname='default',
+              pars=[
+              {'name': 'numtx',
+              'for': 'tot',
+              'startyear': 2014.,
+              'endyear': 2020.,
+              'endval': 68000.,
+              }]),
+        ]
+        
+    # Store these in the project
+    P.addscens(scenlist, overwrite=True)
+    # Run the scenarios
+    P.runscenarios(debug=True,nruns=5,tosample='force') 
+    
+    resultsdiff = P.result().diff(base=1)
+    
+    output = '\n\n----------------\nScenario impact:\n'
+    output += 'Infections averted: %s [%s, %s]\n' % (resultsdiff.get('numinci', key='Current conditions', year='all')[0,17:].sum(), resultsdiff.get('numinci', key='Current conditions', year='all')[1,17:].sum(), resultsdiff.get('numinci', key='Current conditions', year='all')[2,17:].sum())
+    output += 'Deaths averted: %s [%s, %s]\n' % (resultsdiff.get('numdeath', key='Current conditions', year='all')[0,17:].sum(), resultsdiff.get('numdeath', key='Current conditions', year='all')[1,17:].sum(), resultsdiff.get('numdeath', key='Current conditions', year='all')[2,17:].sum())
+    output += 'DALYs averted: %s [%s, %s]\n' % (resultsdiff.get('numdaly', key='Current conditions', year='all')[0,17:].sum(), resultsdiff.get('numdaly', key='Current conditions', year='all')[1,17:].sum(), resultsdiff.get('numdaly', key='Current conditions', year='all')[2,17:].sum())
+    
+    print output
 
     done(t)
 
+    
 
 
 ## 90-90-90 scenario test
@@ -223,7 +253,7 @@ if '90-90-90' in tests:
     t = tic()
 
     print('Running standard scenarios test...')
-    from optima import Parscen, defaultproject, pygui, findinds, plotpeople
+    from optima import Parscen, defaultproject, pygui
     
     P = defaultproject('best')
     P.cleanresults() # Check that scenarios can be run even if no results stored
@@ -291,34 +321,14 @@ if '90-90-90' in tests:
     # Run the scenarios
     P.runscenarios(debug=True) 
 
-    if showstats:
-        blank()
-        for scind, scen in enumerate([scen for scen in P.scens.values() if scen.active]):
-            res_endind = findinds(P.results[-1].tvec, endyear)
-            res = P.results[-1]
-            end_plhiv = res.main['numplhiv'].tot[scind][res_endind]
-            end_propdx = res.main['numdiag'].tot[scind][res_endind]/res.main['numplhiv'].tot[scind][res_endind]
-            end_propevercare = res.main['numevercare'].tot[scind][res_endind]/res.main['numdiag'].tot[scind][res_endind]
-            end_propretincare = res.main['numincare'].tot[scind][res_endind]/res.main['numevercare'].tot[scind][res_endind]
-            end_proptx = res.main['numtreat'].tot[scind][res_endind]/res.main['numincare'].tot[scind][res_endind]
-            end_propsupp = res.main['numsuppressed'].tot[scind][res_endind]/res.main['numtreat'].tot[scind][res_endind]
-            output = '===================================\n'
-            output += scen.name
-            output += '\nOutcomes in Year %i\n' % (endyear)
-            output += 'PLHIV: %s\n' % (end_plhiv)
-            output += 'Prop aware: %s\n' % (end_propdx)
-            output += 'Prop initially linked to care: %s\n' % (end_propevercare)
-            output += 'Prop retained in care: %s\n' % (end_propretincare)
-            output += 'Prop treated: %s\n' % (end_proptx)
-            output += 'Prop suppressed: %s\n' % (end_propsupp)
-            print output
-
   
      
     if doplot:
 #        ppl = P.results[-1].raw['90-90-90'][0]['people']
 #        plotpeople(P, ppl)
         pygui(P.results[-1], toplot='default')
+
+    P.result().summary()
 
     done(t)
 
@@ -338,7 +348,7 @@ if 'maxcoverage' in tests:
     from numpy import array
     
     ## Set up default project
-    P = defaultproject('generalized')
+    P = defaultproject('best')
     
     ## Define scenarios
     defaultbudget = P.progsets['default'].getdefaultbudget()
@@ -360,18 +370,16 @@ if 'maxcoverage' in tests:
 
 
 
-
-
-## Set up project etc.
-if 'maxbudget' in tests:
+## Test budget scenarios
+if 'budget' in tests:
     t = tic()
 
-    print('Running maximum budget scenario test...')
+    print('Running budget scenario test...')
     from optima import Budgetscen, defaultproject, dcp
     from numpy import array
     
     ## Set up default project
-    P = defaultproject('generalized')
+    P = defaultproject('best',dorun=False)
     
     ## Define scenarios
     defaultbudget = P.progsets['default'].getdefaultbudget()
@@ -386,13 +394,25 @@ if 'maxbudget' in tests:
         ]
     
     # Run the scenarios
-    P.addscen(scenlist)
-    P.runscenarios() 
+    P.addscens(scenlist)
+    P.runscenarios(nruns=5,tosample='force',ccsample='rand',verbose=3, base=2) 
      
-    if doplot:
-        from optima import pygui, plotpars
-        pygui(P.results[-1], toplot='default')
-        apd = plotpars([scen.scenparset.pars for scen in P.scens.values()])
+#    if doplot:
+#        from optima import pygui
+#        pygui(P.results[-1], toplot='default')
+#
+    resdiff = P.results[-1]
+    output = '\n\n----------------\n'
+    output += 'Impact of current expenditure (relative to zero):\n'
+    output += 'Infections averted: %s [%s, %s]\n' % (resdiff.get('numinci', key=0, year='all')[0,17:].sum(), resdiff.get('numinci', key=0, year='all')[1,17:].sum(), resdiff.get('numinci', key=0, year='all')[2,17:].sum())
+    output += '    Deaths averted: %s [%s, %s]\n' % (resdiff.get('numdeath', key=0, year='all')[0,17:].sum(), resdiff.get('numdeath', key=0, year='all')[1,17:].sum(), resdiff.get('numdeath', key=0, year='all')[2,17:].sum())
+    output += '     DALYs averted: %s [%s, %s]\n' % (resdiff.get('numdaly', key=0, year='all')[0,17:].sum(), resdiff.get('numdaly', key=0, year='all')[1,17:].sum(), resdiff.get('numdaly', key=0, year='all')[2,17:].sum())
+    output += 'Impact of unlimited expenditure (relative to zero):\n'
+    output += 'Infections averted: %s [%s, %s]\n' % (resdiff.get('numinci', key=1, year='all')[0,17:].sum(), resdiff.get('numinci', key=1, year='all')[1,17:].sum(), resdiff.get('numinci', key=1, year='all')[2,17:].sum())
+    output += '    Deaths averted: %s [%s, %s]\n' % (resdiff.get('numdeath', key=1, year='all')[0,17:].sum(), resdiff.get('numdeath', key=1, year='all')[1,17:].sum(), resdiff.get('numdeath', key=1, year='all')[2,17:].sum())
+    output += '     DALYs averted: %s [%s, %s]\n' % (resdiff.get('numdaly', key=1, year='all')[0,17:].sum(), resdiff.get('numdaly', key=1, year='all')[1,17:].sum(), resdiff.get('numdaly', key=1, year='all')[2,17:].sum())
+    
+    print output
 
 
 
@@ -402,9 +422,10 @@ if 'VMMC' in tests:
     t = tic()
 
     print('Running VMMC scenario test...')
-    from optima import Parscen, Budgetscen, findinds, defaultproject
+    from optima import Parscen, Budgetscen, defaultproject
     
-    P = defaultproject('generalized')
+    P = defaultproject('generalized',dorun=False)
+#    P.runsim()
     pops = P.data['pops']['short']
 
     malelist = findinds(P.data['pops']['male'])
@@ -446,12 +467,9 @@ if 'VMMC' in tests:
     P.runscenarios()
      
     if doplot:
-        from optima import pygui, plotpars
-        ppl1 = P.results[-1].raw['Scale up VMMC program'][0]['people']
-        ppl2 = P.results[-1].raw['Imagine that no-one gets circumcised'][0]['people']
-        plotpeople(P, ppl1, start=0, end=None, pops=[-2], animate=False)
-        apd = plotpars([scen.scenparset.pars for scen in P.scens.values()])
-        pygui(P.results[-1], toplot='default')
+        from optima import pygui
+#        apd = plotpars([scen.scenparset.pars for scen in P.scens.values()])
+        pygui(P.results[-1])
         
 
     done(t)

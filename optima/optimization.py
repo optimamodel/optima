@@ -118,7 +118,7 @@ def defaultobjectives(project=None, progsetname=None, which=None, verbose=2):
     return objectives
 
 
-def defaultconstraints(project=None, progsetname=None, which='outcomes', verbose=2):
+def defaultconstraints(project=None, progsetname=None, verbose=2):
     """
     Define constraints for minimize outcomes optimization: at the moment, just
     total budget constraints defned as a fraction of current spending. Fixed costs
@@ -157,8 +157,6 @@ def defaultconstraints(project=None, progsetname=None, which='outcomes', verbose
         constraints['min']['PMTCT'] = 1.0 # By default, don't let ART funding decrease
 
     return constraints
-
-
 
 
 
@@ -298,15 +296,14 @@ def outcomecalc(budgetvec=None, which=None, project=None, parsetname=None, progs
     parset  = project.parsets[parsetname] 
     progset = project.progsets[progsetname]
     if objectives  is None: objectives  = defaultobjectives(project=project,  progsetname=progsetname, which=which)
-    if constraints is None: constraints = defaultconstraints(project=project, progsetname=progsetname, which=which)
+    if constraints is None: constraints = defaultconstraints(project=project, progsetname=progsetname)
     if totalbudget is None: totalbudget = objectives['budget']
     if origbudget  is None: origbudget  = progset.getdefaultbudget()
     if optiminds   is None: optiminds   = findinds(progset.optimizable())
     if budgetvec   is None: budgetvec   = dcp(origbudget[:][optiminds])
     if type(budgetvec)==odict: budgetvec = dcp(budgetvec[:][optiminds])
-    
-    # Validate input
-    
+       
+    # Validate input    
     arglist = [budgetvec, which, parset, progset, objectives, totalbudget, constraints, optiminds, origbudget]
     if any([arg is None for arg in arglist]):  # WARNING, this kind of obscures which of these is None -- is that ok? Also a little too hard-coded...
         raise OptimaException('outcomecalc() requires which, budgetvec, parset, progset, objectives, totalbudget, constraints, optiminds, origbudget, tvec as inputs at minimum; argument %i is None' % arglist.index(None))
@@ -322,7 +319,7 @@ def outcomecalc(budgetvec=None, which=None, project=None, parsetname=None, progs
         constrainedbudget = dcp(origbudget)
         if len(budgetvec)==len(optiminds): constrainedbudget[optiminds] = budgetvec # Assume it's just the optimizable programs
         else:                              constrainedbudget[:]         = budgetvec # Assume it's all programs
-        
+    
     # Run model
     thiscoverage = progset.getprogcoverage(budget=constrainedbudget, t=objectives['start'], parset=parset, sample=ccsample)
     thisparsdict = progset.getpars(coverage=thiscoverage, t=objectives['start'], parset=parset, sample=ccsample)
@@ -342,6 +339,8 @@ def outcomecalc(budgetvec=None, which=None, project=None, parsetname=None, progs
         # Calculate outcome
         outcome = 0 # Preallocate objective value
         rawoutcomes = odict()
+
+        # Calculate the outcome
         for key in objectives['keys']:
             thisweight = objectives[key+'weight'] # e.g. objectives['inciweight']
             thisoutcome = results.main['num'+key].tot[0][indices].sum() # the instantaneous outcome e.g. objectives['numdeath'] -- 0 is since best
@@ -441,7 +440,7 @@ def optimize(optim=None, maxiters=None, maxtime=None, verbose=2, stoppingfunc=No
     if not(hasattr(optim, 'objectives')) or optim.objectives is None:
         optim.objectives = defaultobjectives(project=project, progsetname=optim.progsetname, which=which, verbose=verbose)
     if not(hasattr(optim, 'constraints')) or optim.constraints is None:
-        optim.constraints = defaultconstraints(project=project, progsetname=optim.progsetname, which=which, verbose=verbose)
+        optim.constraints = defaultconstraints(project=project, progsetname=optim.progsetname, verbose=verbose)
 
     # Process inputs
     if not optim.objectives['budget']: # Handle 0 or None 
@@ -599,7 +598,7 @@ def minoutcomes(project=None, optim=None, tvec=None, verbose=None, maxtime=None,
     results = runmodel(pars=parset.pars, project=project, parsetname=optim.parsetname, progsetname=optim.progsetname, tvec=tvec, keepraw=True, verbose=0, label=project.name+'-minoutcomes')
     initialind = findinds(results.raw[0]['tvec'], optim.objectives['start'])
     initpeople = results.raw[0]['people'][:,:,initialind] # Pull out the people array corresponding to the start of the optimization -- there shouldn't be multiple raw arrays here
-
+    
     # Calculate original things
     constrainedbudgetorig, constrainedbudgetvecorig, lowerlim, upperlim = constrainbudget(origbudget=origbudget, budgetvec=budgetvec, totalbudget=origtotalbudget, budgetlims=optim.constraints, optiminds=optiminds, outputtype='full')
     
@@ -613,10 +612,10 @@ def minoutcomes(project=None, optim=None, tvec=None, verbose=None, maxtime=None,
             'totalbudget':origtotalbudget, # Complicated, see below
             'optiminds':optiminds, 
             'origbudget':origbudget, 
-            'tvec':tvec, 
+            'tvec': tvec, 
             'ccsample':ccsample, 
             'verbose':verbose, 
-            'initpeople':initpeople} # Complicated; see below
+            'initpeople':initpeople} # Set below
     
     # Set up extremes
     extremebudgets = odict()
@@ -632,9 +631,10 @@ def minoutcomes(project=None, optim=None, tvec=None, verbose=None, maxtime=None,
             extremebudgets[prog][p] = sum(constrainedbudgetvecorig)
             for i in nonoptiminds: extremebudgets[prog][p] = origbudget[p] # Copy the original budget
     
-    # Run extremes
+    # Set up storage for extreme budgets
     extremeresults  = odict()
     extremeoutcomes = odict()
+
     for key,exbudget in extremebudgets.items():
         if key=='Baseline': 
             args['initpeople'] = None # Do this so it runs for the full time series, and is comparable to the optimization result
@@ -688,7 +688,7 @@ def minoutcomes(project=None, optim=None, tvec=None, verbose=None, maxtime=None,
         totalbudget = origtotalbudget*scalefactor
         constrainedbudget, constrainedbudgetvec, lowerlim, upperlim = constrainbudget(origbudget=origbudget, budgetvec=budgetvec, totalbudget=totalbudget, budgetlims=optim.constraints, optiminds=optiminds, outputtype='full')
         args['totalbudget'] = totalbudget
-        args['initpeople'] = initpeople # Set so only runs the part of the optimization required
+        args['initpeople'] = initpeople # Reset initpeople
         
         # Set up budgets to run
         if totalbudget: # Budget is nonzero, run
@@ -728,9 +728,11 @@ def minoutcomes(project=None, optim=None, tvec=None, verbose=None, maxtime=None,
                     bestkey = key # Reset key
                     bestfval = fvals[-1] # Reset fval
             
-            ## Calculate outcomes
+            ## Calculate final outcomes for the full time vector
             args['initpeople'] = None # Set to None to get full results, not just from strat year
             new = outcomecalc(asdresults[bestkey]['budget'], outputresults=True, **args)
+            
+            ## Name and store outputs
             if len(scalefactors)==1: new.name = 'Optimal' # If there's just one optimization, just call it optimal
             else: new.name = 'Optimal (%.0f%% budget)' % (scalefactor*100.) # Else, say what the budget is
             tmpresults[new.name] = new

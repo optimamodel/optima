@@ -637,15 +637,15 @@ def getvalidinds(data=None, filterdata=None):
     Example:
         getvalidinds([3,5,8,13], [2000, nan, nan, 2004]) # Returns array([0,3])
     '''
-    from numpy import array, isnan, intersect1d
-    data = array(data)
+    from numpy import isnan, intersect1d
+    data = promotetoarray(data)
     if filterdata is None: filterdata = data # So it can work on a single input -- more or less replicates sanitize() then
-    filterdata = array(filterdata)
+    filterdata = promotetoarray(filterdata)
     if filterdata.dtype=='bool': filterindices = filterdata # It's already boolean, so leave it as is
-    else:                        filterindices = ~isnan(filterdata) # Else, assume it's nans that need to be removed
-    dataindices = ~isnan(data) # Also check validity of data
+    else:                        filterindices = findinds(~isnan(filterdata)) # Else, assume it's nans that need to be removed
+    dataindices = findinds(~isnan(data)) # Also check validity of data
     validindices = intersect1d(dataindices, filterindices)
-    return findinds(validindices) # Only return indices -- WARNING, not consistent with sanitize()
+    return validindices # Only return indices -- WARNING, not consistent with sanitize()
 
 
 
@@ -1016,13 +1016,15 @@ def checkmem(origvariable, descend=0, order='n', plot=False, verbose=0):
 
 
 
-def getfilelist(folder=None, ext=None):
+def getfilelist(folder=None, ext=None, pattern=None):
     ''' A short-hand since glob is annoying '''
     from glob import glob
     import os
     if folder is None: folder = os.getcwd()
-    if ext is None: ext = '*'
-    filelist = sorted(glob(os.path.join(folder, '*.'+ext)))
+    if pattern is None:
+        if ext is None: ext = '*'
+        pattern = '*.'+ext
+    filelist = sorted(glob(os.path.join(folder, pattern)))
     return filelist
 
 
