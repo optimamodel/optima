@@ -395,9 +395,15 @@ def plotepi(results, toplot=None, uncertainty=True, die=True, showdata=True, ver
             if istotal or isstacked: datattrtype = 'tot' # For pulling out total data
             else: datattrtype = 'pops'
             
-            if ismultisim:  # e.g. scenario, no uncertainty
+            if ismultisim:  # e.g. scenario
                 best = list() # Initialize as empty list for storing results sets
-                for s in range(nsims): best.append(getattr(results.main[datatype], attrtype)[s])
+                for s in range(nsims):
+                    if getattr(results.main[datatype], attrtype)[s].shape[0] == 3: # This means it has uncertainty estimates - WARNING, not robust!!
+                        bind = 0 # Index of the best estimates -- we will only plot the best estimates for multisims with uncertainty
+                        thisbest = getattr(results.main[datatype], attrtype)[s][bind]
+                    else:
+                        thisbest = getattr(results.main[datatype], attrtype)[s]
+                    best.append(thisbest)
                 lower = None
                 upper = None
                 databest = None
@@ -701,7 +707,7 @@ def plotbudget(multires=None, die=True, figsize=globalfigsize, legendsize=global
             for p in range(nprogslist[b]-1,-1,-1): # Loop in reverse order over programs
                 progkey = budget.keys()[p]
                 ydata = budget[p]
-                xdata = b+0.6 # 0.6 is 1 nimunus 0.4, which is half the bar width
+                xdata = b+0.6 # 0.6 is 1 munus 0.4, which is half the bar width
                 bottomdata = sum(budget[:p])
                 label = None
                 if progkey in allprogkeys:
@@ -840,7 +846,7 @@ def plotcoverage(multires=None, die=True, figsize=globalfigsize, legendsize=glob
 def plotcascade(results=None, aspercentage=False, cascadecolors=None, figsize=globalfigsize, lw=2, titlesize=globaltitlesize, 
                 labelsize=globallabelsize, ticksize=globalticksize, legendsize=globallegendsize, position=None, useSIticks=True, 
                 showdata=True, dotsize=50, plotstartyear=None, plotendyear=None, die=False, verbose=2, interactive=False, fig=None,
-                asbars=False, allbars=True, **kwargs):
+                asbars=False, allbars=True, blhind=None, **kwargs):
 
     ''' 
     Plot the treatment cascade.
@@ -854,6 +860,9 @@ def plotcascade(results=None, aspercentage=False, cascadecolors=None, figsize=gl
     
     Version: 2017jun02 
     '''
+    
+    # Set defaults
+    if blhind is None: blhind = 0 # Just plot best for now - TODO, add errorbars
     
     # Figure out what kind of result it is
     if type(results)==Resultset: 
@@ -937,11 +946,10 @@ def plotcascade(results=None, aspercentage=False, cascadecolors=None, figsize=gl
             dx = 1.0
             space = 4.0
             basex = arange(ncategories)*space
-#            import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
             for k,key in enumerate(casckeys):
                 for i,ind in enumerate(cascinds):
                     if ismultisim: 
-                        thisbar = 100.*results.main[key].tot[plt][ind]/results.main['numplhiv'].tot[plt][ind] # If it's a multisim, need an extra index for the plot number
+                        thisbar = 100.*results.main[key].tot[plt][blhind][ind]/results.main['numplhiv'].tot[plt][blhind][ind] # If it's a multisim, need an extra index for the plot number
                     else:
                         thisbar = 100.*results.main[key].tot[0][ind]/results.main['numplhiv'].tot[0][ind] # Get the best estimate
                     if k==len(casckeys)-1: label = labels[i]
@@ -1024,7 +1032,7 @@ def plotcascade(results=None, aspercentage=False, cascadecolors=None, figsize=gl
 
 
 
-def plotallocations(project=None, budgets=None, colors=None, factor=1e6, compare=True, plotfixed=False, interactive=False):
+def plotallocations(project=None, budgets=None, colors=None, factor=1e6, compare=True, plotfixed=False, interactive=False, **kwargs):
     ''' Plot allocations in bar charts -- not part of weboptima '''
     
     if budgets is None:
@@ -1235,7 +1243,7 @@ def ploticers(results=None, figsize=globalfigsize, lw=2, dotsize=30, titlesize=g
 
 
 
-def plotcostcov(program=None, year=None, parset=None, results=None, plotoptions=None, existingFigure=None, plotbounds=True, npts=100, maxupperlim=1e8, doplot=False, interactive=False):
+def plotcostcov(program=None, year=None, parset=None, results=None, plotoptions=None, existingFigure=None, plotbounds=True, npts=100, maxupperlim=1e8, interactive=False, **kwargs):
     ''' Plot the cost-coverage curve for a single program'''
     
     # Put plotting imports here so fails at the last possible moment

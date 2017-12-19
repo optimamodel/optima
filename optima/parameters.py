@@ -26,7 +26,7 @@ staticmatrixkeys = ['birthtransit','agetransit','risktransit'] # Static keys tha
 class Parameterset(object):
     ''' Class to hold all parameters and information on how they were generated, and perform operations on them'''
     
-    def __init__(self, name='default', project=None, progsetname=None, budget=None):
+    def __init__(self, name='default', project=None, progsetname=None, budget=None, start=None):
         self.name = name # Name of the parameter set, e.g. 'default'
         self.uid = uuid() # ID
         self.projectref = Link(project) # Store pointer for the project, if available
@@ -38,6 +38,7 @@ class Parameterset(object):
         self.resultsref = None # Store pointer to results
         self.progsetname = progsetname # Store the name of the progset that generated the parset, if any
         self.budget = budget # Store the budget that generated the parset, if any
+        self.start = start # Store the startyear of the parset
         
     
     def __repr__(self):
@@ -103,18 +104,20 @@ class Parameterset(object):
         else:
             return results.main[proptype].tot[ind][timeindex]
                 
-            
     
     
     def makepars(self, data=None, verbose=2):
         self.pars = makepars(data=data, verbose=verbose) # Initialize as list with single entry
         self.popkeys = dcp(self.pars['popkeys']) # Store population keys more accessibly
+        self.start = data['years'][0] # Store the start year
         return None
 
 
-    def interp(self, keys=None, start=2000, end=2030, dt=0.2, tvec=None, smoothness=20, asarray=True, samples=None, verbose=2):
+    def interp(self, keys=None, start=None, end=2030, dt=0.2, tvec=None, smoothness=20, asarray=True, samples=None, verbose=2):
         """ Prepares model parameters to run the simulation. """
         printv('Making model parameters...', 1, verbose),
+        
+        if start is None: start = self.start
 
         simparslist = []
         if isnumber(tvec): tvec = array([tvec]) # Convert to 1-element array -- WARNING, not sure if this is necessary or should be handled lower down
@@ -1228,7 +1231,6 @@ def makesimpars(pars, name=None, keys=None, start=None, end=None, dt=None, tvec=
 
 
     return simpars
-
 
 
 

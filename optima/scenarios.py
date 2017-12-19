@@ -6,7 +6,7 @@ Version: 2017jun03
 
 ## Imports
 from numpy import append, array
-from optima import OptimaException, Link, Multiresultset, runmodel # Core classes/functions
+from optima import OptimaException, Link, Multiresultset # Core classes/functions
 from optima import dcp, today, odict, printv, findinds, defaultrepr, getresults, vec2obj, isnumber, uuid, promotetoarray # Utilities
 
 class Scen(object):
@@ -66,10 +66,10 @@ class Coveragescen(Progscen):
         self.coverage = coverage
 
 
-def runscenarios(project=None, verbose=2, defaultparset=0, debug=False, **kwargs):
+def runscenarios(project=None, verbose=2, name=None, defaultparset=-1, debug=False, nruns=None, base=None, ccsample=None, randseed=None, **kwargs):
     """
     Run all the scenarios.
-    Version: 2017jun04
+    Version: 2017aug15
     """
     
     printv('Running scenarios...', 1, verbose)
@@ -82,8 +82,13 @@ def runscenarios(project=None, verbose=2, defaultparset=0, debug=False, **kwargs
     scenlist = [scen for scen in project.scens.values() if scen.active==True]
     nscens = len(scenlist)
     
+    # Handle inputs
+    if ccsample is None: ccsample = 'best' 
+    if nruns is None:    nruns = 1
+    if base is None:     base = 0
+    
     # Convert the list of scenarios to the actual parameters to use in the model
-    scenparsets = makescenarios(project=project, scenlist=scenlist, verbose=verbose)
+    scenparsets = makescenarios(project=project, scenlist=scenlist, ccsample=ccsample, randseed=randseed, verbose=verbose)        
 
     # Run scenarios
     allresults = []
@@ -91,28 +96,34 @@ def runscenarios(project=None, verbose=2, defaultparset=0, debug=False, **kwargs
         printv('Running scenario "%s" (%i/%i)...' % (scen, scenno+1, nscens), 2, verbose)
         scenparset = scenparsets[scen]
         project.scens[scenno].scenparset = scenparset # Copy into scenarios objects
+        
 
         # Items specific to program (budget or coverage) scenarios
         budget = scenlist[scenno].budget if isinstance(scenlist[scenno], Progscen) else None
         coverage = scenlist[scenno].coverage if isinstance(scenlist[scenno], Progscen) else None
         budgetyears = scenlist[scenno].t if isinstance(scenlist[scenno], Progscen) else None
+        progsetname = scenlist[scenno].progsetname if isinstance(scenlist[scenno], Progscen) else None
 
         # Run model and add results
-        result = runmodel(pars=scenparset.pars, parsetname=scenlist[scenno].parsetname, progsetname=scenlist[scenno].progsetname, project=project, budget=budget, coverage=coverage, budgetyears=budgetyears, verbose=0, debug=debug, label=project.name+'-scenarios', **kwargs)
+        result = project.runsim(pars=scenparset.pars, name=scenlist[scenno].parsetname, progsetname=progsetname, budget=budget, coverage=coverage, budgetyears=budgetyears, verbose=0, debug=debug, resultname=project.name+'-scenarios', addresult=False, n=nruns, **kwargs)
+
         result.name = scenlist[scenno].name # Give a name to these results so can be accessed for the plot legend
         allresults.append(result) 
         printv('... completed scenario: %i/%i' % (scenno+1, nscens), 3, verbose)
     
-    multires = Multiresultset(resultsetlist=allresults, name='scenarios')
+    if name is None: name='scenarios'
+
+    multires = Multiresultset(resultsetlist=allresults, name=name)
     for scen in scenlist: scen.resultsref = multires.uid # Copy results into each scenario that's been run
-    
-    return multires
+    scenres = odict()
+    scenres[name] = multires
+    return scenres
 
 
 
 
 
-def makescenarios(project=None, scenlist=None, verbose=2):
+def makescenarios(project=None, scenlist=None, verbose=2, ccsample=False, randseed=None):
     """ Convert dictionary of scenario parameters into parset to model parameters """
 
     scenparsets = odict()
@@ -191,6 +202,7 @@ def makescenarios(project=None, scenlist=None, verbose=2):
                         thispar.y[popind] = append(thispar.y[popind], scenpar['endval'])
                     
                     if len(thispar.t[popind])!=len(thispar.y[popind]):
+#                        import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
                         raise OptimaException('Parameter lengths must match (t=%i, y=%i)' % (len(thispar.t), len(thispar.y)))
                         
         elif isinstance(scen,Progscen):
@@ -222,7 +234,7 @@ def makescenarios(project=None, scenlist=None, verbose=2):
                         scen.budget[budgetkey] = [budgetentry]
                 
                 # Figure out coverage
-                scen.coverage = thisprogset.getprogcoverage(budget=scen.budget, t=scen.t, parset=thisparset, results=results)
+                scen.coverage = thisprogset.getprogcoverage(budget=scen.budget, t=scen.t, parset=thisparset, results=results, sample=ccsample)
 
             elif isinstance(scen, Coveragescen):
                 
@@ -248,7 +260,7 @@ def makescenarios(project=None, scenlist=None, verbose=2):
                 scen.budget = thisprogset.getprogbudget(coverage=scen.coverage, t=scen.t, parset=thisparset, results=results)
 
             # Create parameter dictionary
-            thisparsdict = thisprogset.getpars(coverage=scen.coverage, t=scen.t, parset=thisparset, results=results)
+            thisparsdict = thisprogset.getpars(coverage=scen.coverage, t=scen.t, parset=thisparset, results=results, sample=ccsample)
             scen.pars = thisparsdict
             thisparset.pars = thisparsdict
             
@@ -300,8 +312,12 @@ def setparscenvalues(parset=None, parname=None, forwhom=None, startyear=None, ve
 
 
 
-def defaultscenarios(project=None, which=None, startyear=2016, endyear=2020, parset=-1, progset=-1, dorun=True, doplot=True):
-    ''' Add default scenarios to a project...examples include min-max budgets and 90-90-90 '''
+def defaultscenarios(project=None, which=None, startyear=2016, endyear=2020, parset=-1, progset=-1, dorun=True, doplot=True, **kwargs):
+    '''
+    Add default scenarios to a project...examples include min-max budgets and 90-90-90.
+    Keyword arguments are passed to runscenarios().
+    
+    '''
     
     if which is None: which = 'budgets'
     
@@ -359,7 +375,7 @@ def defaultscenarios(project=None, which=None, startyear=2016, endyear=2020, par
     
     # Run the scenarios
     project.addscens(scenlist)
-    if dorun: project.runscenarios()
+    if dorun: project.runscenarios(**kwargs)
     if doplot: 
         from optima import pygui
         pygui(project)
