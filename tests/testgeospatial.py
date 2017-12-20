@@ -16,7 +16,7 @@ Version: 2017mar19
 
 ## Define tests to run here!!!
 tests = [
-'makespreadsheet',
+#'makespreadsheet',
 'runGA',
 #'geogui',
 ]
