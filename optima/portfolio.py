@@ -389,8 +389,8 @@ class Portfolio(object):
                 
                 projoutcomesplit[k][io] = odict()
 
-        for k,key in enumerate(self.results.keys()):
-            for obkey in self.objectives['keys']:
+#        for k,key in enumerate(self.results.keys()):
+#            for obkey in self.objectives['keys']:
                 try:
                     if isinstance(self.results[key][io].main['num'+obkey].tot, dict):
                         projoutcomesplit[k][io]['num'+obkey] = self.results[key][io].main['num'+obkey].tot[1][bestindex][indices[io]].sum()     # Index 1 because we take optimal
@@ -432,7 +432,8 @@ class Portfolio(object):
             output += '\n\tBudget:\t%0.0f\t%0.0f' % (sum(projbudgets[prj]['init'][:]), sum(projbudgets[prj]['opt'][:]))
             output += '\n\tOutcome:\t%0.0f\t%0.0f' % (projoutcomes[prj]['init'], projoutcomes[prj]['opt'])
             for key in self.objectives['keys']:
-                output += '\n\t' + self.objectives['keylabels'][key] + ':\t%0.0f\t%0.0f' % (projoutcomesplit[prj]['init']['num'+key], projoutcomesplit[prj]['opt']['num'+key])
+                try: output += '\n\t' + self.objectives['keylabels'][key] + ':\t%0.0f\t%0.0f' % (projoutcomesplit[prj]['init']['num'+key], projoutcomesplit[prj]['opt']['num'+key])
+                except: import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
             output += '\n'
             output += '\n\tAllocation:'
             for prg in projbudgets[prj]['init'].keys():
