@@ -390,16 +390,16 @@ class Portfolio(object):
                 projoutcomesplit[k][io] = odict()
 
 #        for k,key in enumerate(self.results.keys()):
-#            for obkey in self.objectives['keys']:
-                try:
-                    if isinstance(self.results[key][io].main['num'+obkey].tot, dict):
-                        projoutcomesplit[k][io]['num'+obkey] = self.results[key][io].main['num'+obkey].tot[1][bestindex][indices[io]].sum()     # Index 1 because we take optimal
-                        overalloutcomesplit['num'+obkey][io] += projoutcomesplit[k][io]['num'+obkey]
-                    else:
-                        projoutcomesplit[k][io]['num'+obkey] = self.results[key][io].main['num'+obkey].tot[bestindex][indices[io]].sum()     # Again, current and optimal should be same for 0 second optimisation, but being explicit.
-                        overalloutcomesplit['num'+obkey][io] += projoutcomesplit[k][io]['num'+obkey]
-                except:
-                    import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+                for obkey in self.objectives['keys']:
+                    try:
+                        if isinstance(self.results[key][io].main['num'+obkey].tot, dict):
+                            projoutcomesplit[k][io]['num'+obkey] = self.results[key][io].main['num'+obkey].tot[1][bestindex][indices[io]].sum()     # Index 1 because we take optimal
+                            overalloutcomesplit['num'+obkey][io] += projoutcomesplit[k][io]['num'+obkey]
+                        else:
+                            projoutcomesplit[k][io]['num'+obkey] = self.results[key][io].main['num'+obkey].tot[bestindex][indices[io]].sum()     # Again, current and optimal should be same for 0 second optimisation, but being explicit.
+                            overalloutcomesplit['num'+obkey][io] += projoutcomesplit[k][io]['num'+obkey]
+                    except:
+                        import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
         
         # Add to the results structure
         self.GAresults['overallbudget']       = overallbud
