@@ -391,14 +391,12 @@ class Portfolio(object):
 
         for k,key in enumerate(self.results.keys()):
             for obkey in self.objectives['keys']:
-                try:
-                    projoutcomesplit[k]['init']['num'+obkey] = self.results[key]['opt'].main['num'+obkey].tot['Baseline'][bestindex][indices['opt']].sum()     # Again, current and optimal should be same for 0 second optimisation, but being explicit.
-                    projoutcomesplit[k]['opt']['num'+obkey] = self.results[key]['opt'].main['num'+obkey].tot['Optimal'][bestindex][indices['opt']].sum()     # Again, current and optimal should be same for 0 second optimisation, but being explicit.
-#                    projoutcomesplit[k][io]['num'+obkey] = self.results[key][io].main['num'+obkey].tot[0][bestindex][indices[io]].sum()     # Again, current and optimal should be same for 0 second optimisation, but being explicit.
-                    overalloutcomesplit['num'+obkey]['init'] += projoutcomesplit[k]['init']['num'+obkey]
-                    overalloutcomesplit['num'+obkey]['opt'] += projoutcomesplit[k]['opt']['num'+obkey]
-                except:
-                    import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+#                    projoutcomesplit[k]['init']['num'+obkey] = self.results[key]['opt'].main['num'+obkey].tot['Baseline'][bestindex][indices['opt']].sum()     # Again, current and optimal should be same for 0 second optimisation, but being explicit.
+#                    projoutcomesplit[k]['opt']['num'+obkey] = self.results[key]['opt'].main['num'+obkey].tot['Optimal'][bestindex][indices['opt']].sum()     # Again, current and optimal should be same for 0 second optimisation, but being explicit.
+                    projoutcomesplit[k][io]['num'+obkey] = self.results[key][io].main['num'+obkey].tot[0][bestindex][indices[io]].sum()     # Again, current and optimal should be same for 0 second optimisation, but being explicit.
+                    overalloutcomesplit['num'+obkey][io] += projoutcomesplit[k][io]['num'+obkey]
+#                    overalloutcomesplit['num'+obkey]['init'] += projoutcomesplit[k]['init']['num'+obkey]
+#                    overalloutcomesplit['num'+obkey]['opt'] += projoutcomesplit[k]['opt']['num'+obkey]
         
         # Add to the results structure
         self.GAresults['overallbudget']       = overallbud
