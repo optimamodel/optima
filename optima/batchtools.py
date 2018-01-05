@@ -316,11 +316,12 @@ def reoptimizeprojects(projects=None, objectives=None, maxtime=None, maxiters=No
             resultpair = reoptimizeprojects_task(*args)
             resultpairs[resultpair['key']] = resultpair
     if batch:
-        for key in projects:
+        for key in projects.keys():
             resultpair = outputqueue.get()
             resultpairs[resultpair['key']] = resultpair
         for prc in processes:
             prc.join()
+        resultpairs.sort(sortby=projects.keys()) # Ensure it's sorted
         
     # Print any warnings, if they exist
     for project in projects.values(): project.getwarnings() 
