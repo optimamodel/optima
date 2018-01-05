@@ -389,7 +389,7 @@ class Portfolio(object):
                 
                 projoutcomesplit[k][io] = odict()
                 for obkey in self.objectives['keys']:
-                    projoutcomesplit[k][io]['num'+obkey] = 0# self.results[key][io].main['num'+obkey].tot[bestindex][indices[io]].sum()     # Again, current and optimal should be same for 0 second optimisation, but being explicit -- WARNING, not sure why io is used twice
+                    projoutcomesplit[k][io]['num'+obkey] = self.results[key][io].main['num'+obkey].tot[bestindex][indices[io]].sum()     # Again, current and optimal should be same for 0 second optimisation, but being explicit -- WARNING, not sure why io is used twice
                     overalloutcomesplit['num'+obkey][io] += projoutcomesplit[k][io]['num'+obkey]
         
         # Add to the results structure

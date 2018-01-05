@@ -84,8 +84,8 @@ if 'runGA' in tests:
     
     # Make portfolio and run
     F = Portfolio(projects=projlist, objectives=defaultobjectives())
-    F.objectives['end'] = 2022 # This speeds it up by only simulating 5 years
-    F.genBOCs(maxtime=1, mc=0, budgetratios=[1.0, 0.5, 0.1, 5.0]) # Generate BOCs
+    F.objectives['end'] = 2020 # This speeds it up by only simulating 3 years
+    F.genBOCs(maxtime=1, mc=0, budgetratios=[1.0, 0.5, 2.0]) # Generate BOCs
     F.runGA(maxtime=1, mc=0) # Run GA
     F.export(filename=outputpath) # Export
     
