@@ -518,37 +518,21 @@ class Resultset(object):
             errormsg = 'Key %s not found; must be one of:\n%s' % (what, self.main.keys()+self.other.keys())
             raise OptimaException(errormsg)
             
-        # Figure out if it's a Multiresultset or a Resultset
-        if type(self)==Multiresultset:
-            # Use either total (by default) or a given population
-            if pop=='tot':
-                timeseries = resultobj.tot[key][blhkey]
-            else:
-                if isinstance(pop,str): 
-                    try:
-                        pop = self.popkeys.index(pop) # Convert string to number
-                    except:
-                        errormsg = 'Population key %s not found; must be one of: %s' % (pop, self.popkeys)
-                        raise OptimaException(errormsg)
-                timeseries = resultobj.pops[key][blhkey,pop,:]
+        # Use either total (by default) or a given population
+        if pop=='tot':
+            timeseries = resultobj.tot[key]
         else:
-            # Use either total (by default) or a given population
-            if pop=='tot':
-                timeseries = resultobj.tot[key]
-            else:
-                if isinstance(pop,str): 
-                    try:
-                        pop = self.popkeys.index(pop) # Convert string to number
-                    except:
-                        errormsg = 'Population key %s not found; must be one of: %s' % (pop, self.popkeys)
-                        raise OptimaException(errormsg)
-                timeseries = resultobj.pops[key][pop,:]
-            
+            if isinstance(pop,str): 
+                try:
+                    pop = self.popkeys.index(pop) # Convert string to number
+                except:
+                    errormsg = 'Population key %s not found; must be one of: %s' % (pop, self.popkeys)
+                    raise OptimaException(errormsg)
+            timeseries = resultobj.pops[key][pop,:]
         
         # Get the index and return the result
         if checktype(year, 'number'):
             index = findnearest(self.tvec, year)
-            
             result = timeseries[index]
         elif checktype(year, 'arraylike'):
             startind = findnearest(self.tvec, year[0])
@@ -686,11 +670,12 @@ class Multiresultset(Resultset):
                 if orig is None: setattr(self, attr, new) # Pray that they match, since too hard to compare
             
             # Now, the real deal: fix self.main and self.other
+            best = 0 # Key for best data -- discard uncertainty
             for at in ['pops', 'tot']:
                 for key2 in self.main.keys():
-                    getattr(self.main[key2], at)[key] = getattr(rset.main[key2], at) # Add data: e.g. self.main['prev'].pops['foo'] = rset.main['prev'].pops
+                    getattr(self.main[key2], at)[key] = getattr(rset.main[key2], at)[best] # Add data: e.g. self.main['prev'].pops['foo'] = rset.main['prev'].pops[0] -- WARNING, the 0 discards uncertainty data
                 for key2 in self.other.keys():
-                    getattr(self.other[key2], at)[key] = getattr(rset.other[key2], at) # Add data: e.g. self.main['prev'].pops['foo'] = rset.main['prev'].pops
+                    getattr(self.other[key2], at)[key] = getattr(rset.other[key2], at)[best] # Add data: e.g. self.main['prev'].pops['foo'] = rset.main['prev'].pops[0] -- WARNING, the 0 discards uncertainty data
 
             # Finally, process the budget and budgetyears -- these  are only needed for the budget/coverage conversions
             if len(rset.budget) or len(rset.coverage):

@@ -51,6 +51,7 @@ def setmigrations(which='migrations'):
         ('2.4',   ('2.5',   '2017-07-03', None,              'Made registration public')),
         ('2.5',   ('2.6',   '2017-10-23', None,              'Public code release')),
         ('2.6',   ('2.6.1', '2017-12-19', None,              'Scenario sensitivity feature')),
+        ('2.6.1', ('2.6.2', '2017-12-19', None,              'New results format')),
         ])
     
     # Define changelog

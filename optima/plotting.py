@@ -102,7 +102,7 @@ def setylim(data=None, ax=None):
     return lowerlim,upperlim
 
 
-def getplotselections(results, advanced=False, excludedalys=True):
+def getplotselections(results, advanced=False):
     ''' 
     From the inputted results structure, figure out what the available kinds of plots are. List results-specific
     plot types first (e.g., allocations), followed by the standard epi plots, and finally (if available) other
@@ -118,9 +118,6 @@ def getplotselections(results, advanced=False, excludedalys=True):
         errormsg = 'Results input to plotepi() must be either Resultset or Multiresultset, not "%s".' % type(results)
         raise OptimaException(errormsg)
     
-    # Default is to exclude DALYs from results. Note, we do it this way instead of making DALYs a non-main result because this will be easier to revert and will not affect back-end users so much
-    if excludedalys: excludelist = ['numdaly'] 
-
     ## Set up output structure
     plotselections = dict()
     plotselections['keys'] = list()
@@ -161,8 +158,8 @@ def getplotselections(results, advanced=False, excludedalys=True):
     plotepikeys = list()
     plotepinames = list()
     
-    epikeys = [k for k in results.main.keys() if k not in excludelist] # e.g. 'prev'
-    epinames = [result.name for rk,result in results.main.iteritems() if rk not in excludelist]
+    epikeys = results.main.keys() # e.g. 'prev'
+    epinames = [result.name for result in results.main.values()]
     
     if advanced: # Loop has to be written this way so order is correct
         for key in epikeys: # e.g. 'prev'
@@ -395,15 +392,9 @@ def plotepi(results, toplot=None, uncertainty=True, die=True, showdata=True, ver
             if istotal or isstacked: datattrtype = 'tot' # For pulling out total data
             else: datattrtype = 'pops'
             
-            if ismultisim:  # e.g. scenario
+            if ismultisim:  # e.g. scenario, no uncertainty
                 best = list() # Initialize as empty list for storing results sets
-                for s in range(nsims):
-                    if getattr(results.main[datatype], attrtype)[s].shape[0] == 3: # This means it has uncertainty estimates - WARNING, not robust!!
-                        bind = 0 # Index of the best estimates -- we will only plot the best estimates for multisims with uncertainty
-                        thisbest = getattr(results.main[datatype], attrtype)[s][bind]
-                    else:
-                        thisbest = getattr(results.main[datatype], attrtype)[s]
-                    best.append(thisbest)
+                for s in range(nsims): best.append(getattr(results.main[datatype], attrtype)[s])
                 lower = None
                 upper = None
                 databest = None
@@ -707,7 +698,7 @@ def plotbudget(multires=None, die=True, figsize=globalfigsize, legendsize=global
             for p in range(nprogslist[b]-1,-1,-1): # Loop in reverse order over programs
                 progkey = budget.keys()[p]
                 ydata = budget[p]
-                xdata = b+0.6 # 0.6 is 1 munus 0.4, which is half the bar width
+                xdata = b+0.6 # 0.6 is 1 minus 0.4, which is half the bar width
                 bottomdata = sum(budget[:p])
                 label = None
                 if progkey in allprogkeys:
@@ -961,6 +952,7 @@ def plotcascade(results=None, aspercentage=False, cascadecolors=None, figsize=gl
             dy = -1
             lineargs = {'c':targetcolor, 'linewidth':2}
             txtargs = {'fontsize':legendsize, 'color':targetcolor, 'horizontalalignment':'center'}
+            print 'WARNING FIX HARD CODING'
             dxind = 1
             txind = 4 if allbars else 2
             supind = 5 if allbars else 5
