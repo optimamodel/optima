@@ -82,7 +82,6 @@ class Resultset(object):
         # Main results -- time series, by population
         self.main['numinci']        = Result('New HIV infections')
         self.main['numdeath']       = Result('HIV-related deaths')
-        self.main['numdaly']        = Result('HIV-related DALYs')
         self.main['numincibypop']   = Result('New HIV infections caused')
         
         self.main['numplhiv']       = Result('PLHIV')
@@ -114,6 +113,7 @@ class Resultset(object):
         self.other['childprev']     = Result('Child HIV prevalence (%)', ispercentage=True)
         self.other['numotherdeath'] = Result('Non-HIV-related deaths)')
         self.other['numbirths']     = Result('Total births)')
+        self.other['numdaly']       = Result('HIV-related DALYs')
         
         # Add all health states
         for healthkey,healthname in zip(self.settings.healthstates, self.settings.healthstatesfull): # Health keys: ['susreg', 'progcirc', 'undx', 'dx', 'care', 'lost', 'usvl', 'svl']
@@ -397,8 +397,8 @@ class Resultset(object):
             healthstates = array(list(hivstateindices & notonart)) # Find the intersection of this HIV state and not on ART states
             dalypops += allpeople[:,healthstates,:,:].sum(axis=1) * disutils[h]
             dalytot += allpeople[:,healthstates,:,:].sum(axis=(1,2)) * disutils[h]
-        self.main['numdaly'].pops = process(dalypops[:,:,indices])
-        self.main['numdaly'].tot  = process(dalytot[:,indices])
+        self.other['numdaly'].pops = process(dalypops[:,:,indices])
+        self.other['numdaly'].tot  = process(dalytot[:,indices])
         
         
         # Other indicators
