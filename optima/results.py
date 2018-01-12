@@ -427,33 +427,35 @@ class Resultset(object):
         return None
         
         
-    def export(self, filename=None, folder=None, bypop=True, sep=',', ind=0, sigfigs=3, writetofile=True, asexcel=True, verbose=2):
+    def export(self, filename=None, folder=None, bypop=True, sep=',', ind=None, key=None, sigfigs=3, writetofile=True, asexcel=True, verbose=2):
         ''' Method for exporting results to an Excel or CSV file '''
 
+        if ind is None: ind = 0 # WARNING, there must be a better way of doing this
+        if key is None: key = 0
+        
         npts = len(self.tvec)
-        keys = self.main.keys()
+        mainkeys = self.main.keys()
         outputstr = sep.join(['Indicator','Population'] + ['%i'%t for t in self.tvec]) # Create header and years
-        for key in keys:
+        for mainkey in mainkeys:
             if bypop: outputstr += '\n' # Add a line break between different indicators
             if bypop: popkeys = ['tot']+self.popkeys # include total even for bypop -- WARNING, don't try to change this!
             else:     popkeys = ['tot']
             for pk,popkey in enumerate(popkeys):
                 outputstr += '\n'
-                if bypop and popkey!='tot': data = self.main[key].pops[ind][pk-1,:] # WARNING, assumes 'tot' is always the first entry
-                else:                       data = self.main[key].tot[ind][:]
-                outputstr += self.main[key].name+sep+popkey+sep
+                if bypop and popkey!='tot': data = self.main[mainkey].pops[ind][pk-1,:] # WARNING, assumes 'tot' is always the first entry
+                else:                       data = self.main[mainkey].tot[ind][:]
+                outputstr += self.main[mainkey].name+sep+popkey+sep
                 for t in range(npts):
-                    if self.main[key].ispercentage: outputstr += ('%s'+sep) % sigfig(data[t], sigfigs=sigfigs)
+                    if self.main[mainkey].ispercentage: outputstr += ('%s'+sep) % sigfig(data[t], sigfigs=sigfigs)
                     else:                           outputstr += ('%i'+sep) % data[t]
        
-        if hasattr(self, 'budgets'):
-            if len(self.budgets):      thisbudget = self.budgets[ind]
-            else:                      thisbudget = [] 
-        else:                          thisbudget = self.budget
-        if hasattr(self, 'coverages'):
-            if len(self.coverages):    thiscoverage = self.coverages[ind]
-            else:                      thiscoverage = [] 
-        else:                          thiscoverage = self.coverage
+        # Handle budget and coverage
+        thisbudget = []
+        thiscoverage = []
+        try:    thisbudget = self.budgets[key]
+        except: pass
+        try:    thiscoverage = self.coverages[ind]
+        except: pass
         
         if len(thisbudget): # WARNING, does not support multiple years
             outputstr += '\n\n\n'
@@ -761,13 +763,13 @@ class Multiresultset(Resultset):
         return resultsdiff
     
     
-    def export(self, filename=None, folder=None, ind=None, writetofile=True, verbose=2, asexcel=True, **kwargs):
+    def export(self, filename=None, folder=None, ind=None, key=None, writetofile=True, verbose=2, asexcel=True, **kwargs):
         ''' A method to export each multiresult to a different file...not great, but not sure of what's better '''
         
         if asexcel: outputdict = odict()
         else:       outputstr = ''
-        for k,key in enumerate(self.keys):
-            thisoutput = Resultset.export(self, ind=k, writetofile=False, **kwargs)
+        for key in self.keys:
+            thisoutput = Resultset.export(self, ind=ind, key=key, writetofile=False, **kwargs)
             if asexcel:
                 outputdict[key] = thisoutput
             else:
