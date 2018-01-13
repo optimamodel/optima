@@ -164,13 +164,9 @@ def objectivecalc(parvec=None, pars=None, parlist=None, project=None, fitto='pre
     if any([arg is None for arg in [parvec, pars, parlist, project]]): 
         raise OptimaException('objectivecalc() requires parvec, pars, parlist, and project inputs')
     
-    
-
-    printv(parvec, 4, verbose)
-    
     eps = project.settings.eps # Specify absolute error -- can't be larger than ~0.001 because then general population prevalence might be weighted incorrectly
     pars = convert(pars, parlist, parvec)
-    results = project.runsim(pars=pars, start=project.data['years'][0], end=project.data['years'][-1], verbose=0, resultsname=project.name+'-autofit', addresult=False)
+    results = project.runsim(pars=pars, start=project.data['years'][0], end=project.data['years'][-1], verbose=0, resultname=project.name+'-autofit', addresult=False)
     
     ## Loop over all results
     allmismatches = []

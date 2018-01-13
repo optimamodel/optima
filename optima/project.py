@@ -523,10 +523,10 @@ class Project(object):
     #######################################################################################################
 
 
-    def runsim(self, name=None, pars=None, simpars=None, start=None, end=None, dt=None, addresult=True, 
-               die=True, debug=False, overwrite=True, n=1, sample=None, tosample=None, randseed=None,
-               verbose=None, keepraw=False, resultname=None, parsetname=None, progsetname=None, 
-               budget=None, coverage=None, budgetyears=None, data=None, label=None, **kwargs):
+    def runsim(self, name=None, pars=None, simpars=None, start=None, end=None, dt=None, tvec=None, 
+               budget=None, coverage=None, budgetyears=None, data=None, n=1, sample=None, tosample=None, randseed=None,
+               addresult=True, overwrite=True, keepraw=False, doround=True, die=True, debug=False, verbose=None, 
+               parsetname=None, progsetname=None, resultname=None, label=None, **kwargs):
         ''' 
         This function runs a single simulation, or multiple simulations if n>1.
         
@@ -566,7 +566,7 @@ class Project(object):
             for i in range(n):
                 maxint = 2**31-1 # See https://en.wikipedia.org/wiki/2147483647_(number)
                 sampleseed = randint(0,maxint) 
-                simparslist.append(makesimpars(pars, start=start, end=end, dt=dt, settings=self.settings, name=parsetname, sample=sample, tosample=tosample, randseed=sampleseed))
+                simparslist.append(makesimpars(pars, start=start, end=end, dt=dt, tvec=tvec, settings=self.settings, name=parsetname, sample=sample, tosample=tosample, randseed=sampleseed))
         else:
             simparslist = promotetolist(simpars)
 
@@ -577,7 +577,7 @@ class Project(object):
             rawlist.append(raw)
 
         # Store results if required
-        results = Resultset(name=resultname, pars=pars, parsetname=parsetname, progsetname=progsetname, raw=rawlist, simpars=simparslist, budget=budget, coverage=coverage, budgetyears=budgetyears, project=self, keepraw=keepraw, data=data, verbose=verbose) # Create structure for storing results
+        results = Resultset(name=resultname, pars=pars, parsetname=parsetname, progsetname=progsetname, raw=rawlist, simpars=simparslist, budget=budget, coverage=coverage, budgetyears=budgetyears, project=self, keepraw=keepraw, doround=doround, data=data, verbose=verbose) # Create structure for storing results
         if addresult:
             keyname = self.addresult(result=results, overwrite=overwrite)
             if parsetname is not None:
