@@ -90,8 +90,8 @@ def defaultobjectives(project=None, progsetname=None, which=None, verbose=2):
         
     objectives = odict() # Dictionary of all objectives
     objectives['which'] = which
-    objectives['keys'] = ['death', 'inci', 'daly'] # Define valid keys
-    objectives['keylabels'] = odict([('death','Deaths'), ('inci','New infections'), ('daly','DALYs')]) # Define key labels
+    objectives['keys'] = ['death', 'inci'] # Define valid keys #  ['death', 'inci', 'daly']
+    objectives['keylabels'] = odict([('death','Deaths'), ('inci','New infections')]) # Define key labels # , ('daly','DALYs')
     if which in ['outcome', 'outcomes']:
         objectives['base']        = None # "Baseline year to compare outcomes to"
         objectives['start']       = 2017 # "Year to begin optimization"
@@ -100,10 +100,10 @@ def defaultobjectives(project=None, progsetname=None, which=None, verbose=2):
         objectives['budgetscale'] = [1.] # "Scale factors to apply to budget"
         objectives['deathweight'] = 5    # "Relative weight per death"
         objectives['inciweight']  = 1    # "Relative weight per new infection"
-        objectives['dalyweight']  = 0    # "Relative weight per DALY"
+#        objectives['dalyweight']  = 0    # "Relative weight per DALY"
         objectives['deathfrac']   = None # Fraction of deaths to get to
         objectives['incifrac']    = None # Fraction of incidence to get to
-        objectives['dalyfrac']    = None # Fraction of DALYs to get to
+#        objectives['dalyfrac']    = None # Fraction of DALYs to get to
     elif which=='money':
         objectives['base']        = 2015 # "Baseline year to compare outcomes to"
         objectives['start']       = 2017 # "Year to begin optimization"
@@ -111,10 +111,10 @@ def defaultobjectives(project=None, progsetname=None, which=None, verbose=2):
         objectives['budget']      = defaultbudget # "Starting budget"
         objectives['deathweight'] = None # "Death weighting"
         objectives['inciweight']  = None # "Incidence weighting"
-        objectives['dalyweight']  = None # "Incidence weighting"
+#        objectives['dalyweight']  = None # "Incidence weighting"
         objectives['deathfrac']   = 0.25 # Fraction of deaths to avert
         objectives['incifrac']    = 0.25 # Fraction of incidence to avert
-        objectives['dalyfrac']    = 0 # Fraction of DALYs to avert
+#        objectives['dalyfrac']    = 0 # Fraction of DALYs to avert
     else:
         raise OptimaException('"which" keyword argument must be either "outcome" or "money"')
 
@@ -1179,7 +1179,7 @@ def icers(name=None, project=None, parsetname=None, progsetname=None, objective=
         project      = the project object
         parsetname   = name of the parameter set used; default -1
         progsetname  = name of the program set; default -1
-        objective    = what to calculate; must be one of 'death', 'inci', 'daly'; 'daly' by default)
+        objective    = what to calculate; must be one of 'death', 'inci'; 'death' by default)
         startyear    = the year to start applying the budget and calculating the outcome; default from defaultobjectives()
         endyear      = ditto for end year
         budgetratios = the list of budgets relative to baseline to run; default 10 budgets spanning 0.0 to 2.0
@@ -1199,7 +1199,7 @@ def icers(name=None, project=None, parsetname=None, progsetname=None, objective=
     eps = project.settings.eps
     icereps = 1e-9 # A smaller epsilon for ensuring ICER divisions aren't zero
     if marginal     is None: marginal     = True
-    if objective    is None: objective    = 'daly'
+    if objective    is None: objective    = 'death'
     if parsetname   is None: parsetname   = -1
     if progsetname  is None: progsetname  = -1
     if budgetratios is None: budgetratios = [0.0, 0.1, 0.2, 0.4, 0.6, 0.8, 1.0, 1.2, 1.5, 2.0]
@@ -1304,7 +1304,7 @@ def icers(name=None, project=None, parsetname=None, progsetname=None, objective=
                 baselinediff = -baselinediffy/(baselinediffx+eps)
                 estimates = [baselinediff]
             
-            # Finally, calculate the DALYs per dollar
+            # Finally, calculate the outcome per dollar
             thisiecr = array(estimates).mean() # Average upper and lower estimates, if available -- "iecr" is the inverse of an icer
             if thisiecr<0:
                 printv('WARNING, ICER for "%s" at budget ratio %0.1f is negative (%0.3e); setting to 0' % (key, budgetratios[b], 1./(thisiecr+icereps)), 1, verbose)
