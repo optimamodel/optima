@@ -523,18 +523,37 @@ class Project(object):
     #######################################################################################################
 
 
-    def runsim(self, name=None, simpars=None, start=None, end=None, dt=None, addresult=True, die=True, debug=False, overwrite=True, n=1, sample=None, tosample=None, randseed=None, verbose=None, keepraw=False, initpeople=None, startind=None, **kwargs):
+    def runsim(self, name=None, pars=None, simpars=None, start=None, end=None, dt=None, addresult=True, 
+               die=True, debug=False, overwrite=True, n=1, sample=None, tosample=None, randseed=None,
+               verbose=None, keepraw=False, resultname=None, progsetname=None, budget=None, coverage=None,
+               budgetyears=None, data=None, **kwargs):
         ''' 
         This function runs a single simulation, or multiple simulations if n>1.
         
-        Version: 2017oct30
+        Version: 2016nov07
         '''
         if start is None: start=self.settings.start # Specify the start year
         if end is None: end=self.settings.end # Specify the end year
         if dt is None: dt=self.settings.dt # Specify the timestep
-        if name is None: name = -1 # Set default name
         if verbose is None: verbose = self.settings.verbose
         
+        # Extract parameters either from a parset stored in project or from input
+        if name is None:
+            if pars is None:
+                name = -1 # Set default name
+                pars = self.parsets[name].pars
+                resultname = 'parset-'+self.parsets[name].name
+            else:
+                printv('Model was given a pardict and a parsetname, defaulting to use pardict input', 3, self.settings.verbose)
+                if resultname is None: resultname = 'pardict'
+        else:
+            if pars is not None:
+                printv('Model was given a pardict and a parsetname, defaulting to use pardict input', 3, self.settings.verbose)
+                if resultname is None: resultname = 'pardict'
+            else:
+                if resultname is None: resultname = 'parset-'+self.parsets[name].name
+                pars = self.parsets[name].pars
+            
         # Get the parameters sorted
         if simpars is None: # Optionally run with a precreated simpars instead
             simparslist = [] # Needs to be a list
@@ -543,22 +562,22 @@ class Project(object):
             for i in range(n):
                 maxint = 2**31-1 # See https://en.wikipedia.org/wiki/2147483647_(number)
                 sampleseed = randint(0,maxint) 
-                simparslist.append(makesimpars(self.parsets[name].pars, start=start, end=end, dt=dt, settings=self.settings, name=name, sample=sample, tosample=tosample, randseed=sampleseed))
+                simparslist.append(makesimpars(pars, start=start, end=end, dt=dt, settings=self.settings, name=name, sample=sample, tosample=tosample, randseed=sampleseed))
         else:
             simparslist = promotetolist(simpars)
 
         # Run the model! -- WARNING, the logic of this could be cleaned up a lot!
         rawlist = []
         for ind,simpars in enumerate(simparslist):
-            raw = model(simpars, self.settings, die=die, debug=debug, verbose=verbose, label=self.name, initpeople=initpeople, startind=startind, **kwargs) # ACTUALLY RUN THE MODEL
+            raw = model(simpars, self.settings, die=die, debug=debug, verbose=verbose, label=self.name, **kwargs) # ACTUALLY RUN THE MODEL
             rawlist.append(raw)
 
         # Store results -- WARNING, is this correct in all cases?
-        resultname = 'parset-'+self.parsets[name].name 
-        results = Resultset(name=resultname, pars=self.parsets[name].pars, parsetname=name, raw=rawlist, simpars=simparslist, project=self, keepraw=keepraw, verbose=verbose) # Create structure for storing results
+        results = Resultset(name=resultname, pars=pars, parsetname=name, progsetname=progsetname, raw=rawlist, simpars=simparslist, budget=budget, coverage=coverage, budgetyears=budgetyears, project=self, keepraw=keepraw, data=data, verbose=verbose) # Create structure for storing results
         if addresult:
             keyname = self.addresult(result=results, overwrite=overwrite)
-            self.parsets[name].resultsref = keyname # If linked to a parset, store the results
+            if name is not None:
+                self.parsets[name].resultsref = keyname # If linked to a parset, store the results
 
         self.modified = today()
         return results
@@ -591,13 +610,16 @@ class Project(object):
         return None
     
     
-    def runscenarios(self, scenlist=None, verbose=2, debug=False, **kwargs):
+    def runscenarios(self, scenlist=None, name=None, verbose=2, debug=False, nruns=None, base=None, ccsample=None, randseed=None, **kwargs):
         ''' Function to run scenarios '''
+
         if scenlist is not None: self.addscens(scenlist) # Replace existing scenario list with a new one
-        multires = runscenarios(project=self, verbose=verbose, debug=debug, **kwargs)
-        self.addresult(result=multires)
+        if name is None: name = 'scenarios' 
+    
+        scenres = runscenarios(project=self, verbose=verbose, name=name, debug=debug, nruns=nruns, base=base, ccsample=ccsample, randseed=randseed, **kwargs)
+        self.addresult(result=scenres[name])
         self.modified = today()
-        return multires
+        return scenres
     
     
     def defaultscenarios(self, which=None, **kwargs):
@@ -743,6 +765,10 @@ class Project(object):
         else: # Neither special case
             multires = optimize(optim=optim, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, 
                                 die=die, origbudget=origbudget, randseed=randseed, mc=mc, **kwargs)
+        else:
+            multires = multioptimize(optim=optim, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, 
+                                     die=die, origbudget=origbudget, randseed=randseed, mc=mc, nchains=nchains, nblocks=nblocks, 
+                                     blockiters=blockiters, batch=batch, **kwargs)
         
         # Tidy up
         optim.resultsref = multires.name

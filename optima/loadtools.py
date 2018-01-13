@@ -50,7 +50,9 @@ def setmigrations(which='migrations'):
         ('2.3.8', ('2.4',   '2017-06-05', None,              'Ukraine: ICER analysis; cascade bar plot; GUI tools; summary() and fixprops() methdods')),
         ('2.4',   ('2.5',   '2017-07-03', None,              'Made registration public')),
         ('2.5',   ('2.6',   '2017-10-23', None,              'Public code release')),
-        ('2.6',   ('2.7',   '2017-10-31', addtimevarying,    'Time-varying optimization')),
+        ('2.6',   ('2.6.1', '2017-12-19', None,              'Scenario sensitivity feature')),
+        ('2.6.1', ('2.6.2', '2017-12-19', None,              'New results format')),
+        ('2.6.2', ('2.7',   '2017-10-31', addtimevarying,    'Time-varying optimization')),
         ])
     
     # Define changelog

@@ -26,7 +26,7 @@ staticmatrixkeys = ['birthtransit','agetransit','risktransit'] # Static keys tha
 class Parameterset(object):
     ''' Class to hold all parameters and information on how they were generated, and perform operations on them'''
     
-    def __init__(self, name='default', project=None, progsetname=None, budget=None):
+    def __init__(self, name='default', project=None, progsetname=None, budget=None, start=None):
         self.name = name # Name of the parameter set, e.g. 'default'
         self.uid = uuid() # ID
         self.projectref = Link(project) # Store pointer for the project, if available
@@ -38,6 +38,7 @@ class Parameterset(object):
         self.resultsref = None # Store pointer to results
         self.progsetname = progsetname # Store the name of the progset that generated the parset, if any
         self.budget = budget # Store the budget that generated the parset, if any
+        self.start = start # Store the startyear of the parset
         
     
     def __repr__(self):
@@ -103,18 +104,20 @@ class Parameterset(object):
         else:
             return results.main[proptype].tot[ind][timeindex]
                 
-            
     
     
     def makepars(self, data=None, verbose=2):
         self.pars = makepars(data=data, verbose=verbose) # Initialize as list with single entry
         self.popkeys = dcp(self.pars['popkeys']) # Store population keys more accessibly
+        self.start = data['years'][0] # Store the start year
         return None
 
 
-    def interp(self, keys=None, start=2000, end=2030, dt=0.2, tvec=None, smoothness=20, asarray=True, samples=None, verbose=2):
+    def interp(self, keys=None, start=None, end=2030, dt=0.2, tvec=None, smoothness=20, asarray=True, samples=None, verbose=2):
         """ Prepares model parameters to run the simulation. """
         printv('Making model parameters...', 1, verbose),
+        
+        if start is None: start = self.start
 
         simparslist = []
         if isnumber(tvec): tvec = array([tvec]) # Convert to 1-element array -- WARNING, not sure if this is necessary or should be handled lower down
@@ -220,7 +223,7 @@ class Parameterset(object):
         return None
 
 
-    def manualfitlists(self, parsubset=None, advanced=False):
+    def manualfitlists(self, parsubset=None, advanced=None):
         ''' WARNING -- not sure if this function is needed; if it is needed, it should be combined with manualgui,py '''
         if not self.pars:
             raise OptimaException("No parameters available!")
@@ -243,7 +246,7 @@ class Parameterset(object):
         typelist = mflists['types']
         valuelist = mflists['values']
         labellist = mflists['labels']
-
+        
         for key in tmppars.keys():
             par = tmppars[key]
             if hasattr(par, 'manual') and par.manual != 'no':  # Don't worry if it doesn't work, not everything in tmppars is actually a parameter
@@ -251,40 +254,40 @@ class Parameterset(object):
                     if advanced: # By default, don't include these
                         keylist.append(key)
                         subkeylist.append(None)
-                        typelist.append(par.manual)
+                        typelist.append('meta')
                         valuelist.append(par.m)
                         labellist.append('%s: meta' % par.name)
-                elif par.manual in 'const':
+                elif par.manual=='const':
                     keylist.append(key)
                     subkeylist.append(None)
-                    typelist.append(par.manual)
+                    typelist.append('const')
                     valuelist.append(par.y)
                     labellist.append(par.name)
                 elif par.manual=='advanced': # These are also constants, but skip by default
                     if advanced:
                         keylist.append(key)
                         subkeylist.append(None)
-                        typelist.append(par.manual)
+                        typelist.append('const')
                         valuelist.append(par.y)
                         labellist.append(par.name)
                 elif par.manual=='year':
                     keylist.append(key)
                     subkeylist.append(None)
-                    typelist.append(par.manual)
+                    typelist.append('year')
                     valuelist.append(par.t)
                     labellist.append(par.name)
                 elif par.manual=='pop':
                     for subkey in par.keys():
                         keylist.append(key)
                         subkeylist.append(subkey)
-                        typelist.append(par.manual)
+                        typelist.append('pop')
                         valuelist.append(par.y[subkey])
                         labellist.append('%s: %s' % (par.name, str(subkey)))
                 elif par.manual=='exp':
                     for subkey in par.keys():
                         keylist.append(key)
                         subkeylist.append(subkey)
-                        typelist.append(par.manual)
+                        typelist.append('exp')
                         valuelist.append(par.i[subkey])
                         labellist.append('%s: %s' % (par.name, str(subkey)))
                 else:
@@ -1228,7 +1231,6 @@ def makesimpars(pars, name=None, keys=None, start=None, end=None, dt=None, tvec=
 
 
     return simpars
-
 
 
 

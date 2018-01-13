@@ -311,8 +311,11 @@ class Portfolio(object):
         if initbudgets == None: initbudgets = [None]*len(self.projects)
         if optbudgets == None: optbudgets = [None]*len(self.projects)
         if objectives == None: 
-            printv('WARNING, you have called plotBOCs on portfolio %s without specifying objectives. Using default objectives... ' % (self.name), 2, verbose)
-            objectives = defaultobjectives()
+            try: 
+                objectives = self.objectives # This should be defined, but just in case...
+            except:
+                printv('WARNING, you have called plotBOCs on portfolio %s without specifying objectives. Using default objectives... ' % (self.name), 2, verbose)
+                objectives = defaultobjectives()
             
         if not len(self.projects) == len(initbudgets) or not len(self.projects) == len(optbudgets):
             errormsg = 'Error: Plotting BOCs for %i projects with %i initial budgets (%i required) and %i optimal budgets (%i required).' % (len(self.projects), len(initbudgets), len(self.projects), len(optbudgets), len(self.projects))
@@ -335,6 +338,7 @@ class Portfolio(object):
             errormsg = 'Portfolio does not contain results: most likely geospatial analysis has not been run'
             raise OptimaException(errormsg)
         self.GAresults  = odict() # I can't believe this wasn't stored before
+        bestindex = 0 # Index of the best result -- usually 0 since [best, low, high]  
         
         # Keys for initial and optimized
         iokeys = ['init', 'opt'] 
@@ -388,7 +392,7 @@ class Portfolio(object):
                 
                 projoutcomesplit[k][io] = odict()
                 for obkey in self.objectives['keys']:
-                    projoutcomesplit[k][io]['num'+obkey] = self.results[key][io].main['num'+obkey].tot[0][indices[io]].sum()     # Again, current and optimal should be same for 0 second optimisation, but being explicit.
+                    projoutcomesplit[k][io]['num'+obkey] = self.results[key][io].main['num'+obkey].tot[bestindex][indices[io]].sum()     # Again, current and optimal should be same for 0 second optimisation, but being explicit.
                     overalloutcomesplit['num'+obkey][io] += projoutcomesplit[k][io]['num'+obkey]
         
         # Add to the results structure

@@ -49,9 +49,9 @@ T = tic()
 if 'standardrun' in tests:
     P = defaultproject('best',dorun=False)
     P.parset().fixprops(False)
-    P.runsim(debug=True, start=2000, end=2030)
+    P.runsim(debug=True, start=2000, end=2015)
     if runsensitivity: P.sensitivity()
-#    if doplot: pygui(P)
+    if doplot: pygui(P)
 
 ## Calibration
 if 'autocalib' in tests: 
