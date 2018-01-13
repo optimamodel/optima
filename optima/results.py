@@ -7,7 +7,7 @@ Version: 2017oct23
 from optima import OptimaException, Link, Settings, odict, pchip, plotpchip, sigfig # Classes/functions
 from optima import uuid, today, makefilepath, getdate, printv, dcp, objrepr, defaultrepr, sanitizefilename # Printing/file utilities
 from optima import quantile, findinds, findnearest, promotetolist, promotetoarray, checktype # Numeric utilities
-from numpy import array, nan, zeros, arange, shape, maximum
+from numpy import array, nan, zeros, arange, shape, maximum, log
 from numbers import Number
 from xlsxwriter import Workbook
 
@@ -107,13 +107,13 @@ class Resultset(object):
         self.main['numhivbirths']   = Result('Births to HIV+ women')
         self.main['numpmtct']       = Result('HIV+ women receiving PMTCT')
         self.main['popsize']        = Result('Population size')
+        self.main['numdaly']        = Result('HIV-related DALYs')
         self.main['costtreat']      = Result('Annual treatment spend', defaultplot='total')
 
         self.other['adultprev']     = Result('Adult HIV prevalence (%)', ispercentage=True)
         self.other['childprev']     = Result('Child HIV prevalence (%)', ispercentage=True)
         self.other['numotherdeath'] = Result('Non-HIV-related deaths)')
         self.other['numbirths']     = Result('Total births)')
-        self.other['numdaly']       = Result('HIV-related DALYs')
         
         # Add all health states
         for healthkey,healthname in zip(self.settings.healthstates, self.settings.healthstatesfull): # Health keys: ['susreg', 'progcirc', 'undx', 'dx', 'care', 'lost', 'usvl', 'svl']
@@ -213,13 +213,20 @@ class Resultset(object):
         return R
             
         
-    def make(self, raw, quantiles=None, annual=True, verbose=2, doround=True):
-        """ Gather standard results into a form suitable for plotting with uncertainties. """
+    def make(self, raw, quantiles=None, annual=True, verbose=2, doround=True, lifeexpectancy=None, discountrate=None):
+        """
+        Gather standard results into a form suitable for plotting with uncertainties.
+        Life expectancy is measured in years, and the discount rate is in absolute
+        values (e.g., 0.03).        
+        """
         
         printv('Making derived results...', 3, verbose)
         
+        
         # Initialize
-        if quantiles is None: quantiles = [0.5, 0.25, 0.75] # Can't be a kwarg since mutable
+        if quantiles is None:      quantiles      = [0.5, 0.25, 0.75] # Can't be a kwarg since mutable
+        if lifeexpectancy is None: lifeexpectancy = 80 # 80 year life expectancy
+        if discountrate is None:   discountrate   = 0.03 # Discounting of 3% for YLL only
         tvec = dcp(raw[0]['tvec'])
         eps = self.settings.eps
         if annual is False: # Decide what to do with the time vector
@@ -383,25 +390,43 @@ class Resultset(object):
 
         
         # Calculate DALYs
-        yearslostperdeath = 15 # TODO: this gives roughly a 5:1 ratio of YLL:YLD; calculate more precisely
+        
+        ## Years of life lost
+        yllpops = alldeaths.sum(axis=1) # Total deaths per population, sum over health states
+        for pk,popkey in enumerate(self.popkeys): # Loop over each population
+            meanage = self.pars['age'][pk].mean()
+            potentialyearslost = max(0,lifeexpectancy-meanage) # Don't let this go negative!
+            if discountrate>0 and discountrate<1: # Make sure it has reasonable bounds
+                denominator = log(1-discountrate) # Start calculating the integral of (1-discountrate)**potentialyearslost
+                numerator = (1-discountrate)**potentialyearslost - 1 # Minus 1 for t=0
+                discountedyearslost = numerator/denominator # See https://en.wikipedia.org/wiki/Lists_of_integrals#Exponential_functions
+            elif discountrate==0: # Nothing to discount
+                discountedyearslost = potentialyearslost
+            else:
+                raise OptimaException('Invalid discount rate (%s)' % discountrate)
+            yllpops[:,pk,:] *= discountedyearslost # Multiply by the number of potential years of life lost
+        ylltot = yllpops.sum(axis=1) # Sum over populations
+        
+        ## Years lived with disability
         disutiltx = self.pars['disutiltx'].y
         disutils = [self.pars['disutil'+key].y for key in self.settings.hivstates]
-
-        dalypops = alldeaths.sum(axis=1)     * yearslostperdeath
-        dalytot  = alldeaths.sum(axis=(1,2)) * yearslostperdeath
-        dalypops += allpeople[:,alltx,:,:].sum(axis=1)     * disutiltx
-        dalytot  += allpeople[:,alltx,:,:].sum(axis=(1,2)) * disutiltx
+        yldpops = allpeople[:,alltx,:,:].sum(axis=1)     * disutiltx
+        yldtot  = allpeople[:,alltx,:,:].sum(axis=(1,2)) * disutiltx
         notonart = set(self.settings.notonart)
         for h,key in enumerate(self.settings.hivstates): # Loop over health states
             hivstateindices = set(getattr(self.settings,key))
             healthstates = array(list(hivstateindices & notonart)) # Find the intersection of this HIV state and not on ART states
-            dalypops += allpeople[:,healthstates,:,:].sum(axis=1) * disutils[h]
-            dalytot += allpeople[:,healthstates,:,:].sum(axis=(1,2)) * disutils[h]
-        self.other['numdaly'].pops = process(dalypops[:,:,indices])
-        self.other['numdaly'].tot  = process(dalytot[:,indices])
+            yldpops += allpeople[:,healthstates,:,:].sum(axis=1) * disutils[h]
+            yldtot += allpeople[:,healthstates,:,:].sum(axis=(1,2)) * disutils[h]
+        
+        ## Add them up
+        dalypops = yllpops + yldpops
+        dalytot  = ylltot + yldtot
+        self.main['numdaly'].pops = process(dalypops[:,:,indices])
+        self.main['numdaly'].tot  = process(dalytot[:,indices])
         
         
-        # Other indicators
+        ## Other indicators
         upperagelims = self.pars['age'][:,1] # All populations, but upper range
         adultpops = findinds(upperagelims>=15)
         childpops = findinds(upperagelims<15)
