@@ -224,9 +224,9 @@ class Resultset(object):
         
         
         # Initialize
-        if quantiles is None:      quantiles      = [0.5, 0.25, 0.75] # Can't be a kwarg since mutable
+        if quantiles      is None: quantiles      = [0.5, 0.25, 0.75] # Can't be a kwarg since mutable
         if lifeexpectancy is None: lifeexpectancy = 80 # 80 year life expectancy
-        if discountrate is None:   discountrate   = 0.03 # Discounting of 3% for YLL only
+        if discountrate   is None: discountrate   = 0.03 # Discounting of 3% for YLL only
         tvec = dcp(raw[0]['tvec'])
         eps = self.settings.eps
         if annual is False: # Decide what to do with the time vector
