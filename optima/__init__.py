@@ -104,10 +104,10 @@ def debuginfo(dooutput=False):
 
 class OptimaException(Exception):
     ''' A tiny class to allow for Optima-specific exceptions -- define this here to allow for Optima-specific info '''
+    
     def __init__(self, errormsg, *args, **kwargs):
         if isinstance(errormsg, basestring): errormsg = errormsg+debuginfo(dooutput=True) # If it's not a string, not sure what it is, but don't bother with this
         Exception.__init__(self, errormsg, *args, **kwargs)
-
 
 
 #####################################################################################################################

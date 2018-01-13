@@ -527,7 +527,8 @@ def colorize(color=None, string=None, output=False):
         print(ansistring) # Content, so print with newline
         return None
     
-  
+
+
         
     
 ##############################################################################
