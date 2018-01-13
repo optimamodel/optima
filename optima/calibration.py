@@ -4,7 +4,7 @@ CALIBRATION
 Function(s) to perform calibration.
 """
 
-from optima import OptimaException, Link, Par, dcp, runmodel, asd, printv, findinds, isnumber, odict
+from optima import OptimaException, Link, Par, dcp, asd, printv, findinds, isnumber, odict
 from numpy import zeros, array, mean
 
 
@@ -170,7 +170,7 @@ def objectivecalc(parvec=None, pars=None, parlist=None, project=None, fitto='pre
     
     eps = project.settings.eps # Specify absolute error -- can't be larger than ~0.001 because then general population prevalence might be weighted incorrectly
     pars = convert(pars, parlist, parvec)
-    results = runmodel(pars=pars, start=project.data['years'][0], end=project.data['years'][-1], project=project, verbose=0, label=project.name+'-autofit')
+    results = project.runsim(pars=pars, start=project.data['years'][0], end=project.data['years'][-1], verbose=0, resultsname=project.name+'-autofit', addresult=False)
     
     ## Loop over all results
     allmismatches = []

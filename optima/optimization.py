@@ -4,7 +4,7 @@ Functions for running optimizations.
 Version: 2017jun04
 """
 
-from optima import OptimaException, Link, Multiresultset, ICER, asd, runmodel, getresults # Main functions
+from optima import OptimaException, Link, Multiresultset, ICER, asd, getresults # Main functions
 from optima import printv, dcp, odict, findinds, today, getdate, uuid, objrepr, promotetoarray, findnearest, sanitize, inclusiverange # Utilities
 from numpy import zeros, ones, empty, arange, maximum, array, inf, isfinite, argmin, argsort, nan, floor, concatenate, exp
 from numpy.random import random, seed
@@ -419,7 +419,7 @@ def outcomecalc(budgetvec=None, which=None, project=None, parsetname=None, progs
     tvec       = project.settings.maketvec(end=objectives['end'])
     if initpeople is None: startind = None
     else:                  startind = findnearest(tvec, objectives['start']) # Only start running the simulation from the starting point
-    results = runmodel(pars=thisparsdict, project=project, parsetname=parsetname, progsetname=progsetname, tvec=tvec, initpeople=initpeople, startind=startind, verbose=0, label=project.name+'-optim-outcomecalc', doround=False, **kwargs)
+    results = project.runsim(pars=thisparsdict, parsetname=parsetname, progsetname=progsetname, tvec=tvec, initpeople=initpeople, startind=startind, verbose=0, label=project.name+'-optim-outcomecalc', doround=False, addresult=False, **kwargs)
 
     # Figure out which indices to use
     initialind = findnearest(results.tvec, objectives['start'])
@@ -831,7 +831,7 @@ def minoutcomes(project=None, optim=None, tvec=None, verbose=None, maxtime=None,
     if label is None: label = ''
     
     # Calculate the initial people distribution
-    results = runmodel(pars=parset.pars, project=project, parsetname=optim.parsetname, progsetname=optim.progsetname, tvec=tvec, keepraw=True, verbose=0, label=project.name+'-minoutcomes')
+    results = project.runsim(pars=parset.pars, parsetname=optim.parsetname, progsetname=optim.progsetname, tvec=tvec, keepraw=True, verbose=0, label=project.name+'-minoutcomes', addresult=False)
     initialind = findnearest(results.raw[0]['tvec'], optim.objectives['start'])
     initpeople = results.raw[0]['people'][:,:,initialind] # Pull out the people array corresponding to the start of the optimization -- there shouldn't be multiple raw arrays here
 
@@ -1228,7 +1228,7 @@ def icers(name=None, project=None, parsetname=None, progsetname=None, objective=
     nkeys = len(keys)
     
     # Calculate the initial people distribution
-    initresults = runmodel(project=project, parsetname=parsetname, progsetname=progsetname, keepraw=True, verbose=0, label=project.name+'-minoutcomes')
+    initresults = project.runsim(parsetname=parsetname, progsetname=progsetname, keepraw=True, verbose=0, label=project.name+'-minoutcomes', addresult=False)
     initialind  = findnearest(initresults.raw[0]['tvec'], objectives['start'])
     initpeople  = initresults.raw[0]['people'][:,:,initialind] # Pull out the people array corresponding to the start of the optimization -- there shouldn't be multiple raw arrays here
 

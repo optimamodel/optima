@@ -139,7 +139,7 @@ except Exception as E: _failed.append('makespreadsheet: %s' % repr(E))
 from .loadspreadsheet import loadspreadsheet, loadprogramspreadsheet
 
 # Define and run the model
-from .model import model, runmodel
+from .model import model
 
 # Define the programs and cost functions
 from .programs import Program, Programset

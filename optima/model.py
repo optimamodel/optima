@@ -898,35 +898,3 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
     checkfornegativepeople(people) # Check only once for negative people, right before finishing
     
     return raw # Return raw results
-
-
-
-
-def runmodel(project=None, simpars=None, pars=None, parsetname=None, progsetname=None, budget=None, coverage=None, budgetyears=None, settings=None, start=None, end=None, dt=None, tvec=None, name=None, uid=None, data=None, initpeople=None, startind=None, debug=False, die=False, keepraw=False, label=None, verbose=2, doround=True):
-    ''' 
-    Convenience function for running the model. Requires input of either "simpars" or "pars"; and for including the data,
-    requires input of either "project" or "data". All other inputs are optional.
-    
-    Version: 2017jun04
-    '''
-    if settings is None:
-        try:    settings = project.settings 
-        except: raise OptimaException('Could not get settings from project "%s" supplied to runmodel()' % project)
-    if label is None:
-        try: label = project.name
-        except: pass
-    if start is None: start = settings.start
-    if end   is None: end   = settings.end
-    if dt    is None: dt    = settings.dt
-    if simpars is None:
-        if pars is None: 
-            if parsetname is not None: pars = project.parsets[parsetname].pars
-            else:                  pars = project.parsets[-1].pars # Use default
-        simpars = makesimpars(pars, name=name, start=start, end=end, dt=dt, tvec=tvec, settings=settings)
-        
-    # Actually run the model
-    raw = model(simpars=simpars, settings=settings, initpeople=initpeople, startind=startind, debug=debug, die=die, label=label, verbose=verbose) # RUN OPTIMA!!
-    
-    # Store results
-    results = Resultset(project=project, raw=raw, parsetname=parsetname, progsetname=progsetname, budget=budget, coverage=coverage, budgetyears=budgetyears, pars=pars, simpars=simpars, data=data, domake=True, keepraw=keepraw, verbose=verbose, doround=doround) # Create structure for storing results
-    return results

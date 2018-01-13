@@ -1,7 +1,7 @@
 from optima import OptimaException, Settings, Parameterset, Programset, Resultset, BOC, Parscen, Budgetscen, Coveragescen, Progscen, Optim, Link # Import classes
 from optima import odict, getdate, today, uuid, dcp, makefilepath, objrepr, printv, isnumber, saveobj, promotetolist, promotetoodict, sigfig # Import utilities
 from optima import loadspreadsheet, model, gitinfo, defaultscenarios, makesimpars, makespreadsheet
-from optima import defaultobjectives, runmodel, autofit, runscenarios, optimize, multioptimize, tvoptimize, outcomecalc, icers # Import functions
+from optima import defaultobjectives, autofit, runscenarios, optimize, multioptimize, tvoptimize, outcomecalc, icers # Import functions
 from optima import version # Get current version
 from numpy import argmin, argsort
 from numpy.random import seed, randint
@@ -525,8 +525,8 @@ class Project(object):
 
     def runsim(self, name=None, pars=None, simpars=None, start=None, end=None, dt=None, addresult=True, 
                die=True, debug=False, overwrite=True, n=1, sample=None, tosample=None, randseed=None,
-               verbose=None, keepraw=False, resultname=None, progsetname=None, budget=None, coverage=None,
-               budgetyears=None, data=None, **kwargs):
+               verbose=None, keepraw=False, resultname=None, parsetname=None, progsetname=None, 
+               budget=None, coverage=None, budgetyears=None, data=None, label=None, **kwargs):
         ''' 
         This function runs a single simulation, or multiple simulations if n>1.
         
@@ -538,11 +538,12 @@ class Project(object):
         if verbose is None: verbose = self.settings.verbose
         
         # Extract parameters either from a parset stored in project or from input
-        if name is None:
+        if parsetname is None:
+            if name is not None: parsetname = name # This is mostly for backwards compatibility
+            parsetname = -1 # Set default name
             if pars is None:
-                name = -1 # Set default name
-                pars = self.parsets[name].pars
-                resultname = 'parset-'+self.parsets[name].name
+                pars = self.parsets[parsetname].pars
+                resultname = 'parset-'+self.parsets[parsetname].name
             else:
                 printv('Model was given a pardict and a parsetname, defaulting to use pardict input', 3, self.settings.verbose)
                 if resultname is None: resultname = 'pardict'
@@ -551,8 +552,11 @@ class Project(object):
                 printv('Model was given a pardict and a parsetname, defaulting to use pardict input', 3, self.settings.verbose)
                 if resultname is None: resultname = 'pardict'
             else:
-                if resultname is None: resultname = 'parset-'+self.parsets[name].name
-                pars = self.parsets[name].pars
+                if resultname is None: resultname = 'parset-'+self.parsets[parsetname].name
+                pars = self.parsets[parsetname].pars
+        if label is None: # Define the label
+            if name is None: label = '%s' % parsetname
+            else:            label = name
             
         # Get the parameters sorted
         if simpars is None: # Optionally run with a precreated simpars instead
@@ -562,24 +566,24 @@ class Project(object):
             for i in range(n):
                 maxint = 2**31-1 # See https://en.wikipedia.org/wiki/2147483647_(number)
                 sampleseed = randint(0,maxint) 
-                simparslist.append(makesimpars(pars, start=start, end=end, dt=dt, settings=self.settings, name=name, sample=sample, tosample=tosample, randseed=sampleseed))
+                simparslist.append(makesimpars(pars, start=start, end=end, dt=dt, settings=self.settings, name=parsetname, sample=sample, tosample=tosample, randseed=sampleseed))
         else:
             simparslist = promotetolist(simpars)
 
-        # Run the model! -- WARNING, the logic of this could be cleaned up a lot!
+        # Run the model!
         rawlist = []
         for ind,simpars in enumerate(simparslist):
             raw = model(simpars, self.settings, die=die, debug=debug, verbose=verbose, label=self.name, **kwargs) # ACTUALLY RUN THE MODEL
             rawlist.append(raw)
 
-        # Store results -- WARNING, is this correct in all cases?
-        results = Resultset(name=resultname, pars=pars, parsetname=name, progsetname=progsetname, raw=rawlist, simpars=simparslist, budget=budget, coverage=coverage, budgetyears=budgetyears, project=self, keepraw=keepraw, data=data, verbose=verbose) # Create structure for storing results
+        # Store results if required
+        results = Resultset(name=resultname, pars=pars, parsetname=parsetname, progsetname=progsetname, raw=rawlist, simpars=simparslist, budget=budget, coverage=coverage, budgetyears=budgetyears, project=self, keepraw=keepraw, data=data, verbose=verbose) # Create structure for storing results
         if addresult:
             keyname = self.addresult(result=results, overwrite=overwrite)
-            if name is not None:
-                self.parsets[name].resultsref = keyname # If linked to a parset, store the results
-
-        self.modified = today()
+            if parsetname is not None:
+                self.parsets[parsetname].resultsref = keyname # If linked to a parset, store the results
+            self.modified = today() # Only change the modified date if the results are stored
+        
         return results
 
 
@@ -648,10 +652,7 @@ class Project(object):
             except: raise OptimaException("No program set entered, and there are none stored in the project") 
         coverage = self.progsets[progsetname].getprogcoverage(budget=budget, t=budgetyears, parset=self.parsets[parsetname])
         progpars = self.progsets[progsetname].getpars(coverage=coverage,t=budgetyears, parset=self.parsets[parsetname])
-        results = runmodel(pars=progpars, project=self, parsetname=parsetname, progsetname=progsetname, budget=budget, budgetyears=budgetyears, label=self.name+'-runbudget') # WARNING, this should probably use runsim, but then would need to make simpars...
-        results.name = name
-        self.addresult(results)
-        self.modified = today()
+        results = self.runsim(pars=progpars, parsetname=parsetname, progsetname=progsetname, budget=budget, budgetyears=budgetyears, label=self.name+'-runbudget')
         return results
     
     
