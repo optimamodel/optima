@@ -371,7 +371,7 @@ class Portfolio(object):
             projoutcomesplit.append(odict())
             projcov.append(odict())
             tvector, initial, final, indices, alloc, outcome, sumalloc = [odict() for o in range(7)] # Allocate all dicts
-            for ionum,io in enumerate(iokeys):
+            for io in iokeys:
                 tvector[io]  = self.results[key][io].tvec # WARNING, can differ between initial and optimized!
                 initial[io]  = findnearest(tvector[io], self.objectives['start'])
                 final[io]    = findnearest(tvector[io], self.objectives['end'])
@@ -392,7 +392,7 @@ class Portfolio(object):
                 
                 projoutcomesplit[k][io] = odict()
                 for obkey in self.objectives['keys']:
-                    projoutcomesplit[k][io]['num'+obkey] = self.results[key][iokeys[-1]].main['num'+obkey].tot[ionum][bestindex][indices[io]].sum()     # Again, current and optimal should be same for 0 second optimisation, but being explicit -- WARNING, need to fix properly!
+                    projoutcomesplit[k][io]['num'+obkey] = self.results[key][io].main['num'+obkey].tot[bestindex][indices[io]].sum()     # Again, current and optimal should be same for 0 second optimisation, but being explicit -- WARNING, need to fix properly!
                     overalloutcomesplit['num'+obkey][io] += projoutcomesplit[k][io]['num'+obkey]
         
         # Add to the results structure
