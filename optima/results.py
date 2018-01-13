@@ -452,9 +452,12 @@ class Resultset(object):
         # Handle budget and coverage
         thisbudget = []
         thiscoverage = []
+        tvbudget = []
         try:    thisbudget = self.budgets[key]
         except: pass
-        try:    thiscoverage = self.coverages[ind]
+        try:    thiscoverage = self.coverages[key]
+        except: pass
+        try:    tvbudget = self.timevarying[key]
         except: pass
         
         if len(thisbudget): # WARNING, does not support multiple years
@@ -474,7 +477,7 @@ class Resultset(object):
             outputstr += sep*2+sep.join(thiscoverage.keys()) + '\n'
             outputstr += sep*2+sep.join([str(val) for val in covvals]) + '\n' # WARNING, should have this val[0] but then dies with None entries
 
-        if tvbudget:
+        if len(tvbudget):
             tvyears  = tvbudget['tvyears']
             progkeys = tvbudget['tvbudgets'].keys()
             tvdata   = tvbudget['tvbudgets'][:]
