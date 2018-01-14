@@ -84,30 +84,27 @@ class Parameterset(object):
                 results = self.projectref().runsim(name=self.name)
 
         # Interpret inputs
-        if proptype in ['diag','dx','propdiag','propdx']: proptype = 'propdiag'
+        if   proptype in ['diag','dx','propdiag','propdx']:                         proptype = 'propdiag'
         elif proptype in ['evercare','everincare','propevercare','propeverincare']: proptype = 'propvercare'
-        elif proptype in ['care','incare','propcare','propincare']: proptype = 'propincare'
-        elif proptype in ['treat','tx','proptreat','proptx']: proptype = 'proptreat'
-        elif proptype in ['supp','suppressed','propsupp','propsuppressed']: proptype = 'propsuppressed'
-        else:
-            raise OptimaException('Unknown proportion type %s' % proptype)
-    
+        elif proptype in ['care','incare','propcare','propincare']:                 proptype = 'propincare'
+        elif proptype in ['treat','tx','proptreat','proptx']:                       proptype = 'proptreat'
+        elif proptype in ['supp','suppressed','propsupp','propsuppressed']:         proptype = 'propsuppressed'
+        else: raise OptimaException('Unknown proportion type %s' % proptype)
+        
+        # Handle indices
         if ind in ['median', 'm', 'best', 'b', 'average', 'av', 'single',0]: ind=0
         elif ind in ['lower','l','low',1]: ind=1
         elif ind in ['upper','u','up','high','h',2]: ind=2
         else: ind=0 # Return best estimate if can't understand whichone was requested
-        
         timeindex = findinds(results.tvec,year) if year else Ellipsis
 
-        if bypop:
-            return results.main[proptype].pops[ind][:][timeindex]
-        else:
-            return results.main[proptype].tot[ind][timeindex]
+        if bypop: return results.main[proptype].pops[ind][:][timeindex]
+        else:     return results.main[proptype].tot[ind][timeindex]
                 
     
-    
-    def makepars(self, data=None, verbose=2):
+    def makepars(self, data=None, fix=True, verbose=2):
         self.pars = makepars(data=data, verbose=verbose) # Initialize as list with single entry
+        self.fixprops(fix=fix)
         self.popkeys = dcp(self.pars['popkeys']) # Store population keys more accessibly
         self.start = data['years'][0] # Store the start year
         return None
@@ -1146,7 +1143,6 @@ def makepars(data=None, verbose=2, die=True, fixprops=None):
     # Fix treatment from final data year
     for key in ['fixproptx', 'fixpropsupp', 'fixpropdx', 'fixpropcare', 'fixproppmtct']:
         pars[key].t = 2100 # TODO: don't use these, so just set to (hopefully) well past the end of the analysis
-    pars = togglefixprops(pars, fix=fixprops) # Optionally fix the proportions
 
     # Set the values of parameters that aren't from data
     pars['transnorm'].y = 0.43 # See analyses/misc/calculatecd4transnorm.py for calculation
