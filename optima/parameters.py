@@ -136,14 +136,26 @@ class Parameterset(object):
         return None
     
     
-    def fixprops(self, fix=None):
+    def fixprops(self, fix=None, which=None, startyear=None):
         '''
         Fix or unfix the proportions of people on ART and suppressed.
         
         To fix:   P.parset().fixprops()
         To unfix: P.parset().fixprops(False)
+        
+        You can also specify a start year. "fix" can also be a string
+        or a list of strings, to specify which of ['dx', 'tx', 'supp']
+        you want to fix.
         '''
-        self.pars = togglefixprops(self.pars, fix=fix)
+        if fix is None: fix = True # By default, do fix
+        if   which is None:  which = ['tx','supp']
+        elif which is 'all': which = ['dx','tx','supp']
+        else:                which = promotetolist(which)
+        if fix:  startyear = self.pars['numtx'].t['tot'][-1]
+        else:    startyear = 2100
+        if 'dx'   in which: self.pars['fixpropdx'].t   = startyear
+        if 'tx'   in which: self.pars['fixproptx'].t   = startyear
+        if 'supp' in which: self.pars['fixpropsupp'].t = startyear # Doesn't make sense to assume proportion on treatment without assuming proportion suppressed....also, crashes otherwise :)
         return None
         
     
@@ -1181,15 +1193,6 @@ def makepars(data=None, verbose=2, die=True, fixprops=None):
 
     return pars
 
-
-def togglefixprops(pars=None, fix=None, startyear=None):
-    ''' Tiny little method to fix the date for proptx and propsupp '''
-    if fix is None: fix = True # By default, do fix
-    if fix:  startyear = pars['numtx'].t['tot'][-1]
-    else:    startyear = 2100
-    pars['fixproptx'].t   = startyear
-    pars['fixpropsupp'].t = startyear # Doesn't make sense to assume proportion on treatment without assuming proportion suppressed....also, crashes otherwise :)
-    return pars
 
 
 def makesimpars(pars, name=None, keys=None, start=None, end=None, dt=None, tvec=None, settings=None, smoothness=None, asarray=True, sample=None, tosample=None, randseed=None, verbose=2):

@@ -528,13 +528,14 @@ class Project(object):
                addresult=True, overwrite=True, keepraw=False, doround=True, die=True, debug=False, verbose=None, 
                parsetname=None, progsetname=None, resultname=None, label=None, **kwargs):
         ''' 
-        This function runs a single simulation, or multiple simulations if n>1.
+        This function runs a single simulation, or multiple simulations if n>1. This is the
+        core function for actually running the model!!!!!!
         
-        Version: 2016nov07
+        Version: 2018jan13
         '''
-        if start is None: start=self.settings.start # Specify the start year
-        if end is None: end=self.settings.end # Specify the end year
-        if dt is None: dt=self.settings.dt # Specify the timestep
+        if start   is None: start   = self.settings.start # Specify the start year
+        if end     is None: end     = self.settings.end # Specify the end year
+        if dt      is None: dt      = self.settings.dt # Specify the timestep
         if verbose is None: verbose = self.settings.verbose
         
         # Extract parameters either from a parset stored in project or from input
