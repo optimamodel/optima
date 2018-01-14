@@ -1182,13 +1182,13 @@ def makepars(data=None, verbose=2, die=True, fixprops=None):
     return pars
 
 
-def togglefixprops(pars=None, fix=None):
+def togglefixprops(pars=None, fix=None, startyear=None):
     ''' Tiny little method to fix the date for proptx and propsupp '''
     if fix is None: fix = True # By default, do fix
-    if fix:  endyear = pars['numtx'].t['tot'][-1]
-    else:    endyear = 2100
-    pars['fixproptx'].t   = endyear
-    pars['fixpropsupp'].t = endyear # Doesn't make sense to assume proportion on treatment without assuming proportion suppressed....also, crashes otherwise :)
+    if fix:  startyear = pars['numtx'].t['tot'][-1]
+    else:    startyear = 2100
+    pars['fixproptx'].t   = startyear
+    pars['fixpropsupp'].t = startyear # Doesn't make sense to assume proportion on treatment without assuming proportion suppressed....also, crashes otherwise :)
     return pars
 
 

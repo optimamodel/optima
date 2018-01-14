@@ -539,8 +539,8 @@ class Project(object):
         
         # Extract parameters either from a parset stored in project or from input
         if parsetname is None:
-            if name is not None: parsetname = name # This is mostly for backwards compatibility
-            parsetname = -1 # Set default name
+            if name is not None: parsetname = name # This is mostly for backwards compatibility -- allow the first argument to set the parset
+            else:                parsetname = -1 # Set default name
             if pars is None:
                 pars = self.parsets[parsetname].pars
                 resultname = 'parset-'+self.parsets[parsetname].name
