@@ -779,12 +779,12 @@ class Project(object):
         return multires
     
     
-    def makescript(self, filename=None, folder=None, spreadsheetpath=None, verbose=2):
+    def export(self, filename=None, folder=None, spreadsheetpath=None, verbose=2):
         '''
         Export a script that, when run, generates this project. Example:
             import optima as op
             P = op.demo(0)
-            P.makescript(filename='demo.py')
+            P.export(filename='demo.py')
         
         If a spreadsheet path isn't supplied, then export the spreadsheet as well.
         '''
@@ -879,6 +879,7 @@ class Project(object):
         f.write( output )
         f.close()
         printv('Saved project %s to script file %s' % (self.name, fullpath), 2, verbose)
+        return None
 
 
     #######################################################################################################

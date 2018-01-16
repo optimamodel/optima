@@ -652,6 +652,12 @@ def revert_program_costcovdata(costcov):
             'cost': map(to_nan, pluck(costcov, 'cost')),
             'coverage': map(to_nan, pluck(costcov, 'coverage')),
         }
+        try: # Ensure it's in order -- WARNING, copied from programs.py
+            order = op.argsort(result['t']) # Get the order from the years
+            for key in ['t', 'cost', 'coverage']: # Reorder each of them to be the same
+                result[key] = [result[key][o] for o in order]
+        except Exception as E:
+            op.printv('Warning, could not order costcovdata: "%s"' % repr(E))
     return result
 
 
@@ -894,23 +900,24 @@ def get_progset_summary(project, progset_name):
     program_summaries = active_program_summaries + inactive_program_summaries
 
     # Overwrite with default name and category if applicable
-    default_program_summaries = get_default_program_summaries(project)
-    loaded_program_shorts = []
-    default_program_summary_by_short = {
-        p['short']: p for p in default_program_summaries}
-    for program_summary in program_summaries:
-        short = program_summary['short']
-        if short in default_program_summary_by_short:
-            default_program_summary = default_program_summary_by_short[short]
-            if not program_summary['name']:
-                program_summary['name'] = default_program_summary['name']
-            program_summary['category'] = default_program_summary['category']
-        loaded_program_shorts.append(short)
-
-    # append any default programs as inactive if not already in project
-    for program_summary in default_program_summaries:
-        if program_summary['short'] not in loaded_program_shorts:
-            program_summaries.append(program_summary)
+    if len(program_summaries)==0: # Only load defaults if nothing is loaded currently
+        default_program_summaries = get_default_program_summaries(project)
+        loaded_program_shorts = []
+        default_program_summary_by_short = {
+            p['short']: p for p in default_program_summaries}
+        for program_summary in program_summaries:
+            short = program_summary['short']
+            if short in default_program_summary_by_short:
+                default_program_summary = default_program_summary_by_short[short]
+                if not program_summary['name']:
+                    program_summary['name'] = default_program_summary['name']
+                program_summary['category'] = default_program_summary['category']
+            loaded_program_shorts.append(short)
+    
+        # append any default programs as inactive if not already in project
+        for program_summary in default_program_summaries:
+            if program_summary['short'] not in loaded_program_shorts:
+                program_summaries.append(program_summary)
 
     for program_summary in program_summaries:
         if program_summary['category'] == 'No category':
@@ -1076,7 +1083,7 @@ def set_progset_summary_on_project(project, progset_summary, progset_id=None):
     """
     Updates/creates a progset from a progset_summary, with the addition
     of inactive_programs that are taken from the default programs
-    generated from pyOptima.
+    generated from pyOptima, if no programs are selected.
     """
     progset = get_progset_from_name(project, progset_summary['name'], progset_id)
     set_progset_summary_on_progset(progset, progset_summary)
