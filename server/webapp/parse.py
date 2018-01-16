@@ -653,7 +653,7 @@ def revert_program_costcovdata(costcov):
             'coverage': map(to_nan, pluck(costcov, 'coverage')),
         }
         try: # Ensure it's in order -- WARNING, copied from programs.py
-            order = op.argsort(result['t']) # Get the order from the years
+            order = np.argsort(result['t']) # Get the order from the years
             for key in ['t', 'cost', 'coverage']: # Reorder each of them to be the same
                 result[key] = [result[key][o] for o in order]
         except Exception as E:
