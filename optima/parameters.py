@@ -107,7 +107,7 @@ class Parameterset(object):
         self.pars = makepars(data=data, verbose=verbose) # Initialize as list with single entry
         self.fixprops(fix=fix)
         self.popkeys = dcp(self.pars['popkeys']) # Store population keys more accessibly
-        if start is None: self.start = Settings().startyear # Store the start year -- if not supplied, use beginning of data
+        if start is None: self.start = data['years'][0] # Store the start year -- if not supplied, use beginning of data
         else:             self.start = start
         if end is None:   self.end   = Settings().endyear # Store the end year -- if not supplied, use default
         else:             self.end   = end
