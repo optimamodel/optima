@@ -7,7 +7,7 @@ Version: 2016feb06
 """
 
 from optima import OptimaException, Link, printv, uuid, today, sigfig, getdate, dcp, smoothinterp, findinds, odict, Settings, sanitize, defaultrepr, isnumber, promotetoarray, vec2obj, asd, convertlimits
-from numpy import ones, prod, array, zeros, exp, log, append, nan, isnan, maximum, minimum, sort, concatenate as cat, transpose, mean
+from numpy import ones, prod, array, zeros, exp, log, append, nan, isnan, maximum, minimum, sort, concatenate as cat, transpose, mean, argsort
 from random import uniform
 import abc
 
@@ -908,6 +908,12 @@ class Program(object):
             else:
                 errormsg = 'You have already entered cost and/or coverage data for the year %s .' % costcovdatum['t']
                 raise OptimaException(errormsg)
+        
+        # Ensure it's in order
+        order = argsort(self.costcovdata['t']) # Get the order from the years
+        for key in ['t', 'cost', 'coverage']: # Reorder each of them to be the same
+            self.costcovdata[key] = [self.costcovdata[key][o] for o in order]
+        return None
 
 
     def rmcostcovdatum(self, year, verbose=2):
@@ -920,6 +926,7 @@ class Program(object):
         else:
             errormsg = 'You have asked to remove data for the year %s, but no data was added for that year. Cost coverage data are: %s' % (year, self.costcovdata)
             raise OptimaException(errormsg)
+        return None
 
 
     def gettargetpopsize(self, t, parset=None, results=None, total=True, useelig=False, die=False):
@@ -996,7 +1003,7 @@ class Program(object):
         finalpopsize = array([sum(targetpopsize.values())]) if isnumber(sum(targetpopsize.values())) else sum(targetpopsize.values())
                     
         if total: return finalpopsize
-        else: return targetpopsize
+        else:     return targetpopsize
 
 
     def gettargetcomposition(self, t, parset=None, results=None, total=True):
