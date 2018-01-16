@@ -26,7 +26,7 @@ staticmatrixkeys = ['birthtransit','agetransit','risktransit'] # Static keys tha
 class Parameterset(object):
     ''' Class to hold all parameters and information on how they were generated, and perform operations on them'''
     
-    def __init__(self, name='default', project=None, progsetname=None, budget=None, start=None):
+    def __init__(self, name='default', project=None, progsetname=None, budget=None, start=None, end=None):
         self.name = name # Name of the parameter set, e.g. 'default'
         self.uid = uuid() # ID
         self.projectref = Link(project) # Store pointer for the project, if available
@@ -39,6 +39,7 @@ class Parameterset(object):
         self.progsetname = progsetname # Store the name of the progset that generated the parset, if any
         self.budget = budget # Store the budget that generated the parset, if any
         self.start = start # Store the startyear of the parset
+        self.end = end # Store the endyear of the parset
         
     
     def __repr__(self):
@@ -102,11 +103,14 @@ class Parameterset(object):
         else:     return results.main[proptype].tot[ind][timeindex]
                 
     
-    def makepars(self, data=None, fix=True, verbose=2):
+    def makepars(self, data=None, fix=True, verbose=2, start=None, end=None):
         self.pars = makepars(data=data, verbose=verbose) # Initialize as list with single entry
         self.fixprops(fix=fix)
         self.popkeys = dcp(self.pars['popkeys']) # Store population keys more accessibly
-        self.start = data['years'][0] # Store the start year
+        if start is None: self.start = data['years'][0] # Store the start year -- if not supplied, use beginning of data
+        else:             self.start = start
+        if end is None:   self.end   = Settings().endyear # Store the end year -- if not supplied, use default
+        else:             self.end   = end
         return None
 
 
@@ -1055,8 +1059,8 @@ def makepars(data=None, verbose=2, die=True, fixprops=None):
             rawpar['verbose'] = verbose # Easiest way to pass it in
             
             # Decide what the keys are
-            if by=='tot': keys = totkey
-            elif by=='pop': keys = popkeys
+            if   by=='tot' : keys = totkey
+            elif by=='pop' : keys = popkeys
             elif by=='fpop': keys = fpopkeys
             elif by=='mpop': keys = mpopkeys
             else: keys = [] # They're not necessarily empty, e.g. by partnership, but too complicated to figure out here
@@ -1186,7 +1190,6 @@ def makepars(data=None, verbose=2, die=True, fixprops=None):
     # Store information about injecting populations -- needs to be here since relies on other calculations
     pars['injects'] = array([pop in [pop1 for (pop1,pop2) in pars['actsinj'].keys()] for pop in pars['popkeys']])
     
-
     return pars
 
 

@@ -194,7 +194,7 @@ class Project(object):
             raise OptimaException('No data in project "%s"!' % self.name)
         if overwrite or name not in self.parsets:
             parset = Parameterset(name=name, project=self)
-            parset.makepars(self.data, verbose=self.settings.verbose) # Create parameters
+            parset.makepars(self.data, verbose=self.settings.verbose, start=self.settings.start, end=self.settings.end) # Create parameters
             self.addparset(name=name, parset=parset, overwrite=overwrite) # Store parameters
             self.modified = today()
         return None
@@ -533,8 +533,6 @@ class Project(object):
         
         Version: 2018jan13
         '''
-        if start   is None: start   = self.settings.start # Specify the start year
-        if end     is None: end     = self.settings.end # Specify the end year
         if dt      is None: dt      = self.settings.dt # Specify the timestep
         if verbose is None: verbose = self.settings.verbose
         
@@ -564,6 +562,11 @@ class Project(object):
             simparslist = [] # Needs to be a list
             if n>1 and sample is None: sample = 'new' # No point drawing more than one sample unless you're going to use uncertainty
             if randseed is not None: seed(randseed) # Reset the random seed, if specified
+            if start is None: 
+                try:    start = self.parsets[parsetname].start # Try to get start from parameter set, but don't worry if it doesn't exist
+                except: start = self.settings.start # Else, specify the start year from the project
+                try:    end   = self.parsets[parsetname].end # Ditto
+                except: end   = self.settings.end # Ditto
             for i in range(n):
                 maxint = 2**31-1 # See https://en.wikipedia.org/wiki/2147483647_(number)
                 sampleseed = randint(0,maxint) 

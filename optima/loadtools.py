@@ -735,6 +735,11 @@ def addtimevarying(project, **kwargs):
     ''' Update optimization objects to include time-varying settings '''
     for opt in project.optims.values():
         opt.tvsettings = op.defaulttvsettings()
+    for parset in project.parsets.values():
+        try:    assert(op.isnumber(parset.start))
+        except: parset.start = project.settings.start
+        try:    assert(op.isnumber(parset.end))
+        except: parset.end = project.settings.end
     return None
 
 #def redoprograms(project, **kwargs):
