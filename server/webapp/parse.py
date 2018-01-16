@@ -1464,9 +1464,12 @@ def set_optimization_summaries_on_project(project, optimization_summaries):
         if "constraints" in summary:
             optim.constraints = revert_constraints(summary['constraints'])
         
-        for tvkey in optim.tvsettings.keys():
-            if tvkey in summary["tvsettings"]: # This shouldn't be necessary, but just in case...
+        try:
+            print('WARNING, TEMP, REMOVE TRY-CATCH')
+            for tvkey in optim.tvsettings.keys():
                 optim.tvsettings[tvkey] = summary["tvsettings"][tvkey]
+        except Exception as E:
+            print('WARNING, could not set TV settings: %s' % repr(E))
 
         new_optims[summary["name"]] = optim
 

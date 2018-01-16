@@ -42,7 +42,7 @@ class Optim(object):
         output += ' Optimization name: %s\n'    % self.name
         output += 'Parameter set name: %s\n'    % self.parsetname
         output += '  Program set name: %s\n'    % self.progsetname
-        output += '      Time-varying: %s\n'    % self.timevarying
+        output += '      Time-varying: %s\n'    % self.tvsettings['timevarying']
         output += '      Date created: %s\n'    % getdate(self.created)
         output += '     Date modified: %s\n'    % getdate(self.modified)
         output += '               UID: %s\n'    % self.uid
