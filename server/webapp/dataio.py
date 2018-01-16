@@ -1251,6 +1251,8 @@ def load_parset_graphs(project_id, parset_id, calculation_type, which=None, para
     if parameters is not None:
         print(">> load_parset_graphs updating parset '%s'" % parset.name)
         parset.modified = op.today()
+        parset.start = startYear
+        parset.end   = endYear
         parse.set_parameters_on_parset(parameters, parset)
         delete_result_by_parset_id(project_id, parset_id)
         save_project(project)
