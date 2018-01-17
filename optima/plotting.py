@@ -983,8 +983,8 @@ def plotcascade(results=None, aspercentage=False, cascadecolors=None, figsize=gl
             basex = arange(ncategories)*space
             for k,key in enumerate(casckeys):
                 for i,ind in enumerate(cascinds):
-                    if ismultisim: 
-                        thisbar = 100.*results.main[key].tot[plt][blhind][ind]/results.main['numplhiv'].tot[plt][blhind][ind] # If it's a multisim, need an extra index for the plot number
+                    if ismultisim:  # WARNING, is this needed?
+                        thisbar = 100.*results.main[key].tot[plt][ind]/results.main['numplhiv'].tot[plt][ind] # If it's a multisim, need an extra index for the plot number
                     else:
                         thisbar = 100.*results.main[key].tot[0][ind]/results.main['numplhiv'].tot[0][ind] # Get the best estimate
                     if k==len(casckeys)-1: label = labels[i]
