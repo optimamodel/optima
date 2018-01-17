@@ -1,4 +1,3 @@
-from __future__ import print_function
 """
 parse.py
 ========
@@ -497,7 +496,7 @@ def get_parameters_for_edit_program(project):
 def get_parameters_for_outcomes(project, progset_id, parset_id):
     progset = get_progset_from_project(project, progset_id)
     parset = get_parset_from_project(project, parset_id)
-
+    
     print(">> get_parameters_for_outcomes '%s'" % progset.name)
 
     progset.gettargetpops()
@@ -506,13 +505,12 @@ def get_parameters_for_outcomes(project, progset_id, parset_id):
 
     target_par_shorts = set([p['param'] for p in progset.targetpars])
     pars = parset.pars
-    parameters = [
+    parameters = [ # Note the loop!
         {
             'short': par_short,
             'name': pars[par_short].name,
             'coverage': (pars[par_short].limits[1]=='maxpopsize'), # Replaces "coverage" by testing if the upper limit is maxpopsize
             'limits': get_par_limits(project, pars[par_short]),
-            'interact': 'additive', # TODO: Allow different interactivity options
             'populations': [
                 {
                     'pop': popKey,
@@ -529,7 +527,7 @@ def get_parameters_for_outcomes(project, progset_id, parset_id):
         }
         for par_short in target_par_shorts
     ]
-
+    
     return {'parameters': parameters}
 
 
@@ -871,8 +869,13 @@ def set_outcome_summaries_on_progset(outcomes, progset):
             poptuple = tuple(outcome['pop']) if islist else outcome['pop']
             if poptuple in covout_by_poptuple:
                 covout_by_poptuple[poptuple].addccopar(ccopar, overwrite=True)
-
-            covout_by_poptuple[poptuple].interaction = outcome['interact']
+            
+            try:
+                covout_by_poptuple[poptuple].interaction = outcome['interact']
+            except:
+                print "HFOOOOOOOOOOOOOOOOOOOOOOOOOOOOO"
+                print outcome
+                print "OK"
     
     progset.updateprogset()
     return None

@@ -520,7 +520,7 @@ define(['angular', 'underscore', 'toastr'], function(angular, _) {
           vm.outcomes.push({
             name: vm.state.parameter.short,
             pop: pop,
-            interact: "random",
+            interact: "additive",
             years: []
           })
         });
