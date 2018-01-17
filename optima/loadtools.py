@@ -52,7 +52,7 @@ def setmigrations(which='migrations'):
         ('2.5',   ('2.6',   '2017-10-23', None,              'Public code release')),
         ('2.6',   ('2.6.1', '2017-12-19', None,              'Scenario sensitivity feature')),
         ('2.6.1', ('2.6.2', '2017-12-19', None,              'New results format')),
-        ('2.6.2', ('2.7',   '2017-10-31', addtimevarying,    'Time-varying optimization')),
+        ('2.6.2', ('2.6.3', '2018-01-17', addtimevarying,    'Preliminaries for time-varying optimization')),
         ])
     
     # Define changelog
