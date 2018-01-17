@@ -871,7 +871,10 @@ def set_outcome_summaries_on_progset(outcomes, progset):
                 covout_by_poptuple[poptuple].addccopar(ccopar, overwrite=True)
             
             try:
+                
                 covout_by_poptuple[poptuple].interaction = outcome['interact']
+                print 'YESSSSSSSSSSSSSS it worked'
+                print outcome['interact']
             except:
                 print "HFOOOOOOOOOOOOOOOOOOOOOOOOOOOOO"
                 print outcome
