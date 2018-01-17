@@ -4,9 +4,9 @@ Functions for running optimizations.
 Version: 2017jun04
 """
 
-from optima import OptimaException, Link, Multiresultset, ICER, asd, runmodel, getresults # Main functions
-from optima import printv, dcp, odict, findinds, today, getdate, uuid, objrepr, promotetoarray, findnearest, sanitize # Utilities
-from numpy import zeros, empty, arange, maximum, array, inf, isfinite, argmin, argsort, nan, floor
+from optima import OptimaException, Link, Multiresultset, ICER, asd, getresults # Main functions
+from optima import printv, dcp, odict, findinds, today, getdate, uuid, objrepr, promotetoarray, findnearest, sanitize, inclusiverange # Utilities
+from numpy import zeros, ones, empty, arange, maximum, array, inf, isfinite, argmin, argsort, nan, floor, concatenate, exp
 from numpy.random import random, seed
 from time import time
 
@@ -16,12 +16,13 @@ from time import time
 class Optim(object):
     ''' An object for storing an optimization '''
 
-    def __init__(self, project=None, name='default', objectives=None, constraints=None, parsetname=None, progsetname=None):
+    def __init__(self, project=None, name='default', objectives=None, constraints=None, parsetname=None, progsetname=None, timevarying=None, tvsettings=None):
         if project     is None: raise OptimaException('To create an optimization, you must supply a project')
         if parsetname  is None: parsetname  = -1 # If none supplied, assume defaults
         if progsetname is None: progsetname = -1
         if objectives  is None: objectives  = defaultobjectives(project=project,  progsetname=progsetname, verbose=0)
         if constraints is None: constraints = defaultconstraints(project=project, progsetname=progsetname, verbose=0)
+        if tvsettings  is None: tvsettings  = defaulttvsettings(timevarying=timevarying) # Create the time-varying settings
         self.name         = name # Name of the optimization, e.g. 'default'
         self.uid          = uuid() # ID
         self.projectref   = Link(project) # Store pointer for the project, if available
@@ -31,6 +32,7 @@ class Optim(object):
         self.progsetname  = progsetname # Program set name
         self.objectives   = objectives # List of dicts holding Parameter objects -- only one if no uncertainty
         self.constraints  = constraints # List of populations
+        self.tvsettings   = tvsettings # The settings for being time-varying
         self.resultsref   = None # Store pointer to results
 
 
@@ -40,6 +42,7 @@ class Optim(object):
         output += ' Optimization name: %s\n'    % self.name
         output += 'Parameter set name: %s\n'    % self.parsetname
         output += '  Program set name: %s\n'    % self.progsetname
+        output += '      Time-varying: %s\n'    % self.tvsettings['timevarying']
         output += '      Date created: %s\n'    % getdate(self.created)
         output += '     Date modified: %s\n'    % getdate(self.modified)
         output += '               UID: %s\n'    % self.uid
@@ -159,12 +162,29 @@ def defaultconstraints(project=None, progsetname=None, verbose=2):
     return constraints
 
 
+def defaulttvsettings(**kwargs):
+    '''
+    Make default settings for time-varying optimization.
+    
+    Can overwritedefaults with kwargs, e.g.
+        tvsettings = defaulttvsettings(tvconstrain=False)    
+    
+    Version: 2017oct29
+    '''
+    tvsettings = odict()
+    tvsettings['timevarying'] = False # By default, do not use time-varying optimization
+    tvsettings['tvconstrain'] = True # Whether or not to constrain the budget at each point in time
+    tvsettings['tvstep'] = 1.0 # NUmber of years per step
+    tvsettings['tvinit'] = None # Optional array with the same length as the budget vector to initialize to; if None, will default to 0
+    tvsettings['asdstep'] = 0.1 # Default ASD step size
+    tvsettings['asdlim'] = 5.0 # Minimum/maximum limit
+    if kwargs: tvsettings.update(kwargs)
+    return tvsettings
 
 
-
-def constrainbudget(origbudget=None, budgetvec=None, totalbudget=None, budgetlims=None, optiminds=None, tolerance=1e-2, overalltolerance=1.0, outputtype=None):
+def constrainbudget(origbudget=None, budgetvec=None, totalbudget=None, budgetlims=None, optiminds=None, tolerance=1e-2, overalltolerance=1.0, outputtype=None, tvsettings=None):
     """ Take an unnormalized/unconstrained budgetvec and normalize and constrain it """
-
+    
     # Prepare this budget for later scaling and the like
     constrainedbudget = dcp(origbudget)
     
@@ -180,7 +200,7 @@ def constrainbudget(origbudget=None, budgetvec=None, totalbudget=None, budgetlim
     rescaledbudget = dcp(constrainedbudget)
     for key in rescaledbudget.keys(): rescaledbudget[key] *= scaleratio # This is the original budget scaled to the total budget
     if abs(sum(rescaledbudget[:])-totalbudget)>overalltolerance:
-        errormsg = 'rescaling budget failed (%f != %f)' % (sum(rescaledbudget[:]), totalbudget)
+        errormsg = 'Rescaling budget failed (%f != %f)' % (sum(rescaledbudget[:]), totalbudget)
         raise OptimaException(errormsg)
 
     # Calculate the minimum amount that can be spent on the fixed costs
@@ -199,7 +219,7 @@ def constrainbudget(origbudget=None, budgetvec=None, totalbudget=None, budgetlim
     # Scale the supplied budgetvec to meet this available amount
     scaledbudgetvec = dcp(budgetvec*optimscaleratio)
     if abs(sum(scaledbudgetvec)-optimbudget)>overalltolerance:
-        errormsg = 'rescaling budget failed (%f != %f)' % (sum(scaledbudgetvec), optimbudget)
+        errormsg = 'Rescaling budget failed (%f != %f)' % (sum(scaledbudgetvec), optimbudget)
         raise OptimaException(errormsg)
 
     # Calculate absolute limits from relative limits
@@ -261,7 +281,7 @@ def constrainbudget(origbudget=None, budgetvec=None, totalbudget=None, budgetlim
     if abs(sum(constrainedbudget[:])-totalbudget)>overalltolerance:
         errormsg = 'final budget amounts differ (%f != %f)' % (sum(constrainedbudget[:]), totalbudget)
         raise OptimaException(errormsg)
-
+    
     # Optionally return the calculated upper and lower limits as well as the original budget and vector
     constrainedbudgetvec = dcp(constrainedbudget[optiminds])
     if outputtype=='odict':
@@ -273,7 +293,60 @@ def constrainbudget(origbudget=None, budgetvec=None, totalbudget=None, budgetlim
         upperlim = dcp(abslimits['min'][optiminds])
         return constrainedbudget, constrainedbudgetvec, lowerlim, upperlim
     else:
-        raise OptimaException('must specify an output type of "odict", "vec", or "full"; you specified "%s"' % outputtype)
+        raise OptimaException('Must specify an output type of "odict", "vec", or "full"; you specified "%s"' % outputtype)
+
+
+
+def tvfunction(budgetdict=None, years=None, pars=None, optiminds=None, tvsettings=None):
+    '''
+    Convert a budget, vector of years, and a vector of parameters (of same
+    length as the budget) into a corresponding normalized dictionary of
+    arrays.
+    '''
+    
+    # Process x-axis
+    years = promotetoarray(years) # Make sure it's an array
+    x = years-years[0] # Start at zero
+    x /= x.max() # Normalize
+    npts = len(years) # Number of points to calculate over
+    
+    # Loop over the budget dictionary and process each one
+    output = dcp(budgetdict) # Not sure if this is necessary, but to be on the safe side...
+    for i,val in enumerate(output.values()): # Loop over the programs and calculate the budget for each
+        if i in optiminds:
+            y = exp(pars[i]*x)
+            y /= y.mean()
+        else:
+            y = ones(npts)
+        output[i] = output[i]*y
+
+    # Optionally constrain each time point
+    if tvsettings and tvsettings['tvconstrain']:
+        optimbudget = budgetdict[:][optiminds].sum() # The amount to constrain to
+        optimdata = output[:][optiminds,:] # The spending for every optimizable program for every year
+        factors = zeros(npts) # List of correction factors
+        for pt in range(npts): # Loop over and calculate correction factors
+            factors[pt] = optimbudget/optimdata[:,pt].sum()
+        for ind in optiminds: # Loop over programs and correct them
+            output[ind] = output[ind]*factors # Correct all time points for this program
+    
+    return output
+
+
+def separatetv(inputvec=None, optiminds=None):
+    ''' Decide if the budget vector includes time-varying information '''
+    noptimprogs = len(optiminds) # Number of optimized programs
+    ndims = 2 # Semi-hard-code the number of dimensions of the time-varying optimization
+    if len(inputvec)==noptimprogs:
+        budgetvec = inputvec
+        tvcontrolvec = None
+    elif len(inputvec)==ndims*noptimprogs:
+        budgetvec = dcp(inputvec[:noptimprogs]) # Replace the budget vector with the ordinary budget vector
+        tvcontrolvec = dcp(inputvec[noptimprogs:]) # Pull out control vector
+    else:
+        errormsg = 'Budget vector must be either length %i or length %i, not %i' % (noptimprogs, ndims*noptimprogs, len(inputvec))
+        raise OptimaException(errormsg)
+    return (budgetvec, tvcontrolvec)
 
 
 
@@ -284,7 +357,7 @@ def constrainbudget(origbudget=None, budgetvec=None, totalbudget=None, budgetlim
 
 def outcomecalc(budgetvec=None, which=None, project=None, parsetname=None, progsetname=None, 
                 objectives=None, constraints=None, totalbudget=None, optiminds=None, origbudget=None, tvec=None, 
-                initpeople=None, outputresults=False, verbose=2, ccsample='best', doconstrainbudget=True):
+                initpeople=None, outputresults=False, verbose=2, ccsample='best', doconstrainbudget=True, tvsettings=None, tvcontrolvec=None, **kwargs):
     ''' Function to evaluate the objective for a given budget vector (note, not time-varying) '''
 
     # Set up defaults
@@ -311,7 +384,11 @@ def outcomecalc(budgetvec=None, which=None, project=None, parsetname=None, progs
     if which not in ['outcomes','money']:
         errormsg = 'optimize(): "which" must be "outcomes" or "money"; you entered "%s"' % which
         raise OptimaException(errormsg)
-
+    
+    # Handle time-varying optimization -- try pulling out of the budget vector, if required
+    if tvcontrolvec is None:
+        budgetvec, tvcontrolvec = separatetv(inputvec=budgetvec, optiminds=optiminds)
+    
     # Normalize budgetvec and convert to budget -- WARNING, is there a better way of doing this?
     if doconstrainbudget:
         constrainedbudget = constrainbudget(origbudget=origbudget, budgetvec=budgetvec, totalbudget=totalbudget, budgetlims=constraints, optiminds=optiminds, outputtype='odict')
@@ -319,21 +396,37 @@ def outcomecalc(budgetvec=None, which=None, project=None, parsetname=None, progs
         constrainedbudget = dcp(origbudget)
         if len(budgetvec)==len(optiminds): constrainedbudget[optiminds] = budgetvec # Assume it's just the optimizable programs
         else:                              constrainedbudget[:]         = budgetvec # Assume it's all programs
+        
+    # Get the budget array to run
+    if tvsettings is None or not tvsettings['timevarying'] or tvcontrolvec is None: # If not running time-varying optimization, it's easy
+        paryears = objectives['start']
+        budgetarray = dcp(constrainedbudget) # Just copy the constrained budget (may not be an array)
+    else: # Otherwise, it's not easy
+        paryears = inclusiverange(start=objectives['start'], stop=objectives['end'], step=tvsettings['tvstep']) # Create the time vector
+        nyears = len(paryears) # Figure out how many years we're doing this for
+        budgetarray = tvfunction(budgetdict=constrainedbudget, years=paryears, pars=tvcontrolvec, optiminds=optiminds, tvsettings=tvsettings)
+        if doconstrainbudget and tvsettings['tvconstrain']: # Do additional constraints
+            for y in range(nyears):
+                budgetvec = budgetarray.fromeach(ind=y, asdict=False)
+                constrainedbudget = constrainbudget(origbudget=origbudget, budgetvec=budgetvec, totalbudget=totalbudget, budgetlims=constraints, optiminds=optiminds, outputtype='odict')
+                budgetarray.toeach(ind=y, val=constrainedbudget[:])
     
-    # Run model
-    thiscoverage = progset.getprogcoverage(budget=constrainedbudget, t=objectives['start'], parset=parset, sample=ccsample)
-    thisparsdict = progset.getpars(coverage=thiscoverage, t=objectives['start'], parset=parset, sample=ccsample)
-    if initpeople is None: startyear = None
-    else:                  startyear = objectives['start']
-    tvec = project.settings.maketvec(start=startyear, end=objectives['end'])
-    results = runmodel(pars=thisparsdict, project=project, parsetname=parsetname, progsetname=progsetname, tvec=tvec, initpeople=initpeople, verbose=0, label=project.name+'-optim-outcomecalc', doround=False)
+    # Get coverage and actual dictionary, in preparation for running
+    thiscoverage = progset.getprogcoverage(budget=budgetarray, t=paryears, parset=parset, sample=ccsample)
+    thisparsdict = progset.getpars(coverage=thiscoverage, t=paryears, parset=parset, sample=ccsample)
+    
+    # Figure out which indices to run for and actually run the model
+    tvec       = project.settings.maketvec(end=objectives['end'])
+    if initpeople is None: startind = None
+    else:                  startind = findnearest(tvec, objectives['start']) # Only start running the simulation from the starting point
+    results = project.runsim(pars=thisparsdict, parsetname=parsetname, progsetname=progsetname, tvec=tvec, initpeople=initpeople, startind=startind, verbose=0, label=project.name+'-optim-outcomecalc', doround=False, addresult=False, **kwargs)
 
     # Figure out which indices to use
-    initialind = findinds(results.tvec, objectives['start'])
-    finalind = findinds(results.tvec, objectives['end'])
-    if which=='money': baseind = findinds(results.tvec, objectives['base']) # Only used for money minimization
+    initialind = findnearest(results.tvec, objectives['start'])
+    finalind   = findnearest(results.tvec, objectives['end'])
+    if which=='money': baseind = findnearest(results.tvec, objectives['base']) # Only used for money minimization
     if which=='outcomes': indices = arange(initialind, finalind) # Only used for outcomes minimization
-
+    
     ## Here, we split depending on whether it's a outcomes or money minimization:
     if which=='outcomes':
         # Calculate outcome
@@ -353,10 +446,21 @@ def outcomecalc(budgetvec=None, which=None, project=None, parsetname=None, progs
             results.rawoutcomes = rawoutcomes
             results.budgetyears = [objectives['start']] # Use the starting year
             results.budget = constrainedbudget # Convert to budget
+            results.budgets = odict({'outcomecalc':constrainedbudget}) # For plotting
+            results.outcomesettings = odict([('objectives', objectives), ('constraints', constraints), ('tvsettings', tvsettings)])
+            
+            # Store time-varying part
+            if tvsettings and tvsettings['timevarying']:
+                results.timevarying = odict() # One-liner: multires.timevarying = odict().makefrom(locals(), ['tvyears', 'tvpars', 'tvbudgets'])
+                results.timevarying['tvyears'] = dcp(paryears)
+                results.timevarying['tvpars'] = dcp(tvcontrolvec)
+                results.timevarying['tvbudgets'] = dcp(budgetarray)
+                
             output = results
         else:
             output = outcome
 
+    ## It's money
     elif which=='money':
         # Calculate outcome
         targetsmet = True # Assume success until proven otherwise (since operator is AND, not OR)
@@ -569,8 +673,140 @@ def multioptimize(optim=None, nchains=None, nblocks=None, blockiters=None,
 
 
 
+
+
+def tvoptimize(project=None, optim=None, tvec=None, verbose=None, maxtime=None, maxiters=1000, origbudget=None, 
+               ccsample='best', randseed=None, mc=3, label=None, die=False, **kwargs):
+    '''
+    Run a time-varying optimization. See project.optimize() for usage examples, and optimize()
+    for kwarg explanation.
+    
+    Simple example:
+        import optima as op
+        P = op.demo(0, which='simple'); P.parset().fixprops(False) # Create the project, and allow ART to be optimized
+        P.optimize(timevarying=1, mc=0, maxiters=30, randseed=1, tvconstrain=False)
+        op.pygui(P)
+    
+    Version: 2017oct30
+    '''
+
+    printv('Preparing to run a time-varying optimization...', 1, verbose)
+    
+    # Do a preliminary non-time-varying optimization
+    optim.tvsettings['timevarying'] = False # Turn off for the first run
+    prelim = optimize(optim=optim, maxtime=maxtime, maxiters=maxiters, verbose=verbose, origbudget=origbudget,
+                ccsample=ccsample, randseed=randseed, mc=mc, label=label, die=die, keepraw=True, **kwargs)
+    rawresults = prelim.raw['Baseline'][0] # Store the raw results; "Baseline" vs. "Optimal" shouldn't matter, and [0] is the first/best run -- not sure if there is a more robut way
+    
+    # Add in the time-varying component
+    origtotalbudget = dcp(optim.objectives['budget']) # Should be a float, but dcp just in case
+    totalbudget = origtotalbudget
+    optimconstbudget = dcp(prelim.budget)
+    origbudget = dcp(prelim.budgets[0]) # OK to do this since if supplied as an argument, will be the same; else, it will be populated here
+    project = optim.projectref()
+
+    ## Handle budget and remove fixed costs
+    progset = project.progsets[optim.progsetname] # Link to the original program set
+    optimizable = array(progset.optimizable())
+    optiminds = findinds(optimizable)
+    budgetvec = optimconstbudget[:][optiminds] # Get the original budget vector
+    noptimprogs = len(budgetvec) # Number of optimizable programs
+    if label is None: label = ''
+    
+    # Set up arguments which are shared between outcomecalc and asd
+    optim.tvsettings['timevarying'] = True # Turn it back on for everything else
+    args = {'which':'outcomes', 
+            'project':project, 
+            'parsetname':optim.parsetname, 
+            'progsetname':optim.progsetname, 
+            'objectives':optim.objectives, 
+            'constraints':optim.constraints, 
+            'totalbudget':origtotalbudget, # Complicated, see below
+            'optiminds':optiminds, 
+            'origbudget':origbudget, 
+            'tvec':tvec, 
+            'ccsample':ccsample, 
+            'verbose':verbose, 
+            'initpeople':None, # For now, run full time series
+            'tvsettings':optim.tvsettings} # Complicated; see below
+    
+    tmpresults = odict()
+    tmpimprovements = odict()
+    tmpfullruninfo = odict()
+    
+    # This generates the baseline results
+    tmpresults['Baseline'] = outcomecalc(prelim.budgets['Baseline'], outputresults=True, doconstrainbudget=False, **args)
+    tmpresults['Optimal']  = outcomecalc(prelim.budgets['Optimal'],  outputresults=True, doconstrainbudget=False, **args)
+    for key,result in tmpresults.items(): 
+        result.name = key # Update names
+        tmpimprovements[key] = [tmpresults[key].outcome] # Hacky, since expects a list
+    
+    # Set up budgets to run
+    tvbudgetvec = dcp(budgetvec)
+    tvcontrolvec = zeros(noptimprogs) # Generate vector of zeros for correct length
+    tvvec = concatenate([tvbudgetvec, tvcontrolvec])
+    if randseed is None: randseed = int((time()-floor(time()))*1e4) # Make sure a seed is used
+    args['totalbudget'] = totalbudget
+            
+    # Set up the optimizations to run
+    bestfval = inf # Value of outcome
+    asdresults = odict()
+    key = 'Baseline'
+    printv('Running time-varying optimization with maxtime=%s, maxiters=%s' % (maxtime, maxiters), 2, verbose)
+    if label: thislabel = '"'+label+'-'+key+'"'
+    else: thislabel = '"'+key+'"'
+    xmin = concatenate([zeros(noptimprogs), -optim.tvsettings['asdlim']+dcp(tvcontrolvec)])
+    xmax = concatenate([inf+zeros(noptimprogs), optim.tvsettings['asdlim']+dcp(tvcontrolvec)])
+    stepbudget = optim.tvsettings['asdstep']*tvbudgetvec # Step size for budgets
+    steptvcontrol = optim.tvsettings['asdstep']+dcp(tvcontrolvec) # Step size for TV parameter
+    sinitial = concatenate([stepbudget]*2+[steptvcontrol]*2) # Set the step size -- duplicate for +/-
+    args['origbudget'] = optimconstbudget
+    
+    # Set the initial people
+    initialind = findinds(rawresults['tvec'], optim.objectives['start'])
+    initpeople = rawresults['people'][:,:,initialind] # Pull out the people array corresponding to the start of the optimization -- there shouldn't be multiple raw arrays here
+    args['initpeople'] = initpeople
+    
+    # Now run the optimization
+    tvvecnew, fvals, details = asd(outcomecalc, tvvec, args=args, xmin=xmin, xmax=xmax, sinitial=sinitial, maxtime=maxtime, maxiters=maxiters, verbose=verbose, randseed=randseed, label=thislabel, **kwargs)
+    budgetvec, tvcontrolvec = separatetv(inputvec=tvvecnew, optiminds=optiminds)
+    constrainedbudgetnew, constrainedbudgetvecnew, lowerlim, upperlim = constrainbudget(origbudget=origbudget, budgetvec=budgetvec, totalbudget=totalbudget, budgetlims=optim.constraints, optiminds=optiminds, outputtype='full', tvsettings=optim.tvsettings)
+    asdresults[key] = {'budget':constrainedbudgetnew, 'fvals':fvals, 'tvcontrolvec':tvcontrolvec}
+    if fvals[-1]<bestfval: 
+        bestkey = key # Reset key
+        bestfval = fvals[-1] # Reset fval
+    
+    ## Calculate outcomes
+    args['initpeople'] = None # Turn off again to get full results
+    new = outcomecalc(asdresults[bestkey]['budget'], tvcontrolvec=tvcontrolvec, outputresults=True, **args)
+    new.name = 'Time-varying' # Note: could all be simplified
+    tmpresults[new.name] = new
+    tmpimprovements[new.name] = asdresults[bestkey]['fvals']
+    tmpfullruninfo[new.name] = asdresults # Store everything
+    
+    ## Output
+    multires = Multiresultset(resultsetlist=tmpresults.values(), name='optim-%s' % optim.name)
+    for k,key in enumerate(multires.keys): multires.budgetyears[key] = tmpresults[k].budgetyears # Copy budget years
+    multires.improvement = tmpimprovements # Store full function evaluation information -- only use last one
+    multires.fullruninfo = tmpfullruninfo # And the budgets/outcomes for every different run
+    multires.outcomes = dcp(multires.outcome) # Copy to more robust place, and...
+    multires.outcome = multires.outcomes[-1] # ...store these defaults in a convenient place
+    multires.budget = multires.budgets[-1] # Likewise here
+    optim.resultsref = multires.name # Store the reference for this result
+    
+    # Store optimization settings
+    multires.optimsettings = odict([('maxiters',maxiters),('maxtime',maxtime),('mc',mc),('randseed',randseed),('tvsettings',optim.tvsettings)])
+
+    return multires
+
+
+
+
+
+
+
 def minoutcomes(project=None, optim=None, tvec=None, verbose=None, maxtime=None, maxiters=1000, 
-                origbudget=None, ccsample='best', randseed=None, mc=3, label=None, die=False, **kwargs):
+                origbudget=None, ccsample='best', randseed=None, mc=3, label=None, die=False, timevarying=None, keepraw=False, **kwargs):
     ''' Split out minimize outcomes '''
 
     ## Handle budget and remove fixed costs
@@ -595,27 +831,29 @@ def minoutcomes(project=None, optim=None, tvec=None, verbose=None, maxtime=None,
     if label is None: label = ''
     
     # Calculate the initial people distribution
-    results = runmodel(pars=parset.pars, project=project, parsetname=optim.parsetname, progsetname=optim.progsetname, tvec=tvec, keepraw=True, verbose=0, label=project.name+'-minoutcomes')
-    initialind = findinds(results.raw[0]['tvec'], optim.objectives['start'])
+    results = project.runsim(pars=parset.pars, parsetname=optim.parsetname, progsetname=optim.progsetname, tvec=tvec, keepraw=True, verbose=0, label=project.name+'-minoutcomes', addresult=False)
+    initialind = findnearest(results.raw[0]['tvec'], optim.objectives['start'])
     initpeople = results.raw[0]['people'][:,:,initialind] # Pull out the people array corresponding to the start of the optimization -- there shouldn't be multiple raw arrays here
-    
+
     # Calculate original things
     constrainedbudgetorig, constrainedbudgetvecorig, lowerlim, upperlim = constrainbudget(origbudget=origbudget, budgetvec=budgetvec, totalbudget=origtotalbudget, budgetlims=optim.constraints, optiminds=optiminds, outputtype='full')
     
     # Set up arguments which are shared between outcomecalc and asd
-    args = {'which':'outcomes', 
-            'project':project, 
-            'parsetname':optim.parsetname, 
+    args = {'which':      'outcomes', 
+            'project':    project, 
+            'parsetname': optim.parsetname, 
             'progsetname':optim.progsetname, 
-            'objectives':optim.objectives, 
+            'objectives': optim.objectives, 
             'constraints':optim.constraints, 
             'totalbudget':origtotalbudget, # Complicated, see below
-            'optiminds':optiminds, 
-            'origbudget':origbudget, 
-            'tvec': tvec, 
-            'ccsample':ccsample, 
-            'verbose':verbose, 
-            'initpeople':initpeople} # Set below
+            'optiminds':  optiminds, 
+            'origbudget': origbudget, 
+            'tvec':       tvec, 
+            'ccsample':   ccsample, 
+            'verbose':    verbose, 
+            'initpeople': initpeople, # Complicated; see below
+            'keepraw':    keepraw,
+            }
     
     # Set up extremes
     extremebudgets = odict()
@@ -640,13 +878,11 @@ def minoutcomes(project=None, optim=None, tvec=None, verbose=None, maxtime=None,
             args['initpeople'] = None # Do this so it runs for the full time series, and is comparable to the optimization result
             args['totalbudget'] = origbudget[:].sum() # Need to reset this since constraining the budget
             doconstrainbudget = True # This is needed so it returns the full budget odict, not just the budget vector
-            inds = optiminds # Reset to only optimizable indices
         else:
             args['initpeople'] = initpeople # Do this so saves a lot of time (runs twice as fast for all the budget scenarios)
             args['totalbudget'] = origtotalbudget
             doconstrainbudget = False
-            inds = arange(nprogs)
-        extremeresults[key] = outcomecalc(exbudget[inds], outputresults=True, doconstrainbudget=doconstrainbudget, **args)
+        extremeresults[key] = outcomecalc(exbudget[optiminds], outputresults=True, doconstrainbudget=doconstrainbudget, **args)
         extremeresults[key].name = key
         extremeoutcomes[key] = extremeresults[key].outcome
     if mc: bestprogram = argmin(extremeoutcomes[:][len(firstkeys):])+len(firstkeys) # Don't include no funding or infinite funding examples
@@ -748,16 +984,10 @@ def minoutcomes(project=None, optim=None, tvec=None, verbose=None, maxtime=None,
     multires.improvement = tmpimprovements # Store full function evaluation information -- only use last one
     multires.extremeoutcomes = extremeoutcomes # Store all of these
     multires.fullruninfo = tmpfullruninfo # And the budgets/outcomes for every different run
-    multires.outcomes = odict() # Initialize
-    for key in tmpimprovements.keys():
-        multires.outcomes[key] = tmpimprovements[key][-1] # Get best value
+    multires.outcomes = dcp(multires.outcome) # Initialize
+    multires.outcome = multires.outcomes[-1] # Store these defaults in a convenient place
+    multires.budget = multires.budgets[-1]
     optim.resultsref = multires.name # Store the reference for this result
-    try:
-        multires.outcome = multires.outcomes['Optimal'] # Store these defaults in a convenient place
-        multires.budget = multires.budgets['Optimal']
-    except:
-        multires.outcome = None
-        multires.budget = None
     
     # Store optimization settings
     multires.optimsettings = odict([('maxiters',maxiters),('maxtime',maxtime),('mc',mc),('randseed',randseed)])
@@ -769,7 +999,8 @@ def minoutcomes(project=None, optim=None, tvec=None, verbose=None, maxtime=None,
 
 
 
-def minmoney(project=None, optim=None, tvec=None, verbose=None, maxtime=None, maxiters=1000, fundingchange=1.2, tolerance=1e-2, ccsample='best', randseed=None, **kwargs):
+def minmoney(project=None, optim=None, tvec=None, verbose=None, maxtime=None, maxiters=1000, 
+             fundingchange=1.2, tolerance=1e-2, ccsample='best', randseed=None, keepraw=False, **kwargs):
     '''
     A function to minimize money for a fixed objective. Note that it calls minoutcomes() in the process.
 
@@ -800,7 +1031,9 @@ def minmoney(project=None, optim=None, tvec=None, verbose=None, maxtime=None, ma
             'origbudget': origbudget, 
             'tvec':       tvec, 
             'ccsample':   ccsample, 
-            'verbose':    verbose}
+            'verbose':    verbose,
+            'keepraw':    keepraw,
+            }
 
 
     ##########################################################################################################################
@@ -946,7 +1179,7 @@ def icers(name=None, project=None, parsetname=None, progsetname=None, objective=
         project      = the project object
         parsetname   = name of the parameter set used; default -1
         progsetname  = name of the program set; default -1
-        objective    = what to calculate; must be one of 'death', 'inci', 'daly'; 'daly' by default)
+        objective    = what to calculate; must be one of 'death', 'inci'; 'death' by default)
         startyear    = the year to start applying the budget and calculating the outcome; default from defaultobjectives()
         endyear      = ditto for end year
         budgetratios = the list of budgets relative to baseline to run; default 10 budgets spanning 0.0 to 2.0
@@ -995,8 +1228,8 @@ def icers(name=None, project=None, parsetname=None, progsetname=None, objective=
     nkeys = len(keys)
     
     # Calculate the initial people distribution
-    initresults = runmodel(project=project, parsetname=parsetname, progsetname=progsetname, keepraw=True, verbose=0, label=project.name+'-minoutcomes')
-    initialind  = findinds(initresults.raw[0]['tvec'], objectives['start'])
+    initresults = project.runsim(parsetname=parsetname, progsetname=progsetname, keepraw=True, verbose=0, label=project.name+'-minoutcomes', addresult=False)
+    initialind  = findnearest(initresults.raw[0]['tvec'], objectives['start'])
     initpeople  = initresults.raw[0]['people'][:,:,initialind] # Pull out the people array corresponding to the start of the optimization -- there shouldn't be multiple raw arrays here
 
     # Define arguments that don't change in the loop
@@ -1071,7 +1304,7 @@ def icers(name=None, project=None, parsetname=None, progsetname=None, objective=
                 baselinediff = -baselinediffy/(baselinediffx+eps)
                 estimates = [baselinediff]
             
-            # Finally, calculate the DALYs per dollar
+            # Finally, calculate the outcome per dollar
             thisiecr = array(estimates).mean() # Average upper and lower estimates, if available -- "iecr" is the inverse of an icer
             if thisiecr<0:
                 printv('WARNING, ICER for "%s" at budget ratio %0.1f is negative (%0.3e); setting to 0' % (key, budgetratios[b], 1./(thisiecr+icereps)), 1, verbose)

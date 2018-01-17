@@ -13,7 +13,7 @@ Requires line_profiler, available from:
 or: 
     pip install line_profiler
 
-Version: 2016jan29
+Version: 2017oct30
 """
 
 dobenchmark = True
@@ -30,33 +30,45 @@ if dobenchmark:
     print('Benchmarking...')
     
     from pylab import loadtxt, savetxt, vstack, array
-    from optima import Project, gitinfo, sigfig, today, getdate
+    from optima import demo, gitinfo, today, getdate
     from time import time
     
-    ## Settings
+    # Settings
     hashlen = 7
     filename = 'benchmark.txt'
     dosave = True
     
-    ## Run the model
-    P = Project(spreadsheet='generalized.xlsx', dorun=False)
+    # Run a benchmarking test
+    def cpubenchmark():
+        starttime = time()
+        tmp = [0+tmp for tmp in range(int(1e6))]
+        endtime = time()
+        performance = 1.0/(endtime-starttime)
+        return performance
+    
+    # Run the model
+    P = demo(0)
+    performance1 = cpubenchmark()
     t = time()
     P.runsim()
     elapsed = time()-t
+    performance2 = cpubenchmark()
+    performance = sum([performance1, performance2])/2. # Find average of before and after
+    benchmarktxt = "(benchmark:%0.2fm)" % performance
+    print(benchmarktxt)
     
-    ## Gather the output data
-    elapsedstr = sigfig(elapsed, 3)
+    # Gather the output data
+    elapsedstr = '%0.3f' % elapsed
     todaystr = getdate(today()).replace(' ','_')
     gitbranch, gitversion = gitinfo()
     gitversion = gitversion[:hashlen]
-    thisout = array([elapsedstr, todaystr, gitversion, gitbranch])
+    thisout = array([elapsedstr, todaystr, gitversion, gitbranch, benchmarktxt])
     
-    ## Save, but only if hash not already in file
+    # Save, but only if hash not already in file
     if dosave:
         output = loadtxt(filename, dtype=str)
-        if gitversion not in output[:,2]: # Don't append multiple entries per commit
-            output = vstack([output, thisout]) # WARNING, will fail if not at least 2 entries in ouput already (to specify dimensionality)
-            savetxt(filename, output, fmt='%s')
+        output = vstack([output, thisout]) # WARNING, will fail if not at least 2 entries in ouput already (to specify dimensionality)
+        savetxt(filename, output, fmt='%s')
     
     print('Done benchmarking: model runtime was %s s.' % elapsedstr)
 

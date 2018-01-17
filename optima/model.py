@@ -2,7 +2,7 @@
 from numpy import zeros, exp, maximum, minimum, inf, array, isnan, einsum, floor, ones, power as npow, concatenate as cat, interp, nan, squeeze
 from optima import OptimaException, printv, dcp, odict, findinds, makesimpars, Resultset
 
-def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False, debug=False, label=None):
+def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False, debug=False, label=None, startind=None):
     """
     Runs Optima's epidemiological model.
     
@@ -16,8 +16,9 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
     # Initialize basic quantities
     
     if verbose is None:  verbose = settings.verbose # Verbosity of output
-    if label is None: label = ''
-    else:             label += ': '# An optional label to add to error messages
+    if label is None:    label = ''
+    else:                label += ': '# An optional label to add to error messages
+    if startind is None: startind = 0 # Point to start from -- used with non-empty initpeople
     if simpars is None:  raise OptimaException(label+'model() requires simpars as an input')
     if settings is None: raise OptimaException(label+'model() requires settings as an input')
     printv('Running model...', 1, verbose)
@@ -399,7 +400,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
             
             
             
-    people[:,:,0] = initpeople
+    people[:,:,startind] = initpeople
 
     
     ##################################################################################################################
@@ -471,6 +472,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
             birthrates = birthtransit[p1, p2] * birth[p1, :]
             if birthrates.any():
                 birthslist.append(tuple([p1,p2,birthrates,alleligbirthrate]))
+    motherpops = set([thisbirth[0] for thisbirth in birthslist]) # Get the list of all populations who are mothers
     
     
     ##################################################################################################################
@@ -500,7 +502,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
     alltransmatrices = zeros((npts, transmatrix.shape[0], transmatrix.shape[1], transmatrix.shape[2]))
     alltransmatrices[:] = transmatrix
     
-    for t in range(npts): # Loop over time
+    for t in range(startind, npts): # Loop over time
         printv('Timestep %i of %i' % (t+1, npts), 4, verbose)
         
         ###############################################################################
@@ -688,8 +690,17 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
         # Precalculate proportion on PMTCT, whether numpmtct or proppmtct is used
         numhivpospregwomen = 0
         timestepsonpmtct = 1./dt # Specify the number of timesteps on which mothers are on PMTCT -- # TODO: remove hard-coding
+        fsums = dict() # Has to be a dict rather than an odict since the populations are numeric
+        for p1 in motherpops: # Pull these out of the loop to speed computation
+            fsumpop = people[:, p1, t] # Pull out the people who will be summed
+            fsums[p1] = dict() # Use another dict, since only referring to by key
+            fsums[p1]['all']       = fsumpop[:].sum()
+            fsums[p1]['allplhiv']  = fsumpop[allplhiv].sum()
+            fsums[p1]['undx']      = fsumpop[undx].sum()
+            fsums[p1]['alldx']     = fsumpop[alldx].sum()
+            fsums[p1]['alltx']     = fsumpop[alltx].sum()
         for p1,p2,birthrates,alleligbirthrate in birthslist: # p1 is mothers, p2 is children
-            numhivpospregwomen += birthrates[t]*people[alldx, p1, t].sum()*timestepsonpmtct # Divide by dt to get number of women
+            numhivpospregwomen += birthrates[t] * fsums[p1]['alldx'] * timestepsonpmtct # Divide by dt to get number of women
         if isnan(proppmtct[t]): calcproppmtct = numpmtct[t]/(eps+numhivpospregwomen) # Proportion on PMTCT is not specified: use number
         else:                   calcproppmtct = proppmtct[t] # Else, just use the proportion specified
         calcproppmtct = min(calcproppmtct, 1.)
@@ -697,22 +708,21 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
         # Calculate actual births, MTCT, and PMTCT
         for p1,p2,birthrates,alleligbirthrate in birthslist:
             thisbirthrate = birthrates[t]
-            peopledx = people[alldx, p1, t].sum() # Assign to a variable since used twice
-            popbirths      = thisbirthrate * people[:, p1, t].sum()
-            mtctundx       = thisbirthrate * people[undx, p1, t].sum() * effmtct[t] # Births to undiagnosed mothers
-            mtcttx         = thisbirthrate * people[alltx, p1, t].sum()  * pmtcteff[t] # Births to mothers on treatment
-            thiseligbirths = thisbirthrate * peopledx # Births to diagnosed mothers eligible for PMTCT
+            popbirths      = thisbirthrate * fsums[p1]['all']
+            mtctundx       = thisbirthrate * fsums[p1]['undx'] * effmtct[t] # Births to undiagnosed mothers
+            mtcttx         = thisbirthrate * fsums[p1]['alltx'] * pmtcteff[t] # Births to mothers on treatment
+            thiseligbirths = thisbirthrate * fsums[p1]['alldx'] # Births to diagnosed mothers eligible for PMTCT
 
             mtctdx = (thiseligbirths * (1-calcproppmtct)) * effmtct[t] # MTCT from those diagnosed not receiving PMTCT
             mtctpmtct = (thiseligbirths * calcproppmtct) * pmtcteff[t] # MTCT from those receiving PMTCT
             thisreceivepmtct = thiseligbirths * calcproppmtct
             popmtct = mtctundx + mtctdx + mtcttx + mtctpmtct # Total MTCT, adding up all components         
             
-            raw_receivepmtct[p1, t] += thisreceivepmtct*timestepsonpmtct
+            raw_receivepmtct[p1, t] += thisreceivepmtct * timestepsonpmtct
             raw_mtct[p2, t] += popmtct/dt
             raw_mtctfrom[p1, t] += popmtct/dt
             raw_births[p2, t] += popbirths/dt
-            raw_hivbirths[p1, t] += thisbirthrate*people[allplhiv, p1, t].sum()/dt
+            raw_hivbirths[p1, t] += thisbirthrate * fsums[p1]['allplhiv'] / dt
             
         raw_inci[:,t] += raw_mtct[:,t] # Update infections acquired based on PMTCT calculation
         raw_incibypop[:,t] += raw_mtctfrom[:,t] # Update infections caused based on PMTCT calculation
@@ -888,35 +898,3 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
     checkfornegativepeople(people) # Check only once for negative people, right before finishing
     
     return raw # Return raw results
-
-
-
-
-def runmodel(project=None, simpars=None, pars=None, parsetname=None, progsetname=None, budget=None, coverage=None, budgetyears=None, settings=None, start=None, end=None, dt=None, tvec=None, name=None, uid=None, data=None, initpeople=None, debug=False, die=False, keepraw=False, label=None, verbose=2, doround=True):
-    ''' 
-    Convenience function for running the model. Requires input of either "simpars" or "pars"; and for including the data,
-    requires input of either "project" or "data". All other inputs are optional.
-    
-    Version: 2017jun04
-    '''
-    if settings is None:
-        try:    settings = project.settings 
-        except: raise OptimaException('Could not get settings from project "%s" supplied to runmodel()' % project)
-    if label is None:
-        try: label = project.name
-        except: pass
-    if start is None: start = settings.start
-    if end   is None: end   = settings.end
-    if dt    is None: dt    = settings.dt
-    if simpars is None:
-        if pars is None: 
-            if parsetname is not None: pars = project.parsets[parsetname].pars
-            else:                  pars = project.parsets[-1].pars # Use default
-        simpars = makesimpars(pars, name=name, start=start, end=end, dt=dt, tvec=tvec, settings=settings)
-        
-    # Actually run the model
-    raw = model(simpars=simpars, settings=settings, initpeople=initpeople, debug=debug, die=die, label=label, verbose=verbose) # RUN OPTIMA!!
-    
-    # Store results
-    results = Resultset(project=project, raw=raw, parsetname=parsetname, progsetname=progsetname, budget=budget, coverage=coverage, budgetyears=budgetyears, pars=pars, simpars=simpars, data=data, domake=True, keepraw=keepraw, verbose=verbose, doround=doround) # Create structure for storing results
-    return results

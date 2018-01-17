@@ -51,6 +51,8 @@ def setmigrations(which='migrations'):
         ('2.4',   ('2.5',   '2017-07-03', None,              'Made registration public')),
         ('2.5',   ('2.6',   '2017-10-23', None,              'Public code release')),
         ('2.6',   ('2.6.1', '2017-12-19', None,              'Scenario sensitivity feature')),
+        ('2.6.1', ('2.6.2', '2017-12-19', None,              'New results format')),
+        ('2.6.2', ('2.7',   '2017-10-31', addtimevarying,    'Time-varying optimization')),
         ])
     
     # Define changelog
@@ -729,6 +731,17 @@ def redotranstable(project, **kwargs):
     return None
 
 
+def addtimevarying(project, **kwargs):
+    ''' Update optimization objects to include time-varying settings '''
+    for opt in project.optims.values():
+        opt.tvsettings = op.defaulttvsettings()
+    for parset in project.parsets.values():
+        try:    assert(op.isnumber(parset.start))
+        except: parset.start = project.settings.start
+        try:    assert(op.isnumber(parset.end))
+        except: parset.end = project.settings.end
+    return None
+
 #def redoprograms(project, **kwargs):
 #    """
 #    Migration between Optima 2.2.1 and 2.3 -- convert CCO objects from simple dictionaries to parameters.
@@ -755,7 +768,10 @@ def migrate(project, verbose=2, die=False):
         
         # Check that the migration exists
         if not currentversion in migrations:
-            errormsg = "WARNING, migrating %s failed: no migration exists from version %s to the latest version (%s)" % (project.name, currentversion, op.version)
+            if op.compareversions(currentversion, op.version)<0:
+                errormsg = "WARNING, migrating %s failed: no migration exists from version %s to the current version (%s)" % (project.name, currentversion, op.version)
+            elif op.compareversions(currentversion, op.version)>0:
+                errormsg = "WARNING, migrating %s failed: project version %s more recent than current Optima version (%s)" % (project.name, currentversion, op.version)
             if die: raise op.OptimaException(errormsg)
             else:   op.printv(errormsg, 1, verbose)
             return project # Abort, if haven't died already
@@ -767,8 +783,7 @@ def migrate(project, verbose=2, die=False):
             try: 
                 migrator(project, verbose=verbose, die=die) # Sometimes there is no upgrader
             except Exception as E:
-                errormsg = 'WARNING, migrating "%s" from %6s -> %6s failed:\n' % (project.name, currentversion, newversion)
-                errormsg += E.__repr__()
+                errormsg = 'WARNING, migrating "%s" from %6s -> %6s failed:\n%s' % (project.name, currentversion, newversion, repr(E))
                 if not hasattr(project, 'failedmigrations'): project.failedmigrations = [] # Create if it doesn't already exist
                 project.failedmigrations.append(errormsg)
                 if die: raise op.OptimaException(errormsg)

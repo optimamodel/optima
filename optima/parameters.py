@@ -26,7 +26,7 @@ staticmatrixkeys = ['birthtransit','agetransit','risktransit'] # Static keys tha
 class Parameterset(object):
     ''' Class to hold all parameters and information on how they were generated, and perform operations on them'''
     
-    def __init__(self, name='default', project=None, progsetname=None, budget=None, start=None):
+    def __init__(self, name='default', project=None, progsetname=None, budget=None, start=None, end=None):
         self.name = name # Name of the parameter set, e.g. 'default'
         self.uid = uuid() # ID
         self.projectref = Link(project) # Store pointer for the project, if available
@@ -39,6 +39,7 @@ class Parameterset(object):
         self.progsetname = progsetname # Store the name of the progset that generated the parset, if any
         self.budget = budget # Store the budget that generated the parset, if any
         self.start = start # Store the startyear of the parset
+        self.end = end # Store the endyear of the parset
         
     
     def __repr__(self):
@@ -84,32 +85,32 @@ class Parameterset(object):
                 results = self.projectref().runsim(name=self.name)
 
         # Interpret inputs
-        if proptype in ['diag','dx','propdiag','propdx']: proptype = 'propdiag'
+        if   proptype in ['diag','dx','propdiag','propdx']:                         proptype = 'propdiag'
         elif proptype in ['evercare','everincare','propevercare','propeverincare']: proptype = 'propvercare'
-        elif proptype in ['care','incare','propcare','propincare']: proptype = 'propincare'
-        elif proptype in ['treat','tx','proptreat','proptx']: proptype = 'proptreat'
-        elif proptype in ['supp','suppressed','propsupp','propsuppressed']: proptype = 'propsuppressed'
-        else:
-            raise OptimaException('Unknown proportion type %s' % proptype)
-    
+        elif proptype in ['care','incare','propcare','propincare']:                 proptype = 'propincare'
+        elif proptype in ['treat','tx','proptreat','proptx']:                       proptype = 'proptreat'
+        elif proptype in ['supp','suppressed','propsupp','propsuppressed']:         proptype = 'propsuppressed'
+        else: raise OptimaException('Unknown proportion type %s' % proptype)
+        
+        # Handle indices
         if ind in ['median', 'm', 'best', 'b', 'average', 'av', 'single',0]: ind=0
         elif ind in ['lower','l','low',1]: ind=1
         elif ind in ['upper','u','up','high','h',2]: ind=2
         else: ind=0 # Return best estimate if can't understand whichone was requested
-        
         timeindex = findinds(results.tvec,year) if year else Ellipsis
 
-        if bypop:
-            return results.main[proptype].pops[ind][:][timeindex]
-        else:
-            return results.main[proptype].tot[ind][timeindex]
+        if bypop: return results.main[proptype].pops[ind][:][timeindex]
+        else:     return results.main[proptype].tot[ind][timeindex]
                 
     
-    
-    def makepars(self, data=None, verbose=2):
+    def makepars(self, data=None, fix=True, verbose=2, start=None, end=None):
         self.pars = makepars(data=data, verbose=verbose) # Initialize as list with single entry
+        self.fixprops(fix=fix)
         self.popkeys = dcp(self.pars['popkeys']) # Store population keys more accessibly
-        self.start = data['years'][0] # Store the start year
+        if start is None: self.start = data['years'][0] # Store the start year -- if not supplied, use beginning of data
+        else:             self.start = start
+        if end is None:   self.end   = Settings().endyear # Store the end year -- if not supplied, use default
+        else:             self.end   = end
         return None
 
 
@@ -136,14 +137,26 @@ class Parameterset(object):
         return None
     
     
-    def fixprops(self, fix=None):
+    def fixprops(self, fix=None, which=None, startyear=None):
         '''
         Fix or unfix the proportions of people on ART and suppressed.
         
         To fix:   P.parset().fixprops()
         To unfix: P.parset().fixprops(False)
+        
+        You can also specify a start year. "fix" can also be a string
+        or a list of strings, to specify which of ['dx', 'tx', 'supp']
+        you want to fix.
         '''
-        self.pars = togglefixprops(self.pars, fix=fix)
+        if fix is None: fix = True # By default, do fix
+        if   which is None:  which = ['tx','supp']
+        elif which is 'all': which = ['dx','tx','supp']
+        else:                which = promotetolist(which)
+        if fix:  startyear = self.pars['numtx'].t['tot'][-1]
+        else:    startyear = 2100
+        if 'dx'   in which: self.pars['fixpropdx'].t   = startyear
+        if 'tx'   in which: self.pars['fixproptx'].t   = startyear
+        if 'supp' in which: self.pars['fixpropsupp'].t = startyear # Doesn't make sense to assume proportion on treatment without assuming proportion suppressed....also, crashes otherwise :)
         return None
         
     
@@ -1028,7 +1041,7 @@ def makepars(data=None, verbose=2, die=True, fixprops=None):
     try: 
         rawpars = loadpartable() # Read the parameters structure
     except OptimaException as E: 
-        errormsg = 'Could not load parameter table: "%s"' % E.__repr__()
+        errormsg = 'Could not load parameter table: "%s"' % repr(E)
         raise OptimaException(errormsg)
         
     pars['fromto'], pars['transmatrix'] = loadtranstable(npops=len(popkeys)) # Read the transitions
@@ -1046,8 +1059,8 @@ def makepars(data=None, verbose=2, die=True, fixprops=None):
             rawpar['verbose'] = verbose # Easiest way to pass it in
             
             # Decide what the keys are
-            if by=='tot': keys = totkey
-            elif by=='pop': keys = popkeys
+            if   by=='tot' : keys = totkey
+            elif by=='pop' : keys = popkeys
             elif by=='fpop': keys = fpopkeys
             elif by=='mpop': keys = mpopkeys
             else: keys = [] # They're not necessarily empty, e.g. by partnership, but too complicated to figure out here
@@ -1078,7 +1091,7 @@ def makepars(data=None, verbose=2, die=True, fixprops=None):
                 pars[parname] = Yearpar(t=nan, **rawpar)
             
         except Exception as E:
-            errormsg = 'Failed to convert parameter %s:\n%s' % (parname, E.__repr__())
+            errormsg = 'Failed to convert parameter %s:\n%s' % (parname, repr(E))
             if die: raise OptimaException(errormsg)
             else: printv(errormsg, 1, verbose)
     
@@ -1134,7 +1147,6 @@ def makepars(data=None, verbose=2, die=True, fixprops=None):
     # Fix treatment from final data year
     for key in ['fixproptx', 'fixpropsupp', 'fixpropdx', 'fixpropcare', 'fixproppmtct']:
         pars[key].t = 2100 # TODO: don't use these, so just set to (hopefully) well past the end of the analysis
-    pars = togglefixprops(pars, fix=fixprops) # Optionally fix the proportions
 
     # Set the values of parameters that aren't from data
     pars['transnorm'].y = 0.43 # See analyses/misc/calculatecd4transnorm.py for calculation
@@ -1178,18 +1190,8 @@ def makepars(data=None, verbose=2, die=True, fixprops=None):
     # Store information about injecting populations -- needs to be here since relies on other calculations
     pars['injects'] = array([pop in [pop1 for (pop1,pop2) in pars['actsinj'].keys()] for pop in pars['popkeys']])
     
-
     return pars
 
-
-def togglefixprops(pars=None, fix=None):
-    ''' Tiny little method to fix the date for proptx and propsupp '''
-    if fix is None: fix = True # By default, do fix
-    if fix:  endyear = pars['numtx'].t['tot'][-1]
-    else:    endyear = 2100
-    pars['fixproptx'].t   = endyear
-    pars['fixpropsupp'].t = endyear # Doesn't make sense to assume proportion on treatment without assuming proportion suppressed....also, crashes otherwise :)
-    return pars
 
 
 def makesimpars(pars, name=None, keys=None, start=None, end=None, dt=None, tvec=None, settings=None, smoothness=None, asarray=True, sample=None, tosample=None, randseed=None, verbose=2):
@@ -1226,7 +1228,7 @@ def makesimpars(pars, name=None, keys=None, start=None, end=None, dt=None, tvec=
                 simpars[key] = pars[key].interp(tvec=simpars['tvec'], dt=dt, smoothness=smoothness, asarray=asarray, sample=thissample, randseed=randseed)
             except OptimaException as E: 
                 errormsg = 'Could not figure out how to interpolate parameter "%s"' % key
-                errormsg += 'Error: "%s"' % E.__repr__()
+                errormsg += 'Error: "%s"' % repr(E)
                 raise OptimaException(errormsg)
 
 

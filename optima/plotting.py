@@ -11,7 +11,7 @@ plotting to this file.
 Version: 2017jun03
 '''
 
-from optima import OptimaException, Resultset, Multiresultset, ICER, odict, printv, gridcolors, vectocolor, alpinecolormap, makefilepath, sigfig, dcp, findinds, promotetolist, saveobj, promotetoodict, promotetoarray, boxoff, getvalidinds
+from optima import OptimaException, Resultset, Multiresultset, ICER, odict, printv, gridcolors, vectocolor, alpinecolormap, makefilepath, sigfig, dcp, findinds, findnearest, promotetolist, saveobj, promotetoodict, promotetoarray, boxoff, getvalidinds
 from numpy import array, ndim, maximum, arange, zeros, mean, shape, isnan, linspace, minimum # Numeric functions
 from pylab import gcf, get_fignums, close, ion, ioff, isinteractive, figure # Plotting functions
 from matplotlib.backends.backend_agg import new_figure_manager_given_figure as nfmgf # Warning -- assumes user has agg on their system, but should be ok. Use agg since doesn't require an X server
@@ -40,8 +40,8 @@ interactiveposition = [0.15,0.1,0.55,0.75] # Use slightly larger margnis for int
 
 def getdefaultplots(ismulti='both'):
     ''' Since these can get overwritten otherwise '''
-    defaultplots = ['cascadebars', 'budgets', 'numplhiv-stacked', 'numinci-stacked', 'numdeath-stacked', 'numtreat-stacked', 'numnewdiag-stacked', 'prev-population'] # Default epidemiological plots
-    defaultmultiplots = ['budgets', 'numplhiv-total', 'numinci-total', 'numdeath-total', 'numtreat-total', 'numnewdiag-total', 'prev-population'] # Default epidemiological plots
+    defaultplots = ['cascadebars', 'budgets', 'tvbudget', 'numplhiv-stacked', 'numinci-stacked', 'numdeath-stacked', 'numtreat-stacked', 'numnewdiag-stacked', 'prev-population'] # Default epidemiological plots
+    defaultmultiplots = ['budgets', 'tvbudget', 'numplhiv-total', 'numinci-total', 'numdeath-total', 'numtreat-total', 'numnewdiag-total', 'prev-population'] # Default epidemiological plots
     if ismulti==False:  return defaultplots
     elif ismulti==True: return defaultmultiplots
     else:               return defaultplots,defaultmultiplots
@@ -102,7 +102,7 @@ def setylim(data=None, ax=None):
     return lowerlim,upperlim
 
 
-def getplotselections(results, advanced=False, excludedalys=True):
+def getplotselections(results, advanced=False):
     ''' 
     From the inputted results structure, figure out what the available kinds of plots are. List results-specific
     plot types first (e.g., allocations), followed by the standard epi plots, and finally (if available) other
@@ -118,9 +118,6 @@ def getplotselections(results, advanced=False, excludedalys=True):
         errormsg = 'Results input to plotepi() must be either Resultset or Multiresultset, not "%s".' % type(results)
         raise OptimaException(errormsg)
     
-    # Default is to exclude DALYs from results. Note, we do it this way instead of making DALYs a non-main result because this will be easier to revert and will not affect back-end users so much
-    if excludedalys: excludelist = ['numdaly'] 
-
     ## Set up output structure
     plotselections = dict()
     plotselections['keys'] = list()
@@ -141,6 +138,11 @@ def getplotselections(results, advanced=False, excludedalys=True):
                 plotselections['keys'].append(bckey) # e.g. 'budget'
                 plotselections['names'].append(bclabel) # e.g. 'Budget allocation'
     
+    ## Add time-varying budget results
+    if hasattr(results, 'timevarying') and results.timevarying is not None:
+        plotselections['keys'].append('tvbudget') # WARNING, maybe more standard to do append()...
+        plotselections['names'].append('Budget (time-varying)')
+        
     ## Cascade plot is always available, since epi is always available
     plotselections['keys'].append('cascade')
     plotselections['names'].append('Care cascade')
@@ -161,8 +163,8 @@ def getplotselections(results, advanced=False, excludedalys=True):
     plotepikeys = list()
     plotepinames = list()
     
-    epikeys = [k for k in results.main.keys() if k not in excludelist] # e.g. 'prev'
-    epinames = [result.name for rk,result in results.main.iteritems() if rk not in excludelist]
+    epikeys = results.main.keys() # e.g. 'prev'
+    epinames = [result.name for result in results.main.values()]
     
     if advanced: # Loop has to be written this way so order is correct
         for key in epikeys: # e.g. 'prev'
@@ -214,72 +216,51 @@ def makeplots(results=None, toplot=None, die=False, verbose=2, plotstartyear=Non
     ## Add improvement plot
     if 'improvement' in toplot:
         toplot.remove('improvement') # Because everything else is passed to plotepi()
-        try: 
-            if hasattr(results, 'improvement') and results.improvement is not None: # WARNING, duplicated from getplotselections()
-                allplots['improvement'] = plotimprovement(results, die=die, fig=fig, **kwargs)
-        except OptimaException as E: 
-            if die: raise E
-            else: printv('Could not plot improvement: "%s"' % E.__repr__(), 1, verbose)
+        if hasattr(results, 'improvement') and results.improvement is not None: # WARNING, duplicated from getplotselections()
+            allplots['improvement'] = plotimprovement(results, die=die, fig=fig, **kwargs)
     
     ## Add budget plot
     if 'budgets' in toplot:
         toplot.remove('budgets') # Because everything else is passed to plotepi()
-        try: 
-            if hasattr(results, 'budgets') and results.budgets: # WARNING, duplicated from getplotselections()
-                budgetplots = plotbudget(results, die=die, fig=fig, **kwargs)
-                allplots.update(budgetplots)
-        except OptimaException as E: 
-            if die: raise E
-            else: printv('Could not plot budgets: "%s"' % (E.__repr__()), 1, verbose)
+        if hasattr(results, 'budgets') and results.budgets: # WARNING, duplicated from getplotselections()
+            budgetplots = plotbudget(results, die=die, fig=fig, **kwargs)
+            allplots.update(budgetplots)
+    
+    ## Add time-varying budget plot
+    if 'tvbudget' in toplot:
+        toplot.remove('tvbudget') # Because everything else is passed to plotepi()
+        if hasattr(results, 'timevarying') and results.timevarying: # WARNING, duplicated from getplotselections()
+            tvbudgetplots = plottvbudget(results, die=die, fig=fig, **kwargs)
+            allplots.update(tvbudgetplots)
     
     ## Add coverage plot(s)
     if 'coverage' in toplot:
         toplot.remove('coverage') # Because everything else is passed to plotepi()
-        try: 
-            if hasattr(results, 'coverages') and results.coverages: # WARNING, duplicated from getplotselections()
-                coverageplots = plotcoverage(results, die=die, fig=fig, **kwargs)
-                allplots.update(coverageplots)
-        except OptimaException as E: 
-            if die: raise E
-            else: printv('Could not plot coverages: "%s"' % (E.__repr__()), 1, verbose)
+        if hasattr(results, 'coverages') and results.coverages: # WARNING, duplicated from getplotselections()
+            coverageplots = plotcoverage(results, die=die, fig=fig, **kwargs)
+            allplots.update(coverageplots)
     
     ## Add cascade plot(s)
     if 'cascade' in toplot:
         toplot.remove('cascade') # Because everything else is passed to plotepi()
-        try: 
-            cascadeplots = plotcascade(results, die=die, plotstartyear=plotstartyear, plotendyear=plotendyear, fig=fig, **kwargs)
-            allplots.update(cascadeplots)
-        except OptimaException as E: 
-            if die: raise E
-            else: printv('Could not plot cascade: "%s"' % E.__repr__(), 1, verbose)
+        cascadeplots = plotcascade(results, die=die, plotstartyear=plotstartyear, plotendyear=plotendyear, fig=fig, **kwargs)
+        allplots.update(cascadeplots)
     
     ## Add cascade plot(s) with bars
     if 'cascadebars' in toplot:
         toplot.remove('cascadebars') # Because everything else is passed to plotepi()
-        try: 
-            cascadebarplots = plotcascade(results, die=die, plotstartyear=plotstartyear, plotendyear=plotendyear, fig=fig, asbars=True, **kwargs)
-            allplots.update(cascadebarplots)
-        except OptimaException as E: 
-            if die: raise E
-            else: printv('Could not plot cascade bars: "%s"' % E.__repr__(), 1, verbose)
+        cascadebarplots = plotcascade(results, die=die, plotstartyear=plotstartyear, plotendyear=plotendyear, fig=fig, asbars=True, **kwargs)
+        allplots.update(cascadebarplots)
     
     ## Add deaths by CD4 plot -- WARNING, only available if results includes raw
     if 'deathbycd4' in toplot:
         toplot.remove('deathbycd4') # Because everything else is passed to plotepi()
-        try: 
-            allplots['deathbycd4'] = plotbycd4(results, whattoplot='death', die=die, fig=fig, **kwargs)
-        except OptimaException as E: 
-            if die: raise E
-            else: printv('Could not plot deaths by CD4: "%s"' % E.__repr__(), 1, verbose)
+        allplots['deathbycd4'] = plotbycd4(results, whattoplot='death', die=die, fig=fig, **kwargs)
     
     ## Add PLHIV by CD4 plot -- WARNING, only available if results includes raw
     if 'plhivbycd4' in toplot:
         toplot.remove('plhivbycd4') # Because everything else is passed to plotepi()
-        try: 
-            allplots['plhivbycd4'] = plotbycd4(results, whattoplot='people', die=die, fig=fig, **kwargs)
-        except OptimaException as E: 
-            if die: raise E
-            else: printv('Could not plot PLHIV by CD4: "%s"' % E.__repr__(), 1, verbose)
+        allplots['plhivbycd4'] = plotbycd4(results, whattoplot='people', die=die, fig=fig, **kwargs)
     
     
     ## Add epi plots -- WARNING, I hope this preserves the order! ...It should...
@@ -395,15 +376,9 @@ def plotepi(results, toplot=None, uncertainty=True, die=True, showdata=True, ver
             if istotal or isstacked: datattrtype = 'tot' # For pulling out total data
             else: datattrtype = 'pops'
             
-            if ismultisim:  # e.g. scenario
+            if ismultisim:  # e.g. scenario, no uncertainty
                 best = list() # Initialize as empty list for storing results sets
-                for s in range(nsims):
-                    if getattr(results.main[datatype], attrtype)[s].shape[0] == 3: # This means it has uncertainty estimates - WARNING, not robust!!
-                        bind = 0 # Index of the best estimates -- we will only plot the best estimates for multisims with uncertainty
-                        thisbest = getattr(results.main[datatype], attrtype)[s][bind]
-                    else:
-                        thisbest = getattr(results.main[datatype], attrtype)[s]
-                    best.append(thisbest)
+                for s in range(nsims): best.append(getattr(results.main[datatype], attrtype)[s])
                 lower = None
                 upper = None
                 databest = None
@@ -425,7 +400,7 @@ def plotepi(results, toplot=None, uncertainty=True, die=True, showdata=True, ver
                     databest = None
                     datalow = None
                     datahigh = None
-            if ndim(best)==1: # Wrap so right number of dimensions -- happens if not by population
+            if not ismultisim and ndim(best)==1: # Wrap so right number of dimensions -- happens if not by population
                 best  = array([best])
                 lower = array([lower])
                 upper = array([upper])
@@ -494,15 +469,19 @@ def plotepi(results, toplot=None, uncertainty=True, die=True, showdata=True, ver
                 # e.g. scenario, prev-tot; since stacked plots aren't possible with multiple lines, just plot the same in this case
                 if ismultisim and (istotal or isstacked):
                     for l in range(nlinesperplot):
-                        ydata = factor*best[nlinesperplot-1-l]
+                        ind = nlinesperplot-1-l
+                        thisxdata = results.setup[ind]['tvec']
+                        ydata = factor*best[ind]
                         allydata.append(ydata)
-                        ax.plot(xdata, ydata, lw=lw, c=colors[nlinesperplot-1-l], zorder=linezorder, label=labels[l]) # Index is each different e.g. scenario
+                        ax.plot(thisxdata, ydata, lw=lw, c=colors[ind], zorder=linezorder, label=labels[l]) # Index is each different e.g. scenario
                 
                 if ismultisim and isperpop:
                     for l in range(nlinesperplot):
-                        ydata = factor*best[nlinesperplot-1-l][i]
+                        ind = nlinesperplot-1-l
+                        thisxdata = results.setup[ind]['tvec']
+                        ydata = factor*best[ind][i]
                         allydata.append(ydata)
-                        ax.plot(xdata, ydata, lw=lw, c=colors[nlinesperplot-1-l], zorder=linezorder, label=labels[l]) # Indices are different populations (i), then different e..g scenarios (l)
+                        ax.plot(thisxdata, ydata, lw=lw, c=colors[ind], zorder=linezorder, label=labels[l]) # Indices are different populations (i), then different e..g scenarios (l)
 
 
 
@@ -631,21 +610,22 @@ def plotimprovement(results=None, figsize=globalfigsize, lw=2, titlesize=globalt
 
 
 ##################################################################
-## Coverage plot
+## Budget plot
 ##################################################################
     
     
 def plotbudget(multires=None, die=True, figsize=globalfigsize, legendsize=globallegendsize, position=None,
                usepie=False, verbose=2, interactive=False, fig=None, **kwargs):
     ''' 
-    Plot multiple allocations on bar charts -- intended for scenarios and optimizations.
+    Plot multiple allocations on bar or pie charts -- intended for scenarios and optimizations.
 
     Results object must be of Multiresultset type.
     
-    Version: 2017jun04
+    Version: 2017oct29
     '''
     
     # Preliminaries: process inputs and extract needed data
+    if type(multires)==Resultset: multires = Multiresultset([multires]) # Force it to be a multiresultset
     budgets = dcp(multires.budgets)
     for b,budget in enumerate(budgets.values()): # Loop over all budgets
         for p,prog in enumerate(budget.values()): # Loop over all programs in the budget
@@ -670,16 +650,16 @@ def plotbudget(multires=None, die=True, figsize=globalfigsize, legendsize=global
     for k,key in enumerate(allprogkeys):
         colordict[key] = allprogcolors[k]
     
+    # Handle plotting
     budgetplots = odict()
+    fig, naxes = makefigure(figsize=figsize, interactive=interactive, fig=fig)
+    ax = fig.add_subplot(naxes, 1, naxes)
     
     # Make pie plots
     if usepie:
         for i in range(nallocs):
-            fig, naxes = makefigure(figsize=figsize, interactive=interactive, fig=fig)
-            ax = fig.add_subplot(naxes, 1, naxes)
-            setposition(ax, position, interactive)
-            
             # Make a pie
+            setposition(ax, position, interactive)
             ydata = budgets[i][:]
             piecolors = [colordict[key] for key in budgets[i].keys()]
             ax.pie(ydata, colors=piecolors)
@@ -694,8 +674,6 @@ def plotbudget(multires=None, die=True, figsize=globalfigsize, legendsize=global
       
     # Make bar plots
     else:
-        fig, naxes = makefigure(figsize=figsize, interactive=interactive, fig=fig)
-        ax = fig.add_subplot(naxes, 1, naxes)
         if position == globalposition: # If defaults, reset
             position = dcp(position)
             position[0] = 0.25 # More room on left side for y-tick labels
@@ -707,7 +685,7 @@ def plotbudget(multires=None, die=True, figsize=globalfigsize, legendsize=global
             for p in range(nprogslist[b]-1,-1,-1): # Loop in reverse order over programs
                 progkey = budget.keys()[p]
                 ydata = budget[p]
-                xdata = b+0.6 # 0.6 is 1 munus 0.4, which is half the bar width
+                xdata = b+0.6 # 0.6 is 1 minus 0.4, which is half the bar width
                 bottomdata = sum(budget[:p])
                 label = None
                 if progkey in allprogkeys:
@@ -733,6 +711,63 @@ def plotbudget(multires=None, die=True, figsize=globalfigsize, legendsize=global
     return budgetplots
 
 
+
+def plottvbudget(multires=None, die=True, figsize=globalfigsize, legendsize=globallegendsize, position=None,
+               usepie=False, verbose=2, interactive=False, fig=None, **kwargs):
+    ''' 
+    Plot time-varying budget.
+    
+    Version: 2017oct29
+    '''
+    
+    # Preliminaries: process inputs and extract needed data
+    if type(multires)==Resultset: multires = Multiresultset([multires]) # Force it to be a multiresultset
+    tv = multires.timevarying[-1] # Have to choose one -- assume it will be the last one
+    tvyears  = tv['tvyears']
+    progkeys = tv['tvbudgets'].keys()
+    tvdata   = tv['tvbudgets'][:]
+    nprogs = len(progkeys)
+    allprogcolors = gridcolors(nprogs, hueshift=proghueshift)
+    colordict = odict()
+    for k,key in enumerate(progkeys):
+        colordict[key] = allprogcolors[k]
+    
+    # Handle plotting
+    tvbudgetplots = odict()
+    fig, naxes = makefigure(figsize=figsize, interactive=interactive, fig=fig)
+    ax = fig.add_subplot(naxes, 1, naxes)
+    setposition(ax, position, interactive)
+    
+    # Need to build up piece by piece since need to loop over budgets and then budgets
+    legendkeys = []
+    for y,year in enumerate(tvyears):
+        for p in range(nprogs-1,-1,-1): # Loop in reverse order over programs
+            progkey = progkeys[p]
+            ydata = tvdata[p,y]
+            xdata = year - 0.4
+            bottomdata = sum(tvdata[:p,y])
+            label = None
+            if progkey not in legendkeys:
+                label = progkey # Only add legend if not already added
+                legendkeys.append(progkey) # Add label so it doesn't get added to legend multiple times
+            ax.bar(xdata, ydata, bottom=bottomdata, color=colordict[progkey], linewidth=0, label=label)
+
+    # Set up legend
+    legendsettings = {'loc':'upper left', 'bbox_to_anchor':(1.07, 1), 'fontsize':legendsize, 'title':'', 'frameon':False}
+    handles, legendlabels = ax.get_legend_handles_labels()
+    ax.legend(handles, legendlabels, **legendsettings)
+
+    # Set up other things
+    ax.set_ylabel('Spending')
+#    ax.set_xticks([1,nyears])
+#    ax.set_xticklabels(['%i'%i for i in tvyears[[0,-1]]])
+    ax.set_xlim(tvyears[0]-1,tvyears[-1]+1) # 0.6 is 1 minus 0.4, which is half the bar width
+    ax.set_title('Time-varying budget')
+    
+    SIticks(ax=ax, axis='y')
+    tvbudgetplots['tvbudget'] = fig
+    
+    return tvbudgetplots
 
 
 
@@ -961,6 +996,7 @@ def plotcascade(results=None, aspercentage=False, cascadecolors=None, figsize=gl
             dy = -1
             lineargs = {'c':targetcolor, 'linewidth':2}
             txtargs = {'fontsize':legendsize, 'color':targetcolor, 'horizontalalignment':'center'}
+            print 'WARNING FIX HARD CODING'
             dxind = 1
             txind = 4 if allbars else 2
             supind = 5 if allbars else 5
@@ -1284,7 +1320,7 @@ def plotcostcov(program=None, year=None, parset=None, results=None, plotoptions=
         y_u = program.getcoverage(x=xlinedata, t=year, parset=parset, results=results, total=True, proportion=False, toplot=True, sample='u')
     except Exception as E:
         y_l,y_m,y_u = None,None,None
-        print('Warning, could not get program coverage: %s' % E.__repr__())
+        print('Warning, could not get program coverage: %s' % repr(E))
     plotdata['ylinedata_l'] = y_l
     plotdata['ylinedata_m'] = y_m
     plotdata['ylinedata_u'] = y_u
@@ -1447,8 +1483,11 @@ def sanitizeresults(results):
     return output
 
 
-def SItickformatter(x, pos):  # formatter function takes tick label and tick position
+def SItickformatter(x, pos, *args, **kwargs):  # formatter function takes tick label and tick position
     ''' Formats axis ticks so that e.g. 34,243 becomes 34K '''
+#    from pylab import gca, log10, diff
+#    ylims = gca().get_ylim() # To change it for zooming
+#    extrasigfigs = round(log10(max(ylims)/diff(ylims))) # For future -- this works, kind of, but is applied to the wrong plots!
     return sigfig(x, sigfigs=2, SI=True)
 
 
@@ -1483,7 +1522,7 @@ def commaticks(fig=None, ax=None, axis='y'):
 def getplotinds(plotstartyear=None, plotendyear=None, tvec=None, die=False, verbose=2):
     ''' Little function to convert the requested start and end years to indices '''
     if plotstartyear is not None:
-        try: startind = findinds(tvec,plotstartyear)[0] # Get the index of the year to start the plots
+        try: startind = findnearest(tvec,plotstartyear) # Get the index of the year to start the plots
         except: 
             errormsg = 'Unable to find year %s in resultset; falling back on %s'% (plotstartyear, tvec[0])
             if die: raise OptimaException(errormsg)
@@ -1493,7 +1532,7 @@ def getplotinds(plotstartyear=None, plotendyear=None, tvec=None, die=False, verb
     else: startind = 0
 
     if plotendyear is not None:
-        try: endind = findinds(tvec,plotendyear)[0] # Get the index of the year to end the plots
+        try: endind = findnearest(tvec,plotendyear) # Get the index of the year to end the plots
         except: 
             errormsg = 'Unable to find year %s in resultset; falling back on %s'% (plotendyear, tvec[-1])
             if die: raise OptimaException(errormsg)

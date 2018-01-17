@@ -1,7 +1,7 @@
 from optima import OptimaException, Settings, Parameterset, Programset, Resultset, BOC, Parscen, Budgetscen, Coveragescen, Progscen, Optim, Link # Import classes
 from optima import odict, getdate, today, uuid, dcp, makefilepath, objrepr, printv, isnumber, saveobj, promotetolist, promotetoodict, sigfig # Import utilities
 from optima import loadspreadsheet, model, gitinfo, defaultscenarios, makesimpars, makespreadsheet
-from optima import defaultobjectives, runmodel, autofit, runscenarios, optimize, multioptimize, outcomecalc, icers # Import functions
+from optima import defaultobjectives, autofit, runscenarios, optimize, multioptimize, tvoptimize, outcomecalc, icers # Import functions
 from optima import version # Get current version
 from numpy import argmin, argsort
 from numpy.random import seed, randint
@@ -35,7 +35,7 @@ class Project(object):
         3. copy -- copy a structure in the odict
         4. rename -- rename a structure in the odict
 
-    Version: 2017jun03
+    Version: 2017oct30
     """
 
 
@@ -194,7 +194,7 @@ class Project(object):
             raise OptimaException('No data in project "%s"!' % self.name)
         if overwrite or name not in self.parsets:
             parset = Parameterset(name=name, project=self)
-            parset.makepars(self.data, verbose=self.settings.verbose) # Create parameters
+            parset.makepars(self.data, verbose=self.settings.verbose, start=self.settings.start, end=self.settings.end) # Create parameters
             self.addparset(name=name, parset=parset, overwrite=overwrite) # Store parameters
             self.modified = today()
         return None
@@ -502,6 +502,16 @@ class Project(object):
         try:    return self.progsets[key]
         except: return printv('Warning, program set not found!', 1, verbose) # Returns None
     
+    def scen(self, key=-1, verbose=2):
+        ''' Shortcut for getting the latest scenario, i.e. self.scens[-1]'''
+        try:    return self.scens[key]
+        except: return printv('Warning, scenario not found!', 1, verbose) # Returns None
+
+    def optim(self, key=-1, verbose=2):
+        ''' Shortcut for getting the latest optimization, i.e. self.optims[-1]'''
+        try:    return self.optims[key]
+        except: return printv('Warning, optimization not found!', 1, verbose) # Returns None
+
     def result(self, key=-1, verbose=2):
         ''' Shortcut for getting the latest active results, i.e. self.results[-1]'''
         try:    return self.results[key]
@@ -513,26 +523,26 @@ class Project(object):
     #######################################################################################################
 
 
-    def runsim(self, name=None, pars=None, simpars=None, start=None, end=None, dt=None, addresult=True, 
-               die=True, debug=False, overwrite=True, n=1, sample=None, tosample=None, randseed=None,
-               verbose=None, keepraw=False, resultname=None, progsetname=None, budget=None, coverage=None,
-               budgetyears=None, data=None, **kwargs):
+    def runsim(self, name=None, pars=None, simpars=None, start=None, end=None, dt=None, tvec=None, 
+               budget=None, coverage=None, budgetyears=None, data=None, n=1, sample=None, tosample=None, randseed=None,
+               addresult=True, overwrite=True, keepraw=False, doround=True, die=True, debug=False, verbose=None, 
+               parsetname=None, progsetname=None, resultname=None, label=None, **kwargs):
         ''' 
-        This function runs a single simulation, or multiple simulations if n>1.
+        This function runs a single simulation, or multiple simulations if n>1. This is the
+        core function for actually running the model!!!!!!
         
-        Version: 2016nov07
+        Version: 2018jan13
         '''
-        if start is None: start=self.settings.start # Specify the start year
-        if end is None: end=self.settings.end # Specify the end year
-        if dt is None: dt=self.settings.dt # Specify the timestep
+        if dt      is None: dt      = self.settings.dt # Specify the timestep
         if verbose is None: verbose = self.settings.verbose
         
         # Extract parameters either from a parset stored in project or from input
-        if name is None:
+        if parsetname is None:
+            if name is not None: parsetname = name # This is mostly for backwards compatibility -- allow the first argument to set the parset
+            else:                parsetname = -1 # Set default name
             if pars is None:
-                name = -1 # Set default name
-                pars = self.parsets[name].pars
-                resultname = 'parset-'+self.parsets[name].name
+                pars = self.parsets[parsetname].pars
+                resultname = 'parset-'+self.parsets[parsetname].name
             else:
                 printv('Model was given a pardict and a parsetname, defaulting to use pardict input', 3, self.settings.verbose)
                 if resultname is None: resultname = 'pardict'
@@ -541,35 +551,43 @@ class Project(object):
                 printv('Model was given a pardict and a parsetname, defaulting to use pardict input', 3, self.settings.verbose)
                 if resultname is None: resultname = 'pardict'
             else:
-                if resultname is None: resultname = 'parset-'+self.parsets[name].name
-                pars = self.parsets[name].pars
+                if resultname is None: resultname = 'parset-'+self.parsets[parsetname].name
+                pars = self.parsets[parsetname].pars
+        if label is None: # Define the label
+            if name is None: label = '%s' % parsetname
+            else:            label = name
             
         # Get the parameters sorted
         if simpars is None: # Optionally run with a precreated simpars instead
             simparslist = [] # Needs to be a list
             if n>1 and sample is None: sample = 'new' # No point drawing more than one sample unless you're going to use uncertainty
             if randseed is not None: seed(randseed) # Reset the random seed, if specified
+            if start is None: 
+                try:    start = self.parsets[parsetname].start # Try to get start from parameter set, but don't worry if it doesn't exist
+                except: start = self.settings.start # Else, specify the start year from the project
+                try:    end   = self.parsets[parsetname].end # Ditto
+                except: end   = self.settings.end # Ditto
             for i in range(n):
                 maxint = 2**31-1 # See https://en.wikipedia.org/wiki/2147483647_(number)
                 sampleseed = randint(0,maxint) 
-                simparslist.append(makesimpars(pars, start=start, end=end, dt=dt, settings=self.settings, name=name, sample=sample, tosample=tosample, randseed=sampleseed))
+                simparslist.append(makesimpars(pars, start=start, end=end, dt=dt, tvec=tvec, settings=self.settings, name=parsetname, sample=sample, tosample=tosample, randseed=sampleseed))
         else:
             simparslist = promotetolist(simpars)
 
-        # Run the model! -- WARNING, the logic of this could be cleaned up a lot!
+        # Run the model!
         rawlist = []
         for ind,simpars in enumerate(simparslist):
             raw = model(simpars, self.settings, die=die, debug=debug, verbose=verbose, label=self.name, **kwargs) # ACTUALLY RUN THE MODEL
             rawlist.append(raw)
 
-        # Store results -- WARNING, is this correct in all cases?
-        results = Resultset(name=resultname, pars=pars, parsetname=name, progsetname=progsetname, raw=rawlist, simpars=simparslist, budget=budget, coverage=coverage, budgetyears=budgetyears, project=self, keepraw=keepraw, data=data, verbose=verbose) # Create structure for storing results
+        # Store results if required
+        results = Resultset(name=resultname, pars=pars, parsetname=parsetname, progsetname=progsetname, raw=rawlist, simpars=simparslist, budget=budget, coverage=coverage, budgetyears=budgetyears, project=self, keepraw=keepraw, doround=doround, data=data, verbose=verbose) # Create structure for storing results
         if addresult:
             keyname = self.addresult(result=results, overwrite=overwrite)
-            if name is not None:
-                self.parsets[name].resultsref = keyname # If linked to a parset, store the results
-
-        self.modified = today()
+            if parsetname is not None:
+                self.parsets[parsetname].resultsref = keyname # If linked to a parset, store the results
+            self.modified = today() # Only change the modified date if the results are stored
+        
         return results
 
 
@@ -638,10 +656,7 @@ class Project(object):
             except: raise OptimaException("No program set entered, and there are none stored in the project") 
         coverage = self.progsets[progsetname].getprogcoverage(budget=budget, t=budgetyears, parset=self.parsets[parsetname])
         progpars = self.progsets[progsetname].getpars(coverage=coverage,t=budgetyears, parset=self.parsets[parsetname])
-        results = runmodel(pars=progpars, project=self, parsetname=parsetname, progsetname=progsetname, budget=budget, budgetyears=budgetyears, label=self.name+'-runbudget') # WARNING, this should probably use runsim, but then would need to make simpars...
-        results.name = name
-        self.addresult(results)
-        self.modified = today()
+        results = self.runsim(pars=progpars, parsetname=parsetname, progsetname=progsetname, budget=budget, budgetyears=budgetyears, label=self.name+'-runbudget')
         return results
     
     
@@ -709,11 +724,13 @@ class Project(object):
 
     def optimize(self, name=None, parsetname=None, progsetname=None, objectives=None, constraints=None, maxiters=None, maxtime=None, 
                  verbose=2, stoppingfunc=None, die=False, origbudget=None, randseed=None, mc=None, optim=None, optimname=None, multi=False, 
-                 nchains=None, nblocks=None, blockiters=None, batch=None, **kwargs):
+                 nchains=None, nblocks=None, blockiters=None, batch=None, timevarying=None, tvsettings=None, tvconstrain=None, **kwargs):
         '''
         Function to minimize outcomes or money.
         
         Usage examples:
+            P = op.demo(0); P.parset().fixprops(False) # Initialize project so ART has an effect
+            
             P.optimize() # Use defaults
             P.optimize(maxiters=5, mc=0) # Do a very simple run
             P.optimize(parsetname=0, progsetname=0) # Use first parset and progset
@@ -721,6 +738,10 @@ class Project(object):
             P.optimize(optimname=-1) # Same as previous
             P.optimize(multi=True) # Do a multi-chain optimization
             P.optimize(multi=True, nchains=8, nblocks=10, blockiters=50) # Do a very large multi-chain optimization
+            P.optimize(timevarying=True, mc=0, maxiters=30) # Do a short time-varying optimization
+            P.optimize(timevarying=True, mc=0, maxiters=200, tvconstrain=False, randseed=1) # Do a time-varying optimization, allowing total annual budget to vary
+            
+            pygui(P) # To plot results
         '''
         
         # Check inputs
@@ -731,16 +752,24 @@ class Project(object):
             if optimname is not None: # Get the optimization by name if supplied
                 optim = self.optims[optimname] 
             else: # If neither an optim nor an optimname is supplied, create one
-                optim = Optim(project=self, name=name, objectives=objectives, constraints=constraints, parsetname=parsetname, progsetname=progsetname)
+                optim = Optim(project=self, name=name, objectives=objectives, constraints=constraints, parsetname=parsetname, progsetname=progsetname, timevarying=timevarying, tvsettings=tvsettings)
+        if objectives  is not None: optim.objectives  = objectives # Update optim structure with inputs
+        if constraints is not None: optim.constraints = constraints
+        if tvsettings  is not None: optim.tvsettings  = tvsettings
+        if timevarying is not None: optim.tvsettings['timevarying'] = timevarying # Set time-varying optimization
+        if tvconstrain is not None: optim.tvsettings['tvconstrain'] = tvconstrain # Set whether programs should be constrained to their time-varying values
         
         # Run the optimization
-        if not multi:
-            multires = optimize(optim=optim, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, 
-                                die=die, origbudget=origbudget, randseed=randseed, mc=mc, **kwargs)
-        else:
+        if optim.tvsettings['timevarying']: # Call time-varying optimization
+            multires = tvoptimize(optim=optim, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, 
+                                     die=die, origbudget=origbudget, randseed=randseed, mc=mc, **kwargs)
+        elif multi: # It's a multi-run optimization
             multires = multioptimize(optim=optim, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, 
                                      die=die, origbudget=origbudget, randseed=randseed, mc=mc, nchains=nchains, nblocks=nblocks, 
-                                     blockiters=blockiters, batch=batch, **kwargs)
+                                     blockiters=blockiters, batch=batch, **kwargs)      
+        else: # Neither special case
+            multires = optimize(optim=optim, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, 
+                                die=die, origbudget=origbudget, randseed=randseed, mc=mc, **kwargs)
         
         # Tidy up
         optim.resultsref = multires.name
@@ -750,12 +779,12 @@ class Project(object):
         return multires
     
     
-    def makescript(self, filename=None, folder=None, spreadsheetpath=None, verbose=2):
+    def export(self, filename=None, folder=None, spreadsheetpath=None, verbose=2):
         '''
         Export a script that, when run, generates this project. Example:
             import optima as op
             P = op.demo(0)
-            P.makescript(filename='demo.py')
+            P.export(filename='demo.py')
         
         If a spreadsheet path isn't supplied, then export the spreadsheet as well.
         '''
@@ -850,6 +879,7 @@ class Project(object):
         f.write( output )
         f.close()
         printv('Saved project %s to script file %s' % (self.name, fullpath), 2, verbose)
+        return None
 
 
     #######################################################################################################

@@ -109,7 +109,7 @@ def defaultrepr(obj, maxlen=None):
     return output
 
 
-def drprint(obj, maxlen=None):
+def printdr(obj, maxlen=None):
     ''' Shortcut for printing the default repr for an object '''
     print(defaultrepr(obj, maxlen=maxlen))
     return None
@@ -302,6 +302,45 @@ def printdata(data, name='Variable', depth=1, maxlen=40, indent='', level=0, sho
         print('\n')
     return None
 
+
+def printvars(localvars=None, varlist=None, label=None, divider=True, spaces=1, color=None):
+    '''
+    Print out a list of variables. Note that the first argument must be locals().
+    
+    Arguments:
+        localvars = function must be called with locals() as first argument
+        varlist = the list of variables to print out
+        label = optional label to print out, so you know where the variables came from
+        divider = whether or not to offset the printout with a spacer (i.e. ------)
+        spaces = how many spaces to use between variables
+        color = optionally label the variable names in color so they're easier to see
+    
+    Simple usage example:
+        a = range(5); b = 'example'; printvars(locals(), ['a','b'], color='blue')
+    
+    Another useful usage case is to print out the kwargs for a function:
+        printvars(locals(), kwargs.keys())
+        
+    Version: 2017oct28
+    '''
+    
+    varlist = promotetolist(varlist) # Make sure it's actually a list
+    dividerstr = '-'*40
+    
+    if label:  print('Variables for %s:' % label)
+    if divider: print(dividerstr)
+    for varnum,varname in enumerate(varlist):
+        controlstr = '%i. "%s": ' % (varnum, varname) # Basis for the control string -- variable number and name
+        if color: controlstr = colorize(color, output=True) + controlstr + colorize('reset', output=True) # Optionally add color
+        if spaces>1: controlstr += '\n' # Add a newline if the variables are going to be on different lines
+        try:    controlstr += '%s' % localvars[varname] # The variable to be printed
+        except: controlstr += 'WARNING, could not be printed' # In case something goes wrong
+        controlstr += '\n' * spaces # The number of spaces to add between variables
+        print(controlstr), # Print it out
+    if divider: print(dividerstr) # If necessary, print the divider again
+    return None
+
+
 def today():
     ''' Get the current time, in UTC time '''
     import datetime # today = datetime.today
@@ -421,7 +460,76 @@ def printtologfile(message=None, filename=None):
     
     return None
     
+
+def colorize(color=None, string=None, output=False):
+    '''
+    Colorize output text. Arguments:
+        color = the color you want (use 'bg' with background colors, e.g. 'bgblue')
+        string = the text to be colored
+        output = whether to return the modified version of the string
     
+    Examples:
+        colorize('green', 'hi') # Simple example
+        colorize(['yellow', 'bgblack']); print('Hello world'); print('Goodbye world'); colorize() # Colorize all output in between
+        bluearray = colorize(color='blue', string=str(range(5)), output=True); print("c'est bleu: " + bluearray)
+        colorize('magenta') # Now type in magenta for a while
+        colorize() # Stop typing in magenta
+    
+    To get available colors, type colorize('help').
+    
+    Note: although implemented as a class (to allow the "with" syntax),
+    this actually functions more like a function.
+    
+    Version: 2017oct27
+    '''
+    
+    # Define ANSI colors
+    ansicolors = odict([
+                  ('black', '30'),
+                  ('red', '31'),
+                  ('green', '32'),
+                  ('yellow', '33'),
+                  ('blue', '34'),
+                  ('magenta', '35'),
+                  ('cyan', '36'),
+                  ('gray', '37'),
+                  ('bgblack', '40'),
+                  ('bgred', '41'),
+                  ('bggreen', '42'),
+                  ('bgyellow', '43'),
+                  ('bgblue', '44'),
+                  ('bgmagenta', '45'),
+                  ('bgcyan', '46'),
+                  ('bggray', '47'),
+                  ('reset', '0'),
+                  ])
+    for key,val in ansicolors.items(): ansicolors[key] = '\033['+val+'m'
+    
+    # Determine what color to use
+    if color is None: color = 'reset' # By default, reset
+    colorlist = promotetolist(color) # Make sure it's a list
+    for color in colorlist:
+        if color not in ansicolors.keys(): 
+            if color!='help': print('Color "%s" is not available.' % color)
+            print('Available colors are:  \n%s' % '\n  '.join(ansicolors.keys()))
+            return None # Don't proceed if no color supplied
+    ansicolor = ''
+    for color in colorlist:
+        ansicolor += ansicolors[color]
+    
+    # Modify string, if supplied
+    if string is None: ansistring = ansicolor # Just return the color
+    else:              ansistring = ansicolor + str(string) + ansicolors['reset'] # Add to start and end of the string
+
+    if output: 
+        return ansistring # Return the modified string
+    else:
+        print(ansistring) # Content, so print with newline
+        return None
+    
+
+
+        
     
 ##############################################################################
 ### TYPE FUNCTIONS
@@ -675,9 +783,12 @@ def findinds(val1, val2=None, eps=1e-6):
     return output
 
 
+
 def findnearest(series=None, value=None):
     '''
-    Return the index of the nearest match in series to value
+    Return the index of the nearest match in series to value -- like findinds, but
+    always returns an object with the same time as value (i.e. findnearest with
+    a number returns a number, findnearest with an array returns an array).
     
     Examples:
         findnearest(rand(10), 0.5) # returns whichever index is closest to 0.5
@@ -690,7 +801,7 @@ def findnearest(series=None, value=None):
     from numpy import argmin
     series = promotetoarray(series)
     if isnumber(value):
-        output = argmin(abs(promotetoarray(series)-value))
+        output = argmin(abs(series-value))
     else:
         output = []
         for val in value: output.append(findnearest(series, val))
@@ -923,16 +1034,12 @@ def toc(start=None, label=None, sigfigs=None, filename=None, output=False):
     else:         base = 'Elapsed time for %s: ' % label
     logmessage = base + '%s s' % sigfig(elapsed, sigfigs=sigfigs)
     
-    # If we passed in a filename, append the message to that file.
-    if filename is not None:
-        printtologfile(logmessage, filename)
-        
-    # Otherwise, print the message.
+    if output:
+        return elapsed
     else:
-        print(logmessage)
-        
-    if output: return elapsed
-    else:      return None
+        if filename is not None: printtologfile(logmessage, filename) # If we passed in a filename, append the message to that file.
+        else: print(logmessage) # Otherwise, print the message.
+        return None
     
 
 
@@ -1312,19 +1419,19 @@ def makenested(nesteddict, keylist,item=None):
     ''' Insert item into nested dictionary, creating keys if required '''
     currentlevel = nesteddict
     for i,key in enumerate(keylist[:-1]):
-    	if not(key in currentlevel):
-    		currentlevel[key] = {}
-    	currentlevel = currentlevel[key]
+        if not(key in currentlevel):
+            currentlevel[key] = {}
+        currentlevel = currentlevel[key]
     currentlevel[keylist[-1]] = item
 
 def iternested(nesteddict,previous = []):
-	output = []
-	for k in nesteddict.items():
-		if isinstance(k[1],dict):
-			output += iternested(k[1],previous+[k[0]]) # Need to add these at the first level
-		else:
-			output.append(previous+[k[0]])
-	return output
+    output = []
+    for k in nesteddict.items():
+        if isinstance(k[1],dict):
+            output += iternested(k[1],previous+[k[0]]) # Need to add these at the first level
+        else:
+            output.append(previous+[k[0]])
+    return output
 
 
 
@@ -1340,15 +1447,17 @@ from copy import deepcopy as dcp
 
 class odict(OrderedDict):
     '''
-    An ordered dictionary, like the OrderedDict class, but supporting list methods like integer referencing, slicing, and appending.
+    An ordered dictionary, like the OrderedDict class, but supporting list methods like integer 
+    referencing, slicing, and appending.
     
-    Version: 2017jun03
+    Version: 2017oct28
     '''
     
     def __init__(self, *args, **kwargs):
         ''' See collections.py '''
         if len(args)==1 and args[0] is None: args = [] # Remove a None argument
         OrderedDict.__init__(self, *args, **kwargs) # Standard init
+        return None
 
     def __slicekey(self, key, slice_end):
         shift = int(slice_end=='stop')
@@ -1356,10 +1465,13 @@ class odict(OrderedDict):
         elif type(key) is str: return self.index(key)+shift # +1 since otherwise confusing with names (CK)
         elif key is None: return (len(self) if shift else 0)
         else: raise Exception('To use a slice, %s must be either int or str (%s)' % (slice_end, key))
+        return None
 
 
-    def __is_odict_iterable(self, v):
-        return type(v)==list or type(v)==type(array([]))
+    def __is_odict_iterable(self, key):
+        ''' Check to see whether the "key" is actually an iterable '''
+        output = type(key)==list or type(key)==type(array([])) # Do *not* include dict, since that would be recursive
+        return output
 
 
     def __getitem__(self, key):
@@ -1369,10 +1481,8 @@ class odict(OrderedDict):
                 output = OrderedDict.__getitem__(self, key)
                 return output
             except Exception as E: # WARNING, should be KeyError, but this can't print newlines!!!
-                if len(self.keys()): 
-                    errormsg = E.__repr__()+'\n'
-                    errormsg += 'odict key "%s" not found; available keys are:\n%s' % (flexstr(key), '\n'.join([flexstr(k) for k in self.keys()]))
-                else: errormsg = 'Key "%s" not found since odict is empty'% key
+                if len(self.keys()): errormsg = '%s\nodict key "%s" not found; available keys are:\n%s' % (repr(E), flexstr(key), '\n'.join([flexstr(k) for k in self.keys()]))
+                else:                errormsg = 'Key "%s" not found since odict is empty'% key
                 raise Exception(errormsg)
         elif isinstance(key, Number): # Convert automatically from float...dangerous?
             thiskey = self.keys()[int(key)]
@@ -1462,8 +1572,7 @@ class odict(OrderedDict):
                 thiskeystr = flexstr(self.keys()[i]) # Grab a str representation of the current key.  
                 thisval = self.values()[i] # Grab the current value.
                                 
-                # If it's another odict, make a call increasing the recurselevel 
-                # and passing the same parameters we received.
+                # If it's another odict, make a call increasing the recurselevel and passing the same parameters we received.
                 if isinstance(thisval, odict):
                     thisvalstr = flexstr(thisval.__repr__(maxlen=maxlen, showmultilines=showmultilines, divider=divider, 
                         dividerthresh=dividerthresh, numindents=numindents, recurselevel=recurselevel+1, sigfigs=sigfigs, numformat=numformat))
@@ -1474,8 +1583,8 @@ class odict(OrderedDict):
                         thisvalstr = sigfig(thisval, sigfigs=sigfigs)
                     else:
                         thisvalstr = str(thisval) # To avoid numpy's stupid 0.4999999999945
-                else: # Otherwise, do the normal __repr__() read.
-                    thisvalstr = thisval.__repr__()
+                else: # Otherwise, do the normal repr() read.
+                    thisvalstr = repr(thisval)
 
                 # Add information to the lists to retrace afterwards.
                 keystrs.append(thiskeystr)
@@ -1557,13 +1666,11 @@ class odict(OrderedDict):
         output = start
         
         for key in self.keys():
-            output += '('+key.__repr__()
+            output += '('+repr(key)
             output += ', '
             child = self.get(key)
-            if isinstance(child, odict):
-                output += child.export(doprint=False) # Handle nested odicts -- WARNING, can't doesn't work for e.g. lists of odicts!
-            else:
-                output += child.__repr__()
+            if isinstance(child, odict): output += child.export(doprint=False) # Handle nested odicts -- WARNING, can't doesn't work for e.g. lists of odicts!
+            else:                        output += repr(child)
             output += '), '
         
         output += end
@@ -1715,7 +1822,7 @@ class odict(OrderedDict):
             if not isiterable(sortby): raise Exception('Please provide a list to determine the sort order.')
             if all([isinstance(x,basestring) for x in sortby]): # Going to sort by keys
                 allkeys = sortby # Assume the user knows what s/he is doing
-            elif all([isinstance(x,bool) for x in sortby]) or all([(x==0 or x==1) for x in sortby]): # Using Boolean values
+            elif all([isinstance(x,bool) for x in sortby]): # Using Boolean values
                 allkeys = []
                 for i,x in enumerate(sortby):
                      if x: allkeys.append(origkeys[i])
@@ -1806,6 +1913,100 @@ class odict(OrderedDict):
         
         return self # A bit weird, but usually would use this return an odict
     
+    
+    def makefrom(self, source=None, keys=None, keynames=None, *args, **kwargs):
+        '''
+        Create an odict from entries in another dictionary. If keys is None, then
+        use all keys from the current dictionary.
+        
+        Examples:
+            a = 'cat'; b = 'dog'; o = odict().makefrom(source=locals(), keys=['a','b']) # Make use of fact that variables are stored in a dictionary
+            d = {'a':'cat', 'b':'dog'}; o = odict().makefrom(d) # Same as odict(d)
+            l = ['cat', 'monkey', 'dog']; o = odict().makefrom(source=l, keys=[0,2], keynames=['a','b'])
+        '''
+        
+        # Make sure it's iterable
+        if source is not None: # Don't do anything if there's nothing there
+            if not(isiterable(source)): # Make sure it's iterable
+                source = promotetolist(source)
+            elif isinstance(source, basestring):
+                source = [source] # Special case -- strings are iterable, but we don't want to
+            
+            if len(source)==0:
+                return self # Nothing to do here
+            else:
+                # Handle cases where keys or keynames are not supplied
+                if keys is None:
+                    if isinstance(source, (list, tuple)):   keys = range(len(source))
+                    elif isinstance(source, dict): keys = source.keys()
+                    else:                          raise Exception('Unable to guess keys for object of type %s' % type(source))
+                keys = promotetolist(keys) # Make sure it's a list
+                if keynames is None: keynames = keys # Use key names
+                
+                # Loop over supplied keys
+                for key,keyname in zip(keys,keynames):
+                    try: 
+                        self.__setitem__(str(keyname), source[key])
+                    except Exception as E: 
+                        raise Exception('Key "%s" not found: %s' % (key, repr(E)))
+                
+        return self # As with make()
+    
+    
+    def map(self, func=None):
+        '''
+        Apply a function to each element of the odict, returning
+        a new odict with the same keys.
+        
+        Example:
+            cat = odict({'a':[1,2], 'b':[3,4]})
+            def myfunc(mylist): return [i**2 for i in mylist]
+            dog = cat.map(myfunc) # Returns odict({'a':[1,4], 'b':[9,16]})
+        '''
+        output = odict()
+        for key in self.keys():
+            output[key] = func(self.__getitem__(key))
+        return output
+    
+    
+    def fromeach(self, ind=None, asdict=True):
+        '''
+        Take a "slice" across all the keys of an odict, applying the same
+        operation to entry. The simplest usage is just to pick an index.
+        However, you can also use it to apply a function to each key.
+        
+        Example:
+            z = odict({'a':array([1,2,3,4]), 'b':array([5,6,7,8])})
+            z.fromeach(2) # Returns array([3,7])
+            z.fromeach(ind=[1,3], asdict=True) # Returns odict({'a':array([2,4]), 'b':array([6,8])})
+        '''
+        output = odict()
+        for key in self.keys():
+            output[key] = self.__getitem__(key)[ind]
+        if asdict: return output # Output as a slimmed-down odict
+        else:      return output[:] # Output as just the entries
+        
+    
+    def toeach(self, ind=None, val=None):
+        '''
+        The inverse of fromeach: partially reset elements within
+        each odict key.
+        
+        Example:
+            z = odict({'a':[1,2,3,4], 'b':[5,6,7,8]})
+            z.toeach(2, [10,20])    # z is now odict({'a':[1,2,10,4], 'b':[5,6,20,8]})
+            z.toeach(ind=3,val=666) #  z is now odict({'a':[1,2,10,666], 'b':[5,6,20,666]})
+        '''
+        nkeys = len(self.keys())
+        if not(isiterable(val)): # Assume it's meant to be populated in each
+            val = [val]*nkeys # Duplicated
+        if len(val)!=nkeys:
+            errormsg = 'To map values onto each key, they must be the same length (%i vs. %i)' % (len(val), nkeys)
+            raise Exception(errormsg)
+        for k,key in self.enumkeys():
+            self.__getitem__(key)[ind] = val[k]
+        return None
+        
     
     def enumkeys(self):
         ''' Shortcut for enumerate(odict.keys()) '''

@@ -202,7 +202,6 @@ def makescenarios(project=None, scenlist=None, verbose=2, ccsample=False, randse
                         thispar.y[popind] = append(thispar.y[popind], scenpar['endval'])
                     
                     if len(thispar.t[popind])!=len(thispar.y[popind]):
-#                        import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
                         raise OptimaException('Parameter lengths must match (t=%i, y=%i)' % (len(thispar.t), len(thispar.y)))
                         
         elif isinstance(scen,Progscen):
