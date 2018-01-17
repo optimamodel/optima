@@ -93,10 +93,12 @@ class Programset(object):
             for thispop in self.progs_by_targetpar(targetpartype).keys(): # Loop over populations
                 if self.covout[targetpartype].get(thispop): # Take the pre-existing one if it's there... 
                     ccopars = self.covout[targetpartype][thispop].ccopars 
+                    interaction = self.covout[targetpartype][thispop].interaction 
                 else: # ... or if not, set it up
                     ccopars = odict()
                     ccopars['intercept'] = []
                     ccopars['t'] = []
+                    interaction = self.default_interaction
                 targetingprogs = [thisprog.short for thisprog in self.progs_by_targetpar(targetpartype)[thispop]]
                 for tp in targetingprogs:
                     if not ccopars.get(tp): ccopars[tp] = []
@@ -109,7 +111,7 @@ class Programset(object):
                     if prog not in targetingprogs:
                         ccopars.pop(prog, None)
 
-                self.covout[targetpartype][thispop] = Covout(ccopars=ccopars,interaction=self.default_interaction)
+                self.covout[targetpartype][thispop] = Covout(ccopars=ccopars,interaction=interaction)
 
         # Delete any stored effects that aren't needed (if removing a program)
         for tpt in self.covout.keys():
