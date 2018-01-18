@@ -787,7 +787,7 @@ def findinds(val1, val2=None, eps=1e-6):
 def findnearest(series=None, value=None):
     '''
     Return the index of the nearest match in series to value -- like findinds, but
-    always returns an object with the same time as value (i.e. findnearest with
+    always returns an object with the same type as value (i.e. findnearest with
     a number returns a number, findnearest with an array returns an array).
     
     Examples:
