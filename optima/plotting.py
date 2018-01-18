@@ -991,15 +991,14 @@ def plotcascade(results=None, aspercentage=False, cascadecolors=None, figsize=gl
                     else:                  label = None
                     ax.bar(basex[k]+i*dx, thisbar, width=1., color=casccolors[i][k], linewidth=0, label=label)
             
-            targetxpos = 2.0
-            labelxpos  = 3.2
+            targetxpos = 2.0 # Length of the horizontal bar
+            labelxpos  = 3.2 # 
             dy = -1
             lineargs = {'c':targetcolor, 'linewidth':2}
             txtargs = {'fontsize':legendsize, 'color':targetcolor, 'horizontalalignment':'center'}
-            print 'WARNING FIX HARD CODING'
-            dxind = 1
-            txind = 4 if allbars else 2
-            supind = 5 if allbars else 5
+            dxind  = casckeys.index('numdiag')
+            txind  = casckeys.index('numtreat')
+            supind = casckeys.index('numsuppressed')
             ax.plot([basex[dxind], basex[dxind]+targetxpos], [90,90], **lineargs)
             ax.plot([basex[txind], basex[txind]+targetxpos], [81,81], **lineargs)
             ax.plot([basex[supind], basex[supind]+targetxpos], [73,73], **lineargs)
