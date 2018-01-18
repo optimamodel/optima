@@ -814,7 +814,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
 
             for name,prop,lowerstate,tostate,num,denom,raw_new,fixyear in [propdx_list,propcare_list,proptx_list,propsupp_list]:
                 
-                if ~isnan(fixyear) and fixyear==t: # Fixing the proportion from this timepoint
+                if ~isnan(fixyear) and fixyear<t: # Fixing the proportion from this timepoint
                     calcprop = people[num,:,t].sum()/people[denom,:,t].sum() # This is the value we fix it at
                     if ~isnan(prop[t+1:]).all(): # If a parameter value for prop has been specified at some point, we will interpolate to that value
                         nonnanind = findinds(~isnan(prop))[0]
@@ -823,8 +823,8 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                         prop[t+1:] = calcprop
                 
                 # Figure out how many people we currently have...
-                actual          = people[num,:,t+1].sum() # ... in the higher cascade state
-                available       = people[denom,:,t+1].sum() # ... waiting to move up
+                actual    = people[num,:,t+1].sum() # ... in the higher cascade state
+                available = people[denom,:,t+1].sum() # ... waiting to move up
                 
                 # Move the people who started treatment last timestep from usvl to svl
                 if isnan(prop[t+1]):
