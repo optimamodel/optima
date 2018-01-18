@@ -814,15 +814,22 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
 
             for name,prop,lowerstate,tostate,num,denom,raw_new,fixyear in [propdx_list,propcare_list,proptx_list,propsupp_list]:
                 
+                calcprop = people[num,:,t].sum()/people[denom,:,t].sum() # This is the value we fix it at
                 if ~isnan(fixyear) and fixyear==t: # Fixing the proportion from this timepoint
-                    calcprop = people[num,:,t].sum()/people[denom,:,t].sum() # This is the value we fix it at
-                    if ~isnan(prop[t+1:]).all(): # If a parameter value for prop has been specified at some point, we will interpolate to that value
+                    if ~isnan(prop[t:]).all(): # If a parameter value for prop has been specified at some point, we will interpolate to that value
                         nonnanind = findinds(~isnan(prop))[0]
-                        prop[t+1:nonnanind] = interp(range(t+1,nonnanind), [t+1,nonnanind], [calcprop,prop[nonnanind]])
+                        prop[t:nonnanind] = interp(range(t,nonnanind), [t,nonnanind-1], [calcprop,prop[nonnanind]])
+                        print('cokiei! t=%5s nonnanind=%s name=%8s prop[t]=%s prop[nonnanind]=%s calcprop=%s' % (tvec[t], nonnanind, name, prop[t], prop[nonnanind], calcprop))
+                        
                     else: # If not, we will just use this value from now on
-                        prop[t+1:] = calcprop
+                        prop[t:] = calcprop
                 
                 if name=='propdx': print('hi! t=%5s name=%8s prop=%s calcprop=%s' % (tvec[t], name, prop[t], people[num,:,t].sum()/people[denom,:,t].sum()))
+                if name=='propdx': print prop
+                
+                
+                if calcprop-prop[t]>0.01:
+                    import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
                 
                 # Figure out how many people we currently have...
                 actual    = people[num,:,t+1].sum() # ... in the higher cascade state

@@ -71,38 +71,6 @@ class Parameterset(object):
         return parslist
     
     
-    def getprop(self, proptype='proptreat', year=None, bypop=False, ind='best', die=False):
-        ''' Method for getting proportions'''
-
-        # Get results
-        try:
-            results = getresults(project=self.projectref(), pointer=self.resultsref, die=die)
-            assert(results is not None) # Might return something empty
-        except:
-            if die: # Give up
-                raise OptimaException('No results associated with this parameter set')
-            else: # Or, just rerun
-                results = self.projectref().runsim(name=self.name)
-
-        # Interpret inputs
-        if   proptype in ['diag','dx','propdiag','propdx']:                         proptype = 'propdiag'
-        elif proptype in ['evercare','everincare','propevercare','propeverincare']: proptype = 'propvercare'
-        elif proptype in ['care','incare','propcare','propincare']:                 proptype = 'propincare'
-        elif proptype in ['treat','tx','proptreat','proptx']:                       proptype = 'proptreat'
-        elif proptype in ['supp','suppressed','propsupp','propsuppressed']:         proptype = 'propsuppressed'
-        else: raise OptimaException('Unknown proportion type %s' % proptype)
-        
-        # Handle indices
-        if ind in ['median', 'm', 'best', 'b', 'average', 'av', 'single',0]: ind=0
-        elif ind in ['lower','l','low',1]: ind=1
-        elif ind in ['upper','u','up','high','h',2]: ind=2
-        else: ind=0 # Return best estimate if can't understand whichone was requested
-        timeindex = findinds(results.tvec,year) if year else Ellipsis
-
-        if bypop: return results.main[proptype].pops[ind][:][timeindex]
-        else:     return results.main[proptype].tot[ind][timeindex]
-                
-    
     def makepars(self, data=None, fix=True, verbose=2, start=None, end=None):
         self.pars = makepars(data=data, verbose=verbose) # Initialize as list with single entry
         self.fixprops(fix=fix)
