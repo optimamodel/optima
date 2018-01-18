@@ -992,8 +992,8 @@ def plotcascade(results=None, aspercentage=False, cascadecolors=None, figsize=gl
                     ax.bar(basex[k]+i*dx, thisbar, width=1., color=casccolors[i][k], linewidth=0, label=label)
             
             targetxpos = 2.0 # Length of the horizontal bar
-            labelxpos  = 3.2 # 
-            dy = -1
+            labelxpos  = 3.2 # Relative x position of the label
+            labelypos = -1  # Relative y position of the label
             lineargs = {'c':targetcolor, 'linewidth':2}
             txtargs = {'fontsize':legendsize, 'color':targetcolor, 'horizontalalignment':'center'}
             dxind  = casckeys.index('numdiag')
@@ -1003,9 +1003,9 @@ def plotcascade(results=None, aspercentage=False, cascadecolors=None, figsize=gl
             ax.plot([basex[txind], basex[txind]+targetxpos], [81,81], **lineargs)
             ax.plot([basex[supind], basex[supind]+targetxpos], [73,73], **lineargs)
 
-            ax.text(basex[dxind]+labelxpos,90+dy,'90%', **txtargs)
-            ax.text(basex[txind]+labelxpos,81+dy,'81%', **txtargs)
-            ax.text(basex[supind]+labelxpos,73+dy,'73%', **txtargs)
+            ax.text(basex[dxind]+labelxpos,90+labelypos,'90%', **txtargs)
+            ax.text(basex[txind]+labelxpos,81+labelypos,'81%', **txtargs)
+            ax.text(basex[supind]+labelxpos,73+labelypos,'73%', **txtargs)
             
             ax.set_xticks(basex+1.0)
             ax.set_xticklabels(casclabels)
