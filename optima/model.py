@@ -814,7 +814,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
 
             for name,prop,lowerstate,tostate,num,denom,raw_new,fixyear in [propdx_list,propcare_list,proptx_list,propsupp_list]:
                 
-                if ~isnan(fixyear) and fixyear<t: # Fixing the proportion from this timepoint
+                if ~isnan(fixyear) and fixyear==t: # Fixing the proportion from this timepoint
                     calcprop = people[num,:,t].sum()/people[denom,:,t].sum() # This is the value we fix it at
                     if ~isnan(prop[t+1:]).all(): # If a parameter value for prop has been specified at some point, we will interpolate to that value
                         nonnanind = findinds(~isnan(prop))[0]
@@ -822,14 +822,16 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                     else: # If not, we will just use this value from now on
                         prop[t+1:] = calcprop
                 
+                if name=='propdx': print('hi! t=%5s name=%8s prop=%s calcprop=%s' % (tvec[t], name, prop[t], people[num,:,t].sum()/people[denom,:,t].sum()))
+                
                 # Figure out how many people we currently have...
                 actual    = people[num,:,t+1].sum() # ... in the higher cascade state
                 available = people[denom,:,t+1].sum() # ... waiting to move up
                 
                 # Move the people who started treatment last timestep from usvl to svl
                 if isnan(prop[t+1]):
-                    if   name == 'proptx':   wanted = numtx[t+1] # If proptx is nan, we use numtx
-                    else:                    wanted = None # If a proportion or number isn't specified, skip this
+                    if name == 'proptx': wanted = numtx[t+1] # If proptx is nan, we use numtx
+                    else:                wanted = None # If a proportion or number isn't specified, skip this
                 else: # If the prop value is finite, we use it
                     wanted = prop[t+1]*available
                 
@@ -867,7 +869,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                         if totalppltomovedown>eps: # To avoid having to add eps
                             diff = min(-diff, totalppltomovedown-eps) # Flip it around so we have positive people
                             newmovers = diff*ppltomovedown/totalppltomovedown
-                            if name == 'proptx': # Handle SVL and USVL separately
+                            if 0:# name == 'proptx': # Handle SVL and USVL separately
                                 newmoversusvl = newmovers[:ncd4,:] # First group of movers are from USVL
                                 newmoverssvl  = newmovers[ncd4:,:] # Second group is SVL
                                 people[usvl,:,t+1] -= newmoversusvl # Shift people out of USVL treatment
