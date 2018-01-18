@@ -7,7 +7,7 @@ Version: 2017oct23
 from optima import OptimaException, Link, Settings, odict, pchip, plotpchip, sigfig # Classes/functions
 from optima import uuid, today, makefilepath, getdate, printv, dcp, objrepr, defaultrepr, sanitizefilename # Printing/file utilities
 from optima import quantile, findinds, findnearest, promotetolist, promotetoarray, checktype # Numeric utilities
-from numpy import array, nan, zeros, arange, shape, maximum
+from numpy import array, nan, zeros, arange, shape, maximum, log
 from numbers import Number
 from xlsxwriter import Workbook
 
@@ -82,7 +82,6 @@ class Resultset(object):
         # Main results -- time series, by population
         self.main['numinci']        = Result('New HIV infections')
         self.main['numdeath']       = Result('HIV-related deaths')
-        self.main['numdaly']        = Result('HIV-related DALYs')
         self.main['numincibypop']   = Result('New HIV infections caused')
         
         self.main['numplhiv']       = Result('PLHIV')
@@ -108,6 +107,7 @@ class Resultset(object):
         self.main['numhivbirths']   = Result('Births to HIV+ women')
         self.main['numpmtct']       = Result('HIV+ women receiving PMTCT')
         self.main['popsize']        = Result('Population size')
+        self.main['numdaly']        = Result('HIV-related DALYs')
         self.main['costtreat']      = Result('Annual treatment spend', defaultplot='total')
 
         self.other['adultprev']     = Result('Adult HIV prevalence (%)', ispercentage=True)
@@ -213,13 +213,20 @@ class Resultset(object):
         return R
             
         
-    def make(self, raw, quantiles=None, annual=True, verbose=2, doround=True):
-        """ Gather standard results into a form suitable for plotting with uncertainties. """
+    def make(self, raw, quantiles=None, annual=True, verbose=2, doround=True, lifeexpectancy=None, discountrate=None):
+        """
+        Gather standard results into a form suitable for plotting with uncertainties.
+        Life expectancy is measured in years, and the discount rate is in absolute
+        values (e.g., 0.03).        
+        """
         
         printv('Making derived results...', 3, verbose)
         
+        
         # Initialize
-        if quantiles is None: quantiles = [0.5, 0.25, 0.75] # Can't be a kwarg since mutable
+        if quantiles      is None: quantiles      = [0.5, 0.25, 0.75] # Can't be a kwarg since mutable
+        if lifeexpectancy is None: lifeexpectancy = 80 # 80 year life expectancy
+        if discountrate   is None: discountrate   = 0.03 # Discounting of 3% for YLL only
         tvec = dcp(raw[0]['tvec'])
         eps = self.settings.eps
         if annual is False: # Decide what to do with the time vector
@@ -282,14 +289,14 @@ class Resultset(object):
         data         = self.data
 
         # Actually do calculations
-        self.main['prev'].pops = process(allpeople[:,allplhiv,:,:][:,:,:,indices].sum(axis=1) / allpeople[:,:,:,indices].sum(axis=1), percent=True) # Axis 1 is health state
-        self.main['prev'].tot  = process(allpeople[:,allplhiv,:,:][:,:,:,indices].sum(axis=(1,2)) / allpeople[:,:,:,indices].sum(axis=(1,2)), percent=True) # Axis 2 is populations
+        self.main['prev'].pops = process(allpeople[:,allplhiv,:,:][:,:,:,indices].sum(axis=1) / (eps+allpeople[:,:,:,indices].sum(axis=1)), percent=True) # Axis 1 is health state
+        self.main['prev'].tot  = process(allpeople[:,allplhiv,:,:][:,:,:,indices].sum(axis=(1,2)) / (eps+allpeople[:,:,:,indices].sum(axis=(1,2))), percent=True) # Axis 2 is populations
         if data is not None: 
             self.main['prev'].datapops = processdata(data['hivprev'], uncertainty=True)
             self.main['prev'].datatot  = processdata(data['optprev'])
         
-        self.main['force'].pops = process(allinci[:,:,indices] / allpeople[:,:,:,indices].sum(axis=1), percent=True) # Axis 1 is health state
-        self.main['force'].tot  = process(allinci[:,:,indices].sum(axis=1) / allpeople[:,:,:,indices].sum(axis=(1,2)), percent=True) # Axis 2 is populations
+        self.main['force'].pops = process(allinci[:,:,indices] / (eps+allpeople[:,:,:,indices].sum(axis=1)), percent=True) # Axis 1 is health state
+        self.main['force'].tot  = process(allinci[:,:,indices].sum(axis=1) / (eps+allpeople[:,:,:,indices].sum(axis=(1,2))), percent=True) # Axis 2 is populations
 
         self.main['numinci'].pops = process(allinci[:,:,indices])
         self.main['numinci'].tot  = process(allinci[:,:,indices].sum(axis=1)) # Axis 1 is populations
@@ -383,31 +390,49 @@ class Resultset(object):
 
         
         # Calculate DALYs
-        yearslostperdeath = 15 # TODO: this gives roughly a 5:1 ratio of YLL:YLD; calculate more precisely
+        
+        ## Years of life lost
+        yllpops = alldeaths.sum(axis=1) # Total deaths per population, sum over health states
+        for pk,popkey in enumerate(self.popkeys): # Loop over each population
+            meanage = self.pars['age'][pk].mean()
+            potentialyearslost = max(0,lifeexpectancy-meanage) # Don't let this go negative!
+            if discountrate>0 and discountrate<1: # Make sure it has reasonable bounds
+                denominator = log(1-discountrate) # Start calculating the integral of (1-discountrate)**potentialyearslost
+                numerator = (1-discountrate)**potentialyearslost - 1 # Minus 1 for t=0
+                discountedyearslost = numerator/denominator # See https://en.wikipedia.org/wiki/Lists_of_integrals#Exponential_functions
+            elif discountrate==0: # Nothing to discount
+                discountedyearslost = potentialyearslost
+            else:
+                raise OptimaException('Invalid discount rate (%s)' % discountrate)
+            yllpops[:,pk,:] *= discountedyearslost # Multiply by the number of potential years of life lost
+        ylltot = yllpops.sum(axis=1) # Sum over populations
+        
+        ## Years lived with disability
         disutiltx = self.pars['disutiltx'].y
         disutils = [self.pars['disutil'+key].y for key in self.settings.hivstates]
-
-        dalypops = alldeaths.sum(axis=1)     * yearslostperdeath
-        dalytot  = alldeaths.sum(axis=(1,2)) * yearslostperdeath
-        dalypops += allpeople[:,alltx,:,:].sum(axis=1)     * disutiltx
-        dalytot  += allpeople[:,alltx,:,:].sum(axis=(1,2)) * disutiltx
+        yldpops = allpeople[:,alltx,:,:].sum(axis=1)     * disutiltx
+        yldtot  = allpeople[:,alltx,:,:].sum(axis=(1,2)) * disutiltx
         notonart = set(self.settings.notonart)
         for h,key in enumerate(self.settings.hivstates): # Loop over health states
             hivstateindices = set(getattr(self.settings,key))
             healthstates = array(list(hivstateindices & notonart)) # Find the intersection of this HIV state and not on ART states
-            dalypops += allpeople[:,healthstates,:,:].sum(axis=1) * disutils[h]
-            dalytot += allpeople[:,healthstates,:,:].sum(axis=(1,2)) * disutils[h]
+            yldpops += allpeople[:,healthstates,:,:].sum(axis=1) * disutils[h]
+            yldtot += allpeople[:,healthstates,:,:].sum(axis=(1,2)) * disutils[h]
+        
+        ## Add them up
+        dalypops = yllpops + yldpops
+        dalytot  = ylltot + yldtot
         self.main['numdaly'].pops = process(dalypops[:,:,indices])
         self.main['numdaly'].tot  = process(dalytot[:,indices])
         
         
-        # Other indicators
+        ## Other indicators
         upperagelims = self.pars['age'][:,1] # All populations, but upper range
         adultpops = findinds(upperagelims>=15)
         childpops = findinds(upperagelims<15)
-        if len(adultpops): self.other['adultprev'].tot = process(allpeople[:,allplhiv,:,:][:,:,adultpops,:][:,:,:,indices].sum(axis=(1,2)) / allpeople[:,:,adultpops,:][:,:,:,indices].sum(axis=(1,2)), percent=True) # Axis 2 is populations
+        if len(adultpops): self.other['adultprev'].tot = process(allpeople[:,allplhiv,:,:][:,:,adultpops,:][:,:,:,indices].sum(axis=(1,2)) / (eps+allpeople[:,:,adultpops,:][:,:,:,indices].sum(axis=(1,2))), percent=True) # Axis 2 is populations
         else:              self.other['adultprev'].tot = self.main['prev'].tot # In case it's not available, use population average
-        if len(childpops): self.other['childprev'].tot = process(allpeople[:,allplhiv,:,:][:,:,childpops,:][:,:,:,indices].sum(axis=(1,2)) / allpeople[:,:,childpops,:][:,:,:,indices].sum(axis=(1,2)), percent=True) # Axis 2 is populations
+        if len(childpops): self.other['childprev'].tot = process(allpeople[:,allplhiv,:,:][:,:,childpops,:][:,:,:,indices].sum(axis=(1,2)) / (eps+allpeople[:,:,childpops,:][:,:,:,indices].sum(axis=(1,2))), percent=True) # Axis 2 is populations
         else:              self.other['childprev'].tot = self.main['prev'].tot
         self.other['adultprev'].pops = self.main['prev'].pops # This is silly, but avoids errors from a lack of consistency of these results not having pop attributes
         self.other['childprev'].pops = self.main['prev'].pops
@@ -427,33 +452,38 @@ class Resultset(object):
         return None
         
         
-    def export(self, filename=None, folder=None, bypop=True, sep=',', ind=0, sigfigs=3, writetofile=True, asexcel=True, verbose=2):
+    def export(self, filename=None, folder=None, bypop=True, sep=',', ind=None, key=None, sigfigs=3, writetofile=True, asexcel=True, verbose=2):
         ''' Method for exporting results to an Excel or CSV file '''
 
+        if ind is None: ind = 0 # WARNING, there must be a better way of doing this
+        if key is None: key = 0
+        
         npts = len(self.tvec)
-        keys = self.main.keys()
+        mainkeys = self.main.keys()
         outputstr = sep.join(['Indicator','Population'] + ['%i'%t for t in self.tvec]) # Create header and years
-        for key in keys:
+        for mainkey in mainkeys:
             if bypop: outputstr += '\n' # Add a line break between different indicators
             if bypop: popkeys = ['tot']+self.popkeys # include total even for bypop -- WARNING, don't try to change this!
             else:     popkeys = ['tot']
             for pk,popkey in enumerate(popkeys):
                 outputstr += '\n'
-                if bypop and popkey!='tot': data = self.main[key].pops[ind][pk-1,:] # WARNING, assumes 'tot' is always the first entry
-                else:                       data = self.main[key].tot[ind][:]
-                outputstr += self.main[key].name+sep+popkey+sep
+                if bypop and popkey!='tot': data = self.main[mainkey].pops[ind][pk-1,:] # WARNING, assumes 'tot' is always the first entry
+                else:                       data = self.main[mainkey].tot[ind][:]
+                outputstr += self.main[mainkey].name+sep+popkey+sep
                 for t in range(npts):
-                    if self.main[key].ispercentage: outputstr += ('%s'+sep) % sigfig(data[t], sigfigs=sigfigs)
+                    if self.main[mainkey].ispercentage: outputstr += ('%s'+sep) % sigfig(data[t], sigfigs=sigfigs)
                     else:                           outputstr += ('%i'+sep) % data[t]
        
-        if hasattr(self, 'budgets'):
-            if len(self.budgets):      thisbudget = self.budgets[ind]
-            else:                      thisbudget = [] 
-        else:                          thisbudget = self.budget
-        if hasattr(self, 'coverages'):
-            if len(self.coverages):    thiscoverage = self.coverages[ind]
-            else:                      thiscoverage = [] 
-        else:                          thiscoverage = self.coverage
+        # Handle budget and coverage
+        thisbudget = []
+        thiscoverage = []
+        tvbudget = []
+        try:    thisbudget = self.budgets[key]
+        except: pass
+        try:    thiscoverage = self.coverages[key]
+        except: pass
+        try:    tvbudget = self.timevarying[key]
+        except: pass
         
         if len(thisbudget): # WARNING, does not support multiple years
             outputstr += '\n\n\n'
@@ -471,6 +501,16 @@ class Resultset(object):
             outputstr += sep*2+'Coverage\n'
             outputstr += sep*2+sep.join(thiscoverage.keys()) + '\n'
             outputstr += sep*2+sep.join([str(val) for val in covvals]) + '\n' # WARNING, should have this val[0] but then dies with None entries
+
+        if len(tvbudget):
+            tvyears  = tvbudget['tvyears']
+            progkeys = tvbudget['tvbudgets'].keys()
+            tvdata   = tvbudget['tvbudgets'][:]
+            outputstr += '\n\n\n'
+            outputstr += sep*2+'Time-varying' + '\n'
+            outputstr += sep+sep.join(['Year']+progkeys) + '\n'
+            for y,year in enumerate(tvyears): # Loop over years as rows
+                outputstr += sep+str(year)+sep+sep.join([str(val) for val in tvdata[:,y]]) + '\n' # Join together programs as columns
             
         if writetofile: 
             ext = 'xlsx' if asexcel else 'csv'
@@ -518,37 +558,21 @@ class Resultset(object):
             errormsg = 'Key %s not found; must be one of:\n%s' % (what, self.main.keys()+self.other.keys())
             raise OptimaException(errormsg)
             
-        # Figure out if it's a Multiresultset or a Resultset
-        if type(self)==Multiresultset:
-            # Use either total (by default) or a given population
-            if pop=='tot':
-                timeseries = resultobj.tot[key][blhkey]
-            else:
-                if isinstance(pop,str): 
-                    try:
-                        pop = self.popkeys.index(pop) # Convert string to number
-                    except:
-                        errormsg = 'Population key %s not found; must be one of: %s' % (pop, self.popkeys)
-                        raise OptimaException(errormsg)
-                timeseries = resultobj.pops[key][blhkey,pop,:]
+        # Use either total (by default) or a given population
+        if pop=='tot':
+            timeseries = resultobj.tot[key]
         else:
-            # Use either total (by default) or a given population
-            if pop=='tot':
-                timeseries = resultobj.tot[key]
-            else:
-                if isinstance(pop,str): 
-                    try:
-                        pop = self.popkeys.index(pop) # Convert string to number
-                    except:
-                        errormsg = 'Population key %s not found; must be one of: %s' % (pop, self.popkeys)
-                        raise OptimaException(errormsg)
-                timeseries = resultobj.pops[key][pop,:]
-            
+            if isinstance(pop,str): 
+                try:
+                    pop = self.popkeys.index(pop) # Convert string to number
+                except:
+                    errormsg = 'Population key %s not found; must be one of: %s' % (pop, self.popkeys)
+                    raise OptimaException(errormsg)
+            timeseries = resultobj.pops[key][pop,:]
         
         # Get the index and return the result
         if checktype(year, 'number'):
             index = findnearest(self.tvec, year)
-            
             result = timeseries[index]
         elif checktype(year, 'arraylike'):
             startind = findnearest(self.tvec, year[0])
@@ -657,40 +681,47 @@ class Multiresultset(Resultset):
         self.budgets = odict()
         self.coverages = odict()
         self.budgetyears = odict() 
+        self.setup = odict() # For storing the setup attributes (e.g. tvec)
         if type(resultsetlist)==list: pass # It's already a list, carry on
         elif type(resultsetlist) in [odict, dict]: resultsetlist = resultsetlist.values() # Convert from odict to list
         elif resultsetlist is None: raise OptimaException('To generate multi-results, you must feed in a list of result sets: none provided')
         else: raise OptimaException('Resultsetlist type "%s" not understood' % str(type(resultsetlist)))
         
         # Fundamental quantities -- populated by project.runsim()
-        sameattrs = ['tvec', 'dt', 'popkeys', 'projectinfo', 'projectref', 'parsetname', 'progsetname', 'pars', 'data', 'datayears', 'settings'] # Attributes that should be the same across all results sets
-        for attr in sameattrs: setattr(self, attr, None) # Shared attributes across all resultsets
+        setupattrs = ['tvec', 'dt', 'popkeys', 'projectinfo', 'projectref', 'parsetname', 'progsetname', 'pars', 'data', 'datayears', 'settings'] # Attributes that should be the same across all results sets
+        for attr in setupattrs: setattr(self, attr, None) # Shared attributes across all resultsets
 
         # Main and other results -- time series, by population -- get right structure, but clear out results -- WARNING, must match format above!
         self.main  = dcp(resultsetlist[0].main) # For storing main results -- get the format from the first entry, since should be the same for all
         self.other = dcp(resultsetlist[0].other) 
-        for at in ['pops', 'tot']:
+        for poptot in ['pops', 'tot']:
             for key in self.main.keys():
-                setattr(self.main[key], at, odict()) # Turn all of these into an odict -- e.g. self.main['prev'].pops = odict()
+                setattr(self.main[key], poptot, odict()) # Turn all of these into an odict -- e.g. self.main['prev'].pops = odict()
             for key in self.other.keys():
-                setattr(self.other[key], at, odict()) # Turn all of these into an odict -- e.g. self.main['prev'].pops = odict()
+                setattr(self.other[key], poptot, odict()) # Turn all of these into an odict -- e.g. self.main['prev'].pops = odict()
 
         for i,rset in enumerate(resultsetlist):
-            key = rset.name if rset.name is not None else str(i)
+            while rset.name is None or rset.name in self.keys:
+                if rset.name is None: rset.name = str(i)
+                if rset.name in self.keys: rset.name += '-new'
+            key = rset.name
             self.keys.append(key)
+            self.setup[key] = odict() # For storing the setup attributes (e.g. tvec)
             
-            # First, loop over shared attributes, and ensure they match
-            for attr in sameattrs:
+            # First, loop over (presumably) shared setup attributes, and hope they match, but store them separately if they don't
+            for attr in setupattrs:
                 orig = getattr(self, attr)
                 new = getattr(rset, attr)
-                if orig is None: setattr(self, attr, new) # Pray that they match, since too hard to compare
+                self.setup[key][attr] = new # Copy here too
+                if orig is None: setattr(self, attr, new) # For most purposes, only need one copy of these things since won't differ
             
             # Now, the real deal: fix self.main and self.other
+            best = 0 # Key for best data -- discard uncertainty
             for at in ['pops', 'tot']:
                 for key2 in self.main.keys():
-                    getattr(self.main[key2], at)[key] = getattr(rset.main[key2], at) # Add data: e.g. self.main['prev'].pops['foo'] = rset.main['prev'].pops
+                    getattr(self.main[key2], at)[key] = getattr(rset.main[key2], at)[best] # Add data: e.g. self.main['prev'].pops['foo'] = rset.main['prev'].pops[0] -- WARNING, the 0 discards uncertainty data
                 for key2 in self.other.keys():
-                    getattr(self.other[key2], at)[key] = getattr(rset.other[key2], at) # Add data: e.g. self.main['prev'].pops['foo'] = rset.main['prev'].pops
+                    getattr(self.other[key2], at)[key] = getattr(rset.other[key2], at)[best] # Add data: e.g. self.main['prev'].pops['foo'] = rset.main['prev'].pops[0] -- WARNING, the 0 discards uncertainty data
 
             # Finally, process the budget and budgetyears -- these  are only needed for the budget/coverage conversions
             if len(rset.budget) or len(rset.coverage):
@@ -776,13 +807,13 @@ class Multiresultset(Resultset):
         return resultsdiff
     
     
-    def export(self, filename=None, folder=None, ind=None, writetofile=True, verbose=2, asexcel=True, **kwargs):
+    def export(self, filename=None, folder=None, ind=None, key=None, writetofile=True, verbose=2, asexcel=True, **kwargs):
         ''' A method to export each multiresult to a different file...not great, but not sure of what's better '''
         
         if asexcel: outputdict = odict()
         else:       outputstr = ''
-        for k,key in enumerate(self.keys):
-            thisoutput = Resultset.export(self, ind=k, writetofile=False, **kwargs)
+        for key in self.keys:
+            thisoutput = Resultset.export(self, ind=ind, key=key, writetofile=False, **kwargs)
             if asexcel:
                 outputdict[key] = thisoutput
             else:
@@ -975,12 +1006,13 @@ def exporttoexcel(filename=None, outdict=None):
         worksheet = workbook.add_worksheet(sanitizefilename(key)) # A valid filename should also be a valid Excel key
         
         # Define formatting
+        budcovformats = ['Budget', 'Coverage', 'Time-varying']
         colors = {'gentlegreen':'#3c7d3e', 'fadedstrawberry':'#ffeecb', 'edgyblue':'#bcd5ff','accountantgrey':'#f6f6f6', 'white':'#ffffff'}
         formats = dict()
         formats['plain'] = workbook.add_format({})
         formats['bold'] = workbook.add_format({'bg_color': colors['edgyblue'], 'bold': True})
         formats['number'] = workbook.add_format({'bg_color': colors['fadedstrawberry'], 'num_format':0x04})
-        formats['budcov'] = workbook.add_format({'bg_color': colors['gentlegreen'], 'color': colors['white'], 'bold': True})
+        formats['header'] = workbook.add_format({'bg_color': colors['gentlegreen'], 'color': colors['white'], 'bold': True})
         
         # Convert from a string to a 2D array
         outlist = []
@@ -1004,10 +1036,11 @@ def exporttoexcel(filename=None, outdict=None):
                     numbercell = True
                 except:
                     numbercell = False
-                if row==0:                                     thisformat = 'budcov'
-                elif str(thistxt) in ['Budget', 'Coverage']:   thisformat = 'budcov'
-                elif not emptycell and not numbercell:         thisformat = 'bold'
-                elif numbercell:                               thisformat = 'number'
+                if row==0:                             thisformat = 'header'
+                elif str(thistxt) in budcovformats:    thisformat = 'header'
+                elif not emptycell and not numbercell: thisformat = 'bold'
+                elif col<2 and not emptycell:          thisformat = 'bold'
+                elif numbercell:                       thisformat = 'number'
                 worksheet.write(row, col, thistxt, formats[thisformat])
         
         worksheet.set_column(2, maxcol, 15) # Make wider

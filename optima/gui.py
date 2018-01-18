@@ -590,10 +590,10 @@ def plotpars(parslist=None, start=None, end=None, verbose=2, rows=6, cols=5, fig
                         printv('Plot %i/%i...' % (i*len(allplotdata)+pd+1, len(plotparsaxs)*len(allplotdata)), 2, verbose)
                     except Exception as E: 
                         if die: raise E
-                        else: print('??????: %s' % E.__repr__())
+                        else: print('??????: %s' % repr(E))
                     try: 
                         if not(hasattr(this[3],'__len__') and len(this[3])==0): ax.scatter(this[2],this[3])
-                    except Exception: pass # print('Problem with "%s": "%s"' % (this[0], E.__repr__()))
+                    except Exception: pass # print('Problem with "%s": "%s"' % (this[0], repr(E)))
                     if pd==len(allplotdata)-1: # Do this for the last plot only
                         ax.set_ylim((0,1.1*ax.get_ylim()[1]))
                         ax.set_xlim((tvec[0],tvec[-1]))
@@ -837,7 +837,7 @@ def gui_loadproj():
     project = None
     if filepath:
         try: project = loadproj(filepath, verbose=0)
-        except Exception as E: print('Could not load file "%s": "%s"' % (filepath, E.__repr__()))
+        except Exception as E: print('Could not load file "%s": "%s"' % (filepath, repr(E)))
         if type(project)==Project: return project
         else: print('File "%s" is not an Optima project file' % filepath)
     else:
@@ -936,7 +936,7 @@ def gui_loadport():
     if filepath:
         try: tmpport = loadobj(filepath, verbose=0)
         except Exception as E: 
-            warning('Could not load file "%s" because "%s"' % (filepath, E.__repr__()))
+            warning('Could not load file "%s" because "%s"' % (filepath, repr(E)))
             return None
         if tmpport is not None: 
             if type(tmpport)==Portfolio:
@@ -966,7 +966,7 @@ def gui_rungeo():
         globalportfolio.genBOCs(objectives=BOCobjectives, maxtime=30, mc=0)
         globalportfolio.runGA(objectives=globalobjectives, maxtime=30, reoptimize=True, mc=0, batch=True, verbose=2, die=False, strict=True)
     except Exception as E:
-        warning('Geospatial analysis failed: %s' % E.__repr__())
+        warning('Geospatial analysis failed: %s' % repr(E))
     warning('Geospatial analysis finished running; total time: %0.0f s' % (time() - starttime))
     return None
     
@@ -994,7 +994,7 @@ def gui_export():
         try:
             globalportfolio.export(filename=filepath)
         except Exception as E:
-            warning('Results export failed: %s' % E.__repr__())
+            warning('Results export failed: %s' % repr(E))
         warning('Results saved to "%s".' % filepath)
     else:
         warning('Filepath not supplied: %s' % filepath)

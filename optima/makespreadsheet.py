@@ -368,7 +368,7 @@ class TitledRange(object):
                             formats.write_unlocked(self.sheet, current_row, self.data_range.last_col+2+index, assumptiondata, row_format)
                             saveassumptiondata = True
                         except Exception as E:
-                            errormsg = 'WARNING, failed to save assumption "%s" with data:\n%s\nError message:\n (%s)' % (self.content.name, self.content.assumption_data, E.__repr__())
+                            errormsg = 'WARNING, failed to save assumption "%s" with data:\n%s\nError message:\n (%s)' % (self.content.name, self.content.assumption_data, repr(E))
                             print(errormsg)
                             saveassumptiondata = False
                             raise E

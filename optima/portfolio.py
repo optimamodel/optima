@@ -1,4 +1,4 @@
-from optima import OptimaException, Link, gitinfo, tic, toc, odict, getdate, today, uuid, dcp, objrepr, makefilepath, printv, findinds, saveobj, loadproj, promotetolist # Import utilities
+from optima import OptimaException, Link, gitinfo, tic, toc, odict, getdate, today, uuid, dcp, objrepr, makefilepath, printv, findnearest, saveobj, loadproj, promotetolist # Import utilities
 from optima import version, defaultobjectives, Project, pchip, getfilelist, batchBOC, reoptimizeprojects
 from numpy import arange, argsort, zeros, nonzero, linspace, log, exp, inf, argmax, array
 from xlsxwriter import Workbook
@@ -311,8 +311,11 @@ class Portfolio(object):
         if initbudgets == None: initbudgets = [None]*len(self.projects)
         if optbudgets == None: optbudgets = [None]*len(self.projects)
         if objectives == None: 
-            printv('WARNING, you have called plotBOCs on portfolio %s without specifying objectives. Using default objectives... ' % (self.name), 2, verbose)
-            objectives = defaultobjectives()
+            try: 
+                objectives = self.objectives # This should be defined, but just in case...
+            except:
+                printv('WARNING, you have called plotBOCs on portfolio %s without specifying objectives. Using default objectives... ' % (self.name), 2, verbose)
+                objectives = defaultobjectives()
             
         if not len(self.projects) == len(initbudgets) or not len(self.projects) == len(optbudgets):
             errormsg = 'Error: Plotting BOCs for %i projects with %i initial budgets (%i required) and %i optimal budgets (%i required).' % (len(self.projects), len(initbudgets), len(self.projects), len(optbudgets), len(self.projects))
@@ -370,8 +373,8 @@ class Portfolio(object):
             tvector, initial, final, indices, alloc, outcome, sumalloc = [odict() for o in range(7)] # Allocate all dicts
             for io in iokeys:
                 tvector[io]  = self.results[key][io].tvec # WARNING, can differ between initial and optimized!
-                initial[io]  = findinds(tvector[io], self.objectives['start'])
-                final[io]    = findinds(tvector[io], self.objectives['end'])
+                initial[io]  = findnearest(tvector[io], self.objectives['start'])
+                final[io]    = findnearest(tvector[io], self.objectives['end'])
                 indices[io]  = arange(initial[io], final[io])
                 alloc[io]    = self.results[key][io].budget
                 outcome[io]  = self.results[key][io].outcome 
@@ -389,7 +392,7 @@ class Portfolio(object):
                 
                 projoutcomesplit[k][io] = odict()
                 for obkey in self.objectives['keys']:
-                    projoutcomesplit[k][io]['num'+obkey] = self.results[key][io].main['num'+obkey].tot[bestindex][indices[io]].sum()     # Again, current and optimal should be same for 0 second optimisation, but being explicit.
+                    projoutcomesplit[k][io]['num'+obkey] = self.results[key][io].main['num'+obkey].tot[bestindex][indices[io]].sum()     # Again, current and optimal should be same for 0 second optimisation, but being explicit -- WARNING, need to fix properly!
                     overalloutcomesplit['num'+obkey][io] += projoutcomesplit[k][io]['num'+obkey]
         
         # Add to the results structure
@@ -705,8 +708,8 @@ def makegeoprojects(project=None, spreadsheetpath=None, destination=None, dosave
                 popratio[popname].append(wspopsize.cell_value(rowindex, colindex))
                 prevfactors[popname].append(wsprev.cell_value(rowindex, colindex))
                 plhivratio[popname].append(wspopsize.cell_value(rowindex, colindex)*wsprev.cell_value(rowindex, colindex))
-    print('Districts...')
-    print districtlist
+    print('Districts:')
+    print(districtlist)
     ndistricts = len(districtlist)
     
     # Workout the reference year for the spreadsheet for later 'datapoint inclusion'.

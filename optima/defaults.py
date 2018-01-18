@@ -352,7 +352,7 @@ def defaultproject(which='best', addprogset=True, addcostcovdata=True, usestanda
     Options for easily creating default projects based on different spreadsheets, including
     program information -- useful for testing 
     
-    Version: 2016mar24
+    Version: 2017oct30
     '''
     
     
@@ -370,13 +370,13 @@ def defaultproject(which='best', addprogset=True, addcostcovdata=True, usestanda
         dorun = kwargs.get('dorun',True) # Use specified dorun setting, otherwise assume true
         kwargs['dorun'] = False # Don't run now, run after calibration
         P = Project(name='Simple (demo)', spreadsheet=spreadsheetpath+'simple.xlsx', verbose=verbose, **kwargs)
-        P.pars()['transnorm'].y = 0.8 # "Calibration"
-        P.pars()['fixproptx'].t = 2100 # For optimization to work
+        P.pars()['transnorm'].y = 0.6 # "Calibration"
+        P.parset().fixprops(False) # For optimization to work
         if dorun: P.runsim() # Run after calibration
         
         # Programs
         R = defaultprogset(P, addcostcovpars=addcostcovpars, addcostcovdata=addcostcovdata, filterprograms=['HTC', 'ART'])
-        R.programs['HTC'].costcovdata =          {'t':[2014],'cost':[20e6],'coverage':[1e6]}
+        R.programs['HTC'].costcovdata =          {'t':[2014],'cost':[5e6],'coverage':[2e5]}
         R.programs['ART'].costcovdata =          {'t':[2014],'cost': [2e6],'coverage':[1e4]}
         R.covout['hivtest']['M 15-49'].addccopar({'intercept': (0.01,0.01), 't': 2016.0, 'HTC': (0.30,0.30)})
         R.covout['hivtest']['F 15-49'].addccopar({'intercept': (0.01,0.01), 't': 2016.0, 'HTC': (0.30,0.30)})

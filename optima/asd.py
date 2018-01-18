@@ -26,7 +26,7 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
       sdec           2       Step size learning rate (decrease)
       pinc           2       Parameter selection learning rate (increase)
       pdec           2       Parameter selection learning rate (decrease)
-      pinitial       None    Set initial parameter selection probabilities
+      pinitial       None    Set initial parameter selection probabilities (ordered x_0+, x_0-, x_1+, x_1- ... x_n+, x_n-)
       sinitial       None    Set initial step sizes; if empty, calculated from stepsize instead
       xmin           None    Min value allowed for each parameter  
       xmax           None    Max value allowed for each parameter 
@@ -49,9 +49,10 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
     Please use the following citation for this method:
         Kerr CC, Dura-Bernal S, Smolinski TG, Chadderdon GL, Wilson DP (under review). Optimization by adaptive stochastic descent. Available from: thekerrlab.com/asd.
     
-    Version: 2017may17 
+    Version: 2017oct27
     """
     
+    # Imports
     from numpy import array, shape, reshape, ones, zeros, mean, cumsum, mod, concatenate, floor, flatnonzero, isnan, inf
     from numpy.random import random, seed
     from copy import deepcopy # For arrays, even y = x[:] doesn't copy properly
@@ -60,6 +61,7 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
         seed(int(randseed)) # Don't reset it if not supplied
         if verbose>=3: print('Launching ASD with random seed %i; sample: %f' % (randseed, random()))
     
+    # Function to ensure objects are consistent
     def consistentshape(userinput, origshape=False):
         """
         Make sure inputs have the right shape and data type.
@@ -130,10 +132,10 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
         inrange = False
         for r in range(maxrangeiters): # Try to find parameters within range
             choice = flatnonzero(cumprobs > random())[0] # Choose a parameter and upper/lower at random
-            par = mod(choice,nparams) # Which parameter was chosen
-            pm = floor((choice)/nparams) # Plus or minus
+            par = int(floor(choice/2)) # Which parameter was chosen
+            pm =  int(mod(choice, 2)) # Plus or minus
             newval = x[par] + ((-1)**pm)*stepsizes[choice] # Calculate the new vector
-            if newval>=xmin[par] and newval<=xmax[par]: # Make sure it's in range
+            if not(newval<xmin[par] or newval>xmax[par]): # Make sure it's in range
                 inrange = True
                 break
             else:
@@ -144,12 +146,12 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
             break
 
         # Calculate the new value
+        xold = deepcopy(x) # Keep a copy of the old parameter set
         xnew = deepcopy(x) # Initialize the new parameter set
         xnew[par] = newval # Update the new parameter set
         fvalnew = function(xnew, **args) # Calculate the objective function for the new parameter set
         abserrorhistory[mod(count,stalliters)] = max(0, fval-fvalnew) # Keep track of improvements in the error
         relerrorhistory[mod(count,stalliters)] = max(0, fval/float(fvalnew)-1.0) # Keep track of improvements in the error  
-        if verbose>=3: print(offset+'step=%i choice=%s, par=%s, pm=%s, origval=%s, newval=%s, inrange=%s' % (count, choice, par, pm, x[par], xnew[par], inrange))
 
         # Check if this step was an improvement
         fvalold = fval # Store old fval
@@ -166,7 +168,9 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
         else:
             exitreason = 'Objective function returned NaN'
             break
-        if verbose>=2: print(offset + label + ' step %i (%0.1f s) %s (orig: %s | best:%s | new:%s | diff:%s)' % ((count, time()-start, flag)+multisigfig([fvalorig, fvalold, fvalnew, fvalnew-fvalold])))
+        if verbose==2: print(offset + label + ' step %i (%0.1f s) %s (orig: %s | best:%s | new:%s | diff:%s)' % ((count, time()-start, flag)+multisigfig([fvalorig, fvalold, fvalnew, fvalnew-fvalold])))
+        if verbose>=3: print(label + '\nstep = %i\nelapsed = %s\nfval = %s\nchoice = %s\npar = %s\npm = %s\norigval = %s\nnewval = %s\ninrange = %s' % (count, time()-start, fval, choice, par, pm, xold[par], xnew[par], inrange))
+        if verbose>=4: print('probabilities = %s\nstepsizes = %s\nxnew = %s\nxmin = %s\nxmax = %s\n' % (probabilities, stepsizes, xnew, xmin, xmax))
         
         # Store output information
         fvals[count] = fval # Store objective function evaluations

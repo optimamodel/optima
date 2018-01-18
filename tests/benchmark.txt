@@ -1,96 +1,99 @@
-0.257 2016-Jan-25_18:46:09 b56675c geogui-with-plotfixes
-0.260 2016-Jan-25_18:53:29 d3bf4be geogui-with-plotfixes
-0.253 2016-Jan-25_19:11:54 5cab29f geogui-with-plotfixes
-0.297 2016-Jan-25_19:17:29 1b92bc3 geogui-with-plotfixes
-0.264 2016-Jan-29_05:02:50 d816d87 fix-geogui
-0.959 2016-Jan-29_23:54:29 349ae76 births
-1.02 2016-Jan-30_00:04:56 ccb6bb3 births
-0.933 2016-Jan-30_00:21:07 2269c06 births
-0.673 2016-Jan-30_02:02:56 68c2cb0 births
-0.358 2016-Jan-30_04:56:42 6be645b fix-cascade-03
-1.00 2016-Jan-31_05:18:23 18ca9b3 90-90-90
-0.356 2016-Jan-31_05:30:36 6af82b1 90-90-90
-0.401 2016-Feb-01_01:29:39 f98ff4b geogui-output
-0.824 2016-Feb-03_16:04:50 f2f8f86 geospatial-bugfixes
-0.406 2016-Feb-03_17:09:17 9d685ff fix-manualfit
-0.412 2016-Feb-03_17:18:16 dac4e00 geospatial-bugfixes
-0.818 2016-Feb-03_22:51:52 e054e4d constraints
-0.880 2016-Feb-04_01:59:16 0d640d9 constraints
-0.407 2016-Feb-04_14:12:50 e44d55a temp-benchmarking
-0.417 2016-Feb-04_14:13:34 af33ae8 constraints
-0.410 2016-Feb-04_15:16:04 cd18666 temp-benchmarking
-0.448 2016-Feb-04_20:26:38 015f956 azfar-fixes2
-0.554 2016-Feb-05_00:39:01 b9af124 azfar-fixes2
-0.612 2016-Feb-05_03:42:02 d579f7a azfar-fixes2
-0.634 2016-Feb-05_05:44:57 1fd3923 defaultproject-tests
-0.630 2016-Feb-06_17:24:41 e730bea optional-error-checking
-0.625 2016-Feb-06_17:25:13 a67619f optional-error-checking
-0.576 2016-Feb-06_17:32:48 9e602eb optional-error-checking
-0.378 2016-Feb-06_17:38:47 17fa1f9 optional-error-checking
-0.332 2016-Feb-06_18:56:10 4efbd59 speeding-up-model
-0.312 2016-Feb-06_18:57:06 dadc368 speeding-up-model
-0.289 2016-Feb-06_19:19:33 fc27b1f speeding-up-model
-0.377 2016-Feb-06_19:34:19 514d92a speeding-up-model
-0.379 2016-Feb-06_19:47:14 c27c046 speeding-up-model
-0.366 2016-Feb-06_19:55:46 dd142dd speeding-up-model
-0.390 2016-Feb-06_20:01:33 8c01834 speeding-up-model
-0.420 2016-Feb-06_20:11:44 71276b5 speeding-up-model
-0.471 2016-Feb-06_20:12:33 1e410ce speeding-up-model
-0.423 2016-Feb-06_20:15:21 ad05516 speeding-up-model
-0.425 2016-Feb-06_20:16:11 1b124c7 speeding-up-model
-0.887 2016-Feb-06_21:26:25 4a1a097 speeding-up-model
-0.419 2016-Feb-07_01:50:18 b37023d comparison-table
-0.434 2016-Feb-07_05:13:46 710709d autofit-debugging
-1.23 2016-Feb-07_12:46:56 f308af8 autofit-debugging
-1.03 2016-Feb-07_12:47:29 b36d406 autofit-debugging
-0.835 2016-Feb-07_12:53:41 59506ef autofit-debugging
-0.818 2016-Feb-07_13:32:19 c1f05c5 autofit-debugging
-0.413 2016-Feb-07_15:06:58 0699c43 initialize-with-defaults
-0.411 2016-Feb-07_21:32:44 272cdbb initialize-with-defaults
-0.649 2016-Feb-08_04:50:57 2f78f1e refactoring-optimization
-0.898 2016-Feb-08_23:34:58 55c9c17 best-example-project
-0.415 2016-Feb-09_01:03:31 83e060d fix-cascade-06
-0.419 2016-Feb-10_01:23:00 d9bd2e3 reconcile-costfuncs-with-pars
-0.719 2016-Feb-26_14:53:18 c53b8b1 treatment-distribution
-0.406 2016-Feb-26_15:11:11 dda5b3f treatment-distribution
-0.586 2016-Jul-08_21:04:24 2b51e77 develop
-1.46 2016-Jul-08_21:45:33 4cdcea0 feature/primary-infection
-0.782 2016-Jul-08_21:48:57 e2b8089 feature/primary-infection
-1.39 2016-Jul-09_20:11:42 fbf1e0f feature/primary-infection-calculation
-0.704 2016-Jul-09_20:50:02 df2e85b feature/primary-infection-calculation
-0.667 2016-Jul-15_09:26:13 071338a feature/primary-infection-calculation
-0.658 2016-Jul-15_10:28:07 7fff518 feature/primary-infection-calculation
-0.760 2016-Jul-16_11:36:08 54ff15d develop
-0.700 2016-Jul-31_10:10:25 c7e7a8e investigate-negative-people
-0.681 2016-Jul-31_10:10:34 a080522 develop
-0.767 2016-Jul-31_07:34:09 b7a202d investigate-negative-people
-0.614 2016-Aug-10_17:18:12 0b693ac investigate-negative-people
-0.817 2016-Aug-12_12:53:44 58ab898 investigate-negative-people
-0.860 2016-Aug-24_09:32:14 54f8bf8 investigate-negative-people
-0.717 2016-Aug-26_12:32:08 b77d07c investigate-negative-people
-0.680 2016-Sep-13_02:10:26 48a8707 investigate-negative-people
-1.31 2016-Sep-20_22:50:32 521fcbb feature/fix-props
-0.846 2016-Sep-20_22:51:40 930e609 feature/fix-props
-0.857 2016-Sep-21_11:12:21 cda8d6d feature/fix-props
-0.825 2016-Sep-21_11:22:47 90680c5 feature/fix-props
-0.773 2016-Sep-21_16:21:50 7f3c1e8 feature/make-props-standard-outputs
-0.762 2016-Sep-21_16:50:22 c4d038a feature/make-props-standard-outputs
-0.733 2016-Sep-21_16:55:41 3da8635 feature/fix-props
-0.705 2016-Sep-22_01:47:37 3db4da9 debug-stage-4
-0.684 2016-Sep-22_02:21:12 956f7eb debug-stage-4
-0.767 2016-Sep-22_10:40:41 a9293b9 feature/fix-props
-1.09 2016-Sep-29_14:08:15 0a10d61 develop
-0.850 2016-Nov-03_12:19:07 39757ed various-fixes
-0.782 2016-Nov-03_12:20:22 0ddc046 various-fixes
-0.732 2016-Dec-24_00:38:18 a7ddfb7 feature/add-treatment-costs
-0.743 2016-Dec-27_19:41:44 e325e1e feature/investment-staircase
-0.680 2016-Dec-28_11:13:51 1917307 feature/add-treatment-costs
-0.753 2016-Dec-29_03:42:29 74d4fd0 feature/add-treatment-costs
-0.668 2017-Jan-17_16:59:06 36b725f feature/plot-infections-caused
-0.729 2017-Jan-20_01:55:27 f8051a3 make-partable-and-rawtransit-csv-files
-0.708 2017-Jan-20_01:57:14 8e12ff7 make-partable-and-rawtransit-csv-files
-1.39 2017-Feb-07_18:32:09 e19d00d fix-programs-bug
-0.657 2017-Feb-07_18:40:05 b7b04cc fix-programs-bug
-0.664 2017-Mar-02_22:05:53 289c5d8 rethink-GA
-0.671 2017-Mar-02_23:22:55 66208c6 rethink-GA
-0.585 2017-Mar-02_23:34:39 d05c6d7 rethink-GA
+0.257 2016-Jan-25_18:46:09 b56675c geogui-with-plotfixes (benchmark:unknown)
+0.260 2016-Jan-25_18:53:29 d3bf4be geogui-with-plotfixes (benchmark:unknown)
+0.253 2016-Jan-25_19:11:54 5cab29f geogui-with-plotfixes (benchmark:unknown)
+0.297 2016-Jan-25_19:17:29 1b92bc3 geogui-with-plotfixes (benchmark:unknown)
+0.264 2016-Jan-29_05:02:50 d816d87 fix-geogui (benchmark:unknown)
+0.959 2016-Jan-29_23:54:29 349ae76 births (benchmark:unknown)
+1.020 2016-Jan-30_00:04:56 ccb6bb3 births (benchmark:unknown)
+0.933 2016-Jan-30_00:21:07 2269c06 births (benchmark:unknown)
+0.673 2016-Jan-30_02:02:56 68c2cb0 births (benchmark:unknown)
+0.358 2016-Jan-30_04:56:42 6be645b fix-cascade-03 (benchmark:unknown)
+1.000 2016-Jan-31_05:18:23 18ca9b3 90-90-90 (benchmark:unknown)
+0.356 2016-Jan-31_05:30:36 6af82b1 90-90-90 (benchmark:unknown)
+0.401 2016-Feb-01_01:29:39 f98ff4b geogui-output (benchmark:unknown)
+0.824 2016-Feb-03_16:04:50 f2f8f86 geospatial-bugfixes (benchmark:unknown)
+0.406 2016-Feb-03_17:09:17 9d685ff fix-manualfit (benchmark:unknown)
+0.412 2016-Feb-03_17:18:16 dac4e00 geospatial-bugfixes (benchmark:unknown)
+0.818 2016-Feb-03_22:51:52 e054e4d constraints (benchmark:unknown)
+0.880 2016-Feb-04_01:59:16 0d640d9 constraints (benchmark:unknown)
+0.407 2016-Feb-04_14:12:50 e44d55a temp-benchmarking (benchmark:unknown)
+0.417 2016-Feb-04_14:13:34 af33ae8 constraints (benchmark:unknown)
+0.410 2016-Feb-04_15:16:04 cd18666 temp-benchmarking (benchmark:unknown)
+0.448 2016-Feb-04_20:26:38 015f956 azfar-fixes2 (benchmark:unknown)
+0.554 2016-Feb-05_00:39:01 b9af124 azfar-fixes2 (benchmark:unknown)
+0.612 2016-Feb-05_03:42:02 d579f7a azfar-fixes2 (benchmark:unknown)
+0.634 2016-Feb-05_05:44:57 1fd3923 defaultproject-tests (benchmark:unknown)
+0.630 2016-Feb-06_17:24:41 e730bea optional-error-checking (benchmark:unknown)
+0.625 2016-Feb-06_17:25:13 a67619f optional-error-checking (benchmark:unknown)
+0.576 2016-Feb-06_17:32:48 9e602eb optional-error-checking (benchmark:unknown)
+0.378 2016-Feb-06_17:38:47 17fa1f9 optional-error-checking (benchmark:unknown)
+0.332 2016-Feb-06_18:56:10 4efbd59 speeding-up-model (benchmark:unknown)
+0.312 2016-Feb-06_18:57:06 dadc368 speeding-up-model (benchmark:unknown)
+0.289 2016-Feb-06_19:19:33 fc27b1f speeding-up-model (benchmark:unknown)
+0.377 2016-Feb-06_19:34:19 514d92a speeding-up-model (benchmark:unknown)
+0.379 2016-Feb-06_19:47:14 c27c046 speeding-up-model (benchmark:unknown)
+0.366 2016-Feb-06_19:55:46 dd142dd speeding-up-model (benchmark:unknown)
+0.390 2016-Feb-06_20:01:33 8c01834 speeding-up-model (benchmark:unknown)
+0.420 2016-Feb-06_20:11:44 71276b5 speeding-up-model (benchmark:unknown)
+0.471 2016-Feb-06_20:12:33 1e410ce speeding-up-model (benchmark:unknown)
+0.423 2016-Feb-06_20:15:21 ad05516 speeding-up-model (benchmark:unknown)
+0.425 2016-Feb-06_20:16:11 1b124c7 speeding-up-model (benchmark:unknown)
+0.887 2016-Feb-06_21:26:25 4a1a097 speeding-up-model (benchmark:unknown)
+0.419 2016-Feb-07_01:50:18 b37023d comparison-table (benchmark:unknown)
+0.434 2016-Feb-07_05:13:46 710709d autofit-debugging (benchmark:unknown)
+1.230 2016-Feb-07_12:46:56 f308af8 autofit-debugging (benchmark:unknown)
+1.030 2016-Feb-07_12:47:29 b36d406 autofit-debugging (benchmark:unknown)
+0.835 2016-Feb-07_12:53:41 59506ef autofit-debugging (benchmark:unknown)
+0.818 2016-Feb-07_13:32:19 c1f05c5 autofit-debugging (benchmark:unknown)
+0.413 2016-Feb-07_15:06:58 0699c43 initialize-with-defaults (benchmark:unknown)
+0.411 2016-Feb-07_21:32:44 272cdbb initialize-with-defaults (benchmark:unknown)
+0.649 2016-Feb-08_04:50:57 2f78f1e refactoring-optimization (benchmark:unknown)
+0.898 2016-Feb-08_23:34:58 55c9c17 best-example-project (benchmark:unknown)
+0.415 2016-Feb-09_01:03:31 83e060d fix-cascade-06 (benchmark:unknown)
+0.419 2016-Feb-10_01:23:00 d9bd2e3 reconcile-costfuncs-with-pars (benchmark:unknown)
+0.719 2016-Feb-26_14:53:18 c53b8b1 treatment-distribution (benchmark:unknown)
+0.406 2016-Feb-26_15:11:11 dda5b3f treatment-distribution (benchmark:unknown)
+0.586 2016-Jul-08_21:04:24 2b51e77 develop (benchmark:unknown)
+1.460 2016-Jul-08_21:45:33 4cdcea0 feature/primary-infection (benchmark:unknown)
+0.782 2016-Jul-08_21:48:57 e2b8089 feature/primary-infection (benchmark:unknown)
+1.390 2016-Jul-09_20:11:42 fbf1e0f feature/primary-infection-calculation (benchmark:unknown)
+0.704 2016-Jul-09_20:50:02 df2e85b feature/primary-infection-calculation (benchmark:unknown)
+0.667 2016-Jul-15_09:26:13 071338a feature/primary-infection-calculation (benchmark:unknown)
+0.658 2016-Jul-15_10:28:07 7fff518 feature/primary-infection-calculation (benchmark:unknown)
+0.760 2016-Jul-16_11:36:08 54ff15d develop (benchmark:unknown)
+0.700 2016-Jul-31_10:10:25 c7e7a8e investigate-negative-people (benchmark:unknown)
+0.681 2016-Jul-31_10:10:34 a080522 develop (benchmark:unknown)
+0.767 2016-Jul-31_07:34:09 b7a202d investigate-negative-people (benchmark:unknown)
+0.614 2016-Aug-10_17:18:12 0b693ac investigate-negative-people (benchmark:unknown)
+0.817 2016-Aug-12_12:53:44 58ab898 investigate-negative-people (benchmark:unknown)
+0.860 2016-Aug-24_09:32:14 54f8bf8 investigate-negative-people (benchmark:unknown)
+0.717 2016-Aug-26_12:32:08 b77d07c investigate-negative-people (benchmark:unknown)
+0.680 2016-Sep-13_02:10:26 48a8707 investigate-negative-people (benchmark:unknown)
+1.310 2016-Sep-20_22:50:32 521fcbb feature/fix-props (benchmark:unknown)
+0.846 2016-Sep-20_22:51:40 930e609 feature/fix-props (benchmark:unknown)
+0.857 2016-Sep-21_11:12:21 cda8d6d feature/fix-props (benchmark:unknown)
+0.825 2016-Sep-21_11:22:47 90680c5 feature/fix-props (benchmark:unknown)
+0.773 2016-Sep-21_16:21:50 7f3c1e8 feature/make-props-standard-outputs (benchmark:unknown)
+0.762 2016-Sep-21_16:50:22 c4d038a feature/make-props-standard-outputs (benchmark:unknown)
+0.733 2016-Sep-21_16:55:41 3da8635 feature/fix-props (benchmark:unknown)
+0.705 2016-Sep-22_01:47:37 3db4da9 debug-stage-4 (benchmark:unknown)
+0.684 2016-Sep-22_02:21:12 956f7eb debug-stage-4 (benchmark:unknown)
+0.767 2016-Sep-22_10:40:41 a9293b9 feature/fix-props (benchmark:unknown)
+1.090 2016-Sep-29_14:08:15 0a10d61 develop (benchmark:unknown)
+0.850 2016-Nov-03_12:19:07 39757ed various-fixes (benchmark:unknown)
+0.782 2016-Nov-03_12:20:22 0ddc046 various-fixes (benchmark:unknown)
+0.732 2016-Dec-24_00:38:18 a7ddfb7 feature/add-treatment-costs (benchmark:unknown)
+0.743 2016-Dec-27_19:41:44 e325e1e feature/investment-staircase (benchmark:unknown)
+0.680 2016-Dec-28_11:13:51 1917307 feature/add-treatment-costs (benchmark:unknown)
+0.753 2016-Dec-29_03:42:29 74d4fd0 feature/add-treatment-costs (benchmark:unknown)
+0.668 2017-Jan-17_16:59:06 36b725f feature/plot-infections-caused (benchmark:unknown)
+0.729 2017-Jan-20_01:55:27 f8051a3 make-partable-and-rawtransit-csv-files (benchmark:unknown)
+0.708 2017-Jan-20_01:57:14 8e12ff7 make-partable-and-rawtransit-csv-files (benchmark:unknown)
+1.390 2017-Feb-07_18:32:09 e19d00d fix-programs-bug (benchmark:unknown)
+0.657 2017-Feb-07_18:40:05 b7b04cc fix-programs-bug (benchmark:unknown)
+0.664 2017-Mar-02_22:05:53 289c5d8 rethink-GA (benchmark:unknown)
+0.671 2017-Mar-02_23:22:55 66208c6 rethink-GA (benchmark:unknown)
+0.585 2017-Mar-02_23:34:39 d05c6d7 rethink-GA (benchmark:unknown)
+0.868 2017-Oct-30_18:14:10 49e8971 time-varying-optimization (benchmark:18.94m)
+0.552 2017-Oct-30_18:27:40 2f93690 time-varying-optimization (benchmark:18.64m)
+0.505 2017-Oct-30_18:50:53 2035162 time-varying-optimization (benchmark:18.87m)

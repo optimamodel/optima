@@ -7,7 +7,7 @@ Version: 2016feb06
 """
 
 from optima import OptimaException, Link, printv, uuid, today, sigfig, getdate, dcp, smoothinterp, findinds, odict, Settings, sanitize, defaultrepr, isnumber, promotetoarray, vec2obj, asd, convertlimits
-from numpy import ones, prod, array, zeros, exp, log, append, nan, isnan, maximum, minimum, sort, concatenate as cat, transpose, mean
+from numpy import ones, prod, array, zeros, exp, log, append, nan, isnan, maximum, minimum, sort, concatenate as cat, transpose, mean, argsort
 from random import uniform
 import abc
 
@@ -93,10 +93,12 @@ class Programset(object):
             for thispop in self.progs_by_targetpar(targetpartype).keys(): # Loop over populations
                 if self.covout[targetpartype].get(thispop): # Take the pre-existing one if it's there... 
                     ccopars = self.covout[targetpartype][thispop].ccopars 
+                    interaction = self.covout[targetpartype][thispop].interaction 
                 else: # ... or if not, set it up
                     ccopars = odict()
                     ccopars['intercept'] = []
                     ccopars['t'] = []
+                    interaction = self.default_interaction
                 targetingprogs = [thisprog.short for thisprog in self.progs_by_targetpar(targetpartype)[thispop]]
                 for tp in targetingprogs:
                     if not ccopars.get(tp): ccopars[tp] = []
@@ -109,7 +111,7 @@ class Programset(object):
                     if prog not in targetingprogs:
                         ccopars.pop(prog, None)
 
-                self.covout[targetpartype][thispop] = Covout(ccopars=ccopars,interaction=self.default_interaction)
+                self.covout[targetpartype][thispop] = Covout(ccopars=ccopars,interaction=interaction)
 
         # Delete any stored effects that aren't needed (if removing a program)
         for tpt in self.covout.keys():
@@ -908,6 +910,12 @@ class Program(object):
             else:
                 errormsg = 'You have already entered cost and/or coverage data for the year %s .' % costcovdatum['t']
                 raise OptimaException(errormsg)
+        
+        # Ensure it's in order
+        order = argsort(self.costcovdata['t']) # Get the order from the years
+        for key in ['t', 'cost', 'coverage']: # Reorder each of them to be the same
+            self.costcovdata[key] = [self.costcovdata[key][o] for o in order]
+        return None
 
 
     def rmcostcovdatum(self, year, verbose=2):
@@ -920,6 +928,7 @@ class Program(object):
         else:
             errormsg = 'You have asked to remove data for the year %s, but no data was added for that year. Cost coverage data are: %s' % (year, self.costcovdata)
             raise OptimaException(errormsg)
+        return None
 
 
     def gettargetpopsize(self, t, parset=None, results=None, total=True, useelig=False, die=False):
@@ -967,7 +976,7 @@ class Program(object):
                         if die: 
                             raise E
                         else:
-                            print('Failed to extract results because "%s", using default' % E.__repr__())
+                            print('Failed to extract results because "%s", using default' % repr(E))
                             initpopsizes = defaultinitpopsizes
             
             else: # ... or if it's a program for pregnant women.
@@ -983,7 +992,7 @@ class Program(object):
                         if die: 
                             raise E
                         else: 
-                            print('Failed to extract results because "%s", using default' % E.__repr__())
+                            print('Failed to extract results because "%s", using default' % repr(E))
                             initpopsizes = defaultinitpopsizes
         for popno, pop in enumerate(parset.pars['popkeys']):
             popsizes[pop] = initpopsizes[popno,:]
@@ -996,7 +1005,7 @@ class Program(object):
         finalpopsize = array([sum(targetpopsize.values())]) if isnumber(sum(targetpopsize.values())) else sum(targetpopsize.values())
                     
         if total: return finalpopsize
-        else: return targetpopsize
+        else:     return targetpopsize
 
 
     def gettargetcomposition(self, t, parset=None, results=None, total=True):
