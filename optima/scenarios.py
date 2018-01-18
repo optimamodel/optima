@@ -337,7 +337,7 @@ def defaultscenarios(project=None, which=None, startyear=2016, endyear=2020, par
             ]
     
     # WARNING, this may not entirely work
-    elif which=='90-90-90':
+    elif which=='90-90-90' or which=='909090':
         scenlist = [
             Parscen(name='Baseline', parsetname=0, pars=[]),
             Parscen(name='90-90-90',
