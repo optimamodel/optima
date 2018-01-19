@@ -1,5 +1,5 @@
 ## Imports
-from numpy import zeros, exp, maximum, minimum, inf, array, isnan, einsum, floor, ones, power as npow, concatenate as cat, interp, nan, squeeze
+from numpy import zeros, exp, maximum, minimum, inf, array, isnan, einsum, floor, ones, power as npow, concatenate as cat, interp, nan, squeeze, isinf, isfinite
 from optima import OptimaException, printv, dcp, odict, findinds, makesimpars, Resultset
 
 def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False, debug=False, label=None, startind=None):
@@ -815,21 +815,21 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
             for name,prop,lowerstate,tostate,num,denom,raw_new,fixyear in [propdx_list,propcare_list,proptx_list,propsupp_list]:
                 
                 calcprop = people[num,:,t].sum()/people[denom,:,t].sum() # This is the value we fix it at
-                if ~isnan(fixyear) and fixyear==t: # Fixing the proportion from this timepoint
-                    if ~isnan(prop[t:]).all(): # If a parameter value for prop has been specified at some point, we will interpolate to that value
-                        nonnanind = findinds(~isnan(prop))[0]
-                        prop[t:nonnanind] = interp(range(t,nonnanind), [t,nonnanind-1], [calcprop,prop[nonnanind]])
-                        print('cokiei! t=%5s nonnanind=%s name=%8s prop[t]=%s prop[nonnanind]=%s calcprop=%s' % (tvec[t], nonnanind, name, prop[t], prop[nonnanind], calcprop))
+                if fixyear==t: # Fixing the proportion from this timepoint
+                    naninds    = findinds(isnan(prop))
+                    infinds    = findinds(isinf(prop))
+                    finiteinds = findinds(isfinite(prop))
+                    finiteind = npts-1 if not len(finiteinds) else finiteinds[0] # Get first finite index, or else just last point -- latter should not actually matter
+                    naninds = naninds[naninds>=t] # Trim ones that are less than the current point
+                    infinds = infinds[infinds>=t] # Trim ones that are less than the current point
+                    ninterppts = len(infinds)
+                    if len(naninds): prop[naninds] = calcprop
+                    if len(infinds): prop[infinds] = interp(range(ninterppts), [0,ninterppts-1], [calcprop,prop[finiteind]])
+                    print('cokiei! t=%5s finiteind=%s name=%8s prop[t]=%s prop[nonnanind]=%s calcprop=%s' % (tvec[t], finiteind, name, prop[t], prop[finiteind], calcprop))
                         
-                    else: # If not, we will just use this value from now on
-                        prop[t:] = calcprop
                 
                 if name=='propdx': print('hi! t=%5s name=%8s prop=%s calcprop=%s' % (tvec[t], name, prop[t], people[num,:,t].sum()/people[denom,:,t].sum()))
                 if name=='propdx': print prop
-                
-                
-                if calcprop-prop[t]>0.01:
-                    import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
                 
                 # Figure out how many people we currently have...
                 actual    = people[num,:,t+1].sum() # ... in the higher cascade state

@@ -6,7 +6,7 @@ parameters, the Parameterset class.
 Version: 2.1 (2017apr04)
 """
 
-from numpy import array, nan, isnan, zeros, argmax, mean, log, polyfit, exp, maximum, minimum, Inf, linspace, median, shape
+from numpy import array, nan, isnan, isfinite, zeros, argmax, mean, log, polyfit, exp, maximum, minimum, Inf, linspace, median, shape
 from numpy.random import uniform, normal, seed
 from optima import OptimaException, Link, odict, dataframe, printv, sanitize, uuid, today, getdate, makefilepath, smoothinterp, dcp, defaultrepr, isnumber, findinds, getvaliddata, promotetoarray, promotetolist, inclusiverange # Utilities 
 from optima import Settings, getresults, convertlimits, gettvecdt, loadpartable, loadtranstable # Heftier functions
@@ -636,7 +636,7 @@ class Timepar(Par):
             yinterp = m * smoothinterp(tvec, self.t[pop], self.y[pop], smoothness=smoothness) # Use interpolation
             yinterp = applylimits(par=self, y=yinterp, limits=self.limits, dt=dt)
             if asarray: output[pop,:] = yinterp
-            else: output[key] = yinterp
+            else:       output[key]   = yinterp
         if npops==1 and self.by=='tot' and asarray: return output[0,:] # npops should always be 1 if by==tot, but just be doubly sure
         else: return output
 
@@ -1234,7 +1234,7 @@ def applylimits(y, par=None, limits=None, dt=None, warn=True, verbose=2):
     
     # Apply limits, preserving original class -- WARNING, need to handle nans
     if isnumber(y):
-        if isnan(y): return y # Give up
+        if ~isfinite(y): return y # Give up
         newy = median([limits[0], y, limits[1]])
         if warn and newy!=y: printv('Note, parameter value "%s" reset from %f to %f' % (parname, y, newy), 3, verbose)
     elif shape(y):
