@@ -864,7 +864,8 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                                 newmovers = diff*ppltomoveup/totalppltomoveup
                                 people[lowerstate,:,t+1] -= newmovers # Shift people out of the less progressed state... 
                                 people[tostate,:,t+1]    += newmovers # ... and into the more progressed state
-                            raw_new[:,t+1]           += newmovers.sum(axis=0)/dt # Save new movers
+                            raw_new[:,t]           += newmovers.sum(axis=0)/dt # Save new movers
+                            if name=='propdx': print('%s %s' % (tvec[t], raw_new[:,t]))
                     elif diff<-eps: # We need to move people backwards along the cascade
                         ppltomovedown = people[tostate,:,t+1]
                         totalppltomovedown = ppltomovedown.sum()
@@ -880,7 +881,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                             else:
                                 people[tostate,:,t+1]    -= newmovers # Shift people out of the more progressed state... 
                                 people[lowerstate,:,t+1] += newmovers # ... and into the less progressed state
-                            raw_new[:,t+1]           -= newmovers.sum(axis=0)/dt # Save new movers, inverting again
+                            raw_new[:,t]           -= newmovers.sum(axis=0)/dt # Save new movers, inverting again
             if debug: checkfornegativepeople(people, tind=t+1) # If ebugging, check for negative people on every timestep
         
     raw                 = odict()    # Sim output structure
