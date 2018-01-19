@@ -816,20 +816,15 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                 
                 calcprop = people[num,:,t].sum()/people[denom,:,t].sum() # This is the value we fix it at
                 if fixyear==t: # Fixing the proportion from this timepoint
-                    naninds    = findinds(isnan(prop))
-                    infinds    = findinds(isinf(prop))
-                    finiteinds = findinds(isfinite(prop))
+                    naninds    = findinds(isnan(prop)) # Find the indices that are nan -- to be replaced by current values
+                    infinds    = findinds(isinf(prop)) # Find indices that are infinite -- to be scaled up/down to a target value
+                    finiteinds = findinds(isfinite(prop)) # Find indices that are defined
                     finiteind = npts-1 if not len(finiteinds) else finiteinds[0] # Get first finite index, or else just last point -- latter should not actually matter
                     naninds = naninds[naninds>t] # Trim ones that are less than the current point
                     infinds = infinds[infinds>t] # Trim ones that are less than the current point
-                    ninterppts = len(infinds)
-                    if len(naninds): prop[naninds] = calcprop
-                    if len(infinds): prop[infinds] = interp(range(ninterppts), [0,ninterppts-1], [calcprop,prop[finiteind]])
-                    print('cokiei! t=%5s finiteind=%s name=%8s prop[t]=%s prop[nonnanind]=%s calcprop=%s' % (tvec[t], finiteind, name, prop[t], prop[finiteind], calcprop))
-                        
-                
-                if name=='propdx': print('hi! t=%5s name=%8s prop=%s calcprop=%s' % (tvec[t], name, prop[t], people[num,:,t].sum()/people[denom,:,t].sum()))
-                if name=='propdx': print prop
+                    ninterppts = len(infinds) # Number of points to interpolate over
+                    if len(naninds): prop[naninds] = calcprop # Replace nans with current proportion
+                    if len(infinds): prop[infinds] = interp(range(ninterppts), [0,ninterppts-1], [calcprop,prop[finiteind]]) # Replace infinities with scale-up/down
                 
                 # Figure out how many people we currently have...
                 actual    = people[num,:,t+1].sum() # ... in the higher cascade state
