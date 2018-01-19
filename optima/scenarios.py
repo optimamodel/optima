@@ -5,7 +5,7 @@ Version: 2017jun03
 '''
 
 ## Imports
-from numpy import append, array
+from numpy import append, array, nan
 from optima import OptimaException, Link, Multiresultset # Core classes/functions
 from optima import dcp, today, odict, printv, findinds, defaultrepr, getresults, vec2obj, isnumber, uuid, promotetoarray # Utilities
 
@@ -183,7 +183,9 @@ def makescenarios(project=None, scenlist=None, verbose=2, ccsample=False, randse
                         if int(thispar.fromdata): # If it's a regular parameter made from data, we get the default start value from the data
                             this_y = thispar.interp(tvec=scenpar['startyear'], sample=False)[popind] # Find what the model would get for this value
                         else:
-                            this_y = thisparset.getprop(proptype=scenpar['name'],year=scenpar['startyear'])                            
+                            this_y = nan # Keep this as nan, it will be interpolated to the end value
+                            fixproppar = thisparset.pars['fix'+scenpar['name']] # Pull this out since used twice
+                            fixproppar.t = min(fixproppar.t, scenpar['startyear']) # Take the earlier of the current fixprop start year and the scenario start year
 
                     # Remove years after the last good year
                     if last_t < max(thispar.t[popind]):
