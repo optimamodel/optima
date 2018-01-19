@@ -1,5 +1,5 @@
 ## Imports
-from numpy import zeros, exp, maximum, minimum, inf, array, isnan, einsum, floor, ones, power as npow, concatenate as cat, interp, nan, squeeze
+from numpy import zeros, exp, maximum, minimum, inf, array, isnan, einsum, floor, ones, power as npow, concatenate as cat, interp, nan, squeeze, isinf, isfinite
 from optima import OptimaException, printv, dcp, odict, findinds, makesimpars, Resultset
 
 def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False, debug=False, label=None, startind=None):
@@ -814,22 +814,26 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
 
             for name,prop,lowerstate,tostate,num,denom,raw_new,fixyear in [propdx_list,propcare_list,proptx_list,propsupp_list]:
                 
-                if ~isnan(fixyear) and fixyear==t: # Fixing the proportion from this timepoint
-                    calcprop = people[num,:,t].sum()/people[denom,:,t].sum() # This is the value we fix it at
-                    if ~isnan(prop[t+1:]).all(): # If a parameter value for prop has been specified at some point, we will interpolate to that value
-                        nonnanind = findinds(~isnan(prop))[0]
-                        prop[t+1:nonnanind] = interp(range(t+1,nonnanind), [t+1,nonnanind], [calcprop,prop[nonnanind]])
-                    else: # If not, we will just use this value from now on
-                        prop[t+1:] = calcprop
+                calcprop = people[num,:,t].sum()/people[denom,:,t].sum() # This is the value we fix it at
+                if fixyear==t: # Fixing the proportion from this timepoint
+                    naninds    = findinds(isnan(prop)) # Find the indices that are nan -- to be replaced by current values
+                    infinds    = findinds(isinf(prop)) # Find indices that are infinite -- to be scaled up/down to a target value
+                    finiteinds = findinds(isfinite(prop)) # Find indices that are defined
+                    finiteind = npts-1 if not len(finiteinds) else finiteinds[0] # Get first finite index, or else just last point -- latter should not actually matter
+                    naninds = naninds[naninds>t] # Trim ones that are less than the current point
+                    infinds = infinds[infinds>t] # Trim ones that are less than the current point
+                    ninterppts = len(infinds) # Number of points to interpolate over
+                    if len(naninds): prop[naninds] = calcprop # Replace nans with current proportion
+                    if len(infinds): prop[infinds] = interp(range(ninterppts), [0,ninterppts-1], [calcprop,prop[finiteind]]) # Replace infinities with scale-up/down
                 
                 # Figure out how many people we currently have...
-                actual          = people[num,:,t+1].sum() # ... in the higher cascade state
-                available       = people[denom,:,t+1].sum() # ... waiting to move up
+                actual    = people[num,:,t+1].sum() # ... in the higher cascade state
+                available = people[denom,:,t+1].sum() # ... waiting to move up
                 
                 # Move the people who started treatment last timestep from usvl to svl
-                if isnan(prop[t+1]):
-                    if   name == 'proptx':   wanted = numtx[t+1] # If proptx is nan, we use numtx
-                    else:                    wanted = None # If a proportion or number isn't specified, skip this
+                if ~isfinite(prop[t+1]):
+                    if name == 'proptx': wanted = numtx[t+1] # If proptx is nan, we use numtx
+                    else:                wanted = None # If a proportion or number isn't specified, skip this
                 else: # If the prop value is finite, we use it
                     wanted = prop[t+1]*available
                 

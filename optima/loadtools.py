@@ -53,6 +53,7 @@ def setmigrations(which='migrations'):
         ('2.6',   ('2.6.1', '2017-12-19', None,              'Scenario sensitivity feature')),
         ('2.6.1', ('2.6.2', '2017-12-19', None,              'New results format')),
         ('2.6.2', ('2.6.3', '2018-01-17', addtimevarying,    'Preliminaries for time-varying optimization')),
+        ('2.6.3', ('2.6.4', '2018-01-19', None,              'Changes to how proportions are handled')),
         ])
     
     # Define changelog

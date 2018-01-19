@@ -802,13 +802,15 @@ def load_zip_of_prj_files(project_ids):
 
     prjs = [load_project_record(id).as_file(dirname) for id in project_ids]
 
-    zip_fname = '{}.zip'.format(uuid4())
+    datestr = op.today().strftime('%Y%b%d_%H%M%S').encode('ascii', 'ignore') # Today's date
+    zip_fname = 'Optima_projects_%s.zip' % datestr
     server_zip_fname = os.path.join(dirname, zip_fname)
     with ZipFile(server_zip_fname, 'w') as zipfile:
         for prj in prjs:
             zipfile.write(os.path.join(dirname, prj), 'portfolio/{}'.format(prj))
 
-    return dirname, zip_fname
+    full_filename = os.path.join(dirname, zip_fname)
+    return full_filename
 
 
 def resolve_project(project):

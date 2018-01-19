@@ -341,11 +341,14 @@ def printvars(localvars=None, varlist=None, label=None, divider=True, spaces=1, 
     return None
 
 
-def today():
+def today(timezone='utc'):
     ''' Get the current time, in UTC time '''
     import datetime # today = datetime.today
     import dateutil
-    now = datetime.datetime.now(dateutil.tz.tzutc())
+    if timezone=='utc':                           tzinfo = dateutil.tz.tzutc()
+    elif timezone is None or timezone=='current': tzinfo = None
+    else:                                         raise Exception('Timezone "%s" not understood' % timezone)
+    now = datetime.datetime.now(tzinfo)
     return now
 
 
@@ -821,7 +824,7 @@ def dataindex(dataarray, index):
     return output
 
 
-def smoothinterp(newx=None, origx=None, origy=None, smoothness=None, growth=None, strictnans=False):
+def smoothinterp(newx=None, origx=None, origy=None, smoothness=None, growth=None, keepfinite=False):
     '''
     Smoothly interpolate over values and keep end points. Same format as numpy.interp.
     
@@ -837,10 +840,10 @@ def smoothinterp(newx=None, origx=None, origy=None, smoothness=None, growth=None
     
     Version: 2016nov02
     '''
-    from numpy import array, interp, convolve, linspace, concatenate, ones, exp, isnan, argsort, ceil
+    from numpy import array, interp, convolve, linspace, concatenate, ones, exp, nan, inf, isnan, isfinite, argsort, ceil
     
     # Ensure arrays and remove NaNs
-    if isnumber(newx): newx = [newx] # Make sure it has dimension
+    if isnumber(newx):  newx = [newx] # Make sure it has dimension
     if isnumber(origx): origx = [origx] # Make sure it has dimension
     if isnumber(origy): origy = [origy] # Make sure it has dimension
     newx = array(newx)
@@ -859,24 +862,27 @@ def smoothinterp(newx=None, origx=None, origy=None, smoothness=None, growth=None
         errormsg = 'To interpolate, original x and y vectors must be same length (x=%i, y=%i)' % (len(origx), len(origy))
         raise Exception(errormsg)
     
-    if strictnans:
-        origy = origy[~isnan(origy)] 
-        origx = origx[~isnan(origy)]
-
-    # Calculate smoothness: this is consistent smoothing regardless of the size of the arrays
-    if smoothness is None: smoothness = ceil(len(newx)/len(origx))
-    smoothness = int(smoothness) # Make sure it's an appropriate number
-    
     # Make sure it's in the correct order
     correctorder = argsort(origx)
     origx = origx[correctorder]
     origy = origy[correctorder]
     newx = newx[argsort(newx)] # And sort newx just in case
     
-    # Smooth
+    # Only keep finite elements
+    finitey = isfinite(origy) # Boolean for whether it's finite
+    if finitey.any() and not finitey.all(): # If some but not all is finite, pull out indices that are
+        finiteorigy = origy[finitey]
+        finiteorigx = origx[finitey]
+    else: # Otherwise, just copy the original
+        finiteorigy = origy.copy()
+        finiteorigx = origx.copy()
+
+    # Perform interpolation and smooth
+    if smoothness is None: smoothness = ceil(len(newx)/len(origx)) # Calculate smoothness: this is consistent smoothing regardless of the size of the arrays
+    smoothness = int(smoothness) # Make sure it's an appropriate number
+    newy = interp(newx, finiteorigx, finiteorigy) # Perform standard interpolation without infinities
     kernel = exp(-linspace(-2,2,2*smoothness+1)**2)
     kernel /= kernel.sum()
-    newy = interp(newx, origx, origy) # Use interpolation
     validinds = findinds(~isnan(newy)) # Remove nans since these don't exactly smooth well
     if len(validinds): # No point doing these steps if no non-nan values
         validy = newy[validinds]
@@ -894,7 +900,24 @@ def smoothinterp(newx=None, origx=None, origy=None, smoothness=None, growth=None
         if len(futureindices): # If there are past data points
             lastpoint = futureindices[0]-1
             newy[futureindices] = newy[lastpoint] * exp((newx[futureindices]-newx[lastpoint])*growth) # Get last 'good' data point and apply growth
-        
+    
+    # Add infinities back in, if they exist
+    if any(~isfinite(origy)): # Infinities exist, need to add them back in manually since interp can only handle nan
+        if not keepfinite: # Don't keep it finite
+            orignan      = zeros(len(origy)) # Start from scratch
+            origplusinf  = zeros(len(origy)) # Start from scratch
+            origminusinf = zeros(len(origy)) # Start from scratch
+            orignan[isnan(origy)]     = nan  # Replace nan entries with nan
+            origplusinf[origy==inf]   = nan  # Replace plus infinite entries with nan
+            origminusinf[origy==-inf] = nan  # Replace minus infinite entries with nan
+            newnan      = interp(newx, origx, orignan) # Interpolate the nans
+            newplusinf  = interp(newx, origx, origplusinf) # ...again, for positive
+            newminusinf = interp(newx, origx, origminusinf) # ...and again, for negative
+            newy[isnan(newminusinf)] = -inf # Add minus infinity back in first
+            newy[isnan(newplusinf)]  = inf # Then, plus infinity
+            newy[isnan(newnan)]  = nan # Finally, the nans
+            
+    
     return newy
     
 
