@@ -1239,11 +1239,12 @@ def applylimits(y, par=None, limits=None, dt=None, warn=True, verbose=2):
         if warn and newy!=y: printv('Note, parameter value "%s" reset from %f to %f' % (parname, y, newy), 3, verbose)
     elif shape(y):
         newy = array(y) # Make sure it's an array and not a list
-        naninds = findinds(isnan(newy))
-        if len(naninds): newy[naninds] = limits[0] # Temporarily reset -- value shouldn't matter
+        infiniteinds = findinds(~isfinite(newy))
+        infinitevals = newy[infiniteinds] # Store these for safe keeping
+        if len(infiniteinds): newy[infiniteinds] = limits[0] # Temporarily reset -- value shouldn't matter
         newy[newy<limits[0]] = limits[0]
         newy[newy>limits[1]] = limits[1]
-        newy[naninds] = nan # And return to nan
+        newy[infiniteinds] = infinitevals # And stick them back in
         if warn and any(newy!=array(y)):
             printv('Note, parameter "%s" value reset from:\n%s\nto:\n%s' % (parname, y, newy), 3, verbose)
     else:
