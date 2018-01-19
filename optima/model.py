@@ -836,7 +836,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                 available = people[denom,:,t+1].sum() # ... waiting to move up
                 
                 # Move the people who started treatment last timestep from usvl to svl
-                if isnan(prop[t+1]):
+                if ~isfinite(prop[t+1]):
                     if name == 'proptx': wanted = numtx[t+1] # If proptx is nan, we use numtx
                     else:                wanted = None # If a proportion or number isn't specified, skip this
                 else: # If the prop value is finite, we use it
