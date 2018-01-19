@@ -802,7 +802,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                     if actualpeople==0: raise Exception("ERROR: no people.")
                     ratio = wantedpeople/actualpeople
                     if abs(ratio-1)>relerr: # It's not OK
-                        errormsg = label + 'Warning, ratio of population sizes is nowhere near 1 (t=%f, pop=%s, wanted=%f, actual=%f, ratio=%f)' % (t, popkeys[p], wantedpeople, actualpeople, ratio)
+                        errormsg = label + 'Warning, expected population size is nowhere near calculated population size (t=%f, pop=%s, wanted=%f, actual=%f, ratio=%f)' % (t, popkeys[p], wantedpeople, actualpeople, ratio)
                         if die: raise OptimaException(errormsg)
                         else: printv(errormsg, 1, verbose=verbose)
                     people[susnotonart,p,t+1] *= ratio # It's OK, so scale to match
@@ -814,7 +814,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
 
             for name,prop,lowerstate,tostate,num,denom,raw_new,fixyear in [propdx_list,propcare_list,proptx_list,propsupp_list]:
                 
-                calcprop = people[num,:,t].sum()/people[denom,:,t].sum() # This is the value we fix it at
+                calcprop = people[num,:,t].sum()/(eps+people[denom,:,t].sum()) # This is the value we fix it at
                 if fixyear==t: # Fixing the proportion from this timepoint
                     naninds    = findinds(isnan(prop)) # Find the indices that are nan -- to be replaced by current values
                     infinds    = findinds(isinf(prop)) # Find indices that are infinite -- to be scaled up/down to a target value
