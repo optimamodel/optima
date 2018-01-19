@@ -820,8 +820,8 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                     infinds    = findinds(isinf(prop))
                     finiteinds = findinds(isfinite(prop))
                     finiteind = npts-1 if not len(finiteinds) else finiteinds[0] # Get first finite index, or else just last point -- latter should not actually matter
-                    naninds = naninds[naninds>=t] # Trim ones that are less than the current point
-                    infinds = infinds[infinds>=t] # Trim ones that are less than the current point
+                    naninds = naninds[naninds>t] # Trim ones that are less than the current point
+                    infinds = infinds[infinds>t] # Trim ones that are less than the current point
                     ninterppts = len(infinds)
                     if len(naninds): prop[naninds] = calcprop
                     if len(infinds): prop[infinds] = interp(range(ninterppts), [0,ninterppts-1], [calcprop,prop[finiteind]])
