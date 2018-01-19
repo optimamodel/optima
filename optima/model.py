@@ -871,7 +871,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                         if totalppltomovedown>eps: # To avoid having to add eps
                             diff = min(-diff, totalppltomovedown-eps) # Flip it around so we have positive people
                             newmovers = diff*ppltomovedown/totalppltomovedown
-                            if 0:# name == 'proptx': # Handle SVL and USVL separately
+                            if name == 'proptx': # Handle SVL and USVL separately
                                 newmoversusvl = newmovers[:ncd4,:] # First group of movers are from USVL
                                 newmoverssvl  = newmovers[ncd4:,:] # Second group is SVL
                                 people[usvl,:,t+1] -= newmoversusvl # Shift people out of USVL treatment
