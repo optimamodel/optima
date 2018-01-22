@@ -447,8 +447,9 @@ class Project(object):
             keys = parset.pars.keys() # Assume all pars structures have the same keys
             newpars = parset.pars
             for key in keys:
-                if hasattr(newpars[key],'y'): newpars[key].y = origpars[key].y # Reset y (value) variable, if it exists
-                if hasattr(newpars[key],'t'): newpars[key].t = origpars[key].t # Reset t (time) variable, if it exists
+                if newpars[key].fromdata: # Don't refresh parameters that aren't based on data
+                    if hasattr(newpars[key],'y'): newpars[key].y = origpars[key].y # Reset y (value) variable, if it exists
+                    if hasattr(newpars[key],'t'): newpars[key].t = origpars[key].t # Reset t (time) variable, if it exists
         
         self.modified = today()
         return None
