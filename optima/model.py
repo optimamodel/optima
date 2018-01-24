@@ -601,8 +601,13 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
         ### Calculate probabilities of shifting along cascade (if programmatically determined)
         ##############################################################################################################
 
+        def userate(prop,t):
+            if   t==0:             return True # Never force a proportion on the first timestep
+            elif isnan(prop[t-1]): return True # The previous timestep had a rate, so keep the rate here
+            else:                  return False # Neither: use a proportion instead of a rate
+
         # Undiagnosed to diagnosed
-        if isnan(propdx[t]):
+        if userate(propdx,t): # Need to project forward one year to avoid mismatch
             dxprob = [hivtest[:,t]]*ncd4
             for cd4 in range(aidsind, ncd4): dxprob[cd4] = maximum(aidstest[t],hivtest[:,t])
         else: dxprob = zeros(ncd4)
@@ -616,7 +621,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                     raw_diag[:,t] += people[fromstate,:,t]*thistransit[fromstate,tostate,:]/dt
 
         # Diagnosed/lost to care
-        if isnan(propcare[t]):
+        if userate(propcare,t):
             careprob = [linktocare[:,t]]*ncd4
             for cd4 in range(aidsind, ncd4): careprob[cd4] = maximum(aidslinktocare[t],linktocare[:,t])
         else: careprob = zeros(ncd4)
@@ -629,7 +634,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                     thistransit[fromstate,tostate,:] *= careprob[cd4]
 
         # Care/USVL/SVL to lost
-        if isnan(propcare[t]):
+        if userate(propcare,t):
             lossprob = [leavecare[:,t]]*ncd4 
             for cd4 in range(aidsind, ncd4): lossprob[cd4] = minimum(aidsleavecare[t],leavecare[:,t])
         else: lossprob = zeros(ncd4)
@@ -642,7 +647,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                     thistransit[fromstate,tostate,:] *= lossprob[cd4]
     
         # SVL to USVL
-        usvlprob = treatfail if isnan(propsupp[t]) else 0.
+        usvlprob = treatfail if userate(propsupp,t) else 0.
         for fromstate in svl:
             for tostate in fromto[fromstate]:
                 if tostate in svl: # Probability of remaining suppressed
@@ -651,7 +656,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                     thistransit[fromstate,tostate,:] *= usvlprob
         
         # USVL to SVL
-        svlprob = min(numvlmon[t]/(eps+numtx[t]*requiredvl),1) if isnan(propsupp[t]) else 0.
+        svlprob = min(numvlmon[t]/(eps+numtx[t]*requiredvl),1) if userate(propsupp,t) else 0.
         for fromstate in usvl:
             for tostate in fromto[fromstate]:
                 if tostate in usvl: # Probability of not receiving a VL test & thus remaining failed
@@ -867,8 +872,8 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                                 newmovers = diff*ppltomoveup/totalppltomoveup
                                 people[lowerstate,:,t+1] -= newmovers # Shift people out of the less progressed state... 
                                 people[tostate,:,t+1]    += newmovers # ... and into the more progressed state
-                            raw_new[:,t]           += newmovers.sum(axis=0)/dt # Save new movers
-                            if name=='propdx': print('MORE tvec=%s diff=%s newmov=%s raw=%s' % (tvec[t], diff, newmovers, raw_new[:,t]))
+                            raw_new[:,t+1]               += newmovers.sum(axis=0)/dt # Save new movers
+                            if name=='propdx': print('MORE tvec=%s diff=%s newmov=%s raw=%s' % (tvec[t], diff, newmovers, raw_new[:,t+1]))
                     elif diff<-eps: # We need to move people backwards along the cascade
                         ppltomovedown = people[tostate,:,t+1]
                         totalppltomovedown = ppltomovedown.sum()
@@ -884,8 +889,8 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                             else:
                                 people[tostate,:,t+1]    -= newmovers # Shift people out of the more progressed state... 
                                 people[lowerstate,:,t+1] += newmovers # ... and into the less progressed state
-                            raw_new[:,t]               -= newmovers.sum(axis=0)/dt # Save new movers, inverting again
-                            if name=='propdx': print('LESS tvec=%s diff=%s newmov=%s raw=%s' % (tvec[t], diff, newmovers, raw_new[:,t]))
+                            raw_new[:,t+1]               -= newmovers.sum(axis=0)/dt # Save new movers, inverting again
+                            if name=='propdx': print('LESS tvec=%s diff=%s newmov=%s raw=%s' % (tvec[t], diff, newmovers, raw_new[:,t+1]))
             if debug: checkfornegativepeople(people, tind=t+1) # If ebugging, check for negative people on every timestep
         
     raw                 = odict()    # Sim output structure
