@@ -820,8 +820,6 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
             for name,proplist in propstruct.items():
                 prop, lowerstate, tostate, numer, denom, raw_new, fixyear = proplist
 
-                if name=='propdx': print('\n\nhi: %s %s' % (tvec[t], raw_new[:,t]))
-                
                 calcprop = people[numer,:,t].sum()/(eps+people[denom,:,t].sum()) # This is the value we fix it at
                 if fixyear==t: # Fixing the proportion from this timepoint
                     naninds    = findinds(isnan(prop)) # Find the indices that are nan -- to be replaced by current values
@@ -873,7 +871,6 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                                 people[lowerstate,:,t+1] -= newmovers # Shift people out of the less progressed state... 
                                 people[tostate,:,t+1]    += newmovers # ... and into the more progressed state
                             raw_new[:,t+1]               += newmovers.sum(axis=0)/dt # Save new movers
-                            if name=='propdx': print('MORE tvec=%s diff=%s newmov=%s raw=%s' % (tvec[t], diff, newmovers, raw_new[:,t+1]))
                     elif diff<-eps: # We need to move people backwards along the cascade
                         ppltomovedown = people[tostate,:,t+1]
                         totalppltomovedown = ppltomovedown.sum()
@@ -890,7 +887,6 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                                 people[tostate,:,t+1]    -= newmovers # Shift people out of the more progressed state... 
                                 people[lowerstate,:,t+1] += newmovers # ... and into the less progressed state
                             raw_new[:,t+1]               -= newmovers.sum(axis=0)/dt # Save new movers, inverting again
-                            if name=='propdx': print('LESS tvec=%s diff=%s newmov=%s raw=%s' % (tvec[t], diff, newmovers, raw_new[:,t+1]))
             if debug: checkfornegativepeople(people, tind=t+1) # If ebugging, check for negative people on every timestep
         
     raw                 = odict()    # Sim output structure
