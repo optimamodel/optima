@@ -713,8 +713,11 @@ def sanitize(data=None, returninds=False, replacenans=None, die=True):
                     sanitized = dcp(data)
                     sanitized[naninds] = replacenans
         except Exception as E:
-            if die: raise Exception('Sanitization failed on array: "%s":\n %s' % (repr(E), data))
-            else:   return data # Give up and just return the original
+            if die: 
+                raise Exception('Sanitization failed on array: "%s":\n %s' % (repr(E), data))
+            else:
+                sanitized = array([]) # Give up and just return an empty array
+                inds = array([])
         if len(sanitized)==0:
             sanitized = 0.0
             print('                WARNING, no data entered for this parameter, assuming 0')

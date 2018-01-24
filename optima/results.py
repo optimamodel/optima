@@ -264,13 +264,17 @@ class Resultset(object):
         
         def processpopdata(self, rawdata):
             ''' Little method to calculate total population size from data using nearest neighbor interpolation '''
-            preprocessed = processdata(rawdata, uncertainty=True)
-            processed = dcp(preprocessed)
+            nyears = len(self.datayears) # Count how many years there are
+            preprocessed = processdata(rawdata, uncertainty=True) # Preprocess raw population size data by population
+            processed = zeros((3,nyears)) # Zero out # Initialize
             for blh in range(3): # Iterate over best, high, low
-                processed[blh] = zeros(len(self.datayears)) # Zero out
+                validinds = [] # Store valid indices in any population
                 for p in range(self.data['npops']):
-                    sanitized = sanitize(preprocessed[blh][p], replacenans=True, die=False) # Replace nans with nearest neighbors
+                    sanitized,inds = sanitize(preprocessed[blh][p], replacenans=True, die=False, returninds=True) # Replace nans with nearest neighbors
                     processed[blh] += sanitized # Add this population to the running total
+                    validinds += list(inds) # Append valid indices
+                naninds = list(set(range(nyears)) - set(validinds))
+                processed[blh][naninds] = nan # Convert back to nan if no data entered for any population
             return processed
         
         
