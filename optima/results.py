@@ -240,7 +240,7 @@ class Resultset(object):
         
         # Define functions
         def process(rawdata, percent=False):
-            ''' Process the data -- sort into quantiles and optionally round if it's a number '''
+            ''' Process the outputs -- sort into quantiles and optionally round if it's a number '''
             processed = quantile(rawdata, quantiles=quantiles) # Calculate the quantiles
             if doround and not percent: processed = processed.round() # Optionally round
             return processed
@@ -260,6 +260,12 @@ class Resultset(object):
                     if len(array(thisdata[p]))!=len(self.datayears):
                         thisdata[p] = nan+zeros(len(self.datayears)) # Replace with NaN if an assumption
             processed = array([best, low, high]) # For plotting uncertainties
+            return processed
+        
+        def processpopdata(self, rawdata):
+            ''' Little method to calculate total population size from data using nearest neighbor interpolation '''
+            processed = processdata(rawdata, uncertainty=True)
+            kkk
             return processed
         
         def assemble(key):
@@ -386,7 +392,9 @@ class Resultset(object):
 
         self.main['popsize'].pops = process(allpeople[:,:,:,indices].sum(axis=1))
         self.main['popsize'].tot = process(allpeople[:,:,:,indices].sum(axis=(1,2)))
-        if data is not None: self.main['popsize'].datapops = processdata(data['popsize'], uncertainty=True)
+        if data is not None: 
+            self.main['popsize'].datatot  = processpopdata(self, data['popsize'])
+            self.main['popsize'].datapops = processdata(data['popsize'], uncertainty=True)
 
         
         # Calculate DALYs

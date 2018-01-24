@@ -689,7 +689,7 @@ def quantile(data, quantiles=[0.5, 0.25, 0.75]):
 
 
 
-def sanitize(data=None, returninds=False):
+def sanitize(data=None, returninds=False, replacenans=False, method='nearest'):
         '''
         Sanitize input to remove NaNs. Warning, does not work on multidimensional data!!
         
@@ -699,19 +699,19 @@ def sanitize(data=None, returninds=False):
         from numpy import array, isnan, nonzero
         try:
             data = array(data,dtype=float) # Make sure it's an array of float type
-            sanitized = data[~isnan(data)]
+            inds = nonzero(~isnan(data))[0] # WARNING, nonzero returns tuple :(
+            sanitized = data[inds] # Trim data
+            if replacenans:
+                newx = range(len(data)) # Create a new x array the size of the original array
+                sanitized = smoothinterp(newx, inds, sanitized, method=method, smoothness=0) # Replace nans with interpolated values
         except:
             raise Exception('Sanitization failed on array:\n %s' % data)
         if len(sanitized)==0:
             sanitized = 0.0
             print('                WARNING, no data entered for this parameter, assuming 0')
 
-        if returninds: 
-            inds = nonzero(~isnan(data))[0] # WARNING, nonzero returns tuple :(
-            return sanitized, inds
-        else:
-            return sanitized
-
+        if returninds: return sanitized, inds
+        else:          return sanitized
 
 
 def getvaliddata(data=None, filterdata=None, defaultind=0):
@@ -824,7 +824,7 @@ def dataindex(dataarray, index):
     return output
 
 
-def smoothinterp(newx=None, origx=None, origy=None, smoothness=None, growth=None, ensurefinite=False):
+def smoothinterp(newx=None, origx=None, origy=None, smoothness=None, growth=None, ensurefinite=False, method='linear'):
     '''
     Smoothly interpolate over values and keep end points. Same format as numpy.interp.
     
@@ -838,7 +838,7 @@ def smoothinterp(newx=None, origx=None, origy=None, smoothness=None, growth=None
         hold(True)
         scatter(origx,origy)
     
-    Version: 2016nov02
+    Version: 2018jan24
     '''
     from numpy import array, interp, convolve, linspace, concatenate, ones, exp, nan, inf, isnan, isfinite, argsort, ceil
     
@@ -876,19 +876,31 @@ def smoothinterp(newx=None, origx=None, origy=None, smoothness=None, growth=None
     else: # Otherwise, just copy the original
         finiteorigy = origy.copy()
         finiteorigx = origx.copy()
+        
+    # Perform actual interpolation
+    if method=='linear':
+        newy = interp(newx, finiteorigx, finiteorigy) # Perform standard interpolation without infinities
+    elif method=='nearest':
+        newy = zeros(newx.shape) # Create the new array of the right size
+        for i,x in enumerate(newx): # Iterate over each point
+            xind = argmin(abs(finiteorigx-x)) # Find the nearest neighbor
+            newy[i] = finiteorigy[xind] # Copy it
+    else:
+        raise Exception('Method "%s" not found; methods are "linear" or "nearest"' % method)
 
-    # Perform interpolation and smooth
+    # Perform smoothing
     if smoothness is None: smoothness = ceil(len(newx)/len(origx)) # Calculate smoothness: this is consistent smoothing regardless of the size of the arrays
     smoothness = int(smoothness) # Make sure it's an appropriate number
-    newy = interp(newx, finiteorigx, finiteorigy) # Perform standard interpolation without infinities
-    kernel = exp(-linspace(-2,2,2*smoothness+1)**2)
-    kernel /= kernel.sum()
-    validinds = findinds(~isnan(newy)) # Remove nans since these don't exactly smooth well
-    if len(validinds): # No point doing these steps if no non-nan values
-        validy = newy[validinds]
-        validy = concatenate([validy[0]*ones(smoothness), validy, validy[-1]*ones(smoothness)])
-        validy = convolve(validy, kernel, 'valid') # Smooth it out a bit
-        newy[validinds] = validy # Copy back into full vector
+    
+    if smoothness:
+        kernel = exp(-linspace(-2,2,2*smoothness+1)**2)
+        kernel /= kernel.sum()
+        validinds = findinds(~isnan(newy)) # Remove nans since these don't exactly smooth well
+        if len(validinds): # No point doing these steps if no non-nan values
+            validy = newy[validinds]
+            validy = concatenate([validy[0]*ones(smoothness), validy, validy[-1]*ones(smoothness)])
+            validy = convolve(validy, kernel, 'valid') # Smooth it out a bit
+            newy[validinds] = validy # Copy back into full vector
     
     # Apply growth if required
     if growth is not None:
