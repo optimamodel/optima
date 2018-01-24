@@ -5,7 +5,7 @@ Version: 2017oct23
 """
 
 from optima import OptimaException, Link, Settings, odict, pchip, plotpchip, sigfig # Classes/functions
-from optima import uuid, today, makefilepath, getdate, printv, dcp, objrepr, defaultrepr, sanitizefilename # Printing/file utilities
+from optima import uuid, today, makefilepath, getdate, printv, dcp, objrepr, defaultrepr, sanitizefilename, sanitize # Printing/file utilities
 from optima import quantile, findinds, findnearest, promotetolist, promotetoarray, checktype # Numeric utilities
 from numpy import array, nan, zeros, arange, shape, maximum, log
 from numbers import Number
@@ -264,9 +264,15 @@ class Resultset(object):
         
         def processpopdata(self, rawdata):
             ''' Little method to calculate total population size from data using nearest neighbor interpolation '''
-            processed = processdata(rawdata, uncertainty=True)
-            kkk
+            preprocessed = processdata(rawdata, uncertainty=True)
+            processed = dcp(preprocessed)
+            for blh in range(3): # Iterate over best, high, low
+                processed[blh] = zeros(len(self.datayears)) # Zero out
+                for p in range(self.data['npops']):
+                    sanitized = sanitize(preprocessed[blh][p], replacenans=True, die=False) # Replace nans with nearest neighbors
+                    processed[blh] += sanitized # Add this population to the running total
             return processed
+        
         
         def assemble(key):
             ''' Assemble results into an array '''

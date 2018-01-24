@@ -689,23 +689,32 @@ def quantile(data, quantiles=[0.5, 0.25, 0.75]):
 
 
 
-def sanitize(data=None, returninds=False, replacenans=False, method='nearest'):
+def sanitize(data=None, returninds=False, replacenans=None, die=True):
         '''
         Sanitize input to remove NaNs. Warning, does not work on multidimensional data!!
         
-        Example:
+        Examples:
             sanitized,inds = sanitize(array([3,4,nan,8,2,nan,nan,nan,8]), returninds=True)
+            sanitized = sanitize(array([3,4,nan,8,2,nan,nan,nan,8]), replacenans=True)
+            sanitized = sanitize(array([3,4,nan,8,2,nan,nan,nan,8]), replacenans=0)
         '''
         from numpy import array, isnan, nonzero
         try:
             data = array(data,dtype=float) # Make sure it's an array of float type
             inds = nonzero(~isnan(data))[0] # WARNING, nonzero returns tuple :(
             sanitized = data[inds] # Trim data
-            if replacenans:
+            if replacenans is not None:
                 newx = range(len(data)) # Create a new x array the size of the original array
-                sanitized = smoothinterp(newx, inds, sanitized, method=method, smoothness=0) # Replace nans with interpolated values
-        except:
-            raise Exception('Sanitization failed on array:\n %s' % data)
+                if replacenans==True: replacenans = 'nearest'
+                if replacenans in ['nearest','linear']:
+                    sanitized = smoothinterp(newx, inds, sanitized, method=replacenans, smoothness=0) # Replace nans with interpolated values
+                else:
+                    naninds = inds = nonzero(isnan(data))[0]
+                    sanitized = dcp(data)
+                    sanitized[naninds] = replacenans
+        except Exception as E:
+            if die: raise Exception('Sanitization failed on array: "%s":\n %s' % (repr(E), data))
+            else:   return data # Give up and just return the original
         if len(sanitized)==0:
             sanitized = 0.0
             print('                WARNING, no data entered for this parameter, assuming 0')
