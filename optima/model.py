@@ -164,11 +164,49 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
     
     # These all have the same format, so we put them in tuples of (proptype, data structure for storing output, state below, state in question, states above (including state in question), numerator, denominator, data structure for storing new movers)
     #                  name,       prop,    lower, to,    num,      denom,   raw_new,        fixyear
-    propdx_list     = ('propdx',   propdx,   undx, dx,    alldx,   allplhiv, raw_diag,       fixpropdx)
-    propcare_list   = ('propcare', propcare, dx,   care,  allcare, alldx,    raw_newcare,    fixpropcare)
-    proptx_list     = ('proptx',   proptx,   care, alltx, alltx,   allcare,  raw_newtreat,   fixproptx) 
-    propsupp_list   = ('propsupp', propsupp, usvl, svl,   svl,     alltx,    raw_newsupp,    fixpropsupp)
-            
+    propdx_list     = ('propdx',   propdx,   undx, dx,    alldx,   allplhiv, rawdiag,       fixpropdx)
+    propcare_list   = ('propcare', propcare, dx,   care,  allcare, alldx,    rawnewcare,    fixpropcare)
+    proptx_list     = ('proptx',   proptx,   care, alltx, alltx,   allcare,  rawnewtreat,   fixproptx) 
+    propsupp_list   = ('propsupp', propsupp, usvl, svl,   svl,     alltx,    rawnewsupp,    fixpropsupp)
+    
+    propstruct = odict([
+                    ('prop', odict([
+                        ('dx',   propdx),
+                        ('care', propcare),
+                        ('tx',   proptx),
+                        ('supp', propsupp)])),
+                    ('lower', odict([
+                        ('dx',   undx),
+                        ('care', dx),
+                        ('tx',   care),
+                        ('supp', usvl)])),
+                    ('to', odict([
+                        ('dx',   dx),
+                        ('care', care),
+                        ('tx',   alltx),
+                        ('supp', svl)])),
+                    ('numer', odict([
+                        ('dx',   alldx),
+                        ('care', allcare),
+                        ('tx',   alltx),
+                        ('supp', svl)])),
+                    ('denom', odict([
+                        ('dx',   allplhiv),
+                        ('care', alldx),
+                        ('tx',   allcare),
+                        ('supp', alltx)])),
+                    ('rawnew', odict([
+                        ('dx',   rawdiag),
+                        ('care', rawnewcare),
+                        ('tx',   rawnewtreat),
+                        ('supp', rawnewsupp)])),
+                    ('fixyear', odict([
+                        ('dx',   fixpropdx),
+                        ('care', fixpropcare),
+                        ('tx',   fixproptx),
+                        ('supp', fixpropsupp)])),
+                    ])  
+    
     # Population sizes
     popsize = dcp(simpars['popsize'])
     
