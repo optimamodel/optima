@@ -688,7 +688,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
         ##############################################################################################################
 
         # Precalculate proportion on PMTCT, whether numpmtct or proppmtct is used
-        numhivpospregwomen = 0
+        numhivpospregwomen = 0 # Initialize
         timestepsonpmtct = 1./dt # Specify the number of timesteps on which mothers are on PMTCT -- # TODO: remove hard-coding
         fsums = dict() # Has to be a dict rather than an odict since the populations are numeric
         for p1 in motherpops: # Pull these out of the loop to speed computation
@@ -815,7 +815,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
             for name,prop,lowerstate,tostate,num,denom,raw_new,fixyear in [propdx_list,propcare_list,proptx_list,propsupp_list]:
                 
                 calcprop = people[num,:,t].sum()/(eps+people[denom,:,t].sum()) # This is the value we fix it at
-                if fixyear==t: # Fixing the proportion from this timepoint
+                if fixyear==t+1: # Fixing the proportion from this timepoint
                     naninds    = findinds(isnan(prop)) # Find the indices that are nan -- to be replaced by current values
                     infinds    = findinds(isinf(prop)) # Find indices that are infinite -- to be scaled up/down to a target value
                     finiteinds = findinds(isfinite(prop)) # Find indices that are defined
@@ -881,7 +881,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                             else:
                                 people[tostate,:,t+1]    -= newmovers # Shift people out of the more progressed state... 
                                 people[lowerstate,:,t+1] += newmovers # ... and into the less progressed state
-                            raw_new[:,t]           -= newmovers.sum(axis=0)/dt # Save new movers, inverting again
+                            raw_new[:,t]               -= newmovers.sum(axis=0)/dt # Save new movers, inverting again
             if debug: checkfornegativepeople(people, tind=t+1) # If ebugging, check for negative people on every timestep
         
     raw                 = odict()    # Sim output structure
