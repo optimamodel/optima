@@ -6,7 +6,7 @@ parameters, the Parameterset class.
 Version: 2.1 (2017apr04)
 """
 
-from numpy import array, nan, isnan, zeros, argmax, mean, log, polyfit, exp, maximum, minimum, Inf, linspace, median, shape
+from numpy import array, nan, isnan, isfinite, zeros, argmax, mean, log, polyfit, exp, maximum, minimum, Inf, linspace, median, shape
 from numpy.random import uniform, normal, seed
 from optima import OptimaException, Link, odict, dataframe, printv, sanitize, uuid, today, getdate, makefilepath, smoothinterp, dcp, defaultrepr, isnumber, findinds, getvaliddata, promotetoarray, promotetolist, inclusiverange # Utilities 
 from optima import Settings, getresults, convertlimits, gettvecdt, loadpartable, loadtranstable # Heftier functions
@@ -70,38 +70,6 @@ class Parameterset(object):
                 parslist.append(key)
         return parslist
     
-    
-    def getprop(self, proptype='proptreat', year=None, bypop=False, ind='best', die=False):
-        ''' Method for getting proportions'''
-
-        # Get results
-        try:
-            results = getresults(project=self.projectref(), pointer=self.resultsref, die=die)
-            assert(results is not None) # Might return something empty
-        except:
-            if die: # Give up
-                raise OptimaException('No results associated with this parameter set')
-            else: # Or, just rerun
-                results = self.projectref().runsim(name=self.name)
-
-        # Interpret inputs
-        if   proptype in ['diag','dx','propdiag','propdx']:                         proptype = 'propdiag'
-        elif proptype in ['evercare','everincare','propevercare','propeverincare']: proptype = 'propvercare'
-        elif proptype in ['care','incare','propcare','propincare']:                 proptype = 'propincare'
-        elif proptype in ['treat','tx','proptreat','proptx']:                       proptype = 'proptreat'
-        elif proptype in ['supp','suppressed','propsupp','propsuppressed']:         proptype = 'propsuppressed'
-        else: raise OptimaException('Unknown proportion type %s' % proptype)
-        
-        # Handle indices
-        if ind in ['median', 'm', 'best', 'b', 'average', 'av', 'single',0]: ind=0
-        elif ind in ['lower','l','low',1]: ind=1
-        elif ind in ['upper','u','up','high','h',2]: ind=2
-        else: ind=0 # Return best estimate if can't understand whichone was requested
-        timeindex = findinds(results.tvec,year) if year else Ellipsis
-
-        if bypop: return results.main[proptype].pops[ind][:][timeindex]
-        else:     return results.main[proptype].tot[ind][timeindex]
-                
     
     def makepars(self, data=None, fix=True, verbose=2, start=None, end=None):
         self.pars = makepars(data=data, verbose=verbose) # Initialize as list with single entry
@@ -668,7 +636,7 @@ class Timepar(Par):
             yinterp = m * smoothinterp(tvec, self.t[pop], self.y[pop], smoothness=smoothness) # Use interpolation
             yinterp = applylimits(par=self, y=yinterp, limits=self.limits, dt=dt)
             if asarray: output[pop,:] = yinterp
-            else: output[key] = yinterp
+            else:       output[key]   = yinterp
         if npops==1 and self.by=='tot' and asarray: return output[0,:] # npops should always be 1 if by==tot, but just be doubly sure
         else: return output
 
@@ -1266,16 +1234,17 @@ def applylimits(y, par=None, limits=None, dt=None, warn=True, verbose=2):
     
     # Apply limits, preserving original class -- WARNING, need to handle nans
     if isnumber(y):
-        if isnan(y): return y # Give up
+        if ~isfinite(y): return y # Give up
         newy = median([limits[0], y, limits[1]])
         if warn and newy!=y: printv('Note, parameter value "%s" reset from %f to %f' % (parname, y, newy), 3, verbose)
     elif shape(y):
         newy = array(y) # Make sure it's an array and not a list
-        naninds = findinds(isnan(newy))
-        if len(naninds): newy[naninds] = limits[0] # Temporarily reset -- value shouldn't matter
+        infiniteinds = findinds(~isfinite(newy))
+        infinitevals = newy[infiniteinds] # Store these for safe keeping
+        if len(infiniteinds): newy[infiniteinds] = limits[0] # Temporarily reset -- value shouldn't matter
         newy[newy<limits[0]] = limits[0]
         newy[newy>limits[1]] = limits[1]
-        newy[naninds] = nan # And return to nan
+        newy[infiniteinds] = infinitevals # And stick them back in
         if warn and any(newy!=array(y)):
             printv('Note, parameter "%s" value reset from:\n%s\nto:\n%s' % (parname, y, newy), 3, verbose)
     else:
