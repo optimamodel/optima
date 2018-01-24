@@ -158,54 +158,16 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
         return fixind
         
     fixpropdx      = findfixind('fixpropdx')
-    fixpropcare    = findfixind('fixpropcare')# findinds(simpars['tvec']>=simpars['fixpropcare'])[0] if simpars['fixpropcare'] < simpars['tvec'][-1] else nan
-    fixproptx      = findfixind('fixproptx')# findinds(simpars['tvec']>=simpars['fixproptx'])[0] if simpars['fixproptx'] < simpars['tvec'][-1] else nan
-    fixpropsupp    = findfixind('fixpropsupp')# findinds(simpars['tvec']>=simpars['fixpropsupp'])[0] if simpars['fixpropsupp'] < simpars['tvec'][-1] else nan
+    fixpropcare    = findfixind('fixpropcare')
+    fixproptx      = findfixind('fixproptx')
+    fixpropsupp    = findfixind('fixpropsupp')
     
-    # These all have the same format, so we put them in tuples of (proptype, data structure for storing output, state below, state in question, states above (including state in question), numerator, denominator, data structure for storing new movers)
-    #                  name,       prop,    lower, to,    num,      denom,   raw_new,        fixyear
-    propdx_list     = ('propdx',   propdx,   undx, dx,    alldx,   allplhiv, rawdiag,       fixpropdx)
-    propcare_list   = ('propcare', propcare, dx,   care,  allcare, alldx,    rawnewcare,    fixpropcare)
-    proptx_list     = ('proptx',   proptx,   care, alltx, alltx,   allcare,  rawnewtreat,   fixproptx) 
-    propsupp_list   = ('propsupp', propsupp, usvl, svl,   svl,     alltx,    rawnewsupp,    fixpropsupp)
-    
-    propstruct = odict([
-                    ('prop', odict([
-                        ('dx',   propdx),
-                        ('care', propcare),
-                        ('tx',   proptx),
-                        ('supp', propsupp)])),
-                    ('lower', odict([
-                        ('dx',   undx),
-                        ('care', dx),
-                        ('tx',   care),
-                        ('supp', usvl)])),
-                    ('to', odict([
-                        ('dx',   dx),
-                        ('care', care),
-                        ('tx',   alltx),
-                        ('supp', svl)])),
-                    ('numer', odict([
-                        ('dx',   alldx),
-                        ('care', allcare),
-                        ('tx',   alltx),
-                        ('supp', svl)])),
-                    ('denom', odict([
-                        ('dx',   allplhiv),
-                        ('care', alldx),
-                        ('tx',   allcare),
-                        ('supp', alltx)])),
-                    ('rawnew', odict([
-                        ('dx',   rawdiag),
-                        ('care', rawnewcare),
-                        ('tx',   rawnewtreat),
-                        ('supp', rawnewsupp)])),
-                    ('fixyear', odict([
-                        ('dx',   fixpropdx),
-                        ('care', fixpropcare),
-                        ('tx',   fixproptx),
-                        ('supp', fixpropsupp)])),
-                    ])  
+#    # These all have the same format, so we put them in tuples of (proptype, data structure for storing output, state below, state in question, states above (including state in question), numerator, denominator, data structure for storing new movers)
+#    #                    name,       prop,    lower, to,    num,     denom,   raw_new,        fixyear
+    propstruct = odict([('propdx',   [propdx,   undx, dx,    alldx,   allplhiv, raw_diag,       fixpropdx]),
+                        ('propcare', [propcare, dx,   care,  allcare, alldx,    raw_newcare,    fixpropcare]),
+                        ('proptx',   [proptx,   care, alltx, alltx,   allcare,  raw_newtreat,   fixproptx]),
+                        ('propsupp', [propsupp, usvl, svl,   svl,     alltx,    raw_newsupp,    fixpropsupp])])
     
     # Population sizes
     popsize = dcp(simpars['popsize'])
@@ -356,7 +318,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
     ### Set initial epidemic conditions 
     #################################################################################################################
     
-    # TODO: Set parameters, remove hard-coding
+    # WARNING: Set parameters, remove hard-coding
     averagedurationinfected = 10.0/2.0   # Assumed duration of undiagnosed HIV pre-AIDS...used for calculating ratio of diagnosed to undiagnosed
     averagedurationdiagnosed = 1.   # Assumed duration of diagnosed HIV pre-treatment...used for calculating ratio of lost to in care
     averagedurationincare = 3.   # Assumed duration of diagnosed HIV pre-treatment...used for calculating ratio of lost to in care
@@ -727,7 +689,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
 
         # Precalculate proportion on PMTCT, whether numpmtct or proppmtct is used
         numhivpospregwomen = 0 # Initialize
-        timestepsonpmtct = 1./dt # Specify the number of timesteps on which mothers are on PMTCT -- # TODO: remove hard-coding
+        timestepsonpmtct = 1./dt # Specify the number of timesteps on which mothers are on PMTCT -- # WARNING: remove hard-coding
         fsums = dict() # Has to be a dict rather than an odict since the populations are numeric
         for p1 in motherpops: # Pull these out of the loop to speed computation
             fsumpop = people[:, p1, t] # Pull out the people who will be summed
@@ -850,12 +812,13 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
             ## Proportions -- these happen after the Euler step, which is why it's t+1 instead of t
             #######################################################################################
 
-            for name,prop,lowerstate,tostate,num,denom,raw_new,fixyear in [propdx_list,propcare_list,proptx_list,propsupp_list]:
+            for name,proplist in propstruct.items():
+                prop, lowerstate, tostate, numer, denom, raw_new, fixyear = proplist
+
+                if name=='propdx': print('\n\nhi: %s %s' % (tvec[t], raw_new[:,t]))
                 
-                if name=='propdx': print('\n\nhi: %s' % raw_new)
-                
-                calcprop = people[num,:,t].sum()/(eps+people[denom,:,t].sum()) # This is the value we fix it at
-                if fixyear==t+1: # Fixing the proportion from this timepoint
+                calcprop = people[numer,:,t].sum()/(eps+people[denom,:,t].sum()) # This is the value we fix it at
+                if fixyear==t: # Fixing the proportion from this timepoint
                     naninds    = findinds(isnan(prop)) # Find the indices that are nan -- to be replaced by current values
                     infinds    = findinds(isinf(prop)) # Find indices that are infinite -- to be scaled up/down to a target value
                     finiteinds = findinds(isfinite(prop)) # Find indices that are defined
@@ -867,7 +830,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                     if len(infinds): prop[infinds] = interp(range(ninterppts), [0,ninterppts-1], [calcprop,prop[finiteind]]) # Replace infinities with scale-up/down
                 
                 # Figure out how many people we currently have...
-                actual    = people[num,:,t+1].sum() # ... in the higher cascade state
+                actual    = people[numer,:,t+1].sum() # ... in the higher cascade state
                 available = people[denom,:,t+1].sum() # ... waiting to move up
                 
                 # Move the people who started treatment last timestep from usvl to svl
@@ -904,8 +867,8 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                                 newmovers = diff*ppltomoveup/totalppltomoveup
                                 people[lowerstate,:,t+1] -= newmovers # Shift people out of the less progressed state... 
                                 people[tostate,:,t+1]    += newmovers # ... and into the more progressed state
-                            raw_new[:,t+1]           += newmovers.sum(axis=0)/dt # Save new movers
-                            if name=='propdx': print('tvec=%s diff=%s newmov=%s raw=%s' % (tvec[t], diff, newmovers, raw_new[:,t]))
+                            raw_new[:,t]           += newmovers.sum(axis=0)/dt # Save new movers
+                            if name=='propdx': print('MORE tvec=%s diff=%s newmov=%s raw=%s' % (tvec[t], diff, newmovers, raw_new[:,t]))
                     elif diff<-eps: # We need to move people backwards along the cascade
                         ppltomovedown = people[tostate,:,t+1]
                         totalppltomovedown = ppltomovedown.sum()
@@ -921,7 +884,8 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                             else:
                                 people[tostate,:,t+1]    -= newmovers # Shift people out of the more progressed state... 
                                 people[lowerstate,:,t+1] += newmovers # ... and into the less progressed state
-                            raw_new[:,t+1]               -= newmovers.sum(axis=0)/dt # Save new movers, inverting again
+                            raw_new[:,t]               -= newmovers.sum(axis=0)/dt # Save new movers, inverting again
+                            if name=='propdx': print('LESS tvec=%s diff=%s newmov=%s raw=%s' % (tvec[t], diff, newmovers, raw_new[:,t]))
             if debug: checkfornegativepeople(people, tind=t+1) # If ebugging, check for negative people on every timestep
         
     raw                 = odict()    # Sim output structure
