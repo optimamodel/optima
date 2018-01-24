@@ -824,7 +824,7 @@ def dataindex(dataarray, index):
     return output
 
 
-def smoothinterp(newx=None, origx=None, origy=None, smoothness=None, growth=None, keepfinite=False):
+def smoothinterp(newx=None, origx=None, origy=None, smoothness=None, growth=None, ensurefinite=False):
     '''
     Smoothly interpolate over values and keep end points. Same format as numpy.interp.
     
@@ -903,7 +903,7 @@ def smoothinterp(newx=None, origx=None, origy=None, smoothness=None, growth=None
     
     # Add infinities back in, if they exist
     if any(~isfinite(origy)): # Infinities exist, need to add them back in manually since interp can only handle nan
-        if not keepfinite: # Don't keep it finite
+        if not ensurefinite: # If not ensuring all entries are finite, put nonfinite entries back in
             orignan      = zeros(len(origy)) # Start from scratch
             origplusinf  = zeros(len(origy)) # Start from scratch
             origminusinf = zeros(len(origy)) # Start from scratch
