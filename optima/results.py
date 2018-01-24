@@ -262,19 +262,19 @@ class Resultset(object):
             processed = array([best, low, high]) # For plotting uncertainties
             return processed
         
-        def processpopdata(self, rawdata):
+        def processtotalpopsizedata(self, rawdata):
             ''' Little method to calculate total population size from data using nearest neighbor interpolation '''
             nyears = len(self.datayears) # Count how many years there are
             preprocessed = processdata(rawdata, uncertainty=True) # Preprocess raw population size data by population
-            processed = zeros((3,nyears)) # Zero out # Initialize
+            processed = zeros((3,1,nyears)) # Zero out # Initialize
             for blh in range(3): # Iterate over best, high, low
                 validinds = [] # Store valid indices in any population
                 for p in range(self.data['npops']):
                     sanitized,inds = sanitize(preprocessed[blh][p], replacenans=True, die=False, returninds=True) # Replace nans with nearest neighbors
-                    processed[blh] += sanitized # Add this population to the running total
+                    processed[blh][0] += sanitized # Add this population to the running total
                     validinds += list(inds) # Append valid indices
                 naninds = list(set(range(nyears)) - set(validinds))
-                processed[blh][naninds] = nan # Convert back to nan if no data entered for any population
+                processed[blh][0][naninds] = nan # Convert back to nan if no data entered for any population
             return processed
         
         
@@ -403,7 +403,7 @@ class Resultset(object):
         self.main['popsize'].pops = process(allpeople[:,:,:,indices].sum(axis=1))
         self.main['popsize'].tot = process(allpeople[:,:,:,indices].sum(axis=(1,2)))
         if data is not None: 
-            self.main['popsize'].datatot  = processpopdata(self, data['popsize'])
+            self.main['popsize'].datatot  = processtotalpopsizedata(self, data['popsize'])
             self.main['popsize'].datapops = processdata(data['popsize'], uncertainty=True)
 
         
