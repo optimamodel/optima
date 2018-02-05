@@ -1339,7 +1339,8 @@ def get_default_optimization_summaries(project):
         progset_id = progset.uid
         default = {
             'constraints': parse_constraints(op.defaultconstraints(project=project, progsetname=progsetkey)),
-            'objectives': {}
+            'objectives': {},
+            'tvsettings': normalize_obj(op.defaulttvsettings())
         }
         for which in ['outcomes', 'money']:
             default['objectives'][which] = normalize_obj(
