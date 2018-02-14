@@ -473,8 +473,15 @@ class Resultset(object):
     def export(self, filename=None, folder=None, bypop=True, sep=',', ind=None, key=None, sigfigs=3, writetofile=True, asexcel=True, verbose=2):
         ''' Method for exporting results to an Excel or CSV file '''
 
-        if ind is None: ind = 0 # WARNING, there must be a better way of doing this
-        if key is None: key = 0
+        # Handle export by either index or key -- WARNING, still inelegant at best! Accepts key or ind, not both
+        if key is not None: # Key overrides ind -- find the index corresponding to this key
+            try:    
+                ind = self.keys.index(key)
+            except:
+                errormsg = 'Results key "%s" not found; choices are: %s' % (key, self.keys)
+                raise OptimaException(errormsg)
+        if ind is None: ind = 0 # If not supplied, just assume 'best'/default/etc.
+        if key is None: key = 0 # Likewise -- WARNING, inelegant
         
         npts = len(self.tvec)
         mainkeys = self.main.keys()
@@ -825,8 +832,8 @@ class Multiresultset(Resultset):
         return resultsdiff
     
     
-    def export(self, filename=None, folder=None, ind=None, key=None, writetofile=True, verbose=2, asexcel=True, **kwargs):
-        ''' A method to export each multiresult to a different file...not great, but not sure of what's better '''
+    def export(self, filename=None, folder=None, ind=None, writetofile=True, verbose=2, asexcel=True, **kwargs):
+        ''' A method to export each multiresult to a different sheet in Excel (or to a single large text file) '''
         
         if asexcel: outputdict = odict()
         else:       outputstr = ''
