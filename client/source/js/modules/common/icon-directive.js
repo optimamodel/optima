@@ -109,7 +109,7 @@ define(['angular' ], function (angular) {
       link: function(scope, element){
         var html =
           '<i'
-          + ' class="fa ' + iconTypes[scope.action].iconName + '"'
+          + ' class="fas ' + iconTypes[scope.action].iconName + '"'
           + ' tp-text="' + iconTypes[scope.action].helpText + '" '
           + ' tooltip tp-class="tooltip" '
           + ' tp-x="-50" tp-y="-150" '

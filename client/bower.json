@@ -21,7 +21,7 @@
     "normalize-css": "=3.0.1",
     "requirejs": "=2.1.13",
     "underscore": "=1.8.2",
-    "font-awesome": "=4.7.0",
+    "font-awesome": "=5.0.6",
     "angular-toastr": "~1.7.0",
     "tooltip": "angular-tooltip#^0.1.1",
     "angularjs-slider": "^5.8.1",
