@@ -372,7 +372,7 @@ define(['angular', 'underscore'], function (angular, _) {
 		});
     };
 
-    $scope.refreshParset = function() {
+    $scope.refreshParameterset = function() {
       modalService.confirm(
         function () {
           rpcService

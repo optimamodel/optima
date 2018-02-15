@@ -95,8 +95,9 @@ define(['angular' ], function (angular) {
       'delete': { iconName: 'fa-trash-o', helpText: 'Delete'},
       'upload': { iconName: 'fa-upload', helpText: 'Upload'},
       'download': { iconName: 'fa-download', helpText: 'Download'},
-	  'undo': { iconName: 'fa-undo', helpText: 'Undo'},
-	  'redo': { iconName: 'fa-repeat', helpText: 'Redo'},
+	    'undo': { iconName: 'fa-undo', helpText: 'Undo'},
+	    'redo': { iconName: 'fa-repeat', helpText: 'Redo'},
+      'refresh': { iconName: 'fa-sync', helpText: 'Refresh'},
     };
 
     return {
