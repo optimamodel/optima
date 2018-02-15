@@ -372,27 +372,18 @@ define(['angular', 'underscore'], function (angular, _) {
 		});
     };
 
-    $scope.refreshParameterset = function() {
-      modalService.confirm(
-        function () {
+    $scope.refreshParameterSet = function() {
+      rpcService
+        .rpcRun(
+          'refresh_parset', [projectService.project.id, $scope.state.parset.id])
+        .then(function(response) {
+          toastr.success('Parameter set refreshed');
+          $scope.getCalibrationGraphs();
           rpcService
             .rpcRun(
-              'refresh_parset', [projectService.project.id, $scope.state.parset.id])
-            .then(function(response) {
-              toastr.success('Parameter set refreshed');
-              $scope.getCalibrationGraphs();
-              rpcService
-                .rpcRun(
-                  'push_project_to_undo_stack',
-                  [projectService.project.id]);
-            });
-        },
-        function () { },
-        'Yes',
-        'No',
-        'This will reset all your calibration parameters to match the ones in the "default" parset. Do you wish to continue?',
-        'Refresh paramter set'
-      );
+              'push_project_to_undo_stack',
+              [projectService.project.id]);
+        });
     };
 
     $scope.constantProportionART = function() {
