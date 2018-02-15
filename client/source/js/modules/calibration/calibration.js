@@ -291,9 +291,9 @@ define(['angular', 'underscore'], function (angular, _) {
         return;
       }
 
-      if ($scope.state.parset.name === "default") {
+      if ($scope.parsets.length < 2) {
         modalService.informError(
-          [{message: 'Deleting the default parameter set is not permitted.'}]);
+          [{message: 'Deleting the only parameter set is not permitted.'}]);
         return;
       }
 
@@ -384,6 +384,41 @@ define(['angular', 'underscore'], function (angular, _) {
               'push_project_to_undo_stack',
               [projectService.project.id]);
         });
+    };
+
+    $scope.refreshParameterSet = function() {
+      function refreshparset(initialprev) {
+        rpcService
+          .rpcRun(
+            'refresh_parset', [projectService.project.id, $scope.state.parset.id, initialprev])
+          .then(function(response) {
+            $scope.state.parset.name = name;
+            toastr.success('Parameter set refreshed from data');
+            $scope.getCalibrationGraphs();
+            rpcService
+              .rpcRun(
+                'push_project_to_undo_stack',
+                [projectService.project.id]);
+          });
+      }
+
+      // Because passing arguments is too hard -- to supply the options for the choice below
+      function refreshparsetandprev() {
+        refreshparset(true);
+      }
+
+      function refreshparsetwithoutprev() {
+        refreshparset(false);
+      }
+
+      modalService.choice(
+        refreshparsetandprev,
+        refreshparsetwithoutprev,
+        'Yes, reset initial prevalences',
+        'No, keep initial prevalences',
+        'Do you want to reset initial prevalences to match uploaded data?',
+        'Refresh parameter set'
+      );
     };
 
     $scope.constantProportionART = function() {

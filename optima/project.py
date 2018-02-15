@@ -434,7 +434,7 @@ class Project(object):
     ### Utilities
     #######################################################################################################
 
-    def refreshparset(self, name=None, orig=None):
+    def refreshparset(self, name=None, orig=None, resetprevalence=False):
         '''
         Reset the chosen (or all) parsets to reflect the parameter values from the spreadsheet (or another parset).
         This has to be a method of project rather than parset because it relies on the project's data, which is
@@ -459,8 +459,9 @@ class Project(object):
             keys = parset.pars.keys() # Assume all pars structures have the same keys
             for key in keys: # Loop over all parset keys
                 if hasattr(parset.pars[key],'fromdata') and parset.pars[key].fromdata: # Don't refresh parameters that aren't based on data
-                    if hasattr(parset.pars[key],'y'): parset.pars[key].y = origparset.pars[key].y # Reset y (value) variable, if it exists
-                    if hasattr(parset.pars[key],'t'): parset.pars[key].t = origparset.pars[key].t # Reset t (time) variable, if it exists
+                    if key!='initprev' or resetprevalence: # Initial prevalence is a special case: the only user-edited parameter that is also a data parameter
+                        if hasattr(parset.pars[key],'y'): parset.pars[key].y = origparset.pars[key].y # Reset y (value) variable, if it exists
+                        if hasattr(parset.pars[key],'t'): parset.pars[key].t = origparset.pars[key].t # Reset t (time) variable, if it exists
         
         self.modified = today()
         return None
