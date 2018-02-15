@@ -848,7 +848,7 @@ def removegaoptim(portfolio):
     return portfolio
 
 
-def migrateportfolio(portfolio=None, verbose=2):
+def migrateportfolio(portfolio=None, verbose=2, die=False):
     
     # Rather than use the dict mapping, use a (series) of if statements
     if op.compareversions(portfolio.version, '2.3.5')<0:
@@ -858,7 +858,8 @@ def migrateportfolio(portfolio=None, verbose=2):
     # Check to make sure it's the latest version
     if portfolio.version != op.version:
         errormsg = "No portfolio migration exists from version %s to the latest version (%s)" % (portfolio.version, op.version)
-        raise op.OptimaException(errormsg)
+        if die: raise op.OptimaException(errormsg)
+        else:   op.printv(errormsg, 1, verbose)
     
     return portfolio
 
