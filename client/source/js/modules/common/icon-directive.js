@@ -95,8 +95,9 @@ define(['angular' ], function (angular) {
       'delete': { iconName: 'fa-trash-o', helpText: 'Delete'},
       'upload': { iconName: 'fa-upload', helpText: 'Upload'},
       'download': { iconName: 'fa-download', helpText: 'Download'},
-	    'undo': { iconName: 'fa-undo', helpText: 'Undo'},
-	    'redo': { iconName: 'fa-repeat', helpText: 'Redo'}
+      'undo': { iconName: 'fa-undo', helpText: 'Undo'},
+      'redo': { iconName: 'fa-repeat', helpText: 'Redo'},
+      'refresh': { iconName: 'fa-refresh', helpText: 'Refresh'}
     };
 
     return {
@@ -108,7 +109,7 @@ define(['angular' ], function (angular) {
       link: function(scope, element){
         var html =
           '<i'
-          + ' class="fas ' + iconTypes[scope.action].iconName + '"'
+          + ' class="fa ' + iconTypes[scope.action].iconName + '"'
           + ' tp-text="' + iconTypes[scope.action].helpText + '" '
           + ' tooltip tp-class="tooltip" '
           + ' tp-x="-50" tp-y="-150" '
