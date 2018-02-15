@@ -133,7 +133,7 @@ class Project(object):
     ### Methods for I/O and spreadsheet loading
     #######################################################################################################
 
-    def loadspreadsheet(self, filename=None, folder=None, name=None, overwrite=True, makedefaults=True, dorun=True, **kwargs):
+    def loadspreadsheet(self, filename=None, folder=None, name=None, overwrite=False, makedefaults=True, dorun=True, **kwargs):
         ''' Load a data spreadsheet -- enormous, ugly function so located in its own file '''
         ## Load spreadsheet and update metadata
         self.data = loadspreadsheet(filename=filename, folder=folder, verbose=self.settings.verbose) # Do the hard work of actually loading the spreadsheet
@@ -188,16 +188,21 @@ class Project(object):
 #                print('%s failed' % key1)
         
 
-    def makeparset(self, name='default', overwrite=True):
+    def makeparset(self, name='default', overwrite=False, dosave=True, die=False):
         ''' If parameter set of that name doesn't exist, create it '''
         if not self.data:
             raise OptimaException('No data in project "%s"!' % self.name)
-        if overwrite or name not in self.parsets:
-            parset = Parameterset(name=name, project=self)
-            parset.makepars(self.data, verbose=self.settings.verbose, start=self.settings.start, end=self.settings.end) # Create parameters
-            self.addparset(name=name, parset=parset, overwrite=overwrite) # Store parameters
-            self.modified = today()
-        return None
+        parset = Parameterset(name=name, project=self)
+        parset.makepars(self.data, verbose=self.settings.verbose, start=self.settings.start, end=self.settings.end) # Create parameters
+        if dosave: # Save to the project if requested
+            if name in self.parsets and not overwrite: # and overwrite if requested
+                errormsg = 'Cannot make parset "%s" because it already exists (%s) and overwrite is off' % (name, self.parsets.keys())
+                if die: raise OptimaException(errormsg) # Probably not a big deal, so...
+                else:   printv(errormsg, 3, verbose=self.settings.verbose) # ...don't even print it except with high verbose settings
+            else:
+                self.addparset(name=name, parset=parset, overwrite=overwrite) # Store parameters
+                self.modified = today()
+        return parset
 
 
     def makedefaults(self, name=None, scenname=None, overwrite=False):
@@ -429,27 +434,34 @@ class Project(object):
     ### Utilities
     #######################################################################################################
 
-    def refreshparset(self, name=None, orig='default'):
+    def refreshparset(self, name=None, orig=None, resetprevalence=False):
         '''
         Reset the chosen (or all) parsets to reflect the parameter values from the spreadsheet (or another parset).
+        This has to be a method of project rather than parset because it relies on the project's data, which is
+        not stored in the parset.
         
         Usage:
-            P.refreshparset() # Refresh all parsets in the project to match 'default'
-            P.refreshparset(name='calibrated') # Reset parset 'calibrated' to match 'default'
+            P.refreshparset() # Refresh all parsets in the project to match the data
+            P.refreshparset(name='calibrated', orig='default') # Reset parset 'calibrated' to match 'default'
             P.refreshparset(name=['default', 'bugaboo'], orig='calibrated') # Reset parsets 'default' and 'bugaboo' to match 'calibrated'
         '''
         
         if name is None: name = self.parsets.keys() # If none is given, use all
-        name = promotetolist(name) # Make sure it's a list
-        if orig not in self.parsets.keys(): self.makeparset(name=orig) # Make sure the parset exists
-        origpars = self.parsets[orig].pars # "Original" parameters to copy from (based on data)
-        for parset in [self.parsets[n] for n in name]: # Loop over all named parsets
+        namelist = promotetolist(name) # Make sure it's a list
+        if orig is None: # No original parset is supplied: recreate from data
+            origparset = self.makeparset(dosave=False) # Create a temporary parset from the data
+        else: # It's supplied, so...
+            try: origparset = self.parsets[orig] # ...try to read it from the data...
+            except: # ...but raise an error if it isn't there
+                errormsg = 'Cannot refresh parset from %s since it does not exist: parsets are: %s' % (orig, self.parsets.keys())
+                raise OptimaException(errormsg)
+        for parset in [self.parsets[n] for n in namelist]: # Loop over all named parsets
             keys = parset.pars.keys() # Assume all pars structures have the same keys
-            newpars = parset.pars
-            for key in keys:
-                if hasattr(newpars[key],'fromdata') and newpars[key].fromdata: # Don't refresh parameters that aren't based on data
-                    if hasattr(newpars[key],'y'): newpars[key].y = origpars[key].y # Reset y (value) variable, if it exists
-                    if hasattr(newpars[key],'t'): newpars[key].t = origpars[key].t # Reset t (time) variable, if it exists
+            for key in keys: # Loop over all parset keys
+                if hasattr(parset.pars[key],'fromdata') and parset.pars[key].fromdata: # Don't refresh parameters that aren't based on data
+                    if key!='initprev' or resetprevalence: # Initial prevalence is a special case: the only user-edited parameter that is also a data parameter
+                        if hasattr(parset.pars[key],'y'): parset.pars[key].y = origparset.pars[key].y # Reset y (value) variable, if it exists
+                        if hasattr(parset.pars[key],'t'): parset.pars[key].t = origparset.pars[key].t # Reset t (time) variable, if it exists
         
         self.modified = today()
         return None
