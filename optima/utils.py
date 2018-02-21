@@ -166,12 +166,13 @@ def indent(prefix=None, text=None, suffix='\n', n=0, pretty=False, simple=True, 
     
 
 
-def sigfig(X, sigfigs=5, SI=False):
+def sigfig(X, sigfigs=5, SI=False, sep=False):
     '''
     Return a string representation of variable x with sigfigs number of significant figures -- 
     copied from asd.py.
     
-    If SI=True, then will return e.g. 32433 as 32.433K
+    If SI=True,  then will return e.g. 32433 as 32.433K
+    If sep=True, then will return e.g. 32433 as 32,433
     '''
     from numpy import log10, floor
     output = []
@@ -208,6 +209,10 @@ def sigfig(X, sigfigs=5, SI=False):
                 decimals = int(max(0,-magnitude+sigfigs-1))
                 strformat = '%' + '%i.%i' % (digits, decimals)  + 'f'
                 string = strformat % x
+                if sep: # To insert separators in the right place, have to convert back to a number
+                    if decimals>0:  roundnumber = float(string)
+                    else:           roundnumber = int(string)
+                    string = format(roundnumber, ',') # Allow comma separator
                 string += suffix
                 output.append(string)
         except:
