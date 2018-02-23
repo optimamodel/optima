@@ -5,7 +5,7 @@ Version: 2017oct23
 """
 
 from optima import OptimaException, Link, Settings, odict, pchip, plotpchip, sigfig # Classes/functions
-from optima import uuid, today, makefilepath, getdate, printv, dcp, objrepr, defaultrepr, sanitizefilename # Printing/file utilities
+from optima import uuid, today, makefilepath, getdate, printv, dcp, objrepr, defaultrepr, sanitizefilename, sanitize # Printing/file utilities
 from optima import quantile, findinds, findnearest, promotetolist, promotetoarray, checktype # Numeric utilities
 from numpy import array, nan, zeros, arange, shape, maximum, log
 from numbers import Number
@@ -240,7 +240,7 @@ class Resultset(object):
         
         # Define functions
         def process(rawdata, percent=False):
-            ''' Process the data -- sort into quantiles and optionally round if it's a number '''
+            ''' Process the outputs -- sort into quantiles and optionally round if it's a number '''
             processed = quantile(rawdata, quantiles=quantiles) # Calculate the quantiles
             if doround and not percent: processed = processed.round() # Optionally round
             return processed
@@ -261,6 +261,22 @@ class Resultset(object):
                         thisdata[p] = nan+zeros(len(self.datayears)) # Replace with NaN if an assumption
             processed = array([best, low, high]) # For plotting uncertainties
             return processed
+        
+        def processtotalpopsizedata(self, rawdata):
+            ''' Little method to calculate total population size from data using nearest neighbor interpolation '''
+            nyears = len(self.datayears) # Count how many years there are
+            preprocessed = processdata(rawdata, uncertainty=True) # Preprocess raw population size data by population
+            processed = zeros((3,1,nyears)) # Zero out # Initialize
+            for blh in range(3): # Iterate over best, high, low
+                validinds = [] # Store valid indices in any population
+                for p in range(self.data['npops']):
+                    sanitized,inds = sanitize(preprocessed[blh][p], replacenans=True, die=False, returninds=True) # Replace nans with nearest neighbors
+                    processed[blh][0] += sanitized # Add this population to the running total
+                    validinds += list(inds) # Append valid indices
+                naninds = list(set(range(nyears)) - set(validinds))
+                processed[blh][0][naninds] = nan # Convert back to nan if no data entered for any population
+            return processed
+        
         
         def assemble(key):
             ''' Assemble results into an array '''
@@ -386,7 +402,9 @@ class Resultset(object):
 
         self.main['popsize'].pops = process(allpeople[:,:,:,indices].sum(axis=1))
         self.main['popsize'].tot = process(allpeople[:,:,:,indices].sum(axis=(1,2)))
-        if data is not None: self.main['popsize'].datapops = processdata(data['popsize'], uncertainty=True)
+        if data is not None: 
+            self.main['popsize'].datatot  = processtotalpopsizedata(self, data['popsize'])
+            self.main['popsize'].datapops = processdata(data['popsize'], uncertainty=True)
 
         
         # Calculate DALYs
@@ -455,8 +473,15 @@ class Resultset(object):
     def export(self, filename=None, folder=None, bypop=True, sep=',', ind=None, key=None, sigfigs=3, writetofile=True, asexcel=True, verbose=2):
         ''' Method for exporting results to an Excel or CSV file '''
 
-        if ind is None: ind = 0 # WARNING, there must be a better way of doing this
-        if key is None: key = 0
+        # Handle export by either index or key -- WARNING, still inelegant at best! Accepts key or ind, not both
+        if key is not None: # Key overrides ind -- find the index corresponding to this key
+            try:    
+                ind = self.keys.index(key)
+            except:
+                errormsg = 'Results key "%s" not found; choices are: %s' % (key, self.keys)
+                raise OptimaException(errormsg)
+        if ind is None: ind = 0 # If not supplied, just assume 'best'/default/etc.
+        if key is None: key = 0 # Likewise -- WARNING, inelegant
         
         npts = len(self.tvec)
         mainkeys = self.main.keys()
@@ -807,8 +832,8 @@ class Multiresultset(Resultset):
         return resultsdiff
     
     
-    def export(self, filename=None, folder=None, ind=None, key=None, writetofile=True, verbose=2, asexcel=True, **kwargs):
-        ''' A method to export each multiresult to a different file...not great, but not sure of what's better '''
+    def export(self, filename=None, folder=None, ind=None, writetofile=True, verbose=2, asexcel=True, **kwargs):
+        ''' A method to export each multiresult to a different sheet in Excel (or to a single large text file) '''
         
         if asexcel: outputdict = odict()
         else:       outputstr = ''

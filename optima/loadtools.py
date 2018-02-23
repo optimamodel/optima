@@ -52,7 +52,8 @@ def setmigrations(which='migrations'):
         ('2.5',   ('2.6',   '2017-10-23', None,              'Public code release')),
         ('2.6',   ('2.6.1', '2017-12-19', None,              'Scenario sensitivity feature')),
         ('2.6.1', ('2.6.2', '2017-12-19', None,              'New results format')),
-        ('2.6.2', ('2.7',   '2017-10-31', addtimevarying,    'Time-varying optimization')),
+        ('2.6.2', ('2.6.3', '2018-01-17', addtimevarying,    'Preliminaries for time-varying optimization')),
+        ('2.6.3', ('2.6.4', '2018-01-19', None,              'Changes to how proportions are handled')),
         ])
     
     # Define changelog
@@ -847,17 +848,22 @@ def removegaoptim(portfolio):
     return portfolio
 
 
-def migrateportfolio(portfolio=None, verbose=2):
+def migrateportfolio(portfolio=None, verbose=2, die=True):
     
     # Rather than use the dict mapping, use a (series) of if statements
     if op.compareversions(portfolio.version, '2.3.5')<0:
         op.printv('Migrating portfolio "%s" from %6s -> %6s' % (portfolio.name, portfolio.version, '2.3.5'), 2, verbose)
         portfolio = removegaoptim(portfolio)
     
-    # Check to make sure it's the latest version
+    # Update version number to the latest -- no other changes  should be necessary
+    if op.compareversions(portfolio.version, '2.3.5')>=0:
+        portfolio.version = op.version
+    
+    # Check to make sure it's the latest version -- should not happen, but just in case!
     if portfolio.version != op.version:
         errormsg = "No portfolio migration exists from version %s to the latest version (%s)" % (portfolio.version, op.version)
-        raise op.OptimaException(errormsg)
+        if die: raise op.OptimaException(errormsg)
+        else:   op.printv(errormsg, 1, verbose)
     
     return portfolio
 

@@ -1,6 +1,6 @@
 ## Imports
-from numpy import zeros, exp, maximum, minimum, inf, array, isnan, einsum, floor, ones, power as npow, concatenate as cat, interp, nan, squeeze
-from optima import OptimaException, printv, dcp, odict, findinds, makesimpars, Resultset
+from numpy import zeros, exp, maximum, minimum, inf, array, isnan, einsum, floor, ones, power as npow, concatenate as cat, interp, nan, squeeze, isinf, isfinite
+from optima import OptimaException, printv, dcp, odict, findinds
 
 def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False, debug=False, label=None, startind=None):
     """
@@ -158,17 +158,17 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
         return fixind
         
     fixpropdx      = findfixind('fixpropdx')
-    fixpropcare    = findfixind('fixpropcare')# findinds(simpars['tvec']>=simpars['fixpropcare'])[0] if simpars['fixpropcare'] < simpars['tvec'][-1] else nan
-    fixproptx      = findfixind('fixproptx')# findinds(simpars['tvec']>=simpars['fixproptx'])[0] if simpars['fixproptx'] < simpars['tvec'][-1] else nan
-    fixpropsupp    = findfixind('fixpropsupp')# findinds(simpars['tvec']>=simpars['fixpropsupp'])[0] if simpars['fixpropsupp'] < simpars['tvec'][-1] else nan
+    fixpropcare    = findfixind('fixpropcare')
+    fixproptx      = findfixind('fixproptx')
+    fixpropsupp    = findfixind('fixpropsupp')
     
-    # These all have the same format, so we put them in tuples of (proptype, data structure for storing output, state below, state in question, states above (including state in question), numerator, denominator, data structure for storing new movers)
-    #                  name,       prop,    lower, to,    num,      denom,   raw_new,        fixyear
-    propdx_list     = ('propdx',   propdx,   undx, dx,    alldx,   allplhiv, raw_diag,       fixpropdx)
-    propcare_list   = ('propcare', propcare, dx,   care,  allcare, alldx,    raw_newcare,    fixpropcare)
-    proptx_list     = ('proptx',   proptx,   care, alltx, alltx,   allcare,  raw_newtreat,   fixproptx) 
-    propsupp_list   = ('propsupp', propsupp, usvl, svl,   svl,     alltx,    raw_newsupp,    fixpropsupp)
-            
+#    # These all have the same format, so we put them in tuples of (proptype, data structure for storing output, state below, state in question, states above (including state in question), numerator, denominator, data structure for storing new movers)
+#    #                    name,       prop,    lower, to,    num,     denom,   raw_new,        fixyear
+    propstruct = odict([('propdx',   [propdx,   undx, dx,    alldx,   allplhiv, raw_diag,       fixpropdx]),
+                        ('propcare', [propcare, dx,   care,  allcare, alldx,    raw_newcare,    fixpropcare]),
+                        ('proptx',   [proptx,   care, alltx, alltx,   allcare,  raw_newtreat,   fixproptx]),
+                        ('propsupp', [propsupp, usvl, svl,   svl,     alltx,    raw_newsupp,    fixpropsupp])])
+    
     # Population sizes
     popsize = dcp(simpars['popsize'])
     
@@ -318,7 +318,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
     ### Set initial epidemic conditions 
     #################################################################################################################
     
-    # TODO: Set parameters, remove hard-coding
+    # WARNING: Set parameters, remove hard-coding
     averagedurationinfected = 10.0/2.0   # Assumed duration of undiagnosed HIV pre-AIDS...used for calculating ratio of diagnosed to undiagnosed
     averagedurationdiagnosed = 1.   # Assumed duration of diagnosed HIV pre-treatment...used for calculating ratio of lost to in care
     averagedurationincare = 3.   # Assumed duration of diagnosed HIV pre-treatment...used for calculating ratio of lost to in care
@@ -601,8 +601,13 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
         ### Calculate probabilities of shifting along cascade (if programmatically determined)
         ##############################################################################################################
 
+        def userate(prop,t):
+            if   t==0:             return True # Never force a proportion on the first timestep
+            elif isnan(prop[t-1]): return True # The previous timestep had a rate, so keep the rate here
+            else:                  return False # Neither: use a proportion instead of a rate
+
         # Undiagnosed to diagnosed
-        if isnan(propdx[t]):
+        if userate(propdx,t): # Need to project forward one year to avoid mismatch
             dxprob = [hivtest[:,t]]*ncd4
             for cd4 in range(aidsind, ncd4): dxprob[cd4] = maximum(aidstest[t],hivtest[:,t])
         else: dxprob = zeros(ncd4)
@@ -616,7 +621,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                     raw_diag[:,t] += people[fromstate,:,t]*thistransit[fromstate,tostate,:]/dt
 
         # Diagnosed/lost to care
-        if isnan(propcare[t]):
+        if userate(propcare,t):
             careprob = [linktocare[:,t]]*ncd4
             for cd4 in range(aidsind, ncd4): careprob[cd4] = maximum(aidslinktocare[t],linktocare[:,t])
         else: careprob = zeros(ncd4)
@@ -629,7 +634,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                     thistransit[fromstate,tostate,:] *= careprob[cd4]
 
         # Care/USVL/SVL to lost
-        if isnan(propcare[t]):
+        if userate(propcare,t):
             lossprob = [leavecare[:,t]]*ncd4 
             for cd4 in range(aidsind, ncd4): lossprob[cd4] = minimum(aidsleavecare[t],leavecare[:,t])
         else: lossprob = zeros(ncd4)
@@ -642,7 +647,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                     thistransit[fromstate,tostate,:] *= lossprob[cd4]
     
         # SVL to USVL
-        usvlprob = treatfail if isnan(propsupp[t]) else 0.
+        usvlprob = treatfail if userate(propsupp,t) else 0.
         for fromstate in svl:
             for tostate in fromto[fromstate]:
                 if tostate in svl: # Probability of remaining suppressed
@@ -651,7 +656,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                     thistransit[fromstate,tostate,:] *= usvlprob
         
         # USVL to SVL
-        svlprob = min(numvlmon[t]/(eps+numtx[t]*requiredvl),1) if isnan(propsupp[t]) else 0.
+        svlprob = min(numvlmon[t]/(eps+numtx[t]*requiredvl),1) if userate(propsupp,t) else 0.
         for fromstate in usvl:
             for tostate in fromto[fromstate]:
                 if tostate in usvl: # Probability of not receiving a VL test & thus remaining failed
@@ -688,8 +693,8 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
         ##############################################################################################################
 
         # Precalculate proportion on PMTCT, whether numpmtct or proppmtct is used
-        numhivpospregwomen = 0
-        timestepsonpmtct = 1./dt # Specify the number of timesteps on which mothers are on PMTCT -- # TODO: remove hard-coding
+        numhivpospregwomen = 0 # Initialize
+        timestepsonpmtct = 1./dt # Specify the number of timesteps on which mothers are on PMTCT -- # WARNING: remove hard-coding
         fsums = dict() # Has to be a dict rather than an odict since the populations are numeric
         for p1 in motherpops: # Pull these out of the loop to speed computation
             fsumpop = people[:, p1, t] # Pull out the people who will be summed
@@ -802,7 +807,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                     if actualpeople==0: raise Exception("ERROR: no people.")
                     ratio = wantedpeople/actualpeople
                     if abs(ratio-1)>relerr: # It's not OK
-                        errormsg = label + 'Warning, ratio of population sizes is nowhere near 1 (t=%f, pop=%s, wanted=%f, actual=%f, ratio=%f)' % (t, popkeys[p], wantedpeople, actualpeople, ratio)
+                        errormsg = label + 'Warning, expected population size is nowhere near calculated population size (t=%f, pop=%s, wanted=%f, actual=%f, ratio=%f)' % (t, popkeys[p], wantedpeople, actualpeople, ratio)
                         if die: raise OptimaException(errormsg)
                         else: printv(errormsg, 1, verbose=verbose)
                     people[susnotonart,p,t+1] *= ratio # It's OK, so scale to match
@@ -812,24 +817,29 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
             ## Proportions -- these happen after the Euler step, which is why it's t+1 instead of t
             #######################################################################################
 
-            for name,prop,lowerstate,tostate,num,denom,raw_new,fixyear in [propdx_list,propcare_list,proptx_list,propsupp_list]:
-                
-                if ~isnan(fixyear) and fixyear==t: # Fixing the proportion from this timepoint
-                    calcprop = people[num,:,t].sum()/people[denom,:,t].sum() # This is the value we fix it at
-                    if ~isnan(prop[t+1:]).all(): # If a parameter value for prop has been specified at some point, we will interpolate to that value
-                        nonnanind = findinds(~isnan(prop))[0]
-                        prop[t+1:nonnanind] = interp(range(t+1,nonnanind), [t+1,nonnanind], [calcprop,prop[nonnanind]])
-                    else: # If not, we will just use this value from now on
-                        prop[t+1:] = calcprop
+            for name,proplist in propstruct.items():
+                prop, lowerstate, tostate, numer, denom, raw_new, fixyear = proplist
+
+                calcprop = people[numer,:,t].sum()/(eps+people[denom,:,t].sum()) # This is the value we fix it at
+                if fixyear==t: # Fixing the proportion from this timepoint
+                    naninds    = findinds(isnan(prop)) # Find the indices that are nan -- to be replaced by current values
+                    infinds    = findinds(isinf(prop)) # Find indices that are infinite -- to be scaled up/down to a target value
+                    finiteinds = findinds(isfinite(prop)) # Find indices that are defined
+                    finiteind = npts-1 if not len(finiteinds) else finiteinds[0] # Get first finite index, or else just last point -- latter should not actually matter
+                    naninds = naninds[naninds>t] # Trim ones that are less than the current point
+                    infinds = infinds[infinds>t] # Trim ones that are less than the current point
+                    ninterppts = len(infinds) # Number of points to interpolate over
+                    if len(naninds): prop[naninds] = calcprop # Replace nans with current proportion
+                    if len(infinds): prop[infinds] = interp(range(ninterppts), [0,ninterppts-1], [calcprop,prop[finiteind]]) # Replace infinities with scale-up/down
                 
                 # Figure out how many people we currently have...
-                actual          = people[num,:,t+1].sum() # ... in the higher cascade state
-                available       = people[denom,:,t+1].sum() # ... waiting to move up
+                actual    = people[numer,:,t+1].sum() # ... in the higher cascade state
+                available = people[denom,:,t+1].sum() # ... waiting to move up
                 
                 # Move the people who started treatment last timestep from usvl to svl
-                if isnan(prop[t+1]):
-                    if   name == 'proptx':   wanted = numtx[t+1] # If proptx is nan, we use numtx
-                    else:                    wanted = None # If a proportion or number isn't specified, skip this
+                if ~isfinite(prop[t+1]):
+                    if name == 'proptx': wanted = numtx[t+1] # If proptx is nan, we use numtx
+                    else:                wanted = None # If a proportion or number isn't specified, skip this
                 else: # If the prop value is finite, we use it
                     wanted = prop[t+1]*available
                 
@@ -860,7 +870,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                                 newmovers = diff*ppltomoveup/totalppltomoveup
                                 people[lowerstate,:,t+1] -= newmovers # Shift people out of the less progressed state... 
                                 people[tostate,:,t+1]    += newmovers # ... and into the more progressed state
-                            raw_new[:,t+1]           += newmovers.sum(axis=0)/dt # Save new movers
+                            raw_new[:,t+1]               += newmovers.sum(axis=0)/dt # Save new movers
                     elif diff<-eps: # We need to move people backwards along the cascade
                         ppltomovedown = people[tostate,:,t+1]
                         totalppltomovedown = ppltomovedown.sum()
@@ -876,7 +886,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                             else:
                                 people[tostate,:,t+1]    -= newmovers # Shift people out of the more progressed state... 
                                 people[lowerstate,:,t+1] += newmovers # ... and into the less progressed state
-                            raw_new[:,t+1]           -= newmovers.sum(axis=0)/dt # Save new movers, inverting again
+                            raw_new[:,t+1]               -= newmovers.sum(axis=0)/dt # Save new movers, inverting again
             if debug: checkfornegativepeople(people, tind=t+1) # If ebugging, check for negative people on every timestep
         
     raw                 = odict()    # Sim output structure

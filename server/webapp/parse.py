@@ -870,15 +870,7 @@ def set_outcome_summaries_on_progset(outcomes, progset):
             if poptuple in covout_by_poptuple:
                 covout_by_poptuple[poptuple].addccopar(ccopar, overwrite=True)
             
-            try:
-                
-                covout_by_poptuple[poptuple].interaction = outcome['interact']
-                print 'YESSSSSSSSSSSSSS it worked'
-                print covout_by_poptuple[poptuple]
-            except:
-                print "HFOOOOOOOOOOOOOOOOOOOOOOOOOOOOO"
-                print outcome
-                print "OK"
+            covout_by_poptuple[poptuple].interaction = outcome['interact']
     
     progset.updateprogset()
     return None
@@ -1347,7 +1339,8 @@ def get_default_optimization_summaries(project):
         progset_id = progset.uid
         default = {
             'constraints': parse_constraints(op.defaultconstraints(project=project, progsetname=progsetkey)),
-            'objectives': {}
+            'objectives': {},
+            'tvsettings': normalize_obj(op.defaulttvsettings())
         }
         for which in ['outcomes', 'money']:
             default['objectives'][which] = normalize_obj(
@@ -1470,12 +1463,8 @@ def set_optimization_summaries_on_project(project, optimization_summaries):
         if "constraints" in summary:
             optim.constraints = revert_constraints(summary['constraints'])
         
-        try:
-            print('WARNING, TEMP, REMOVE TRY-CATCH')
-            for tvkey in optim.tvsettings.keys():
-                optim.tvsettings[tvkey] = summary["tvsettings"][tvkey]
-        except Exception as E:
-            print('WARNING, could not set TV settings: %s' % repr(E))
+        for tvkey in optim.tvsettings.keys():
+            optim.tvsettings[tvkey] = summary["tvsettings"][tvkey]
 
         new_optims[summary["name"]] = optim
 
