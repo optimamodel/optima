@@ -3,7 +3,7 @@ from optima import odict, getdate, today, uuid, dcp, makefilepath, objrepr, prin
 from optima import loadspreadsheet, model, gitinfo, defaultscenarios, makesimpars, makespreadsheet
 from optima import defaultobjectives, autofit, runscenarios, optimize, multioptimize, tvoptimize, outcomecalc, icers # Import functions
 from optima import version # Get current version
-from numpy import argmin, argsort
+from numpy import argmin, argsort, nan
 from numpy.random import seed, randint
 import os
 
@@ -923,6 +923,7 @@ class Project(object):
         
         if budgetratios is None:
             budgetratios = [1.0, 0.8, 0.5, 0.3, 0.1, 0.01, 1.5, 3.0, 5.0, 10.0, 30.0, 100.0]
+        ybaseline = nan # Prepopulate, assuming it won't be found (which it probably will be)
         
         # Calculate the number of iterations
         noptims = 1 + (mc!=0) + max(abs(mc),0) # Calculate the number of optimizations per BOC point
@@ -936,12 +937,11 @@ class Project(object):
         # Initialize arrays
         budgetdict = odict()
         for budgetratio in budgetratios:
-            budgetdict['%s'%budgetratio] = budgetratio # Store the budget ratios as a dicitonary
+            budgetdict['%s'%budgetratio] = budgetratio # Store the budget ratios as a dictionary
         tmpx = odict()
         tmpy = odict()
         tmptotals = odict()
         tmpallocs = odict()
-        tmpoutcomes = odict()
         counts = odict([(key,0) for key in budgetdict.keys()]) # Initialize to zeros -- count how many times each budget is run
         while len(budgetdict):
             key, ratio = budgetdict.items()[0] # Use first budget in the stack
@@ -968,6 +968,8 @@ class Project(object):
             tmpx[key] = budget # Used to be append, but can't use lists since can iterate multiple times over a single budget
             tmpy[key] = results.outcome
             boc.budgets[key] = tmpallocs[-1]
+            if ratio==1.0: # Check if ratio is 1, and if so, store the baseline
+                ybaseline = results.extremeoutcomes['Baseline'] # Store baseline result, but also not part of the BOC
             
             # Check that the BOC points are monotonic, and if not, rerun
             budgetdict.pop(key) # Remove the current key from the list
@@ -987,8 +989,8 @@ class Project(object):
             boc.budgets.sort(xorder)
             boc.x.insert(0, 0) # Add the zero-budget point to the beginning of the list
             boc.y.insert(0, results.extremeoutcomes['Zero']) # It doesn't matter which results these come from
-            boc.ybaseline = results.extremeoutcomes['Baseline'] # Store baseilne result, but also not part of the BOC
-            boc.yinf = results.extremeoutcomes['Infinite'] # Store infinite money, but not as part of the BOC
+            boc.ybaseline = ybaseline # Has to be calculated out of the loop since this changes depending on the budget
+            boc.yinf      = results.extremeoutcomes['Infinite'] # Store infinite money, but not as part of the BOC
             boc.parsetname = parsetname
             boc.progsetname = progsetname
             boc.defaultbudget = dcp(defaultbudget)
