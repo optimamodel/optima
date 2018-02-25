@@ -965,15 +965,14 @@ class Project(object):
             results = optimize(optim=optim, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, origbudget=owbudget, label=label, mc=mc, die=die, randseed=randseed, **kwargs)
             tmptotals[key] = budget
             tmpallocs[key] = dcp(results.budgets['Optimal'])
-            tmpoutcomes[key] = results.improvement[-1][-1]
             tmpx[key] = budget # Used to be append, but can't use lists since can iterate multiple times over a single budget
-            tmpy[key] = tmpoutcomes[-1]
+            tmpy[key] = results.outcome
             boc.budgets[key] = tmpallocs[-1]
             
             # Check that the BOC points are monotonic, and if not, rerun
             budgetdict.pop(key) # Remove the current key from the list
-            for oldkey in tmpoutcomes.keys():
-                if tmpoutcomes[oldkey]>tmpoutcomes[key] and tmptotals[oldkey]>tmptotals[key]: # Outcome is worse but budget is larger
+            for oldkey in tmpy.keys():
+                if tmpy[oldkey]>tmpy[key] and tmptotals[oldkey]>tmptotals[key]: # Outcome is worse but budget is larger
                     printv('WARNING, outcome for %s is worse than outcome for %s, rerunning...' % (oldkey, key), 1, verbose)
                     if counts[oldkey]<5: # Don't get stuck in an infinite loop -- 5 is arbitrary, but jeez, that should take care of it
                         budgetdict.insert(0, oldkey, float(oldkey)) # e.g. key2='0.8'
@@ -988,6 +987,7 @@ class Project(object):
             boc.budgets.sort(xorder)
             boc.x.insert(0, 0) # Add the zero-budget point to the beginning of the list
             boc.y.insert(0, results.extremeoutcomes['Zero']) # It doesn't matter which results these come from
+            boc.ybaseline = results.extremeoutcomes['Baseline'] # Store baseilne result, but also not part of the BOC
             boc.yinf = results.extremeoutcomes['Infinite'] # Store infinite money, but not as part of the BOC
             boc.parsetname = parsetname
             boc.progsetname = progsetname
