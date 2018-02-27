@@ -503,12 +503,14 @@ class OptimaSpreadsheet:
     def generate_instructions(self):
         self.current_sheet = self.sheets['Instructions'] # OK to hard-code since function is hardcoded itself
         current_row = 0
-        self.current_sheet.set_column('A:A',80)
-        self.current_sheet.merge_range('A1:A3', 'O P T I M A   2 . 0', self.formats.formats['info_header'])
+        self.current_sheet.set_column('A:A',120)
+        self.current_sheet.merge_range('A1:A3', 'O P T I M A   H I V', self.formats.formats['info_header'])
         current_row = 3
         current_row = self.formats.writeline(self.current_sheet, current_row)
-        current_row = self.formats.writeblock(self.current_sheet, current_row, row_height=65, text='Welcome to the Optima 2.0 data entry spreadsheet. This is where all data for the model will be entered. Please ask someone from the Optima development team if you need help, or use the default contact (info@optimamodel.com).')
+        current_row = self.formats.writeblock(self.current_sheet, current_row, row_height=65, text='Welcome to the Optima HIV data entry spreadsheet. This is where all data for the model will be entered. Please ask someone from the Optima development team if you need help, or use the default contact (info@optimamodel.com).')
         current_row = self.formats.writeblock(self.current_sheet, current_row, text='For further details please visit: http://optimamodel.com/indicator-guide')
+        current_row = self.formats.writeblock(self.current_sheet, current_row, text='After you upload this spreadsheet to your Optima HIV project, your data will be stored in the project but any comments you make on individual cells will NOT be stored. You are therefore encouraged to enter any specific comments that you would like to make about this data spreadsheet in the cell below. These comments will be stored.',self.formats.formats['optional'])
+        current_row = self.formats.writeblock(self.current_sheet, current_row, text=self.data['datacomments'])
         current_row = self.formats.writeblock(self.current_sheet, current_row, text='Spreadsheet created with Optima version %s' % version)
         current_row = self.formats.writeblock(self.current_sheet, current_row, text='Date created: %s' % getdate(today()))
 
@@ -663,7 +665,7 @@ class OptimaProgramSpreadsheet:
         self.current_sheet.merge_range('A1:A3', 'O P T I M A   2 . 0', self.formats.formats['info_header'])
         current_row = 3
         current_row = self.formats.writeline(self.current_sheet, current_row)
-        current_row = self.formats.writeblock(self.current_sheet, current_row, row_height=65, text='Welcome to the Optima 2.0 program data entry spreadsheet. This is where all program data will be entered. Please ask someone from the Optima development team if you need help, or use the default contact (info@optimamodel.com).')
+        current_row = self.formats.writeblock(self.current_sheet, current_row, row_height=65, text='Welcome to the Optima HIV program data entry spreadsheet. This is where all program data will be entered. Please ask someone from the Optima development team if you need help, or use the default contact (info@optimamodel.com).')
         current_row = self.formats.writeblock(self.current_sheet, current_row, text='For further details please visit: http://optimamodel.com/file/indicator-guide')
 
 
