@@ -535,11 +535,8 @@ class Programset(object):
                                     part1 = coverage[thisprog.short]
                                     part2 = thisprog.getcoverage(x=fullx,t=t, parset=parset, results=results, proportion=False,total=True)
                                 else:
-                                    try:
-                                        part1 = coverage[thisprog.short]*thisprog.gettargetcomposition(t=t, parset=parset, results=results)[thispop]
-                                        part2 = thisprog.getcoverage(x=fullx,t=t, parset=parset, results=results, proportion=False,total=False)[thispop]
-                                    except:
-                                        import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+                                    part1 = coverage[thisprog.short]*thisprog.gettargetcomposition(t=t, parset=parset, results=results)[thispop]
+                                    part2 = thisprog.getcoverage(x=fullx,t=t, parset=parset, results=results, proportion=False,total=False)[thispop]
                                 thiscov[thisprog.short] = part1/part2
                             delta[thisprog.short] = [self.covout[thispartype][thispop].getccopar(t=t, sample=sample)[thisprog.short][j] - outcomes[thispartype][thispop][j] for j in range(nyrs)]
                             
