@@ -91,6 +91,7 @@ def loadspreadsheet(filename=None, folder=None, verbose=2):
     ## Initialize dictionaries
     data = odict() # Create sheetsure for holding data
     data['meta'] = odict()
+    data['meta']['datacomments'] = '' # Store the data comment entered on the instructions sheet
     data['meta']['date'] = today()
     data['meta']['sheets'] = sheets # Store parameter names
     
@@ -129,6 +130,10 @@ def loadspreadsheet(filename=None, folder=None, verbose=2):
     ## Now, actually load the data
     ##################################################################    
     
+    ## Load comment from front sheet
+    comment = workbook.sheet_by_name('Instructions').cell_value(13, 0) # Hardcoded comment cell in A14
+    data['meta']['datacomments'] = comment # Store the data comment entered on the instructions sheet
+
     ## Loop over each group of sheets
     for sheetname in sheets.keys(): # Loop over each type of data, but treat constants differently
         subparlist = sheets[sheetname] # List of subparameters

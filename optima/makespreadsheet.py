@@ -227,6 +227,7 @@ class OptimaFormats:
         self.formats['optional']     = self.book.add_format({'locked':0, 'num_format':0x00, 'bg_color':OptimaFormats.OPT_COLOR,'border':1, 'border_color':OptimaFormats.BORDER_COLOR})
         self.formats['info_header']  = self.book.add_format({'align':'center','valign':'vcenter', 'color':'#D5AA1D','fg_color':'#0E0655', 'font_size':20})
         self.formats['grey']         = self.book.add_format({'fg_color':'#EEEEEE', 'text_wrap':True})
+        self.formats['orange']       = self.book.add_format({'fg_color':'#FFC65E', 'text_wrap':True})
         self.formats['info_url']     = self.book.add_format({'fg_color':'#EEEEEE', 'text_wrap':True, 'color':'blue','align':'center'})
         self.formats['grey_bold']    = self.book.add_format({'fg_color':'#EEEEEE','bold':True})
         self.formats['merge_format'] = self.book.add_format({'bold': 1,'align': 'center','text_wrap':True})
@@ -509,10 +510,10 @@ class OptimaSpreadsheet:
         current_row = self.formats.writeline(self.current_sheet, current_row)
         current_row = self.formats.writeblock(self.current_sheet, current_row, row_height=65, text='Welcome to the Optima HIV data entry spreadsheet. This is where all data for the model will be entered. Please ask someone from the Optima development team if you need help, or use the default contact (info@optimamodel.com).')
         current_row = self.formats.writeblock(self.current_sheet, current_row, text='For further details please visit: http://optimamodel.com/indicator-guide')
-        current_row = self.formats.writeblock(self.current_sheet, current_row, text='After you upload this spreadsheet to your Optima HIV project, your data will be stored in the project but any comments you make on individual cells will NOT be stored. You are therefore encouraged to enter any specific comments that you would like to make about this data spreadsheet in the cell below. These comments will be stored.',self.formats.formats['optional'])
-        current_row = self.formats.writeblock(self.current_sheet, current_row, text=self.data['datacomments'])
         current_row = self.formats.writeblock(self.current_sheet, current_row, text='Spreadsheet created with Optima version %s' % version)
         current_row = self.formats.writeblock(self.current_sheet, current_row, text='Date created: %s' % getdate(today()))
+        current_row = self.formats.writeblock(self.current_sheet, current_row, row_format = 'orange', add_line = False, text='After you upload this spreadsheet to your Optima HIV project, your data will be stored in the project but any comments you make on individual cells will NOT be stored. You are therefore encouraged to enter any specific comments that you would like to make about this data spreadsheet in cell A14 below. These comments will be stored. We recommend that you insert a link to the project logbook in cell A14.')
+        current_row = self.formats.writeblock(self.current_sheet, current_row, row_height=50, row_format = 'orange', add_line = False, text=self.data['meta']['datacomments'])
 
 
     def generate_populations(self):
