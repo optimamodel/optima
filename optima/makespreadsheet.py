@@ -508,12 +508,18 @@ class OptimaSpreadsheet:
         self.current_sheet.merge_range('A1:A3', 'O P T I M A   H I V', self.formats.formats['info_header'])
         current_row = 3
         current_row = self.formats.writeline(self.current_sheet, current_row)
-        current_row = self.formats.writeblock(self.current_sheet, current_row, row_height=65, text='Welcome to the Optima HIV data entry spreadsheet. This is where all data for the model will be entered. Please ask someone from the Optima development team if you need help, or use the default contact (info@optimamodel.com).')
+        current_row = self.formats.writeblock(self.current_sheet, current_row, row_height=30, text='Welcome to the Optima HIV data entry spreadsheet. This is where all data for the model will be entered. Please ask someone from the Optima development team if you need help, or use the default contact (info@optimamodel.com).')
         current_row = self.formats.writeblock(self.current_sheet, current_row, text='For further details please visit: http://optimamodel.com/indicator-guide')
         current_row = self.formats.writeblock(self.current_sheet, current_row, text='Spreadsheet created with Optima version %s' % version)
         current_row = self.formats.writeblock(self.current_sheet, current_row, text='Date created: %s' % getdate(today()))
-        current_row = self.formats.writeblock(self.current_sheet, current_row, row_format = 'orange', add_line = False, text='After you upload this spreadsheet to your Optima HIV project, your data will be stored in the project but any comments you make on individual cells will NOT be stored. You are therefore encouraged to enter any specific comments that you would like to make about this data spreadsheet in cell A14 below. These comments will be stored. We recommend that you insert a link to the project logbook in cell A14.')
-        current_row = self.formats.writeblock(self.current_sheet, current_row, row_height=50, row_format = 'orange', add_line = False, text=self.data['meta']['datacomments'])
+        current_row = self.formats.writeblock(self.current_sheet, current_row, row_height=80, add_line=False, text='After you upload this spreadsheet to your Optima HIV project, your data will be stored in the project but any comments you make on individual cells will NOT be stored. You are therefore encouraged to enter any specific comments that you would like to make about this data spreadsheet in the shaded cells below. These comments will be stored. We recommend that you insert a link to the project logbook in one of these cells.')
+        current_row = self.formats.writeline(self.current_sheet, current_row, row_format='bold')
+        current_row = self.formats.writeblock(self.current_sheet, current_row, add_line=False, row_format='bold', text='Comments:')
+        ncommentrows = 15 # Add comment rows
+        for ncr in range(ncommentrows):
+            try:    thistext = self.data['meta']['datacomments'][ncr] # Try to read comments
+            except: thistext = '' # If failure, skip
+            current_row = self.formats.writeblock(self.current_sheet, current_row, row_format='orange', add_line=False, text=thistext)
 
 
     def generate_populations(self):
