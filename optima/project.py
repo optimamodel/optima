@@ -923,7 +923,12 @@ class Project(object):
         
         if budgetratios is None:
             budgetratios = [1.0, 0.8, 0.5, 0.3, 0.1, 0.01, 1.5, 3.0, 5.0, 10.0, 30.0, 100.0]
+        if 1.0 not in budgetratios:
+            printv('Warning, current budget not present in budget ratios, adding...', 3, verbose)
+            budgetratios = list(budgetratios).insert(0, 1.0) # Ensure 1.0 is in there
         ybaseline = nan # Prepopulate, assuming it won't be found (which it probably will be)
+        yregionoptim = nan # The optimal y value for the within-region optimum
+        regionoptimbudget = None # The budget for the within-region optimum
         
         # Calculate the number of iterations
         noptims = 1 + (mc!=0) + max(abs(mc),0) # Calculate the number of optimizations per BOC point
@@ -970,6 +975,8 @@ class Project(object):
             boc.budgets[key] = tmpallocs[-1]
             if ratio==1.0: # Check if ratio is 1, and if so, store the baseline
                 ybaseline = results.extremeoutcomes['Baseline'] # Store baseline result, but also not part of the BOC
+                yregionoptim = results.outcome
+                regionoptimbudget = budget
             
             # Check that the BOC points are monotonic, and if not, rerun
             budgetdict.pop(key) # Remove the current key from the list
@@ -983,17 +990,19 @@ class Project(object):
                         
         # Tidy up: insert remaining points
         if sum(counts[:]):
+            boc.parsetname = parsetname
+            boc.progsetname = progsetname
             xorder = argsort(tmpx[:]) # Sort everything
             boc.x = tmpx[:][xorder].tolist() # Convert to list
             boc.y = tmpy[:][xorder].tolist()
             boc.budgets.sort(xorder)
             boc.x.insert(0, 0) # Add the zero-budget point to the beginning of the list
             boc.y.insert(0, results.extremeoutcomes['Zero']) # It doesn't matter which results these come from
-            boc.ybaseline = ybaseline # Has to be calculated out of the loop since this changes depending on the budget
             boc.yinf      = results.extremeoutcomes['Infinite'] # Store infinite money, but not as part of the BOC
-            boc.parsetname = parsetname
-            boc.progsetname = progsetname
-            boc.defaultbudget = dcp(defaultbudget)
+            boc.ybaseline = ybaseline # Has to be calculated out of the loop since this changes depending on the budget
+            boc.yregionoptim = yregionoptim # Outcome for within-region optimization
+            boc.defaultbudget = dcp(defaultbudget) # Default budget
+            boc.regionoptimbudget = dcp(regionoptimbudget) # Within-region-optimal budget
             boc.bocsettings = odict([('maxiters',maxiters),('maxtime',maxtime),('mc',mc),('randseed',randseed)])
             self.addresult(result=boc)
             self.modified = today()

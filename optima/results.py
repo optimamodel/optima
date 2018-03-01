@@ -868,16 +868,20 @@ class Multiresultset(Resultset):
 class BOC(object):
     ''' Structure to hold a budget and outcome array for geospatial analysis'''
     
-    def __init__(self, name='boc', x=None, y=None, yinf=None, budgets=None, defaultbudget=None, objectives=None, constraints=None, parsetname=None, progsetname=None):
+    def __init__(self, name='boc', x=None, y=None, budgets=None, defaultbudget=None, objectives=None, constraints=None, parsetname=None, progsetname=None):
         self.uid = uuid()
         self.created = today()
         self.x = x if x else [] # A list of budget totals
         self.y = y if y else [] # A corresponding list of 'maximally' optimised outcomes
-        self.yinf = yinf # Store the outcome for infinite money to be plotted separately if desired
+        self.yinf = None # Store the outcome for infinite money to be plotted separately if desired
         self.parsetname = parsetname
         self.progsetname = progsetname
+        self.ybaseline = None # Outcome for baseline
+        self.yregionoptim = None # Outcome for within-region optimization -- calculated by project.runBOC()
+        self.ygaoptim = None # Outcome for GA optimization -- calculated by portfolio.runGA()
         self.budgets = budgets if budgets else odict() # A list of actual budgets
         self.defaultbudget = defaultbudget # The initial budget, pre-optimization
+        self.regionoptimbudget = None # The region-optimized budget, pre-GA
         self.gaoptimbudget = None # The optimized budget, assigned by GA
         self.objectives = objectives # Specification for what outcome y represents (objectives['budget'] excluded)
         self.constraints = constraints # Likewise...
@@ -888,23 +892,16 @@ class BOC(object):
         output = defaultrepr(self)
         return output
         
-    def getoutcome(self, budgets):
+    def getoutcome(self, budgets, deriv=False):
         ''' Get interpolated outcome for a corresponding list of budgets '''
         x = dcp(self.x)
         y = dcp(self.y)
         x.append(1e15+max(self.x))  # Big number
-        y.append(min(self.y))
-        return pchip(x, y, budgets)
+        y.append(self.yinf)
+        output = pchip(x, y, budgets)
+        return output
         
-    def getoutcomederiv(self, budgets):
-        ''' Get interpolated outcome derivatives for a corresponding list of budgets '''
-        x = dcp(self.x)
-        y = dcp(self.y)
-        x.append(1e15+max(self.x))  # Big number
-        y.append(min(self.y))
-        return pchip(x, y, budgets, deriv = True)
-        
-    def plot(self, deriv = False, returnplot = False, initbudget = None, optbudget = None, baseline=0):
+    def plot(self, deriv=False, returnplot=False, initbudget=None, optbudget=None, baseline=0):
         ''' Plot the budget-outcome curve '''
         from pylab import xlabel, ylabel, show
         
