@@ -131,8 +131,9 @@ def loadspreadsheet(filename=None, folder=None, verbose=2):
     ##################################################################    
     
     ## Load comment from front sheet
-    comment = workbook.sheet_by_name('Instructions').cell_value(13, 0) # Hardcoded comment cell in A14
-    data['meta']['datacomments'] = comment # Store the data comment entered on the instructions sheet
+    if workbook.sheet_by_name('Instructions').nrows > 12:
+        comment = workbook.sheet_by_name('Instructions').cell_value(13, 0) # Hardcoded comment cell in A14
+        data['meta']['datacomments'] = comment # Store the data comment entered on the instructions sheet
 
     ## Loop over each group of sheets
     for sheetname in sheets.keys(): # Loop over each type of data, but treat constants differently
