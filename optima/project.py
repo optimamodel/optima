@@ -937,7 +937,7 @@ class Project(object):
         guessminiters = min(50, guessmaxiters)  # WARNING, shouldn't hardcode stalliters but doesn't really matter, either
         estminiters = noptims*nbocpts*guessminiters
         estmaxiters = noptims*nbocpts*guessmaxiters
-        printv('Generating BOC for %s for %0.0f-%0.0f with weights deaths=%0.1f, infections=%0.1f (est. %i-%i iterations)' % (self.name, objectives['start'], objectives['end'], objectives['deathweight'], objectives['inciweight'], estminiters, estmaxiters), 1, verbose)
+        printv('Generating BOC for %s for %0.0f-%0.0f with weights deaths=%0.1f, infections=%0.1f, DALYs=%0.1f (est. %i-%i iterations)' % (self.name, objectives['start'], objectives['end'], objectives['deathweight'], objectives['inciweight'], objectives['dalyweight'], estminiters, estmaxiters), 1, verbose)
         
         # Initialize arrays
         budgetdict = odict()
