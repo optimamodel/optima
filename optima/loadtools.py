@@ -53,8 +53,7 @@ def setmigrations(which='migrations'):
         ('2.6',   ('2.6.1', '2017-12-19', None,              'Scenario sensitivity feature')),
         ('2.6.1', ('2.6.2', '2017-12-19', None,              'New results format')),
         ('2.6.2', ('2.6.3', '2018-01-17', addtimevarying,    'Preliminaries for time-varying optimization')),
-        ('2.6.3', ('2.6.4', '2018-01-19', None,              'Changes to how proportions are handled')),
-        ('2.6.4', ('2.6.5', '2018-02-24', addbaselinetobocs, 'Add baseilne to BOC results')),
+        ('2.6.3', ('2.6.4', '2018-01-24', None,              'Changes to how proportions are handled')),
         ])
     
     # Define changelog
@@ -742,24 +741,6 @@ def addtimevarying(project, **kwargs):
         except: parset.start = project.settings.start
         try:    assert(op.isnumber(parset.end))
         except: parset.end = project.settings.end
-    return None
-
-
-def addbaselinetobocs(project, recalculate=False, **kwargs):
-    '''
-    Update BOC objects to include a baseline entry. By default don't recalculate, since it might slow things down
-    and is probably unlikely to be used and may not match the rest of the BOC values.
-    '''
-    for res in project.results.values():
-        if isinstance(res, op.BOC):
-            if recalculate:
-                args = {'budget':      res.defaultbudget,
-                        'parsetname':  res.parsetname,
-                        'progsetname': res.progsetname,
-                        'objectives':  res.objectives}
-                res.ybaseline = project.outcomecalc(**args)
-            else:
-                res.ybaseline = -1 # Put in dummy value so it doesn't crash, 
     return None
 
 
