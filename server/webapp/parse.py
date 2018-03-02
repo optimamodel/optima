@@ -1299,10 +1299,10 @@ def set_scenario_summaries_on_project(project, scenario_summaries):
 ### OPTIMIZATIONS
 #############################################################################################
 
-def parse_constraints(constraints, project=None):
+def parse_constraints(constraints, project=None, progsetname=None):
     entries = []
     if constraints is None:
-        constraints = op.defaultconstraints(project=project)
+        constraints = op.defaultconstraints(project=project, progsetname=None)
     for key, value in constraints['name'].items():
         entries.append({
             'key': key,
@@ -1320,11 +1320,8 @@ def force_to_none(val):
     return val
 
 
-def revert_constraints(entries):
-    result = op.odict()
-    result['min'] = op.odict()
-    result['max'] = op.odict()
-    result['name'] = op.odict()
+def revert_constraints(entries, project=None, progsetname=None):
+    result = op.defaultconstraints(project=project, progsetname=progsetname) # Get the structure right
     for entry in entries:
         key = entry['key']
         result['min'][key] = force_to_none(entry['min'])
@@ -1409,7 +1406,7 @@ def get_optimization_summaries(project):
             "id": str(optim.uid),
             "name": str(optim.name),
             "objectives": normalize_obj(optim.objectives),
-            "constraints": parse_constraints(optim.constraints, project=project),
+            "constraints": parse_constraints(optim.constraints, project=project, progsetname=optim.progsetname),
             "tvsettings": normalize_obj(optim.tvsettings),
         }
 
@@ -1461,7 +1458,7 @@ def set_optimization_summaries_on_project(project, optimization_summaries):
         optim.objectives["which"] = summary["which"]
 
         if "constraints" in summary:
-            optim.constraints = revert_constraints(summary['constraints'])
+            optim.constraints = revert_constraints(summary['constraints'], project=project, progsetname=optim.progsetname)
         
         for tvkey in optim.tvsettings.keys():
             optim.tvsettings[tvkey] = summary["tvsettings"][tvkey]
