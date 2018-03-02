@@ -360,3 +360,11 @@ def testbicolormap():
         imshow(rand(20,20),cmap=maps[m],interpolation='none');
         colorbar()
     show()
+
+
+def hex2rgb(string):
+    ''' A little helper function to convert e.g. '86bc25' to its RGB representation. '''
+    from numpy import array
+    from struct import unpack
+    rgb = array(unpack('BBB',string.decode('hex')),dtype=float)/255.
+    return rgb

@@ -289,6 +289,8 @@ class Portfolio(object):
         if reoptimize: 
             resultpairs = reoptimizeprojects(projects=self.projects, objectives=objectives, maxtime=maxtime, maxiters=maxiters, mc=mc, batch=batch, maxload=maxload, interval=interval, verbose=verbose, randseed=randseed)
             self.results = resultpairs
+            for b,boc in enumerate(boclist):
+                boc.ygaoptim = self.results[b]['opt'].outcome # Store outcome
         
         # Make results and optionally export
         if self.results: self.makeoutput(doprint=doprint, verbose=verbose)
