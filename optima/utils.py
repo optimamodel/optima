@@ -1391,7 +1391,7 @@ def boxoff(ax=None, removeticks=True, flipticks=True):
     '''
     I don't know why there isn't already a Matplotlib command for this.
     
-    Removes the top and right borders of a plot. Also optionally removs
+    Removes the top and right borders of a plot. Also optionally removes
     the tick marks, and flips the remaining ones outside.
 
     Version: 2017may22    

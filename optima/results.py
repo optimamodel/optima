@@ -898,7 +898,7 @@ class BOC(object):
         y = dcp(self.y)
         x.append(1e15+max(self.x))  # Big number
         y.append(self.yinf)
-        output = pchip(x, y, budgets)
+        output = pchip(x, y, budgets, deriv=deriv)
         return output
         
     def plot(self, deriv=False, returnplot=False, initbudget=None, optbudget=None, baseline=0):
