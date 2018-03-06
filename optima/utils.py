@@ -346,13 +346,18 @@ def printvars(localvars=None, varlist=None, label=None, divider=True, spaces=1, 
     return None
 
 
-def today(timezone='utc'):
+def today(timezone='utc', die=False):
     ''' Get the current time, in UTC time '''
     import datetime # today = datetime.today
-    import dateutil
-    if timezone=='utc':                           tzinfo = dateutil.tz.tzutc()
-    elif timezone is None or timezone=='current': tzinfo = None
-    else:                                         raise Exception('Timezone "%s" not understood' % timezone)
+    try:
+        import dateutil
+        if timezone=='utc':                           tzinfo = dateutil.tz.tzutc()
+        elif timezone is None or timezone=='current': tzinfo = None
+        else:                                         raise Exception('Timezone "%s" not understood' % timezone)
+    except:
+        errormsg = 'Timezone information not available'
+        if die: raise Exception(errormsg)
+        tzinfo = None
     now = datetime.datetime.now(tzinfo)
     return now
 
