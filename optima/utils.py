@@ -1492,6 +1492,83 @@ def iternested(nesteddict,previous = []):
 
 
 
+
+
+##############################################################################
+### PLOTTING FUNCTIONS
+##############################################################################
+
+def setylim(data=None, ax=None):
+    '''
+    A small script to determine how the y limits should be set. Looks
+    at all data (a list of arrays) and computes the lower limit to
+    use, e.g.
+    
+        setylim([array([-3,4]), array([6,4,6])], ax)
+    
+    will keep Matplotlib's lower limit, since at least one data value
+    is below 0.
+    
+    Note, if you just want to set the lower limit, you can do that 
+    with this function via:
+        setylim(0, ax)
+    '''
+    # Get current limits
+    currlower, currupper = ax.get_ylim()
+    
+    # Calculate the lower limit based on all the data
+    lowerlim = 0
+    upperlim = 0
+    data = promotetolist(data) # Make sure it'siterable
+    for ydata in data:
+        lowerlim = min(lowerlim, promotetoarray(ydata).min())
+        upperlim = max(upperlim, promotetoarray(ydata).max())
+    
+    # Set the new y limits
+    if lowerlim<0: lowerlim = currlower # If and only if the data lower limit is negative, use the plotting lower limit
+    upperlim = max(upperlim, currupper) # Shouldn't be an issue, but just in case...
+    
+    # Specify the new limits and return
+    ax.set_ylim((lowerlim, upperlim))
+    return lowerlim,upperlim
+
+
+def SItickformatter(x, pos, sigfigs=2, SI=True, *args, **kwargs):  # formatter function takes tick label and tick position
+    ''' Formats axis ticks so that e.g. 34,243 becomes 34K '''
+    output = sigfig(x, sigfigs=sigfigs, SI=SI) # Pretty simple since sigfig() does all the work
+    return output
+
+
+def SIticks(fig=None, ax=None, axis='y'):
+    ''' Apply SI tick formatting to one axis of a figure '''
+    from matplotlib import ticker
+    if  fig is not None: axlist = fig.axes
+    elif ax is not None: axlist = promotetolist(ax)
+    else: raise Exception('Must supply either figure or axes')
+    for ax in axlist:
+        if   axis=='x': thisaxis = ax.xaxis
+        elif axis=='y': thisaxis = ax.yaxis
+        elif axis=='z': thisaxis = ax.zaxis
+        else: raise Exception('Axis must be x, y, or z')
+        thisaxis.set_major_formatter(ticker.FuncFormatter(SItickformatter))
+    return None
+
+
+def commaticks(fig=None, ax=None, axis='y'):
+    ''' Use commas in formatting the y axis of a figure -- see http://stackoverflow.com/questions/25973581/how-to-format-axis-number-format-to-thousands-with-a-comma-in-matplotlib '''
+    from matplotlib import ticker
+    if   ax  is not None: axlist = promotetolist(ax)
+    elif fig is not None: axlist = fig.axes
+    else: raise Exception('Must supply either figure or axes')
+    for ax in axlist:
+        if   axis=='x': thisaxis = ax.xaxis
+        elif axis=='y': thisaxis = ax.yaxis
+        elif axis=='z': thisaxis = ax.zaxis
+        else: raise Exception('Axis must be x, y, or z')
+        thisaxis.set_major_formatter(ticker.FuncFormatter(lambda x, p: format(int(x), ',')))
+    return None
+
+
 ##############################################################################
 ### ODICT CLASS
 ##############################################################################

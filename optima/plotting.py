@@ -12,6 +12,7 @@ Version: 2017jun03
 '''
 
 from optima import OptimaException, Resultset, Multiresultset, ICER, odict, printv, gridcolors, vectocolor, alpinecolormap, makefilepath, sigfig, dcp, findinds, findnearest, promotetolist, saveobj, promotetoodict, promotetoarray, boxoff, getvalidinds
+from optima import setylim, commaticks, SIticks
 from numpy import array, ndim, maximum, arange, zeros, mean, shape, isnan, linspace, minimum # Numeric functions
 from pylab import gcf, get_fignums, close, ion, ioff, isinteractive, figure # Plotting functions
 from matplotlib.backends.backend_agg import new_figure_manager_given_figure as nfmgf # Warning -- assumes user has agg on their system, but should be ok. Use agg since doesn't require an X server
@@ -66,41 +67,6 @@ def setposition(ax=None, position=None, interactive=False):
     ax.set_position(position)
     return position
     
-
-def setylim(data=None, ax=None):
-    '''
-    A small script to determine how the y limits should be set. Looks
-    at all data (a list of arrays) and computes the lower limit to
-    use, e.g.
-    
-        setylim([array([-3,4]), array([6,4,6])], ax)
-    
-    will keep Matplotlib's lower limit, since at least one data value
-    is below 0.
-    
-    Note, if you just want to set the lower limit, you can do that 
-    with this function via:
-        setylim(0, ax)
-    '''
-    # Get current limits
-    currlower, currupper = ax.get_ylim()
-    
-    # Calculate the lower limit based on all the data
-    lowerlim = 0
-    upperlim = 0
-    data = promotetolist(data) # Make sure it'siterable
-    for ydata in data:
-        lowerlim = min(lowerlim, promotetoarray(ydata).min())
-        upperlim = max(upperlim, promotetoarray(ydata).max())
-    
-    # Set the new y limits
-    if lowerlim<0: lowerlim = currlower # If and only if the data lower limit is negative, use the plotting lower limit
-    upperlim = max(upperlim, currupper) # Shouldn't be an issue, but just in case...
-    
-    # Specify the new limits and return
-    ax.set_ylim((lowerlim, upperlim))
-    return lowerlim,upperlim
-
 
 def getplotselections(results, advanced=False):
     ''' 
@@ -1480,42 +1446,6 @@ def sanitizeresults(results):
         except: raise OptimaException('Could not figure out how to get results from:\n%s' % results)
     else: output = results # Just use directly
     return output
-
-
-def SItickformatter(x, pos, *args, **kwargs):  # formatter function takes tick label and tick position
-    ''' Formats axis ticks so that e.g. 34,243 becomes 34K '''
-#    from pylab import gca, log10, diff
-#    ylims = gca().get_ylim() # To change it for zooming
-#    extrasigfigs = round(log10(max(ylims)/diff(ylims))) # For future -- this works, kind of, but is applied to the wrong plots!
-    return sigfig(x, sigfigs=2, SI=True)
-
-
-def SIticks(fig=None, ax=None, axis='y'):
-    ''' Apply SI tick formatting to one axis of a figure '''
-    if  fig is not None: axlist = fig.axes
-    elif ax is not None: axlist = promotetolist(ax)
-    else: raise OptimaException('Must supply either figure or axes')
-    for ax in axlist:
-        if   axis=='x': thisaxis = ax.xaxis
-        elif axis=='y': thisaxis = ax.yaxis
-        elif axis=='z': thisaxis = ax.zaxis
-        else: raise OptimaException('Axis must be x, y, or z')
-        thisaxis.set_major_formatter(ticker.FuncFormatter(SItickformatter))
-    return None
-
-
-def commaticks(fig=None, ax=None, axis='y'):
-    ''' Use commas in formatting the y axis of a figure -- see http://stackoverflow.com/questions/25973581/how-to-format-axis-number-format-to-thousands-with-a-comma-in-matplotlib '''
-    if   ax  is not None: axlist = promotetolist(ax)
-    elif fig is not None: axlist = fig.axes
-    else: raise OptimaException('Must supply either figure or axes')
-    for ax in axlist:
-        if   axis=='x': thisaxis = ax.xaxis
-        elif axis=='y': thisaxis = ax.yaxis
-        elif axis=='z': thisaxis = ax.zaxis
-        else: raise OptimaException('Axis must be x, y, or z')
-        thisaxis.set_major_formatter(ticker.FuncFormatter(lambda x, p: format(int(x), ',')))
-    return None
 
 
 def getplotinds(plotstartyear=None, plotendyear=None, tvec=None, die=False, verbose=2):
