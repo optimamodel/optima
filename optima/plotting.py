@@ -1506,8 +1506,8 @@ def SIticks(fig=None, ax=None, axis='y'):
 
 def commaticks(fig=None, ax=None, axis='y'):
     ''' Use commas in formatting the y axis of a figure -- see http://stackoverflow.com/questions/25973581/how-to-format-axis-number-format-to-thousands-with-a-comma-in-matplotlib '''
-    if  fig is not None: axlist = fig.axes
-    elif ax is not None: axlist = promotetolist(ax)
+    if   ax  is not None: axlist = promotetolist(ax)
+    elif fig is not None: axlist = fig.axes
     else: raise OptimaException('Must supply either figure or axes')
     for ax in axlist:
         if   axis=='x': thisaxis = ax.xaxis
