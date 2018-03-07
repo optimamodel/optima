@@ -1294,10 +1294,10 @@ def loadbalancer(maxload=None, index=None, interval=None, maxtime=None, label=No
     from numpy.random import random
     
     # Set up processes to start asynchronously
-    if maxload is None: maxload = 0.5
+    if maxload  is None: maxload = 0.8
     if interval is None: interval = 5.0
-    if maxtime is None: maxtime = 36000
-    if label is None: label = ''
+    if maxtime  is None: maxtime = 36000
+    if label    is None: label = ''
     else: label += ': '
     if index is None:  
         pause = random()*interval
