@@ -900,7 +900,7 @@ class Project(object):
     #######################################################################################################
         
     def genBOC(self, budgetratios=None, name=None, parsetname=None, progsetname=None, objectives=None, constraints=None, maxiters=1000, 
-               maxtime=None, verbose=2, stoppingfunc=None, mc=3, die=False, randseed=None, **kwargs):
+               maxtime=None, verbose=2, stoppingfunc=None, mc=3, die=False, randseed=None, origbudget=None, **kwargs):
         ''' Function to generate project-specific budget-outcome curve for geospatial analysis '''
         if name is None:
             name = 'BOC ' + self.name
@@ -961,13 +961,11 @@ class Project(object):
             # All subsequent genBOC steps use the allocation of the previous step as its initial budget, scaled up internally within optimization.py of course.
             if len(tmptotals):
                 closest = argmin(abs(tmptotals[:]-budget)) # Find closest budget
-                owbudget = tmpallocs[closest]
-            else:
-                owbudget = None
+                origbudget = tmpallocs[closest]
             label = self.name+' $%sm (%i/%i)' % (sigfig(budget/1e6, sigfigs=3), thiscount, totalcount)
             
             # Actually run
-            results = optimize(optim=optim, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, origbudget=owbudget, label=label, mc=mc, die=die, randseed=randseed, **kwargs)
+            results = optimize(optim=optim, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, origbudget=origbudget, label=label, mc=mc, die=die, randseed=randseed, **kwargs)
             tmptotals[key] = budget
             tmpallocs[key] = dcp(results.budgets['Optimal'])
             tmpx[key] = budget # Used to be append, but can't use lists since can iterate multiple times over a single budget
