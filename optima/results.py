@@ -892,13 +892,13 @@ class BOC(object):
         output = defaultrepr(self)
         return output
         
-    def getoutcome(self, budgets, deriv=False):
+    def getoutcome(self, budgets, deriv=False, method=None, smoothness=None):
         ''' Get interpolated outcome for a corresponding list of budgets '''
         x = dcp(self.x)
         y = dcp(self.y)
         x.append(1e15+max(self.x))  # Big number
         y.append(self.yinf)
-        output = pchip(x, y, budgets, deriv=deriv)
+        output = pchip(x, y, budgets, deriv=deriv, method=method, smoothness=smoothness)
         return output
         
     def plot(self, deriv=False, returnplot=False, initbudget=None, optbudget=None, baseline=0):
