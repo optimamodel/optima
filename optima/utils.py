@@ -922,19 +922,16 @@ def smoothinterp(newx=None, origx=None, origy=None, smoothness=None, growth=None
             prepend = validy[0]*ones(smoothness)
             postpend = validy[-1]*ones(smoothness)
             if not keepends:
-                try:
-                    print('YESSS')
+                try: # Try to compute slope, but use original prepend if it doesn't work
                     dyinitial = (validy[0]-validy[1])
                     prepend = validy[0]*ones(smoothness) + dyinitial*arange(smoothness,0,-1)
                 except:
                     pass
-                try:
-                    print('kkkk')
+                try: # Try to compute slope, but use original postpend if it doesn't work
                     dyfinal = (validy[-1]-validy[-2])
                     postpend = validy[-1]*ones(smoothness) + dyfinal*arange(1,smoothness+1,1)
                 except:
                     pass
-#            import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
             validy = concatenate([prepend, validy, postpend])
             validy = convolve(validy, kernel, 'valid') # Smooth it out a bit
             newy[validinds] = validy # Copy back into full vector
