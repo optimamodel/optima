@@ -31,7 +31,7 @@ def pchip(x=None, y=None, xnew=None, deriv = False, method=None, smooth=None, sm
     
     elif method=='smoothinterp':
         from utils import smoothinterp
-        ynew = smoothinterp(xnew, x, y, smoothness=smoothness)
+        ynew = smoothinterp(xnew, x, y, smoothness=smoothness, keepends=False)
         if deriv:
               if len(xnew)==1:
                   print('WARNING, length 1 smooth interpolation derivative not implemented')

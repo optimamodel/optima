@@ -845,7 +845,7 @@ def dataindex(dataarray, index):
     return output
 
 
-def smoothinterp(newx=None, origx=None, origy=None, smoothness=None, growth=None, ensurefinite=False, method='linear'):
+def smoothinterp(newx=None, origx=None, origy=None, smoothness=None, growth=None, ensurefinite=False, keepends=True, method='linear'):
     '''
     Smoothly interpolate over values and keep end points. Same format as numpy.interp.
     
@@ -861,7 +861,7 @@ def smoothinterp(newx=None, origx=None, origy=None, smoothness=None, growth=None
     
     Version: 2018jan24
     '''
-    from numpy import array, interp, convolve, linspace, concatenate, ones, exp, nan, inf, isnan, isfinite, argsort, ceil
+    from numpy import array, interp, convolve, linspace, concatenate, ones, exp, nan, inf, isnan, isfinite, argsort, ceil, arange
     
     # Ensure arrays and remove NaNs
     if isnumber(newx):  newx = [newx] # Make sure it has dimension
@@ -919,7 +919,23 @@ def smoothinterp(newx=None, origx=None, origy=None, smoothness=None, growth=None
         validinds = findinds(~isnan(newy)) # Remove nans since these don't exactly smooth well
         if len(validinds): # No point doing these steps if no non-nan values
             validy = newy[validinds]
-            validy = concatenate([validy[0]*ones(smoothness), validy, validy[-1]*ones(smoothness)])
+            prepend = validy[0]*ones(smoothness)
+            postpend = validy[-1]*ones(smoothness)
+            if not keepends:
+                try:
+                    print('YESSS')
+                    dyinitial = (validy[0]-validy[1])
+                    prepend = validy[0]*ones(smoothness) + dyinitial*arange(smoothness,0,-1)
+                except:
+                    pass
+                try:
+                    print('kkkk')
+                    dyfinal = (validy[-1]-validy[-2])
+                    postpend = validy[-1]*ones(smoothness) + dyfinal*arange(1,smoothness+1,1)
+                except:
+                    pass
+#            import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+            validy = concatenate([prepend, validy, postpend])
             validy = convolve(validy, kernel, 'valid') # Smooth it out a bit
             newy[validinds] = validy # Copy back into full vector
     
