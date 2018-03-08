@@ -205,12 +205,12 @@ class Portfolio(object):
         bocxvecs = []
         bocyvecs = []
         for boc in boclist:
-            maxbudget = min(grandtotal,max(boc.x))+1 # Add one for the log
-            tmpx1 = linspace(0,log(maxbudget), npts) # Exponentially distributed
-            tmpx2 = linspace(1, maxbudget, npts) # Uniformly distributed
-            tmpx3 = (tmpx1+log(tmpx2))/2. # Halfway in between, logarithmically speaking
-            tmpxvec = exp(tmpx3)-1 # Subtract one from the log
-            tmpyvec = pchip(boc.x, boc.y, tmpxvec)
+            maxbudget = min(grandtotal,max(boc.x)) # Calculate the maximum sensible budget for this region
+            tmpx1 = linspace(1,log(maxbudget), npts) # Logarithmically distributed
+            tmpx2 = log(linspace(1, maxbudget, npts)) # Uniformly distributed
+            tmpx3 = (tmpx1+tmpx2)/2. # Halfway in between, logarithmically speaking
+            tmpxvec = exp(tmpx3) # Convert from log-space to normal space
+            tmpyvec = pchip(boc.x, boc.y, tmpxvec) # Interpolate BOC onto the new points
             newtmpyvec = tmpyvec[0] - tmpyvec # Flip to an improvement
             bocxvecs.append(tmpxvec)
             bocyvecs.append(newtmpyvec)
