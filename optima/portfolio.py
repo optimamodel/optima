@@ -82,9 +82,9 @@ class Portfolio(object):
         return None
     
     
-    def addfolder(self, folder=None, replace=True, verbose=2):
+    def addfolder(self, folder=None, replace=True, pattern=None, verbose=2):
         ''' Add a folder of projects to a portfolio '''
-        filelist = getfilelist(folder, 'prj')
+        filelist = getfilelist(folder, 'prj', pattern=pattern)
         projects = []
         if replace: self.projects = odict() # Wipe clean before adding new projects
         for f,filename in enumerate(filelist):
