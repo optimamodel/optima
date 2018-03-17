@@ -2232,7 +2232,7 @@ class dataframe(object):
     
     Works for both numeric and non-numeric data.
     
-    Version: 2018feb28
+    Version: 2018mar17
     '''
 
     def __init__(self, cols=None, data=None):
@@ -2330,6 +2330,12 @@ class dataframe(object):
             colindex = self.cols.index(key[0])
             rowindex = int(key[1])
             output = self.data[rowindex,colindex]
+        elif isinstance(key, slice):
+            rowslice = key
+            slicedata = self.data[rowslice,:]
+            output = dataframe(cols=self.cols, data=slicedata)
+        else:
+            raise Exception('Unrecognized dataframe key "%s"' % key)
         return output
         
     def __setitem__(self, key, value):
