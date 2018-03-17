@@ -101,7 +101,9 @@ def normalize_obj(obj):
             return float(obj)
 
     if isinstance(obj, unicode):
-        return str(obj)
+        try:    string = str(obj) # Try to convert it to ascii
+        except: string = obj # Give up and use original
+        return string
 
     if isinstance(obj, set):
         return list(obj)
