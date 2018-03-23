@@ -105,7 +105,7 @@ class Project(object):
         for attr in ['name', 'version', 'created', 'modified', 'spreadsheetdate', 'gitbranch', 'gitversion', 'uid']:
             info[attr] = getattr(self, attr) # Populate the dictionary
         info['parsetkeys'] = self.parsets.keys()
-        info['progsetkeys'] = self.parsets.keys()
+        info['progsetkeys'] = self.progsets.keys()
         return info
     
     
