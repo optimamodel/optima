@@ -385,10 +385,10 @@ class Programset(object):
         return thisbudget
 
 
-    def getdefaultcoverage(self, t=None, parset=None, results=None, verbose=2, sample='best'):
+    def getdefaultcoverage(self, t=None, parset=None, results=None, verbose=2, sample='best', proportion=False):
         ''' Extract the coverage levels corresponding to the default budget'''
         defaultbudget = self.getdefaultbudget()
-        defaultcoverage = self.getprogcoverage(budget=defaultbudget, t=t, parset=parset, results=results, sample=sample)
+        defaultcoverage = self.getprogcoverage(budget=defaultbudget, t=t, parset=parset, results=results, proportion=proportion, sample=sample)
         for progno in range(len(defaultcoverage)):
             defaultcoverage[progno] = defaultcoverage[progno][0] if defaultcoverage[progno] else nan    
         return defaultcoverage
