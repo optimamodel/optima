@@ -549,7 +549,8 @@ class Programset(object):
                                 print('WARNING: no coverage-outcome parameters defined for program  "%s", population "%s" and parameter "%s". Skipping over... ' % (thisprog.short, thispop, thispartype))
                                 outcomes[thispartype][thispop] = None
                             else: 
-                                outcomes[thispartype][thispop] += thiscov[thisprog.short]*delta[thisprog.short] * self.programs[thisprog.short].costcovfn.getccopar(t=t, sample=sample)['saturation']
+#                                outcomes[thispartype][thispop] += thiscov[thisprog.short]*delta[thisprog.short] * self.programs[thisprog.short].costcovfn.getccopar(t=t, sample=sample)['saturation']
+                                outcomes[thispartype][thispop] += thiscov[thisprog.short]*delta[thisprog.short] 
                             
                     # NESTED CALCULATION
                     elif self.covout[thispartype][thispop].interaction == 'nested':

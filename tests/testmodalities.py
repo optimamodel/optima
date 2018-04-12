@@ -111,10 +111,6 @@ if 'modalities' in tests:
               'HTC_outreach': array([ 1e6,]),
               'HTC_hometest': array([ 1e6,])}
     
-    # Plot the cost-coverage curves for each program if asked
-    if doplot: R.plotallcoverage(t=2013,
-                      parset=P.parsets['default'])
-    
     # Get the coverage of each program associated with this budget
     coverage = R.getprogcoverage(budget=budget,
                                  t=2013,
