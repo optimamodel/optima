@@ -710,9 +710,8 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
         else:                   calcproppmtct = proppmtct[t] # Else, just use the proportion specified
         calcproppmtct = min(calcproppmtct, 1.)
         
-        undxhivbirths = zeros(npops) 
-        dxhivbirths = zeros(npops)
-#        popmtct = zeros(npops)
+        undxhivbirths = zeros(npops) # Store undiagnosed HIV+ births for this timestep
+        dxhivbirths = zeros(npops) # Store diagnosed HIV+ births for this timestep
         
         # Calculate actual births, MTCT, and PMTCT
         for p1,p2,birthrates,alleligbirthrate in birthslist:
@@ -736,7 +735,6 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
             raw_births[p2, t] += popbirths/dt
             raw_hivbirths[p1, t] += thisbirthrate * fsums[p1]['allplhiv'] / dt
             
-#        import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
         raw_inci[:,t] += raw_mtct[:,t] # Update infections acquired based on PMTCT calculation
         raw_incibypop[:,t] += raw_mtctfrom[:,t] # Update infections caused based on PMTCT calculation
 
