@@ -16,8 +16,6 @@ import abc
 # ...though would be nice to have an easier way!
 coveragepars=['numtx','numpmtct','numost','numcirc','numvlmon'] 
 
-malawihack=False
-
 class Programset(object):
 
     def __init__(self, name='default', programs=None, default_interaction='additive', project=None):
