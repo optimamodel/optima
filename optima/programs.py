@@ -545,13 +545,15 @@ class Programset(object):
                     # NB, if there's only one program targeting this parameter, just do simple additive calc
                     if self.covout[thispartype][thispop].interaction == 'additive' or len(self.progs_by_targetpar(thispartype)[thispop])==1:
                         # Outcome += c1*delta_out1 + c2*delta_out2
+#                        import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
                         for thisprog in self.progs_by_targetpar(thispartype)[thispop]:
                             if not self.covout[thispartype][thispop].ccopars[thisprog.short]:
                                 print('WARNING: no coverage-outcome parameters defined for program  "%s", population "%s" and parameter "%s". Skipping over... ' % (thisprog.short, thispop, thispartype))
                                 outcomes[thispartype][thispop] = None
                             else: 
-                                if malawihack:  outcomes[thispartype][thispop] += thiscov[thisprog.short]*delta[thisprog.short] * self.programs[thisprog.short].costcovfn.getccopar(t=t, sample=sample)['saturation']   # NEW WAY PROPOSED FOR MALAWI – DOES NOT PRODUCE EXPECTED RESULTS
-                                else:           outcomes[thispartype][thispop] += thiscov[thisprog.short]*delta[thisprog.short] # ORIGINAL WAY – KNOWN BUG WRT TO HOW SATURATION WORKS
+                                outcomes[thispartype][thispop] += thiscov[thisprog.short]*delta[thisprog.short] * self.programs[thisprog.short].costcovfn.getccopar(t=t, sample=sample)['saturation']   # NEW WAY PROPOSED FOR MALAWI – DOES NOT PRODUCE EXPECTED RESULTS
+#                                if malawihack:  outcomes[thispartype][thispop] += thiscov[thisprog.short]*delta[thisprog.short] * self.programs[thisprog.short].costcovfn.getccopar(t=t, sample=sample)['saturation']   # NEW WAY PROPOSED FOR MALAWI – DOES NOT PRODUCE EXPECTED RESULTS
+#                                else:           outcomes[thispartype][thispop] += thiscov[thisprog.short]*delta[thisprog.short] # ORIGINAL WAY – KNOWN BUG WRT TO HOW SATURATION WORKS
                             
                     # NESTED CALCULATION
                     elif self.covout[thispartype][thispop].interaction == 'nested':
