@@ -711,6 +711,9 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
         else:                   calcproppmtct = proppmtct[t] # Else, just use the proportion specified
         calcproppmtct = min(calcproppmtct, 1.)
         
+        undxhivbirths = zeros(npops) # Store undiagnosed HIV+ births for this timestep
+        dxhivbirths = zeros(npops) # Store diagnosed HIV+ births for this timestep
+        
         # Calculate actual births, MTCT, and PMTCT
         for p1,p2,birthrates,alleligbirthrate in birthslist:
             thisbirthrate = birthrates[t]
@@ -722,11 +725,14 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
             mtctdx = (thiseligbirths * (1-calcproppmtct)) * effmtct[t] # MTCT from those diagnosed not receiving PMTCT
             mtctpmtct = (thiseligbirths * calcproppmtct) * pmtcteff[t] # MTCT from those receiving PMTCT
             thisreceivepmtct = thiseligbirths * calcproppmtct
-            popmtct = mtctundx + mtctdx + mtcttx + mtctpmtct # Total MTCT, adding up all components         
+            thispopmtct = mtctundx + mtctdx + mtcttx + mtctpmtct # Total MTCT, adding up all components         
+
+            undxhivbirths[p2] += mtctundx                       # Births to add to undx  
+            dxhivbirths[p2]   += (mtctdx + mtcttx + mtctpmtct)   # Births add to dx
             
             raw_receivepmtct[p1, t] += thisreceivepmtct * timestepsonpmtct
-            raw_mtct[p2, t] += popmtct/dt
-            raw_mtctfrom[p1, t] += popmtct/dt
+            raw_mtct[p2, t] += thispopmtct/dt
+            raw_mtctfrom[p1, t] += thispopmtct/dt
             raw_births[p2, t] += popbirths/dt
             raw_hivbirths[p1, t] += thisbirthrate * fsums[p1]['allplhiv'] / dt
             
@@ -744,8 +750,9 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
         if t<npts-1:
             
             ## Births 
-            people[undx[0], :, t+1] += raw_mtct[:, t]*dt # HIV+ babies assigned to undiagnosed compartment -- WARNING, shouldn't use a raw variable in a calculation, that's for output
-            people[susreg, :, t+1] += (raw_births[:,t] - raw_mtct[:, t])*dt  # HIV- babies assigned to uncircumcised compartment
+            people[susreg, :, t+1] += raw_births[:,t]*dt - undxhivbirths - dxhivbirths # HIV- babies assigned to uncircumcised compartment
+            people[undx[0], :, t+1] += undxhivbirths # HIV+ babies born to undiagnosed mothers assigned to undiagnosed compartment 
+            people[dx[0], :, t+1]   += dxhivbirths   # HIV+ babies born to diagnosed mothers assigned to diagnosed compartment
 
             ## Circumcision 
             circppl = minimum(numcirc[:,t+1], people[susreg,:,t+1])

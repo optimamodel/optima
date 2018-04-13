@@ -578,6 +578,7 @@ class Project(object):
             if start is None: 
                 try:    start = self.parsets[parsetname].start # Try to get start from parameter set, but don't worry if it doesn't exist
                 except: start = self.settings.start # Else, specify the start year from the project
+            if end is None: 
                 try:    end   = self.parsets[parsetname].end # Ditto
                 except: end   = self.settings.end # Ditto
             for i in range(n):
