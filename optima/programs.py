@@ -9,7 +9,6 @@ Version: 2016feb06
 from optima import OptimaException, Link, printv, uuid, today, sigfig, getdate, dcp, smoothinterp, findinds, odict, Settings, sanitize, defaultrepr, isnumber, promotetoarray, vec2obj, asd, convertlimits
 from numpy import ones, prod, array, zeros, exp, log, append, nan, isnan, maximum, minimum, sort, concatenate as cat, transpose, mean, argsort
 from random import uniform
-import abc
 
 class Programset(object):
 
@@ -1045,7 +1044,6 @@ class Program(object):
 ########################################################
 class CCOF(object):
     '''Cost-coverage, coverage-outcome and cost-outcome objects'''
-    __metaclass__ = abc.ABCMeta # WARNING, this is the only place where this is used...is it necessary...?
 
     def __init__(self,ccopars=None,interaction=None):
         self.ccopars = ccopars if ccopars else odict()
@@ -1179,11 +1177,9 @@ class CCOF(object):
         if not inverse: return self.function(x=x,ccopar=ccopar,popsize=popsize)
         else: return self.inversefunction(x=x,ccopar=ccopar,popsize=popsize)
 
-    @abc.abstractmethod # This method must be defined by the derived class
     def function(self, x, ccopar, popsize):
         pass
 
-    @abc.abstractmethod # This method must be defined by the derived class
     def inversefunction(self, x, ccopar, popsize):
         pass
 
