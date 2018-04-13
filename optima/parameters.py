@@ -62,6 +62,12 @@ class Parameterset(object):
             raise OptimaException('No results associated with this parameter set')
     
     
+    def getcovpars(self):
+        '''Method for getting a list of coverage-only parameters'''
+        coveragepars = [par.short for par in self.pars.values() if isinstance(par, Par) and par.iscoveragepar()]
+        return coveragepars
+        
+
     def parkeys(self):
         ''' Return a list of the keys in pars that are actually parameter objects '''
         parslist = []
@@ -442,6 +448,9 @@ class Par(object):
         output = defaultrepr(self)
         return output
     
+    def iscoveragepar(self):
+        ''' Determine whether it's a coverage parameter'''
+        return True if self.limits[1] == 'maxpopsize' else False
 
 
 class Constant(Par):

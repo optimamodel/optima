@@ -110,6 +110,9 @@ if 'modalities' in tests:
     budget = {'HTC_clinics': array([ 1e7,]),
               'HTC_outreach': array([ 1e6,]),
               'HTC_hometest': array([ 1e6,])}
+
+    # Test optimizability
+    R.readytooptimize()
     
     # Get the coverage of each program associated with this budget
     coverage = R.getprogcoverage(budget=budget,
