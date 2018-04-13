@@ -16,6 +16,7 @@ import abc
 # ...though would be nice to have an easier way!
 coveragepars=['numtx','numpmtct','numost','numcirc','numvlmon'] 
 
+malawihack=False
 
 class Programset(object):
 
@@ -549,8 +550,8 @@ class Programset(object):
                                 print('WARNING: no coverage-outcome parameters defined for program  "%s", population "%s" and parameter "%s". Skipping over... ' % (thisprog.short, thispop, thispartype))
                                 outcomes[thispartype][thispop] = None
                             else: 
-#                                outcomes[thispartype][thispop] += thiscov[thisprog.short]*delta[thisprog.short] * self.programs[thisprog.short].costcovfn.getccopar(t=t, sample=sample)['saturation']
-                                outcomes[thispartype][thispop] += thiscov[thisprog.short]*delta[thisprog.short] 
+                                if malawihack:  outcomes[thispartype][thispop] += thiscov[thisprog.short]*delta[thisprog.short] * self.programs[thisprog.short].costcovfn.getccopar(t=t, sample=sample)['saturation']   # NEW WAY PROPOSED FOR MALAWI – DOES NOT PRODUCE EXPECTED RESULTS
+                                else:           outcomes[thispartype][thispop] += thiscov[thisprog.short]*delta[thisprog.short] # ORIGINAL WAY – KNOWN BUG WRT TO HOW SATURATION WORKS
                             
                     # NESTED CALCULATION
                     elif self.covout[thispartype][thispop].interaction == 'nested':
