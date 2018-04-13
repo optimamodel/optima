@@ -14,7 +14,7 @@ Version: 2016jan05 by cliffk
 tests = [
 'modalities',
 #'scaleup',
-#'costcov parameter test'
+'costcov parameter test'
 ]
 
 ##############################################################################
@@ -84,15 +84,15 @@ if 'modalities' in tests:
     
     # Add cost-coverage function parameters to each program
     HTC_clinics.costcovfn.addccopar({'t': 2013.0,
-                                     'saturation': (0.85,0.95),#(0.5,0.45),
+                                     'saturation': (0.5,0.45),
                                      'unitcost': (35,45)})
                              
     HTC_outreach.costcovfn.addccopar({'t': 2013.0,
-                                     'saturation':(0.85,0.95),#(0.55,0.65),
+                                     'saturation':(0.55,0.65),
                                       'unitcost': (45,55)})
                              
     HTC_hometest.costcovfn.addccopar({'t': 2013.0,
-                                     'saturation':(0.85,0.95),#(0.35,0.45),
+                                     'saturation':(0.35,0.45),
                                       'unitcost': (15,25)})
     
     # Combine the 3 program together in a program set
@@ -107,9 +107,9 @@ if 'modalities' in tests:
                                                     'HTC_hometest':(0.35,0.45)})
                        
     # Define the budget and the type of interaction
-    budget = {'HTC_clinics': array([ 1e9,]),
-              'HTC_outreach': array([ 1e9,]),
-              'HTC_hometest': array([ 1e9,])}
+    budget = {'HTC_clinics': array([ 1e7,]),
+              'HTC_outreach': array([ 1e6,]),
+              'HTC_hometest': array([ 1e6,])}
 
     # Get the coverage of each program associated with this budget
     coverage = R.getprogcoverage(budget=budget,
