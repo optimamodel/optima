@@ -488,13 +488,12 @@ class Programset(object):
                 try:    parset = self.projectref().parset() # Get default parset
                 except: raise OptimaException('Please provide either a parset or a resultset that contains a parset')
         if coverage is None:
-            coverage = self.getdefaultcoverage(t=t, parset=parset, results=results, sample=sample)
+            coverage = self.getdefaultcoverage(t=t, parset=parset, results=results, sample=sample, proportion=True)
         for covkey, coventry in coverage.iteritems(): # Ensure coverage level values are lists
             if isnumber(coventry): coverage[covkey] = [coventry]
 
         # Set up internal variables
         nyrs = len(t)
-        infbudget = odict((k,array([1e9]*len(coverage[k]))) if self.programs[k].optimizable() else (k,None) for k in coverage.keys())
 
         # Loop over parameter types
         for thispartype in self.targetpartypes:
@@ -526,34 +525,25 @@ class Programset(object):
                             outcomes[thispartype][thispop] = None
                         else:
                             outcomes[thispartype][thispop] = self.covout[thispartype][thispop].getccopar(t=t, sample=sample)['intercept']
-                            fullx = infbudget[thisprog.short]
                             if thiscovpop:
-                                part1 = coverage[thisprog.short]*thisprog.gettargetcomposition(t=t, parset=parset, results=results)[thiscovpop]
-                                part2 = thisprog.getcoverage(x=fullx, t=t, parset=parset, results=results, proportion=False,total=False)[thiscovpop]
-                                thiscov[thisprog.short] = part1/part2
+                                thiscov[thisprog.short] = coverage[thisprog.short]*thisprog.gettargetcomposition(t=t, parset=parset, results=results)[thiscovpop]
                             else:
                                 if thispop == 'tot':
-                                    part1 = coverage[thisprog.short]
-                                    part2 = thisprog.getcoverage(x=fullx,t=t, parset=parset, results=results, proportion=False,total=True)
+                                    thiscov[thisprog.short] = coverage[thisprog.short]
                                 else:
-                                    part1 = coverage[thisprog.short]*thisprog.gettargetcomposition(t=t, parset=parset, results=results)[thispop]
-                                    part2 = thisprog.getcoverage(x=fullx,t=t, parset=parset, results=results, proportion=False,total=False)[thispop]
-                                thiscov[thisprog.short] = part1/part2
+                                    thiscov[thisprog.short] = coverage[thisprog.short]*thisprog.gettargetcomposition(t=t, parset=parset, results=results)[thispop]
                             delta[thisprog.short] = [self.covout[thispartype][thispop].getccopar(t=t, sample=sample)[thisprog.short][j] - outcomes[thispartype][thispop][j] for j in range(nyrs)]
                             
                     # ADDITIVE CALCULATION
                     # NB, if there's only one program targeting this parameter, just do simple additive calc
                     if self.covout[thispartype][thispop].interaction == 'additive' or len(self.progs_by_targetpar(thispartype)[thispop])==1:
                         # Outcome += c1*delta_out1 + c2*delta_out2
-#                        import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
                         for thisprog in self.progs_by_targetpar(thispartype)[thispop]:
                             if not self.covout[thispartype][thispop].ccopars[thisprog.short]:
                                 print('WARNING: no coverage-outcome parameters defined for program  "%s", population "%s" and parameter "%s". Skipping over... ' % (thisprog.short, thispop, thispartype))
                                 outcomes[thispartype][thispop] = None
                             else: 
-                                outcomes[thispartype][thispop] += thiscov[thisprog.short]*delta[thisprog.short] * self.programs[thisprog.short].costcovfn.getccopar(t=t, sample=sample)['saturation']   # NEW WAY PROPOSED FOR MALAWI – DOES NOT PRODUCE EXPECTED RESULTS
-#                                if malawihack:  outcomes[thispartype][thispop] += thiscov[thisprog.short]*delta[thisprog.short] * self.programs[thisprog.short].costcovfn.getccopar(t=t, sample=sample)['saturation']   # NEW WAY PROPOSED FOR MALAWI – DOES NOT PRODUCE EXPECTED RESULTS
-#                                else:           outcomes[thispartype][thispop] += thiscov[thisprog.short]*delta[thisprog.short] # ORIGINAL WAY – KNOWN BUG WRT TO HOW SATURATION WORKS
+                                outcomes[thispartype][thispop] += thiscov[thisprog.short]*delta[thisprog.short]
                             
                     # NESTED CALCULATION
                     elif self.covout[thispartype][thispop].interaction == 'nested':

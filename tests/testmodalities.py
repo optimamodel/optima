@@ -124,17 +124,17 @@ if 'modalities' in tests:
     
     # Get the outcomes associated with this budget
     R.covout['hivtest']['F 15-49'].interaction = 'nested'
-    outcomes_nested = R.getoutcomes(coverage_number,
+    outcomes_nested = R.getoutcomes(coverage,
                                     t=2013,
                                     parset=P.parsets['default'])
     
     R.covout['hivtest']['F 15-49'].interaction = 'random'
-    outcomes_random = R.getoutcomes(coverage_number,
+    outcomes_random = R.getoutcomes(coverage,
                                     t=2013,
                                     parset=P.parsets['default'])
     
     R.covout['hivtest']['F 15-49'].interaction = 'additive'
-    outcomes_additive = R.getoutcomes(coverage_number,
+    outcomes_additive = R.getoutcomes(coverage,
                                     t=2013,
                                     parset=P.parsets['default'])
     
