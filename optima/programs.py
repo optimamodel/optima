@@ -90,6 +90,7 @@ class Programset(object):
                 else: # ... or if not, set it up
                     ccopars = odict()
                     ccopars['intercept'] = []
+                    ccopars['maximum'] = []
                     ccopars['t'] = []
                     interaction = self.default_interaction
                 targetingprogs = [thisprog.short for thisprog in self.progs_by_targetpar(targetpartype)[thispop]]
@@ -100,6 +101,7 @@ class Programset(object):
                 progccopars = dcp(ccopars)
                 progccopars.pop('t', None)
                 progccopars.pop('intercept', None)
+                progccopars.pop('maximum', None)
                 for prog in progccopars.keys(): 
                     if prog not in targetingprogs:
                         ccopars.pop(prog, None)
@@ -554,36 +556,41 @@ class Programset(object):
                     elif self.covout[thispartype][thispop].interaction == 'random':
                         # Outcome += c1(1-c2)* delta_out1 + c2(1-c1)*delta_out2 + c1c2* max(delta_out1,delta_out2)
     
-                        if all(self.covout[thispartype][thispop].ccopars.values()):
+#                        if all(self.covout[thispartype][thispop].ccopars.values()):
                     
-                            for prog1 in thiscov.keys():
-                                product = ones(thiscov[prog1].shape)
-                                for prog2 in thiscov.keys():
-                                    if prog1 != prog2:
-                                        product *= (1-thiscov[prog2])
-                
-                                outcomes[thispartype][thispop] += delta[prog1]*thiscov[prog1]*product 
-        
-                            # Recursion over overlap levels
-                            def overlap_calc(indexes,target_depth):
-                                if len(indexes) < target_depth:
-                                    accum = 0
-                                    for j in range(indexes[-1]+1,len(thiscov)):
-                                        accum += overlap_calc(indexes+[j],target_depth)
-                                    return thiscov.values()[indexes[-1]]*accum
-                                else:
-                                    return thiscov.values()[indexes[-1]]* max([delta.values()[x] for x in [0]],0)
-        
-                            # Iterate over overlap levels
-                            for i in range(2,len(thiscov)): # Iterate over numbers of overlapping programs
-                                for j in range(0,len(thiscov)-1): # Iterate over the index of the first program in the sum
-                                    outcomes[thispartype][thispop] += overlap_calc([j],i)[0]
+                        for prog1 in thiscov.keys():
+                            product = ones(thiscov[prog1].shape)
+                            for prog2 in thiscov.keys():
+                                if prog1 != prog2:
+                                    product *= (1-thiscov[prog2])
+            
+                            outcomes[thispartype][thispop] += delta[prog1]*thiscov[prog1]*product 
+    
+                        # Recursion over overlap levels
+                        def overlap_calc(indexes,target_depth):
+                            if len(indexes) < target_depth:
+                                accum = 0
+                                for j in range(indexes[-1]+1,len(thiscov)):
+                                    accum += overlap_calc(indexes+[j],target_depth)
+                                return thiscov.values()[indexes[-1]]*accum
+                            else:
+                                return thiscov.values()[indexes[-1]]* max([delta.values()[x] for x in [0]],0)
+    
+                        # Iterate over overlap levels
+                        for i in range(2,len(thiscov)): # Iterate over numbers of overlapping programs
+                            for j in range(0,len(thiscov)-1): # Iterate over the index of the first program in the sum
+                                outcomes[thispartype][thispop] += overlap_calc([j],i)[0]
 
-                            # All programs together
-                            outcomes[thispartype][thispop] += prod(array(thiscov.values()),0)*[max([c[j] for c in delta.values()]) for j in range(nyrs)]
+                        # All programs together
+                        outcomes[thispartype][thispop] += prod(array(thiscov.values()),0)*[max([c[j] for c in delta.values()]) for j in range(nyrs)]
                     
+
                     else: raise OptimaException('Unknown reachability type "%s"',self.covout[thispartype][thispop].interaction)
         
+                    # Get the maximum value of the parameter, if it exists
+                    maximum = self.covout[thispartype][thispop].ccopars.get('maximum', None)
+                    if maximum: outcomes[thispartype][thispop] = min(maximum, outcomes[thispartype][thispop])
+
         # Validate
         for outcome in outcomes.keys():
             for key in outcomes[outcome].keys():
