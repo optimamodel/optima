@@ -234,11 +234,6 @@ class Programset(object):
                 if covoutmissing: msg += 'The following parameter(s) are missing coverage-outcome data: %s.'% covoutmissing
             return msg
 
-#    def iscoveragepar(self, parset):
-#        coveragepars = [par.short for par in pars.values() if isinstance(par, Par) and par.limits[1] == 'maxpopsize']
-#
-#        return [True if par in coveragepars else False for par in self.targetpartypes]
-
     def changepopname(self, oldname=None, newname=None):
         '''
         Change the short name of a population in a progset.
