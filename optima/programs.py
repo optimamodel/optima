@@ -6,7 +6,7 @@ set of programs, respectively.
 Version: 2016feb06
 """
 
-from optima import OptimaException, Link, printv, uuid, today, sigfig, getdate, dcp, smoothinterp, findinds, odict, Settings, sanitize, defaultrepr, isnumber, promotetoarray, vec2obj, asd, convertlimits, Par
+from optima import OptimaException, Link, printv, uuid, today, sigfig, getdate, dcp, smoothinterp, findinds, odict, Settings, sanitize, defaultrepr, isnumber, promotetoarray, vec2obj, asd, convertlimits
 from numpy import ones, prod, array, zeros, exp, log, append, nan, isnan, maximum, minimum, sort, concatenate as cat, transpose, mean, argsort
 from random import uniform
 import abc
