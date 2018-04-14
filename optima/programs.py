@@ -385,6 +385,14 @@ class Programset(object):
         return defaultcoverage
 
 
+    def gettargetpopsizes(self, t=None, parset=None, results=None, verbose=2):
+        ''' Extract a disctionary of target pop sizes'''
+        targetpopsizes = odict()
+        for pn,prog in self.programs.iteritems():
+            targetpopsizes[prog.short] = self.programs[pn].gettargetpopsize(t=t, parset=parset)
+        return targetpopsizes
+
+
     def getprogcoverage(self, budget, t, parset=None, results=None, proportion=False, sample='best', verbose=2):
         '''Budget is currently assumed to be a DICTIONARY OF ARRAYS'''
 
@@ -464,7 +472,7 @@ class Programset(object):
 
 
     def getoutcomes(self, coverage=None, t=None, parset=None, results=None, sample='best'):
-        ''' Get the model parameters corresponding to dictionary of coverage values'''
+        ''' Get the model parameters corresponding to dictionary of coverage values (number covered)'''
 
         # Initialise output
         outcomes = odict()
@@ -478,15 +486,20 @@ class Programset(object):
                 try:    parset = self.projectref().parset() # Get default parset
                 except: raise OptimaException('Please provide either a parset or a resultset that contains a parset')
         if coverage is None:
-            coverage = self.getdefaultcoverage(t=t, parset=parset, results=results, sample=sample, proportion=True)
+            coverage = self.getdefaultcoverage(t=t, parset=parset, results=results, sample=sample, proportion=False)
         for covkey, coventry in coverage.iteritems(): # Ensure coverage level values are lists
             if isnumber(coventry): coverage[covkey] = [coventry]
 
         # Set up internal variables
         nyrs = len(t)
         coveragepars = parset.getcovpars() # Get list of coverage-only parameters
+        targetpopsizes = self.gettargetpopsizes(t=t, parset=parset)
+        propcovered = odict()
+        for pn in coverage.keys():
+            propcovered[pn] = coverage[pn]/targetpopsizes[pn]
 
         # Loop over parameter types
+        import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
         for thispartype in self.targetpartypes:
             outcomes[thispartype] = odict()
             
@@ -517,12 +530,12 @@ class Programset(object):
                         else:
                             outcomes[thispartype][thispop] = self.covout[thispartype][thispop].getccopar(t=t, sample=sample)['intercept']
                             if thiscovpop:
-                                thiscov[thisprog.short] = coverage[thisprog.short]*thisprog.gettargetcomposition(t=t, parset=parset, results=results)[thiscovpop]
+                                thiscov[thisprog.short] = propcovered[thisprog.short]*thisprog.gettargetcomposition(t=t, parset=parset, results=results)[thiscovpop]
                             else:
                                 if thispop == 'tot':
-                                    thiscov[thisprog.short] = coverage[thisprog.short]
+                                    thiscov[thisprog.short] = propcovered[thisprog.short]
                                 else:
-                                    thiscov[thisprog.short] = coverage[thisprog.short]*thisprog.gettargetcomposition(t=t, parset=parset, results=results)[thispop]
+                                    thiscov[thisprog.short] = propcovered[thisprog.short]*thisprog.gettargetcomposition(t=t, parset=parset, results=results)[thispop]
                             delta[thisprog.short] = [self.covout[thispartype][thispop].getccopar(t=t, sample=sample)[thisprog.short][j] - outcomes[thispartype][thispop][j] for j in range(nyrs)]
                             
                     # ADDITIVE CALCULATION
@@ -534,7 +547,8 @@ class Programset(object):
                                 print('WARNING: no coverage-outcome parameters defined for program  "%s", population "%s" and parameter "%s". Skipping over... ' % (thisprog.short, thispop, thispartype))
                                 outcomes[thispartype][thispop] = None
                             else: 
-                                outcomes[thispartype][thispop] += thiscov[thisprog.short]*delta[thisprog.short]
+                                try: outcomes[thispartype][thispop] += thiscov[thisprog.short]*delta[thisprog.short]
+                                except: import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
                             
                     # NESTED CALCULATION
                     elif self.covout[thispartype][thispop].interaction == 'nested':
