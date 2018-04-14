@@ -446,7 +446,7 @@ class Programset(object):
         return budget
 
 
-    def getpopcoverage(self, budget, t, parset=None, results=None, sample='best', verbose=2):
+    def getpopcoverage(self, budget, t, parset=None, results=None, sample='best', verbose=2, proportion=False):
         '''Get the number of people from each population covered by each program.'''
 
         # Initialise output
@@ -465,7 +465,7 @@ class Programset(object):
                     popcoverage[thisprog] = None
                 else:
                     spending = budget[thisprog] # Get the amount of money spent on this program
-                    popcoverage[thisprog] = self.programs[thisprog].getcoverage(x=spending, t=t, parset=parset, results=results, total=False, sample=sample)
+                    popcoverage[thisprog] = self.programs[thisprog].getcoverage(x=spending, t=t, parset=parset, results=results, total=False, sample=sample, proportion=proportion)
             else: popcoverage[thisprog] = None
 
         return popcoverage
@@ -491,6 +491,8 @@ class Programset(object):
             if isnumber(coventry): coverage[covkey] = [coventry]
 
         # Set up internal variables
+#        budget = self.getprogbudget(t=t,parset=parset,coverage=coverage)
+#        propcov2 = self.getpopcoverage(t=t,parset=parset,budget=budget,proportion=True)
         nyrs = len(t)
         coveragepars = parset.getcovpars() # Get list of coverage-only parameters
         targetpopsizes = self.gettargetpopsizes(t=t, parset=parset)
@@ -530,12 +532,12 @@ class Programset(object):
                         else:
                             outcomes[thispartype][thispop] = self.covout[thispartype][thispop].getccopar(t=t, sample=sample)['intercept']
                             if thiscovpop:
-                                thiscov[thisprog.short] = propcovered[thisprog.short]*thisprog.gettargetcomposition(t=t, parset=parset, results=results)[thiscovpop]
+                                thiscov[thisprog.short] = coverage[thisprog.short]*thisprog.gettargetcomposition(t=t, parset=parset, results=results)[thiscovpop]/targetpopsizes[thisprog.short]
                             else:
                                 if thispop == 'tot':
-                                    thiscov[thisprog.short] = propcovered[thisprog.short]
+                                    thiscov[thisprog.short] = coverage[thisprog.short]/targetpopsizes[thisprog.short]
                                 else:
-                                    thiscov[thisprog.short] = propcovered[thisprog.short]*thisprog.gettargetcomposition(t=t, parset=parset, results=results)[thispop]
+                                    thiscov[thisprog.short] = coverage[thisprog.short]*thisprog.gettargetcomposition(t=t, parset=parset, results=results)[thispop]/targetpopsizes[thisprog.short]
                             delta[thisprog.short] = [self.covout[thispartype][thispop].getccopar(t=t, sample=sample)[thisprog.short][j] - outcomes[thispartype][thispop][j] for j in range(nyrs)]
                             
                     # ADDITIVE CALCULATION
