@@ -540,8 +540,7 @@ class Programset(object):
                                 print('WARNING: no coverage-outcome parameters defined for program  "%s", population "%s" and parameter "%s". Skipping over... ' % (thisprog.short, thispop, thispartype))
                                 outcomes[thispartype][thispop] = None
                             else: 
-                                try: outcomes[thispartype][thispop] += thiscov[thisprog.short]*delta[thisprog.short]
-                                except: import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+                                outcomes[thispartype][thispop] += thiscov[thisprog.short]*delta[thisprog.short]
                             
                     # NESTED CALCULATION
                     elif self.covout[thispartype][thispop].interaction == 'nested':
