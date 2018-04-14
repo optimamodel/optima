@@ -13,7 +13,7 @@ Version: 2016jan05 by cliffk
 ## Define tests to run here!!!
 tests = [
 'modalities',
-#'scaleup',
+'scaleup',
 'costcov parameter test'
 ]
 
@@ -84,7 +84,7 @@ if 'modalities' in tests:
     
     # Add cost-coverage function parameters to each program
     HTC_clinics.costcovfn.addccopar({'t': 2013.0,
-                                     'saturation': (0.5,0.45),
+                                     'saturation': (0.35,0.45),
                                      'unitcost': (35,45)})
                              
     HTC_outreach.costcovfn.addccopar({'t': 2013.0,
@@ -100,7 +100,6 @@ if 'modalities' in tests:
     
     # Add parameters for the coverage-outcome functions
     R.covout['hivtest']['F 15-49'].addccopar({'intercept': (0.25,0.35),
-                                                    'maximum': 1.0, # Maximum value the parameter can take
                                                     't': 2013.0,
                                                     'HTC_clinics': (0.75,0.85),
                                                     'HTC_outreach': (0.85,0.95),
@@ -174,7 +173,7 @@ if 'modalities' in tests:
 if 'scaleup' in tests:
     # See the effect of scaling up one of the programs
     budget_outreachscaleup = {'HTC_clinics': array([ 1e7,]),
-              'HTC_outreach': array([ 1e9,]),
+              'HTC_outreach': array([ 1e7,]),
               'HTC_hometest': array([ 1e6,])}
     
     coverage_outreachscaleup = R.getprogcoverage(budget=budget_outreachscaleup,
@@ -187,17 +186,17 @@ if 'scaleup' in tests:
                                  proportion=False)
     
     R.covout['hivtest']['F 15-49'].interaction = 'nested'
-    outcomes_nested_outreachscaleup = R.getoutcomes(coverage_outreachscaleup,
+    outcomes_nested_outreachscaleup = R.getoutcomes(coverage_outreachscaleup_number,
                                     t=2013,
                                     parset=P.parsets['default'])
     
     R.covout['hivtest']['F 15-49'].interaction = 'random'
-    outcomes_random_outreachscaleup = R.getoutcomes(coverage_outreachscaleup,
+    outcomes_random_outreachscaleup = R.getoutcomes(coverage_outreachscaleup_number,
                                     t=2013,
                                     parset=P.parsets['default'])
     
     R.covout['hivtest']['F 15-49'].interaction = 'additive'
-    outcomes_additive_outreachscaleup = R.getoutcomes(coverage_outreachscaleup,
+    outcomes_additive_outreachscaleup = R.getoutcomes(coverage_outreachscaleup_number,
                                     t=2013,
                                     parset=P.parsets['default'])
     
@@ -241,17 +240,17 @@ if 'scaleup' in tests:
     assert_allclose(coverage_outreachscaleup['HTC_outreach'][0], 0.217677365273,atol=atol)
     assert_allclose(coverage_outreachscaleup['HTC_hometest'][0], 0.0566322089804,atol=atol)
     
-#    assert_allclose(outcomes_nested_outreachscaleup['hivtest']['F 15-49'][0],0.444239953077,atol=atol)
-#    assert_allclose(outcomes_random_outreachscaleup['hivtest']['F 15-49'][0],0.52833307343,atol=atol)
-#    assert_allclose(outcomes_additive_outreachscaleup['hivtest']['F 15-49'][0],0.558741856611,atol=atol)
-#    
+    assert_allclose(outcomes_nested_outreachscaleup['hivtest']['F 15-49'][0],0.444239953077,atol=atol)
+    assert_allclose(outcomes_random_outreachscaleup['hivtest']['F 15-49'][0],0.52833307343,atol=atol)
+    assert_allclose(outcomes_additive_outreachscaleup['hivtest']['F 15-49'][0],0.558741856611,atol=atol)
+    
     assert_allclose(coverage_hometestscaleup['HTC_clinics'][0],0.244944433098,atol=atol) 
     assert_allclose(coverage_hometestscaleup['HTC_outreach'][0], 0.0227951129721,atol=atol)  
     assert_allclose(coverage_hometestscaleup['HTC_hometest'][0], 0.356286414635,atol=atol) 
     
-#    assert_allclose(outcomes_nested_hometestscaleup['hivtest']['F 15-49'][0],0.435885926,atol=atol)
-#    assert_allclose(outcomes_random_hometestscaleup['hivtest']['F 15-49'][0],0.461657257438,atol=atol)
-#    assert_allclose(outcomes_additive_hometestscaleup['hivtest']['F 15-49'][0],0.471777925796,atol=atol)
+    assert_allclose(outcomes_nested_hometestscaleup['hivtest']['F 15-49'][0],0.435885926,atol=atol)
+    assert_allclose(outcomes_random_hometestscaleup['hivtest']['F 15-49'][0],0.461657257438,atol=atol)
+    assert_allclose(outcomes_additive_hometestscaleup['hivtest']['F 15-49'][0],0.471777925796,atol=atol)
     
 
     # Now see how the different options affect diagnoses

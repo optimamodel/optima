@@ -491,8 +491,6 @@ class Programset(object):
             if isnumber(coventry): coverage[covkey] = [coventry]
 
         # Set up internal variables
-#        budget = self.getprogbudget(t=t,parset=parset,coverage=coverage)
-#        propcov2 = self.getpopcoverage(t=t,parset=parset,budget=budget,proportion=True)
         nyrs = len(t)
         coveragepars = parset.getcovpars() # Get list of coverage-only parameters
         targetpopsizes = self.gettargetpopsizes(t=t, parset=parset)
