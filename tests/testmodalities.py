@@ -124,17 +124,17 @@ if 'modalities' in tests:
     
     # Get the outcomes associated with this budget
     R.covout['hivtest']['F 15-49'].interaction = 'nested'
-    outcomes_nested = R.getoutcomes(coverage,
+    outcomes_nested = R.getoutcomes(coverage_number,
                                     t=2013,
                                     parset=P.parsets['default'])
     
     R.covout['hivtest']['F 15-49'].interaction = 'random'
-    outcomes_random = R.getoutcomes(coverage,
+    outcomes_random = R.getoutcomes(coverage_number,
                                     t=2013,
                                     parset=P.parsets['default'])
     
     R.covout['hivtest']['F 15-49'].interaction = 'additive'
-    outcomes_additive = R.getoutcomes(coverage,
+    outcomes_additive = R.getoutcomes(coverage_number,
                                     t=2013,
                                     parset=P.parsets['default'])
     
@@ -216,15 +216,15 @@ if 'scaleup' in tests:
                                  proportion=False)
     
     R.covout['hivtest']['F 15-49'].interaction = 'nested'
-    outcomes_nested_hometestscaleup = R.getoutcomes(coverage_hometestscaleup,
+    outcomes_nested_hometestscaleup = R.getoutcomes(coverage_hometestscaleup_number,
                                     t=2013,
                                     parset=P.parsets['default'])
     R.covout['hivtest']['F 15-49'].interaction = 'random'
-    outcomes_random_hometestscaleup = R.getoutcomes(coverage_hometestscaleup,
+    outcomes_random_hometestscaleup = R.getoutcomes(coverage_hometestscaleup_number,
                                     t=2013,
                                     parset=P.parsets['default'])
     R.covout['hivtest']['F 15-49'].interaction = 'additive'
-    outcomes_additive_hometestscaleup = R.getoutcomes(coverage_hometestscaleup,
+    outcomes_additive_hometestscaleup = R.getoutcomes(coverage_hometestscaleup_number,
                                     t=2013,
                                     parset=P.parsets['default'])
 
@@ -256,8 +256,8 @@ if 'scaleup' in tests:
 
     # Now see how the different options affect diagnoses
     initialparsdict = R.getpars(coverage, t=2013, parset=P.parsets['default'])
-    outreachparsdict = R.getpars(coverage_outreachscaleup, t=2013, parset=P.parsets['default'])
-    hometestparsdict = R.getpars(coverage_hometestscaleup, t=2013, parset=P.parsets['default'])
+    outreachparsdict = R.getpars(coverage_outreachscaleup_number, t=2013, parset=P.parsets['default'])
+    hometestparsdict = R.getpars(coverage_hometestscaleup_number, t=2013, parset=P.parsets['default'])
     
     initialparset = dcp(P.parsets['default'])
     initialparset.pars = initialparsdict
