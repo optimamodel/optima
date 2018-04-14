@@ -501,7 +501,6 @@ class Programset(object):
             propcovered[pn] = coverage[pn]/targetpopsizes[pn]
 
         # Loop over parameter types
-        import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
         for thispartype in self.targetpartypes:
             outcomes[thispartype] = odict()
             
@@ -524,20 +523,12 @@ class Programset(object):
     
                     # Loop over the programs that target this parameter/population combo
                     for thisprog in self.progs_by_targetpar(thispartype)[thispop]: 
-                        if type(thispop)==tuple: thiscovpop = thisprog.targetpops[0] # If it's a partnership parameters, get the target population separately
-                        else: thiscovpop = None
                         if not self.covout[thispartype][thispop].ccopars[thisprog.short]:
                             print('WARNING: no coverage-outcome function defined for optimizable program  "%s", skipping over... ' % (thisprog.short))
                             outcomes[thispartype][thispop] = None
                         else:
                             outcomes[thispartype][thispop] = self.covout[thispartype][thispop].getccopar(t=t, sample=sample)['intercept']
-                            if thiscovpop:
-                                thiscov[thisprog.short] = coverage[thisprog.short]*thisprog.gettargetcomposition(t=t, parset=parset, results=results)[thiscovpop]/targetpopsizes[thisprog.short]
-                            else:
-                                if thispop == 'tot':
-                                    thiscov[thisprog.short] = coverage[thisprog.short]/targetpopsizes[thisprog.short]
-                                else:
-                                    thiscov[thisprog.short] = coverage[thisprog.short]*thisprog.gettargetcomposition(t=t, parset=parset, results=results)[thispop]/targetpopsizes[thisprog.short]
+                            thiscov[thisprog.short] = propcovered[thisprog.short]
                             delta[thisprog.short] = [self.covout[thispartype][thispop].getccopar(t=t, sample=sample)[thisprog.short][j] - outcomes[thispartype][thispop][j] for j in range(nyrs)]
                             
                     # ADDITIVE CALCULATION
