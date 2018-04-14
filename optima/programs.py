@@ -496,7 +496,7 @@ class Programset(object):
         targetpopsizes = self.gettargetpopsizes(t=t, parset=parset)
         propcovered = odict()
         for pn in coverage.keys():
-            propcovered[pn] = coverage[pn]/targetpopsizes[pn]
+            if coverage[pn] is not None: propcovered[pn] = coverage[pn]/targetpopsizes[pn]
 
         # Loop over parameter types
         for thispartype in self.targetpartypes:
