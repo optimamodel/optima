@@ -49,8 +49,13 @@ if dobenchmark:
     # Run the model
     P = demo(0)
     performance1 = cpubenchmark()
+    x = P.progsets[0].getdefaultbudget()
     t = time()
-    P.runsim()
+
+    # Run the model 
+#    P.runsim()
+    P.runbudget(budget=x, budgetyears=2016)
+
     elapsed = time()-t
     performance2 = cpubenchmark()
     performance = sum([performance1, performance2])/2. # Find average of before and after

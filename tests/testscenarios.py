@@ -10,9 +10,9 @@ tests = [
 #'standardscen',
 #'maxcoverage',
 #'budget',
-'90-90-90',
+#'90-90-90',
 #'sensitivity',
-#'VMMC'
+'VMMC'
 ]
 
 ##############################################################################
@@ -422,13 +422,14 @@ if 'VMMC' in tests:
     t = tic()
 
     print('Running VMMC scenario test...')
-    from optima import Parscen, Budgetscen, defaultproject
+    from optima import Parscen, Budgetscen, defaultproject, findinds
     
     P = defaultproject('generalized',dorun=False)
 #    P.runsim()
     pops = P.data['pops']['short']
 
     malelist = findinds(P.data['pops']['male'])
+    femalelist = findinds(P.data['pops']['female'])
     caspships = P.parsets['default'].pars['condcas'].y.keys()
     
     ## Define scenarios
@@ -437,26 +438,26 @@ if 'VMMC' in tests:
                 parsetname='default',
                 pars=[]),
 
-        Parscen(name='Imagine that no-one gets circumcised',
+        Parscen(name='Proportion circumcised',
              parsetname='default',
              pars=[{'endval': 0.2,
                 'endyear': 2020,
                 'name': 'propcirc',
-                'for': malelist,
+                'for': femalelist,
                 'startval': .85,
                 'startyear': 2015.2}]),
         
-        Budgetscen(name='Default budget',
-              parsetname='default',
-              progsetname='default',
-              t=2015,
-              budget=P.progsets['default'].getdefaultbudget()),
-
-         Budgetscen(name='Scale up VMMC program',
-              parsetname='default',
-              progsetname='default',
-              t=2016,
-              budget={'VMMC': 1e8}),
+#        Budgetscen(name='Default budget',
+#              parsetname='default',
+#              progsetname='default',
+#              t=2015,
+#              budget=P.progsets['default'].getdefaultbudget()),
+#
+#         Budgetscen(name='Scale up VMMC program',
+#              parsetname='default',
+#              progsetname='default',
+#              t=2016,
+#              budget={'VMMC': 1e8}),
 
         ]
     

@@ -99,3 +99,7 @@
 0.505 2017-Oct-30_18:50:53 2035162 time-varying-optimization (benchmark:18.87m)
 0.890 2018-Mar-29_17:21:06 b586b1b develop (benchmark:16.89m)
 0.818 2018-Mar-29_17:22:42 b586b1b develop (benchmark:17.63m)
+0.768 2018-Apr-24_07:44:53 5ea5109 include-saturation (benchmark:10.15m)
+0.657 2018-Apr-24_07:46:08 5ea5109 include-saturation (benchmark:9.90m)
+0.646 2018-Apr-24_07:46:21 5ea5109 include-saturation (benchmark:10.78m)
+0.835 2018-Apr-24_07:46:40 5ea5109 include-saturation (benchmark:11.26m)

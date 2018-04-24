@@ -272,6 +272,7 @@ def makescenarios(project=None, scenlist=None, verbose=2, ccsample=False, randse
         thisparset.modified = today()
         thisparset.name = scen.name
         scenparsets[scen.name] = thisparset
+        import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
         
     return scenparsets
 
