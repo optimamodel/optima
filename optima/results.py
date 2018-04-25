@@ -296,6 +296,7 @@ class Resultset(object):
         allpmtct     = assemble('pmtct')
         allcosttreat = assemble('costtreat')
         allplhiv     = self.settings.allplhiv
+        allsus       = self.settings.sus
         allaids      = self.settings.allaids
         alldx        = self.settings.alldx
         allevercare  = self.settings.allevercare
@@ -311,8 +312,9 @@ class Resultset(object):
             self.main['prev'].datapops = processdata(data['hivprev'], uncertainty=True)
             self.main['prev'].datatot  = processdata(data['optprev'])
         
-        self.main['force'].pops = process(allinci[:,:,indices] / (eps+allpeople[:,:,:,indices].sum(axis=1)), percent=True) # Axis 1 is health state
-        self.main['force'].tot  = process(allinci[:,:,indices].sum(axis=1) / (eps+allpeople[:,:,:,indices].sum(axis=(1,2))), percent=True) # Axis 2 is populations
+#        import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+        self.main['force'].pops = process(allinci[:,:,indices] / (eps+allpeople[:,allsus,:,:][:,:,:,indices].sum(axis=1)), percent=True) # Axis 1 is health state
+        self.main['force'].tot  = process(allinci[:,:,indices].sum(axis=1) / (eps+allpeople[:,allsus,:,:][:,:,:,indices].sum(axis=(1,2))), percent=True) # Axis 2 is populations
 
         self.main['numinci'].pops = process(allinci[:,:,indices])
         self.main['numinci'].tot  = process(allinci[:,:,indices].sum(axis=1)) # Axis 1 is populations
