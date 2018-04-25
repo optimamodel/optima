@@ -103,3 +103,5 @@
 0.844 2018-Apr-24_07:51:02 758412f include-saturation (benchmark:10.20m)
 0.871 2018-Apr-24_07:51:05 758412f include-saturation (benchmark:11.29m)
 0.737 2018-Apr-24_07:51:08 758412f include-saturation (benchmark:10.75m)
+0.487 2018-Apr-25_07:10:13 58cbd53 include-saturation for runsim (benchmark:18.06m iterations/second)
+0.624 2018-Apr-25_07:15:27 58cbd53 include-saturation for runbudget (benchmark:18.25m iterations/second)
