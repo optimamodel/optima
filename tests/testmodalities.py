@@ -14,7 +14,7 @@ Version: 2016jan05 by cliffk
 tests = [
 'modalities',
 'scaleup',
-'costcov parameter test'
+'costcov'
 ]
 
 ##############################################################################
@@ -333,7 +333,7 @@ if 'scaleup' in tests:
     if showstats: summary_scaleup()
 
 
-if 'costcov parameter test' in tests:
+if 'costcov' in tests:
     P = demo(doplot=False, which='simple')
     
     pops = P.pars()['popkeys']
