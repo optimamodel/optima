@@ -985,7 +985,6 @@ def minoutcomes(project=None, optim=None, tvec=None, verbose=None, maxtime=None,
     multires.fullruninfo = tmpfullruninfo # And the budgets/outcomes for every different run
     multires.outcomes = dcp(multires.outcome) # Initialize
     multires.outcome = multires.outcomes[-1] # Store these defaults in a convenient place
-    multires.budget = multires.budgets[-1]
     optim.resultsref = multires.name # Store the reference for this result
     
     # Store optimization settings
