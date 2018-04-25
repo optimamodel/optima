@@ -373,7 +373,7 @@ def manualfit(project=None, parsubset=None, name=-1, ind=0, maxrows=25, verbose=
 
 
 
-def plotpeople(project=None, people=None, tvec=None, ind=None, simind=None, start=2, end=None, pops=None, animate=False, skipempty=True, verbose=2, **kwargs):
+def plotpeople(project=None, people=None, tvec=None, ind=None, simind=None, start=2, end=None, pops=None, animate=False, skipempty=True, verbose=2, toplot=None, **kwargs):
     '''
     A function to plot all people as a stacked plot
     
@@ -384,11 +384,11 @@ def plotpeople(project=None, people=None, tvec=None, ind=None, simind=None, star
         P = op.defaults.defaultproject('simple')
         P.runsim()
         people = P.results[-1].raw[0]['people']
-        op.gui.plotpeople(P, people)
+        op.plotpeople(P, people)
         
     NB: for a multiresult, simind must not be None!
     
-    Version: 2016feb04
+    Version: 2018apr0
     '''
     if pops is None: pops = Ellipsis # This is a slice
     elif isnumber(pops): pops = [pops]
@@ -397,14 +397,15 @@ def plotpeople(project=None, people=None, tvec=None, ind=None, simind=None, star
     legendsettings = {'loc':'upper left', 'bbox_to_anchor':(1.02, 1), 'fontsize':11, 'title':''}
     nocolor = (0.9,0.9,0.9)
     labels = project.settings.statelabels
+    if toplot is None: toplot = 'people'
     
     if people is None:
         if ind is None: ind=-1
         try:
-            people = project.results[ind].raw[0]['people'] # Try to get default people to plot
+            people = project.results[ind].raw[0][toplot] # Try to get default people to plot
         except:
             if simind is None: simind = 1
-            people = project.results[ind].raw[simind][0]['people'] # It's a multiresult: need another  index
+            people = project.results[ind].raw[simind][0][toplot] # It's a multiresult: need another  index
         
     
     plotstyles = odict([
