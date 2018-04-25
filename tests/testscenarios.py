@@ -12,7 +12,7 @@ tests = [
 #'budget',
 '90-90-90',
 #'sensitivity',
-#'VMMC'
+'VMMC'
 ]
 
 ##############################################################################
@@ -204,7 +204,7 @@ if 'standardscen' in tests:
 if 'sensitivity' in tests:
     t = tic()
 
-    print('Testing scenario sensitivity...')
+    print('Testing scenario sensitivity - WARNING, SCENARIO SENSITIVITY IS NOT FUNCTIONAL!!!')
     from optima import Parscen, defaultproject, pygui, findinds
     from numpy import array
     
@@ -237,9 +237,9 @@ if 'sensitivity' in tests:
     resultsdiff = P.result().diff(base=1)
     
     output = '\n\n----------------\nScenario impact:\n'
-    output += 'Infections averted: %s [%s, %s]\n' % (resultsdiff.get('numinci', key='Current conditions', year='all')[0,17:].sum(), resultsdiff.get('numinci', key='Current conditions', year='all')[1,17:].sum(), resultsdiff.get('numinci', key='Current conditions', year='all')[2,17:].sum())
-    output += 'Deaths averted: %s [%s, %s]\n' % (resultsdiff.get('numdeath', key='Current conditions', year='all')[0,17:].sum(), resultsdiff.get('numdeath', key='Current conditions', year='all')[1,17:].sum(), resultsdiff.get('numdeath', key='Current conditions', year='all')[2,17:].sum())
-    output += 'DALYs averted: %s [%s, %s]\n' % (resultsdiff.get('numdaly', key='Current conditions', year='all')[0,17:].sum(), resultsdiff.get('numdaly', key='Current conditions', year='all')[1,17:].sum(), resultsdiff.get('numdaly', key='Current conditions', year='all')[2,17:].sum())
+    output += 'Infections averted: %s \n' % (resultsdiff.get('numinci', key='Current conditions', year='all')[17:].sum())
+    output += 'Deaths averted: %s \n' % (resultsdiff.get('numdeath', key='Current conditions', year='all')[17:].sum())
+    output += 'DALYs averted: %s \n' % (resultsdiff.get('numdaly', key='Current conditions', year='all')[17:].sum())
     
     print output
 
@@ -284,7 +284,7 @@ if '90-90-90' in tests:
               'for': 'tot',
               'startyear': startyear,
               'endyear': endyear,
-              'endval': .9,
+              'endval': 1.,
               },
               
               {'name': 'proptx',
@@ -404,13 +404,13 @@ if 'budget' in tests:
     resdiff = P.results[-1]
     output = '\n\n----------------\n'
     output += 'Impact of current expenditure (relative to zero):\n'
-    output += 'Infections averted: %s [%s, %s]\n' % (resdiff.get('numinci', key=0, year='all')[0,17:].sum(), resdiff.get('numinci', key=0, year='all')[1,17:].sum(), resdiff.get('numinci', key=0, year='all')[2,17:].sum())
-    output += '    Deaths averted: %s [%s, %s]\n' % (resdiff.get('numdeath', key=0, year='all')[0,17:].sum(), resdiff.get('numdeath', key=0, year='all')[1,17:].sum(), resdiff.get('numdeath', key=0, year='all')[2,17:].sum())
-    output += '     DALYs averted: %s [%s, %s]\n' % (resdiff.get('numdaly', key=0, year='all')[0,17:].sum(), resdiff.get('numdaly', key=0, year='all')[1,17:].sum(), resdiff.get('numdaly', key=0, year='all')[2,17:].sum())
+    output += 'Infections averted: %s\n' % (resdiff.get('numinci', key=0, year='all')[17:].sum())
+    output += '    Deaths averted: %s\n' % (resdiff.get('numdeath', key=0, year='all')[17:].sum())
+    output += '     DALYs averted: %s\n' % (resdiff.get('numdaly', key=0, year='all')[17:].sum())
     output += 'Impact of unlimited expenditure (relative to zero):\n'
-    output += 'Infections averted: %s [%s, %s]\n' % (resdiff.get('numinci', key=1, year='all')[0,17:].sum(), resdiff.get('numinci', key=1, year='all')[1,17:].sum(), resdiff.get('numinci', key=1, year='all')[2,17:].sum())
-    output += '    Deaths averted: %s [%s, %s]\n' % (resdiff.get('numdeath', key=1, year='all')[0,17:].sum(), resdiff.get('numdeath', key=1, year='all')[1,17:].sum(), resdiff.get('numdeath', key=1, year='all')[2,17:].sum())
-    output += '     DALYs averted: %s [%s, %s]\n' % (resdiff.get('numdaly', key=1, year='all')[0,17:].sum(), resdiff.get('numdaly', key=1, year='all')[1,17:].sum(), resdiff.get('numdaly', key=1, year='all')[2,17:].sum())
+    output += 'Infections averted: %s\n' % (resdiff.get('numinci', key=1, year='all')[17:].sum())
+    output += '    Deaths averted: %s\n' % (resdiff.get('numdeath', key=1, year='all')[17:].sum())
+    output += '     DALYs averted: %s\n' % (resdiff.get('numdaly', key=1, year='all')[17:].sum())
     
     print output
 
@@ -422,14 +422,13 @@ if 'VMMC' in tests:
     t = tic()
 
     print('Running VMMC scenario test...')
-    from optima import Parscen, Budgetscen, defaultproject
+    from optima import Parscen, Budgetscen, defaultproject, findinds
     
     P = defaultproject('generalized',dorun=False)
-#    P.runsim()
     pops = P.data['pops']['short']
 
     malelist = findinds(P.data['pops']['male'])
-    caspships = P.parsets['default'].pars['condcas'].y.keys()
+    femalelist = findinds(P.data['pops']['female']) # Added in case you want to check that this fails, as it should
     
     ## Define scenarios
     scenlist = [
@@ -437,12 +436,12 @@ if 'VMMC' in tests:
                 parsetname='default',
                 pars=[]),
 
-        Parscen(name='Imagine that no-one gets circumcised',
+        Parscen(name='Proportion circumcised',
              parsetname='default',
              pars=[{'endval': 0.2,
                 'endyear': 2020,
                 'name': 'propcirc',
-                'for': malelist,
+                'for': malelist, #femalelist
                 'startval': .85,
                 'startyear': 2015.2}]),
         
@@ -464,7 +463,7 @@ if 'VMMC' in tests:
     P.addscens(scenlist, overwrite=True)
     
     # Run the scenarios
-    P.runscenarios()
+    P.runscenarios(die=True)
      
     if doplot:
         from optima import pygui
