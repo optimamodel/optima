@@ -1050,7 +1050,6 @@ def makepars(data=None, verbose=2, die=True, fixprops=None):
             elif by=='fpop': keys = fpopkeys
             elif by=='mpop': keys = mpopkeys
             else: keys = [] # They're not necessarily empty, e.g. by partnership, but too complicated to figure out here
-#            if by in ['fpop', 'mpop']: rawpar['by'] = 'pop' # Reset, since no longer needed -- WARNING, kludgy
             
             # Decide how to handle it based on parameter type
             if partype=='initprev': # Initialize prevalence only
