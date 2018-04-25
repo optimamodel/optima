@@ -99,3 +99,4 @@
 0.505 2017-Oct-30_18:50:53 2035162 time-varying-optimization (benchmark:18.87m)
 0.890 2018-Mar-29_17:21:06 b586b1b develop (benchmark:16.89m)
 0.818 2018-Mar-29_17:22:42 b586b1b develop (benchmark:17.63m)
+0.582 2018-Apr-24_07:47:18 2f7a3cd develop (benchmark:9.89m)

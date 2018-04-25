@@ -207,6 +207,13 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
         else: # No one on OST
             ostprev = zeros(npts)
     
+    # Circumcision check
+    if (simpars['propcirc'][female,:]>0).any():
+        errormsg = label + 'You have entered non-zero value for circumcision prevalence among a female population.'
+        if die: raise OptimaException(errormsg)
+        else:   printv(errormsg, 1, verbose)
+        simpars['propcirc'][female,:] = 0.
+    
     # Other interventions
     transinj  = simpars['transinj']                         # Injecting transition probability
     effcondom = simpars['effcondom']                        # Condom effect
