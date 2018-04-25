@@ -599,6 +599,8 @@ def multioptimize(optim=None, nchains=None, nblocks=None, blockiters=None,
     You can see how after 10 iterations, the blocks talk to each other, and the optimization
     for each thread restarts from the best solution found for each.
     '''
+    
+    print(' YESSSR UNNINGG ')
 
     # Import dependencies here so no biggie if they fail
     from multiprocessing import Process, Queue
@@ -999,7 +1001,7 @@ def minoutcomes(project=None, optim=None, tvec=None, verbose=None, maxtime=None,
 
 
 def minmoney(project=None, optim=None, tvec=None, verbose=None, maxtime=None, maxiters=1000, 
-             fundingchange=1.2, tolerance=1e-2, ccsample='best', randseed=None, keepraw=False, die=True, **kwargs):
+             fundingchange=1.2, tolerance=1e-2, ccsample='best', randseed=None, keepraw=False, die=False, **kwargs):
     '''
     A function to minimize money for a fixed objective. Note that it calls minoutcomes() in the process.
 
@@ -1084,12 +1086,12 @@ def minmoney(project=None, optim=None, tvec=None, verbose=None, maxtime=None, ma
     # If infinite or zero money met objectives, don't bother proceeding
     if terminate:
         if zerofailed:
-            constrainedbudgetvec = budgetvec * 0.0
+            constrainedbudgetvec = budgetvec*0.0
             newtotalbudget = 0.0
             fundingfactor = 0.0
         if infinitefailed:
-            fundingfactor = 100 # For plotting, don't make the factor infinite, just very large
-            constrainedbudgetvec = budgetvec * fundingfactor
+            fundingfactor = 10 # For plotting, don't make the factor infinite, just very large
+            constrainedbudgetvec = 0.0*budgetvec + budgetvec.sum()*fundingfactor
             newtotalbudget = totalbudget * fundingfactor
 
     else:
@@ -1151,11 +1153,16 @@ def minmoney(project=None, optim=None, tvec=None, verbose=None, maxtime=None, ma
 
     ## Tidy up -- WARNING, need to think of a way to process multiple inds
     args['totalbudget'] = origtotalbudget
+    args['doconstrainbudget'] = False
     orig = outcomecalc(origbudgetvec, outputresults=True, **args)
     args['totalbudget'] = newtotalbudget * fundingfactor
+    args['doconstrainbudget'] = False
     new = outcomecalc(constrainedbudgetvec, outputresults=True, **args)
+    
     orig.name = 'Baseline' # WARNING, is this really the best way of doing it?
-    new.name = 'Optimal'
+    if   zerofailed:     new.name = 'Zero budget'
+    elif infinitefailed: new.name = 'Infinite budget'
+    else:                new.name = 'Optimal'
     tmpresults = [orig, new]
     multires = Multiresultset(resultsetlist=tmpresults, name='optim-%s' % optim.name)
     for k,key in enumerate(multires.keys): multires.budgetyears[key] = tmpresults[k].budgetyears 
