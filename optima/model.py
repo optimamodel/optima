@@ -34,6 +34,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
     nstates         = settings.nstates              # Shorten number of health states
     eps             = settings.eps                  # Define another small number to avoid divide-by-zero errors
     forcepopsize    = settings.forcepopsize         # Whether or not to force the population size to match the parameters
+    treatbycd4      = settings.treatbycd4           # Whether or not to preferentially put people on treatment from lower CD4 counts
     fromto          = simpars['fromto']             # States to and from
     transmatrix     = simpars['transmatrix']        # Raw transitions matrix
 
@@ -859,16 +860,19 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                         if totalppltomoveup>eps:
                             diff = min(diff, totalppltomoveup-eps) # Make sure we don't move more people than are available
                             if name == 'proptx': # For treatment, we move people in lower CD4 states first
-                                tmpdiff = diff
-                                newmovers = zeros((ncd4,npops))
-                                for cd4 in reversed(range(ncd4)): # Going backwards so that lower CD4 counts move up the cascade first
-                                    if tmpdiff>eps: # Move people until you have the right proportions
-                                        ppltomoveupcd4 = ppltomoveup[cd4,:]
-                                        totalppltomoveupcd4 = ppltomoveupcd4.sum()
-                                        if totalppltomoveupcd4>eps:
-                                            tmpdiffcd4 = min(tmpdiff, totalppltomoveupcd4-eps)
-                                            newmovers[cd4,:] = tmpdiffcd4*ppltomoveupcd4/totalppltomoveupcd4 # Pull out evenly from each population
-                                            tmpdiff -= newmovers[cd4,:].sum() # Adjust the number of available spots
+                                if treatbycd4:
+                                    tmpdiff = diff
+                                    newmovers = zeros((ncd4,npops))
+                                    for cd4 in reversed(range(ncd4)): # Going backwards so that lower CD4 counts move up the cascade first
+                                        if tmpdiff>eps: # Move people until you have the right proportions
+                                            ppltomoveupcd4 = ppltomoveup[cd4,:]
+                                            totalppltomoveupcd4 = ppltomoveupcd4.sum()
+                                            if totalppltomoveupcd4>eps:
+                                                tmpdiffcd4 = min(tmpdiff, totalppltomoveupcd4-eps)
+                                                newmovers[cd4,:] = tmpdiffcd4*ppltomoveupcd4/totalppltomoveupcd4 # Pull out evenly from each population
+                                                tmpdiff -= newmovers[cd4,:].sum() # Adjust the number of available spots
+                                else:
+                                    newmovers = diff*ppltomoveup/totalppltomoveup
                                 # Need to handle USVL and SVL separately
                                 people[care,:,t+1] -= newmovers # Shift people out of care
                                 people[usvl,:,t+1]  += newmovers*(1.0-treatvs) # ... and onto treatment, according to existing proportions

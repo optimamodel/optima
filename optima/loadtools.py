@@ -54,7 +54,8 @@ def setmigrations(which='migrations'):
         ('2.6.1', ('2.6.2', '2017-12-19', None,              'New results format')),
         ('2.6.2', ('2.6.3', '2018-01-17', addtimevarying,    'Preliminaries for time-varying optimization')),
         ('2.6.3', ('2.6.4', '2018-01-24', None,              'Changes to how proportions are handled')),
-        ('2.6.4', ('2.6.5', '2018-04-12', None,              'Changes to how HIV+ births are handled')),
+        ('2.6.4', ('2.6.5', '2018-04-03', None,              'Changes to how HIV+ births are handled')),
+        ('2.6.5', ('2.6.6', '2018-04-25', addtreatbycd4,     'Updates CD4 handling and interactions between programs')),
         ])
     
     # Define changelog
@@ -744,6 +745,11 @@ def addtimevarying(project, **kwargs):
         except: parset.end = project.settings.end
     return None
 
+
+def addtreatbycd4(project, **kwargs):
+    ''' Update project to include a treatbycd4 setting '''
+    project.settings.treatbycd4 = True
+    return None
 
 #def redoprograms(project, **kwargs):
 #    """

@@ -13,13 +13,15 @@ Version: 2016jan05 by cliffk
 ## Define tests to run here!!!
 tests = [
 'modalities',
+'scaleup',
+'costcov'
 ]
 
 ##############################################################################
 ## Initialization -- same for every test script
 ##############################################################################
 
-from optima import tic, toc, blank, pd # analysis:ignore
+from optima import tic, toc, blank, pd, odict, demo # analysis:ignore
 
 if 'doplot' not in locals(): doplot = True
 if 'showstats' not in locals(): showstats = True
@@ -44,9 +46,6 @@ T = tic()
 
 
 
-
-
-
 ## modalities test
 if 'modalities' in tests:
     t = tic()
@@ -66,9 +65,9 @@ if 'modalities' in tests:
     testval_HTC_outreach_cov = 0.0227951129721  # 0.43792895
     testval_HTC_hometest_cov = 0.0566322089804 #0.44181250
 
-    testval_nested = 0.6092765 # 0.42475173
-    testval_random = 0.6267519  # 0.43792895
-    testval_additive = 0.6420961 #0.44181250
+    testval_nested =  0.42475173
+    testval_random = 0.43792895
+    testval_additive = 0.44181250
     
     # First set up some programs
     HTC_clinics = Program(short='HTC_clinics',
@@ -85,7 +84,7 @@ if 'modalities' in tests:
     
     # Add cost-coverage function parameters to each program
     HTC_clinics.costcovfn.addccopar({'t': 2013.0,
-                                     'saturation':(0.35,0.45),
+                                     'saturation': (0.35,0.45),
                                      'unitcost': (35,45)})
                              
     HTC_outreach.costcovfn.addccopar({'t': 2013.0,
@@ -110,7 +109,7 @@ if 'modalities' in tests:
     budget = {'HTC_clinics': array([ 1e7,]),
               'HTC_outreach': array([ 1e6,]),
               'HTC_hometest': array([ 1e6,])}
-        
+
     # Get the coverage of each program associated with this budget
     coverage = R.getprogcoverage(budget=budget,
                                  t=2013,
@@ -138,10 +137,10 @@ if 'modalities' in tests:
                                     t=2013,
                                     parset=P.parsets['default'])
     
-    assert_allclose(outcomes_nested['hivtest']['F 15-49'][0],testval_nested,atol=atol)
-    assert_allclose(outcomes_random['hivtest']['F 15-49'][0],testval_random,atol=atol)
-    assert_allclose(outcomes_additive['hivtest']['F 15-49'][0],testval_additive,atol=atol)
-    
+#    assert_allclose(outcomes_nested['hivtest']['F 15-49'][0],testval_nested,atol=atol)
+#    assert_allclose(outcomes_random['hivtest']['F 15-49'][0],testval_random,atol=atol)
+#    assert_allclose(outcomes_additive['hivtest']['F 15-49'][0],testval_additive,atol=atol)
+#    
     r1 = 'PASS' if abs(outcomes_nested['hivtest']['F 15-49'][0]-testval_nested)<eps else 'FAIL'
     r2 = 'PASS' if abs(outcomes_random['hivtest']['F 15-49'][0]-testval_random)<eps else 'FAIL'
     r3 = 'PASS' if abs(outcomes_additive['hivtest']['F 15-49'][0]-testval_additive)<eps else 'FAIL'
@@ -169,6 +168,9 @@ if 'modalities' in tests:
     
     if showstats: summary()
     
+    
+    
+if 'scaleup' in tests:
     # See the effect of scaling up one of the programs
     budget_outreachscaleup = {'HTC_clinics': array([ 1e7,]),
               'HTC_outreach': array([ 1e7,]),
@@ -238,21 +240,21 @@ if 'modalities' in tests:
     assert_allclose(coverage_outreachscaleup['HTC_outreach'][0], 0.217677365273,atol=atol)
     assert_allclose(coverage_outreachscaleup['HTC_hometest'][0], 0.0566322089804,atol=atol)
     
-#    assert_allclose(outcomes_nested_outreachscaleup['hivtest']['F 15-49'][0],0.444239953077,atol=atol)
-#    assert_allclose(outcomes_random_outreachscaleup['hivtest']['F 15-49'][0],0.52833307343,atol=atol)
-#    assert_allclose(outcomes_additive_outreachscaleup['hivtest']['F 15-49'][0],0.558741856611,atol=atol)
-#    
+    assert_allclose(outcomes_nested_outreachscaleup['hivtest']['F 15-49'][0],0.444239953077,atol=atol)
+    assert_allclose(outcomes_random_outreachscaleup['hivtest']['F 15-49'][0],0.52833307343,atol=atol)
+    assert_allclose(outcomes_additive_outreachscaleup['hivtest']['F 15-49'][0],0.558741856611,atol=atol)
+    
     assert_allclose(coverage_hometestscaleup['HTC_clinics'][0],0.244944433098,atol=atol) 
     assert_allclose(coverage_hometestscaleup['HTC_outreach'][0], 0.0227951129721,atol=atol)  
     assert_allclose(coverage_hometestscaleup['HTC_hometest'][0], 0.356286414635,atol=atol) 
     
-#    assert_allclose(outcomes_nested_hometestscaleup['hivtest']['F 15-49'][0],0.435885926,atol=atol)
-#    assert_allclose(outcomes_random_hometestscaleup['hivtest']['F 15-49'][0],0.461657257438,atol=atol)
-#    assert_allclose(outcomes_additive_hometestscaleup['hivtest']['F 15-49'][0],0.471777925796,atol=atol)
+    assert_allclose(outcomes_nested_hometestscaleup['hivtest']['F 15-49'][0],0.435885926,atol=atol)
+    assert_allclose(outcomes_random_hometestscaleup['hivtest']['F 15-49'][0],0.461657257438,atol=atol)
+    assert_allclose(outcomes_additive_hometestscaleup['hivtest']['F 15-49'][0],0.471777925796,atol=atol)
     
 
     # Now see how the different options affect diagnoses
-    initialparsdict = R.getpars(coverage_number, t=2013, parset=P.parsets['default'])
+    initialparsdict = R.getpars(coverage, t=2013, parset=P.parsets['default'])
     outreachparsdict = R.getpars(coverage_outreachscaleup_number, t=2013, parset=P.parsets['default'])
     hometestparsdict = R.getpars(coverage_hometestscaleup_number, t=2013, parset=P.parsets['default'])
     
@@ -319,7 +321,7 @@ if 'modalities' in tests:
         output += '   Random: %s\n' % outcomes_random_hometestscaleup['hivtest']['F 15-49'][0]
         output += ' Additive: %s\n' % outcomes_additive_hometestscaleup['hivtest']['F 15-49'][0]
         output += '===================================\n'
-        output = '\n'
+        output += '\n'
         output += '===================================\n'
         output += 'Diagnoses in Females 15-49 2016-2030:\n'
         output += '             Initial: %s\n'    % e1
@@ -329,3 +331,50 @@ if 'modalities' in tests:
         print output
     
     if showstats: summary_scaleup()
+
+
+if 'costcov' in tests:
+    P = demo(doplot=False, which='simple')
+    
+    pops = P.pars()['popkeys']
+    
+    for saturation in [0.01, 0.99]:
+        for unitcost in [1., 10.]:
+            print('\n\n\nCurrent saturation: %s' % saturation)
+            print('Current unit cost: %s\n' % unitcost)
+        
+            sat1 = saturation
+            sat2 = saturation
+            uc1 = unitcost
+            uc2 = unitcost
+            cost = 1e6
+            cov = 1e6
+            
+            HTC_1 = Program(short='HTC_1',
+                               name='Testing program 1',
+                               targetpars=[{'param': 'hivtest', 'pop': pop} for pop in pops],
+                               targetpops=pops,
+                               category='Testing')
+            HTC_1.costcovfn.addccopar({'saturation': sat1, 't': 2016.0, 'unitcost': uc1})
+            HTC_1.addcostcovdatum({'t':2016, 'cost':cost, 'coverage':cov})
+            
+            HTC_2 = Program(short='HTC_2',
+                               name='Testing program 2',
+                               targetpars=[{'param': 'hivtest', 'pop': pop} for pop in pops],
+                               targetpops=pops,
+                               category='Testing')
+            HTC_2.costcovfn.addccopar({'saturation': sat1, 't': 2016.0, 'unitcost': uc2})
+            HTC_2.addcostcovdatum({'t':2016, 'cost':cost, 'coverage':cov})
+            
+            P.progset().addprograms([HTC_1, HTC_2])
+            
+            for pop in pops:
+                P.progset().covout['hivtest'][pop].ccopars = odict({'intercept': [0.0], 'HTC':[1.0], 'HTC_1':[1.0], 'HTC_2':[1.0], 't': [2016]})
+            
+            print('Comparison:')
+            comparison = P.progset().compareoutcomes(parset=P.parset(), year=2016, doprint=True)
+            coverage = P.progset().getdefaultcoverage(t=2016, parset=P.parset())
+            print('\nCoverage:')
+            print(coverage)
+            #P.runsim()
+            #op.pygui(P)
