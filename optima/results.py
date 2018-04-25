@@ -312,7 +312,6 @@ class Resultset(object):
             self.main['prev'].datapops = processdata(data['hivprev'], uncertainty=True)
             self.main['prev'].datatot  = processdata(data['optprev'])
         
-#        import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
         self.main['force'].pops = process(allinci[:,:,indices] / (eps+allpeople[:,allsus,:,:][:,:,:,indices].sum(axis=1)), percent=True) # Axis 1 is health state
         self.main['force'].tot  = process(allinci[:,:,indices].sum(axis=1) / (eps+allpeople[:,allsus,:,:][:,:,:,indices].sum(axis=(1,2))), percent=True) # Axis 2 is populations
 
