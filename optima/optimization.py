@@ -999,7 +999,7 @@ def minoutcomes(project=None, optim=None, tvec=None, verbose=None, maxtime=None,
 
 
 def minmoney(project=None, optim=None, tvec=None, verbose=None, maxtime=None, maxiters=1000, 
-             fundingchange=1.2, tolerance=1e-2, ccsample='best', randseed=None, keepraw=False, **kwargs):
+             fundingchange=1.2, tolerance=1e-2, ccsample='best', randseed=None, keepraw=False, die=True, **kwargs):
     '''
     A function to minimize money for a fixed objective. Note that it calls minoutcomes() in the process.
 
@@ -1048,7 +1048,9 @@ def minmoney(project=None, optim=None, tvec=None, verbose=None, maxtime=None, ma
     if not(targetsmet): 
         terminate = True
         infinitefailed = True
-        printv("Infinite allocation can't meet targets:\n%s" % summary, 1, verbose) # WARNING, this shouldn't be an exception, something more subtle
+        errormsg = "Not proceeding with money minimization since even infinite funding can't meet targets:\n%s" % summary
+        if die: raise OptimaException(errormsg)
+        else:   printv(errormsg, 1, verbose)
     else: printv("Infinite allocation meets targets, as expected; proceeding...\n(%s)\n" % summary, 2, verbose)
 
     # Next, try no money
@@ -1059,7 +1061,9 @@ def minmoney(project=None, optim=None, tvec=None, verbose=None, maxtime=None, ma
         if targetsmet: 
             terminate = True
             zerofailed = True
-            printv("Even zero allocation meets targets:\n%s" % summary, 1, verbose)
+            errormsg = "Not proceeding with money minimization since even zero funding meets targets:\n%s" % summary
+            if die: raise OptimaException(errormsg)
+            else:   printv(errormsg, 1, verbose)
         else: printv("Zero allocation doesn't meet targets, as expected; proceeding...\n(%s)\n" % summary, 2, verbose)
 
     # If those did as expected, proceed with checking what's actually going on to set objective weights for minoutcomes() function
