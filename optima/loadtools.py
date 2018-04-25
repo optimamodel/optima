@@ -55,6 +55,7 @@ def setmigrations(which='migrations'):
         ('2.6.2', ('2.6.3', '2018-01-17', addtimevarying,    'Preliminaries for time-varying optimization')),
         ('2.6.3', ('2.6.4', '2018-01-24', None,              'Changes to how proportions are handled')),
         ('2.6.4', ('2.6.5', '2018-04-12', None,              'Changes to how HIV+ births are handled')),
+        ('2.6.5', ('2.6.6', '2018-04-24', None,              'Handle male- and female-only populations for parameters')),
         ])
     
     # Define changelog
