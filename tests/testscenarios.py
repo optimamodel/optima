@@ -7,7 +7,7 @@ Version: 2016feb07
 
 ## Define tests to run here!!!
 tests = [
-#'standardscen',
+'standardscen',
 #'maxcoverage',
 'budget',
 #'90-90-90',
@@ -82,25 +82,25 @@ if 'standardscen' in tests:
                  'endval': 0.,
                  }]),
 
-        Parscen(name='Increase numpmtct',
-             parsetname='default',
-             pars=[{
-                 'name': 'numpmtct',
-                 'for': 'tot',
-                 'startyear': 2015.,
-                 'endyear': 2020,
-                 'endval': 0.9,
-                 }]),
-
-        Parscen(name='Full casual condom use',
-             parsetname='default',
-             pars=[{
-                 'name': 'condcas',
-                 'for': caspships,
-                 'startyear': 2005,
-                 'endyear': 2015,
-                 'endval': 1.,
-                 }]),
+#        Parscen(name='Increase numpmtct',
+#             parsetname='default',
+#             pars=[{
+#                 'name': 'numpmtct',
+#                 'for': 'tot',
+#                 'startyear': 2015.,
+#                 'endyear': 2020,
+#                 'endval': 0.9,
+#                 }]),
+#
+#        Parscen(name='Full casual condom use',
+#             parsetname='default',
+#             pars=[{
+#                 'name': 'condcas',
+#                 'for': caspships,
+#                 'startyear': 2005,
+#                 'endyear': 2015,
+#                 'endval': 1.,
+#                 }]),
 
          Parscen(name='More casual acts',
               parsetname='default',
@@ -122,34 +122,34 @@ if 'standardscen' in tests:
                   'endval': 1.,
                   }]),
 
-         Parscen(name='Increased STI prevalence in FSW',
-              parsetname='default',
-              pars=[{
-                  'name': 'stiprev',
-                  'for': 0,
-                  'startyear': 2005.,
-                  'endyear': 2015,
-                  'endval': 0.8,
-                  }]),
-
-         Parscen(name='Get 50K people on OST',
-              parsetname='default',
-              pars=[{
-                  'name': 'numost',
-                  'for': 0,
-                  'startyear': 2005.,
-                  'endyear': 2015,
-                  'endval': 50000,
-                  }]),
-
-         Budgetscen(name='Keep current investment in condom program',
-              parsetname='default',
-              progsetname='default',
-              t=2016,
-              budget={'Condoms': 1e7,
-                           'FSW programs': 1e6,
-                           'HTC':2e7,
-                           'ART':1e6}),
+#         Parscen(name='Increased STI prevalence in FSW',
+#              parsetname='default',
+#              pars=[{
+#                  'name': 'stiprev',
+#                  'for': 0,
+#                  'startyear': 2005.,
+#                  'endyear': 2015,
+#                  'endval': 0.8,
+#                  }]),
+#
+#         Parscen(name='Get 50K people on OST',
+#              parsetname='default',
+#              pars=[{
+#                  'name': 'numost',
+#                  'for': 0,
+#                  'startyear': 2005.,
+#                  'endyear': 2015,
+#                  'endval': 50000,
+#                  }]),
+#
+#         Budgetscen(name='Keep current investment in condom program',
+#              parsetname='default',
+#              progsetname='default',
+#              t=2016,
+#              budget={'Condoms': 1e7,
+#                           'FSW programs': 1e6,
+#                           'HTC':2e7,
+#                           'ART':1e6}),
 
          Budgetscen(name='Double investment in condom program',
               parsetname='default',
@@ -178,12 +178,12 @@ if 'standardscen' in tests:
                            'HTC':array([2e7,3e7,4e7]),
                            'ART':array([1e6,1.5e6,2e6])}),
 
-         Budgetscen(name='Test some progs only',
-              parsetname='default',
-              progsetname='default',
-              t=2016,
-              budget={'Condoms': 1e7,
-                           'ART':1e6})
+#         Budgetscen(name='Test some progs only',
+#              parsetname='default',
+#              progsetname='default',
+#              t=2016,
+#              budget={'Condoms': 1e7,
+#                           'ART':1e6})
 
         ]
     
@@ -236,12 +236,11 @@ if 'sensitivity' in tests:
     
     resultsdiff = P.result().diff(base=1)
     
-    output = '\n\n----------------\nScenario impact:\n'
-    output += 'Infections averted: %s [%s, %s]\n' % (resultsdiff.get('numinci', key='Current conditions', year='all')[0,17:].sum(), resultsdiff.get('numinci', key='Current conditions', year='all')[1,17:].sum(), resultsdiff.get('numinci', key='Current conditions', year='all')[2,17:].sum())
-    output += 'Deaths averted: %s [%s, %s]\n' % (resultsdiff.get('numdeath', key='Current conditions', year='all')[0,17:].sum(), resultsdiff.get('numdeath', key='Current conditions', year='all')[1,17:].sum(), resultsdiff.get('numdeath', key='Current conditions', year='all')[2,17:].sum())
-    output += 'DALYs averted: %s [%s, %s]\n' % (resultsdiff.get('numdaly', key='Current conditions', year='all')[0,17:].sum(), resultsdiff.get('numdaly', key='Current conditions', year='all')[1,17:].sum(), resultsdiff.get('numdaly', key='Current conditions', year='all')[2,17:].sum())
-    
-    print output
+#    output = '\n\n----------------\nScenario impact:\n'
+#    output += 'Infections averted: %s [%s, %s]\n' % (resultsdiff.get('numinci', key='Current conditions', year='all')[0,17:].sum(), resultsdiff.get('numinci', key='Current conditions', year='all')[1,17:].sum(), resultsdiff.get('numinci', key='Current conditions', year='all')[2,17:].sum())
+#    output += 'Deaths averted: %s [%s, %s]\n' % (resultsdiff.get('numdeath', key='Current conditions', year='all')[0,17:].sum(), resultsdiff.get('numdeath', key='Current conditions', year='all')[1,17:].sum(), resultsdiff.get('numdeath', key='Current conditions', year='all')[2,17:].sum())
+#    output += 'DALYs averted: %s [%s, %s]\n' % (resultsdiff.get('numdaly', key='Current conditions', year='all')[0,17:].sum(), resultsdiff.get('numdaly', key='Current conditions', year='all')[1,17:].sum(), resultsdiff.get('numdaly', key='Current conditions', year='all')[2,17:].sum())
+#    print output
 
     done(t)
 
@@ -399,22 +398,10 @@ if 'budget' in tests:
     
     P.result().export()
      
-#    if doplot:
-#        from optima import pygui
-#        pygui(P.results[-1], toplot='default')
-#
-#    resdiff = P.results[-1]
-#    output = '\n\n----------------\n'
-#    output += 'Impact of current expenditure (relative to zero):\n'
-#    output += 'Infections averted: %s [%s, %s]\n' % (resdiff.get('numinci', key=0, year='all')[0,17:].sum(), resdiff.get('numinci', key=0, year='all')[1,17:].sum(), resdiff.get('numinci', key=0, year='all')[2,17:].sum())
-#    output += '    Deaths averted: %s [%s, %s]\n' % (resdiff.get('numdeath', key=0, year='all')[0,17:].sum(), resdiff.get('numdeath', key=0, year='all')[1,17:].sum(), resdiff.get('numdeath', key=0, year='all')[2,17:].sum())
-#    output += '     DALYs averted: %s [%s, %s]\n' % (resdiff.get('numdaly', key=0, year='all')[0,17:].sum(), resdiff.get('numdaly', key=0, year='all')[1,17:].sum(), resdiff.get('numdaly', key=0, year='all')[2,17:].sum())
-#    output += 'Impact of unlimited expenditure (relative to zero):\n'
-#    output += 'Infections averted: %s [%s, %s]\n' % (resdiff.get('numinci', key=1, year='all')[0,17:].sum(), resdiff.get('numinci', key=1, year='all')[1,17:].sum(), resdiff.get('numinci', key=1, year='all')[2,17:].sum())
-#    output += '    Deaths averted: %s [%s, %s]\n' % (resdiff.get('numdeath', key=1, year='all')[0,17:].sum(), resdiff.get('numdeath', key=1, year='all')[1,17:].sum(), resdiff.get('numdeath', key=1, year='all')[2,17:].sum())
-#    output += '     DALYs averted: %s [%s, %s]\n' % (resdiff.get('numdaly', key=1, year='all')[0,17:].sum(), resdiff.get('numdaly', key=1, year='all')[1,17:].sum(), resdiff.get('numdaly', key=1, year='all')[2,17:].sum())
-#    
-#    print output
+    if doplot:
+        from optima import pygui
+        pygui(P.results[-1], toplot='default')
+
 
 
 
@@ -431,6 +418,7 @@ if 'VMMC' in tests:
     pops = P.data['pops']['short']
 
     malelist = findinds(P.data['pops']['male'])
+    femalelist = findinds(P.data['pops']['female'])
     caspships = P.parsets['default'].pars['condcas'].y.keys()
     
     ## Define scenarios
@@ -439,26 +427,26 @@ if 'VMMC' in tests:
                 parsetname='default',
                 pars=[]),
 
-        Parscen(name='Imagine that no-one gets circumcised',
+        Parscen(name='Proportion circumcised',
              parsetname='default',
              pars=[{'endval': 0.2,
                 'endyear': 2020,
                 'name': 'propcirc',
-                'for': malelist,
+                'for': femalelist,
                 'startval': .85,
                 'startyear': 2015.2}]),
         
-        Budgetscen(name='Default budget',
-              parsetname='default',
-              progsetname='default',
-              t=2015,
-              budget=P.progsets['default'].getdefaultbudget()),
-
-         Budgetscen(name='Scale up VMMC program',
-              parsetname='default',
-              progsetname='default',
-              t=2016,
-              budget={'VMMC': 1e8}),
+#        Budgetscen(name='Default budget',
+#              parsetname='default',
+#              progsetname='default',
+#              t=2015,
+#              budget=P.progsets['default'].getdefaultbudget()),
+#
+#         Budgetscen(name='Scale up VMMC program',
+#              parsetname='default',
+#              progsetname='default',
+#              t=2016,
+#              budget={'VMMC': 1e8}),
 
         ]
     

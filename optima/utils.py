@@ -1425,6 +1425,20 @@ def boxoff(ax=None, removeticks=True, flipticks=True):
         ax.tick_params(direction='out', pad=5)
     return ax
 
+
+def loadtext(filename=None, splitlines=False):
+    ''' Convenience function for reading a text file '''
+    with open(filename) as f: output = f.read()
+    if splitlines: output = output.splitlines()
+    return output
+
+
+def savetext(filename=None, string=None):
+    ''' Convenience function for reading a text file -- accepts a string or list of strings '''
+    if isinstance(string, list): string = '\n'.join(string) # Convert from list to string)
+    with open(filename, 'w') as f: f.write(string)
+    return None
+
 ##############################################################################
 ### NESTED DICTIONARY FUNCTIONS
 ##############################################################################

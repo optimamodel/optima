@@ -660,9 +660,9 @@ class Project(object):
 
     def runbudget(self, name=None, budget=None, budgetyears=None, progsetname=None, parsetname='default', verbose=2):
         ''' Function to run the model for a given budget, years, programset and parameterset '''
-        if name        is None: name = 'runbudget'
-        if budget      is None: raise OptimaException("Please enter a budget dictionary to run")
-        if budgetyears is None: raise OptimaException("Please specify the years for your budget") # WARNING, the budget should probably contain the years itself
+        if name        is None: name        = 'runbudget'
+        if budget      is None: budget      = self.progset().getdefaultbudget()
+        if budgetyears is None: budgetyears = self.settings.now
         if progsetname is None:
             try:
                 progsetname = self.progsets[0].name
