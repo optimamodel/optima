@@ -790,8 +790,6 @@ def tvoptimize(project=None, optim=None, tvec=None, verbose=None, maxtime=None, 
     multires.improvement = tmpimprovements # Store full function evaluation information -- only use last one
     multires.fullruninfo = tmpfullruninfo # And the budgets/outcomes for every different run
     multires.outcomes = dcp(multires.outcome) # Copy to more robust place, and...
-#    multires.outcome = multires.outcomes[-1] # ...store these defaults in a convenient place
-#    multires.budget = multires.budgets[-1] # Likewise here
     optim.resultsref = multires.name # Store the reference for this result
     
     # Store optimization settings
