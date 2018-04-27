@@ -378,7 +378,7 @@ class Portfolio(object):
                 initial[io]  = findnearest(tvector[io], self.objectives['start'])
                 final[io]    = findnearest(tvector[io], self.objectives['end'])
                 indices[io]  = arange(initial[io], final[io])
-                alloc[io]    = self.results[key][io].budget
+                alloc[io]    = self.results[key][io].budgets[-1]
                 outcome[io]  = self.results[key][io].outcome 
                 sumalloc[io] = alloc[io][:].sum() # Should be a budget odict that we're summing
                 overallbud[io] += sumalloc[io]
