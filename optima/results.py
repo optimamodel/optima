@@ -773,7 +773,7 @@ class Multiresultset(Resultset):
                     else:
                         missingattrs[rsetattr].append(i) # It exists already: append this index
         for attr,indlist in missingattrs.iteritems(): # Loop over all of the attributes identified as missing
-            if attr not in ['budget','coverage']: # Don't add the single budgets and coverages (WARNING, TEMP)
+            if attr not in ['budget','coverage']: # Don't add the single budgets and coverages (WARNING, COULD DO THIS BETTER)
                 setattr(self, attr, odict()) # Create a new odict -- e.g. self.rawoutcomes = odict()
                 for ind in indlist: # Loop over each of the stored indices
                     key = self.keys[ind] # Get the key for this index

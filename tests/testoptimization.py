@@ -11,7 +11,8 @@ Version: 2017jan13
 ## Define tests to run here!!!
 tests = [
 'minimizeoutcomes',
-#'investmentstaircase',
+#'multichain',
+##'investmentstaircase',
 #'minimizemoney',
 ]
 
@@ -48,11 +49,6 @@ T = tic()
 
 
 
-
-
-
-
-
 ## Minimize outcomes test
 if 'minimizeoutcomes' in tests:
     t = tic()
@@ -77,6 +73,19 @@ if 'minimizeoutcomes' in tests:
     done(t)
 
 
+if 'multichain' in tests:
+    t = tic()
+
+    print('Running multichain optimization test...')
+    import optima as op
+    import pylab as pl
+    P = op.demo(0)
+    results = P.optimize(multi=True, nchains=4, blockiters=10, nblocks=2, randseed=1)
+    if doplot: 
+        op.pygui(P, toplot=['improvement', 'budgets', 'numinci'])
+        pl.figure(); pl.plot(results.multiimprovement.transpose())
+    
+    done(t)
 
 if 'investmentstaircase' in tests:
     t = tic()
