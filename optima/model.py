@@ -70,7 +70,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
     cd4trans        = array([simpars['cd4transacute'], simpars['cd4transgt500'], simpars['cd4transgt350'], simpars['cd4transgt200'], simpars['cd4transgt50'], simpars['cd4translt50']])
     background      = simpars['death']*dt           # Background death rates
     relhivdeath     = simpars['hivdeath']           # Relative HIV-related death rates
-    deathprob       = zeros((nstates))              # Initialise death probability array
+    deathprob       = zeros((nstates,npops))        # Initialise death probability array
 
     # Cascade-related parameters
     requiredvl      = simpars['requiredvl']                               # Number of VL tests required per year
@@ -334,8 +334,6 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
             else:   printv(errormsg, 1, verbose)
             initpeople = None
                 
-                
-    
     # If it wasn't specified, or if there's something wrong with it, determine what it should be here
     if initpeople is None:
 
@@ -400,8 +398,6 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
         else:   printv(errormsg, 1, verbose)
         initpeople[initpeople<0] = 0.0
             
-            
-            
     people[:,:,startind] = initpeople
 
     
@@ -428,8 +424,6 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                 else:   printv(errormsg, 1, verbose)
                 condkey = 0.0
                     
-                    
-                
             this['cond'] = 1.0 - condkey*effcondom
             this['pop1'] = popkeys.index(key[0])
             this['pop2'] = popkeys.index(key[1])
@@ -493,7 +487,6 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                             if die: raise OptimaException(errormsg)
                             else:   printv(errormsg, 1, verbose=verbose)
                             people[errstate,errpop,t] = 0.0 # Reset
-                                
                 
 
     ##################################################################################################################
@@ -532,6 +525,13 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
         thisprev = people[allplhiv,:,t].sum(axis=0) / allpeople[:,t] 
         inhomo = (inhomopar+eps) / (exp(inhomopar+eps)-1) * exp(inhomopar*(1-thisprev)) # Don't shift the mean, but make it maybe nonlinear based on prevalence
         
+        ## Apply relative HIV death rates by population
+        import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+        # Death probabilities
+        transmatrix[fromstate,tostate,:] *= 1.-deathhiv[fromhealthstate]*deathusvl*dt
+        deathprob[fromstate] = deathhiv[fromhealthstate]*deathusvl*dt
+
+
         ###############################################################################
         ## Calculate probability of getting infected
         ###############################################################################
@@ -592,7 +592,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
         ##############################################################################################################
 
         # Adjust transition rates
-        thistransit[nsus:,:,:] *= (1.-background[:,t])
+        thistransit[nsus:,:,:] *= (1.-background[:,t]) 
 
         # Store deaths
         raw_death[:,:,t]    = einsum('ij,i->ij', people[:,:,t], deathprob)/dt
