@@ -108,7 +108,6 @@ class Resultset(object):
         self.main['numpmtct']       = Result('HIV+ women receiving PMTCT')
         self.main['popsize']        = Result('Population size')
         self.main['numdaly']        = Result('HIV-related DALYs')
-        self.main['costtreat']      = Result('Annual treatment spend', defaultplot='total')
 
         self.other['adultprev']     = Result('Adult HIV prevalence (%)', ispercentage=True)
         self.other['childprev']     = Result('Child HIV prevalence (%)', ispercentage=True)
@@ -294,7 +293,6 @@ class Resultset(object):
         allhivbirths = assemble('hivbirths')
         allbirths    = assemble('births')
         allpmtct     = assemble('pmtct')
-        allcosttreat = assemble('costtreat')
         allplhiv     = self.settings.allplhiv
         allsus       = self.settings.sus
         allaids      = self.settings.allaids
@@ -380,9 +378,6 @@ class Resultset(object):
         self.main['numtreat'].pops = process(allpeople[:,alltx,:,:][:,:,:,indices].sum(axis=1)) #  Note that allpeople[:,txinds,:,indices] produces an error
         self.main['numtreat'].tot = process(allpeople[:,alltx,:,:][:,:,:,indices].sum(axis=(1,2))) # Axis 1 is populations
         if data is not None: self.main['numtreat'].datatot = processdata(data['numtx'])
-
-        self.main['costtreat'].pops = process(allcosttreat[:,:,indices])
-        self.main['costtreat'].tot  = process(allcosttreat[:,:,indices].sum(axis=1)) # Axis 1 is populations
 
         self.main['proptreat'].pops = process(allpeople[:,alltx,:,:][:,:,:,indices].sum(axis=1)/maximum(allpeople[:,alldx,:,:][:,:,:,indices].sum(axis=1),eps), percent=True) 
         self.main['proptreat'].tot  = process(allpeople[:,alltx,:,:][:,:,:,indices].sum(axis=(1,2))/maximum(allpeople[:,alldx,:,:][:,:,:,indices].sum(axis=(1,2)),eps), percent=True) # Axis 1 is populations
