@@ -244,8 +244,8 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                     transmatrix[fromstate,tostate,:] *= prog[fromhealthstate]
     
             # Death probabilities
-            transmatrix[fromstate,tostate,:] *= 1.-deathhiv[fromhealthstate]*dt 
-            deathprob[fromstate] = deathhiv[fromhealthstate]*dt
+            transmatrix[fromstate,tostate,:] *= 1.-deathhiv[fromhealthstate]*relhivdeath*dt 
+            deathprob[fromstate,:] = deathhiv[fromhealthstate]*relhivdeath*dt
             
     ## Recovery and deaths for people on suppressive ART
     for fromstate in svl:
@@ -263,8 +263,8 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                     transmatrix[fromstate,tostate,:] = prog[0]
     
             # Death probabilities
-            transmatrix[fromstate,tostate,:] *= (1.-deathhiv[fromhealthstate]*deathsvl*dt)    
-            deathprob[fromstate] = deathhiv[fromhealthstate]*deathsvl*dt
+            transmatrix[fromstate,tostate,:] *= (1.-deathhiv[fromhealthstate]*relhivdeath*deathsvl*dt)    
+            deathprob[fromstate,:] = deathhiv[fromhealthstate]*relhivdeath*deathsvl*dt
             
 
     # Recovery and progression and deaths for people on unsuppressive ART
@@ -311,8 +311,8 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                     transmatrix[fromstate,tostate,:] = 1.-simpars['usvlrecovlt50']*dt
                                     
             # Death probabilities
-            transmatrix[fromstate,tostate,:] *= 1.-deathhiv[fromhealthstate]*deathusvl*dt
-            deathprob[fromstate] = deathhiv[fromhealthstate]*deathusvl*dt
+            transmatrix[fromstate,tostate,:] *= 1.-deathhiv[fromhealthstate]*relhivdeath*deathusvl*dt
+            deathprob[fromstate,:] = deathhiv[fromhealthstate]*relhivdeath*deathusvl*dt
   
 
   
@@ -525,12 +525,6 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
         thisprev = people[allplhiv,:,t].sum(axis=0) / allpeople[:,t] 
         inhomo = (inhomopar+eps) / (exp(inhomopar+eps)-1) * exp(inhomopar*(1-thisprev)) # Don't shift the mean, but make it maybe nonlinear based on prevalence
         
-        ## Apply relative HIV death rates by population
-        import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
-        # Death probabilities
-        transmatrix[fromstate,tostate,:] *= 1.-deathhiv[fromhealthstate]*deathusvl*dt
-        deathprob[fromstate] = deathhiv[fromhealthstate]*deathusvl*dt
-
 
         ###############################################################################
         ## Calculate probability of getting infected
@@ -595,8 +589,8 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
         thistransit[nsus:,:,:] *= (1.-background[:,t]) 
 
         # Store deaths
-        raw_death[:,:,t]    = einsum('ij,i->ij', people[:,:,t], deathprob)/dt
-        raw_otherdeath[:,t] = einsum('ij,j->j',  people[:,:,t], background[:,t])/dt
+        raw_death[:,:,t]    = einsum('ij,ij->ij', people[:,:,t], deathprob)/dt
+        raw_otherdeath[:,t] = einsum('ij,j->j',   people[:,:,t], background[:,t])/dt
 
 
         ##############################################################################################################
