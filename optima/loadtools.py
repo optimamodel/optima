@@ -37,7 +37,7 @@ def setmigrations(which='migrations'):
         ('2.1.9', ('2.1.10','2016-12-28', addpropsandcosttx, 'Added treatment cost parameter')),
         ('2.1.10',('2.2',   '2017-01-13', redoparameters,    'Updated the way parameters are handled')),
         ('2.2',   ('2.2.1', '2017-02-01', redovlmon,         'Updated the VL monitoring parameter')),
-        ('2.2.1', ('2.2.2', '2017-02-01', addprojectinfo,    'Stored information about the proect in the results')),
+        ('2.2.1', ('2.2.2', '2017-02-01', addprojectinfo,    'Stored information about the project in the results')),
         ('2.2.2', ('2.3',   '2017-02-09', redoparamattr,     'Updated parameter attributes')),
         ('2.3',   ('2.3.1', '2017-02-15', removespreadsheet, "Don't store the spreadsheet with the project, to save space")),
         ('2.3.1', ('2.3.2', '2017-03-01', addagetopars,      'Ensured that age is stored in parsets')),
@@ -57,6 +57,7 @@ def setmigrations(which='migrations'):
         ('2.6.4', ('2.6.5', '2018-04-03', None,              'Changes to how HIV+ births are handled')),
         ('2.6.5', ('2.6.6', '2018-04-25', addtreatbycd4,     'Updates CD4 handling and interactions between programs')),
         ('2.6.6', ('2.6.7', '2018-04-28', removecosttx,      'Remove treatment cost parameter')),
+        ('2.6.7', ('2.6.8', '2018-04-28', addrelhivdeath,    'Add population-dependent relative HIV death rates')),
         ])
     
     # Define changelog
@@ -758,6 +759,21 @@ def removecosttx(project, **kwargs):
     Migration between Optima 2.6.6 and 2.6.7: removes costtx parameter
     """
     removeparameter(project, short='costtx', datashort='costtx')
+    return None
+
+
+def addrelhivdeath(project, **kwargs):
+    """
+    Migration between Optima 2.6.7 and 2.6.8: add a population-dependent relative HIV death rate
+    """
+
+    short = 'hivdeath'
+    copyfrom = 'force'
+    kwargs['name'] = 'Relative death rate for populations (unitless)'
+    npops = len(project.data['pops']['short'])
+    kwargs['y[:]'] = array([1.]*npops)
+    addparameter(project=project, copyfrom=copyfrom, short=short, **kwargs)
+    
     return None
 
 
