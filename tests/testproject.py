@@ -88,7 +88,7 @@ if 'parametercheck' in tests:
     parsonly = set([
     'actscas', 'actscom', 'actsinj', 'actsreg', 'age', 'transnorm',
     'condcas', 'condcom', 'condreg', 'numcirc',
-    'female', 'force', 'inhomo', 'initprev', 
+    'female', 'force', 'inhomo', 'initprev','hivdeath', 
     'propdx','propcare','proptx','propsupp','proppmtct',
     'injects', 'male', 'popkeys', 'fromto', 'transmatrix',
     'fixproppmtct', 'fixpropsupp', 'fixpropdx', 'fixpropcare', 'fixproptx'])

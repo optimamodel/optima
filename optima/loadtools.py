@@ -770,9 +770,11 @@ def addrelhivdeath(project, **kwargs):
     short = 'hivdeath'
     copyfrom = 'force'
     kwargs['name'] = 'Relative death rate for populations (unitless)'
-    npops = len(project.data['pops']['short'])
-    kwargs['y[:]'] = array([1.]*npops)
     addparameter(project=project, copyfrom=copyfrom, short=short, **kwargs)
+    npops = len(project.data['pops']['short'])
+    for ps in project.parsets.values():
+        ps.pars['hivdeath'].y[:] = array([1.]*npops)
+        for key in range(npops): ps.pars['hivdeath'].prior[key].pars = array([0.9, 1.1]) 
     
     return None
 
