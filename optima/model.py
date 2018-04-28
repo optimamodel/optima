@@ -68,7 +68,8 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
     deathsvl        = simpars['deathsvl']           # Death rate whilst on suppressive ART
     deathusvl       = simpars['deathusvl']          # Death rate whilst on unsuppressive ART
     cd4trans        = array([simpars['cd4transacute'], simpars['cd4transgt500'], simpars['cd4transgt350'], simpars['cd4transgt200'], simpars['cd4transgt50'], simpars['cd4translt50']])
-    background      = simpars['death']*dt
+    background      = simpars['death']*dt           # Background death rates
+    relhivdeath     = simpars['hivdeath']           # Relative HIV-related death rates
     deathprob       = zeros((nstates))              # Initialise death probability array
 
     # Cascade-related parameters
