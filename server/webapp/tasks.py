@@ -301,7 +301,10 @@ def optimize(project_id, optimization_id, maxtime):
         raise Exception(error_text)
 
     print(">> optimize start")
-    result = project.optimize(optim=optim, maxtime=float(maxtime), mc=0)  # Set this to zero for now while we decide how to handle uncertainties etc.
+    maxtime = float(maxtime)
+    if maxtime>3600: mc = 9 # Arbitrary threshold for "unlimited" run: run with uncertainty
+    else:            mc = 0
+    result = project.optimize(optim=optim, maxtime=maxtime, mc=mc)  # Set this to zero for now while we decide how to handle uncertainties etc.
 
     print(">> optimize budgets %s" % result.budgets)
     

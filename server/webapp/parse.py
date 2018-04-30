@@ -445,7 +445,7 @@ def get_parameters_for_scenarios(project):
         result[parset_id] = pars
         for par in parset.pars.values():
             if isinstance(par, op.Timepar): # Targetable parameters are timepars
-                for pop in par.y.keys():
+                for pop in par.keys():
                     pars.append({
                         'name': par.name,
                         'short': par.short,
@@ -462,7 +462,7 @@ def get_startval_for_parameter(project, parset_id, par_short, pop, year):
         pop = tuple(pop)
     for par in parset.pars.values():
         if isinstance(par, op.Timepar) and par.short==par_short:
-            for par_pop in par.y.keys():
+            for par_pop in par.keys():
                 if par_pop == pop:
                     try:
                         par_defaults = op.setparscenvalues(
@@ -489,7 +489,7 @@ def get_parameters_for_edit_program(project):
                         'name': par.name,
                         'param': par.short,
                         'by': par.by,
-                        'pships': par.y.keys() if par.by == 'pship' else []
+                        'pships': par.keys() if par.by == 'pship' else []
                     })
                     added_par_keys.add(par_key)
     return parameters
