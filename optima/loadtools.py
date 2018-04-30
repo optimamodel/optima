@@ -56,8 +56,9 @@ def setmigrations(which='migrations'):
         ('2.6.3', ('2.6.4', '2018-01-24', None,              'Changes to how proportions are handled')),
         ('2.6.4', ('2.6.5', '2018-04-03', None,              'Changes to how HIV+ births are handled')),
         ('2.6.5', ('2.6.6', '2018-04-25', addtreatbycd4,     'Updates CD4 handling and interactions between programs')),
-        ('2.6.6', ('2.6.7', '2018-04-28', removecosttx,      'Remove treatment cost parameter')),
-        ('2.6.7', ('2.6.8', '2018-04-28', addrelhivdeath,    'Add population-dependent relative HIV death rates')),
+        ('2.6.6', ('2.6.7', '2018-04-26', None,              'Handle male- and female-only populations for parameters')),
+        ('2.6.7', ('2.6.8', '2018-04-28', removecosttx,      'Remove treatment cost parameter')),
+        ('2.6.8', ('2.6.9', '2018-04-28', addrelhivdeath,    'Add population-dependent relative HIV death rates')),
         ])
     
     # Define changelog
@@ -756,7 +757,7 @@ def addtreatbycd4(project, **kwargs):
 
 def removecosttx(project, **kwargs):
     """
-    Migration between Optima 2.6.6 and 2.6.7: removes costtx parameter
+    Migration between Optima 2.6.7 and 2.6.8: removes costtx parameter
     """
     removeparameter(project, short='costtx', datashort='costtx')
     return None
@@ -764,7 +765,7 @@ def removecosttx(project, **kwargs):
 
 def addrelhivdeath(project, **kwargs):
     """
-    Migration between Optima 2.6.7 and 2.6.8: add a population-dependent relative HIV death rate
+    Migration between Optima 2.6.8 and 2.6.9: add a population-dependent relative HIV death rate
     """
 
     short = 'hivdeath'

@@ -483,7 +483,7 @@ class Constant(Par):
             raise OptimaException(errormsg)
         return None
     
-    def interp(self, tvec=None, dt=None, smoothness=None, asarray=True, sample=False, randseed=None): # Keyword arguments are for consistency but not actually used
+    def interp(self, tvec=None, dt=None, smoothness=None, asarray=True, sample=False, randseed=None, popkeys=None): # Keyword arguments are for consistency but not actually used
         """
         Take parameters and turn them into model parameters -- here, just return a constant value at every time point
         
@@ -547,7 +547,7 @@ class Metapar(Par):
                 raise OptimaException(errormsg)
         return None
     
-    def interp(self, tvec=None, dt=None, smoothness=None, asarray=True, sample=None, randseed=None): # Keyword arguments are for consistency but not actually used
+    def interp(self, tvec=None, dt=None, smoothness=None, asarray=True, sample=None, randseed=None, popkeys=None): # Keyword arguments are for consistency but not actually used
         """ Take parameters and turn them into model parameters -- here, just return a constant value at every time point """
         
         # Figure out sample
@@ -558,12 +558,16 @@ class Metapar(Par):
             y = self.ysample
                 
         dt = gettvecdt(tvec=tvec, dt=dt, justdt=True) # Method for getting dt
-        if asarray: output = zeros(len(self.keys()))
+        outkeys = getoutkeys(self, popkeys) # Get the list of keys for the output
+        if asarray: output = zeros(len(outkeys))
         else: output = odict()
-        for pop,key in enumerate(self.keys()): # Loop over each population, always returning an [npops x npts] array
-            yinterp = applylimits(par=self, y=y[key]*self.m, limits=self.limits, dt=dt)
+        
+        for pop,key in enumerate(outkeys): # Loop over each population, always returning an [npops x npts] array
+            if key in self.keys(): yval = y[key]*self.m
+            else:                  yval = 0. # Population not present, set to zero
+            yinterp = applylimits(par=self, y=yval, limits=self.limits, dt=dt) 
             if asarray: output[pop] = yinterp
-            else: output[key] = yinterp
+            else:       output[key] = yinterp
         return output
     
 
@@ -619,7 +623,7 @@ class Timepar(Par):
             raise OptimaException(errormsg)
         return None
     
-    def interp(self, tvec=None, dt=None, smoothness=None, asarray=True, sample=None, randseed=None):
+    def interp(self, tvec=None, dt=None, smoothness=None, asarray=True, sample=None, randseed=None, popkeys=None):
         """ Take parameters and turn them into model parameters """
         
         # Validate input
@@ -628,6 +632,7 @@ class Timepar(Par):
             raise OptimaException(errormsg)
         tvec, dt = gettvecdt(tvec=tvec, dt=dt) # Method for getting these as best possible
         if smoothness is None: smoothness = int(defaultsmoothness/dt) # Handle smoothness
+        outkeys = getoutkeys(self, popkeys) # Get the list of keys for the output
         
         # Figure out sample
         if not sample:
@@ -637,13 +642,16 @@ class Timepar(Par):
             m = self.msample
         
         # Set things up and do the interpolation
-        npops = len(self.keys())
+        npops = len(outkeys)
         if self.by=='pship': asarray= False # Force odict since too dangerous otherwise
         if asarray: output = zeros((npops,len(tvec)))
-        else: output = odict()
-        for pop,key in enumerate(self.keys()): # Loop over each population, always returning an [npops x npts] array
-            yinterp = m * smoothinterp(tvec, self.t[pop], self.y[pop], smoothness=smoothness) # Use interpolation
-            yinterp = applylimits(par=self, y=yinterp, limits=self.limits, dt=dt)
+        else:       output = odict()
+        for pop,key in enumerate(outkeys): # Loop over each population, always returning an [npops x npts] array
+            if key in self.keys():
+                yinterp = m * smoothinterp(tvec, self.t[key], self.y[key], smoothness=smoothness) # Use interpolation
+                yinterp = applylimits(par=self, y=yinterp, limits=self.limits, dt=dt)
+            else:
+                yinterp = zeros(len(tvec)) # Population not present, just set to zero
             if asarray: output[pop,:] = yinterp
             else:       output[key]   = yinterp
         if npops==1 and self.by=='tot' and asarray: return output[0,:] # npops should always be 1 if by==tot, but just be doubly sure
@@ -683,7 +691,7 @@ class Popsizepar(Par):
             raise OptimaException(errormsg)
         return None
 
-    def interp(self, tvec=None, dt=None, smoothness=None, asarray=True, sample=None, randseed=None): # WARNING: smoothness isn't used, but kept for consistency with other methods...
+    def interp(self, tvec=None, dt=None, smoothness=None, asarray=True, sample=None, randseed=None, popkeys=None): # WARNING: smoothness isn't used, but kept for consistency with other methods...
         """ Take population size parameter and turn it into a model parameters """
         
         # Validate input
@@ -691,6 +699,7 @@ class Popsizepar(Par):
             errormsg = 'Cannot interpolate parameter "%s" with no time vector specified' % self.name
             raise OptimaException(errormsg)
         tvec, dt = gettvecdt(tvec=tvec, dt=dt) # Method for getting these as best possible
+        outkeys = getoutkeys(self, popkeys) # Get the list of keys for the output
         
         # Figure out sample
         if not sample:
@@ -700,15 +709,17 @@ class Popsizepar(Par):
             m = self.msample
         
         # Do interpolation
-        keys = self.keys()
-        npops = len(keys)
+        npops = len(outkeys)
         if asarray: output = zeros((npops,len(tvec)))
         else: output = odict()
-        for pop,key in enumerate(keys):
-            yinterp = m * self.i[key] * grow(self.e[key], array(tvec)-self.start)
-            yinterp = applylimits(par=self, y=yinterp, limits=self.limits, dt=dt)
+        for pop,key in enumerate(outkeys):
+            if key in self.keys():
+                yinterp = m * self.i[key] * grow(self.e[key], array(tvec)-self.start)
+                yinterp = applylimits(par=self, y=yinterp, limits=self.limits, dt=dt)
+            else:
+                yinterp = zeros(len(tvec))
             if asarray: output[pop,:] = yinterp
-            else: output[key] = yinterp
+            else:       output[key] = yinterp
         return output
 
 
@@ -734,7 +745,7 @@ class Yearpar(Par):
         '''No prior, so return nothing'''
         return None
     
-    def interp(self, tvec=None, dt=None, smoothness=None, sample=None, randseed=None, asarray=True): # Keyword arguments are for consistency but not actually used
+    def interp(self, tvec=None, dt=None, smoothness=None, sample=None, randseed=None, asarray=True, popkeys=None): # Keyword arguments are for consistency but not actually used
         '''No interpolation, so simply return the value'''
         return self.t
 
@@ -769,10 +780,17 @@ class Dist(object):
 ### Functions for handling the parameters
 #############################################################################################################################
 
+def getoutkeys(par=None, popkeys=None):
+    ''' Small method to decide whether to return 'tot', a subset of population keys, or all population keys '''
+    if par.by in ['mpop','fpop'] and popkeys is not None:
+        return popkeys # Expand male or female only keys to all
+    else:
+        return par.keys() # Or just return the default
+            
+
 def grow(exponent, tvec):
     ''' Return a time vector for a population growth '''
     return exp(tvec*exponent) # Simple exponential growth
-
 
 
 def getvalidyears(years, validdata, defaultind=0):
@@ -1040,8 +1058,7 @@ def makepars(data=None, verbose=2, die=True, fixprops=None):
             elif by=='pop' : keys = popkeys
             elif by=='fpop': keys = fpopkeys
             elif by=='mpop': keys = mpopkeys
-            else: keys = [] # They're not necessarily empty, e.g. by partnership, but too complicated to figure out here
-            if by in ['fpop', 'mpop']: rawpar['by'] = 'pop' # Reset, since no longer needed
+            else:            keys = [] # They're not necessarily empty, e.g. by partnership, but too complicated to figure out here
             
             # Decide how to handle it based on parameter type
             if partype=='initprev': # Initialize prevalence only
@@ -1071,17 +1088,11 @@ def makepars(data=None, verbose=2, die=True, fixprops=None):
             errormsg = 'Failed to convert parameter %s:\n%s' % (parname, repr(E))
             if die: raise OptimaException(errormsg)
             else: printv(errormsg, 1, verbose)
+
     
     ###############################################################################
     ## Tidy up -- things that can't be converted automatically
     ###############################################################################
-
-    # Births rates. This parameter is coupled with the birth matrix defined below
-    for key in list(set(popkeys)-set(fpopkeys)): # Births are only female: add zeros
-        pars['birth'].y[key] = array([0.0])
-        pars['birth'].t[key] = array([0.0])
-    pars['birth'].y.sort(popkeys) # Sort them so they have the same order as everything else
-    pars['birth'].t.sort(popkeys)
     
     # Birth transitions - these are stored as the proportion of transitions, which is constant, and is multiplied by time-varying birth rates in model.py
     npopkeys = len(popkeys)
@@ -1109,18 +1120,9 @@ def makepars(data=None, verbose=2, die=True, fixprops=None):
     pars['risktransit'] = array(data['risktransit'])
     
     # Circumcision
-    for key in list(set(popkeys)-set(mpopkeys)): # Circumcision is only male
-        pars['propcirc'].y[key] = array([0.0])
-        pars['propcirc'].t[key] = array([0.0])
-        pars['numcirc'].y[key]  = array([0.0])
-        pars['numcirc'].t[key]  = array([0.0])
-    pars['propcirc'].y.sort(popkeys) # Sort them so they have the same order as everything else
-    pars['propcirc'].t.sort(popkeys)
-    pars['numcirc'].y.sort(popkeys) # Sort them so they have the same order as everything else
-    pars['numcirc'].t.sort(popkeys)
     for key in pars['numcirc'].keys():
         pars['numcirc'].y[key] = array([0.0]) # Set to 0 for all populations, since program parameter only
-
+    
     # Fix treatment from final data year
     for key in ['fixproptx', 'fixpropsupp', 'fixpropdx', 'fixpropcare', 'fixproppmtct']:
         pars[key].t = 2100 # TODO: don't use these, so just set to (hopefully) well past the end of the analysis
@@ -1192,6 +1194,7 @@ def makesimpars(pars, name=None, keys=None, start=None, end=None, dt=None, tvec=
     simpars['dt'] = dt  # Store dt
     if smoothness is None: smoothness = int(defaultsmoothness/dt)
     tosample = promotetolist(tosample) # Convert to list
+    popkeys = pars['popkeys'] # Used for interpolation
     
     # Copy default keys by default
     for key in generalkeys: simpars[key] = dcp(pars[key])
@@ -1203,7 +1206,7 @@ def makesimpars(pars, name=None, keys=None, start=None, end=None, dt=None, tvec=
             thissample = sample # Make a copy of it to check it against the list of things we are sampling
             if tosample[0] is not None and key not in tosample: thissample = False # Don't sample from unselected parameters -- tosample[0] since it's been promoted to a list
             try:
-                simpars[key] = pars[key].interp(tvec=simpars['tvec'], dt=dt, smoothness=smoothness, asarray=asarray, sample=thissample, randseed=randseed)
+                simpars[key] = pars[key].interp(tvec=simpars['tvec'], dt=dt, popkeys=popkeys, smoothness=smoothness, asarray=asarray, sample=thissample, randseed=randseed)
             except OptimaException as E: 
                 errormsg = 'Could not figure out how to interpolate parameter "%s"' % key
                 errormsg += 'Error: "%s"' % repr(E)

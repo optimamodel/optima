@@ -61,8 +61,8 @@ define(['angular'], function (module) {
 
             if (par.short == scenParName) {
               if (par.pop == "tot") {
-                par.popLabel = "Total Population";
-                scenPar.forLabel = "Total Population";
+                par.popLabel = "Total population";
+                scenPar.forLabel = "Total population";
               } else if ("" + par.pop == "" + scenPar.for) {
                 scenPar.forLabel = par.popLabel;
               }
