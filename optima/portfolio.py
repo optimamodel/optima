@@ -759,7 +759,7 @@ def makegeoprojects(project=None, spreadsheetpath=None, destination=None, dosave
         newproject.name = districtname
         
         # Scale data        
-        for popid in xrange(npops):
+        for popid in range(npops):
             popname = poplist[popid]
             for x in newproject.data['popsize']:
                 x[popid] = [z*popratio[popname][c] for z in x[popid]]
@@ -770,14 +770,12 @@ def makegeoprojects(project=None, spreadsheetpath=None, destination=None, dosave
         newproject.data['numost'] = [[y*plhivratio['tot'][c] for y in x] for x in newproject.data['numost']]
         
         # Scale calibration
-        for popid in xrange(npops):
-            popname = poplist[popid]
-            newproject.parsets[-1].pars['popsize'].i[popname] *= popratio[popname][c]
-            newproject.parsets[-1].pars['initprev'].y[popname] *= prevfactors[popname][c]
-            newproject.parsets[-1].pars['numcirc'].y[popname] *= plhivratio['tot'][c]
-        newproject.parsets[-1].pars['numtx'].y['tot'] *= plhivratio['tot'][c]
-        newproject.parsets[-1].pars['numpmtct'].y['tot'] *= plhivratio['tot'][c]
-        newproject.parsets[-1].pars['numost'].y['tot'] *= plhivratio['tot'][c]
+        newproject.parsets[-1].pars['popsize'].i[:]  *= popratio[popname][c]
+        newproject.parsets[-1].pars['initprev'].y[:] *= prevfactors[popname][c]
+        newproject.parsets[-1].pars['numcirc'].y[:]  *= plhivratio['tot'][c]
+        newproject.parsets[-1].pars['numtx'].y[:]    *= plhivratio['tot'][c]
+        newproject.parsets[-1].pars['numpmtct'].y[:] *= plhivratio['tot'][c]
+        newproject.parsets[-1].pars['numost'].y[:]   *= plhivratio['tot'][c]
         
         # Scale programs
         if len(project.progsets) > 0:
