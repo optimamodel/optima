@@ -600,8 +600,6 @@ def multioptimize(optim=None, nchains=None, nblocks=None, blockiters=None,
     for each thread restarts from the best solution found for each.
     '''
     
-    print(' YESSSR UNNINGG ')
-
     # Import dependencies here so no biggie if they fail
     from multiprocessing import Process, Queue
     
