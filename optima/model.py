@@ -914,7 +914,6 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
     raw['newtreat']     = raw_newtreat
     raw['death']        = raw_death
     raw['otherdeath']   = raw_otherdeath
-    raw['costtreat']    = people[alltx,:,:].sum(axis=0)*simpars['costtx'] # Calculate this here since otherwise results depends on simpars
     
     checkfornegativepeople(people) # Check only once for negative people, right before finishing
     
