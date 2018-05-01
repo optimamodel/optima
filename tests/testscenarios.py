@@ -7,12 +7,12 @@ Version: 2016feb07
 
 ## Define tests to run here!!!
 tests = [
-'standardscen',
+#'standardscen',
 #'maxcoverage',
-'budget',
+#'budget',
 #'90-90-90',
 #'sensitivity',
-#'VMMC'
+'VMMC'
 ]
 
 ##############################################################################
@@ -414,11 +414,8 @@ if 'VMMC' in tests:
     from optima import Parscen, Budgetscen, defaultproject
     
     P = defaultproject('generalized',dorun=False)
-#    P.runsim()
     pops = P.data['pops']['short']
 
-    malelist = findinds(P.data['pops']['male'])
-    femalelist = findinds(P.data['pops']['female'])
     caspships = P.parsets['default'].pars['condcas'].y.keys()
     
     ## Define scenarios
@@ -432,21 +429,21 @@ if 'VMMC' in tests:
              pars=[{'endval': 0.2,
                 'endyear': 2020,
                 'name': 'propcirc',
-                'for': malelist,
+                'for': P.pars()['propcirc'].keys(),
                 'startval': .85,
                 'startyear': 2015.2}]),
         
-#        Budgetscen(name='Default budget',
-#              parsetname='default',
-#              progsetname='default',
-#              t=2015,
-#              budget=P.progsets['default'].getdefaultbudget()),
-#
-#         Budgetscen(name='Scale up VMMC program',
-#              parsetname='default',
-#              progsetname='default',
-#              t=2016,
-#              budget={'VMMC': 1e8}),
+        Budgetscen(name='Default budget',
+              parsetname='default',
+              progsetname='default',
+              t=2015,
+              budget=P.progsets['default'].getdefaultbudget()),
+
+         Budgetscen(name='Scale up VMMC program',
+              parsetname='default',
+              progsetname='default',
+              t=2016,
+              budget={'VMMC': 1e8}),
 
         ]
     
