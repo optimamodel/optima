@@ -373,7 +373,7 @@ def manualfit(project=None, parsubset=None, name=-1, ind=0, maxrows=25, verbose=
 
 
 
-def plotpeople(project=None, people=None, tvec=None, ind=None, simind=None, start=2, end=None, pops=None, animate=False, skipempty=True, verbose=2, **kwargs):
+def plotpeople(project=None, people=None, tvec=None, ind=None, simind=None, start=2, end=None, pops=None, animate=False, skipempty=True, verbose=2, toplot=None, **kwargs):
     '''
     A function to plot all people as a stacked plot
     
@@ -384,11 +384,11 @@ def plotpeople(project=None, people=None, tvec=None, ind=None, simind=None, star
         P = op.defaults.defaultproject('simple')
         P.runsim()
         people = P.results[-1].raw[0]['people']
-        op.gui.plotpeople(P, people)
+        op.plotpeople(P, people)
         
     NB: for a multiresult, simind must not be None!
     
-    Version: 2016feb04
+    Version: 2018apr0
     '''
     if pops is None: pops = Ellipsis # This is a slice
     elif isnumber(pops): pops = [pops]
@@ -397,14 +397,15 @@ def plotpeople(project=None, people=None, tvec=None, ind=None, simind=None, star
     legendsettings = {'loc':'upper left', 'bbox_to_anchor':(1.02, 1), 'fontsize':11, 'title':''}
     nocolor = (0.9,0.9,0.9)
     labels = project.settings.statelabels
+    if toplot is None: toplot = 'people'
     
     if people is None:
         if ind is None: ind=-1
         try:
-            people = project.results[ind].raw[0]['people'] # Try to get default people to plot
+            people = project.results[ind].raw[0][toplot] # Try to get default people to plot
         except:
             if simind is None: simind = 1
-            people = project.results[ind].raw[simind][0]['people'] # It's a multiresult: need another  index
+            people = project.results[ind].raw[simind][0][toplot] # It's a multiresult: need another  index
         
     
     plotstyles = odict([
@@ -590,10 +591,10 @@ def plotpars(parslist=None, start=None, end=None, verbose=2, rows=6, cols=5, fig
                         printv('Plot %i/%i...' % (i*len(allplotdata)+pd+1, len(plotparsaxs)*len(allplotdata)), 2, verbose)
                     except Exception as E: 
                         if die: raise E
-                        else: print('??????: %s' % E.__repr__())
+                        else: print('??????: %s' % repr(E))
                     try: 
                         if not(hasattr(this[3],'__len__') and len(this[3])==0): ax.scatter(this[2],this[3])
-                    except Exception: pass # print('Problem with "%s": "%s"' % (this[0], E.__repr__()))
+                    except Exception: pass # print('Problem with "%s": "%s"' % (this[0], repr(E)))
                     if pd==len(allplotdata)-1: # Do this for the last plot only
                         ax.set_ylim((0,1.1*ax.get_ylim()[1]))
                         ax.set_xlim((tvec[0],tvec[-1]))
@@ -837,7 +838,7 @@ def gui_loadproj():
     project = None
     if filepath:
         try: project = loadproj(filepath, verbose=0)
-        except Exception as E: print('Could not load file "%s": "%s"' % (filepath, E.__repr__()))
+        except Exception as E: print('Could not load file "%s": "%s"' % (filepath, repr(E)))
         if type(project)==Project: return project
         else: print('File "%s" is not an Optima project file' % filepath)
     else:
@@ -936,7 +937,7 @@ def gui_loadport():
     if filepath:
         try: tmpport = loadobj(filepath, verbose=0)
         except Exception as E: 
-            warning('Could not load file "%s" because "%s"' % (filepath, E.__repr__()))
+            warning('Could not load file "%s" because "%s"' % (filepath, repr(E)))
             return None
         if tmpport is not None: 
             if type(tmpport)==Portfolio:
@@ -966,7 +967,7 @@ def gui_rungeo():
         globalportfolio.genBOCs(objectives=BOCobjectives, maxtime=30, mc=0)
         globalportfolio.runGA(objectives=globalobjectives, maxtime=30, reoptimize=True, mc=0, batch=True, verbose=2, die=False, strict=True)
     except Exception as E:
-        warning('Geospatial analysis failed: %s' % E.__repr__())
+        warning('Geospatial analysis failed: %s' % repr(E))
     warning('Geospatial analysis finished running; total time: %0.0f s' % (time() - starttime))
     return None
     
@@ -994,7 +995,7 @@ def gui_export():
         try:
             globalportfolio.export(filename=filepath)
         except Exception as E:
-            warning('Results export failed: %s' % E.__repr__())
+            warning('Results export failed: %s' % repr(E))
         warning('Results saved to "%s".' % filepath)
     else:
         warning('Filepath not supplied: %s' % filepath)

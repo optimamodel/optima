@@ -4,7 +4,7 @@ from copy import deepcopy as dcp
 from pylab import figure, plot, show
 pchipeps = 1e-8
 
-def pchip(x=None, y=None, xnew=None, deriv = False, method='pchip', smooth=0, monotonic=True):
+def pchip(x=None, y=None, xnew=None, deriv = False, method=None, smooth=None, smoothness=None, monotonic=True):
     """
     This module implements the monotonic Piecewise Cubic Hermite Interpolating Polynomial (PCHIP).
     Slopes are constrained via the Fritsch-Carlson method.
@@ -25,13 +25,13 @@ def pchip(x=None, y=None, xnew=None, deriv = False, method='pchip', smooth=0, mo
         xnew = promotetoarray(xnew)
     xnew = dcp(sorted(xnew))
     
-    if method=='pchip': # WARNING, need to rename this function something else...
+    if method is None or method=='pchip': # WARNING, need to rename this function something else...
         m = pchip_slopes(x, y) # Compute slopes used by piecewise cubic Hermite interpolator.
         ynew = pchip_eval(x, y, m, xnew, deriv) # Use these slopes (along with the Hermite basis function) to interpolate.
     
     elif method=='smoothinterp':
         from utils import smoothinterp
-        ynew = smoothinterp(xnew, x, y)
+        ynew = smoothinterp(xnew, x, y, smoothness=smoothness, keepends=False)
         if deriv:
               if len(xnew)==1:
                   print('WARNING, length 1 smooth interpolation derivative not implemented')

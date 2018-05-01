@@ -91,6 +91,7 @@ def loadspreadsheet(filename=None, folder=None, verbose=2):
     ## Initialize dictionaries
     data = odict() # Create sheetsure for holding data
     data['meta'] = odict()
+    data['meta']['datacomments'] = [] # Store the data comments entered on the instructions sheet
     data['meta']['date'] = today()
     data['meta']['sheets'] = sheets # Store parameter names
     
@@ -112,12 +113,12 @@ def loadspreadsheet(filename=None, folder=None, verbose=2):
     ## Initialize other quantities
     blhindices = {'best':0, 'low':1, 'high':2} # Define best-low-high indices
     skipblanksheets = ['Optional indicators', 'Cascade'] # Don't check optional indicators, check everything else
-    skipblankpars = ['numcirc', 'costtx']
+    skipblankpars = ['numcirc']
     
     ## Actually open workbook
     try:  workbook = open_workbook(fullpath) # Open workbook
     except Exception as E: 
-        errormsg = 'Failed to load spreadsheet "%s": %s' % (fullpath, E.__repr__())
+        errormsg = 'Failed to load spreadsheet "%s": %s' % (fullpath, repr(E))
         raise OptimaException(errormsg)
     
     ## Open workbook and calculate columns for which data are entered, and store the year ranges
@@ -129,6 +130,14 @@ def loadspreadsheet(filename=None, folder=None, verbose=2):
     ## Now, actually load the data
     ##################################################################    
     
+    ## Load comment from front sheet
+    instructionssheet = workbook.sheet_by_name('Instructions')
+    commentrow = 16 # First row for comments
+    if instructionssheet.nrows >= commentrow:
+        for row in range(commentrow-1, instructionssheet.nrows):
+            comment = instructionssheet.cell_value(row, 0) # Hardcoded comment cell in A14
+            data['meta']['datacomments'].append(comment) # Store the data comment entered on the instructions sheet
+
     ## Loop over each group of sheets
     for sheetname in sheets.keys(): # Loop over each type of data, but treat constants differently
         subparlist = sheets[sheetname] # List of subparameters

@@ -2,7 +2,7 @@
 ### Imports
 #############################################################################################################################
 
-try: import cPickle as pickle # For Python 2 compatibility
+try:    import cPickle as pickle # For Python 2 compatibility
 except: import pickle
 from gzip import GzipFile
 from cStringIO import StringIO
@@ -20,7 +20,14 @@ import optima as op
 #############################################################################################################################
 
 def saveobj(filename=None, obj=None, compresslevel=5, verbose=True, folder=None):
-    ''' Save an object to file -- use compression 5, since more is much slower but not much smaller '''
+    '''
+    Save an object to file -- use compression 5 by default, since more is much slower but not much smaller.
+    Once saved, can be loaded with loadobj() (q.v.).
+
+    Usage:
+		myobj = ['this', 'is', 'a', 'weird', {'object':44}]
+		saveobj('myfile.obj', myobj)
+    '''
     fullpath = makefilepath(filename=filename, folder=folder, sanitize=True)
     with GzipFile(fullpath, 'wb', compresslevel=compresslevel) as fileobj:
         fileobj.write(pickle.dumps(obj, protocol=-1))
@@ -28,8 +35,13 @@ def saveobj(filename=None, obj=None, compresslevel=5, verbose=True, folder=None)
     return fullpath
 
 
-def loadobj(filename=None, verbose=True, folder=None):
-    ''' Load a saved file '''
+def loadobj(filename=None, folder=None, verbose=True):
+    '''
+    Load a saved file.
+
+    Usage:
+    	obj = loadobj('myfile.obj')
+    '''
     # Handle loading of either filename or file object
     if isinstance(filename, basestring): 
         argtype = 'filename'

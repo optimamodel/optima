@@ -109,7 +109,7 @@ def defaultrepr(obj, maxlen=None):
     return output
 
 
-def drprint(obj, maxlen=None):
+def printdr(obj, maxlen=None):
     ''' Shortcut for printing the default repr for an object '''
     print(defaultrepr(obj, maxlen=maxlen))
     return None
@@ -166,12 +166,13 @@ def indent(prefix=None, text=None, suffix='\n', n=0, pretty=False, simple=True, 
     
 
 
-def sigfig(X, sigfigs=5, SI=False):
+def sigfig(X, sigfigs=5, SI=False, sep=False):
     '''
     Return a string representation of variable x with sigfigs number of significant figures -- 
     copied from asd.py.
     
-    If SI=True, then will return e.g. 32433 as 32.433K
+    If SI=True,  then will return e.g. 32433 as 32.433K
+    If sep=True, then will return e.g. 32433 as 32,433
     '''
     from numpy import log10, floor
     output = []
@@ -208,6 +209,10 @@ def sigfig(X, sigfigs=5, SI=False):
                 decimals = int(max(0,-magnitude+sigfigs-1))
                 strformat = '%' + '%i.%i' % (digits, decimals)  + 'f'
                 string = strformat % x
+                if sep: # To insert separators in the right place, have to convert back to a number
+                    if decimals>0:  roundnumber = float(string)
+                    else:           roundnumber = int(string)
+                    string = format(roundnumber, ',') # Allow comma separator
                 string += suffix
                 output.append(string)
         except:
@@ -302,11 +307,58 @@ def printdata(data, name='Variable', depth=1, maxlen=40, indent='', level=0, sho
         print('\n')
     return None
 
-def today():
+
+def printvars(localvars=None, varlist=None, label=None, divider=True, spaces=1, color=None):
+    '''
+    Print out a list of variables. Note that the first argument must be locals().
+    
+    Arguments:
+        localvars = function must be called with locals() as first argument
+        varlist = the list of variables to print out
+        label = optional label to print out, so you know where the variables came from
+        divider = whether or not to offset the printout with a spacer (i.e. ------)
+        spaces = how many spaces to use between variables
+        color = optionally label the variable names in color so they're easier to see
+    
+    Simple usage example:
+        a = range(5); b = 'example'; printvars(locals(), ['a','b'], color='blue')
+    
+    Another useful usage case is to print out the kwargs for a function:
+        printvars(locals(), kwargs.keys())
+        
+    Version: 2017oct28
+    '''
+    
+    varlist = promotetolist(varlist) # Make sure it's actually a list
+    dividerstr = '-'*40
+    
+    if label:  print('Variables for %s:' % label)
+    if divider: print(dividerstr)
+    for varnum,varname in enumerate(varlist):
+        controlstr = '%i. "%s": ' % (varnum, varname) # Basis for the control string -- variable number and name
+        if color: controlstr = colorize(color, output=True) + controlstr + colorize('reset', output=True) # Optionally add color
+        if spaces>1: controlstr += '\n' # Add a newline if the variables are going to be on different lines
+        try:    controlstr += '%s' % localvars[varname] # The variable to be printed
+        except: controlstr += 'WARNING, could not be printed' # In case something goes wrong
+        controlstr += '\n' * spaces # The number of spaces to add between variables
+        print(controlstr), # Print it out
+    if divider: print(dividerstr) # If necessary, print the divider again
+    return None
+
+
+def today(timezone='utc', die=False):
     ''' Get the current time, in UTC time '''
     import datetime # today = datetime.today
-    import dateutil
-    now = datetime.datetime.now(dateutil.tz.tzutc())
+    try:
+        import dateutil
+        if timezone=='utc':                           tzinfo = dateutil.tz.tzutc()
+        elif timezone is None or timezone=='current': tzinfo = None
+        else:                                         raise Exception('Timezone "%s" not understood' % timezone)
+    except:
+        errormsg = 'Timezone information not available'
+        if die: raise Exception(errormsg)
+        tzinfo = None
+    now = datetime.datetime.now(tzinfo)
     return now
 
 
@@ -421,7 +473,76 @@ def printtologfile(message=None, filename=None):
     
     return None
     
+
+def colorize(color=None, string=None, output=False):
+    '''
+    Colorize output text. Arguments:
+        color = the color you want (use 'bg' with background colors, e.g. 'bgblue')
+        string = the text to be colored
+        output = whether to return the modified version of the string
     
+    Examples:
+        colorize('green', 'hi') # Simple example
+        colorize(['yellow', 'bgblack']); print('Hello world'); print('Goodbye world'); colorize() # Colorize all output in between
+        bluearray = colorize(color='blue', string=str(range(5)), output=True); print("c'est bleu: " + bluearray)
+        colorize('magenta') # Now type in magenta for a while
+        colorize() # Stop typing in magenta
+    
+    To get available colors, type colorize('help').
+    
+    Note: although implemented as a class (to allow the "with" syntax),
+    this actually functions more like a function.
+    
+    Version: 2017oct27
+    '''
+    
+    # Define ANSI colors
+    ansicolors = odict([
+                  ('black', '30'),
+                  ('red', '31'),
+                  ('green', '32'),
+                  ('yellow', '33'),
+                  ('blue', '34'),
+                  ('magenta', '35'),
+                  ('cyan', '36'),
+                  ('gray', '37'),
+                  ('bgblack', '40'),
+                  ('bgred', '41'),
+                  ('bggreen', '42'),
+                  ('bgyellow', '43'),
+                  ('bgblue', '44'),
+                  ('bgmagenta', '45'),
+                  ('bgcyan', '46'),
+                  ('bggray', '47'),
+                  ('reset', '0'),
+                  ])
+    for key,val in ansicolors.items(): ansicolors[key] = '\033['+val+'m'
+    
+    # Determine what color to use
+    if color is None: color = 'reset' # By default, reset
+    colorlist = promotetolist(color) # Make sure it's a list
+    for color in colorlist:
+        if color not in ansicolors.keys(): 
+            if color!='help': print('Color "%s" is not available.' % color)
+            print('Available colors are:  \n%s' % '\n  '.join(ansicolors.keys()))
+            return None # Don't proceed if no color supplied
+    ansicolor = ''
+    for color in colorlist:
+        ansicolor += ansicolors[color]
+    
+    # Modify string, if supplied
+    if string is None: ansistring = ansicolor # Just return the color
+    else:              ansistring = ansicolor + str(string) + ansicolors['reset'] # Add to start and end of the string
+
+    if output: 
+        return ansistring # Return the modified string
+    else:
+        print(ansistring) # Content, so print with newline
+        return None
+    
+
+
+        
     
 ##############################################################################
 ### TYPE FUNCTIONS
@@ -578,29 +699,40 @@ def quantile(data, quantiles=[0.5, 0.25, 0.75]):
 
 
 
-def sanitize(data=None, returninds=False):
+def sanitize(data=None, returninds=False, replacenans=None, die=True):
         '''
         Sanitize input to remove NaNs. Warning, does not work on multidimensional data!!
         
-        Example:
+        Examples:
             sanitized,inds = sanitize(array([3,4,nan,8,2,nan,nan,nan,8]), returninds=True)
+            sanitized = sanitize(array([3,4,nan,8,2,nan,nan,nan,8]), replacenans=True)
+            sanitized = sanitize(array([3,4,nan,8,2,nan,nan,nan,8]), replacenans=0)
         '''
         from numpy import array, isnan, nonzero
         try:
             data = array(data,dtype=float) # Make sure it's an array of float type
-            sanitized = data[~isnan(data)]
-        except:
-            raise Exception('Sanitization failed on array:\n %s' % data)
-        if len(sanitized)==0:
-            sanitized = 0.0
-            print('                WARNING, no data entered for this parameter, assuming 0')
-
-        if returninds: 
             inds = nonzero(~isnan(data))[0] # WARNING, nonzero returns tuple :(
-            return sanitized, inds
-        else:
-            return sanitized
-
+            sanitized = data[inds] # Trim data
+            if replacenans is not None:
+                newx = range(len(data)) # Create a new x array the size of the original array
+                if replacenans==True: replacenans = 'nearest'
+                if replacenans in ['nearest','linear']:
+                    sanitized = smoothinterp(newx, inds, sanitized, method=replacenans, smoothness=0) # Replace nans with interpolated values
+                else:
+                    naninds = inds = nonzero(isnan(data))[0]
+                    sanitized = dcp(data)
+                    sanitized[naninds] = replacenans
+            if len(sanitized)==0:
+                sanitized = 0.0
+                print('                WARNING, no data entered for this parameter, assuming 0')
+        except Exception as E:
+            if die: 
+                raise Exception('Sanitization failed on array: "%s":\n %s' % (repr(E), data))
+            else:
+                sanitized = data # Give up and just return an empty array
+                inds = []
+        if returninds: return sanitized, inds
+        else:          return sanitized
 
 
 def getvaliddata(data=None, filterdata=None, defaultind=0):
@@ -675,9 +807,12 @@ def findinds(val1, val2=None, eps=1e-6):
     return output
 
 
+
 def findnearest(series=None, value=None):
     '''
-    Return the index of the nearest match in series to value
+    Return the index of the nearest match in series to value -- like findinds, but
+    always returns an object with the same type as value (i.e. findnearest with
+    a number returns a number, findnearest with an array returns an array).
     
     Examples:
         findnearest(rand(10), 0.5) # returns whichever index is closest to 0.5
@@ -690,7 +825,7 @@ def findnearest(series=None, value=None):
     from numpy import argmin
     series = promotetoarray(series)
     if isnumber(value):
-        output = argmin(abs(promotetoarray(series)-value))
+        output = argmin(abs(series-value))
     else:
         output = []
         for val in value: output.append(findnearest(series, val))
@@ -710,7 +845,7 @@ def dataindex(dataarray, index):
     return output
 
 
-def smoothinterp(newx=None, origx=None, origy=None, smoothness=None, growth=None, strictnans=False):
+def smoothinterp(newx=None, origx=None, origy=None, smoothness=None, growth=None, ensurefinite=False, keepends=True, method='linear'):
     '''
     Smoothly interpolate over values and keep end points. Same format as numpy.interp.
     
@@ -724,12 +859,12 @@ def smoothinterp(newx=None, origx=None, origy=None, smoothness=None, growth=None
         hold(True)
         scatter(origx,origy)
     
-    Version: 2016nov02
+    Version: 2018jan24
     '''
-    from numpy import array, interp, convolve, linspace, concatenate, ones, exp, isnan, argsort, ceil
+    from numpy import array, interp, convolve, linspace, concatenate, ones, exp, nan, inf, isnan, isfinite, argsort, ceil, arange
     
     # Ensure arrays and remove NaNs
-    if isnumber(newx): newx = [newx] # Make sure it has dimension
+    if isnumber(newx):  newx = [newx] # Make sure it has dimension
     if isnumber(origx): origx = [origx] # Make sure it has dimension
     if isnumber(origy): origy = [origy] # Make sure it has dimension
     newx = array(newx)
@@ -748,30 +883,58 @@ def smoothinterp(newx=None, origx=None, origy=None, smoothness=None, growth=None
         errormsg = 'To interpolate, original x and y vectors must be same length (x=%i, y=%i)' % (len(origx), len(origy))
         raise Exception(errormsg)
     
-    if strictnans:
-        origy = origy[~isnan(origy)] 
-        origx = origx[~isnan(origy)]
-
-    # Calculate smoothness: this is consistent smoothing regardless of the size of the arrays
-    if smoothness is None: smoothness = ceil(len(newx)/len(origx))
-    smoothness = int(smoothness) # Make sure it's an appropriate number
-    
     # Make sure it's in the correct order
     correctorder = argsort(origx)
     origx = origx[correctorder]
     origy = origy[correctorder]
     newx = newx[argsort(newx)] # And sort newx just in case
     
-    # Smooth
-    kernel = exp(-linspace(-2,2,2*smoothness+1)**2)
-    kernel /= kernel.sum()
-    newy = interp(newx, origx, origy) # Use interpolation
-    validinds = findinds(~isnan(newy)) # Remove nans since these don't exactly smooth well
-    if len(validinds): # No point doing these steps if no non-nan values
-        validy = newy[validinds]
-        validy = concatenate([validy[0]*ones(smoothness), validy, validy[-1]*ones(smoothness)])
-        validy = convolve(validy, kernel, 'valid') # Smooth it out a bit
-        newy[validinds] = validy # Copy back into full vector
+    # Only keep finite elements
+    finitey = isfinite(origy) # Boolean for whether it's finite
+    if finitey.any() and not finitey.all(): # If some but not all is finite, pull out indices that are
+        finiteorigy = origy[finitey]
+        finiteorigx = origx[finitey]
+    else: # Otherwise, just copy the original
+        finiteorigy = origy.copy()
+        finiteorigx = origx.copy()
+        
+    # Perform actual interpolation
+    if method=='linear':
+        newy = interp(newx, finiteorigx, finiteorigy) # Perform standard interpolation without infinities
+    elif method=='nearest':
+        newy = zeros(newx.shape) # Create the new array of the right size
+        for i,x in enumerate(newx): # Iterate over each point
+            xind = argmin(abs(finiteorigx-x)) # Find the nearest neighbor
+            newy[i] = finiteorigy[xind] # Copy it
+    else:
+        raise Exception('Method "%s" not found; methods are "linear" or "nearest"' % method)
+
+    # Perform smoothing
+    if smoothness is None: smoothness = ceil(len(newx)/len(origx)) # Calculate smoothness: this is consistent smoothing regardless of the size of the arrays
+    smoothness = int(smoothness) # Make sure it's an appropriate number
+    
+    if smoothness:
+        kernel = exp(-linspace(-2,2,2*smoothness+1)**2)
+        kernel /= kernel.sum()
+        validinds = findinds(~isnan(newy)) # Remove nans since these don't exactly smooth well
+        if len(validinds): # No point doing these steps if no non-nan values
+            validy = newy[validinds]
+            prepend = validy[0]*ones(smoothness)
+            postpend = validy[-1]*ones(smoothness)
+            if not keepends:
+                try: # Try to compute slope, but use original prepend if it doesn't work
+                    dyinitial = (validy[0]-validy[1])
+                    prepend = validy[0]*ones(smoothness) + dyinitial*arange(smoothness,0,-1)
+                except:
+                    pass
+                try: # Try to compute slope, but use original postpend if it doesn't work
+                    dyfinal = (validy[-1]-validy[-2])
+                    postpend = validy[-1]*ones(smoothness) + dyfinal*arange(1,smoothness+1,1)
+                except:
+                    pass
+            validy = concatenate([prepend, validy, postpend])
+            validy = convolve(validy, kernel, 'valid') # Smooth it out a bit
+            newy[validinds] = validy # Copy back into full vector
     
     # Apply growth if required
     if growth is not None:
@@ -783,7 +946,24 @@ def smoothinterp(newx=None, origx=None, origy=None, smoothness=None, growth=None
         if len(futureindices): # If there are past data points
             lastpoint = futureindices[0]-1
             newy[futureindices] = newy[lastpoint] * exp((newx[futureindices]-newx[lastpoint])*growth) # Get last 'good' data point and apply growth
-        
+    
+    # Add infinities back in, if they exist
+    if any(~isfinite(origy)): # Infinities exist, need to add them back in manually since interp can only handle nan
+        if not ensurefinite: # If not ensuring all entries are finite, put nonfinite entries back in
+            orignan      = zeros(len(origy)) # Start from scratch
+            origplusinf  = zeros(len(origy)) # Start from scratch
+            origminusinf = zeros(len(origy)) # Start from scratch
+            orignan[isnan(origy)]     = nan  # Replace nan entries with nan
+            origplusinf[origy==inf]   = nan  # Replace plus infinite entries with nan
+            origminusinf[origy==-inf] = nan  # Replace minus infinite entries with nan
+            newnan      = interp(newx, origx, orignan) # Interpolate the nans
+            newplusinf  = interp(newx, origx, origplusinf) # ...again, for positive
+            newminusinf = interp(newx, origx, origminusinf) # ...and again, for negative
+            newy[isnan(newminusinf)] = -inf # Add minus infinity back in first
+            newy[isnan(newplusinf)]  = inf # Then, plus infinity
+            newy[isnan(newnan)]  = nan # Finally, the nans
+            
+    
     return newy
     
 
@@ -923,16 +1103,12 @@ def toc(start=None, label=None, sigfigs=None, filename=None, output=False):
     else:         base = 'Elapsed time for %s: ' % label
     logmessage = base + '%s s' % sigfig(elapsed, sigfigs=sigfigs)
     
-    # If we passed in a filename, append the message to that file.
-    if filename is not None:
-        printtologfile(logmessage, filename)
-        
-    # Otherwise, print the message.
+    if output:
+        return elapsed
     else:
-        print(logmessage)
-        
-    if output: return elapsed
-    else:      return None
+        if filename is not None: printtologfile(logmessage, filename) # If we passed in a filename, append the message to that file.
+        else: print(logmessage) # Otherwise, print the message.
+        return None
     
 
 
@@ -1131,10 +1307,10 @@ def loadbalancer(maxload=None, index=None, interval=None, maxtime=None, label=No
     from numpy.random import random
     
     # Set up processes to start asynchronously
-    if maxload is None: maxload = 0.5
+    if maxload  is None: maxload = 0.8
     if interval is None: interval = 5.0
-    if maxtime is None: maxtime = 36000
-    if label is None: label = ''
+    if maxtime  is None: maxtime = 36000
+    if label    is None: label = ''
     else: label += ': '
     if index is None:  
         pause = random()*interval
@@ -1233,7 +1409,7 @@ def boxoff(ax=None, removeticks=True, flipticks=True):
     '''
     I don't know why there isn't already a Matplotlib command for this.
     
-    Removes the top and right borders of a plot. Also optionally removs
+    Removes the top and right borders of a plot. Also optionally removes
     the tick marks, and flips the remaining ones outside.
 
     Version: 2017may22    
@@ -1248,6 +1424,20 @@ def boxoff(ax=None, removeticks=True, flipticks=True):
     if flipticks:
         ax.tick_params(direction='out', pad=5)
     return ax
+
+
+def loadtext(filename=None, splitlines=False):
+    ''' Convenience function for reading a text file '''
+    with open(filename) as f: output = f.read()
+    if splitlines: output = output.splitlines()
+    return output
+
+
+def savetext(filename=None, string=None):
+    ''' Convenience function for reading a text file -- accepts a string or list of strings '''
+    if isinstance(string, list): string = '\n'.join(string) # Convert from list to string)
+    with open(filename, 'w') as f: f.write(string)
+    return None
 
 ##############################################################################
 ### NESTED DICTIONARY FUNCTIONS
@@ -1312,21 +1502,98 @@ def makenested(nesteddict, keylist,item=None):
     ''' Insert item into nested dictionary, creating keys if required '''
     currentlevel = nesteddict
     for i,key in enumerate(keylist[:-1]):
-    	if not(key in currentlevel):
-    		currentlevel[key] = {}
-    	currentlevel = currentlevel[key]
+        if not(key in currentlevel):
+            currentlevel[key] = {}
+        currentlevel = currentlevel[key]
     currentlevel[keylist[-1]] = item
 
 def iternested(nesteddict,previous = []):
-	output = []
-	for k in nesteddict.items():
-		if isinstance(k[1],dict):
-			output += iternested(k[1],previous+[k[0]]) # Need to add these at the first level
-		else:
-			output.append(previous+[k[0]])
-	return output
+    output = []
+    for k in nesteddict.items():
+        if isinstance(k[1],dict):
+            output += iternested(k[1],previous+[k[0]]) # Need to add these at the first level
+        else:
+            output.append(previous+[k[0]])
+    return output
 
 
+
+
+
+
+##############################################################################
+### PLOTTING FUNCTIONS
+##############################################################################
+
+def setylim(data=None, ax=None):
+    '''
+    A small script to determine how the y limits should be set. Looks
+    at all data (a list of arrays) and computes the lower limit to
+    use, e.g.
+    
+        setylim([array([-3,4]), array([6,4,6])], ax)
+    
+    will keep Matplotlib's lower limit, since at least one data value
+    is below 0.
+    
+    Note, if you just want to set the lower limit, you can do that 
+    with this function via:
+        setylim(0, ax)
+    '''
+    # Get current limits
+    currlower, currupper = ax.get_ylim()
+    
+    # Calculate the lower limit based on all the data
+    lowerlim = 0
+    upperlim = 0
+    data = promotetolist(data) # Make sure it'siterable
+    for ydata in data:
+        lowerlim = min(lowerlim, promotetoarray(ydata).min())
+        upperlim = max(upperlim, promotetoarray(ydata).max())
+    
+    # Set the new y limits
+    if lowerlim<0: lowerlim = currlower # If and only if the data lower limit is negative, use the plotting lower limit
+    upperlim = max(upperlim, currupper) # Shouldn't be an issue, but just in case...
+    
+    # Specify the new limits and return
+    ax.set_ylim((lowerlim, upperlim))
+    return lowerlim,upperlim
+
+
+def SItickformatter(x, pos, sigfigs=2, SI=True, *args, **kwargs):  # formatter function takes tick label and tick position
+    ''' Formats axis ticks so that e.g. 34,243 becomes 34K '''
+    output = sigfig(x, sigfigs=sigfigs, SI=SI) # Pretty simple since sigfig() does all the work
+    return output
+
+
+def SIticks(fig=None, ax=None, axis='y'):
+    ''' Apply SI tick formatting to one axis of a figure '''
+    from matplotlib import ticker
+    if  fig is not None: axlist = fig.axes
+    elif ax is not None: axlist = promotetolist(ax)
+    else: raise Exception('Must supply either figure or axes')
+    for ax in axlist:
+        if   axis=='x': thisaxis = ax.xaxis
+        elif axis=='y': thisaxis = ax.yaxis
+        elif axis=='z': thisaxis = ax.zaxis
+        else: raise Exception('Axis must be x, y, or z')
+        thisaxis.set_major_formatter(ticker.FuncFormatter(SItickformatter))
+    return None
+
+
+def commaticks(fig=None, ax=None, axis='y'):
+    ''' Use commas in formatting the y axis of a figure -- see http://stackoverflow.com/questions/25973581/how-to-format-axis-number-format-to-thousands-with-a-comma-in-matplotlib '''
+    from matplotlib import ticker
+    if   ax  is not None: axlist = promotetolist(ax)
+    elif fig is not None: axlist = fig.axes
+    else: raise Exception('Must supply either figure or axes')
+    for ax in axlist:
+        if   axis=='x': thisaxis = ax.xaxis
+        elif axis=='y': thisaxis = ax.yaxis
+        elif axis=='z': thisaxis = ax.zaxis
+        else: raise Exception('Axis must be x, y, or z')
+        thisaxis.set_major_formatter(ticker.FuncFormatter(lambda x, p: format(int(x), ',')))
+    return None
 
 
 ##############################################################################
@@ -1340,15 +1607,17 @@ from copy import deepcopy as dcp
 
 class odict(OrderedDict):
     '''
-    An ordered dictionary, like the OrderedDict class, but supporting list methods like integer referencing, slicing, and appending.
+    An ordered dictionary, like the OrderedDict class, but supporting list methods like integer 
+    referencing, slicing, and appending.
     
-    Version: 2017jun03
+    Version: 2017oct28
     '''
     
     def __init__(self, *args, **kwargs):
         ''' See collections.py '''
         if len(args)==1 and args[0] is None: args = [] # Remove a None argument
         OrderedDict.__init__(self, *args, **kwargs) # Standard init
+        return None
 
     def __slicekey(self, key, slice_end):
         shift = int(slice_end=='stop')
@@ -1356,10 +1625,25 @@ class odict(OrderedDict):
         elif type(key) is str: return self.index(key)+shift # +1 since otherwise confusing with names (CK)
         elif key is None: return (len(self) if shift else 0)
         else: raise Exception('To use a slice, %s must be either int or str (%s)' % (slice_end, key))
+        return None
 
 
-    def __is_odict_iterable(self, v):
-        return type(v)==list or type(v)==type(array([]))
+    def __is_odict_iterable(self, key):
+        ''' Check to see whether the "key" is actually an iterable '''
+        output = type(key)==list or type(key)==type(array([])) # Do *not* include dict, since that would be recursive
+        return output
+        
+        
+    def __sanitize_items(self, items):
+        ''' Try to convert the output of a slice to an array, but give up easily and return a list '''
+        try: 
+            output = array(items) # Try standard Numpy array...
+            if 'S' in str(output.dtype): # ...but instead of converting to string, convert to object array
+                output = array(items, dtype=object)
+        except:
+            output = items # If that fails, just give up and return the list
+        return output
+        
 
 
     def __getitem__(self, key):
@@ -1369,10 +1653,8 @@ class odict(OrderedDict):
                 output = OrderedDict.__getitem__(self, key)
                 return output
             except Exception as E: # WARNING, should be KeyError, but this can't print newlines!!!
-                if len(self.keys()): 
-                    errormsg = E.__repr__()+'\n'
-                    errormsg += 'odict key "%s" not found; available keys are:\n%s' % (flexstr(key), '\n'.join([flexstr(k) for k in self.keys()]))
-                else: errormsg = 'Key "%s" not found since odict is empty'% key
+                if len(self.keys()): errormsg = '%s\nodict key "%s" not found; available keys are:\n%s' % (repr(E), flexstr(key), '\n'.join([flexstr(k) for k in self.keys()]))
+                else:                errormsg = 'Key "%s" not found since odict is empty'% key
                 raise Exception(errormsg)
         elif isinstance(key, Number): # Convert automatically from float...dangerous?
             thiskey = self.keys()[int(key)]
@@ -1385,15 +1667,15 @@ class odict(OrderedDict):
                     print('Stop index must be >= start index (start=%i, stop=%i)' % (startind, stopind))
                     raise Exception
                 slicevals = [self.__getitem__(i) for i in range(startind,stopind)]
-                try: return array(slicevals) # Try to convert to an array
-                except: return slicevals
+                output = self.__sanitize_items(slicevals)
+                return output
             except:
                 print('Invalid odict slice... returning empty list...')
                 return []
         elif self.__is_odict_iterable(key): # Iterate over items
             listvals = [self.__getitem__(item) for item in key]
-            try: return array(listvals)
-            except: return listvals
+            output = self.__sanitize_items(listvals)
+            return output
         else: # Handle everything else
             return OrderedDict.__getitem__(self,key)
         
@@ -1462,8 +1744,7 @@ class odict(OrderedDict):
                 thiskeystr = flexstr(self.keys()[i]) # Grab a str representation of the current key.  
                 thisval = self.values()[i] # Grab the current value.
                                 
-                # If it's another odict, make a call increasing the recurselevel 
-                # and passing the same parameters we received.
+                # If it's another odict, make a call increasing the recurselevel and passing the same parameters we received.
                 if isinstance(thisval, odict):
                     thisvalstr = flexstr(thisval.__repr__(maxlen=maxlen, showmultilines=showmultilines, divider=divider, 
                         dividerthresh=dividerthresh, numindents=numindents, recurselevel=recurselevel+1, sigfigs=sigfigs, numformat=numformat))
@@ -1474,8 +1755,8 @@ class odict(OrderedDict):
                         thisvalstr = sigfig(thisval, sigfigs=sigfigs)
                     else:
                         thisvalstr = str(thisval) # To avoid numpy's stupid 0.4999999999945
-                else: # Otherwise, do the normal __repr__() read.
-                    thisvalstr = thisval.__repr__()
+                else: # Otherwise, do the normal repr() read.
+                    thisvalstr = repr(thisval)
 
                 # Add information to the lists to retrace afterwards.
                 keystrs.append(thiskeystr)
@@ -1557,13 +1838,11 @@ class odict(OrderedDict):
         output = start
         
         for key in self.keys():
-            output += '('+key.__repr__()
+            output += '('+repr(key)
             output += ', '
             child = self.get(key)
-            if isinstance(child, odict):
-                output += child.export(doprint=False) # Handle nested odicts -- WARNING, can't doesn't work for e.g. lists of odicts!
-            else:
-                output += child.__repr__()
+            if isinstance(child, odict): output += child.export(doprint=False) # Handle nested odicts -- WARNING, can't doesn't work for e.g. lists of odicts!
+            else:                        output += repr(child)
             output += '), '
         
         output += end
@@ -1715,7 +1994,7 @@ class odict(OrderedDict):
             if not isiterable(sortby): raise Exception('Please provide a list to determine the sort order.')
             if all([isinstance(x,basestring) for x in sortby]): # Going to sort by keys
                 allkeys = sortby # Assume the user knows what s/he is doing
-            elif all([isinstance(x,bool) for x in sortby]) or all([(x==0 or x==1) for x in sortby]): # Using Boolean values
+            elif all([isinstance(x,bool) for x in sortby]): # Using Boolean values
                 allkeys = []
                 for i,x in enumerate(sortby):
                      if x: allkeys.append(origkeys[i])
@@ -1807,6 +2086,100 @@ class odict(OrderedDict):
         return self # A bit weird, but usually would use this return an odict
     
     
+    def makefrom(self, source=None, keys=None, keynames=None, *args, **kwargs):
+        '''
+        Create an odict from entries in another dictionary. If keys is None, then
+        use all keys from the current dictionary.
+        
+        Examples:
+            a = 'cat'; b = 'dog'; o = odict().makefrom(source=locals(), keys=['a','b']) # Make use of fact that variables are stored in a dictionary
+            d = {'a':'cat', 'b':'dog'}; o = odict().makefrom(d) # Same as odict(d)
+            l = ['cat', 'monkey', 'dog']; o = odict().makefrom(source=l, keys=[0,2], keynames=['a','b'])
+        '''
+        
+        # Make sure it's iterable
+        if source is not None: # Don't do anything if there's nothing there
+            if not(isiterable(source)): # Make sure it's iterable
+                source = promotetolist(source)
+            elif isinstance(source, basestring):
+                source = [source] # Special case -- strings are iterable, but we don't want to
+            
+            if len(source)==0:
+                return self # Nothing to do here
+            else:
+                # Handle cases where keys or keynames are not supplied
+                if keys is None:
+                    if isinstance(source, (list, tuple)):   keys = range(len(source))
+                    elif isinstance(source, dict): keys = source.keys()
+                    else:                          raise Exception('Unable to guess keys for object of type %s' % type(source))
+                keys = promotetolist(keys) # Make sure it's a list
+                if keynames is None: keynames = keys # Use key names
+                
+                # Loop over supplied keys
+                for key,keyname in zip(keys,keynames):
+                    try: 
+                        self.__setitem__(str(keyname), source[key])
+                    except Exception as E: 
+                        raise Exception('Key "%s" not found: %s' % (key, repr(E)))
+                
+        return self # As with make()
+    
+    
+    def map(self, func=None):
+        '''
+        Apply a function to each element of the odict, returning
+        a new odict with the same keys.
+        
+        Example:
+            cat = odict({'a':[1,2], 'b':[3,4]})
+            def myfunc(mylist): return [i**2 for i in mylist]
+            dog = cat.map(myfunc) # Returns odict({'a':[1,4], 'b':[9,16]})
+        '''
+        output = odict()
+        for key in self.keys():
+            output[key] = func(self.__getitem__(key))
+        return output
+    
+    
+    def fromeach(self, ind=None, asdict=True):
+        '''
+        Take a "slice" across all the keys of an odict, applying the same
+        operation to entry. The simplest usage is just to pick an index.
+        However, you can also use it to apply a function to each key.
+        
+        Example:
+            z = odict({'a':array([1,2,3,4]), 'b':array([5,6,7,8])})
+            z.fromeach(2) # Returns array([3,7])
+            z.fromeach(ind=[1,3], asdict=True) # Returns odict({'a':array([2,4]), 'b':array([6,8])})
+        '''
+        output = odict()
+        for key in self.keys():
+            output[key] = self.__getitem__(key)[ind]
+        if asdict: return output # Output as a slimmed-down odict
+        else:      return output[:] # Output as just the entries
+        
+    
+    def toeach(self, ind=None, val=None):
+        '''
+        The inverse of fromeach: partially reset elements within
+        each odict key.
+        
+        Example:
+            z = odict({'a':[1,2,3,4], 'b':[5,6,7,8]})
+            z.toeach(2, [10,20])    # z is now odict({'a':[1,2,10,4], 'b':[5,6,20,8]})
+            z.toeach(ind=3,val=666) #  z is now odict({'a':[1,2,10,666], 'b':[5,6,20,666]})
+        '''
+        nkeys = len(self.keys())
+        if not(isiterable(val)): # Assume it's meant to be populated in each
+            val = [val]*nkeys # Duplicated
+        if len(val)!=nkeys:
+            errormsg = 'To map values onto each key, they must be the same length (%i vs. %i)' % (len(val), nkeys)
+            raise Exception(errormsg)
+        for k,key in self.enumkeys():
+            self.__getitem__(key)[ind] = val[k]
+        return None
+        
+    
     def enumkeys(self):
         ''' Shortcut for enumerate(odict.keys()) '''
         iterator = enumerate(self.keys())
@@ -1852,33 +2225,48 @@ class dataframe(object):
     A simple data frame, based on simple lists, for simply storing simple data.
     
     Example usage:
-        a = dataframe(['x','y'],[[1238,2,3],[0.04,5,6]]) # Create data frame
+        a = dataframe(cols=['x','y'],data=[[1238,2],[384,5],[666,7]) # Create data frame
         print a['x'] # Print out a column
         print a[0] # Print out a row
-        print a['x',0] # Print out an element
-        a[0] = [5,6]; print a # Set values for a whole row
+        print a[0,'x'] # Print out an element
+        a[0] = [123,6]; print a # Set values for a whole row
         a['y'] = [8,5,0]; print a # Set values for a whole column
         a['z'] = [14,14,14]; print a # Add new column
         a.addcol('z', [14,14,14]); print a # Alternate way to add new column
         a.rmcol('z'); print a # Remove a column
         a.pop(1); print a # Remove a row
-        a.append([1,2]); print a # Append a new row
-        a.insert(1,[9,9]); print a # Insert a new row
+        a.append([555,2,14]); print a # Append a new row
+        a.insert(1,[555,2,14]); print a # Insert a new row
         a.sort(); print a # Sort by the first column
         a.sort('y'); print a # Sort by the second column
-        a.addrow([1,44]); print a # Replace the previous row and sort
+        a.addrow([555,2,14]); print a # Replace the previous row and sort
         a.getrow(1) # Return the row starting with value '1'
         a.rmrow(); print a # Remove last row
-        a.rmrow(3); print a # Remove the row starting with element '3'
+        a.rmrow(1238); print a # Remove the row starting with element '3'
     
-    Version: 2016oct31
+    Works for both numeric and non-numeric data.
+    
+    Version: 2018mar17
     '''
 
     def __init__(self, cols=None, data=None):
         if cols is None: cols = list()
-        if data is None: data = zeros((len(cols),0), dtype=object) # Object allows more than just numbers to be stored
+        if data is None: 
+            data = zeros((0,len(cols)), dtype=object) # Object allows more than just numbers to be stored
+        else:
+            data = array(data, dtype=object)
+            if data.ndim != 2:
+                errormsg = 'Dimension of data must be 2, not %s' % data.ndim
+                raise Exception(errormsg)
+            if data.shape[1]==len(cols):
+                pass
+            elif data.shape[0]==len(cols):
+                data = data.transpose()
+            else:
+                errormsg = 'Number of columns (%s) does not match array shape (%s)' % (len(cols), data.shape)
+                raise Exception(errormsg)
         self.cols = cols
-        self.data = array(data, dtype=object)
+        self.data = data
         return None
     
     def __repr__(self, spacing=2):
@@ -1896,7 +2284,7 @@ class dataframe(object):
                 outputlist[col] = list()
                 maxlen = len(col) # Start with length of column name
                 if nrows:
-                    for val in self.data[c,:]:
+                    for val in self.data[:,c]:
                         output = flexstr(val)
                         maxlen = max(maxlen, len(output))
                         outputlist[col].append(output)
@@ -1926,12 +2314,17 @@ class dataframe(object):
                 try: 
                     output[c] = value[col]
                 except: 
-                    raise Exception('Entry for column %s not found; keys you supplied are: %s' % (col, value.keys()))
-            return array(output, dtype=object)
+                    errormsg = 'Entry for column %s not found; keys you supplied are: %s' % (col, value.keys())
+                    raise Exception(errormsg)
+            output = array(output, dtype=object)
         elif value is None:
-            return empty(self.ncols(),dtype=object)
+            output = empty(self.ncols(),dtype=object)
         else: # Not sure what it is, just make it an array
-            return array(value, dtype=object)
+            if len(value)==self.ncols():
+                output = array(value, dtype=object)
+            else:
+                errormsg = 'Row has wrong length (%s supplied, %s expected)' % (len(value), self.ncols())
+        return output
     
     def _sanitizecol(self, col):
         ''' Take None or a string and return the index of the column '''
@@ -1943,71 +2336,91 @@ class dataframe(object):
     def __getitem__(self, key):
         if isinstance(key, basestring):
             colindex = self.cols.index(key)
-            output = self.data[colindex,:]
+            output = self.data[:,colindex]
         elif isinstance(key, Number):
             rowindex = int(key)
-            output = self.data[:,rowindex]
+            output = self.data[rowindex,:]
         elif isinstance(key, tuple):
             colindex = self.cols.index(key[0])
             rowindex = int(key[1])
-            output = self.data[colindex,rowindex]
+            output = self.data[rowindex,colindex]
+        elif isinstance(key, slice):
+            rowslice = key
+            slicedata = self.data[rowslice,:]
+            output = dataframe(cols=self.cols, data=slicedata)
+        else:
+            raise Exception('Unrecognized dataframe key "%s"' % key)
         return output
         
     def __setitem__(self, key, value):
-        if isinstance(key, basestring):
+        if isinstance(key, basestring): # Add column
             if len(value) != self.nrows(): 
-                raise Exception('Vector has incorrect length (%i vs. %i)' % (len(value), self.nrows()))
+                errormsg = 'Vector has incorrect length (%i vs. %i)' % (len(value), self.nrows())
+                raise Exception(errormsg)
             try:
                 colindex = self.cols.index(key)
-                self.data[colindex,:] = value
+                self.data[:,colindex] = value
             except:
                 self.cols.append(key)
                 colindex = self.cols.index(key)
-                self.data = vstack((self.data, array(value, dtype=object)))
+                self.data = hstack((self.data, array(value, dtype=object)))
         elif isinstance(key, Number):
             value = self._val2row(value) # Make sure it's in the correct format
             if len(value) != self.ncols(): 
-                raise Exception('Vector has incorrect length (%i vs. %i)' % (len(value), self.ncols()))
+                errormsg = 'Vector has incorrect length (%i vs. %i)' % (len(value), self.ncols())
+                raise Exception(errormsg)
             rowindex = int(key)
-            self.data[:,rowindex] = value
+            try:
+                self.data[rowindex,:] = value
+            except:
+                self.data = vstack((self.data, array(value, dtype=object)))
         elif isinstance(key, tuple):
-            colindex = self.cols.index(key[0])
-            rowindex = int(key[1])
-            self.data[colindex,rowindex] = value
+            try:
+                colindex = self.cols.index(key[0])
+                rowindex = int(key[1])
+                self.data[rowindex,colindex] = value
+            except:
+                errormsg = 'Could not insert element (%s,%s) in dataframe of shape %' % (colindex, rowindex, self.data.shape)
+                raise Exception(errormsg)
         return None
     
     def pop(self, key, returnval=True):
         ''' Remove a row from the data frame '''
         rowindex = int(key)
-        thisrow = self.data[:,rowindex]
-        self.data = hstack((self.data[:,:rowindex], self.data[:,rowindex+1:]))
+        thisrow = self.data[rowindex,:]
+        self.data = vstack((self.data[:rowindex,:], self.data[rowindex+1:,:]))
         if returnval: return thisrow
         else:         return None
     
     def append(self, value):
         ''' Add a row to the end of the data frame '''
         value = self._val2row(value) # Make sure it's in the correct format
-        self.data = hstack((self.data, array(matrix(value).transpose(), dtype=object)))
+        self.data = vstack((self.data, array(value, dtype=object)))
         return None
     
     def ncols(self):
         ''' Get the number of columns in the data frame '''
-        return len(self.cols)
+        ncols = len(self.cols)
+        ncols2 = self.data.shape[1]
+        if ncols != ncols2:
+            errormsg = 'Dataframe corrupted: %s columns specified but %s in data' % (ncols, ncols2)
+            raise Exception(errormsg)
+        return ncols
 
     def nrows(self):
         ''' Get the number of rows in the data frame '''
-        try:    return self.data.shape[1]
+        try:    return self.data.shape[0]
         except: return 0 # If it didn't work, probably because it's empty
     
     def addcol(self, key, value):
-        ''' Add a new colun to the data frame -- for consistency only '''
+        ''' Add a new column to the data frame -- for consistency only '''
         self.__setitem__(key, value)
     
     def rmcol(self, key):
         ''' Remove a column from the data frame '''
         colindex = self.cols.index(key)
         self.cols.pop(colindex) # Remove from list of columns
-        self.data = vstack((self.data[:colindex,:], self.data[colindex+1:,:])) # Remove from data
+        self.data = hstack((self.data[:,:colindex], self.data[:,colindex+1:])) # Remove from data
         return None
     
     def addrow(self, value=None, overwrite=True, col=None, reverse=False):
@@ -2016,14 +2429,14 @@ class dataframe(object):
         col   = self._sanitizecol(col)
         index = self._rowindex(key=value[col], col=col, die=False) # Return None if not found
         if index is None or not overwrite: self.append(value)
-        else: self.data[:,index] = value # If it exists already, just replace it
+        else: self.data[index,:] = value # If it exists already, just replace it
         self.sort(col=col, reverse=reverse) # Sort
         return None
     
     def _rowindex(self, key=None, col=None, die=False):
         ''' Get the sanitized row index for a given key and column '''
         col = self._sanitizecol(col)
-        coldata = self.data[col,:] # Get data for this column
+        coldata = self.data[:,col] # Get data for this column
         if key is None: key = coldata[-1] # If not supplied, pick the last element
         try:    index = coldata.tolist().index(key) # Try to find duplicates
         except: 
@@ -2058,7 +2471,7 @@ class dataframe(object):
             asdict = whether to return results as dict rather than list
         
         Example:
-            df = dataframe(cols=['year','val'],data=[[2016,2017],[0.3,0.5]])
+            df = dataframe(cols=['year','val'],data=[[2016,0.3],[2017,0.5]])
             df.getrow(2016) # returns array([2016, 0.3], dtype=object)
             df.getrow(2013) # returns None, or exception if die is True
             df.getrow(2013, closest=True) # returns array([2016, 0.3], dtype=object)
@@ -2068,10 +2481,10 @@ class dataframe(object):
             index = self._rowindex(key=key, col=col, die=(die and default is None))
         else:
             col = self._sanitizecol(col)
-            coldata = self.data[col,:] # Get data for this column
+            coldata = self.data[:,col] # Get data for this column
             index = argmin(abs(coldata-key)) # Find the closest match to the key
         if index is not None:
-            thisrow = self.data[:,index]
+            thisrow = self.data[index,:]
             if asdict:
                 thisrow = self._todict(thisrow)
         else:
@@ -2082,15 +2495,15 @@ class dataframe(object):
         ''' Insert a row at the specified location '''
         rowindex = int(row)
         value = self._val2row(value) # Make sure it's in the correct format
-        self.data = hstack((self.data[:,:rowindex], array(matrix(value).transpose(), dtype=object), self.data[:,rowindex:]))
+        self.data = vstack((self.data[:rowindex,:], value, self.data[rowindex:,:]))
         return None
     
     def sort(self, col=None, reverse=False):
         ''' Sort the data frame by the specified column '''
         col = self._sanitizecol(col)
-        sortorder = argsort(self.data[col,:])
+        sortorder = argsort(self.data[:,col])
         if reverse: sortorder = array(list(reversed(sortorder)))
-        self.data = self.data[:,sortorder]
+        self.data = self.data[sortorder,:]
         return None
         
 

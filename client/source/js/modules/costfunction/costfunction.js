@@ -480,7 +480,7 @@ define(['angular', 'underscore', 'toastr'], function(angular, _) {
       vm.makePopKeyLabel = function(popKey) {
         if (typeof popKey === 'string') {
           if (popKey == "tot") {
-            return "Total Population";
+            return "Total population";
           }
           return popKey;
         }
@@ -520,7 +520,7 @@ define(['angular', 'underscore', 'toastr'], function(angular, _) {
           vm.outcomes.push({
             name: vm.state.parameter.short,
             pop: pop,
-            interact: "random",
+            interact: "",
             years: []
           })
         });

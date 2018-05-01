@@ -37,7 +37,7 @@ def setmigrations(which='migrations'):
         ('2.1.9', ('2.1.10','2016-12-28', addpropsandcosttx, 'Added treatment cost parameter')),
         ('2.1.10',('2.2',   '2017-01-13', redoparameters,    'Updated the way parameters are handled')),
         ('2.2',   ('2.2.1', '2017-02-01', redovlmon,         'Updated the VL monitoring parameter')),
-        ('2.2.1', ('2.2.2', '2017-02-01', addprojectinfo,    'Stored information about the proect in the results')),
+        ('2.2.1', ('2.2.2', '2017-02-01', addprojectinfo,    'Stored information about the project in the results')),
         ('2.2.2', ('2.3',   '2017-02-09', redoparamattr,     'Updated parameter attributes')),
         ('2.3',   ('2.3.1', '2017-02-15', removespreadsheet, "Don't store the spreadsheet with the project, to save space")),
         ('2.3.1', ('2.3.2', '2017-03-01', addagetopars,      'Ensured that age is stored in parsets')),
@@ -51,6 +51,14 @@ def setmigrations(which='migrations'):
         ('2.4',   ('2.5',   '2017-07-03', None,              'Made registration public')),
         ('2.5',   ('2.6',   '2017-10-23', None,              'Public code release')),
         ('2.6',   ('2.6.1', '2017-12-19', None,              'Scenario sensitivity feature')),
+        ('2.6.1', ('2.6.2', '2017-12-19', None,              'New results format')),
+        ('2.6.2', ('2.6.3', '2018-01-17', addtimevarying,    'Preliminaries for time-varying optimization')),
+        ('2.6.3', ('2.6.4', '2018-01-24', None,              'Changes to how proportions are handled')),
+        ('2.6.4', ('2.6.5', '2018-04-03', None,              'Changes to how HIV+ births are handled')),
+        ('2.6.5', ('2.6.6', '2018-04-25', addtreatbycd4,     'Updates CD4 handling and interactions between programs')),
+        ('2.6.6', ('2.6.7', '2018-04-26', None,              'Handle male- and female-only populations for parameters')),
+        ('2.6.7', ('2.6.8', '2018-04-28', removecosttx,      'Remove treatment cost parameter')),
+        ('2.6.8', ('2.6.9', '2018-04-28', addrelhivdeath,    'Add population-dependent relative HIV death rates')),
         ])
     
     # Define changelog
@@ -729,6 +737,49 @@ def redotranstable(project, **kwargs):
     return None
 
 
+def addtimevarying(project, **kwargs):
+    ''' Update optimization objects to include time-varying settings '''
+    for opt in project.optims.values():
+        opt.tvsettings = op.defaulttvsettings()
+    for parset in project.parsets.values():
+        try:    assert(op.isnumber(parset.start))
+        except: parset.start = project.settings.start
+        try:    assert(op.isnumber(parset.end))
+        except: parset.end = project.settings.end
+    return None
+
+
+def addtreatbycd4(project, **kwargs):
+    ''' Update project to include a treatbycd4 setting '''
+    project.settings.treatbycd4 = True
+    return None
+
+
+def removecosttx(project, **kwargs):
+    """
+    Migration between Optima 2.6.7 and 2.6.8: removes costtx parameter
+    """
+    removeparameter(project, short='costtx', datashort='costtx')
+    return None
+
+
+def addrelhivdeath(project, **kwargs):
+    """
+    Migration between Optima 2.6.8 and 2.6.9: add a population-dependent relative HIV death rate
+    """
+
+    short = 'hivdeath'
+    copyfrom = 'force'
+    kwargs['name'] = 'Relative death rate for populations (unitless)'
+    addparameter(project=project, copyfrom=copyfrom, short=short, **kwargs)
+    npops = len(project.data['pops']['short'])
+    for ps in project.parsets.values():
+        ps.pars['hivdeath'].y[:] = array([1.]*npops)
+        for key in range(npops): ps.pars['hivdeath'].prior[key].pars = array([0.9, 1.1]) 
+    
+    return None
+
+
 #def redoprograms(project, **kwargs):
 #    """
 #    Migration between Optima 2.2.1 and 2.3 -- convert CCO objects from simple dictionaries to parameters.
@@ -755,7 +806,10 @@ def migrate(project, verbose=2, die=False):
         
         # Check that the migration exists
         if not currentversion in migrations:
-            errormsg = "WARNING, migrating %s failed: no migration exists from version %s to the latest version (%s)" % (project.name, currentversion, op.version)
+            if op.compareversions(currentversion, op.version)<0:
+                errormsg = "WARNING, migrating %s failed: no migration exists from version %s to the current version (%s)" % (project.name, currentversion, op.version)
+            elif op.compareversions(currentversion, op.version)>0:
+                errormsg = "WARNING, migrating %s failed: project version %s more recent than current Optima version (%s)" % (project.name, currentversion, op.version)
             if die: raise op.OptimaException(errormsg)
             else:   op.printv(errormsg, 1, verbose)
             return project # Abort, if haven't died already
@@ -767,8 +821,7 @@ def migrate(project, verbose=2, die=False):
             try: 
                 migrator(project, verbose=verbose, die=die) # Sometimes there is no upgrader
             except Exception as E:
-                errormsg = 'WARNING, migrating "%s" from %6s -> %6s failed:\n' % (project.name, currentversion, newversion)
-                errormsg += E.__repr__()
+                errormsg = 'WARNING, migrating "%s" from %6s -> %6s failed:\n%s' % (project.name, currentversion, newversion, repr(E))
                 if not hasattr(project, 'failedmigrations'): project.failedmigrations = [] # Create if it doesn't already exist
                 project.failedmigrations.append(errormsg)
                 if die: raise op.OptimaException(errormsg)
@@ -832,17 +885,22 @@ def removegaoptim(portfolio):
     return portfolio
 
 
-def migrateportfolio(portfolio=None, verbose=2):
+def migrateportfolio(portfolio=None, verbose=2, die=True):
     
     # Rather than use the dict mapping, use a (series) of if statements
     if op.compareversions(portfolio.version, '2.3.5')<0:
         op.printv('Migrating portfolio "%s" from %6s -> %6s' % (portfolio.name, portfolio.version, '2.3.5'), 2, verbose)
         portfolio = removegaoptim(portfolio)
     
-    # Check to make sure it's the latest version
+    # Update version number to the latest -- no other changes  should be necessary
+    if op.compareversions(portfolio.version, '2.3.5')>=0:
+        portfolio.version = op.version
+    
+    # Check to make sure it's the latest version -- should not happen, but just in case!
     if portfolio.version != op.version:
         errormsg = "No portfolio migration exists from version %s to the latest version (%s)" % (portfolio.version, op.version)
-        raise op.OptimaException(errormsg)
+        if die: raise op.OptimaException(errormsg)
+        else:   op.printv(errormsg, 1, verbose)
     
     return portfolio
 

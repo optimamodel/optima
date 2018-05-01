@@ -291,9 +291,9 @@ define(['angular', 'underscore'], function (angular, _) {
         return;
       }
 
-      if ($scope.state.parset.name === "default") {
+      if ($scope.parsets.length < 2) {
         modalService.informError(
-          [{message: 'Deleting the default parameter set is not permitted.'}]);
+          [{message: 'Deleting the only parameter set is not permitted.'}]);
         return;
       }
 
@@ -372,26 +372,52 @@ define(['angular', 'underscore'], function (angular, _) {
 		});
     };
 
-    $scope.refreshParset = function() {
-      modalService.confirm(
-        function () {
+    $scope.refreshParameterSet = function() {
+      rpcService
+        .rpcRun(
+          'refresh_parset', [projectService.project.id, $scope.state.parset.id])
+        .then(function(response) {
+          toastr.success('Parameter set refreshed from data');
+          $scope.getCalibrationGraphs();
           rpcService
             .rpcRun(
-              'refresh_parset', [projectService.project.id, $scope.state.parset.id])
-            .then(function(response) {
-              toastr.success('Parameter set refreshed');
-              $scope.getCalibrationGraphs();
-              rpcService
-                .rpcRun(
-                  'push_project_to_undo_stack',
-                  [projectService.project.id]);
-            });
-        },
-        function () { },
-        'Yes',
-        'No',
-        'This will reset all your calibration parameters to match the ones in the "default" parset. Do you wish to continue?',
-        'Refresh paramter set'
+              'push_project_to_undo_stack',
+              [projectService.project.id]);
+        });
+    };
+
+    $scope.refreshParameterSet = function() {
+      function refreshparset(initialprev) {
+        rpcService
+          .rpcRun(
+            'refresh_parset', [projectService.project.id, $scope.state.parset.id, initialprev])
+          .then(function(response) {
+            $scope.state.parset.name = name;
+            toastr.success('Parameter set refreshed from data');
+            $scope.getCalibrationGraphs();
+            rpcService
+              .rpcRun(
+                'push_project_to_undo_stack',
+                [projectService.project.id]);
+          });
+      }
+
+      // Because passing arguments is too hard -- to supply the options for the choice below
+      function refreshparsetandprev() {
+        refreshparset(true);
+      }
+
+      function refreshparsetwithoutprev() {
+        refreshparset(false);
+      }
+
+      modalService.choice(
+        refreshparsetandprev,
+        refreshparsetwithoutprev,
+        'Use the values from the uploaded databook',
+        'Use the values entered in the calibration',
+        'What values would you like to use to for initial HIV prevalence?',
+        'Reload data from databook to this parameter set'
       );
     };
 

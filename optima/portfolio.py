@@ -1,4 +1,4 @@
-from optima import OptimaException, Link, gitinfo, tic, toc, odict, getdate, today, uuid, dcp, objrepr, makefilepath, printv, findinds, saveobj, loadproj, promotetolist # Import utilities
+from optima import OptimaException, Link, gitinfo, tic, toc, odict, getdate, today, uuid, dcp, objrepr, makefilepath, printv, findnearest, saveobj, loadproj, promotetolist # Import utilities
 from optima import version, defaultobjectives, Project, pchip, getfilelist, batchBOC, reoptimizeprojects
 from numpy import arange, argsort, zeros, nonzero, linspace, log, exp, inf, argmax, array
 from xlsxwriter import Workbook
@@ -82,9 +82,9 @@ class Portfolio(object):
         return None
     
     
-    def addfolder(self, folder=None, replace=True, verbose=2):
+    def addfolder(self, folder=None, replace=True, pattern=None, verbose=2):
         ''' Add a folder of projects to a portfolio '''
-        filelist = getfilelist(folder, 'prj')
+        filelist = getfilelist(folder, 'prj', pattern=pattern)
         projects = []
         if replace: self.projects = odict() # Wipe clean before adding new projects
         for f,filename in enumerate(filelist):
@@ -205,12 +205,12 @@ class Portfolio(object):
         bocxvecs = []
         bocyvecs = []
         for boc in boclist:
-            maxbudget = min(grandtotal,max(boc.x))+1 # Add one for the log
-            tmpx1 = linspace(0,log(maxbudget), npts) # Exponentially distributed
-            tmpx2 = linspace(1, maxbudget, npts) # Uniformly distributed
-            tmpx3 = (tmpx1+log(tmpx2))/2. # Halfway in between, logarithmically speaking
-            tmpxvec = exp(tmpx3)-1 # Subtract one from the log
-            tmpyvec = pchip(boc.x, boc.y, tmpxvec)
+            maxbudget = min(grandtotal,max(boc.x)) # Calculate the maximum sensible budget for this region
+            tmpx1 = linspace(1,log(maxbudget), npts) # Logarithmically distributed
+            tmpx2 = log(linspace(1, maxbudget, npts)) # Uniformly distributed
+            tmpx3 = (tmpx1+tmpx2)/2. # Halfway in between, logarithmically speaking
+            tmpxvec = exp(tmpx3) # Convert from log-space to normal space
+            tmpyvec = pchip(boc.x, boc.y, tmpxvec) # Interpolate BOC onto the new points
             newtmpyvec = tmpyvec[0] - tmpyvec # Flip to an improvement
             bocxvecs.append(tmpxvec)
             bocyvecs.append(newtmpyvec)
@@ -289,6 +289,8 @@ class Portfolio(object):
         if reoptimize: 
             resultpairs = reoptimizeprojects(projects=self.projects, objectives=objectives, maxtime=maxtime, maxiters=maxiters, mc=mc, batch=batch, maxload=maxload, interval=interval, verbose=verbose, randseed=randseed)
             self.results = resultpairs
+            for b,boc in enumerate(boclist):
+                boc.ygaoptim = self.results[b]['opt'].outcome # Store outcome
         
         # Make results and optionally export
         if self.results: self.makeoutput(doprint=doprint, verbose=verbose)
@@ -311,8 +313,11 @@ class Portfolio(object):
         if initbudgets == None: initbudgets = [None]*len(self.projects)
         if optbudgets == None: optbudgets = [None]*len(self.projects)
         if objectives == None: 
-            printv('WARNING, you have called plotBOCs on portfolio %s without specifying objectives. Using default objectives... ' % (self.name), 2, verbose)
-            objectives = defaultobjectives()
+            try: 
+                objectives = self.objectives # This should be defined, but just in case...
+            except:
+                printv('WARNING, you have called plotBOCs on portfolio %s without specifying objectives. Using default objectives... ' % (self.name), 2, verbose)
+                objectives = defaultobjectives()
             
         if not len(self.projects) == len(initbudgets) or not len(self.projects) == len(optbudgets):
             errormsg = 'Error: Plotting BOCs for %i projects with %i initial budgets (%i required) and %i optimal budgets (%i required).' % (len(self.projects), len(initbudgets), len(self.projects), len(optbudgets), len(self.projects))
@@ -335,6 +340,7 @@ class Portfolio(object):
             errormsg = 'Portfolio does not contain results: most likely geospatial analysis has not been run'
             raise OptimaException(errormsg)
         self.GAresults  = odict() # I can't believe this wasn't stored before
+        bestindex = 0 # Index of the best result -- usually 0 since [best, low, high]  
         
         # Keys for initial and optimized
         iokeys = ['init', 'opt'] 
@@ -369,10 +375,10 @@ class Portfolio(object):
             tvector, initial, final, indices, alloc, outcome, sumalloc = [odict() for o in range(7)] # Allocate all dicts
             for io in iokeys:
                 tvector[io]  = self.results[key][io].tvec # WARNING, can differ between initial and optimized!
-                initial[io]  = findinds(tvector[io], self.objectives['start'])
-                final[io]    = findinds(tvector[io], self.objectives['end'])
+                initial[io]  = findnearest(tvector[io], self.objectives['start'])
+                final[io]    = findnearest(tvector[io], self.objectives['end'])
                 indices[io]  = arange(initial[io], final[io])
-                alloc[io]    = self.results[key][io].budget
+                alloc[io]    = self.results[key][io].budgets[-1]
                 outcome[io]  = self.results[key][io].outcome 
                 sumalloc[io] = alloc[io][:].sum() # Should be a budget odict that we're summing
                 overallbud[io] += sumalloc[io]
@@ -388,7 +394,7 @@ class Portfolio(object):
                 
                 projoutcomesplit[k][io] = odict()
                 for obkey in self.objectives['keys']:
-                    projoutcomesplit[k][io]['num'+obkey] = self.results[key][io].main['num'+obkey].tot[0][indices[io]].sum()     # Again, current and optimal should be same for 0 second optimisation, but being explicit.
+                    projoutcomesplit[k][io]['num'+obkey] = self.results[key][io].main['num'+obkey].tot[bestindex][indices[io]].sum()     # Again, current and optimal should be same for 0 second optimisation, but being explicit -- WARNING, need to fix properly!
                     overalloutcomesplit['num'+obkey][io] += projoutcomesplit[k][io]['num'+obkey]
         
         # Add to the results structure
@@ -704,8 +710,8 @@ def makegeoprojects(project=None, spreadsheetpath=None, destination=None, dosave
                 popratio[popname].append(wspopsize.cell_value(rowindex, colindex))
                 prevfactors[popname].append(wsprev.cell_value(rowindex, colindex))
                 plhivratio[popname].append(wspopsize.cell_value(rowindex, colindex)*wsprev.cell_value(rowindex, colindex))
-    print('Districts...')
-    print districtlist
+    print('Districts:')
+    print(districtlist)
     ndistricts = len(districtlist)
     
     # Workout the reference year for the spreadsheet for later 'datapoint inclusion'.
@@ -753,7 +759,7 @@ def makegeoprojects(project=None, spreadsheetpath=None, destination=None, dosave
         newproject.name = districtname
         
         # Scale data        
-        for popid in xrange(npops):
+        for popid in range(npops):
             popname = poplist[popid]
             for x in newproject.data['popsize']:
                 x[popid] = [z*popratio[popname][c] for z in x[popid]]
@@ -764,14 +770,12 @@ def makegeoprojects(project=None, spreadsheetpath=None, destination=None, dosave
         newproject.data['numost'] = [[y*plhivratio['tot'][c] for y in x] for x in newproject.data['numost']]
         
         # Scale calibration
-        for popid in xrange(npops):
-            popname = poplist[popid]
-            newproject.parsets[-1].pars['popsize'].i[popname] *= popratio[popname][c]
-            newproject.parsets[-1].pars['initprev'].y[popname] *= prevfactors[popname][c]
-            newproject.parsets[-1].pars['numcirc'].y[popname] *= plhivratio['tot'][c]
-        newproject.parsets[-1].pars['numtx'].y['tot'] *= plhivratio['tot'][c]
-        newproject.parsets[-1].pars['numpmtct'].y['tot'] *= plhivratio['tot'][c]
-        newproject.parsets[-1].pars['numost'].y['tot'] *= plhivratio['tot'][c]
+        newproject.parsets[-1].pars['popsize'].i[:]  *= popratio[popname][c]
+        newproject.parsets[-1].pars['initprev'].y[:] *= prevfactors[popname][c]
+        newproject.parsets[-1].pars['numcirc'].y[:]  *= plhivratio['tot'][c]
+        newproject.parsets[-1].pars['numtx'].y[:]    *= plhivratio['tot'][c]
+        newproject.parsets[-1].pars['numpmtct'].y[:] *= plhivratio['tot'][c]
+        newproject.parsets[-1].pars['numost'].y[:]   *= plhivratio['tot'][c]
         
         # Scale programs
         if len(project.progsets) > 0:

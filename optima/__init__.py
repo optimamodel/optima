@@ -55,12 +55,12 @@ from uuid import uuid4 as uuid
 from copy import deepcopy as dcp
 
 # Utilities -- import alphabetically
-from .utils import blank, boxoff, checkmem, checktype, compareversions, dataindex, dataframe, defaultrepr
-from .utils import drprint, findinds, findnearest, getdate, getfilelist, getvaliddata, getvalidinds, gitinfo, inclusiverange, indent, isnumber, isiterable
-from .utils import Link, LinkException, loadbalancer, makefilepath, objectid, objatt, objmeth, objrepr
-from .utils import odict, percentcomplete, perturb, printarr, printdata as pd, printv, printtologfile
-from .utils import promotetoarray, promotetolist, promotetoodict, quantile, runcommand, sanitize, scaleratio
-from .utils import sigfig, slacknotification, smoothinterp, tic, toc, today, vec2obj, sanitizefilename
+from .utils import blank, boxoff, checkmem, checktype, colorize, commaticks, compareversions, dataindex, dataframe, defaultrepr
+from .utils import findinds, findnearest, getdate, getfilelist, getvaliddata, getvalidinds, gitinfo, inclusiverange, indent, isnumber, isiterable
+from .utils import Link, LinkException, loadbalancer, loadtext, makefilepath, objectid, objatt, objmeth, objrepr
+from .utils import odict, percentcomplete, perturb, printarr, printdata as pd, printdr, printv, printvars, printtologfile
+from .utils import promotetoarray, promotetolist, promotetoodict, quantile, runcommand, sanitize, sanitizefilename, savetext, scaleratio, setylim
+from .utils import sigfig, SItickformatter, SIticks, slacknotification, smoothinterp, tic, toc, today, vec2obj
 import utils as _utils; del utils
 
 # Optimization algorithm
@@ -104,10 +104,10 @@ def debuginfo(dooutput=False):
 
 class OptimaException(Exception):
     ''' A tiny class to allow for Optima-specific exceptions -- define this here to allow for Optima-specific info '''
+    
     def __init__(self, errormsg, *args, **kwargs):
         if isinstance(errormsg, basestring): errormsg = errormsg+debuginfo(dooutput=True) # If it's not a string, not sure what it is, but don't bother with this
         Exception.__init__(self, errormsg, *args, **kwargs)
-
 
 
 #####################################################################################################################
@@ -133,13 +133,13 @@ import parameters as _parameters; del parameters
 
 # Create a blank spreadsheet
 try: from .makespreadsheet import makespreadsheet, makeprogramspreadsheet, default_datastart, default_dataend
-except Exception as E: _failed.append('makespreadsheet: %s' % E.__repr__())
+except Exception as E: _failed.append('makespreadsheet: %s' % repr(E))
 
 # Load a completed a spreadsheet
 from .loadspreadsheet import loadspreadsheet, loadprogramspreadsheet
 
 # Define and run the model
-from .model import model, runmodel
+from .model import model
 
 # Define the programs and cost functions
 from .programs import Program, Programset
@@ -154,11 +154,11 @@ from .scenarios import Parscen, Budgetscen, Coveragescen, Progscen, runscenarios
 import scenarios as _scenarios; del scenarios
 
 # Optimization and ICER analyses
-from .optimization import Optim, defaultobjectives, defaultconstraints, optimize, multioptimize, outcomecalc, icers
+from .optimization import Optim, defaultobjectives, defaultconstraints, defaulttvsettings, optimize, multioptimize, tvoptimize, outcomecalc, icers, tvfunction
 import optimization as _optimization; del optimization
 
 # Plotting functions
-from .plotting import getplotselections, makeplots, plotepi, plotcascade, plotbudget, plotcoverage, plotallocations, plotcostcov, plotbycd4, ploticers, saveplots, reanimateplots, sanitizeresults, commaticks, SIticks
+from .plotting import getplotselections, makeplots, plotepi, plotcascade, plotbudget, plottvbudget, plotcoverage, plotallocations, plotcostcov, plotbycd4, ploticers, saveplots, reanimateplots, sanitizeresults
 import plotting as _plotting; del plotting
 
 #####################################################################################################################
@@ -195,12 +195,12 @@ import defaults as _defaults; del defaults
 try: 
     from .gui import plotresults, pygui, plotpeople, plotpars, manualfit, showplots, loadplot, geogui
     import gui as _gui; del gui
-except Exception as E: _failed.append('gui: %s' % E.__repr__())
+except Exception as E: _failed.append('gui: %s' % repr(E))
 
 try: 
     from .webserver import browser
     import webserver as _webserver; del webserver
-except Exception as E: _failed.append('webserver: %s' % E.__repr__())
+except Exception as E: _failed.append('webserver: %s' % repr(E))
 
 
 if len(_failed): print('The following import errors were encountered:\n%s' % _failed)

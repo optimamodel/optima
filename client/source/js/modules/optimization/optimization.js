@@ -529,6 +529,7 @@ define(['angular', 'ui.router'], function (angular) {
       var progset_id = newOptimization.progset_id;
       var defaultOptimization = deepCopyJson($scope.defaultOptimizationsByProgsetId[progset_id]);
       newOptimization.objectives = defaultOptimization.objectives[which];
+      newOptimization.tvsettings = defaultOptimization.tvsettings; // Warning, would be better to generate this on the backend rather than manually constructing it here!!
 
       openEditOptimizationModal(newOptimization);
     };

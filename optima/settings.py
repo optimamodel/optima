@@ -13,7 +13,7 @@ How verbose works:
 Version: 2016oct05
 """
 
-from numpy import arange, array, concatenate as cat, linspace, shape
+from numpy import arange, array, concatenate as cat, shape
 from optima import OptimaException, defaultrepr, printv, dcp, isnumber, inclusiverange
 
 
@@ -91,7 +91,8 @@ class Settings(object):
         self.safetymargin = 0.5 # Do not move more than this fraction of people on a single timestep
         self.eps = 1e-3 # Must be small enough to be applied to prevalence, which might be ~0.1% or less
         self.infmoney = 1e10 # A lot of money
-        self.forcepopsize = True # Whether or not to force the population size to match the parameters
+        self.forcepopsize = False # Whether or not to force the population size to match the parameters
+        self.treatbycd4 = True # Whether or not to preferentially put people on treatment from lower CD4 counts
         printv('Initialized settings', 4, self.verbose) # And show how verbose is used
     
     

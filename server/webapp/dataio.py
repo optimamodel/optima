@@ -802,13 +802,15 @@ def load_zip_of_prj_files(project_ids):
 
     prjs = [load_project_record(id).as_file(dirname) for id in project_ids]
 
-    zip_fname = '{}.zip'.format(uuid4())
+    datestr = op.today().strftime('%Y%b%d_%H%M%S').encode('ascii', 'ignore') # Today's date
+    zip_fname = 'Optima_projects_%s.zip' % datestr
     server_zip_fname = os.path.join(dirname, zip_fname)
     with ZipFile(server_zip_fname, 'w') as zipfile:
         for prj in prjs:
             zipfile.write(os.path.join(dirname, prj), 'portfolio/{}'.format(prj))
 
-    return dirname, zip_fname
+    full_filename = os.path.join(dirname, zip_fname)
+    return full_filename
 
 
 def resolve_project(project):
@@ -1165,13 +1167,13 @@ def create_parset(project_id, new_parset_name):
     return load_parset_summaries(project_id)
 
 
-def refresh_parset(project_id, parset_id):
+def refresh_parset(project_id, parset_id, resetprevalence):
     ''' Refresh parset from data '''
     
     def update_project_fn(project):
         parset = parse.get_parset_from_project(project, parset_id)
         parset_name = parset.name
-        project.refreshparset(name=parset_name)
+        project.refreshparset(name=parset_name, resetprevalence=resetprevalence)
 
     update_project_with_fn(project_id, update_project_fn)
     delete_result_by_parset_id(project_id, parset_id)
@@ -1251,6 +1253,8 @@ def load_parset_graphs(project_id, parset_id, calculation_type, which=None, para
     if parameters is not None:
         print(">> load_parset_graphs updating parset '%s'" % parset.name)
         parset.modified = op.today()
+        parset.start    = startYear
+        parset.end      = endYear
         parse.set_parameters_on_parset(parameters, parset)
         delete_result_by_parset_id(project_id, parset_id)
         save_project(project)
