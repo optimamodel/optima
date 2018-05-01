@@ -1078,7 +1078,7 @@ def makepars(data=None, verbose=2, die=True, fixprops=None):
                 thisprior = {'dist':'uniform', 'pars':(low, high)} if fromdata else None
                 pars[parname] = Constant(y=best, prior=thisprior, **rawpar)
             
-            elif partype=='meta': # Force-of-infection and inhomogeneity and transitions
+            elif partype=='meta': # Force-of-infection, inhomogeneity, relative HIV-related death rates, and transitions
                 pars[parname] = Metapar(y=odict([(key,None) for key in keys]), **rawpar)
                 
             elif partype=='yearpar': # Years to fix proportions of people at different cascade stages
@@ -1132,6 +1132,7 @@ def makepars(data=None, verbose=2, die=True, fixprops=None):
     pars['transnorm'].prior.pars *= pars['transnorm'].y # Scale default range
     for key in popkeys: # Define values for each population
         pars['force'].y[key] = 1.0
+        pars['hivdeath'].y[key] = 1.0
         pars['inhomo'].y[key] = 0.0
         pars['inhomo'].prior[key].pars = array([0.0, 0.3]) # Arbitrary
     
