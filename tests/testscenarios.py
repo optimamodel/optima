@@ -76,31 +76,31 @@ if 'standardscen' in tests:
              parsetname='default',
              pars=[{
                  'name': 'propcirc',
-                 'for': malelist,
+                 'for': P.pars()['propcirc'].keys(),
                  'startyear': 2015,
                  'endyear': 2020,
                  'endval': 0.,
                  }]),
 
-#        Parscen(name='Increase numpmtct',
-#             parsetname='default',
-#             pars=[{
-#                 'name': 'numpmtct',
-#                 'for': 'tot',
-#                 'startyear': 2015.,
-#                 'endyear': 2020,
-#                 'endval': 0.9,
-#                 }]),
-#
-#        Parscen(name='Full casual condom use',
-#             parsetname='default',
-#             pars=[{
-#                 'name': 'condcas',
-#                 'for': caspships,
-#                 'startyear': 2005,
-#                 'endyear': 2015,
-#                 'endval': 1.,
-#                 }]),
+        Parscen(name='Increase numpmtct',
+             parsetname='default',
+             pars=[{
+                 'name': 'numpmtct',
+                 'for': 'tot',
+                 'startyear': 2015.,
+                 'endyear': 2020,
+                 'endval': 0.9,
+                 }]),
+
+        Parscen(name='Full casual condom use',
+             parsetname='default',
+             pars=[{
+                 'name': 'condcas',
+                 'for': caspships,
+                 'startyear': 2005,
+                 'endyear': 2015,
+                 'endval': 1.,
+                 }]),
 
          Parscen(name='More casual acts',
               parsetname='default',
@@ -122,34 +122,34 @@ if 'standardscen' in tests:
                   'endval': 1.,
                   }]),
 
-#         Parscen(name='Increased STI prevalence in FSW',
-#              parsetname='default',
-#              pars=[{
-#                  'name': 'stiprev',
-#                  'for': 0,
-#                  'startyear': 2005.,
-#                  'endyear': 2015,
-#                  'endval': 0.8,
-#                  }]),
-#
-#         Parscen(name='Get 50K people on OST',
-#              parsetname='default',
-#              pars=[{
-#                  'name': 'numost',
-#                  'for': 0,
-#                  'startyear': 2005.,
-#                  'endyear': 2015,
-#                  'endval': 50000,
-#                  }]),
-#
-#         Budgetscen(name='Keep current investment in condom program',
-#              parsetname='default',
-#              progsetname='default',
-#              t=2016,
-#              budget={'Condoms': 1e7,
-#                           'FSW programs': 1e6,
-#                           'HTC':2e7,
-#                           'ART':1e6}),
+         Parscen(name='Increased STI prevalence in FSW',
+              parsetname='default',
+              pars=[{
+                  'name': 'stiprev',
+                  'for': 0,
+                  'startyear': 2005.,
+                  'endyear': 2015,
+                  'endval': 0.8,
+                  }]),
+
+         Parscen(name='Get 50K people on OST',
+              parsetname='default',
+              pars=[{
+                  'name': 'numost',
+                  'for': 0,
+                  'startyear': 2005.,
+                  'endyear': 2015,
+                  'endval': 50000,
+                  }]),
+
+         Budgetscen(name='Keep current investment in condom program',
+              parsetname='default',
+              progsetname='default',
+              t=2016,
+              budget={'Condoms': 1e7,
+                           'FSW programs': 1e6,
+                           'HTC':2e7,
+                           'ART':1e6}),
 
          Budgetscen(name='Double investment in condom program',
               parsetname='default',
@@ -178,12 +178,12 @@ if 'standardscen' in tests:
                            'HTC':array([2e7,3e7,4e7]),
                            'ART':array([1e6,1.5e6,2e6])}),
 
-#         Budgetscen(name='Test some progs only',
-#              parsetname='default',
-#              progsetname='default',
-#              t=2016,
-#              budget={'Condoms': 1e7,
-#                           'ART':1e6})
+         Budgetscen(name='Test some progs only',
+              parsetname='default',
+              progsetname='default',
+              t=2016,
+              budget={'Condoms': 1e7,
+                           'ART':1e6})
 
         ]
     
