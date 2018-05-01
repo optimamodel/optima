@@ -716,17 +716,10 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
         # Calculate actual births, MTCT, and PMTCT
         for p1,p2,birthrates,alleligbirthrate in birthslist:
             thisbirthrate = birthrates[t]
-<<<<<<< HEAD
             popbirths      = thisbirthrate * people[:, p1, t].sum()
             mtctundx       = thisbirthrate * people[undx, p1, t].sum() * effmtct[t] # Births to undiagnosed mothers
             mtcttx         = thisbirthrate * people[alltx, p1, t].sum()  * pmtcteff[t] # Births to mothers on treatment
             thiseligbirths = thisbirthrate * people[alldx, p1, t].sum() # Births to diagnosed mothers eligible for PMTCT
-=======
-            popbirths      = thisbirthrate * fsums[p1]['all']
-            mtctundx       = thisbirthrate * fsums[p1]['undx'] * effmtct[t] # Births to undiagnosed mothers
-            mtcttx         = thisbirthrate * fsums[p1]['alltx'] * pmtcteff[t] # Births to mothers on treatment
-            thiseligbirths = thisbirthrate * fsums[p1]['alldx'] # Births to diagnosed mothers eligible for PMTCT
->>>>>>> develop
 
             mtctdx = (thiseligbirths * (1-calcproppmtct)) * effmtct[t] # MTCT from those diagnosed not receiving PMTCT
             mtctpmtct = (thiseligbirths * calcproppmtct) * pmtcteff[t] # MTCT from those receiving PMTCT
@@ -740,13 +733,9 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
             raw_mtct[p2, t] += thispopmtct/dt
             raw_mtctfrom[p1, t] += thispopmtct/dt
             raw_births[p2, t] += popbirths/dt
-<<<<<<< HEAD
             raw_birthsto[p1, t] += thisbirthrate*people[:, p1, t].sum()/dt
             raw_hivbirths[p1, t] += thisbirthrate*people[allplhiv, p1, t].sum()/dt
             raw_hivdxbirths[p1, t] += thisbirthrate*people[alldx, p1, t].sum()/dt
-=======
-            raw_hivbirths[p1, t] += thisbirthrate * fsums[p1]['allplhiv'] / dt
->>>>>>> develop
             
         raw_inci[:,t] += raw_mtct[:,t] # Update infections acquired based on PMTCT calculation
         raw_incibypop[:,t] += raw_mtctfrom[:,t] # Update infections caused based on PMTCT calculation
