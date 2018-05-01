@@ -756,11 +756,11 @@ class Multiresultset(Resultset):
             if len(rset.budget):       # If it has a budget, overwrite coverage information by calculating from budget
                 self.budgets[key]      = rset.budget
                 self.budgetyears[key]  = rset.budgetyears
-                self.coverages[key]    = progset.getprogcoverage(budget=rset.budget, t=rset.budgetyears, parset=parset, results=rset, proportion=True) # Set proportion TRUE here, because coverage will be outputted as PERCENT covered
+                self.coverages[key]    = progset.getprogcoverage(budget=rset.budget, t=rset.budgetyears, parset=parset, results=rset) 
             elif len(rset.coverage):   # If no budget, compute budget from coverage
                 self.coverages[key]    = rset.coverage
                 self.budgetyears[key]  = rset.budgetyears
-                self.budgets[key]      = progset.getprogbudget(coverage=rset.coverage, t=rset.budgetyears, parset=parset, results=rset, proportion=False) # Set proportion FALSE here, because coverage will be inputted as NUMBER covered    
+                self.budgets[key]      = progset.getprogbudget(coverage=rset.coverage, t=rset.budgetyears, parset=parset, results=rset) 
             
         # Handle any keys that haven't been handled already, including the barber's hair
         missingattrs = odict() # Create an odict for storing the attributes to be populated
@@ -772,12 +772,13 @@ class Multiresultset(Resultset):
                         missingattrs[rsetattr] = [i] # It doesn't exist: create a list of indices to loop over
                     else:
                         missingattrs[rsetattr].append(i) # It exists already: append this index
-        for attr,indlist in missingattrs.items(): # Loop over all of the attributes identified as missing
-            setattr(self, attr, odict()) # Create a new odict -- e.g. self.rawoutcomes = odict()
-            for ind in indlist: # Loop over each of the stored indices
-                key = self.keys[ind] # Get the key for this index
-                thisattr = getattr(resultsetlist[ind], attr) # e.g. resultsetlist[0].rawoutcomes
-                getattr(self, attr)[key] = thisattr # e.g. self.rawoutcomes['init'] = resultsetlist[0].rawoutcomes
+        for attr,indlist in missingattrs.iteritems(): # Loop over all of the attributes identified as missing
+            if attr not in ['budget','coverage']: # Don't add the single budgets and coverages (WARNING, COULD DO THIS BETTER)
+                setattr(self, attr, odict()) # Create a new odict -- e.g. self.rawoutcomes = odict()
+                for ind in indlist: # Loop over each of the stored indices
+                    key = self.keys[ind] # Get the key for this index
+                    thisattr = getattr(resultsetlist[ind], attr) # e.g. resultsetlist[0].rawoutcomes
+                    getattr(self, attr)[key] = thisattr # e.g. self.rawoutcomes['init'] = resultsetlist[0].rawoutcomes
         
         
     def __repr__(self):
