@@ -432,7 +432,7 @@ if 'VMMC' in tests:
              pars=[{'endval': 0.2,
                 'endyear': 2020,
                 'name': 'propcirc',
-                'for': femalelist,
+                'for': malelist,
                 'startval': .85,
                 'startyear': 2015.2}]),
         

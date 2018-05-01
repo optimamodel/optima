@@ -414,10 +414,10 @@ define(['angular', 'underscore'], function (angular, _) {
       modalService.choice(
         refreshparsetandprev,
         refreshparsetwithoutprev,
-        'Yes, reset initial prevalences',
-        'No, keep initial prevalences',
-        'Do you want to reset initial prevalences to match uploaded data?',
-        'Refresh parameter set'
+        'Use the values from the uploaded databook',
+        'Use the values entered in the calibration',
+        'What values would you like to use to for initial HIV prevalence?',
+        'Reload data from databook to this parameter set'
       );
     };
 
