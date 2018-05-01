@@ -102,8 +102,8 @@ class Resultset(object):
         self.main['numhivdxbirths'] = Result('Pregancies to diagnosed HIV+ women')
 
 #        self.main['numpmtct']       = Result('HIV+ women receiving PMTCT')
-        self.main['adultprev']     = Result('Adult HIV prevalence (%)', ispercentage=True)
-        self.main['childprev']     = Result('Child HIV prevalence (%)', ispercentage=True)
+#        self.other['adultprev']     = Result('Adult HIV prevalence (%)', ispercentage=True)
+#        self.other['childprev']     = Result('Child HIV prevalence (%)', ispercentage=True)
 
 #        self.main['numbirths']      = Result('Total births')
 #        self.main['prev']           = Result('HIV prevalence (%)',       ispercentage=True, defaultplot='population')
@@ -436,35 +436,35 @@ class Resultset(object):
 #        self.main['propplhivsupp'].tot = process(allpeople[:,svl,:,:][:,:,:,indices].sum(axis=(1,2))/maximum(allpeople[:,allplhiv,:,:][:,:,:,indices].sum(axis=(1,2)),eps), percent=True) # Axis 1 is populations
 
         
-        # Calculate DALYs
-        
-        ## Years of life lost
-        yllpops = alldeaths.sum(axis=1) # Total deaths per population, sum over health states
-        for pk,popkey in enumerate(self.popkeys): # Loop over each population
-            meanage = self.pars['age'][pk].mean()
-            potentialyearslost = max(0,lifeexpectancy-meanage) # Don't let this go negative!
-            if discountrate>0 and discountrate<1: # Make sure it has reasonable bounds
-                denominator = log(1-discountrate) # Start calculating the integral of (1-discountrate)**potentialyearslost
-                numerator = (1-discountrate)**potentialyearslost - 1 # Minus 1 for t=0
-                discountedyearslost = numerator/denominator # See https://en.wikipedia.org/wiki/Lists_of_integrals#Exponential_functions
-            elif discountrate==0: # Nothing to discount
-                discountedyearslost = potentialyearslost
-            else:
-                raise OptimaException('Invalid discount rate (%s)' % discountrate)
-            yllpops[:,pk,:] *= discountedyearslost # Multiply by the number of potential years of life lost
-        ylltot = yllpops.sum(axis=1) # Sum over populations
-        
-        ## Years lived with disability
-        disutiltx = self.pars['disutiltx'].y
-        disutils = [self.pars['disutil'+key].y for key in self.settings.hivstates]
-        yldpops = allpeople[:,alltx,:,:].sum(axis=1)     * disutiltx
-        yldtot  = allpeople[:,alltx,:,:].sum(axis=(1,2)) * disutiltx
-        notonart = set(self.settings.notonart)
-        for h,key in enumerate(self.settings.hivstates): # Loop over health states
-            hivstateindices = set(getattr(self.settings,key))
-            healthstates = array(list(hivstateindices & notonart)) # Find the intersection of this HIV state and not on ART states
-            dalypops += allpeople[:,healthstates,:,:].sum(axis=1) * disutils[h]
-            dalytot += allpeople[:,healthstates,:,:].sum(axis=(1,2)) * disutils[h]
+#        # Calculate DALYs
+#        
+#        ## Years of life lost
+#        yllpops = alldeaths.sum(axis=1) # Total deaths per population, sum over health states
+#        for pk,popkey in enumerate(self.popkeys): # Loop over each population
+#            meanage = self.pars['age'][pk].mean()
+#            potentialyearslost = max(0,lifeexpectancy-meanage) # Don't let this go negative!
+#            if discountrate>0 and discountrate<1: # Make sure it has reasonable bounds
+#                denominator = log(1-discountrate) # Start calculating the integral of (1-discountrate)**potentialyearslost
+#                numerator = (1-discountrate)**potentialyearslost - 1 # Minus 1 for t=0
+#                discountedyearslost = numerator/denominator # See https://en.wikipedia.org/wiki/Lists_of_integrals#Exponential_functions
+#            elif discountrate==0: # Nothing to discount
+#                discountedyearslost = potentialyearslost
+#            else:
+#                raise OptimaException('Invalid discount rate (%s)' % discountrate)
+#            yllpops[:,pk,:] *= discountedyearslost # Multiply by the number of potential years of life lost
+#        ylltot = yllpops.sum(axis=1) # Sum over populations
+#        
+#        ## Years lived with disability
+#        disutiltx = self.pars['disutiltx'].y
+#        disutils = [self.pars['disutil'+key].y for key in self.settings.hivstates]
+#        yldpops = allpeople[:,alltx,:,:].sum(axis=1)     * disutiltx
+#        yldtot  = allpeople[:,alltx,:,:].sum(axis=(1,2)) * disutiltx
+#        notonart = set(self.settings.notonart)
+#        for h,key in enumerate(self.settings.hivstates): # Loop over health states
+#            hivstateindices = set(getattr(self.settings,key))
+#            healthstates = array(list(hivstateindices & notonart)) # Find the intersection of this HIV state and not on ART states
+#            dalypops += allpeople[:,healthstates,:,:].sum(axis=1) * disutils[h]
+#            dalytot += allpeople[:,healthstates,:,:].sum(axis=(1,2)) * disutils[h]
 #        self.main['numdaly'].pops = process(dalypops[:,:,indices])
 #        self.main['numdaly'].tot  = process(dalytot[:,indices])
         
@@ -473,13 +473,13 @@ class Resultset(object):
 #        upperagelims = self.pars['age'][:,1] # All populations, but upper range
 #        adultpops = findinds(upperagelims>=15)
 #        childpops = findinds(upperagelims<15)
-#        if len(adultpops): self.other['adultprev'].tot = process(allpeople[:,allplhiv,:,:][:,:,adultpops,:][:,:,:,indices].sum(axis=(1,2)) / allpeople[:,:,adultpops,:][:,:,:,indices].sum(axis=(1,2)), percent=True) # Axis 2 is populations
-#        else:              self.other['adultprev'].tot = self.main['prev'].tot # In case it's not available, use population average
-#        if len(childpops): self.other['childprev'].tot = process(allpeople[:,allplhiv,:,:][:,:,childpops,:][:,:,:,indices].sum(axis=(1,2)) / allpeople[:,:,childpops,:][:,:,:,indices].sum(axis=(1,2)), percent=True) # Axis 2 is populations
-#        else:              self.other['childprev'].tot = self.main['prev'].tot
-#        self.other['adultprev'].pops = self.main['prev'].pops # This is silly, but avoids errors from a lack of consistency of these results not having pop attributes
-#        self.other['childprev'].pops = self.main['prev'].pops
-#        
+#        if len(adultpops): self.main['adultprev'].tot = process(allpeople[:,allplhiv,:,:][:,:,adultpops,:][:,:,:,indices].sum(axis=(1,2)) / allpeople[:,:,adultpops,:][:,:,:,indices].sum(axis=(1,2)), percent=True) # Axis 2 is populations
+#        else:              self.main['adultprev'].tot = self.main['prev'].tot # In case it's not available, use population average
+#        if len(childpops): self.main['childprev'].tot = process(allpeople[:,allplhiv,:,:][:,:,childpops,:][:,:,:,indices].sum(axis=(1,2)) / allpeople[:,:,childpops,:][:,:,:,indices].sum(axis=(1,2)), percent=True) # Axis 2 is populations
+#        else:              self.main['childprev'].tot = self.main['prev'].tot
+#        self.main['adultprev'].pops = self.main['prev'].pops # This is silly, but avoids errors from a lack of consistency of these results not having pop attributes
+#        self.main['childprev'].pops = self.main['prev'].pops
+        
 #        # Add in each health state
 #        for healthkey in self.settings.healthstates: # Health keys: ['susreg', 'progcirc', 'undx', 'dx', 'care', 'lost', 'usvl', 'svl']
 #            healthinds = getattr(self.settings, healthkey)
@@ -512,11 +512,11 @@ class Resultset(object):
             for pk,popkey in enumerate(popkeys):
                 outputstr += '\n'
                 try:
-                    if bypop and popkey!='tot': data = self.main[key].pops[ind][pk-1,:] # WARNING, assumes 'tot' is always the first entry
-                    else:                       data = self.main[key].tot[ind][:]
+                    if bypop and popkey!='tot': data = self.main[mainkey].pops[ind][pk-1,:] # WARNING, assumes 'tot' is always the first entry
+                    else:                       data = self.main[mainkey].tot[ind][:]
                 except:
                     import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
-                outputstr += self.main[key].name+sep+popkey+sep
+                outputstr += self.main[mainkey].name+sep+popkey+sep
                 for t in range(npts):
                     if self.main[mainkey].ispercentage: outputstr += ('%s'+sep) % sigfig(data[t], sigfigs=sigfigs)
                     else:                           outputstr += ('%i'+sep) % data[t]
