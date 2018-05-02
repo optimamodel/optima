@@ -1,7 +1,6 @@
 from utils import isnumber, checktype, promotetoarray
 from numpy import linspace, array, diff, argsort
 from copy import deepcopy as dcp
-from pylab import figure, plot, show
 pchipeps = 1e-8
 
 def pchip(x=None, y=None, xnew=None, deriv = False, method=None, smooth=None, smoothness=None, monotonic=True):
@@ -122,6 +121,8 @@ def pchip_eval(x, y, m, xvec, deriv = False):
 
 def plotpchip(x, y, deriv=False, returnplot=False, initbudget=None, optbudget=None, subsample=50):
 
+    from pylab import figure, plot, show
+    
     xorder = argsort(x)
     x = dcp(array(x)[xorder])
     y = dcp(array(y)[xorder])
