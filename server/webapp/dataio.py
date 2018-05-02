@@ -379,7 +379,7 @@ def get_optimademo_projects():
             elif proj['name'].find('regional')>=0: regionalprojectlist.append(proj) # It's a regional project
             else:                                  nationalprojectlist.append(proj)
         projects = demoprojectlist + regionalprojectlist + nationalprojectlist # Combine project lists into one sorted list
-    except Exception as E: # But just create the demo projects if that fails
+    except Exception as E: # But just skip creation if that fails
         print('WARNING, could not load demo projects: %s' % repr(E))
         projects = []
     output = {'projects': projects}
