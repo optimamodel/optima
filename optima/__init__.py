@@ -158,8 +158,10 @@ from .optimization import Optim, defaultobjectives, defaultconstraints, defaultt
 import optimization as _optimization; del optimization
 
 # Plotting functions
-from .plotting import getplotselections, makeplots, plotepi, plotcascade, plotbudget, plottvbudget, plotcoverage, plotallocations, plotcostcov, plotbycd4, ploticers, saveplots, reanimateplots, sanitizeresults
-import plotting as _plotting; del plotting
+try:
+    from .plotting import getplotselections, makeplots, plotepi, plotcascade, plotbudget, plottvbudget, plotcoverage, plotallocations, plotcostcov, plotbycd4, ploticers, saveplots, reanimateplots, sanitizeresults
+    import plotting as _plotting; del plotting
+except Exception as E: _failed.append('plotting: %s' % repr(E))
 
 #####################################################################################################################
 ### Load high-level modules that depend on everything else
@@ -203,5 +205,5 @@ try:
 except Exception as E: _failed.append('webserver: %s' % repr(E))
 
 
-if len(_failed): print('The following import errors were encountered:\n%s' % _failed)
+if len(_failed): print('The following non-critical import errors were encountered:\n%s' % _failed)
 else: del _failed # If it's empty, don't bother keeping it
