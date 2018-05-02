@@ -382,9 +382,6 @@ def get_optimademo_projects():
     except Exception as E: # But just create the demo projects if that fails
         print('WARNING, could not load demo projects: %s' % repr(E))
         projects = []
-        for key in ['concentrated','generalized']:
-            project = op.demo(which=key, doplot=False)
-            projects.append(project)
     output = {'projects': projects}
     return output
 
