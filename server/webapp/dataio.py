@@ -366,18 +366,22 @@ def get_optimademo_projects():
     
     Note that these should be stored in the analyses repo under the name optimademo.    
     '''
-    user_id = get_optimademo_user()
-    query = ProjectDb.query.filter_by(user_id=user_id)
-    projectlist = map(load_project_summary_from_project_record, query.all())
-    sortedprojectlist = sorted(projectlist, key=lambda proj: proj['name']) # Sorts by project name
-    demoprojectlist = []
-    nationalprojectlist = []
-    regionalprojectlist = []
-    for proj in sortedprojectlist:
-        if   proj['name'].find('(demo)')>=0:   demoprojectlist.append(proj) # It's a demo project
-        elif proj['name'].find('regional')>=0: regionalprojectlist.append(proj) # It's a regional project
-        else:                                  nationalprojectlist.append(proj)
-    projects = demoprojectlist + regionalprojectlist + nationalprojectlist # Combine project lists into one sorted list
+    try: # Try to load the demo projects...
+        user_id = get_optimademo_user()
+        query = ProjectDb.query.filter_by(user_id=user_id)
+        projectlist = map(load_project_summary_from_project_record, query.all())
+        sortedprojectlist = sorted(projectlist, key=lambda proj: proj['name']) # Sorts by project name
+        demoprojectlist = []
+        nationalprojectlist = []
+        regionalprojectlist = []
+        for proj in sortedprojectlist:
+            if   proj['name'].find('(demo)')>=0:   demoprojectlist.append(proj) # It's a demo project
+            elif proj['name'].find('regional')>=0: regionalprojectlist.append(proj) # It's a regional project
+            else:                                  nationalprojectlist.append(proj)
+        projects = demoprojectlist + regionalprojectlist + nationalprojectlist # Combine project lists into one sorted list
+    except Exception as E: # But just skip creation if that fails
+        print('WARNING, could not load demo projects: %s' % repr(E))
+        projects = []
     output = {'projects': projects}
     return output
 
