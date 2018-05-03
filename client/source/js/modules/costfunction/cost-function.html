@@ -127,7 +127,6 @@
                   class="section table table-bordered">
                 <tr>
                   <td>Year</td>
-                  <td>Estimated<br>population</td>
                   <td>Saturation %</td>
                   <td>Unit cost</td>
                   <td></td>
@@ -139,11 +138,6 @@
                         ng-change="vm.setEstPopulationForCcopar()"
                         ng-options="year for year in vm.state.yearSelector"
                         class="txbox"/>
-                  </td>
-                  <td valign="center">
-                    <div class="txbox">
-                      {{row[1]}}
-                    </div>
                   </td>
                   <td>
                     <ng-form name="saturationForm">
