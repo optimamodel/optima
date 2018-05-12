@@ -244,18 +244,24 @@ class Resultset(object):
             if doround and not percent: processed = processed.round() # Optionally round
             return processed
         
-        def processdata(rawdata, uncertainty=False):
+        def processdata(rawdata, uncertainty=False, bypop=False, interrupt=False):
             ''' Little method to turn the data into a form suitable for plotting -- basically, replace assumptions with nans '''
+            
             if uncertainty: 
-                best = dcp(rawdata[0])
-                low = dcp(rawdata[1])
-                high = dcp(rawdata[2])
+                if bypop:
+                    best = dcp(rawdata[0])
+                    low = dcp(rawdata[1])
+                    high = dcp(rawdata[2])
+                else:
+                    best = dcp([rawdata[1]])
+                    low = dcp([rawdata[0]])
+                    high = dcp([rawdata[2]])
             else:
                 best = dcp(rawdata)
                 low = dcp(rawdata)
                 high = dcp(rawdata)
             for thisdata in [best, low, high]: # Combine in loop, but actual operate on these -- thanks, pass-by-reference!
-                for p in range(len(thisdata)):
+                for p in range(len(array(thisdata))):
                     if len(array(thisdata[p]))!=len(self.datayears):
                         thisdata[p] = nan+zeros(len(self.datayears)) # Replace with NaN if an assumption
             processed = array([best, low, high]) # For plotting uncertainties
@@ -264,7 +270,7 @@ class Resultset(object):
         def processtotalpopsizedata(self, rawdata):
             ''' Little method to calculate total population size from data using nearest neighbor interpolation '''
             nyears = len(self.datayears) # Count how many years there are
-            preprocessed = processdata(rawdata, uncertainty=True) # Preprocess raw population size data by population
+            preprocessed = processdata(rawdata, uncertainty=True, bypop=True) # Preprocess raw population size data by population
             processed = zeros((3,1,nyears)) # Zero out # Initialize
             for blh in range(3): # Iterate over best, high, low
                 validinds = [] # Store valid indices in any population
@@ -307,8 +313,8 @@ class Resultset(object):
         self.main['prev'].pops = process(allpeople[:,allplhiv,:,:][:,:,:,indices].sum(axis=1) / (eps+allpeople[:,:,:,indices].sum(axis=1)), percent=True) # Axis 1 is health state
         self.main['prev'].tot  = process(allpeople[:,allplhiv,:,:][:,:,:,indices].sum(axis=(1,2)) / (eps+allpeople[:,:,:,indices].sum(axis=(1,2))), percent=True) # Axis 2 is populations
         if data is not None: 
-            self.main['prev'].datapops = processdata(data['hivprev'], uncertainty=True)
-            self.main['prev'].datatot  = processdata(data['optprev'])
+            self.main['prev'].datapops = processdata(data['hivprev'], uncertainty=True, bypop=True)
+            self.main['prev'].datatot  = processdata(data['optprev'], uncertainty=True)
         
         self.main['force'].pops = process(allinci[:,:,indices] / (eps+allpeople[:,allsus,:,:][:,:,:,indices].sum(axis=1)), percent=True) # Axis 1 is health state
         self.main['force'].tot  = process(allinci[:,:,indices].sum(axis=1) / (eps+allpeople[:,allsus,:,:][:,:,:,indices].sum(axis=(1,2))), percent=True) # Axis 2 is populations
@@ -316,13 +322,13 @@ class Resultset(object):
         self.main['numinci'].pops = process(allinci[:,:,indices])
         self.main['numinci'].tot  = process(allinci[:,:,indices].sum(axis=1)) # Axis 1 is populations
         if data is not None: 
-            self.main['numinci'].datatot = processdata(data['optnuminfect'])
+            self.main['numinci'].datatot = processdata(data['optnuminfect'], uncertainty=True, interrupt=True)
             self.main['numinci'].estimate = True # It's not real data, just an estimate
         
         self.main['numincibypop'].pops = process(allincibypop[:,:,indices])
         self.main['numincibypop'].tot  = process(allincibypop[:,:,indices].sum(axis=1)) # Axis 1 is populations
         if data is not None: 
-            self.main['numincibypop'].datatot = processdata(data['optnuminfect'])
+            self.main['numincibypop'].datatot = processdata(data['optnuminfect'], uncertainty=True)
             self.main['numincibypop'].estimate = True # It's not real data, just an estimate
         
         self.main['nummtct'].pops = process(allmtct[:,:,indices])
@@ -337,19 +343,19 @@ class Resultset(object):
         self.main['numnewdiag'].pops = process(alldiag[:,:,indices])
         self.main['numnewdiag'].tot  = process(alldiag[:,:,indices].sum(axis=1)) # Axis 1 is populations
         if data is not None: 
-            self.main['numnewdiag'].datatot = processdata(data['optnumdiag'])
+            self.main['numnewdiag'].datatot = processdata(data['optnumdiag'], uncertainty=True)
             self.main['numnewdiag'].estimate = False # It's real data, not just an estimate
         
         self.main['numdeath'].pops = process(alldeaths[:,:,:,indices].sum(axis=1))
         self.main['numdeath'].tot  = process(alldeaths[:,:,:,indices].sum(axis=(1,2))) # Axis 1 is populations
         if data is not None: 
-            self.main['numdeath'].datatot = processdata(data['optdeath'])
+            self.main['numdeath'].datatot = processdata(data['optdeath'], uncertainty=True)
             self.main['numdeath'].estimate = True # It's not real data, just an estimate
         
         self.main['numplhiv'].pops = process(allpeople[:,allplhiv,:,:][:,:,:,indices].sum(axis=1)) # Axis 1 is health state
         self.main['numplhiv'].tot  = process(allpeople[:,allplhiv,:,:][:,:,:,indices].sum(axis=(1,2))) # Axis 2 is populations
         if data is not None: 
-            self.main['numplhiv'].datatot = processdata(data['optplhiv'])
+            self.main['numplhiv'].datatot = processdata(data['optplhiv'], uncertainty=True)
             self.main['numplhiv'].estimate = True # It's not real data, just an estimate
         
         self.main['numaids'].pops = process(allpeople[:,allaids,:,:][:,:,:,indices].sum(axis=1)) # Axis 1 is health state
@@ -360,7 +366,7 @@ class Resultset(object):
         
         self.main['propdiag'].pops = process(allpeople[:,alldx,:,:][:,:,:,indices].sum(axis=1)/maximum(allpeople[:,allplhiv,:,:][:,:,:,indices].sum(axis=1),eps), percent=True) 
         self.main['propdiag'].tot  = process(allpeople[:,alldx,:,:][:,:,:,indices].sum(axis=(1,2))/maximum(allpeople[:,allplhiv,:,:][:,:,:,indices].sum(axis=(1,2)),eps), percent=True) # Axis 1 is populations
-        if data is not None: self.main['propdiag'].datatot = processdata(data['optpropdx'])
+        if data is not None: self.main['propdiag'].datatot = processdata(data['optpropdx'], uncertainty=True)
         
         self.main['numevercare'].pops = process(allpeople[:,allevercare,:,:][:,:,:,indices].sum(axis=1)) #  Note that allpeople[:,txinds,:,indices] produces an error
         self.main['numevercare'].tot  = process(allpeople[:,allevercare,:,:][:,:,:,indices].sum(axis=(1,2))) # Axis 1 is populations
@@ -373,7 +379,7 @@ class Resultset(object):
 
         self.main['propincare'].pops = process(allpeople[:,allcare,:,:][:,:,:,indices].sum(axis=1)/maximum(allpeople[:,alldx,:,:][:,:,:,indices].sum(axis=1),eps), percent=True) 
         self.main['propincare'].tot  = process(allpeople[:,allcare,:,:][:,:,:,indices].sum(axis=(1,2))/maximum(allpeople[:,alldx,:,:][:,:,:,indices].sum(axis=(1,2)),eps), percent=True) # Axis 1 is populations
-        if data is not None: self.main['propincare'].datatot = processdata(data['optpropcare'])
+        if data is not None: self.main['propincare'].datatot = processdata(data['optpropcare'], uncertainty=True)
 
         self.main['numtreat'].pops = process(allpeople[:,alltx,:,:][:,:,:,indices].sum(axis=1)) #  Note that allpeople[:,txinds,:,indices] produces an error
         self.main['numtreat'].tot = process(allpeople[:,alltx,:,:][:,:,:,indices].sum(axis=(1,2))) # Axis 1 is populations
@@ -381,7 +387,7 @@ class Resultset(object):
 
         self.main['proptreat'].pops = process(allpeople[:,alltx,:,:][:,:,:,indices].sum(axis=1)/maximum(allpeople[:,alldx,:,:][:,:,:,indices].sum(axis=1),eps), percent=True) 
         self.main['proptreat'].tot  = process(allpeople[:,alltx,:,:][:,:,:,indices].sum(axis=(1,2))/maximum(allpeople[:,alldx,:,:][:,:,:,indices].sum(axis=(1,2)),eps), percent=True) # Axis 1 is populations
-        if data is not None: self.main['proptreat'].datatot = processdata(data['optproptx'])
+        if data is not None: self.main['proptreat'].datatot = processdata(data['optproptx'], uncertainty=True)
 
         self.main['propplhivtreat'].pops = process(allpeople[:,alltx,:,:][:,:,:,indices].sum(axis=1)/maximum(allpeople[:,allplhiv,:,:][:,:,:,indices].sum(axis=1),eps), percent=True) 
         self.main['propplhivtreat'].tot = process(allpeople[:,alltx,:,:][:,:,:,indices].sum(axis=(1,2))/maximum(allpeople[:,allplhiv,:,:][:,:,:,indices].sum(axis=(1,2)),eps), percent=True) # Axis 1 is populations
@@ -391,7 +397,7 @@ class Resultset(object):
 
         self.main['propsuppressed'].pops = process(allpeople[:,svl,:,:][:,:,:,indices].sum(axis=1)/maximum(allpeople[:,alltx,:,:][:,:,:,indices].sum(axis=1),eps), percent=True) 
         self.main['propsuppressed'].tot = process(allpeople[:,svl,:,:][:,:,:,indices].sum(axis=(1,2))/maximum(allpeople[:,alltx,:,:][:,:,:,indices].sum(axis=(1,2)),eps), percent=True) # Axis 1 is populations
-        if data is not None: self.main['propsuppressed'].datatot = processdata(data['optpropsupp'])
+        if data is not None: self.main['propsuppressed'].datatot = processdata(data['optpropsupp'], uncertainty=True)
 
         self.main['propplhivsupp'].pops = process(allpeople[:,svl,:,:][:,:,:,indices].sum(axis=1)/maximum(allpeople[:,allplhiv,:,:][:,:,:,indices].sum(axis=1),eps), percent=True) 
         self.main['propplhivsupp'].tot = process(allpeople[:,svl,:,:][:,:,:,indices].sum(axis=(1,2))/maximum(allpeople[:,allplhiv,:,:][:,:,:,indices].sum(axis=(1,2)),eps), percent=True) # Axis 1 is populations
@@ -400,7 +406,7 @@ class Resultset(object):
         self.main['popsize'].tot = process(allpeople[:,:,:,indices].sum(axis=(1,2)))
         if data is not None: 
             self.main['popsize'].datatot  = processtotalpopsizedata(self, data['popsize'])
-            self.main['popsize'].datapops = processdata(data['popsize'], uncertainty=True)
+            self.main['popsize'].datapops = processdata(data['popsize'], uncertainty=True, bypop=True)
 
         
         # Calculate DALYs
