@@ -13,11 +13,11 @@ tests = [
 'makespreadsheet',
 #'makeprogramspreadsheet',
 'checkexisting',
-'makespreadsheetwithdata',
+#'makespreadsheetwithdata',
 #'unittests',
 ]
 
-dosave = False
+dosave = True
 
 
 ##############################################################################
