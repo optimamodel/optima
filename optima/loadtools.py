@@ -781,10 +781,19 @@ def addrelhivdeath(project, **kwargs):
     return None
 
 
-def addspectruranges(project, **kwargs):
+def addspectrumranges(project, **kwargs):
     """
     Migration between Optima 2.6.9 and 2.6.10: add ranges for optional data inputs
     """
+    optindicators = ['optpropdx','optpropcare','optproptx','optpropsupp','optproppmtct','optnumtest','optnumdiag','optnuminfect','optprev','optplhiv','optdeath','optnewtreat']
+    for optind in optindicators:
+        if len(project.data[optind])==1:
+            tmpdata = op.dcp(project.data[optind])
+            newdata = []
+            newdata.append([nan]*len(project.data[optind][0])) # No data for high estimate
+            newdata.append(tmpdata[0]) # Previous data for best estimate
+            newdata.append([nan]*len(project.data[optind][0])) # No data for low estimate
+            project.data[optind] = newdata
     return None
 
 #def redoprograms(project, **kwargs):
