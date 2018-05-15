@@ -350,34 +350,42 @@ def verify_admin_request_decorator(api_call):
 ### OPTIMA DEMO PROJECTS
 #############################################################################################
 
-def get_optimademo_user(name='_OptimaDemo'):
+def get_optimademo_user(name='_OptimaDemo', die=False):
     ''' Get the Optima Demo user ID, from its name -- default is '_OptimaDemo' '''
     user = UserDb.query.filter_by(username=name).first()
     if user is None:
-        raise Exception('No Optima demo user found; demo projects not available') # Could quote name, but (minor) security risk
+        errormsg = 'WARNING, no Optima demo user found; demo projects not available' # Could quote name, but (minor) security risk
+        if die: raise Exception(errormsg)
+        else:   print(errormsg)
         return None
     else:
         return user.id
 
 
-def get_optimademo_projects():
+def get_optimademo_projects(die=False):
     '''
     Return the projects associated with the Optima Demo user.
     
     Note that these should be stored in the analyses repo under the name optimademo.    
     '''
-    user_id = get_optimademo_user()
-    query = ProjectDb.query.filter_by(user_id=user_id)
-    projectlist = map(load_project_summary_from_project_record, query.all())
-    sortedprojectlist = sorted(projectlist, key=lambda proj: proj['name']) # Sorts by project name
-    demoprojectlist = []
-    nationalprojectlist = []
-    regionalprojectlist = []
-    for proj in sortedprojectlist:
-        if   proj['name'].find('(demo)')>=0:   demoprojectlist.append(proj) # It's a demo project
-        elif proj['name'].find('regional')>=0: regionalprojectlist.append(proj) # It's a regional project
-        else:                                  nationalprojectlist.append(proj)
-    projects = demoprojectlist + regionalprojectlist + nationalprojectlist # Combine project lists into one sorted list
+    try: # Try to load the demo projects...
+        user_id = get_optimademo_user()
+        query = ProjectDb.query.filter_by(user_id=user_id)
+        projectlist = map(load_project_summary_from_project_record, query.all())
+        sortedprojectlist = sorted(projectlist, key=lambda proj: proj['name']) # Sorts by project name
+        demoprojectlist = []
+        nationalprojectlist = []
+        regionalprojectlist = []
+        for proj in sortedprojectlist:
+            if   proj['name'].find('(demo)')>=0:   demoprojectlist.append(proj) # It's a demo project
+            elif proj['name'].find('regional')>=0: regionalprojectlist.append(proj) # It's a regional project
+            else:                                  nationalprojectlist.append(proj)
+        projects = demoprojectlist + regionalprojectlist + nationalprojectlist # Combine project lists into one sorted list
+    except Exception as E: # But just skip creation if that fails
+        errormsg = 'WARNING, could not load demo projects: %s' % repr(E)
+        if die: raise Exception(errormsg)
+        else:   print(errormsg)
+        projects = []
     output = {'projects': projects}
     return output
 
