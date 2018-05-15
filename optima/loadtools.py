@@ -59,6 +59,7 @@ def setmigrations(which='migrations'):
         ('2.6.6', ('2.6.7', '2018-04-26', None,              'Handle male- and female-only populations for parameters')),
         ('2.6.7', ('2.6.8', '2018-04-28', removecosttx,      'Remove treatment cost parameter')),
         ('2.6.8', ('2.6.9', '2018-04-28', addrelhivdeath,    'Add population-dependent relative HIV death rates')),
+        ('2.6.9', ('2.6.10','2018-05-15', addspectrumranges, 'Add ranges for optional data inputs')),
         ])
     
     # Define changelog
@@ -779,6 +780,12 @@ def addrelhivdeath(project, **kwargs):
     
     return None
 
+
+def addspectruranges(project, **kwargs):
+    """
+    Migration between Optima 2.6.9 and 2.6.10: add ranges for optional data inputs
+    """
+    return None
 
 #def redoprograms(project, **kwargs):
 #    """

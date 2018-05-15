@@ -13,7 +13,7 @@ tests = [
 'makespreadsheet',
 #'makeprogramspreadsheet',
 'checkexisting',
-#'makespreadsheetwithdata',
+'makespreadsheetwithdata',
 #'unittests',
 ]
 
