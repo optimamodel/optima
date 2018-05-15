@@ -244,7 +244,7 @@ class Resultset(object):
             if doround and not percent: processed = processed.round() # Optionally round
             return processed
         
-        def processdata(rawdata, uncertainty=False, bypop=False, interrupt=False):
+        def processdata(rawdata, uncertainty=False, bypop=False):
             ''' Little method to turn the data into a form suitable for plotting -- basically, replace assumptions with nans '''
             
             if uncertainty: 
@@ -322,7 +322,7 @@ class Resultset(object):
         self.main['numinci'].pops = process(allinci[:,:,indices])
         self.main['numinci'].tot  = process(allinci[:,:,indices].sum(axis=1)) # Axis 1 is populations
         if data is not None: 
-            self.main['numinci'].datatot = processdata(data['optnuminfect'], uncertainty=True, interrupt=True)
+            self.main['numinci'].datatot = processdata(data['optnuminfect'], uncertainty=True)
             self.main['numinci'].estimate = True # It's not real data, just an estimate
         
         self.main['numincibypop'].pops = process(allincibypop[:,:,indices])
