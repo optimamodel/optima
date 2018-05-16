@@ -145,7 +145,9 @@ def defaultprograms(project, addcostcovpars=False, addcostcovdata=False, filterp
                   
     PEP = Program(short='PEP',
                   name='Post-exposure prophylaxis',
-                  category='Care and treatment',
+                  category='Prevention',
+                  targetpars=[{'param': 'prep', 'pop':  pop} for pop in pops],
+                  targetpops=pops,
                   criteria = {'hivstatus': ['lt50', 'gt50', 'gt200', 'gt350'], 'pregnant': False})
                   
     HTC = Program(short='HTC',
