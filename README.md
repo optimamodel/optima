@@ -290,11 +290,11 @@ Then to create the optima database, use these commands *from the root Optima dir
 
 ```bash
 createdb optima # Create Optima database -- for run.sh
-createdb test # Create test database -- for test.sh
+#createdb test # Create test database -- for test.sh
 createuser optima -P -s # with password optima
-createuser test -P -s # with password test
-migrate version_control postgresql://optima:optima@localhost:5432/optima server/db/ # Allow version control
-migrate upgrade postgresql://optima:optima@localhost:5432/optima server/db/ # Run the migrations to be safe
+#createuser test -P -s # with password test
+#migrate version_control postgresql://optima:optima@localhost:5432/optima server/db/ # Allow version control
+#migrate upgrade postgresql://optima:optima@localhost:5432/optima server/db/ # Run the migrations to be safe
 ```
 
 The scripts require that the `optima` user is a superuser. To check this:
