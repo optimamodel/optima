@@ -490,6 +490,7 @@ class OptimaSpreadsheet:
         elif  rangename=='children': return self.ref_child_range
         elif  rangename=='average':  return ['Average']
         elif  rangename=='total':    return ['Total']
+        elif  rangename=='hbl':      return ['high','best','low']
         elif  rangename=='.':        return None
         else: 
             errormsg = 'Range name %s not found' % rangename

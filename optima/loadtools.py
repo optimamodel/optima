@@ -59,6 +59,7 @@ def setmigrations(which='migrations'):
         ('2.6.6', ('2.6.7', '2018-04-26', None,              'Handle male- and female-only populations for parameters')),
         ('2.6.7', ('2.6.8', '2018-04-28', removecosttx,      'Remove treatment cost parameter')),
         ('2.6.8', ('2.6.9', '2018-04-28', addrelhivdeath,    'Add population-dependent relative HIV death rates')),
+        ('2.6.9', ('2.6.10','2018-05-15', addspectrumranges, 'Add ranges for optional data inputs')),
         ])
     
     # Define changelog
@@ -779,6 +780,21 @@ def addrelhivdeath(project, **kwargs):
     
     return None
 
+
+def addspectrumranges(project, **kwargs):
+    """
+    Migration between Optima 2.6.9 and 2.6.10: add ranges for optional data inputs
+    """
+    optindicators = ['optpropdx','optpropcare','optproptx','optpropsupp','optproppmtct','optnumtest','optnumdiag','optnuminfect','optprev','optplhiv','optdeath','optnewtreat']
+    for optind in optindicators:
+        if len(project.data[optind])==1:
+            tmpdata = op.dcp(project.data[optind])
+            newdata = []
+            newdata.append([nan]*len(project.data[optind][0])) # No data for high estimate
+            newdata.append(tmpdata[0]) # Previous data for best estimate
+            newdata.append([nan]*len(project.data[optind][0])) # No data for low estimate
+            project.data[optind] = newdata
+    return None
 
 #def redoprograms(project, **kwargs):
 #    """

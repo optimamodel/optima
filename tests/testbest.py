@@ -51,7 +51,7 @@ if 'standardrun' in tests:
     P.parset().fixprops(False)
     P.pars()['hivdeath'].y['PWID'] = 2.0 # Increase death rate for PWID
     P.runsim(debug=True, start=2000, end=2015)
-    if runsensitivity: P.sensitivity()
+#    if runsensitivity: P.sensitivity()
     if doplot: pygui(P)
 
 ## Calibration
