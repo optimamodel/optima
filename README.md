@@ -107,6 +107,10 @@ This compiles and builds the JavaScript client, ready to be served.
 ```
 pip install flask-login flask-sqlalchemy flask-restful-swagger mpld3 celery==3.1.23 redis twisted validate-email
 ```
+or
+```
+pip install -r server/localrequirements.txt
+```
   These are the modules required by the Flask API, as well as for plotting (mpld3), the task manager (celery), the temporary database (redis, which talks to postgres), and the server (twisted, which is an equivalent of e.g. Apache).
 
 2. Download and install Redis (from the MSI) from:  
