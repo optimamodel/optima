@@ -221,6 +221,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
     pmtcteff  = (1 - simpars['effpmtct']) * effmtct         # Effective MTCT transmission whilst on PMTCT
 
     allcirceff = einsum('i,j',[1,circconst],male)+einsum('i,j',[1,1],female)
+#    import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
     alleff = einsum('ab,ab,ab,ca->abc',prepeff,stieff,circeff,allcirceff)
 
     # Force of infection metaparameter

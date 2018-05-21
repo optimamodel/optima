@@ -60,6 +60,7 @@ def setmigrations(which='migrations'):
         ('2.6.7', ('2.6.8', '2018-04-28', removecosttx,      'Remove treatment cost parameter')),
         ('2.6.8', ('2.6.9', '2018-04-28', addrelhivdeath,    'Add population-dependent relative HIV death rates')),
         ('2.6.9', ('2.6.10','2018-05-16', addspectrumranges, 'Add ranges for optional data inputs')),
+        ('2.6.10',('2.6.11','2018-05-21', circmigration,     'Adds the missing migration for circumcision key changes')),
         ])
     
     # Define changelog
@@ -803,6 +804,39 @@ def addspectrumranges(project, **kwargs):
         ps.pars['effprep'].name = 'Efficacy of ARV-based prophylaxis'
     
     return None
+
+
+def circmigration(project, **kwargs):
+    """
+    Migration between Optima 2.6.10 and 2.6.11: add circumcision migration
+    """
+    
+    ## Redo circ parameters
+    malelist = [val for i,val in enumerate(project.data['pops']['short']) if project.data['pops']['male'][i]]
+    femalelist = [val for i,val in enumerate(project.data['pops']['short']) if project.data['pops']['female'][i]]
+    
+    for pset in project.parsets.values():
+
+        if pset.pars['propcirc'].by=='pop':
+            pset.pars['propcirc'].by = 'mpop'
+            for fpop in femalelist: 
+                pset.pars['propcirc'].t.pop(fpop)
+                pset.pars['propcirc'].y.pop(fpop)
+
+        if pset.pars['numcirc'].by=='pop':
+            pset.pars['numcirc'].by = 'mpop'
+            for fpop in femalelist: 
+                pset.pars['numcirc'].t.pop(fpop)
+                pset.pars['numcirc'].y.pop(fpop)
+                
+        if pset.pars['birth'].by=='pop':
+            pset.pars['birth'].by = 'fpop'
+            for mpop in malelist: 
+                pset.pars['birth'].t.pop(mpop)
+                pset.pars['birth'].y.pop(mpop)
+            
+    return None
+    
 
 #def redoprograms(project, **kwargs):
 #    """
