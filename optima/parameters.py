@@ -150,10 +150,15 @@ class Parameterset(object):
         else:                which = promotetolist(which)
         
         data = self.projectref().data
-        for key in which:
-            tmp = data2timepar(data=data['optprop'+key], years=data['years'], keys=self.pars['prop'+key].t.keys(), name='tmp', short='tmp')
-            self.pars['prop'+key].y = tmp.y
-            self.pars['prop'+key].t = tmp.t
+        if use:
+            for key in which:
+                tmp = data2timepar(data=data['optprop'+key], years=data['years'], keys=self.pars['prop'+key].t.keys(), name='tmp', short='tmp')
+                self.pars['prop'+key].y = tmp.y
+                self.pars['prop'+key].t = tmp.t
+        else:
+            for key in which:
+                self.pars['prop'+key].y[0] = array([nan])
+                self.pars['prop'+key].t[0] = array([0.0])
 
         return None
 
