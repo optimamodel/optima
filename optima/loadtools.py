@@ -850,6 +850,9 @@ def tvtreatfail(project, **kwargs):
     kwargs['name'] = 'Proportion of cases with detected VL failure for which there is a switch to an effective regimen (%/year)'
     kwargs['limits'] = (0, 'maxrate')
     addparameter(project=project, copyfrom=copyfrom, short=short, **kwargs)
+    for ps in project.parsets.values():
+        ps.pars['regimen'].y[:] = array([[.2]]) # Assume 20% are shifted
+        ps.pars['regimen'].t[:] = array([[2017.]]) 
     
     removeparameter(project, short='treatfail', datashort='treatfail')
     
@@ -858,6 +861,10 @@ def tvtreatfail(project, **kwargs):
     kwargs['name'] = 'Treatment failure rate'
     kwargs['limits'] = (0, 'maxrate')
     addparameter(project=project, copyfrom=copyfrom, short=short, **kwargs)
+    for ps in project.parsets.values():
+        ps.pars['treatfail'].y[:] = array([[.16]]) # Assume 16% are shifted
+        ps.pars['treatfail'].t[:] = array([[2017.]]) 
+    
     
     return None
 
