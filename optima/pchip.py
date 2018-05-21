@@ -36,8 +36,8 @@ def pchip(x=None, y=None, xnew=None, deriv = False, method=None, smooth=None, sm
                   print('WARNING, length 1 smooth interpolation derivative not implemented')
                   ynew = [0.0] # WARNING, temp
               else:
-        		    ynew = (diff(ynew)/diff(xnew)).tolist() # Calculate derivative explicitly
-        		    ynew.append(ynew[-1]) # Duplicate the last element so the right length
+                  (diff(ynew)/diff(xnew)).tolist() # Calculate derivative explicitly
+                  ynew.append(ynew[-1]) # Duplicate the last element so the right length
     else:
         raise Exception('Interpolation method "%s" not understood' % method)
     
