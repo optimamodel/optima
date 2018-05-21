@@ -133,14 +133,14 @@ class Project(object):
     ### Methods for I/O and spreadsheet loading
     #######################################################################################################
 
-    def loadspreadsheet(self, filename=None, folder=None, name=None, overwrite=False, makedefaults=True, dorun=True, useprops=False, **kwargs):
+    def loadspreadsheet(self, filename=None, folder=None, name=None, overwrite=False, makedefaults=True, dorun=True, **kwargs):
         ''' Load a data spreadsheet -- enormous, ugly function so located in its own file '''
         ## Load spreadsheet and update metadata
         self.data = loadspreadsheet(filename=filename, folder=folder, verbose=self.settings.verbose) # Do the hard work of actually loading the spreadsheet
         self.spreadsheetdate = today() # Update date when spreadsheet was last loaded
         self.modified = today()
         if name is None: name = 'default'
-        self.makeparset(name=name, overwrite=overwrite, useprops=useprops)
+        self.makeparset(name=name, overwrite=overwrite)
         if makedefaults: self.makedefaults(name)
         self.settings.start = self.data['years'][0] # Reset the default simulation start to initial year of data
         if dorun: self.runsim(name, addresult=True, **kwargs) # Pass all kwargs to runsim as well
@@ -188,12 +188,12 @@ class Project(object):
 #                print('%s failed' % key1)
         
 
-    def makeparset(self, name='default', overwrite=False, dosave=True, die=False, useprops=False):
+    def makeparset(self, name='default', overwrite=False, dosave=True, die=False):
         ''' If parameter set of that name doesn't exist, create it '''
         if not self.data:
             raise OptimaException('No data in project "%s"!' % self.name)
         parset = Parameterset(name=name, project=self)
-        parset.makepars(self.data, verbose=self.settings.verbose, start=self.settings.start, end=self.settings.end, useprops=useprops) # Create parameters
+        parset.makepars(self.data, verbose=self.settings.verbose, start=self.settings.start, end=self.settings.end) # Create parameters
         if dosave: # Save to the project if requested
             if name in self.parsets and not overwrite: # and overwrite if requested
                 errormsg = 'Cannot make parset "%s" because it already exists (%s) and overwrite is off' % (name, self.parsets.keys())

@@ -77,8 +77,8 @@ class Parameterset(object):
         return parslist
     
     
-    def makepars(self, data=None, fix=True, verbose=2, start=None, end=None, useprops=False):
-        self.pars = makepars(data=data, verbose=verbose, useprops=useprops) # Initialize as list with single entry
+    def makepars(self, data=None, fix=True, verbose=2, start=None, end=None):
+        self.pars = makepars(data=data, verbose=verbose) # Initialize as list with single entry
         self.fixprops(fix=fix)
         self.popkeys = dcp(self.pars['popkeys']) # Store population keys more accessibly
         if start is None: self.start = data['years'][0] # Store the start year -- if not supplied, use beginning of data
@@ -833,13 +833,13 @@ def data2prev(data=None, keys=None, index=0, blh=0, **defaultargs): # WARNING, "
     """ Take an array of data return either the first or last (...or some other) non-NaN entry -- used for initial HIV prevalence only so far... """
     par = Metapar(y=odict([(key,None) for key in keys]), **defaultargs) # Create structure -- need key:None for prior
     for row,key in enumerate(keys):
-        par.y[key] = sanitize(data[blh][row])[index] # Return the specified index -- usually either the first [0] or last [-1]
+        par.y[key] = sanitize(data['hivprev'][blh][row])[index] # Return the specified index -- usually either the first [0] or last [-1]
         par.prior[key].pars *= par.y[key] # Get prior in right range
     return par
 
 
 
-def data2popsize(data=None, years=None, keys=None, blh=0, uniformgrowth=False, doplot=False, **defaultargs):
+def data2popsize(data=None, keys=None, blh=0, uniformgrowth=False, doplot=False, **defaultargs):
     ''' Convert population size data into population size parameters '''
     par = Popsizepar(m=1, **defaultargs)
     
@@ -847,8 +847,8 @@ def data2popsize(data=None, years=None, keys=None, blh=0, uniformgrowth=False, d
     sanitizedy = odict() # Initialize to be empty
     sanitizedt = odict() # Initialize to be empty
     for row,key in enumerate(keys):
-        sanitizedy[key] = sanitize(data[blh][row]) # Store each extant value
-        sanitizedt[key] = array(years)[~isnan(data[blh][row])] # Store each year
+        sanitizedy[key] = sanitize(data['popsize'][blh][row]) # Store each extant value
+        sanitizedt[key] = array(data['years'])[~isnan(data['popsize'][blh][row])] # Store each year
     
     # Store a list of population sizes that have at least 2 data points
     atleast2datapoints = [] 
@@ -863,8 +863,8 @@ def data2popsize(data=None, years=None, keys=None, blh=0, uniformgrowth=False, d
     largestpopkey = atleast2datapoints[argmax([mean(sanitizedy[key]) for key in atleast2datapoints])] # Find largest population size (for at least 2 data points)
     
     # Perform 2-parameter exponential fit to data
-    startyear = years[0]
-    par.start = years[0]
+    startyear = data['years'][0]
+    par.start = data['years'][0]
     tdata = odict()
     ydata = odict()
     for key in atleast2datapoints:
@@ -936,13 +936,20 @@ def data2timepar(data=None, years=None, keys=None, defaultind=0, verbose=2, **de
         errormsg = 'Cannot create a time parameter without keyword arguments "name" and "short"! \n\nArguments:\n %s' % defaultargs.items()
         raise OptimaException(errormsg)
         
+    # Process data
+    if isinstance(data,dict): # The entire structure has been passed
+        thisdata = data[short]
+        years = data['years']
+    elif isinstance(data,list): # Just the relevant entry has been passed
+        thisdata = data
+        
     par = Timepar(m=1.0, y=odict(), t=odict(), **defaultargs) # Create structure
     for row,key in enumerate(keys):
         try:
-            validdata = ~isnan(data[row]) # WARNING, this could all be greatly simplified!!!! Shouldn't need to call this and sanitize()
+            validdata = ~isnan(thisdata[row]) # WARNING, this could all be greatly simplified!!!! Shouldn't need to call this and sanitize()
             par.t[key] = getvaliddata(years, validdata, defaultind=defaultind) 
             if sum(validdata): 
-                par.y[key] = sanitize(data[row])
+                par.y[key] = sanitize(thisdata[row])
             else:
                 printv('data2timepar(): no data for parameter "%s", key "%s"' % (name, key), 3, verbose) # Probably ok...
                 par.y[key] = array([0.0]) # Blank, assume zero -- WARNING, is this ok?
@@ -1026,7 +1033,7 @@ def balance(act=None, which=None, data=None, popkeys=None, limits=None, popsizep
 
 
 
-def makepars(data=None, verbose=2, die=True, fixprops=None, useprops=False):
+def makepars(data=None, verbose=2, die=True, fixprops=None):
     """
     Translates the raw data (which were read from the spreadsheet) into
     parameters that can be used in the model. These data are then used to update 
@@ -1087,21 +1094,18 @@ def makepars(data=None, verbose=2, die=True, fixprops=None, useprops=False):
             
             # Decide how to handle it based on parameter type
             if partype=='initprev': # Initialize prevalence only
-                pars['initprev'] = data2prev(data=data['hivprev'], keys=keys, **rawpar) # Pull out first available HIV prevalence point
+                pars['initprev'] = data2prev(data=data, keys=keys, **rawpar) # Pull out first available HIV prevalence point
             
             elif partype=='popsize': # Population size only
-                pars['popsize'] = data2popsize(data=data['popsize'], years=data['years'], keys=keys, **rawpar)
+                pars['popsize'] = data2popsize(data=data, keys=keys, **rawpar)
             
             elif partype=='timepar': # Otherwise it's a regular time par, made from data
                 domake = False # By default, don't make the parameter
                 if by!='pship' and fromdata: domake = True # If it's not a partnership parameter and it's made from data, then make it
                 if domake:
-                    pars[parname] = data2timepar(data=data[parname], years=data['years'], keys=keys, **rawpar) 
+                    pars[parname] = data2timepar(data=data, keys=keys, **rawpar) 
                 else:
-                    if parname in ['proptx', 'propsupp', 'propdx', 'propcare', 'proppmtct'] and useprops: 
-                        pars[parname] = data2timepar(data=data['opt'+parname], years=data['years'], keys=keys, **rawpar) 
-                    else: 
-                        pars[parname] = Timepar(m=1.0, y=odict([(key,array([nan])) for key in keys]), t=odict([(key,array([0.0])) for key in keys]), **rawpar) # Create structure
+                    pars[parname] = Timepar(m=1.0, y=odict([(key,array([nan])) for key in keys]), t=odict([(key,array([0.0])) for key in keys]), **rawpar) # Create structure
             
             elif partype=='constant': # The constants, e.g. transmfi
                 best = data[parname][0] if fromdata else nan
@@ -1118,7 +1122,6 @@ def makepars(data=None, verbose=2, die=True, fixprops=None, useprops=False):
             
         except Exception as E:
             errormsg = 'Failed to convert parameter %s:\n%s' % (parname, repr(E))
-            import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
             if die: raise OptimaException(errormsg)
             else: printv(errormsg, 1, verbose)
 
