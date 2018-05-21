@@ -172,7 +172,7 @@ define(['angular', 'underscore'], function (angular, _) {
         targetpar.pops = ['tot'];
         targetpar.attr.populations = [];
 
-      } else if (attr.by == "pop" or "fpop" or "mpop") {
+      } else if (attr.by == "pop" || attr.by == "fpop" || attr.by == "mpop") {
 
         targetpar.attr.selectAll =
           targetpar.attr.populations
