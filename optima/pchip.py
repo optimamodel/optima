@@ -1,6 +1,5 @@
-from utils import isnumber, checktype, promotetoarray
+from optima import isnumber, checktype, promotetoarray, dcp
 from numpy import linspace, array, diff, argsort
-from copy import deepcopy as dcp
 pchipeps = 1e-8
 
 def pchip(x=None, y=None, xnew=None, deriv = False, method=None, smooth=None, smoothness=None, monotonic=True):
@@ -36,7 +35,7 @@ def pchip(x=None, y=None, xnew=None, deriv = False, method=None, smooth=None, sm
                   print('WARNING, length 1 smooth interpolation derivative not implemented')
                   ynew = [0.0] # WARNING, temp
               else:
-                  (diff(ynew)/diff(xnew)).tolist() # Calculate derivative explicitly
+                  ynew = (diff(ynew)/diff(xnew)).tolist() # Calculate derivative explicitly
                   ynew.append(ynew[-1]) # Duplicate the last element so the right length
     else:
         raise Exception('Interpolation method "%s" not understood' % method)
