@@ -800,7 +800,7 @@ def addspectrumranges(project, **kwargs):
     
     # Rename PrEP
     for ps in project.parsets.values():
-        ps.pars['prep'].name    = 'Proportion of people covered by ARV-based prophylaxis'
+        ps.pars['prep'].name    = 'Proportion of exposure events covered by ARV-based prophylaxis'
         ps.pars['effprep'].name = 'Efficacy of ARV-based prophylaxis'
     
     return None
