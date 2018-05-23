@@ -1,6 +1,5 @@
-from utils import isnumber, checktype, promotetoarray
+from optima import isnumber, checktype, promotetoarray, dcp
 from numpy import linspace, array, diff, argsort
-from copy import deepcopy as dcp
 pchipeps = 1e-8
 
 def pchip(x=None, y=None, xnew=None, deriv = False, method=None, smooth=None, smoothness=None, monotonic=True):
