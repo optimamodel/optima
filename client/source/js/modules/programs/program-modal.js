@@ -167,12 +167,12 @@ define(['angular', 'underscore'], function (angular, _) {
             && targetpar.pops
             && (targetpar.attr.pships.length === targetpar.pops.length);
 
-      } if (targetpar.attr.by === 'tot') {
+      } else if (attr.by === 'tot') {
 
         targetpar.pops = ['tot'];
         targetpar.attr.populations = [];
 
-      } else if (attr.by == "pop") {
+      } else if (attr.by == "pop" || attr.by == "fpop" || attr.by == "mpop") {
 
         targetpar.attr.selectAll =
           targetpar.attr.populations
