@@ -61,7 +61,11 @@ def setmigrations(which='migrations'):
         ('2.6.8', ('2.6.9', '2018-04-28', addrelhivdeath,    'Add population-dependent relative HIV death rates')),
         ('2.6.9', ('2.6.10','2018-05-16', addspectrumranges, 'Add ranges for optional data inputs')),
         ('2.6.10',('2.6.11','2018-05-21', circmigration,     'Adds the missing migration for circumcision key changes')),
+<<<<<<< HEAD
         ('2.6.11',('2.6.12','2018-05-21', tvtreatfail,       'Redo treatment failure and add regimen switching')),
+=======
+        ('2.6.11',('2.6.12','2018-05-23', changehivdeathname,'CHange the name of the relative HIV-related death rate')),
+>>>>>>> develop
         ])
     
     
@@ -802,7 +806,7 @@ def addspectrumranges(project, **kwargs):
     
     # Rename PrEP
     for ps in project.parsets.values():
-        ps.pars['prep'].name    = 'Proportion of people covered by ARV-based prophylaxis'
+        ps.pars['prep'].name    = 'Proportion of exposure events covered by ARV-based prophylaxis'
         ps.pars['effprep'].name = 'Efficacy of ARV-based prophylaxis'
     
     return None
@@ -840,6 +844,7 @@ def circmigration(project, **kwargs):
     return None
     
 
+<<<<<<< HEAD
 def tvtreatfail(project, **kwargs):
     """
     Migration between Optima 2.6.11 and 2.6.12: redo treatment failure
@@ -869,6 +874,19 @@ def tvtreatfail(project, **kwargs):
     return None
 
 
+=======
+def changehivdeathname(project, **kwargs):
+    """
+    Change name of relative HIV-related death rate
+    """
+    
+    for pset in project.parsets.values():
+        pset.pars['hivdeath'].name = 'Relative HIV-related death rate (unitless)'
+    
+    return None
+
+    
+>>>>>>> develop
 #def redoprograms(project, **kwargs):
 #    """
 #    Migration between Optima 2.2.1 and 2.3 -- convert CCO objects from simple dictionaries to parameters.
