@@ -857,6 +857,9 @@ def tvtreatfail(project, **kwargs):
     Migration between Optima 2.6.12 and 2.7: redo treatment failure
     """
     
+    if 'treatfail' in project.data.keys(): tfdata = project.data['treatfail'][0]
+    else: tfdata = 0.16
+
     short = 'regimen'
     copyfrom = 'numvlmon'
     kwargs['name'] = 'Proportion of cases with detected VL failure for which there is a switch to an effective regimen (%/year)'
@@ -877,6 +880,9 @@ def tvtreatfail(project, **kwargs):
         ps.pars['treatfail'].y[:] = array([[.16]]) # Assume 16% are shifted
         ps.pars['treatfail'].t[:] = array([[2017.]]) 
     
+    # Set data values
+#    project.data['treatfail'] = [[tfdata]] 
+#    project.data['regimen'] = [[0.2]] 
     
     return None
 

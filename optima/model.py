@@ -653,6 +653,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                     thistransit[fromstate,tostate,:] *= usvlprob
         
         # USVL to SVL
+        svlprob = regimen[t] if userate(propsupp,t) else 0.
         svlprob = min(regimen[t]*numvlmon[t]/(eps+numtx[t]*requiredvl),1) if userate(propsupp,t) else 0.
         for fromstate in usvl:
             for tostate in fromto[fromstate]:
