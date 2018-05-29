@@ -80,7 +80,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
     aidslinktocare  = 1.-exp(-dt/(maximum(eps,simpars['aidslinktocare'])))# Probability of being linked to care in 1 time step for people with AIDS
     leavecare       = simpars['leavecare']*dt                             # Proportion of people lost to follow-up per year
     aidsleavecare   = simpars['aidsleavecare']*dt                         # Proportion of people with AIDS being lost to follow-up per year
-    regimen         = simpars['regimen']                                  # Proportion of people who switch regimens when found to be failing
+    regainvs         = simpars['regainvs']                                  # Proportion of people who switch regimens when found to be failing
         
     # Disease state indices
     susreg          = settings.susreg               # Susceptible, regular
@@ -653,8 +653,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                     thistransit[fromstate,tostate,:] *= usvlprob
         
         # USVL to SVL
-        svlprob = regimen[t] if userate(propsupp,t) else 0.
-        svlprob = min(regimen[t]*numvlmon[t]/(eps+numtx[t]*requiredvl),1) if userate(propsupp,t) else 0.
+        svlprob = min(regainvs[t]*numvlmon[t]/(eps+numtx[t]*requiredvl),1) if userate(propsupp,t) else 0.
         for fromstate in usvl:
             for tostate in fromto[fromstate]:
                 if tostate in usvl: # Probability of not receiving a VL test & thus remaining failed
