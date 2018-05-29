@@ -464,7 +464,7 @@ class Project(object):
                         if hasattr(parset.pars[key],'t'): parset.pars[key].t = origparset.pars[key].t # Reset t (time) variable, if it exists
                 # Reset transition matrices
                 if key in ['birthtransit','agetransit','risktransit']: 
-                    parset.pars[key] = dcp(origparset[key])
+                    parset.pars[key] = dcp(origparset.pars[key])
         
         self.modified = today()
         return None
