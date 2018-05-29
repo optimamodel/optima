@@ -491,8 +491,8 @@ if 'newcascade' in tests:
              pars=[{'endval': .1,
                 'endyear': 2020,
                 'startyear': 2017.,
-                'name': 'regimen',
-                'for': P.pars()['regimen'].keys()}]),
+                'name': 'regainvs',
+                'for': P.pars()['regainvs'].keys()}]),
         
         ]
     
