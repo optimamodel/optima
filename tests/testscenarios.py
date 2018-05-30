@@ -12,7 +12,8 @@ tests = [
 #'budget',
 #'90-90-90',
 #'sensitivity',
-'VMMC'
+#'VMMC',
+'newcascade'
 ]
 
 ##############################################################################
@@ -458,5 +459,52 @@ if 'VMMC' in tests:
 #        apd = plotpars([scen.scenparset.pars for scen in P.scens.values()])
         pygui(P.results[-1])
         
+
+
+## Set up project etc.
+if 'newcascade' in tests:
+    t = tic()
+
+    print('Running new cascade parameters scenario test...')
+    from optima import Parscen, Budgetscen, defaultproject
+    
+    P = defaultproject('best',dorun=False)
+    P.parset().fixprops(False)
+    P.parset().fixprops(which='tx')
+    
+    ## Define scenarios
+    scenlist = [
+        Parscen(name='Current conditions',
+                parsetname='default',
+                pars=[]),
+
+        Parscen(name='Increase treatment failure',
+             parsetname='default',
+             pars=[{'endval': 0.5,
+                'endyear': 2020,
+                'startyear': 2017.,
+                'name': 'treatfail',
+                'for': P.pars()['treatfail'].keys()}]),
+        
+        Parscen(name='Decrease regimen switching rate',
+             parsetname='default',
+             pars=[{'endval': .1,
+                'endyear': 2020,
+                'startyear': 2017.,
+                'name': 'regainvs',
+                'for': P.pars()['regainvs'].keys()}]),
+        
+        ]
+    
+    # Store these in the project
+    P.addscens(scenlist, overwrite=True)
+    
+    # Run the scenarios
+    P.runscenarios()
+     
+    if doplot:
+        from optima import pygui
+#        apd = plotpars([scen.scenparset.pars for scen in P.scens.values()])
+        pygui(P.results[-1])
 
     done(t)

@@ -61,8 +61,10 @@ def setmigrations(which='migrations'):
         ('2.6.8', ('2.6.9', '2018-04-28', addrelhivdeath,    'Add population-dependent relative HIV death rates')),
         ('2.6.9', ('2.6.10','2018-05-16', addspectrumranges, 'Add ranges for optional data inputs')),
         ('2.6.10',('2.6.11','2018-05-21', circmigration,     'Adds the missing migration for circumcision key changes')),
-        ('2.6.11',('2.6.12','2018-05-23', changehivdeathname,'CHange the name of the relative HIV-related death rate')),
+        ('2.6.11',('2.6.12','2018-05-23', changehivdeathname,'Change the name of the relative HIV-related death rate')),
+        ('2.6.12',('2.7',   '2018-05-25', tvtreatfail,       'Redo treatment failure and add regimen switching/adherence support')),
         ])
+    
     
     # Define changelog
     changelog = op.odict()
@@ -850,6 +852,35 @@ def changehivdeathname(project, **kwargs):
     return None
 
     
+def tvtreatfail(project, **kwargs):
+    """
+    Migration between Optima 2.6.12 and 2.7: redo treatment failure
+    """
+    
+    short = 'regainvs'
+    copyfrom = 'numvlmon'
+    kwargs['name'] = 'Proportion of cases with detected VL failure for which there is a switch to an effective regimen (%/year)'
+    kwargs['limits'] = (0, 'maxrate')
+    addparameter(project=project, copyfrom=copyfrom, short=short, **kwargs)
+    for ps in project.parsets.values():
+        ps.pars['regainvs'].y[:] = array([[.2]]) # Assume 20% are shifted
+        ps.pars['regainvs'].t[:] = array([[2017.]]) 
+    
+    removeparameter(project, short='treatfail', datashort='treatfail')
+    
+    short = 'treatfail'
+    copyfrom = 'numvlmon'
+    kwargs['name'] = 'Treatment failure rate'
+    kwargs['limits'] = (0, 'maxrate')
+    addparameter(project=project, copyfrom=copyfrom, short=short, **kwargs)
+    for ps in project.parsets.values():
+        ps.pars['treatfail'].y[:] = array([[.16]]) # Assume 16% are shifted
+        ps.pars['treatfail'].t[:] = array([[2017.]]) 
+    
+    
+    return None
+
+
 #def redoprograms(project, **kwargs):
 #    """
 #    Migration between Optima 2.2.1 and 2.3 -- convert CCO objects from simple dictionaries to parameters.
