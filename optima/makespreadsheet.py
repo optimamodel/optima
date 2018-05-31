@@ -189,6 +189,9 @@ def nan2blank(thesedata):
     ''' Convert a nan entry to a blank entry'''
     return list(map(lambda val: '' if isnan(val) else val, thesedata))
 
+def zero2blank(thesedata):
+    ''' Convert a nan entry to a blank entry'''
+    return list(map(lambda val: '' if val==0 else val, thesedata))
 
 class OptimaFormats:
     """ the formats used in the spreadsheet """
@@ -478,7 +481,9 @@ class OptimaSpreadsheet:
     def getmatrixdata(self, parname=None):
         ''' Get matrix data -- stored directly so just have to retrieve'''
         if self.data is not None:
-            data = self.data.get(parname)
+            origdata = self.data.get(parname)
+            data = []
+            for row in origdata: data.append(zero2blank(row))
             return (data, None)
         return (None, None) # By default, return None
     
@@ -611,9 +616,9 @@ class OptimaSpreadsheet:
         
         # Actually generate workbooks
         self.sheet_names = self.pardefinitions['sheets'].keys()
-        for sheetname in ['Instructions']+self.sheet_names:
+        for sheetname in ['Instructions', 'Populations']+self.sheet_names:
             self.sheets[sheetname] = self.book.add_worksheet(sheetname)
-        for key in ['Populations', 'Constants']: self.sheet_names.remove(key) # Remove keys that are handled separately
+        self.sheet_names.remove('Constants') # Remove constants key which is handled separately
         self.generate_instructions() # Instructions
         self.generate_populations() # Population metadata
         for sheetname in self.sheet_names:
