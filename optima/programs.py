@@ -1022,10 +1022,8 @@ class Program(object):
         totalreached = self.costcovfn.evaluate(x=x, popsize=totaltargeted, t=t, toplot=toplot, sample=sample)
 
         if total: 
-            if proportion:
-                output = totalreached/totaltargeted
-            else:
-                output = totalreached
+            if proportion: output = totalreached/totaltargeted
+            else:          output = totalreached
         else:
             popreached = odict()
             targetcomposition = self.targetcomposition if self.targetcomposition else self.gettargetcomposition(t=t,parset=parset) 
@@ -1168,9 +1166,6 @@ class CCOF(object):
 
         ccopar['t'] = t
         printv('\nCalculated CCO parameters in year(s) %s to be %s' % (t, ccopar), 4, verbose)
-        print('TESST')
-        print ccopar
-        import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
         return ccopar
 
     def evaluate(self, x, popsize, t, toplot, inverse=False, sample='best', verbose=2):
