@@ -1154,7 +1154,7 @@ class CCOF(object):
                         raise OptimaException('Unrecognised bounds.')
         
         # CK: I feel there might be a more direct way of doing all of this...
-        ccopartuples = sorted(zip(self.ccopars['t'], *ccopars_sample.values())) # Rather than forming a tuple and then pulling out the elements, maybe keep the arrays separate?
+        ccopartuples = zip(self.ccopars['t'], *ccopars_sample.values()) # Rather than forming a tuple and then pulling out the elements, maybe keep the arrays separate?
         knownt = array([ccopartuple[0] for ccopartuple in ccopartuples])
 
         # Calculate interpolated parameters
@@ -1168,6 +1168,9 @@ class CCOF(object):
 
         ccopar['t'] = t
         printv('\nCalculated CCO parameters in year(s) %s to be %s' % (t, ccopar), 4, verbose)
+        print('TESST')
+        print ccopar
+        import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
         return ccopar
 
     def evaluate(self, x, popsize, t, toplot, inverse=False, sample='best', verbose=2):

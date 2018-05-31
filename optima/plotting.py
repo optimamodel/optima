@@ -1253,7 +1253,7 @@ def plotcostcov(program=None, year=None, parset=None, results=None, plotoptions=
     if not isinstance(parset, Parameterset):
         raise OptimaException('Please supply a parset, not "%s"' % parset)
     year = promotetoarray(year)
-    year.sort() # Ensure it's in order
+#    year.sort() # Ensure it's in order -- otherwise, plotting is mixed up (?!)
     colors = gridcolors(len(year))
     plotdata = odict()
     
