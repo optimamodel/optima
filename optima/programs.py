@@ -1021,15 +1021,20 @@ class Program(object):
         totaltargeted = sum(poptargeted.values())
         totalreached = self.costcovfn.evaluate(x=x, popsize=totaltargeted, t=t, toplot=toplot, sample=sample)
 
-        if total: return totalreached/totaltargeted if proportion else totalreached
+        if total: 
+            if proportion:
+                output = totalreached/totaltargeted
+            else:
+                output = totalreached
         else:
             popreached = odict()
             targetcomposition = self.targetcomposition if self.targetcomposition else self.gettargetcomposition(t=t,parset=parset) 
             for targetpop in self.targetpops:
                 popreached[targetpop] = totalreached*targetcomposition[targetpop]
                 if proportion: popreached[targetpop] /= poptargeted[targetpop]
-
-            return popreached
+            output = popreached
+        return output
+            
 
 
     def getbudget(self, x, t, parset=None, results=None, proportion=False, toplot=False, sample='best'):
