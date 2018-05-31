@@ -2,7 +2,7 @@
 ## Preliminaries
 ###########################################################################
 
-from optima import OptimaException, loaddatapars, odict, printv, today, isnumber, makefilepath, version, compareversions
+from optima import OptimaException, loaddatapars, odict, printv, today, isnumber, makefilepath, version, compareversions, dcp
 from numpy import nan, isnan, array, shape # For reading in empty values
 from xlrd import open_workbook, colname # For opening Excel workbooks
 versioncheck = '\n(spreadsheet version not available)' # To be filled once the version is checked below
@@ -97,7 +97,7 @@ def loadspreadsheet(filename=None, folder=None, verbose=2):
     data['meta'] = odict()
     data['meta']['datacomments'] = [] # Store the data comments entered on the instructions sheet
     data['meta']['date'] = today()
-    data['meta']['sheets'] = sheets # Store parameter names
+    data['meta']['sheets'] = dcp(sheets) # Store parameter names
     
     ## Initialize populations
     data['pops'] = odict() # Initialize to empty list
