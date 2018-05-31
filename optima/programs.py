@@ -1021,15 +1021,18 @@ class Program(object):
         totaltargeted = sum(poptargeted.values())
         totalreached = self.costcovfn.evaluate(x=x, popsize=totaltargeted, t=t, toplot=toplot, sample=sample)
 
-        if total: return totalreached/totaltargeted if proportion else totalreached
+        if total: 
+            if proportion: output = totalreached/totaltargeted
+            else:          output = totalreached
         else:
             popreached = odict()
             targetcomposition = self.targetcomposition if self.targetcomposition else self.gettargetcomposition(t=t,parset=parset) 
             for targetpop in self.targetpops:
                 popreached[targetpop] = totalreached*targetcomposition[targetpop]
                 if proportion: popreached[targetpop] /= poptargeted[targetpop]
-
-            return popreached
+            output = popreached
+        return output
+            
 
 
     def getbudget(self, x, t, parset=None, results=None, proportion=False, toplot=False, sample='best'):
@@ -1149,7 +1152,7 @@ class CCOF(object):
                         raise OptimaException('Unrecognised bounds.')
         
         # CK: I feel there might be a more direct way of doing all of this...
-        ccopartuples = sorted(zip(self.ccopars['t'], *ccopars_sample.values())) # Rather than forming a tuple and then pulling out the elements, maybe keep the arrays separate?
+        ccopartuples = zip(self.ccopars['t'], *ccopars_sample.values()) # Rather than forming a tuple and then pulling out the elements, maybe keep the arrays separate?
         knownt = array([ccopartuple[0] for ccopartuple in ccopartuples])
 
         # Calculate interpolated parameters
