@@ -1078,7 +1078,7 @@ def minmoney(project=None, optim=None, tvec=None, verbose=None, maxtime=None, ma
     #%% Preliminary investigations
         
     # Calculate current, infinite, and zero spending
-    printv('\n\n\n####################', 2, verbose)
+    printv('\n\n', 2, verbose)
     printv('Preliminary investigations...', 2, verbose)
     dists = op.odict()
     movie = []
@@ -1246,14 +1246,14 @@ def minmoney(project=None, optim=None, tvec=None, verbose=None, maxtime=None, ma
             return totalbudget, new_budgetvec, budget_list, result_list # Since we know this meets the targets
         
         #%% Do the binary search
-        printv('\n\n\n####################', 2, verbose)
+        printv('\n\n', 2, verbose)
         movie.append('Scale current budget')
         totalbudget,b_list,r_list = binary_search(budgetvec=budgetvec, totalbudget=origtotalbudget, args=args, target=res_targ, curr_met=curr_met)
         for bud,res in zip(b_list,r_list):
             movie.append(res)
             
         #%% Throw n_throws points at current budget level
-        printv('\n\n\n####################', 2, verbose)
+        printv('\n\n', 2, verbose)
         printv('Throwing...', 2, verbose)
         allocated_budget = op.dcp(budgetvec)
         allocated_budget[:] *= 0
@@ -1298,7 +1298,7 @@ def minmoney(project=None, optim=None, tvec=None, verbose=None, maxtime=None, ma
         
         
         #%% Final refinement
-        printv('\n\n\n####################', 2, verbose)
+        printv('\n\n', 2, verbose)
         printv('Local search...', 2, verbose)
         for r_s,refine_step in enumerate(refine_steps):
             movie.append('Local search %s (%s/%s)' % (refine_step, r_s+1, len(refine_steps)))
