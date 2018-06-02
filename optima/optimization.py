@@ -1357,7 +1357,7 @@ def minmoney(project=None, optim=None, tvec=None, verbose=None, maxtime=None, ma
             target_color = (0.1,0.7,0.3)
             
             def init_fig():
-                fig = pl.figure()
+                fig = pl.figure(facecolor='w')
                 pl.xlabel(pl_ax['x'])
                 pl.ylabel(pl_ax['y'])
                 pl.fill_between([0,res_targ[pl_ax['x']]], res_targ[pl_ax['y']]*pl.ones(2), color=target_color) # Plot target
@@ -1409,13 +1409,15 @@ def minmoney(project=None, optim=None, tvec=None, verbose=None, maxtime=None, ma
                 if not i%10:
                     flush()
                     
-            pl.figure()
+            pl.figure(facecolor='w')
             pl.subplot(1,2,1)
             pl.pie(origbudget[:], labels=origbudget.keys())
             pl.axis('equal')
+            pl.title('Original')
             pl.subplot(1,2,2)
             pl.pie(newbudget[:], labels=newbudget.keys())
             pl.axis('equal')
+            pl.title('Optimal')
     
     # Impose lower limits only
     for key in optim.constraints['min']:
