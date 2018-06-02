@@ -16,11 +16,11 @@ from time import time
 class Optim(object):
     ''' An object for storing an optimization '''
 
-    def __init__(self, project=None, name='default', objectives=None, constraints=None, parsetname=None, progsetname=None, timevarying=None, tvsettings=None):
+    def __init__(self, project=None, name='default', objectives=None, constraints=None, parsetname=None, progsetname=None, timevarying=None, tvsettings=None, which=None):
         if project     is None: raise OptimaException('To create an optimization, you must supply a project')
         if parsetname  is None: parsetname  = -1 # If none supplied, assume defaults
         if progsetname is None: progsetname = -1
-        if objectives  is None: objectives  = defaultobjectives(project=project,  progsetname=progsetname, verbose=0)
+        if objectives  is None: objectives  = defaultobjectives(project=project,  progsetname=progsetname, verbose=0, which=which)
         if constraints is None: constraints = defaultconstraints(project=project, progsetname=progsetname, verbose=0)
         if tvsettings  is None: tvsettings  = defaulttvsettings(timevarying=timevarying) # Create the time-varying settings
         self.name         = name # Name of the optimization, e.g. 'default'
@@ -370,7 +370,9 @@ def outcomecalc(budgetvec=None, which=None, project=None, parsetname=None, progs
     progset = project.progsets[progsetname]
     if objectives  is None: objectives  = defaultobjectives(project=project,  progsetname=progsetname, which=which)
     if constraints is None: constraints = defaultconstraints(project=project, progsetname=progsetname)
-    if totalbudget is None: totalbudget = objectives['budget']
+    if totalbudget is None:
+        if budgetvec is None: totalbudget = objectives['budget']
+        else:                 totalbudget = budgetvec[:].sum() # If a budget vector is supplied
     if origbudget  is None: origbudget  = progset.getdefaultbudget()
     if optiminds   is None: optiminds   = findinds(progset.optimizable())
     if budgetvec   is None: budgetvec   = dcp(origbudget[:][optiminds])
