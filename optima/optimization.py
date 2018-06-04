@@ -1115,6 +1115,10 @@ def minmoney(project=None, optim=None, tvec=None, verbose=None, maxtime=None, ma
         zerofailed = False
         printv('Zero money check passes (distance: %s)' % dists['zero'], 2, verbose)
     
+    # Plot current, infinite, and zero spending
+    movie.append('Preliminaries')
+    movie += [res_curr, res_inf, res_zero]
+        
     # If infinite or zero money met objectives, don't bother proceeding
     if infinitefailed or zerofailed:
         if zerofailed:
@@ -1125,13 +1129,10 @@ def minmoney(project=None, optim=None, tvec=None, verbose=None, maxtime=None, ma
             fundingfactor = 10 # For plotting, don't make the factor infinite, just very large
             budgetvec = 0.0*budgetvec + budgetvec.sum()*fundingfactor
             totalbudget *= fundingfactor
+        
     
     # It didn't, proceed with the algorithm
     else:
-        # Plot current, infinite, and zero spending
-        movie.append('Preliminaries')
-        movie += [res_curr, res_inf, res_zero]
-        
         #%% Increase/decrease current budget until targets met
         def binary_search(budgetvec=None, totalbudget=None, args=None, target=None, curr_met=None, step=None, tol=None):
             ''' Do a binary search to find a solution to within tol tolerance '''
@@ -1425,9 +1426,8 @@ def minmoney(project=None, optim=None, tvec=None, verbose=None, maxtime=None, ma
     
     ## Tidy up -- WARNING, need to think of a way to process multiple inds
     args['doconstrainbudget'] = False
-    orig = outcomecalc(origbudgetvec, totalbudget=origtotalbudget, outputresults=True, **args)
-    args['doconstrainbudget'] = False
-    new = outcomecalc(newbudget, totalbudget=newbudget[:].sum(), outputresults=True, **args)
+    orig = outcomecalc(origbudgetvec, totalbudget=origtotalbudget,    outputresults=True, **args)
+    new  = outcomecalc(newbudget,     totalbudget=newbudget[:].sum(), outputresults=True, **args)
     
     orig.name = 'Baseline' # WARNING, is this really the best way of doing it?
     if   zerofailed:     new.name = 'Zero budget'
