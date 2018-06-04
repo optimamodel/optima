@@ -176,22 +176,25 @@ def get_populations_from_project(project):
             age_to: int
         - ...
     """
-    data_pops = normalize_obj(project.data.get("pops"))
     populations = []
-    for i in range(len(data_pops['short'])):
-        population = {
-            'short': data_pops['short'][i],
-            'name': data_pops['long'][i],
-            'male': bool(data_pops['male'][i]),
-            'female': bool(data_pops['female'][i]),
-            'age_from': int(data_pops['age'][i][0]),
-            'age_to': int(data_pops['age'][i][1]),
-        }
-        if 'injects' in data_pops:
-            population['injects'] = bool((data_pops['injects'][i]))
-        if 'sexworker' in data_pops:
-            population['sexworker'] = bool((data_pops['sexworker'][i]))
-        populations.append(population)
+    try:
+        data_pops = normalize_obj(project.data.get("pops"))
+        for i in range(len(data_pops['short'])):
+            population = {
+                'short': data_pops['short'][i],
+                'name': data_pops['long'][i],
+                'male': bool(data_pops['male'][i]),
+                'female': bool(data_pops['female'][i]),
+                'age_from': int(data_pops['age'][i][0]),
+                'age_to': int(data_pops['age'][i][1]),
+            }
+            if 'injects' in data_pops:
+                population['injects'] = bool((data_pops['injects'][i]))
+            if 'sexworker' in data_pops:
+                population['sexworker'] = bool((data_pops['sexworker'][i]))
+            populations.append(population)
+    except Exception as E:
+        print('Warning, no populations entered for project "%s", returning empty list: %s' % (project.name, repr(E)))
     return populations
 
 
@@ -249,19 +252,8 @@ def clear_project_data(project):
 
 
 def set_project_summary_on_project(project, summary):
-
     print(">> set_project_summary_on_project")
-
-    data_pops = revert_populations_to_pop(summary['populations'])
-
-    project.data["pops"] = data_pops
-    project.data["npops"] = len(data_pops)
-
     project.name = summary["name"]
-
-    if not project.settings:
-        project.settings = op.Settings()
-
     startYear = summary['startYear']
     endYear = summary['endYear']
     project.settings.start = startYear
