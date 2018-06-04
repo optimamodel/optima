@@ -249,19 +249,8 @@ def clear_project_data(project):
 
 
 def set_project_summary_on_project(project, summary):
-
     print(">> set_project_summary_on_project")
-
-    data_pops = revert_populations_to_pop(summary['populations'])
-
-    project.data["pops"] = data_pops
-    project.data["npops"] = len(data_pops)
-
     project.name = summary["name"]
-
-    if not project.settings:
-        project.settings = op.Settings()
-
     startYear = summary['startYear']
     endYear = summary['endYear']
     project.settings.start = startYear

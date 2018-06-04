@@ -504,15 +504,9 @@ def create_project_with_spreadsheet_download(user_id, project_summary):
 
     project = op.Project(name=project_summary["name"])
     project.uid = project_entry.id
-
-    data_pops = parse.revert_populations_to_pop(project_summary["populations"])
-    project.data["pops"] = data_pops
-    project.data["npops"] = len(data_pops)
-
     save_project(project)
 
-    new_project_template = secure_filename(
-        "{}.xlsx".format(project_summary['name']))
+    new_project_template = secure_filename("%s.xlsx" % project_summary['name'])
     path = templatepath(new_project_template)
     op.makespreadsheet(path, pops=project_summary['populations'], datastart=project_summary['startYear'], dataend=project_summary['endYear'])
 
@@ -534,11 +528,6 @@ def create_project(user_id, project_summary):
 
     project = op.Project(name=project_summary["name"])
     project.uid = project_entry.id
-
-    data_pops = parse.revert_populations_to_pop(project_summary["populations"])
-    project.data["pops"] = data_pops
-    project.data["npops"] = len(data_pops)
-
     save_project(project)
 
     return {'projectId': str(project.uid)}
