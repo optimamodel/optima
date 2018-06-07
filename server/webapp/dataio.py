@@ -1098,6 +1098,11 @@ def load_result_mpld3_graphs(result_id=None, which=None, zoom=None, startYear=No
 
 
 def download_figures(result_id=None, which=None, filetype=None, index=None):
+    # Super kludgy, advanced switch gets stuck here instead of in a separate variable
+    if 'advanced' in which:
+#        advanced = True
+        which.remove("advanced")
+    
     result = load_result_by_id(result_id, which)
     dirname = upload_dir_user(TEMPLATEDIR)
     if not dirname:
