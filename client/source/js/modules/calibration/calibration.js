@@ -414,10 +414,10 @@ define(['angular', 'underscore'], function (angular, _) {
       modalService.choice(
         refreshparsetandprev,
         refreshparsetwithoutprev,
-        'Use the values from the uploaded databook',
+        'Use the values from the uploaded spreadsheet',
         'Use the values entered in the calibration',
         'What values would you like to use to for initial HIV prevalence?',
-        'Reload data from databook to this parameter set'
+        'Reload values from spreadsheet to this parameter set'
       );
     };
 
