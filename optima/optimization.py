@@ -6,9 +6,11 @@ Version: 2017jun04
 
 from optima import OptimaException, Link, Multiresultset, ICER, asd, getresults # Main functions
 from optima import printv, dcp, odict, findinds, today, getdate, uuid, objrepr, promotetoarray, findnearest, sanitize, inclusiverange # Utilities
-from numpy import zeros, ones, empty, arange, maximum, array, inf, isfinite, argmin, argsort, nan, floor, concatenate, exp
+
+from numpy import zeros, ones, empty, arange, array, inf, isfinite, argmin, argsort, nan, floor, concatenate, exp
 from numpy.random import random, seed
 from time import time
+import optima as op # Used by minmoney, at some point should make syntax consistent
 
 ################################################################################################################################################
 ### The container class
@@ -1033,8 +1035,6 @@ def minmoney(project=None, optim=None, tvec=None, verbose=None, maxtime=None, ma
             }
 
     #%% Preliminaries
-    import optima as op
-    import pylab as pl
     start = op.tic()
     
     # Set parameters
@@ -1047,7 +1047,8 @@ def minmoney(project=None, optim=None, tvec=None, verbose=None, maxtime=None, ma
     refine_steps = [0.0, 0.5, 0.8, 0.9, 0.95, 0.99]  # During refinement, factor by which to scale programs
     refine_keep  = 0.5 # During refinement, proportion of difference to reallocate to other programs
     factor       = 1e6 # Units to scale printed out budget numbers
-    animate      = True # Whether or not to animate at the end
+    animate      = False # Whether or not to animate at the end
+    if animate: import pylab as pl
 
     
     #%% Definitions
