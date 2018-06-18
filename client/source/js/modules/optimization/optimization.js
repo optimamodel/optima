@@ -295,6 +295,8 @@ define(['angular', 'ui.router'], function (angular) {
           $scope.task_id = response.data.task_id;
           if (response.data.status === 'started') {
             $scope.statusMessage = 'Optimization started.';
+            $scope.elapsedTime = 0;
+            var timer = setInterval(function(){$scope.elapsedTime++}, 1000);
             initPollOptimizations();
           } else if (response.data.status === 'blocked') {
             $scope.statusMessage = 'Another calculation on this project is already running.'
@@ -311,15 +313,12 @@ define(['angular', 'ui.router'], function (angular) {
             var calcState = response.data;
             if (calcState.status === 'completed') {
               $scope.statusMessage = 'Loading graphs...';
+              clearInterval(timer);
               toastr.success('Optimization completed');
               getOptimizationGraphs();
             } else if (calcState.status === 'started') {
               $scope.task_id = calcState.task_id;
-              var start = new Date(calcState.start_time);
-              var now = new Date(calcState.current_time);
-              var diff = now.getTime() - start.getTime();
-              var seconds = parseInt(diff / 1000);
-              $scope.statusMessage = "Optimization running for " + seconds + " s";
+              $scope.statusMessage = "Optimization running for " + $scope.elapsedTime + " s";
             } else {
               $scope.statusMessage = 'Optimization failed';
               $scope.state.isRunnable = true;

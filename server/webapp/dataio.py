@@ -504,15 +504,9 @@ def create_project_with_spreadsheet_download(user_id, project_summary):
 
     project = op.Project(name=project_summary["name"])
     project.uid = project_entry.id
-
-    data_pops = parse.revert_populations_to_pop(project_summary["populations"])
-    project.data["pops"] = data_pops
-    project.data["npops"] = len(data_pops)
-
     save_project(project)
 
-    new_project_template = secure_filename(
-        "{}.xlsx".format(project_summary['name']))
+    new_project_template = secure_filename("%s.xlsx" % project_summary['name'])
     path = templatepath(new_project_template)
     op.makespreadsheet(path, pops=project_summary['populations'], datastart=project_summary['startYear'], dataend=project_summary['endYear'])
 
@@ -534,11 +528,6 @@ def create_project(user_id, project_summary):
 
     project = op.Project(name=project_summary["name"])
     project.uid = project_entry.id
-
-    data_pops = parse.revert_populations_to_pop(project_summary["populations"])
-    project.data["pops"] = data_pops
-    project.data["npops"] = len(data_pops)
-
     save_project(project)
 
     return {'projectId': str(project.uid)}
@@ -615,15 +604,13 @@ def save_project_as_new(project, user_id):
         # For results that should be cached, create or update a Postgres 
         # record for the result.
         if 'scenarios' in name: 
-            update_or_create_result_record_by_id(result, project.uid, None, 
-                'scenarios')
+            update_or_create_result_record_by_id(result, project.uid, None, 'scenarios')
         if 'optim' in name:     
-            update_or_create_result_record_by_id(result, project.uid, None, 
-                'optimization')
-        if 'parset' in name:    
-            update_or_create_result_record_by_id(result, project.uid, 
-                project.parsets[result.parsetname].uid, 
-                'calibration')
+            update_or_create_result_record_by_id(result, project.uid, None, 'optimization')
+        if 'parset' in name:   
+            try:    parset_uid = project.parsets[result.parsetname].uid # Try to get this, but don't worry if it fails
+            except: parset_uid = None
+            update_or_create_result_record_by_id(result, project.uid, parset_uid, 'calibration')
             
     # Commit the Postgres changes.
     db.session.commit()
@@ -1085,7 +1072,11 @@ def download_result_data(result_id):
 def load_result_by_optimization(project, optimization):
 
     result_name = "optim-" + optimization.name
-    parset_id = project.parsets[optimization.parsetname].uid
+    try:
+        parset_id = project.parsets[optimization.parsetname].uid # Try to extract the 
+    except:
+        print('>> Warning, optimization parset "%s" not in project parsets: %s; reverting to default "%s"' % (optimization.parsetname, project.parsets.keys(), project.parset().name))
+        parset_id = project.parset().uid # Just get the default
 
     print(">> load_result_by_optimization '%s'" % result_name)
     result_records = db.session.query(ResultsDb).filter_by(
@@ -1109,6 +1100,11 @@ def load_result_mpld3_graphs(result_id=None, which=None, zoom=None, startYear=No
 
 
 def download_figures(result_id=None, which=None, filetype=None, index=None):
+    # Super kludgy, advanced switch gets stuck here instead of in a separate variable
+    if 'advanced' in which:
+#        advanced = True
+        which.remove("advanced")
+    
     result = load_result_by_id(result_id, which)
     dirname = upload_dir_user(TEMPLATEDIR)
     if not dirname:

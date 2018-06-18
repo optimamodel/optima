@@ -863,7 +863,7 @@ def tvtreatfail(project, **kwargs):
     kwargs['limits'] = (0, 'maxrate')
     addparameter(project=project, copyfrom=copyfrom, short=short, **kwargs)
     for ps in project.parsets.values():
-        ps.pars['regainvs'].y[:] = array([[.2]]) # Assume 20% are shifted
+        ps.pars['regainvs'].y[:] = array([[1.]]) # Assume 100% are shifted (for backward compatability)
         ps.pars['regainvs'].t[:] = array([[2017.]]) 
     
     removeparameter(project, short='treatfail', datashort='treatfail')
