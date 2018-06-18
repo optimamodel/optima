@@ -528,6 +528,8 @@ define(['angular', 'underscore'], function (angular, _) {
           if (status === 'started') {
             $scope.statusMessage = 'Autofit started.';
             $scope.secondsRun = 0;
+            $scope.elapsedTime = 0;
+            var timer = setInterval(function(){$scope.elapsedTime++}, 1000);
             initPollAutoCalibration();
           } else if (status === 'blocked') {
             $scope.statusMessage = 'Another calculation on this project is already running.'
@@ -546,6 +548,7 @@ define(['angular', 'underscore'], function (angular, _) {
           var status = response.data.status;
           if (status === 'completed') {
             $scope.statusMessage = '';
+            clearInterval(timer);
             toastr.success('Autofit completed');
             $scope.getCalibrationGraphs();
 			rpcService
@@ -553,11 +556,7 @@ define(['angular', 'underscore'], function (angular, _) {
 			    'push_project_to_undo_stack', 
 				[projectService.project.id]);
           } else if (status === 'started') {
-            var start = new Date(response.data.start_time);
-            var now = new Date(response.data.current_time);
-            var diff = now.getTime() - start.getTime();
-            var seconds = parseInt(diff / 1000);
-            $scope.statusMessage = "Autofit running for " + seconds + " s";
+            $scope.statusMessage = "Autofit running for " + $scope.elapsedTime + " s";
           } else {
             $scope.statusMessage = 'Autofit failed';
             $scope.state.isRunnable = true;
