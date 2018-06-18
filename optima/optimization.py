@@ -7,8 +7,8 @@ Version: 2017jun04
 from optima import OptimaException, Link, Multiresultset, ICER, asd, getresults # Main functions
 from optima import printv, dcp, odict, findinds, today, getdate, uuid, objrepr, promotetoarray, findnearest, sanitize, inclusiverange # Utilities
 
-from numpy import zeros, ones, empty, arange, array, inf, isfinite, argmin, argsort, nan, floor, concatenate, exp
-from numpy.random import random, seed
+from numpy import zeros, ones, empty, arange, array, inf, isfinite, argmin, argsort, nan, floor, concatenate, exp, sqrt, logical_and
+from numpy.random import random, seed, randint
 from time import time
 import optima as op # Used by minmoney, at some point should make syntax consistent
 
@@ -1058,7 +1058,7 @@ def minmoney(project=None, optim=None, tvec=None, verbose=None, maxtime=None, ma
         for key in target.keys():
             ax_dist = max(0, this[key]-target[key])
             each_dist.append(ax_dist)
-        dist = pl.sqrt(sum(pl.array(each_dist)**2))
+        dist = sqrt(sum(array(each_dist)**2))
         return dist
         
     def met(dist):
@@ -1267,7 +1267,7 @@ def minmoney(project=None, optim=None, tvec=None, verbose=None, maxtime=None, ma
             success_budgets = [budgetvec]
             for t,throw in enumerate(range(n_throws-1)): # -1 since include current budget
                 key = 'Throw %s' % (t+2) # since starting with current
-                vec = pl.rand(nprogs)
+                vec = random(nprogs)
                 vec /= vec.sum() # Normalize
                 this_budget = op.dcp(allocated_budget) + vec*remaining_budget
                 this_budget /= this_budget.sum()
@@ -1304,18 +1304,18 @@ def minmoney(project=None, optim=None, tvec=None, verbose=None, maxtime=None, ma
         printv('Local search...', 2, verbose)
         for r_s,refine_step in enumerate(refine_steps):
             movie.append('Local search %s (%s/%s)' % (refine_step, r_s+1, len(refine_steps)))
-            refine_vec = pl.ones(len(budgetvec))
+            refine_vec = ones(len(budgetvec))
             r = 0
             still_choices = True
             while r <= n_refine and still_choices:
                 r += 1
                 trial_vec = op.dcp(budgetvec)
-                choices = op.findinds(pl.logical_and(refine_vec, trial_vec)) # It's not a choice if either is zero
+                choices = op.findinds(logical_and(refine_vec, trial_vec)) # It's not a choice if either is zero
                 if not len(choices):
                     still_choices = False
                 else:
                     # Choose program and remake vector
-                    ind = choices[pl.randint(len(choices))]
+                    ind = choices[randint(len(choices))]
                     this_prog = trial_vec[ind]
                     trial_vec[ind] = 0 # Set to zero temporarily
                     new_prog = this_prog*refine_step
