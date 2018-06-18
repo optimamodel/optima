@@ -81,6 +81,42 @@
         </div>
       </div>
 
+      <div style="display: table-row;">
+        <div style="display: table-cell; padding-right: 50px">
+          <div
+            style="
+              display: flex;
+              align-items: center;
+              padding-top: 10px;
+              padding-bottom: 15px;">
+
+            <button
+              type="submit"
+              class="btn __green __m"
+              ng-disabled="calibrateForm.$invalid"
+              ng-click="updateGraphYears()">
+              Display plots
+            </button>
+
+            &nbsp; from &nbsp;
+
+            <select
+              ng-model="state.startPlot"
+              ng-options="year for year in years"></select>
+
+            &nbsp; to &nbsp;
+
+            <select
+              ng-model="state.endPlot"
+              ng-options="year for year in years"></select>
+
+            <icon action="undo" click="undo()"/>
+            <icon action="redo" click="redo()"/>
+
+          </div>
+        </div>
+      </div>
+
     </div>
 
     <style>
