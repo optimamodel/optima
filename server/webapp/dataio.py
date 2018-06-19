@@ -1236,6 +1236,41 @@ def save_parameters(project_id, parset_id, parameters):
     update_project_with_fn(project_id, update_project_fn)
 
 
+def change_year_graphs(project_id, parset_id, which=None, parameters=None, advanced_pars=None, zoom=None, startPlot=None, endPlot=None):
+
+    print(">> change_year_graphs args project_id %s" % project_id)
+    print(">> change_year_graphs args parset_id %s" % parset_id)
+    project = load_project(project_id)
+    parset = parse.get_parset_from_project(project, parset_id)
+
+    result_name = "parset-" + parset.name
+    print(">> change_year_graphs result-name '%s'" % result_name)
+    result = load_result(project_id, name=result_name, which=which)
+    if result:
+        if not which:
+            if hasattr(result, 'which'):
+                print(">> change_year_graphs load stored which of parset '%s'" % parset.name)
+                which = result.which
+
+    if parameters is not None:
+        print(">> load_parset_graphs updating parset '%s'" % parset.name)
+        parset.modified = op.today()
+        parset.start = startPlot
+        parset.end = endPlot
+        parse.set_parameters_on_parset(parameters, parset)
+        save_project(project)
+
+    if result is None:
+        print(">> no result? ")
+        # Error?
+
+    graph_dict = make_mpld3_graph_dict(result=result, which=which, zoom=zoom, startYear=startPlot, endYear=endPlot)
+
+    return {
+        "parameters": parse.get_parameters_from_parset(parset, advanced=advanced_pars),
+        "graphs": graph_dict["graphs"]
+    }
+
 
 def load_parset_graphs(project_id, parset_id, calculation_type, which=None, parameters=None, advanced_pars=None, zoom=None, startYear=None, endYear=None):
 

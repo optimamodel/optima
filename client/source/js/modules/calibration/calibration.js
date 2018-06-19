@@ -62,7 +62,8 @@ define(['angular', 'underscore'], function (angular, _) {
           var defaultindex = $scope.years.length - extrayears;
           $scope.state.startYear = $scope.years[0];
           $scope.state.endYear = $scope.years[defaultindex];
-
+          $scope.state.startPlot = $scope.state.startYear;
+          $scope.state.endPlot = $scope.state.endYear;
           // Fetching list of parsets for open project
           rpcService
             .rpcRun(
@@ -175,9 +176,48 @@ define(['angular', 'underscore'], function (angular, _) {
             console.log('saveAndUpdateGraphs', response.graphs);
             $scope.statusMessage = '';
             $scope.state.isRunnable = true;
+            $scope.state.startPlot = $scope.state.startYear;
+            $scope.state.endPlot = $scope.state.endYear;
             rpcService
               .rpcRun(
                 'push_project_to_undo_stack', 
+                [projectService.project.id]);
+          },
+          function(response) {
+            $scope.state.isRunnable = false;
+            toastr.error('Error in loading graphs');
+          });
+    };
+
+    $scope.updateGraphYears = function() {
+      if (!$scope.parameters) {
+        return;
+      }
+      console.log('updateGraphYears', $scope.parameters);
+      rpcService
+        .rpcRun(
+          'change_year_graphs',
+          [
+            projectService.project.id,
+            $scope.state.parset.id,
+            getSelectors(),
+            $scope.parameters,
+            $scope.state.advancedPars
+          ],
+          {
+            startPlot: $scope.state.startPlot,
+            endPlot: $scope.state.endPlot
+          })
+        .then(
+          function(response) {
+            loadParametersAndGraphs(response.data);
+            toastr.success('Loaded graphs');
+            console.log('updateGraphYears', response.graphs);
+            $scope.statusMessage = '';
+            $scope.state.isRunnable = true;
+            rpcService
+              .rpcRun(
+                'push_project_to_undo_stack',
                 [projectService.project.id]);
           },
           function(response) {
