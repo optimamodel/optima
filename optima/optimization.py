@@ -1345,81 +1345,80 @@ def minmoney(project=None, optim=None, tvec=None, verbose=None, maxtime=None, ma
                         printv('   Target not met, rejecting...', 2, verbose)
                         refine_vec[ind] = 0
             
-        op.toc(start)
+    
+    #%% Tidy up
+    op.toc(start)
+    newbudget = op.dcp(origbudget)
+    newbudget[optiminds] = budgetvec
+    
+    #%% Animation
+    if animate:
+        # Plot setup
+        pl_ax = {'x':'death','y':'inci'} # "plot axes"
+        target_color = (0.1,0.7,0.3)
         
+        def init_fig():
+            fig = pl.figure(facecolor='w')
+            pl.xlabel(pl_ax['x'])
+            pl.ylabel(pl_ax['y'])
+            pl.fill_between([0,res_targ[pl_ax['x']]], res_targ[pl_ax['y']]*pl.ones(2), color=target_color) # Plot target
+            return fig
         
-        #%% Tidy up
-        newbudget = op.dcp(origbudget)
-        newbudget[optiminds] = budgetvec
+        def plot_point(res, color=None, budget=None, denom=None, marker=None):
+            ''' Plot a single budget-outcome point '''
+            if marker is None: marker = 'o'
+            if denom is None: denom = origtotalbudget
+            pl.scatter(res[pl_ax['x']], res[pl_ax['y']], color=color, marker=marker) # Plot current
+            return None
         
-        #%% Animation
-        if animate:
-            # Plot setup
-            pl_ax = {'x':'death','y':'inci'} # "plot axes"
-            target_color = (0.1,0.7,0.3)
-            
-            def init_fig():
-                fig = pl.figure(facecolor='w')
-                pl.xlabel(pl_ax['x'])
-                pl.ylabel(pl_ax['y'])
-                pl.fill_between([0,res_targ[pl_ax['x']]], res_targ[pl_ax['y']]*pl.ones(2), color=target_color) # Plot target
-                return fig
-            
-            def plot_point(res, color=None, budget=None, denom=None, marker=None):
-                ''' Plot a single budget-outcome point '''
-                if marker is None: marker = 'o'
-                if denom is None: denom = origtotalbudget
-                pl.scatter(res[pl_ax['x']], res[pl_ax['y']], color=color, marker=marker) # Plot current
-                return None
-            
-            def fix_lims():
-                ''' Just readjust the axis limits '''
-                xl = pl.xlim()
-                yl = pl.ylim()
-                pl.xlim((0,xl[1]))
-                pl.ylim((0,yl[1]))
-                return None
-            
-            def flush(rate=20):
-                ''' Flush the current plotting buffer '''
-                pl.pause(1/float(rate))
-                return None
-            
-            # Calculate limits
-            init_fig()
-            xmax = -1
-            ymax = -1
-            for frame in movie:
-                try:
-                    xmax = max(xmax, frame[pl_ax['x']])
-                    ymax = max(ymax, frame[pl_ax['y']])
-                except:
-                    pass
-            pl.xlim((0,xmax))
-            pl.ylim((0,ymax))
-            
-            # Plot
-            npoints = len(movie)
-            colors = op.vectocolor(range(npoints))
-            title_text = ''
-            for i in range(npoints):
-                if isinstance(movie[i], basestring):
-                    title_text = movie[i]
-                else:
-                    plot_point(movie[i], color=colors[i])
-                pl.title(title_text + ' (%s/%s)' % (i+1, npoints))
-                if not i%10:
-                    flush()
-                    
-            pl.figure(facecolor='w')
-            pl.subplot(1,2,1)
-            pl.pie(origbudget[:], labels=origbudget.keys())
-            pl.axis('equal')
-            pl.title('Original')
-            pl.subplot(1,2,2)
-            pl.pie(newbudget[:], labels=newbudget.keys())
-            pl.axis('equal')
-            pl.title('Optimal')
+        def fix_lims():
+            ''' Just readjust the axis limits '''
+            xl = pl.xlim()
+            yl = pl.ylim()
+            pl.xlim((0,xl[1]))
+            pl.ylim((0,yl[1]))
+            return None
+        
+        def flush(rate=20):
+            ''' Flush the current plotting buffer '''
+            pl.pause(1/float(rate))
+            return None
+        
+        # Calculate limits
+        init_fig()
+        xmax = -1
+        ymax = -1
+        for frame in movie:
+            try:
+                xmax = max(xmax, frame[pl_ax['x']])
+                ymax = max(ymax, frame[pl_ax['y']])
+            except:
+                pass
+        pl.xlim((0,xmax))
+        pl.ylim((0,ymax))
+        
+        # Plot
+        npoints = len(movie)
+        colors = op.vectocolor(range(npoints))
+        title_text = ''
+        for i in range(npoints):
+            if isinstance(movie[i], basestring):
+                title_text = movie[i]
+            else:
+                plot_point(movie[i], color=colors[i])
+            pl.title(title_text + ' (%s/%s)' % (i+1, npoints))
+            if not i%10:
+                flush()
+                
+        pl.figure(facecolor='w')
+        pl.subplot(1,2,1)
+        pl.pie(origbudget[:], labels=origbudget.keys())
+        pl.axis('equal')
+        pl.title('Original')
+        pl.subplot(1,2,2)
+        pl.pie(newbudget[:], labels=newbudget.keys())
+        pl.axis('equal')
+        pl.title('Optimal')
     
     # Impose lower limits only
     for key in optim.constraints['min']:
