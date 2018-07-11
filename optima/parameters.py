@@ -40,6 +40,7 @@ class Parameterset(object):
         self.budget = budget # Store the budget that generated the parset, if any
         self.start = start # Store the startyear of the parset
         self.end = end # Store the endyear of the parset
+        self.isfixed = None # Store whether props are fixed or not
         
     
     def __repr__(self):
@@ -122,7 +123,9 @@ class Parameterset(object):
         or a list of strings, to specify which of ['dx', 'tx', 'supp']
         you want to fix.
         '''
-        if fix is None: fix = True # By default, do fix
+        if fix is None:
+            fix = True # By default, do fix
+        self.isfixed = fix
         if   which is None:  which = ['tx','supp']
         elif which is 'all': which = ['dx','tx','supp']
         else:                which = promotetolist(which)
