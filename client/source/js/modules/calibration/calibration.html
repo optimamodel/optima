@@ -115,9 +115,14 @@
           <br>
           <div class="art-projection-assumptions">
             &nbsp;&nbsp;<b>ART projection assumption</b><help ref="art-projection-assumptions"/><br>
-            &nbsp;&nbsp;<button class="btn" ng-click="constantProportionART()">Proportion</button>
             &nbsp;&nbsp;
-            <button class="btn" ng-click="constantNumberART()">Number</button>
+            <input type="radio" id="ARTProportion" name="artAssumption" value="proportion"
+            ng-click="constantProportionART()">
+            <label for="ARTProportion">Proportion</label>
+            &nbsp;&nbsp;
+            <input type="radio" id="ARTConstant" name="artAssumption" value="constant"
+            ng-click="constantNumberART()">
+            <label for="ARTConstant">Number</label>
           </div>
           <br>
           <div class="automatic-calibration">
