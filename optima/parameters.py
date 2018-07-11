@@ -125,7 +125,7 @@ class Parameterset(object):
         '''
         if fix is None:
             fix = True # By default, do fix
-        self.isfixed = fix
+        self.isfixed = fix # Store fixed status
         if   which is None:  which = ['tx','supp']
         elif which is 'all': which = ['dx','tx','supp']
         else:                which = promotetolist(which)
