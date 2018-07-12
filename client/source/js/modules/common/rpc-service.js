@@ -108,28 +108,32 @@ define(['angular' ], function (angular) {
         if (fileType) {
           tag += 'accept="' + fileType + '" '
         }
-        tag += ">";
+        tag += " multiple>";
         var deferred = $q.defer();
         angular
           .element(tag)
           .change(function(event) {
-            $upload
-              .upload({
-                url: '/api/upload',
-                fields: {
-                  name: name,
-                  args: JSON.stringify(args),
-                  kwargs: JSON.stringify(kwargs)
-                },
-                file: event.target.files[0]
-              })
-              .then(
-                function(response) {
-                  deferred.resolve(response);
-                },
-                function(response) {
-                  deferred.reject(response);
-                });
+            for (var i = 0; i < this.files.length; i++) {
+              var currentFile = this.files[i];
+              $upload
+                .upload({
+                  url: '/api/upload',
+                  fields: {
+                    name: name,
+                    args: JSON.stringify(args),
+                    kwargs: JSON.stringify(kwargs)
+                  },
+                  file: currentFile
+                })
+                .then(
+                  function(response) {
+                    deferred.resolve(response);
+                  },
+                  function(response) {
+                    deferred.reject(response);
+                  }
+                );
+            }
           })
           .click();
         return deferred.promise;
