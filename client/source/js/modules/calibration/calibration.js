@@ -141,6 +141,16 @@ define(['angular', 'underscore'], function (angular, _) {
             console.log('getCalibrationGraphs', response.graphs);
             $scope.statusMessage = '';
             $scope.state.isRunnable = true;
+            rpcService
+              .rpcRun('get_isfixed',[projectService.project.id,$scope.state.parset.id])
+              .then(function(response) {
+                var isfixed = response.data.isfixed;
+                if (isfixed) {
+                  document.getElementById("ARTProportion").checked = true;
+                } else {
+                  document.getElementById("ARTConstant").checked = true;
+                }
+              });
           },
           function(response) {
             $scope.state.isRunnable = false;
@@ -498,17 +508,6 @@ define(['angular', 'underscore'], function (angular, _) {
               $scope.statusMessage = 'Checking for pre-calculated figures...';
               $scope.getCalibrationGraphs();
             }
-            rpcService
-              .rpcRun(
-                'get_isfixed',[projectService.project.id,$scope.state.parset.id])
-              .then(function(response) {
-                var isfixed = response.data.isfixed;
-                if (isfixed) {
-                  document.getElementById("ARTProportion").checked = true;
-                } else {
-                  document.getElementById("ARTConstant").checked = true;
-                }
-              });
           });
       } else {
         $scope.state.isRunnable = true;
