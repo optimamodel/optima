@@ -129,7 +129,7 @@ def make_mpld3_graph_dict(result=None, which=None, zoom=None, startYear=None, en
         n = len(graph_selectors['keys'])
         for i in range(n):
             key = graph_selectors['keys'][i]
-            if key.startswith(normal_default_keys) and ('total' in key or 'stacked' in key):
+            if key.startswith(normal_default_keys) and ('stacked' in key) and ('numincibypop' not in key):
                 graph_selectors['defaults'][i] = True
     selectors = convert_to_selectors(graph_selectors)
 
