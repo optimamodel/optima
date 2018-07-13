@@ -109,8 +109,15 @@ def make_mpld3_graph_dict(result=None, which=None, zoom=None, startYear=None, en
         else:
             which = ["default"]
     else:
-        advanced = False
-        if 'advanced' in which:
+        if 'advanced' not in which:
+            advanced = False
+            which = [w.split("-")[0] for w in which]
+            def remove_duplicates(seq):
+                seen = set()
+                seen_add = seen.add
+                return [x for x in seq if not (x in seen or seen_add(x))]
+            which = remove_duplicates(which)
+        else:
             advanced = True
             which.remove('advanced')
 
@@ -125,12 +132,16 @@ def make_mpld3_graph_dict(result=None, which=None, zoom=None, startYear=None, en
             if normal_graph_selectors["defaults"][i]:
                 normal_default_keys.append(normal_graph_selectors["keys"][i])
         normal_default_keys = tuple(normal_default_keys)
-        # rough and dirty defaults for missing defaults in advanced
+        # rough and dirty defaults for missing defaults in advanced - convert 'numinci' to 'numinci-stacked', for example
         n = len(graph_selectors['keys'])
         for i in range(n):
             key = graph_selectors['keys'][i]
             if key.startswith(normal_default_keys) and ('stacked' in key) and ('numincibypop' not in key):
                 graph_selectors['defaults'][i] = True
+            if (key.split("-")[0] in which) and (('stacked' in key) and ('prev' not in key)):
+                which[which.index(key.split("-")[0])] = key
+        if 'prev' in which:
+            which[which.index('prev')] = 'prev-population'
     selectors = convert_to_selectors(graph_selectors)
 
     default_which = []
