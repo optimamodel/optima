@@ -1204,6 +1204,11 @@ def fixproptx_off(project_id, parset_id):
     fixproptx(project_id, parset_id, fix=False)
     return None
 
+def get_isfixed(project_id, parset_id):
+    ''' Read whether constant proportion is off or on for ART '''
+    project = load_project(project_id)
+    parset = parse.get_parset_from_project(project, parset_id)
+    return {"isfixed": parset.isfixed}
 
 def load_parset_summaries(project_id):
     project = load_project(project_id)
