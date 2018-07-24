@@ -402,20 +402,21 @@ define(
             });
         };
 
-        scope.switchGraphs = function() {
+        scope.toggleAdvanced = function() {
           scope.graphs.advanced = !scope.graphs.advanced;
           var resultId = scope.graphs.resultId;
           if (_.isUndefined(resultId)) {
             return;
           }
-          console.log('switchGraphs', scope.graphs.advanced, 'reusltId', scope.graphs.resultId);
-          var which = ["default"];
+          console.log('toggleAdvanced', scope.graphs.advanced, 'resultId', scope.graphs.resultId);
+          var which = scope.getSelectors();
+          var zoom = scope.state.slider2.currentValue;
           if (scope.graphs.advanced) {
             which.push("advanced");
           }
           rpcService
             .rpcRun('load_result_mpld3_graphs',
-              [resultId, which])
+              [resultId, which, zoom])
             .then(function(response) {
               scope.graphs = response.data.graphs;
               toastr.success('Graphs updated');
@@ -474,9 +475,9 @@ define(
         );
 
         // WARNING -- do we need this!?
-        scope.toggleAdvanced = function() {
+        /*scope.toggleAdvanced = function() {
           scope.switchGraphs();
-        };
+        };*/
 
         // Or this?
         scope.defaultSelectors = function() {
