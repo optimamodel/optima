@@ -64,7 +64,7 @@ def setmigrations(which='migrations'):
         ('2.6.11',('2.6.12','2018-05-23', changehivdeathname,'Change the name of the relative HIV-related death rate')),
         ('2.6.12',('2.7',   '2018-05-25', tvtreatfail,       'Redo treatment failure and add regimen switching/adherence support')),
         ('2.7',   ('2.7.1', '2018-06-17', None,              'Modified minimize money algorithm')),
-        ('2.7.1', ('2.7.2', '2018-07-11', addfixedattr,      'Store props fixedness')),
+        ('2.7.1', ('2.7.2', '2018-07-24', addfixedattr,      'Store whether or not proportions are fixed')),
         ])
     
     
