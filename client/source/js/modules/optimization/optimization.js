@@ -216,7 +216,7 @@ define(['angular', 'ui.router'], function (angular) {
       }
 
       var names = _.pluck($scope.state.optimizations, 'name');
-      var name = $scope.state.optimization.name;
+      var name = optimization.name;
       copy(rpcService.getUniqueName(name, names));
     };
 
@@ -238,7 +238,7 @@ define(['angular', 'ui.router'], function (angular) {
         _.noop,
         'Yes, remove this optimization',
         'No',
-        'Are you sure you want to permanently remove optimization "' + $scope.state.optimization.name + '"?',
+        'Are you sure you want to permanently remove optimization "' + deleteOptimization.name + '"?',
         'Delete optimization'
       );
     };

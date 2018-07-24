@@ -215,7 +215,7 @@ def makeplots(results=None, toplot=None, die=False, verbose=2, plotstartyear=Non
     ## Add cascade plot(s) with bars
     if 'cascadebars' in toplot:
         toplot.remove('cascadebars') # Because everything else is passed to plotepi()
-        cascadebarplots = plotcascade(results, die=die, plotstartyear=plotstartyear, plotendyear=plotendyear, fig=fig, asbars=True, **kwargs)
+        cascadebarplots = plotcascade(results, die=die, fig=fig, asbars=True, **kwargs)
         allplots.update(cascadebarplots)
     
     ## Add deaths by CD4 plot -- WARNING, only available if results includes raw

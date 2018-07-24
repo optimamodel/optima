@@ -64,6 +64,7 @@ def setmigrations(which='migrations'):
         ('2.6.11',('2.6.12','2018-05-23', changehivdeathname,'Change the name of the relative HIV-related death rate')),
         ('2.6.12',('2.7',   '2018-05-25', tvtreatfail,       'Redo treatment failure and add regimen switching/adherence support')),
         ('2.7',   ('2.7.1', '2018-06-17', None,              'Modified minimize money algorithm')),
+        ('2.7.1', ('2.7.2', '2018-07-24', addfixedattr,      'Store whether or not proportions are fixed')),
         ])
     
     
@@ -880,6 +881,17 @@ def tvtreatfail(project, **kwargs):
     
     
     return None
+
+
+def addfixedattr(project, **kwargs):
+    """
+    Migration between Optima 2.7.1 and 2.7.2: add fixedness attribute
+    """
+    
+    for ps in project.parsets.values():
+        if abs(ps.pars['fixproptx'].t - 2100) < 0.1:
+            ps.isfixed = False
+        else: ps.isfixed = True
 
 
 #def redoprograms(project, **kwargs):
