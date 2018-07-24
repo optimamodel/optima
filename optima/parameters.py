@@ -119,7 +119,7 @@ class Parameterset(object):
         To fix:   P.parset().fixprops()
         To unfix: P.parset().fixprops(False)
         
-        You can also specify a start year. "fix" can also be a string
+        You can also specify a start year. "which" can be a string
         or a list of strings, to specify which of ['dx', 'tx', 'supp']
         you want to fix.
         '''
