@@ -1135,6 +1135,7 @@ class CCOF(object):
         
         # Get the appropriate sample type
         for parname, parvalue in self.ccopars.iteritems():
+            parvalue = promotetoarray(parvalue)
             if parname is not 't' and len(parvalue):
                 ccopars_sample[parname] = zeros(len(parvalue))
                 for j in range(len(parvalue)):
@@ -1241,8 +1242,19 @@ class Costcov(CCOF):
 
     def function(self, x, ccopar, popsize, eps=None):
         '''Returns coverage in a given year for a given spending amount.'''
-        u = array(ccopar['unitcost'])
-        s = array(ccopar['saturation'])
+
+        # Get the values that are always there
+        u = promotetoarray(ccopar['unitcost'])
+        s = promotetoarray(ccopar['saturation'])
+
+        # Get yield and pop adjustment factor, which are only sometimes there, use them to adjust unitcost
+        if ccopar.get('yield') and ccopar.get('yield') is not None:
+            yld = promotetoarray(ccopar['unitcost'])
+            u /= yld
+        if ccopar.get('popfactor') and ccopar.get('popfactor') is not None:
+            pf = promotetoarray(ccopar['popfactor'])
+            u *= pf
+
         if eps is None: eps = Settings().eps # Warning, use project-nonspecific eps
         if isnumber(popsize): popsize = array([popsize])
 
@@ -1257,8 +1269,19 @@ class Costcov(CCOF):
 
     def inversefunction(self, x, ccopar, popsize, eps=None):
         '''Returns coverage in a given year for a given spending amount.'''
-        u = array(ccopar['unitcost'])
-        s = array(ccopar['saturation'])
+
+        # Get the values that are always there
+        u = promotetoarray(ccopar['unitcost'])
+        s = promotetoarray(ccopar['saturation'])
+
+        # Get yield and pop adjustment factor, which are only sometimes there, use them to adjust unitcost
+        if ccopar.get('yield') and ccopar.get('yield') is not None:
+            yld = promotetoarray(ccopar['unitcost'])
+            u /= yld
+        if ccopar.get('popfactor') and ccopar.get('popfactor') is not None:
+            pf = promotetoarray(ccopar['popfactor'])
+            u *= pf
+
         if eps is None: eps = Settings().eps # Warning, use project-nonspecific eps
         if isnumber(popsize): popsize = array([popsize])
 

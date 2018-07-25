@@ -16,9 +16,10 @@ Version: 2016feb06
 tests = [
 #'loadprogramspreadsheet', # TEMPORARILY NON-FUNCTIONAL
 'demonstrateprogrammethods',
-'plotprogram',
+'addyield',
+#'plotprogram',
 'compareoutcomes',
-'reconcilepars',
+#'reconcilepars',
 ]
 
 
@@ -136,6 +137,27 @@ if 'demonstrateprogrammethods' in tests:
     
     done(t)
 
+
+
+## Add yield and population adjustment factors
+if 'addyield' in tests:
+
+    P = defaultproject('best',dorun=False)
+    
+    cov1 = P.progsets[-1].getprogcoverage(budget=P.progsets[-1].getdefaultbudget(),
+                      t=2016,
+                      parset=P.parsets['default'])
+    
+    P.progsets[-1].programs[0].costcovfn.ccopars['yield'] = .3
+    P.progsets[-1].programs[0].costcovfn.ccopars['popfactor'] = .2
+
+    cov2 = P.progsets[-1].getprogcoverage(budget=P.progsets[-1].getdefaultbudget(),
+                      t=2016,
+                      parset=P.parsets['default'])
+    
+    print cov1
+    print cov2
+    
 
 
 ## Try program plotting

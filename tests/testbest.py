@@ -47,14 +47,15 @@ T = tic()
 
 ## Make or load&migrate a project
 if 'standardrun' in tests:
+
     P = defaultproject('best',dorun=False)
-#    P.parset().fixprops(False)
-#    P.pars()['hivdeath'].y['PWID'] = 2.0 # Increase death rate for PWID
-#    P.runsim(debug=True, start=2000, end=2015)
-#    P.parset().usedataprops()
-#    P.parset().usedataprops(False)
-#    if runsensitivity: P.sensitivity()
-#    if doplot: pygui(P)
+    P.parset().fixprops(False)
+    P.pars()['hivdeath'].y['PWID'] = 2.0 # Increase death rate for PWID
+    P.runsim(debug=True, start=2000, end=2015)
+    P.parset().usedataprops()
+    P.parset().usedataprops(False)
+    if runsensitivity: P.sensitivity()
+    if doplot: pygui(P)
 
 ## Calibration
 if 'autocalib' in tests: 
