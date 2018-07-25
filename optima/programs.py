@@ -1247,16 +1247,18 @@ class Costcov(CCOF):
         u = promotetoarray(ccopar['unitcost'])
         s = promotetoarray(ccopar['saturation'])
 
-        # Get yield and pop adjustment factor, which are only sometimes there, use them to adjust unitcost
+        # Get yield which is only sometimes there, use to adjust unitcost
         if ccopar.get('yield') and ccopar.get('yield') is not None:
             yld = promotetoarray(ccopar['unitcost'])
             u /= yld
+
+        # Get popfactor which is only sometimes there, use to adjust popsize
+        popsize = promotetoarray(popsize)
         if ccopar.get('popfactor') and ccopar.get('popfactor') is not None:
             pf = promotetoarray(ccopar['popfactor'])
-            u *= pf
+            popsize *= pf
 
-        if eps is None: eps = Settings().eps # Warning, use project-nonspecific eps
-        if isnumber(popsize): popsize = array([popsize])
+        if eps is None: eps = Settings().eps # Warning, this uses project-nonspecific eps
 
         nyrs,npts = len(u),len(x)
         eps = array([eps]*npts)
@@ -1274,16 +1276,19 @@ class Costcov(CCOF):
         u = promotetoarray(ccopar['unitcost'])
         s = promotetoarray(ccopar['saturation'])
 
-        # Get yield and pop adjustment factor, which are only sometimes there, use them to adjust unitcost
+        # Get yield which is only sometimes there, use to adjust unitcost
         if ccopar.get('yield') and ccopar.get('yield') is not None:
             yld = promotetoarray(ccopar['unitcost'])
             u /= yld
+
+        # Get popfactor which is only sometimes there, use to adjust popsize
+        popsize = promotetoarray(popsize)
         if ccopar.get('popfactor') and ccopar.get('popfactor') is not None:
             pf = promotetoarray(ccopar['popfactor'])
-            u *= pf
+            popsize *= pf
+
 
         if eps is None: eps = Settings().eps # Warning, use project-nonspecific eps
-        if isnumber(popsize): popsize = array([popsize])
 
         nyrs,npts = len(u),len(x)
         eps = array([eps]*npts)
