@@ -16,7 +16,7 @@ Version: 2016feb06
 tests = [
 #'loadprogramspreadsheet', # TEMPORARILY NON-FUNCTIONAL
 'demonstrateprogrammethods',
-'addyield',
+'addpopfactor',
 #'plotprogram',
 'compareoutcomes',
 #'reconcilepars',
@@ -139,8 +139,8 @@ if 'demonstrateprogrammethods' in tests:
 
 
 
-## Add yield and population adjustment factors
-if 'addyield' in tests:
+## Add population adjustment factors
+if 'addpopfactor' in tests:
 
     P = defaultproject('best',dorun=False)
     
@@ -148,7 +148,6 @@ if 'addyield' in tests:
                       t=2016,
                       parset=P.parsets['default'])
     
-    P.progsets[-1].programs[0].costcovfn.ccopars['yield'] = .3
     P.progsets[-1].programs[0].costcovfn.ccopars['popfactor'] = .2
 
     cov2 = P.progsets[-1].getprogcoverage(budget=P.progsets[-1].getdefaultbudget(),

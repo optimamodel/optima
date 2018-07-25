@@ -1247,11 +1247,6 @@ class Costcov(CCOF):
         u = promotetoarray(ccopar['unitcost'])
         s = promotetoarray(ccopar['saturation'])
 
-        # Get yield which is only sometimes there, use to adjust unitcost
-        if ccopar.get('yield') and ccopar.get('yield') is not None:
-            yld = promotetoarray(ccopar['unitcost'])
-            u /= yld
-
         # Get popfactor which is only sometimes there, use to adjust popsize
         popsize = promotetoarray(popsize)
         if ccopar.get('popfactor') and ccopar.get('popfactor') is not None:
@@ -1275,11 +1270,6 @@ class Costcov(CCOF):
         # Get the values that are always there
         u = promotetoarray(ccopar['unitcost'])
         s = promotetoarray(ccopar['saturation'])
-
-        # Get yield which is only sometimes there, use to adjust unitcost
-        if ccopar.get('yield') and ccopar.get('yield') is not None:
-            yld = promotetoarray(ccopar['unitcost'])
-            u /= yld
 
         # Get popfactor which is only sometimes there, use to adjust popsize
         popsize = promotetoarray(popsize)
