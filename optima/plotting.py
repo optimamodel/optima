@@ -312,6 +312,12 @@ def plotepi(results, toplot=None, uncertainty=True, die=True, showdata=True, ver
         
         # Remove failed ones
         toplot = [thisplot for thisplot in toplot if None not in thisplot] # Remove a plot if datatype or plotformat is None
+
+        # Check if the figure will be saved to insert into a presentation or report
+        if  kwargs["for_report"]:
+            forreport = True
+            titlesize = 16
+            labelsize = 14
         
 
         ################################################################################################################
@@ -484,8 +490,6 @@ def plotepi(results, toplot=None, uncertainty=True, die=True, showdata=True, ver
                 
                 # General configuration
                 boxoff(ax)
-                ax.title.set_fontsize(titlesize)
-                ax.xaxis.label.set_fontsize(labelsize)
                 ax.yaxis.label.set_fontsize(labelsize)
                 for item in ax.get_xticklabels() + ax.get_yticklabels(): item.set_fontsize(ticksize)
     
@@ -494,9 +498,14 @@ def plotepi(results, toplot=None, uncertainty=True, die=True, showdata=True, ver
                 plottitle = results.main[datatype].name
                 if isperpop:  
                     plotylabel = plottitle
-                    plottitle  = results.popkeys[i] # Add extra information to plot if by population
                     ax.set_ylabel(plotylabel)
+                    try: plottitle = kwargs["popmapping"][results.popkeys[i]] # if popmapping was passed in as kwarg, use the title specified there for this population instead
+                    except: plottitle = results.popkeys[i] # Add extra information to plot if by population
+                    if forreport: ax.set_ylabel(plotylabel, fontweight="bold", fontsize=labelsize) # overwrites previously set ylabel
                 ax.set_title(plottitle)
+                if forreport:
+                    ax.set_xlabel('Year', fontweight="bold", fontsize=labelsize)
+                    ax.set_title(plottitle, fontweight="bold", fontsize=titlesize) # overwrites previously set title
                 setylim(allydata, ax=ax)
                 ax.set_xlim((results.tvec[startind], results.tvec[endind]))
                 if not ismultisim:
