@@ -1242,26 +1242,22 @@ class Costcov(CCOF):
 
     def function(self, x, ccopar, popsize, eps=None):
         '''Returns coverage in a given year for a given spending amount.'''
-
-        # Get the values that are always there
-        u = promotetoarray(ccopar['unitcost'])
-        s = promotetoarray(ccopar['saturation'])
-
-        # Get popfactor which is only sometimes there, use to adjust popsize
-        popsize = promotetoarray(popsize)
-        if ccopar.get('popfactor') and ccopar.get('popfactor') is not None:
-            pf = promotetoarray(ccopar['popfactor'])
-            popsize *= pf
-
+        
         if eps is None: eps = Settings().eps # Warning, this uses project-nonspecific eps
 
+        # Get the values that are always there
+        u  = promotetoarray(ccopar['unitcost'])
+        s  = promotetoarray(ccopar['saturation'])
+        pf = promotetoarray(ccopar['popfactor'])
+        popsize = promotetoarray(popsize)
+        
         nyrs,npts = len(u),len(x)
         eps = array([eps]*npts)
-        if nyrs==npts: return maximum((2*s/(1+exp(-2*x/(popsize*s*u)))-s)*popsize,eps)
+        if nyrs==npts: return maximum((2*s/(1+exp(-2*x/(popsize*pf*s*u)))-s)*popsize*pf,eps)
         else:
             y = zeros((nyrs,npts))
             for yr in range(nyrs):
-                y[yr,:] = maximum((2*s[yr]/(1+exp(-2*x/(popsize[yr]*s[yr]*u[yr])))-s[yr])*popsize[yr],eps)
+                y[yr,:] = maximum((2*s[yr]/(1+exp(-2*x/(popsize[yr]*pf[yr]*s[yr]*u[yr])))-s[yr])*popsize[yr]*pf[yr],eps)
             return y
 
     def inversefunction(self, x, ccopar, popsize, eps=None):
