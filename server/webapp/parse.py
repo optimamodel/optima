@@ -659,7 +659,8 @@ def revert_program_ccopars(ccopars):
         result = op.odict({
             't': ccopars['t'],
             'saturation': map(tuple, ccopars['saturation']),
-            'unitcost': map(tuple, ccopars['unitcost'])
+            'unitcost':   map(tuple, ccopars['unitcost']),
+            'popfactor':  map(tuple, ccopars['popfactor'])
         })
     return result
 
@@ -694,6 +695,8 @@ def get_program_summary(program, progset, active):
                 - 2016
             unitcost:
                 - [1.136849845773715, 1.136849845773715]
+            popfactor:
+                - [1.0, 1.0]
         costcov:
             -
                 cost: 16616289
@@ -731,7 +734,7 @@ def get_program_summary(program, progset, active):
             """
 
     ccopars_dict = normalize_obj(program.costcovfn.ccopars)
-    for key in ['saturation', 'unitcost']:
+    for key in ['saturation', 'unitcost', 'popfactor']:
         if key not in ccopars_dict:
             continue
         a_list = ccopars_dict[key]

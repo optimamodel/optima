@@ -1069,6 +1069,7 @@ class CCOF(object):
         # Fill in the missing information for cost-coverage curves
         if ccopar.get('unitcost') is not None:
             if not ccopar.get('saturation'): ccopar['saturation'] = (1.,1.)
+            if not ccopar.get('popfactor'):  ccopar['popfactor']  = (1.,1.)
 
         if not self.ccopars:
             for ccopartype in ccopar.keys():
@@ -1209,7 +1210,8 @@ class Costcov(CCOF):
                 ccopar: {
                             't': [2015,2016],
                             'saturation': [.90,1.],
-                            'unitcost': [40,30]
+                            'unitcost': [40,30],
+                            'popfactor': [1,1]
                         }
                         The intervals in ccopar allow a randomization
                         to explore uncertainties in the model.
@@ -1262,27 +1264,22 @@ class Costcov(CCOF):
 
     def inversefunction(self, x, ccopar, popsize, eps=None):
         '''Returns coverage in a given year for a given spending amount.'''
+        
+        if eps is None: eps = Settings().eps # Warning, use project-nonspecific eps
 
         # Get the values that are always there
-        u = promotetoarray(ccopar['unitcost'])
-        s = promotetoarray(ccopar['saturation'])
-
-        # Get popfactor which is only sometimes there, use to adjust popsize
+        u  = promotetoarray(ccopar['unitcost'])
+        s  = promotetoarray(ccopar['saturation'])
+        pf = promotetoarray(ccopar['popfactor'])
         popsize = promotetoarray(popsize)
-        if ccopar.get('popfactor') and ccopar.get('popfactor') is not None:
-            pf = promotetoarray(ccopar['popfactor'])
-            popsize *= pf
-
-
-        if eps is None: eps = Settings().eps # Warning, use project-nonspecific eps
 
         nyrs,npts = len(u),len(x)
         eps = array([eps]*npts)
-        if nyrs==npts: return maximum(-0.5*popsize*s*u*log(maximum(s*popsize-x,0)/(s*popsize+x)),eps)
+        if nyrs==npts: return maximum(-0.5*popsize*pf*s*u*log(maximum(s*popsize*pf-x,0)/(s*popsize*pf+x)),eps)
         else:
             y = zeros((nyrs,npts))
             for yr in range(nyrs):
-                y[yr,:] = maximum(-0.5*popsize[yr]*s[yr]*u[yr]*log(maximum(s[yr]*popsize[yr]-x,0)/(s[yr]*popsize[yr]+x)),eps)
+                y[yr,:] = maximum(-0.5*popsize[yr]*pf[yr]*s[yr]*u[yr]*log(maximum(s[yr]*popsize[yr]*pf[yr]-x,0)/(s[yr]*popsize[yr]*pf[yr]+x)),eps)
             return y
             
 

@@ -230,10 +230,11 @@ def defaultprograms(project, addcostcovpars=False, addcostcovdata=False, filterp
                     name='Other',
                     category='Other')
                   
-    if addcostcovpars:
+    if addcostcovpars: # WARNING, does not include popfactors except as an example -- assumed to be 1
         Condoms.costcovfn.addccopar({'saturation': (0.75,0.75),
                                  't': 2016.0,
-                                 'unitcost': (3,7)})
+                                 'unitcost': (3,7),
+                                 'popfactor': (1,1)})
     
         SBCC.costcovfn.addccopar({'saturation': (0.6,0.6),
                                  't': 2016.0,
