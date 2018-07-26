@@ -65,6 +65,7 @@ def setmigrations(which='migrations'):
         ('2.6.12',('2.7',   '2018-05-25', tvtreatfail,       'Redo treatment failure and add regimen switching/adherence support')),
         ('2.7',   ('2.7.1', '2018-06-17', None,              'Modified minimize money algorithm')),
         ('2.7.1', ('2.7.2', '2018-07-24', addfixedattr,      'Store whether or not proportions are fixed')),
+        ('2.7.2', ('2.7.3', '2018-07-26', addpopfactor,      'Add a population adjustment factor to programs')),
         ])
     
     
@@ -858,7 +859,6 @@ def tvtreatfail(project, **kwargs):
     """
     Migration between Optima 2.6.12 and 2.7: redo treatment failure
     """
-    
     short = 'regainvs'
     copyfrom = 'numvlmon'
     kwargs['name'] = 'Proportion of cases with detected VL failure for which there is a switch to an effective regimen (%/year)'
@@ -878,8 +878,7 @@ def tvtreatfail(project, **kwargs):
     for ps in project.parsets.values():
         ps.pars['treatfail'].y[:] = array([[.16]]) # Assume 16% are shifted
         ps.pars['treatfail'].t[:] = array([[2017.]]) 
-    
-    
+
     return None
 
 
@@ -887,11 +886,35 @@ def addfixedattr(project, **kwargs):
     """
     Migration between Optima 2.7.1 and 2.7.2: add fixedness attribute
     """
-    
     for ps in project.parsets.values():
         if abs(ps.pars['fixproptx'].t - 2100) < 0.1:
             ps.isfixed = False
         else: ps.isfixed = True
+    return None
+
+
+def addpopfactor(project, **kwargs):
+    """
+    Migration between Optima 2.7.2 and 2.7.3: add popfactor attribute
+    """
+    for progset in project.progsets.values():
+        for program in progset.programs.values():
+            try:
+                ccopars = program.costcovfn.ccopars # Won't exist or will be empty for e.g. fixed cost programs
+                if ccopars: # Don't do anything if it's empty or None
+                    ccopars['popfactor'] = []
+                    for yr in range(len(ccopars['t'])): # Give it the right number of elements
+                        istuple = True
+                        try: # This shouldn't fail, but it really doesn't matter if it does, so be safe
+                            if op.isnumber(ccopars['saturation'][yr]) and op.isnumber(ccopars['unitcost'][yr]):
+                                istuple = False # If everything else is just a plain number, make this a plain number too
+                        except:
+                            pass
+                        if istuple: ccopars['popfactor'].append((1.0,1.0))
+                        else:       ccopars['popfactor'].append(1.0)
+            except:
+                pass # Don't really worry if it didn't work
+    return None
 
 
 #def redoprograms(project, **kwargs):

@@ -117,7 +117,7 @@
                   width: 100%;
                   margin-top: 10px">
 
-            <div style="flex: 0 0 540px;">
+            <div style="flex: 0 0 740px;">
 
               <h3>Define cost function
                 <help ref="define-cost-function"/>
@@ -129,6 +129,7 @@
                   <td>Year</td>
                   <td>Saturation %</td>
                   <td>Unit cost</td>
+                  <td>Population factor</td>
                   <td></td>
                 </tr>
                 <tr ng-repeat="row in vm.state.ccoparsTable.rows">
@@ -197,6 +198,37 @@
                         Invalid values
                       </div>
                       <div class="error-hint" ng-show="vm.checkLowHighViolation(row[4], row[5])">
+                        Please ensure low < high
+                      </div>
+                    </ng-form>
+                  </td>
+                  <td>
+                    <ng-form name="popForm">
+                      <input
+                        ng-class="{ invalid: popForm.low.$invalid }"
+                        name="low"
+                        ng-model="row[6]"
+                        min="0"
+                        type="number"
+                        step="any"
+                        style="width: 85px"
+                        class="txbox __inline"
+                        required/>
+                      -
+                      <input
+                        ng-class="{ invalid: popForm.high.$invalid }"
+                        name="high"
+                        ng-model="row[7]"
+                        min="0"
+                        type="number"
+                        step="any"
+                        style="width: 85px"
+                        class="txbox __inline"
+                        required/>
+                      <div class="error-hint" ng-show="popForm.$invalid">
+                        Invalid values
+                      </div>
+                      <div class="error-hint" ng-show="vm.checkLowHighViolation(row[6], row[7])">
                         Please ensure low < high
                       </div>
                     </ng-form>

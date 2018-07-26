@@ -1069,6 +1069,7 @@ class CCOF(object):
         # Fill in the missing information for cost-coverage curves
         if ccopar.get('unitcost') is not None:
             if not ccopar.get('saturation'): ccopar['saturation'] = (1.,1.)
+            if not ccopar.get('popfactor'):  ccopar['popfactor']  = (1.,1.)
 
         if not self.ccopars:
             for ccopartype in ccopar.keys():
@@ -1135,6 +1136,7 @@ class CCOF(object):
         
         # Get the appropriate sample type
         for parname, parvalue in self.ccopars.iteritems():
+            parvalue = promotetoarray(parvalue)
             if parname is not 't' and len(parvalue):
                 ccopars_sample[parname] = zeros(len(parvalue))
                 for j in range(len(parvalue)):
@@ -1208,7 +1210,8 @@ class Costcov(CCOF):
                 ccopar: {
                             't': [2015,2016],
                             'saturation': [.90,1.],
-                            'unitcost': [40,30]
+                            'unitcost': [40,30],
+                            'popfactor': [1,1]
                         }
                         The intervals in ccopar allow a randomization
                         to explore uncertainties in the model.
@@ -1241,34 +1244,42 @@ class Costcov(CCOF):
 
     def function(self, x, ccopar, popsize, eps=None):
         '''Returns coverage in a given year for a given spending amount.'''
-        u = array(ccopar['unitcost'])
-        s = array(ccopar['saturation'])
-        if eps is None: eps = Settings().eps # Warning, use project-nonspecific eps
-        if isnumber(popsize): popsize = array([popsize])
+        
+        if eps is None: eps = Settings().eps # Warning, this uses project-nonspecific eps
 
+        # Get the values that are always there
+        u  = promotetoarray(ccopar['unitcost'])
+        s  = promotetoarray(ccopar['saturation'])
+        pf = promotetoarray(ccopar['popfactor'])
+        popsize = promotetoarray(popsize)
+        
         nyrs,npts = len(u),len(x)
         eps = array([eps]*npts)
-        if nyrs==npts: return maximum((2*s/(1+exp(-2*x/(popsize*s*u)))-s)*popsize,eps)
+        if nyrs==npts: return maximum((2*s/(1+exp(-2*x/(popsize*pf*s*u)))-s)*popsize*pf,eps)
         else:
             y = zeros((nyrs,npts))
             for yr in range(nyrs):
-                y[yr,:] = maximum((2*s[yr]/(1+exp(-2*x/(popsize[yr]*s[yr]*u[yr])))-s[yr])*popsize[yr],eps)
+                y[yr,:] = maximum((2*s[yr]/(1+exp(-2*x/(popsize[yr]*pf[yr]*s[yr]*u[yr])))-s[yr])*popsize[yr]*pf[yr],eps)
             return y
 
     def inversefunction(self, x, ccopar, popsize, eps=None):
         '''Returns coverage in a given year for a given spending amount.'''
-        u = array(ccopar['unitcost'])
-        s = array(ccopar['saturation'])
+        
         if eps is None: eps = Settings().eps # Warning, use project-nonspecific eps
-        if isnumber(popsize): popsize = array([popsize])
+
+        # Get the values that are always there
+        u  = promotetoarray(ccopar['unitcost'])
+        s  = promotetoarray(ccopar['saturation'])
+        pf = promotetoarray(ccopar['popfactor'])
+        popsize = promotetoarray(popsize)
 
         nyrs,npts = len(u),len(x)
         eps = array([eps]*npts)
-        if nyrs==npts: return maximum(-0.5*popsize*s*u*log(maximum(s*popsize-x,0)/(s*popsize+x)),eps)
+        if nyrs==npts: return maximum(-0.5*popsize*pf*s*u*log(maximum(s*popsize*pf-x,0)/(s*popsize*pf+x)),eps)
         else:
             y = zeros((nyrs,npts))
             for yr in range(nyrs):
-                y[yr,:] = maximum(-0.5*popsize[yr]*s[yr]*u[yr]*log(maximum(s[yr]*popsize[yr]-x,0)/(s[yr]*popsize[yr]+x)),eps)
+                y[yr,:] = maximum(-0.5*popsize[yr]*pf[yr]*s[yr]*u[yr]*log(maximum(s[yr]*popsize[yr]*pf[yr]-x,0)/(s[yr]*popsize[yr]*pf[yr]+x)),eps)
             return y
             
 
