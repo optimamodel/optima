@@ -66,6 +66,7 @@ def setmigrations(which='migrations'):
         ('2.7',   ('2.7.1', '2018-06-17', None,              'Modified minimize money algorithm')),
         ('2.7.1', ('2.7.2', '2018-07-24', addfixedattr,      'Store whether or not proportions are fixed')),
         ('2.7.2', ('2.7.3', '2018-07-26', addpopfactor,      'Add a population adjustment factor to programs')),
+        ('2.7.3', ('2.7.4', '2018-07-27', addpopfactor,      'Fix previous migration')),
         ])
     
     
@@ -895,23 +896,28 @@ def addfixedattr(project, **kwargs):
 
 def addpopfactor(project, **kwargs):
     """
-    Migration between Optima 2.7.2 and 2.7.3: add popfactor attribute
+    Migration between Optima 2.7.2 and 2.7.3 and 2.7.4: add popfactor attribute
     """
     for progset in project.progsets.values():
-        for program in progset.programs.values():
+        program_list = progset.programs.values()
+        try:    inactive_list = progset.inactive_programs.values()
+        except: inactive_list = [] # This might fail if there are no inactive programs; don't worry
+        all_programs = program_list + inactive_list
+        for program in all_programs:
             try:
                 ccopars = program.costcovfn.ccopars # Won't exist or will be empty for e.g. fixed cost programs
                 if ccopars: # Don't do anything if it's empty or None
-                    ccopars['popfactor'] = []
-                    for yr in range(len(ccopars['t'])): # Give it the right number of elements
-                        istuple = True
-                        try: # This shouldn't fail, but it really doesn't matter if it does, so be safe
-                            if op.isnumber(ccopars['saturation'][yr]) and op.isnumber(ccopars['unitcost'][yr]):
-                                istuple = False # If everything else is just a plain number, make this a plain number too
-                        except:
-                            pass
-                        if istuple: ccopars['popfactor'].append((1.0,1.0))
-                        else:       ccopars['popfactor'].append(1.0)
+                    if 'popfactor' not in ccopars: # Don't add it if it's already there
+                        ccopars['popfactor'] = []
+                        for yr in range(len(ccopars['t'])): # Give it the right number of elements
+                            istuple = True
+                            try: # This shouldn't fail, but it really doesn't matter if it does, so be safe
+                                if op.isnumber(ccopars['saturation'][yr]) and op.isnumber(ccopars['unitcost'][yr]):
+                                    istuple = False # If everything else is just a plain number, make this a plain number too
+                            except:
+                                pass
+                            if istuple: ccopars['popfactor'].append((1.0,1.0))
+                            else:       ccopars['popfactor'].append(1.0)
             except:
                 pass # Don't really worry if it didn't work
     return None
