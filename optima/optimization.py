@@ -978,6 +978,7 @@ def minoutcomes(project=None, optim=None, tvec=None, verbose=None, maxtime=None,
         else:
             tmpresults['Optimal'] = dcp(tmpresults['Baseline']) # If zero budget, just copy current and rename
             tmpresults['Optimal'].name = 'Optimal' # Rename name to named name
+            tmpresults['Optimal'].projectref = Link(project) # Restore link
 
     ## Output
     multires = Multiresultset(resultsetlist=tmpresults.values(), name='optim-%s' % optim.name)
