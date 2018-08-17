@@ -37,7 +37,7 @@ def setmigrations(which='migrations'):
         ('2.1.9', ('2.1.10','2016-12-28', addpropsandcosttx, 'Added treatment cost parameter')),
         ('2.1.10',('2.2',   '2017-01-13', redoparameters,    'Updated the way parameters are handled')),
         ('2.2',   ('2.2.1', '2017-02-01', redovlmon,         'Updated the VL monitoring parameter')),
-        ('2.2.1', ('2.2.2', '2017-02-01', addprojectinfo,    'Stored information about the proect in the results')),
+        ('2.2.1', ('2.2.2', '2017-02-01', addprojectinfo,    'Stored information about the project in the results')),
         ('2.2.2', ('2.3',   '2017-02-09', redoparamattr,     'Updated parameter attributes')),
         ('2.3',   ('2.3.1', '2017-02-15', removespreadsheet, "Don't store the spreadsheet with the project, to save space")),
         ('2.3.1', ('2.3.2', '2017-03-01', addagetopars,      'Ensured that age is stored in parsets')),
@@ -51,7 +51,24 @@ def setmigrations(which='migrations'):
         ('2.4',   ('2.5',   '2017-07-03', None,              'Made registration public')),
         ('2.5',   ('2.6',   '2017-10-23', None,              'Public code release')),
         ('2.6',   ('2.6.1', '2017-12-19', None,              'Scenario sensitivity feature')),
+        ('2.6.1', ('2.6.2', '2017-12-19', None,              'New results format')),
+        ('2.6.2', ('2.6.3', '2018-01-17', addtimevarying,    'Preliminaries for time-varying optimization')),
+        ('2.6.3', ('2.6.4', '2018-01-24', None,              'Changes to how proportions are handled')),
+        ('2.6.4', ('2.6.5', '2018-04-03', None,              'Changes to how HIV+ births are handled')),
+        ('2.6.5', ('2.6.6', '2018-04-25', addtreatbycd4,     'Updates CD4 handling and interactions between programs')),
+        ('2.6.6', ('2.6.7', '2018-04-26', None,              'Handle male- and female-only populations for parameters')),
+        ('2.6.7', ('2.6.8', '2018-04-28', removecosttx,      'Remove treatment cost parameter')),
+        ('2.6.8', ('2.6.9', '2018-04-28', addrelhivdeath,    'Add population-dependent relative HIV death rates')),
+        ('2.6.9', ('2.6.10','2018-05-16', addspectrumranges, 'Add ranges for optional data inputs')),
+        ('2.6.10',('2.6.11','2018-05-21', circmigration,     'Adds the missing migration for circumcision key changes')),
+        ('2.6.11',('2.6.12','2018-05-23', changehivdeathname,'Change the name of the relative HIV-related death rate')),
+        ('2.6.12',('2.7',   '2018-05-25', tvtreatfail,       'Redo treatment failure and add regimen switching/adherence support')),
+        ('2.7',   ('2.7.1', '2018-06-17', None,              'Modified minimize money algorithm')),
+        ('2.7.1', ('2.7.2', '2018-07-24', addfixedattr,      'Store whether or not proportions are fixed')),
+        ('2.7.2', ('2.7.3', '2018-07-26', addpopfactor,      'Add a population adjustment factor to programs')),
+        ('2.7.3', ('2.7.4', '2018-07-27', addpopfactor,      'Fix previous migration')),
         ])
+    
     
     # Define changelog
     changelog = op.odict()
@@ -729,6 +746,183 @@ def redotranstable(project, **kwargs):
     return None
 
 
+def addtimevarying(project, **kwargs):
+    ''' Update optimization objects to include time-varying settings '''
+    for opt in project.optims.values():
+        opt.tvsettings = op.defaulttvsettings()
+    for parset in project.parsets.values():
+        try:    assert(op.isnumber(parset.start))
+        except: parset.start = project.settings.start
+        try:    assert(op.isnumber(parset.end))
+        except: parset.end = project.settings.end
+    return None
+
+
+def addtreatbycd4(project, **kwargs):
+    ''' Update project to include a treatbycd4 setting '''
+    project.settings.treatbycd4 = True
+    return None
+
+
+def removecosttx(project, **kwargs):
+    """
+    Migration between Optima 2.6.7 and 2.6.8: removes costtx parameter
+    """
+    removeparameter(project, short='costtx', datashort='costtx')
+    return None
+
+
+def addrelhivdeath(project, **kwargs):
+    """
+    Migration between Optima 2.6.8 and 2.6.9: add a population-dependent relative HIV death rate
+    """
+
+    short = 'hivdeath'
+    copyfrom = 'force'
+    kwargs['name'] = 'Relative death rate for populations (unitless)'
+    addparameter(project=project, copyfrom=copyfrom, short=short, **kwargs)
+    npops = len(project.data['pops']['short'])
+    for ps in project.parsets.values():
+        ps.pars['hivdeath'].y[:] = array([1.]*npops)
+        for key in range(npops): ps.pars['hivdeath'].prior[key].pars = array([0.9, 1.1]) 
+    
+    return None
+
+
+def addspectrumranges(project, **kwargs):
+    """
+    Migration between Optima 2.6.9 and 2.6.10: add ranges for optional data inputs and rename PrEP
+    """
+    
+    # Add ranges
+    optindicators = ['optpropdx','optpropcare','optproptx','optpropsupp','optproppmtct','optnumtest','optnumdiag','optnuminfect','optprev','optplhiv','optdeath','optnewtreat']
+    for optind in optindicators:
+        if len(project.data[optind])==1:
+            tmpdata = op.dcp(project.data[optind])
+            newdata = []
+            newdata.append([nan]*len(project.data[optind][0])) # No data for high estimate
+            newdata.append(tmpdata[0]) # Previous data for best estimate
+            newdata.append([nan]*len(project.data[optind][0])) # No data for low estimate
+            project.data[optind] = newdata
+    
+    # Rename PrEP
+    for ps in project.parsets.values():
+        ps.pars['prep'].name    = 'Proportion of exposure events covered by ARV-based prophylaxis'
+        ps.pars['effprep'].name = 'Efficacy of ARV-based prophylaxis'
+    
+    return None
+
+
+def circmigration(project, **kwargs):
+    """
+    Migration between Optima 2.6.10 and 2.6.11: add circumcision migration
+    """
+    
+    ## Redo circ parameters
+    malelist = [val for i,val in enumerate(project.data['pops']['short']) if project.data['pops']['male'][i]]
+    femalelist = [val for i,val in enumerate(project.data['pops']['short']) if project.data['pops']['female'][i]]
+    
+    for pset in project.parsets.values():
+
+        if pset.pars['propcirc'].by=='pop':
+            pset.pars['propcirc'].by = 'mpop'
+            for fpop in femalelist: 
+                pset.pars['propcirc'].t.pop(fpop)
+                pset.pars['propcirc'].y.pop(fpop)
+
+        if pset.pars['numcirc'].by=='pop':
+            pset.pars['numcirc'].by = 'mpop'
+            for fpop in femalelist: 
+                pset.pars['numcirc'].t.pop(fpop)
+                pset.pars['numcirc'].y.pop(fpop)
+                
+        if pset.pars['birth'].by=='pop':
+            pset.pars['birth'].by = 'fpop'
+            for mpop in malelist: 
+                pset.pars['birth'].t.pop(mpop)
+                pset.pars['birth'].y.pop(mpop)
+            
+    return None
+    
+
+def changehivdeathname(project, **kwargs):
+    """
+    Change name of relative HIV-related death rate
+    """
+    
+    for pset in project.parsets.values():
+        pset.pars['hivdeath'].name = 'Relative HIV-related death rate (unitless)'
+    
+    return None
+
+    
+def tvtreatfail(project, **kwargs):
+    """
+    Migration between Optima 2.6.12 and 2.7: redo treatment failure
+    """
+    short = 'regainvs'
+    copyfrom = 'numvlmon'
+    kwargs['name'] = 'Proportion of cases with detected VL failure for which there is a switch to an effective regimen (%/year)'
+    kwargs['limits'] = (0, 'maxrate')
+    addparameter(project=project, copyfrom=copyfrom, short=short, **kwargs)
+    for ps in project.parsets.values():
+        ps.pars['regainvs'].y[:] = array([[1.]]) # Assume 100% are shifted (for backward compatability)
+        ps.pars['regainvs'].t[:] = array([[2017.]]) 
+    
+    removeparameter(project, short='treatfail', datashort='treatfail')
+    
+    short = 'treatfail'
+    copyfrom = 'numvlmon'
+    kwargs['name'] = 'Treatment failure rate'
+    kwargs['limits'] = (0, 'maxrate')
+    addparameter(project=project, copyfrom=copyfrom, short=short, **kwargs)
+    for ps in project.parsets.values():
+        ps.pars['treatfail'].y[:] = array([[.16]]) # Assume 16% are shifted
+        ps.pars['treatfail'].t[:] = array([[2017.]]) 
+
+    return None
+
+
+def addfixedattr(project, **kwargs):
+    """
+    Migration between Optima 2.7.1 and 2.7.2: add fixedness attribute
+    """
+    for ps in project.parsets.values():
+        if abs(ps.pars['fixproptx'].t - 2100) < 0.1:
+            ps.isfixed = False
+        else: ps.isfixed = True
+    return None
+
+
+def addpopfactor(project, **kwargs):
+    """
+    Migration between Optima 2.7.2 and 2.7.3 and 2.7.4: add popfactor attribute
+    """
+    for progset in project.progsets.values():
+        program_list = progset.programs.values()
+        try:    inactive_list = progset.inactive_programs.values()
+        except: inactive_list = [] # This might fail if there are no inactive programs; don't worry
+        all_programs = program_list + inactive_list
+        for program in all_programs:
+            try:
+                ccopars = program.costcovfn.ccopars # Won't exist or will be empty for e.g. fixed cost programs
+                if ccopars: # Don't do anything if it's empty or None
+                    if 'popfactor' not in ccopars: # Don't add it if it's already there
+                        ccopars['popfactor'] = []
+                        for yr in range(len(ccopars['t'])): # Give it the right number of elements
+                            istuple = True
+                            try: # This shouldn't fail, but it really doesn't matter if it does, so be safe
+                                if op.isnumber(ccopars['saturation'][yr]) and op.isnumber(ccopars['unitcost'][yr]):
+                                    istuple = False # If everything else is just a plain number, make this a plain number too
+                            except:
+                                pass
+                            if istuple: ccopars['popfactor'].append((1.0,1.0))
+                            else:       ccopars['popfactor'].append(1.0)
+            except:
+                pass # Don't really worry if it didn't work
+    return None
+
+
 #def redoprograms(project, **kwargs):
 #    """
 #    Migration between Optima 2.2.1 and 2.3 -- convert CCO objects from simple dictionaries to parameters.
@@ -755,7 +949,10 @@ def migrate(project, verbose=2, die=False):
         
         # Check that the migration exists
         if not currentversion in migrations:
-            errormsg = "WARNING, migrating %s failed: no migration exists from version %s to the latest version (%s)" % (project.name, currentversion, op.version)
+            if op.compareversions(currentversion, op.version)<0:
+                errormsg = "WARNING, migrating %s failed: no migration exists from version %s to the current version (%s)" % (project.name, currentversion, op.version)
+            elif op.compareversions(currentversion, op.version)>0:
+                errormsg = "WARNING, migrating %s failed: project version %s more recent than current Optima version (%s)" % (project.name, currentversion, op.version)
             if die: raise op.OptimaException(errormsg)
             else:   op.printv(errormsg, 1, verbose)
             return project # Abort, if haven't died already
@@ -767,8 +964,7 @@ def migrate(project, verbose=2, die=False):
             try: 
                 migrator(project, verbose=verbose, die=die) # Sometimes there is no upgrader
             except Exception as E:
-                errormsg = 'WARNING, migrating "%s" from %6s -> %6s failed:\n' % (project.name, currentversion, newversion)
-                errormsg += E.__repr__()
+                errormsg = 'WARNING, migrating "%s" from %6s -> %6s failed:\n%s' % (project.name, currentversion, newversion, repr(E))
                 if not hasattr(project, 'failedmigrations'): project.failedmigrations = [] # Create if it doesn't already exist
                 project.failedmigrations.append(errormsg)
                 if die: raise op.OptimaException(errormsg)
@@ -832,17 +1028,22 @@ def removegaoptim(portfolio):
     return portfolio
 
 
-def migrateportfolio(portfolio=None, verbose=2):
+def migrateportfolio(portfolio=None, verbose=2, die=True):
     
     # Rather than use the dict mapping, use a (series) of if statements
     if op.compareversions(portfolio.version, '2.3.5')<0:
         op.printv('Migrating portfolio "%s" from %6s -> %6s' % (portfolio.name, portfolio.version, '2.3.5'), 2, verbose)
         portfolio = removegaoptim(portfolio)
     
-    # Check to make sure it's the latest version
+    # Update version number to the latest -- no other changes  should be necessary
+    if op.compareversions(portfolio.version, '2.3.5')>=0:
+        portfolio.version = op.version
+    
+    # Check to make sure it's the latest version -- should not happen, but just in case!
     if portfolio.version != op.version:
         errormsg = "No portfolio migration exists from version %s to the latest version (%s)" % (portfolio.version, op.version)
-        raise op.OptimaException(errormsg)
+        if die: raise op.OptimaException(errormsg)
+        else:   op.printv(errormsg, 1, verbose)
     
     return portfolio
 
