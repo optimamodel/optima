@@ -41,13 +41,8 @@ interactiveposition = [0.15,0.1,0.55,0.75] # Use slightly larger margnis for int
 
 def getdefaultplots(ismulti='both'):
     ''' Since these can get overwritten otherwise '''
-<<<<<<< HEAD
-    defaultplots = ['cascadebars', 'budgets', 'tvbudget', 'numplhiv-stacked', 'numinci-stacked', 'numdeath-stacked', 'numtreat-stacked', 'numnewdiag-stacked', 'prev-population', 'popsize-stacked']
-    defaultmultiplots = ['budgets', 'tvbudget', 'numplhiv-total', 'numinci-total', 'numdeath-total', 'numtreat-total', 'numnewdiag-total', 'prev-population', 'popsize-stacked']
-=======
     defaultplots = ['cascadebars', 'budgets', 'tvbudget', 'numplhiv-stacked', 'numinci-stacked', 'numdeath-stacked', 'numtreat-stacked', 'numnewdiag-stacked', 'prev-population', 'popsize-stacked'] # Default epidemiological plots
     defaultmultiplots = ['budgets', 'tvbudget', 'numplhiv-total', 'numinci-total', 'numdeath-total', 'numtreat-total', 'numnewdiag-total', 'prev-population', 'popsize-stacked'] # Default epidemiological plots
->>>>>>> develop
     if ismulti==False:  return defaultplots
     elif ismulti==True: return defaultmultiplots
     else:               return defaultplots,defaultmultiplots
@@ -196,11 +191,7 @@ def makeplots(results=None, toplot=None, die=False, verbose=2, plotstartyear=Non
         if hasattr(results, 'budgets') and results.budgets: # WARNING, duplicated from getplotselections()
             budgetplots = plotbudget(results, die=die, fig=fig, **kwargs)
             allplots.update(budgetplots)
-<<<<<<< HEAD
-            
-=======
     
->>>>>>> develop
     ## Add time-varying budget plot
     if 'tvbudget' in toplot:
         toplot.remove('tvbudget') # Because everything else is passed to plotepi()
@@ -224,11 +215,7 @@ def makeplots(results=None, toplot=None, die=False, verbose=2, plotstartyear=Non
     ## Add cascade plot(s) with bars
     if 'cascadebars' in toplot:
         toplot.remove('cascadebars') # Because everything else is passed to plotepi()
-<<<<<<< HEAD
-        cascadebarplots = plotcascade(results, die=die, plotstartyear=plotstartyear, plotendyear=plotendyear, fig=fig, asbars=True, **kwargs)
-=======
         cascadebarplots = plotcascade(results, die=die, fig=fig, asbars=True, **kwargs)
->>>>>>> develop
         allplots.update(cascadebarplots)
     
     ## Add deaths by CD4 plot -- WARNING, only available if results includes raw
@@ -458,11 +445,7 @@ def plotepi(results, toplot=None, uncertainty=True, die=True, showdata=True, ver
                     for l in range(nlinesperplot):
                         ind = nlinesperplot-1-l
                         thisxdata = results.setup[ind]['tvec']
-<<<<<<< HEAD
-                        ydata = factor*best[ind]
-=======
                         ydata = factor*best[ind][i]
->>>>>>> develop
                         allydata.append(ydata)
                         ax.plot(thisxdata, ydata, lw=lw, c=colors[ind], zorder=linezorder, label=labels[l]) # Indices are different populations (i), then different e..g scenarios (l)
 
@@ -1469,14 +1452,6 @@ def sanitizeresults(results):
     return output
 
 
-<<<<<<< HEAD
-def SItickformatter(x, pos):  # formatter function takes tick label and tick position
-    ''' Formats axis ticks so that e.g. 34,243 becomes 34K '''
-    return sigfig(x, sigfigs=2, SI=True)
-
-
-=======
->>>>>>> develop
 def getplotinds(plotstartyear=None, plotendyear=None, tvec=None, die=False, verbose=2):
     ''' Little function to convert the requested start and end years to indices '''
     if plotstartyear is not None:
