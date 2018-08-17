@@ -41,8 +41,13 @@ interactiveposition = [0.15,0.1,0.55,0.75] # Use slightly larger margnis for int
 
 def getdefaultplots(ismulti='both'):
     ''' Since these can get overwritten otherwise '''
+<<<<<<< HEAD
     defaultplots = ['cascadebars', 'budgets', 'tvbudget', 'numplhiv-stacked', 'numinci-stacked', 'numdeath-stacked', 'numtreat-stacked', 'numnewdiag-stacked', 'prev-population', 'popsize-stacked']
     defaultmultiplots = ['budgets', 'tvbudget', 'numplhiv-total', 'numinci-total', 'numdeath-total', 'numtreat-total', 'numnewdiag-total', 'prev-population', 'popsize-stacked']
+=======
+    defaultplots = ['cascadebars', 'budgets', 'tvbudget', 'numplhiv-stacked', 'numinci-stacked', 'numdeath-stacked', 'numtreat-stacked', 'numnewdiag-stacked', 'prev-population', 'popsize-stacked'] # Default epidemiological plots
+    defaultmultiplots = ['budgets', 'tvbudget', 'numplhiv-total', 'numinci-total', 'numdeath-total', 'numtreat-total', 'numnewdiag-total', 'prev-population', 'popsize-stacked'] # Default epidemiological plots
+>>>>>>> develop
     if ismulti==False:  return defaultplots
     elif ismulti==True: return defaultmultiplots
     else:               return defaultplots,defaultmultiplots
@@ -191,7 +196,11 @@ def makeplots(results=None, toplot=None, die=False, verbose=2, plotstartyear=Non
         if hasattr(results, 'budgets') and results.budgets: # WARNING, duplicated from getplotselections()
             budgetplots = plotbudget(results, die=die, fig=fig, **kwargs)
             allplots.update(budgetplots)
+<<<<<<< HEAD
             
+=======
+    
+>>>>>>> develop
     ## Add time-varying budget plot
     if 'tvbudget' in toplot:
         toplot.remove('tvbudget') # Because everything else is passed to plotepi()
@@ -215,7 +224,11 @@ def makeplots(results=None, toplot=None, die=False, verbose=2, plotstartyear=Non
     ## Add cascade plot(s) with bars
     if 'cascadebars' in toplot:
         toplot.remove('cascadebars') # Because everything else is passed to plotepi()
+<<<<<<< HEAD
         cascadebarplots = plotcascade(results, die=die, plotstartyear=plotstartyear, plotendyear=plotendyear, fig=fig, asbars=True, **kwargs)
+=======
+        cascadebarplots = plotcascade(results, die=die, fig=fig, asbars=True, **kwargs)
+>>>>>>> develop
         allplots.update(cascadebarplots)
     
     ## Add deaths by CD4 plot -- WARNING, only available if results includes raw
@@ -342,15 +355,9 @@ def plotepi(results, toplot=None, uncertainty=True, die=True, showdata=True, ver
             if istotal or isstacked: datattrtype = 'tot' # For pulling out total data
             else: datattrtype = 'pops'
             
-            if ismultisim:  # e.g. scenario
+            if ismultisim:  # e.g. scenario, no uncertainty
                 best = list() # Initialize as empty list for storing results sets
-                for s in range(nsims):
-                    if getattr(results.main[datatype], attrtype)[s].shape[0] == 3: # This means it has uncertainty estimates - WARNING, not robust!!
-                        bind = 0 # Index of the best estimates -- we will only plot the best estimates for multisims with uncertainty
-                        thisbest = getattr(results.main[datatype], attrtype)[s][bind]
-                    else:
-                        thisbest = getattr(results.main[datatype], attrtype)[s]
-                    best.append(thisbest)
+                for s in range(nsims): best.append(getattr(results.main[datatype], attrtype)[s])
                 lower = None
                 upper = None
                 databest = None
@@ -372,7 +379,7 @@ def plotepi(results, toplot=None, uncertainty=True, die=True, showdata=True, ver
                     databest = None
                     datalow = None
                     datahigh = None
-            if ndim(best)==1: # Wrap so right number of dimensions -- happens if not by population
+            if not ismultisim and ndim(best)==1: # Wrap so right number of dimensions -- happens if not by population
                 best  = array([best])
                 lower = array([lower])
                 upper = array([upper])
@@ -451,7 +458,11 @@ def plotepi(results, toplot=None, uncertainty=True, die=True, showdata=True, ver
                     for l in range(nlinesperplot):
                         ind = nlinesperplot-1-l
                         thisxdata = results.setup[ind]['tvec']
+<<<<<<< HEAD
                         ydata = factor*best[ind]
+=======
+                        ydata = factor*best[ind][i]
+>>>>>>> develop
                         allydata.append(ydata)
                         ax.plot(thisxdata, ydata, lw=lw, c=colors[ind], zorder=linezorder, label=labels[l]) # Indices are different populations (i), then different e..g scenarios (l)
 
@@ -955,8 +966,8 @@ def plotcascade(results=None, aspercentage=False, cascadecolors=None, figsize=gl
             basex = arange(ncategories)*space
             for k,key in enumerate(casckeys):
                 for i,ind in enumerate(cascinds):
-                    if ismultisim: 
-                        thisbar = 100.*results.main[key].tot[plt][blhind][ind]/results.main['numplhiv'].tot[plt][blhind][ind] # If it's a multisim, need an extra index for the plot number
+                    if ismultisim:  # WARNING, is this needed?
+                        thisbar = 100.*results.main[key].tot[plt][ind]/results.main['numplhiv'].tot[plt][ind] # If it's a multisim, need an extra index for the plot number
                     else:
                         thisbar = 100.*results.main[key].tot[0][ind]/results.main['numplhiv'].tot[0][ind] # Get the best estimate
                     if k==len(casckeys)-1: label = labels[i]
@@ -1458,11 +1469,14 @@ def sanitizeresults(results):
     return output
 
 
+<<<<<<< HEAD
 def SItickformatter(x, pos):  # formatter function takes tick label and tick position
     ''' Formats axis ticks so that e.g. 34,243 becomes 34K '''
     return sigfig(x, sigfigs=2, SI=True)
 
 
+=======
+>>>>>>> develop
 def getplotinds(plotstartyear=None, plotendyear=None, tvec=None, die=False, verbose=2):
     ''' Little function to convert the requested start and end years to indices '''
     if plotstartyear is not None:

@@ -216,7 +216,7 @@ define(['angular', 'ui.router'], function (angular) {
       }
 
       var names = _.pluck($scope.state.optimizations, 'name');
-      var name = $scope.state.optimization.name;
+      var name = optimization.name;
       copy(rpcService.getUniqueName(name, names));
     };
 
@@ -238,7 +238,7 @@ define(['angular', 'ui.router'], function (angular) {
         _.noop,
         'Yes, remove this optimization',
         'No',
-        'Are you sure you want to permanently remove optimization "' + $scope.state.optimization.name + '"?',
+        'Are you sure you want to permanently remove optimization "' + deleteOptimization.name + '"?',
         'Delete optimization'
       );
     };
@@ -295,6 +295,8 @@ define(['angular', 'ui.router'], function (angular) {
           $scope.task_id = response.data.task_id;
           if (response.data.status === 'started') {
             $scope.statusMessage = 'Optimization started.';
+            $scope.elapsedTime = 0;
+            var timer = setInterval(function(){$scope.elapsedTime++}, 1000);
             initPollOptimizations();
           } else if (response.data.status === 'blocked') {
             $scope.statusMessage = 'Another calculation on this project is already running.'
@@ -311,15 +313,12 @@ define(['angular', 'ui.router'], function (angular) {
             var calcState = response.data;
             if (calcState.status === 'completed') {
               $scope.statusMessage = 'Loading graphs...';
+              clearInterval(timer);
               toastr.success('Optimization completed');
               getOptimizationGraphs();
             } else if (calcState.status === 'started') {
               $scope.task_id = calcState.task_id;
-              var start = new Date(calcState.start_time);
-              var now = new Date(calcState.current_time);
-              var diff = now.getTime() - start.getTime();
-              var seconds = parseInt(diff / 1000);
-              $scope.statusMessage = "Optimization running for " + seconds + " s";
+              $scope.statusMessage = "Optimization running for " + $scope.elapsedTime + " s";
             } else {
               $scope.statusMessage = 'Optimization failed';
               $scope.state.isRunnable = true;
@@ -529,6 +528,7 @@ define(['angular', 'ui.router'], function (angular) {
       var progset_id = newOptimization.progset_id;
       var defaultOptimization = deepCopyJson($scope.defaultOptimizationsByProgsetId[progset_id]);
       newOptimization.objectives = defaultOptimization.objectives[which];
+      newOptimization.tvsettings = defaultOptimization.tvsettings; // Warning, would be better to generate this on the backend rather than manually constructing it here!!
 
       openEditOptimizationModal(newOptimization);
     };

@@ -46,9 +46,6 @@
             <icon action="undo" click="undo()"/>
             <icon action="redo" click="redo()"/>
 			
-			<!--<button-->
-            <!--class="btn"-->
-            <!--ng-click="refreshParset()">Set to default</button>-->
           </div>
         </div>
         <div style="display: table-cell; padding-right: 80px;">
@@ -74,6 +71,7 @@
             <icon action="download" click="downloadParameterSet()"/>
             <icon action="upload" click="uploadParameterSet()"/>
             <icon action="delete" click="deleteParameterSet()"/>
+            <icon action="refresh" click="refreshParameterSet()"/>
             <help ref="parameter-sets"/>
           </div>
 
@@ -117,9 +115,14 @@
           <br>
           <div class="art-projection-assumptions">
             &nbsp;&nbsp;<b>ART projection assumption</b><help ref="art-projection-assumptions"/><br>
-            &nbsp;&nbsp;<button class="btn" ng-click="constantProportionART()">Proportion</button>
             &nbsp;&nbsp;
-            <button class="btn" ng-click="constantNumberART()">Number</button>
+            <input type="radio" id="ARTProportion" name="artAssumption" value="proportion"
+            ng-click="constantProportionART()">
+            <label for="ARTProportion">Proportion</label>
+            &nbsp;&nbsp;
+            <input type="radio" id="ARTConstant" name="artAssumption" value="constant"
+            ng-click="constantNumberART()">
+            <label for="ARTConstant">Number</label>
           </div>
           <br>
           <div class="automatic-calibration">

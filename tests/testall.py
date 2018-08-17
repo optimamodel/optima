@@ -12,7 +12,7 @@ To run everything, either set everything = True below, or at the command line ty
 
 ./testall everything
 
-Version: 2016jan29 by cliffk
+Version: 2018jan04 by cliffk
 """
 
 ## Initialization
@@ -37,6 +37,7 @@ MASTER = [
 'testcalibration',
 'testoptimization',
 'testmigrations',
+'testgeospatial',
 ]
 
 ## Optionally run everything

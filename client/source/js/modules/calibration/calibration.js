@@ -141,6 +141,16 @@ define(['angular', 'underscore'], function (angular, _) {
             console.log('getCalibrationGraphs', response.graphs);
             $scope.statusMessage = '';
             $scope.state.isRunnable = true;
+            rpcService
+              .rpcRun('get_isfixed',[projectService.project.id,$scope.state.parset.id])
+              .then(function(response) {
+                var isfixed = response.data.isfixed;
+                if (isfixed) {
+                  document.getElementById("ARTProportion").checked = true;
+                } else {
+                  document.getElementById("ARTConstant").checked = true;
+                }
+              });
           },
           function(response) {
             $scope.state.isRunnable = false;
@@ -291,9 +301,9 @@ define(['angular', 'underscore'], function (angular, _) {
         return;
       }
 
-      if ($scope.state.parset.name === "default") {
+      if ($scope.parsets.length < 2) {
         modalService.informError(
-          [{message: 'Deleting the default parameter set is not permitted.'}]);
+          [{message: 'Deleting the only parameter set is not permitted.'}]);
         return;
       }
 
@@ -372,26 +382,52 @@ define(['angular', 'underscore'], function (angular, _) {
 		});
     };
 
-    $scope.refreshParset = function() {
-      modalService.confirm(
-        function () {
+    $scope.refreshParameterSet = function() {
+      rpcService
+        .rpcRun(
+          'refresh_parset', [projectService.project.id, $scope.state.parset.id])
+        .then(function(response) {
+          toastr.success('Parameter set refreshed from data');
+          $scope.getCalibrationGraphs();
           rpcService
             .rpcRun(
-              'refresh_parset', [projectService.project.id, $scope.state.parset.id])
-            .then(function(response) {
-              toastr.success('Parameter set refreshed');
-              $scope.getCalibrationGraphs();
-              rpcService
-                .rpcRun(
-                  'push_project_to_undo_stack',
-                  [projectService.project.id]);
-            });
-        },
-        function () { },
-        'Yes',
-        'No',
-        'This will reset all your calibration parameters to match the ones in the "default" parset. Do you wish to continue?',
-        'Refresh paramter set'
+              'push_project_to_undo_stack',
+              [projectService.project.id]);
+        });
+    };
+
+    $scope.refreshParameterSet = function() {
+      function refreshparset(initialprev) {
+        rpcService
+          .rpcRun(
+            'refresh_parset', [projectService.project.id, $scope.state.parset.id, initialprev])
+          .then(function(response) {
+            $scope.state.parset.name = name;
+            toastr.success('Parameter set refreshed from data');
+            $scope.getCalibrationGraphs();
+            rpcService
+              .rpcRun(
+                'push_project_to_undo_stack',
+                [projectService.project.id]);
+          });
+      }
+
+      // Because passing arguments is too hard -- to supply the options for the choice below
+      function refreshparsetandprev() {
+        refreshparset(true);
+      }
+
+      function refreshparsetwithoutprev() {
+        refreshparset(false);
+      }
+
+      modalService.choice(
+        refreshparsetandprev,
+        refreshparsetwithoutprev,
+        'Use the values from the uploaded spreadsheet',
+        'Use the values entered in the calibration',
+        'What values would you like to use to for initial HIV prevalence?',
+        'Reload values from spreadsheet to this parameter set'
       );
     };
 
@@ -502,6 +538,8 @@ define(['angular', 'underscore'], function (angular, _) {
           if (status === 'started') {
             $scope.statusMessage = 'Autofit started.';
             $scope.secondsRun = 0;
+            $scope.elapsedTime = 0;
+            var timer = setInterval(function(){$scope.elapsedTime++}, 1000);
             initPollAutoCalibration();
           } else if (status === 'blocked') {
             $scope.statusMessage = 'Another calculation on this project is already running.'
@@ -520,6 +558,7 @@ define(['angular', 'underscore'], function (angular, _) {
           var status = response.data.status;
           if (status === 'completed') {
             $scope.statusMessage = '';
+            clearInterval(timer);
             toastr.success('Autofit completed');
             $scope.getCalibrationGraphs();
 			rpcService
@@ -527,11 +566,7 @@ define(['angular', 'underscore'], function (angular, _) {
 			    'push_project_to_undo_stack', 
 				[projectService.project.id]);
           } else if (status === 'started') {
-            var start = new Date(response.data.start_time);
-            var now = new Date(response.data.current_time);
-            var diff = now.getTime() - start.getTime();
-            var seconds = parseInt(diff / 1000);
-            $scope.statusMessage = "Autofit running for " + seconds + " s";
+            $scope.statusMessage = "Autofit running for " + $scope.elapsedTime + " s";
           } else {
             $scope.statusMessage = 'Autofit failed';
             $scope.state.isRunnable = true;

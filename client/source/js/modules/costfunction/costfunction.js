@@ -280,12 +280,13 @@ define(['angular', 'underscore', 'toastr'], function(angular, _) {
 
       function revertCcoparsTable() {
         var table = vm.state.ccoparsTable;
-        var ccopars = {t: [], saturation: [], unitcost: []};
+        var ccopars = {t: [], saturation: [], unitcost: [], popfactor: []};
         table.rows.forEach(function(row, iRow) {
           if (iRow != table.iEditRow) {
             ccopars.t.push(row[0]);
             ccopars.saturation.push([row[2] / 100., row[3] / 100.]);
             ccopars.unitcost.push([row[4], row[5]]);
+            ccopars.popfactor.push([row[6], row[7]]);
           }
         });
         vm.state.program.ccopars = ccopars;
@@ -390,7 +391,9 @@ define(['angular', 'underscore', 'toastr'], function(angular, _) {
               ccopars.saturation[iYear][0] * 100.,
               ccopars.saturation[iYear][1] * 100.,
               ccopars.unitcost[iYear][0],
-              ccopars.unitcost[iYear][1]
+              ccopars.unitcost[iYear][1],
+              ccopars.popfactor[iYear][0],
+              ccopars.popfactor[iYear][1]
             ])
           }
         }
@@ -480,7 +483,7 @@ define(['angular', 'underscore', 'toastr'], function(angular, _) {
       vm.makePopKeyLabel = function(popKey) {
         if (typeof popKey === 'string') {
           if (popKey == "tot") {
-            return "Total Population";
+            return "Total population";
           }
           return popKey;
         }
@@ -520,7 +523,7 @@ define(['angular', 'underscore', 'toastr'], function(angular, _) {
           vm.outcomes.push({
             name: vm.state.parameter.short,
             pop: pop,
-            interact: "random",
+            interact: "",
             years: []
           })
         });

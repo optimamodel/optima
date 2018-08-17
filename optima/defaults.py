@@ -231,6 +231,7 @@ def defaultprograms(project, addcostcovpars=False, addcostcovdata=False, filterp
                     name='Other',
                     category='Other')
                   
+<<<<<<< HEAD
     if addcostcovpars:
         # WARNING, does not include popfactors except as an example -- assumed to be 1
         Condoms.costcovfn.addccopar({'saturation': (0.75,0.75),
@@ -238,6 +239,14 @@ def defaultprograms(project, addcostcovpars=False, addcostcovdata=False, filterp
                                  'unitcost': (3,7),
                                  'popfactor': (1,1)})    
                                 
+=======
+    if addcostcovpars: # WARNING, does not include popfactors except as an example -- assumed to be 1
+        Condoms.costcovfn.addccopar({'saturation': (0.75,0.75),
+                                 't': 2016.0,
+                                 'unitcost': (3,7),
+                                 'popfactor': (1,1)})
+    
+>>>>>>> develop
         SBCC.costcovfn.addccopar({'saturation': (0.6,0.6),
                                  't': 2016.0,
                                  'unitcost': (8,12)})
@@ -357,7 +366,7 @@ def defaultproject(which='best', addprogset=True, addcostcovdata=True, usestanda
     Options for easily creating default projects based on different spreadsheets, including
     program information -- useful for testing 
     
-    Version: 2016mar24
+    Version: 2017oct30
     '''
     
     
@@ -381,7 +390,11 @@ def defaultproject(which='best', addprogset=True, addcostcovdata=True, usestanda
         
         # Programs
         R = defaultprogset(P, addcostcovpars=addcostcovpars, addcostcovdata=addcostcovdata, filterprograms=['HTC', 'ART'])
+<<<<<<< HEAD
         R.programs['HTC'].costcovdata =          {'t':[2014],'cost': [5e6],'coverage':[2e5]}
+=======
+        R.programs['HTC'].costcovdata =          {'t':[2014],'cost':[5e6],'coverage':[2e5]}
+>>>>>>> develop
         R.programs['ART'].costcovdata =          {'t':[2014],'cost': [2e6],'coverage':[1e4]}
         R.covout['hivtest']['M 15-49'].addccopar({'intercept': (0.01,0.01), 't': 2016.0, 'HTC': (0.30,0.30)})
         R.covout['hivtest']['F 15-49'].addccopar({'intercept': (0.01,0.01), 't': 2016.0, 'HTC': (0.30,0.30)})

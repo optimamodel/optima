@@ -350,34 +350,42 @@ def verify_admin_request_decorator(api_call):
 ### OPTIMA DEMO PROJECTS
 #############################################################################################
 
-def get_optimademo_user(name='_OptimaDemo'):
+def get_optimademo_user(name='_OptimaDemo', die=False):
     ''' Get the Optima Demo user ID, from its name -- default is '_OptimaDemo' '''
     user = UserDb.query.filter_by(username=name).first()
     if user is None:
-        raise Exception('No Optima demo user found; demo projects not available') # Could quote name, but (minor) security risk
+        errormsg = 'WARNING, no Optima demo user found; demo projects not available' # Could quote name, but (minor) security risk
+        if die: raise Exception(errormsg)
+        else:   print(errormsg)
         return None
     else:
         return user.id
 
 
-def get_optimademo_projects():
+def get_optimademo_projects(die=False):
     '''
     Return the projects associated with the Optima Demo user.
     
     Note that these should be stored in the analyses repo under the name optimademo.    
     '''
-    user_id = get_optimademo_user()
-    query = ProjectDb.query.filter_by(user_id=user_id)
-    projectlist = map(load_project_summary_from_project_record, query.all())
-    sortedprojectlist = sorted(projectlist, key=lambda proj: proj['name']) # Sorts by project name
-    demoprojectlist = []
-    nationalprojectlist = []
-    regionalprojectlist = []
-    for proj in sortedprojectlist:
-        if   proj['name'].find('(demo)')>=0:   demoprojectlist.append(proj) # It's a demo project
-        elif proj['name'].find('regional')>=0: regionalprojectlist.append(proj) # It's a regional project
-        else:                                  nationalprojectlist.append(proj)
-    projects = demoprojectlist + regionalprojectlist + nationalprojectlist # Combine project lists into one sorted list
+    try: # Try to load the demo projects...
+        user_id = get_optimademo_user()
+        query = ProjectDb.query.filter_by(user_id=user_id)
+        projectlist = map(load_project_summary_from_project_record, query.all())
+        sortedprojectlist = sorted(projectlist, key=lambda proj: proj['name']) # Sorts by project name
+        demoprojectlist = []
+        nationalprojectlist = []
+        regionalprojectlist = []
+        for proj in sortedprojectlist:
+            if   proj['name'].find('(demo)')>=0:   demoprojectlist.append(proj) # It's a demo project
+            elif proj['name'].find('regional')>=0: regionalprojectlist.append(proj) # It's a regional project
+            else:                                  nationalprojectlist.append(proj)
+        projects = demoprojectlist + regionalprojectlist + nationalprojectlist # Combine project lists into one sorted list
+    except Exception as E: # But just skip creation if that fails
+        errormsg = 'WARNING, could not load demo projects: %s' % repr(E)
+        if die: raise Exception(errormsg)
+        else:   print(errormsg)
+        projects = []
     output = {'projects': projects}
     return output
 
@@ -496,15 +504,9 @@ def create_project_with_spreadsheet_download(user_id, project_summary):
 
     project = op.Project(name=project_summary["name"])
     project.uid = project_entry.id
-
-    data_pops = parse.revert_populations_to_pop(project_summary["populations"])
-    project.data["pops"] = data_pops
-    project.data["npops"] = len(data_pops)
-
     save_project(project)
 
-    new_project_template = secure_filename(
-        "{}.xlsx".format(project_summary['name']))
+    new_project_template = secure_filename("%s.xlsx" % project_summary['name'])
     path = templatepath(new_project_template)
     op.makespreadsheet(path, pops=project_summary['populations'], datastart=project_summary['startYear'], dataend=project_summary['endYear'])
 
@@ -526,11 +528,6 @@ def create_project(user_id, project_summary):
 
     project = op.Project(name=project_summary["name"])
     project.uid = project_entry.id
-
-    data_pops = parse.revert_populations_to_pop(project_summary["populations"])
-    project.data["pops"] = data_pops
-    project.data["npops"] = len(data_pops)
-
     save_project(project)
 
     return {'projectId': str(project.uid)}
@@ -607,15 +604,13 @@ def save_project_as_new(project, user_id):
         # For results that should be cached, create or update a Postgres 
         # record for the result.
         if 'scenarios' in name: 
-            update_or_create_result_record_by_id(result, project.uid, None, 
-                'scenarios')
+            update_or_create_result_record_by_id(result, project.uid, None, 'scenarios')
         if 'optim' in name:     
-            update_or_create_result_record_by_id(result, project.uid, None, 
-                'optimization')
-        if 'parset' in name:    
-            update_or_create_result_record_by_id(result, project.uid, 
-                project.parsets[result.parsetname].uid, 
-                'calibration')
+            update_or_create_result_record_by_id(result, project.uid, None, 'optimization')
+        if 'parset' in name:   
+            try:    parset_uid = project.parsets[result.parsetname].uid # Try to get this, but don't worry if it fails
+            except: parset_uid = None
+            update_or_create_result_record_by_id(result, project.uid, parset_uid, 'calibration')
             
     # Commit the Postgres changes.
     db.session.commit()
@@ -802,13 +797,15 @@ def load_zip_of_prj_files(project_ids):
 
     prjs = [load_project_record(id).as_file(dirname) for id in project_ids]
 
-    zip_fname = '{}.zip'.format(uuid4())
+    datestr = op.today().strftime('%Y%b%d_%H%M%S').encode('ascii', 'ignore') # Today's date
+    zip_fname = 'Optima_projects_%s.zip' % datestr
     server_zip_fname = os.path.join(dirname, zip_fname)
     with ZipFile(server_zip_fname, 'w') as zipfile:
         for prj in prjs:
             zipfile.write(os.path.join(dirname, prj), 'portfolio/{}'.format(prj))
 
-    return dirname, zip_fname
+    full_filename = os.path.join(dirname, zip_fname)
+    return full_filename
 
 
 def resolve_project(project):
@@ -1075,7 +1072,11 @@ def download_result_data(result_id):
 def load_result_by_optimization(project, optimization):
 
     result_name = "optim-" + optimization.name
-    parset_id = project.parsets[optimization.parsetname].uid
+    try:
+        parset_id = project.parsets[optimization.parsetname].uid # Try to extract the 
+    except:
+        print('>> Warning, optimization parset "%s" not in project parsets: %s; reverting to default "%s"' % (optimization.parsetname, project.parsets.keys(), project.parset().name))
+        parset_id = project.parset().uid # Just get the default
 
     print(">> load_result_by_optimization '%s'" % result_name)
     result_records = db.session.query(ResultsDb).filter_by(
@@ -1099,6 +1100,11 @@ def load_result_mpld3_graphs(result_id=None, which=None, zoom=None, startYear=No
 
 
 def download_figures(result_id=None, which=None, filetype=None, index=None):
+    # Super kludgy, advanced switch gets stuck here instead of in a separate variable
+    if 'advanced' in which:
+#        advanced = True
+        which.remove("advanced")
+    
     result = load_result_by_id(result_id, which)
     dirname = upload_dir_user(TEMPLATEDIR)
     if not dirname:
@@ -1165,13 +1171,13 @@ def create_parset(project_id, new_parset_name):
     return load_parset_summaries(project_id)
 
 
-def refresh_parset(project_id, parset_id):
+def refresh_parset(project_id, parset_id, resetprevalence):
     ''' Refresh parset from data '''
     
     def update_project_fn(project):
         parset = parse.get_parset_from_project(project, parset_id)
         parset_name = parset.name
-        project.refreshparset(name=parset_name)
+        project.refreshparset(name=parset_name, resetprevalence=resetprevalence)
 
     update_project_with_fn(project_id, update_project_fn)
     delete_result_by_parset_id(project_id, parset_id)
@@ -1198,6 +1204,11 @@ def fixproptx_off(project_id, parset_id):
     fixproptx(project_id, parset_id, fix=False)
     return None
 
+def get_isfixed(project_id, parset_id):
+    ''' Read whether constant proportion is off or on for ART '''
+    project = load_project(project_id)
+    parset = parse.get_parset_from_project(project, parset_id)
+    return {"isfixed": parset.isfixed}
 
 def load_parset_summaries(project_id):
     project = load_project(project_id)
@@ -1251,6 +1262,8 @@ def load_parset_graphs(project_id, parset_id, calculation_type, which=None, para
     if parameters is not None:
         print(">> load_parset_graphs updating parset '%s'" % parset.name)
         parset.modified = op.today()
+        parset.start    = startYear
+        parset.end      = endYear
         parse.set_parameters_on_parset(parameters, parset)
         delete_result_by_parset_id(project_id, parset_id)
         save_project(project)

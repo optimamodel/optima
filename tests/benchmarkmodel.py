@@ -13,14 +13,15 @@ Requires line_profiler, available from:
 or: 
     pip install line_profiler
 
-Version: 2016jan29
+Version: 2018apr24
 """
 
 dobenchmark = True
 doprofile = True
 
-# If running profiling, choose which function to line profile. Choices are: model, runsim, makesimpars, interp
-functiontoprofile = 'model' 
+# If running profiling, choose which function to line profile. 
+functiontoprofile = 'model' # Choices are: model, runsim, makesimpars, interp
+tobenchmark = 'runsim' # Choices are 'runsim' or 'runbudget'
 
 
 ############################################################################################################################
@@ -29,34 +30,50 @@ functiontoprofile = 'model'
 if dobenchmark:
     print('Benchmarking...')
     
-    from pylab import loadtxt, savetxt, vstack, array
-    from optima import Project, gitinfo, sigfig, today, getdate
+    from optima import demo, gitinfo, today, getdate, loadtext, savetext
     from time import time
     
-    ## Settings
+    # Settings
     hashlen = 7
     filename = 'benchmark.txt'
     dosave = True
     
-    ## Run the model
-    P = Project(spreadsheet='generalized.xlsx', dorun=False)
-    t = time()
-    P.runsim()
-    elapsed = time()-t
+    # Run a benchmarking test
+    def cpubenchmark():
+        starttime = time()
+        tmp = [0+tmp for tmp in range(int(1e6))]
+        endtime = time()
+        performance = 1.0/(endtime-starttime)
+        return performance
     
-    ## Gather the output data
-    elapsedstr = sigfig(elapsed, 3)
+    # Prelminaries
+    P = demo(doplot=False, dorun=False)
+    performance1 = cpubenchmark()
+    t = time()
+
+    # Run the model 
+    if   tobenchmark == 'runsim':    P.runsim()
+    elif tobenchmark == 'runbudget': P.runbudget()
+    else: raise Exception('tobenchmark "%s" not recognized' % tobenchmark)
+
+    elapsed = time()-t
+    performance2 = cpubenchmark()
+    performance = sum([performance1, performance2])/2. # Find average of before and after
+    benchmarktxt = "for %s (benchmark:%0.2fm iterations/second)" % (tobenchmark, performance)
+    print(benchmarktxt)
+    
+    # Gather the output data
+    elapsedstr = '%0.3f' % elapsed
     todaystr = getdate(today()).replace(' ','_')
     gitbranch, gitversion = gitinfo()
     gitversion = gitversion[:hashlen]
-    thisout = array([elapsedstr, todaystr, gitversion, gitbranch])
+    thisout = ' '.join([elapsedstr, todaystr, gitversion, gitbranch, benchmarktxt])
     
-    ## Save, but only if hash not already in file
+    # Save, but only if hash not already in file
     if dosave:
-        output = loadtxt(filename, dtype=str)
-        if gitversion not in output[:,2]: # Don't append multiple entries per commit
-            output = vstack([output, thisout]) # WARNING, will fail if not at least 2 entries in ouput already (to specify dimensionality)
-            savetxt(filename, output, fmt='%s')
+        output = loadtext(filename, splitlines=True)
+        output.append(thisout)
+        savetext(filename, output)
     
     print('Done benchmarking: model runtime was %s s.' % elapsedstr)
 
@@ -65,8 +82,12 @@ if dobenchmark:
 ############################################################################################################################
 ## Profiling
 ############################################################################################################################
-try: import line_profiler # analysis:ignore
-except: doprofile = False # Don't profile if it can't be loaded
+try: 
+    import line_profiler # analysis:ignore
+except: 
+    print('WARNING: Line profiler "line_profiler" not available, not running line profiling')
+    doprofile = False # Don't profile if it can't be loaded
+
 if doprofile:
     from line_profiler import LineProfiler
     from optima import Project, model, makesimpars, applylimits # analysis:ignore -- called by eval() function

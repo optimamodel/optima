@@ -5,7 +5,7 @@ Version: 2017jun03
 '''
 
 ## Imports
-from numpy import append, array
+from numpy import append, array, inf
 from optima import OptimaException, Link, Multiresultset # Core classes/functions
 from optima import dcp, today, odict, printv, findinds, defaultrepr, getresults, vec2obj, isnumber, uuid, promotetoarray # Utilities
 
@@ -183,8 +183,10 @@ def makescenarios(project=None, scenlist=None, verbose=2, ccsample=False, randse
                         if int(thispar.fromdata): # If it's a regular parameter made from data, we get the default start value from the data
                             this_y = thispar.interp(tvec=scenpar['startyear'], sample=False)[popind] # Find what the model would get for this value
                         else:
-                            this_y = thisparset.getprop(proptype=scenpar['name'],year=scenpar['startyear'])                            
-
+                            this_y = inf # Another special value, indicating this should be filled in to the maximum                 
+                            fixproppar = thisparset.pars['fix'+scenpar['name']] # Pull out e.g. fixpropdx
+                            fixproppar.t = min(fixproppar.t, scenpar['startyear']) # Reset start year to the lower of these
+                    
                     # Remove years after the last good year
                     if last_t < max(thispar.t[popind]):
                         thispar.t[popind] = thispar.t[popind][findinds(thispar.t[popind] <= last_t)]
@@ -202,7 +204,6 @@ def makescenarios(project=None, scenlist=None, verbose=2, ccsample=False, randse
                         thispar.y[popind] = append(thispar.y[popind], scenpar['endval'])
                     
                     if len(thispar.t[popind])!=len(thispar.y[popind]):
-#                        import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
                         raise OptimaException('Parameter lengths must match (t=%i, y=%i)' % (len(thispar.t), len(thispar.y)))
                         
         elif isinstance(scen,Progscen):
@@ -303,16 +304,16 @@ def setparscenvalues(parset=None, parname=None, forwhom=None, startyear=None, ve
     if parset.pars[parname].fromdata: # If it's a regular parameter made from data, we get the default start value from the data
         if startyear is None: startyear = parset.pars[parname].t[forwhom][-1]
         startval = parset.pars[parname].interp(startyear,asarray=False)[forwhom][0]
-    else:
+    else: # Otherwise, give up -- we can't predict a proportion until the model is run
         if startyear is None: startyear = parset.projectref().settings.now
-        startval = parset.getprop(proptype=parname,year=startyear)[0]
+        startval = None
 
     
     return {'startval':startval,'startyear':startyear}
 
 
 
-def defaultscenarios(project=None, which=None, startyear=2016, endyear=2020, parset=-1, progset=-1, dorun=True, doplot=True, **kwargs):
+def defaultscenarios(project=None, which=None, startyear=2020, endyear=2025, parset=-1, progset=-1, dorun=True, doplot=True, **kwargs):
     '''
     Add default scenarios to a project...examples include min-max budgets and 90-90-90.
     Keyword arguments are passed to runscenarios().
@@ -338,7 +339,7 @@ def defaultscenarios(project=None, which=None, startyear=2016, endyear=2020, par
             ]
     
     # WARNING, this may not entirely work
-    elif which=='90-90-90':
+    elif which=='90-90-90' or which=='909090':
         scenlist = [
             Parscen(name='Baseline', parsetname=0, pars=[]),
             Parscen(name='90-90-90',

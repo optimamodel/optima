@@ -189,6 +189,9 @@ def nan2blank(thesedata):
     ''' Convert a nan entry to a blank entry'''
     return list(map(lambda val: '' if isnan(val) else val, thesedata))
 
+def zero2blank(thesedata):
+    ''' Convert a nan entry to a blank entry'''
+    return list(map(lambda val: '' if val==0 else val, thesedata))
 
 class OptimaFormats:
     """ the formats used in the spreadsheet """
@@ -227,6 +230,7 @@ class OptimaFormats:
         self.formats['optional']     = self.book.add_format({'locked':0, 'num_format':0x00, 'bg_color':OptimaFormats.OPT_COLOR,'border':1, 'border_color':OptimaFormats.BORDER_COLOR})
         self.formats['info_header']  = self.book.add_format({'align':'center','valign':'vcenter', 'color':'#D5AA1D','fg_color':'#0E0655', 'font_size':20})
         self.formats['grey']         = self.book.add_format({'fg_color':'#EEEEEE', 'text_wrap':True})
+        self.formats['orange']       = self.book.add_format({'fg_color':'#FFC65E', 'text_wrap':True})
         self.formats['info_url']     = self.book.add_format({'fg_color':'#EEEEEE', 'text_wrap':True, 'color':'blue','align':'center'})
         self.formats['grey_bold']    = self.book.add_format({'fg_color':'#EEEEEE','bold':True})
         self.formats['merge_format'] = self.book.add_format({'bold': 1,'align': 'center','text_wrap':True})
@@ -368,7 +372,7 @@ class TitledRange(object):
                             formats.write_unlocked(self.sheet, current_row, self.data_range.last_col+2+index, assumptiondata, row_format)
                             saveassumptiondata = True
                         except Exception as E:
-                            errormsg = 'WARNING, failed to save assumption "%s" with data:\n%s\nError message:\n (%s)' % (self.content.name, self.content.assumption_data, E.__repr__())
+                            errormsg = 'WARNING, failed to save assumption "%s" with data:\n%s\nError message:\n (%s)' % (self.content.name, self.content.assumption_data, repr(E))
                             print(errormsg)
                             saveassumptiondata = False
                             raise E
@@ -477,7 +481,9 @@ class OptimaSpreadsheet:
     def getmatrixdata(self, parname=None):
         ''' Get matrix data -- stored directly so just have to retrieve'''
         if self.data is not None:
-            data = self.data.get(parname)
+            origdata = self.data.get(parname)
+            data = []
+            for row in origdata: data.append(zero2blank(row))
             return (data, None)
         return (None, None) # By default, return None
     
@@ -489,6 +495,7 @@ class OptimaSpreadsheet:
         elif  rangename=='children': return self.ref_child_range
         elif  rangename=='average':  return ['Average']
         elif  rangename=='total':    return ['Total']
+        elif  rangename=='hbl':      return ['high','best','low']
         elif  rangename=='.':        return None
         else: 
             errormsg = 'Range name %s not found' % rangename
@@ -503,14 +510,22 @@ class OptimaSpreadsheet:
     def generate_instructions(self):
         self.current_sheet = self.sheets['Instructions'] # OK to hard-code since function is hardcoded itself
         current_row = 0
-        self.current_sheet.set_column('A:A',80)
-        self.current_sheet.merge_range('A1:A3', 'O P T I M A   2 . 0', self.formats.formats['info_header'])
+        self.current_sheet.set_column('A:A',120)
+        self.current_sheet.merge_range('A1:A3', 'O P T I M A   H I V', self.formats.formats['info_header'])
         current_row = 3
         current_row = self.formats.writeline(self.current_sheet, current_row)
-        current_row = self.formats.writeblock(self.current_sheet, current_row, row_height=65, text='Welcome to the Optima 2.0 data entry spreadsheet. This is where all data for the model will be entered. Please ask someone from the Optima development team if you need help, or use the default contact (info@optimamodel.com).')
+        current_row = self.formats.writeblock(self.current_sheet, current_row, row_height=30, text='Welcome to the Optima HIV data entry spreadsheet. This is where all data for the model will be entered. Please ask someone from the Optima development team if you need help, or use the default contact (info@optimamodel.com).')
         current_row = self.formats.writeblock(self.current_sheet, current_row, text='For further details please visit: http://optimamodel.com/indicator-guide')
         current_row = self.formats.writeblock(self.current_sheet, current_row, text='Spreadsheet created with Optima version %s' % version)
         current_row = self.formats.writeblock(self.current_sheet, current_row, text='Date created: %s' % getdate(today()))
+        current_row = self.formats.writeblock(self.current_sheet, current_row, row_height=80, add_line=False, text='After you upload this spreadsheet to your Optima HIV project, your data will be stored in the project but any comments you make on individual cells will NOT be stored. You are therefore encouraged to enter any specific comments that you would like to make about this data spreadsheet in the shaded cells below. These comments will be stored. We recommend that you insert a link to the project logbook in one of these cells.')
+        current_row = self.formats.writeline(self.current_sheet, current_row, row_format='bold')
+        current_row = self.formats.writeblock(self.current_sheet, current_row, add_line=False, row_format='bold', text='Comments:')
+        ncommentrows = 15 # Add comment rows
+        for ncr in range(ncommentrows):
+            try:    thistext = self.data['meta']['datacomments'][ncr] # Try to read comments
+            except: thistext = '' # If failure, skip
+            current_row = self.formats.writeblock(self.current_sheet, current_row, row_format='orange', add_line=False, text=thistext)
 
 
     def generate_populations(self):
@@ -601,9 +616,9 @@ class OptimaSpreadsheet:
         
         # Actually generate workbooks
         self.sheet_names = self.pardefinitions['sheets'].keys()
-        for sheetname in ['Instructions']+self.sheet_names:
+        for sheetname in ['Instructions', 'Populations']+self.sheet_names:
             self.sheets[sheetname] = self.book.add_worksheet(sheetname)
-        for key in ['Populations', 'Constants']: self.sheet_names.remove(key) # Remove keys that are handled separately
+        self.sheet_names.remove('Constants') # Remove constants key which is handled separately
         self.generate_instructions() # Instructions
         self.generate_populations() # Population metadata
         for sheetname in self.sheet_names:
@@ -663,7 +678,7 @@ class OptimaProgramSpreadsheet:
         self.current_sheet.merge_range('A1:A3', 'O P T I M A   2 . 0', self.formats.formats['info_header'])
         current_row = 3
         current_row = self.formats.writeline(self.current_sheet, current_row)
-        current_row = self.formats.writeblock(self.current_sheet, current_row, row_height=65, text='Welcome to the Optima 2.0 program data entry spreadsheet. This is where all program data will be entered. Please ask someone from the Optima development team if you need help, or use the default contact (info@optimamodel.com).')
+        current_row = self.formats.writeblock(self.current_sheet, current_row, row_height=65, text='Welcome to the Optima HIV program data entry spreadsheet. This is where all program data will be entered. Please ask someone from the Optima development team if you need help, or use the default contact (info@optimamodel.com).')
         current_row = self.formats.writeblock(self.current_sheet, current_row, text='For further details please visit: http://optimamodel.com/file/indicator-guide')
 
 

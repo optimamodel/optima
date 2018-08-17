@@ -35,7 +35,11 @@ class Project(object):
         3. copy -- copy a structure in the odict
         4. rename -- rename a structure in the odict
 
+<<<<<<< HEAD
     Version: 2018aug17
+=======
+    Version: 2017oct30
+>>>>>>> develop
     """
 
 
@@ -202,6 +206,7 @@ class Project(object):
             else:
                 self.addparset(name=name, parset=parset, overwrite=overwrite) # Store parameters
                 self.modified = today()
+<<<<<<< HEAD
                 return parset
             
         if overwrite or name not in self.parsets:
@@ -210,6 +215,9 @@ class Project(object):
             self.addparset(name=name, parset=parset, overwrite=overwrite) # Store parameters
             self.modified = today()
         return None
+=======
+        return parset
+>>>>>>> develop
 
 
     def makedefaults(self, name=None, scenname=None, overwrite=False):
@@ -535,6 +543,16 @@ class Project(object):
         try:    return self.optims[key]
         except: return printv('Warning, optimization not found!', 1, verbose) # Returns None
     
+    def scen(self, key=-1, verbose=2):
+        ''' Shortcut for getting the latest scenario, i.e. self.scens[-1]'''
+        try:    return self.scens[key]
+        except: return printv('Warning, scenario not found!', 1, verbose) # Returns None
+
+    def optim(self, key=-1, verbose=2):
+        ''' Shortcut for getting the latest optimization, i.e. self.optims[-1]'''
+        try:    return self.optims[key]
+        except: return printv('Warning, optimization not found!', 1, verbose) # Returns None
+
     def result(self, key=-1, verbose=2):
         ''' Shortcut for getting the latest active results, i.e. self.results[-1]'''
         try:    return self.results[key]
@@ -670,7 +688,11 @@ class Project(object):
 
     def runbudget(self, name=None, budget=None, budgetyears=None, progsetname=None, parsetname='default', verbose=2):
         ''' Function to run the model for a given budget, years, programset and parameterset '''
+<<<<<<< HEAD
         if name        is None: name = 'runbudget'
+=======
+        if name        is None: name        = 'runbudget'
+>>>>>>> develop
         if budget      is None: budget      = self.progset().getdefaultbudget()
         if budgetyears is None: budgetyears = self.settings.now
         if progsetname is None:
@@ -681,9 +703,12 @@ class Project(object):
         coverage = self.progsets[progsetname].getprogcoverage(budget=budget, t=budgetyears, parset=self.parsets[parsetname])
         progpars = self.progsets[progsetname].getpars(coverage=coverage,t=budgetyears, parset=self.parsets[parsetname])
         results = self.runsim(pars=progpars, parsetname=parsetname, progsetname=progsetname, budget=budget, budgetyears=budgetyears, label=self.name+'-runbudget')
+<<<<<<< HEAD
         results.name = name
         self.addresult(results)
         self.modified = today()
+=======
+>>>>>>> develop
         return results
     
     

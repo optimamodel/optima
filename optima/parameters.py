@@ -68,6 +68,10 @@ class Parameterset(object):
         coveragepars = [par.short for par in self.pars.values() if isinstance(par, Par) and par.iscoveragepar()]
         return coveragepars
         
+<<<<<<< HEAD
+=======
+
+>>>>>>> develop
     def parkeys(self):
         ''' Return a list of the keys in pars that are actually parameter objects '''
         parslist = []
@@ -592,6 +596,10 @@ class Metapar(Par):
         outkeys = getoutkeys(self, popkeys) # Get the list of keys for the output
         if asarray: output = zeros(len(outkeys))
         else: output = odict()
+<<<<<<< HEAD
+=======
+        
+>>>>>>> develop
         for pop,key in enumerate(outkeys): # Loop over each population, always returning an [npops x npts] array
             if key in self.keys(): yval = y[key]*self.m
             else:                  yval = 0. # Population not present, set to zero
@@ -741,7 +749,11 @@ class Popsizepar(Par):
         # Do interpolation
         npops = len(outkeys)
         if asarray: output = zeros((npops,len(tvec)))
+<<<<<<< HEAD
         else:       output = odict()
+=======
+        else: output = odict()
+>>>>>>> develop
         for pop,key in enumerate(outkeys):
             if key in self.keys():
                 yinterp = m * self.i[key] * grow(self.e[key], array(tvec)-self.start)
@@ -749,7 +761,11 @@ class Popsizepar(Par):
             else:
                 yinterp = zeros(len(tvec))
             if asarray: output[pop,:] = yinterp
+<<<<<<< HEAD
             else:       output[key]   = yinterp
+=======
+            else:       output[key] = yinterp
+>>>>>>> develop
         return output
 
 
@@ -816,7 +832,11 @@ def getoutkeys(par=None, popkeys=None):
         return popkeys # Expand male or female only keys to all
     else:
         return par.keys() # Or just return the default
+<<<<<<< HEAD
 
+=======
+            
+>>>>>>> develop
 
 def grow(exponent, tvec):
     ''' Return a time vector for a population growth '''
@@ -947,13 +967,21 @@ def data2timepar(data=None, years=None, keys=None, defaultind=0, verbose=2, **de
         thisdata = data[short]
         years = data['years']
     elif isinstance(data,list): # Just the relevant entry has been passed
+<<<<<<< HEAD
         thisdata = data        
+=======
+        thisdata = data
+>>>>>>> develop
         
     par = Timepar(m=1.0, y=odict(), t=odict(), **defaultargs) # Create structure
     for row,key in enumerate(keys):
         try:
             validdata = ~isnan(thisdata[row]) # WARNING, this could all be greatly simplified!!!! Shouldn't need to call this and sanitize()
+<<<<<<< HEAD
             par.t[key] = getvaliddata(years, validdata, defaultind=defaultind)
+=======
+            par.t[key] = getvaliddata(years, validdata, defaultind=defaultind) 
+>>>>>>> develop
             if sum(validdata): 
                 par.y[key] = sanitize(thisdata[row])
             else:
@@ -1069,6 +1097,7 @@ def makepars(data=None, verbose=2, die=True, fixprops=None):
     pars['popkeys'] = dcp(popkeys)
     pars['age'] = array(data['pops']['age'])
     
+    
     # Read in parameters automatically
     try: 
         rawpars = loadpartable() # Read the parameters structure
@@ -1077,7 +1106,7 @@ def makepars(data=None, verbose=2, die=True, fixprops=None):
         raise OptimaException(errormsg)
         
     pars['fromto'], pars['transmatrix'] = loadtranstable(npops=len(popkeys)) # Read the transitions
-    
+        
     for rawpar in rawpars: # Iterate over all automatically read in parameters
         printv('Converting data parameter "%s"...' % rawpar['short'], 3, verbose)
         
@@ -1095,7 +1124,11 @@ def makepars(data=None, verbose=2, die=True, fixprops=None):
             elif by=='pop' : keys = popkeys
             elif by=='fpop': keys = fpopkeys
             elif by=='mpop': keys = mpopkeys
+<<<<<<< HEAD
             else: keys = [] # They're not necessarily empty, e.g. by partnership, but too complicated to figure out here
+=======
+            else:            keys = [] # They're not necessarily empty, e.g. by partnership, but too complicated to figure out here
+>>>>>>> develop
             
             # Decide how to handle it based on parameter type
             if partype=='initprev': # Initialize prevalence only
@@ -1109,7 +1142,11 @@ def makepars(data=None, verbose=2, die=True, fixprops=None):
                 if by!='pship' and fromdata: domake = True # If it's not a partnership parameter and it's made from data, then make it
                 if domake:
                     pars[parname] = data2timepar(data=data, keys=keys, **rawpar) 
+<<<<<<< HEAD
                 else: 
+=======
+                else:
+>>>>>>> develop
                     pars[parname] = Timepar(m=1.0, y=odict([(key,array([nan])) for key in keys]), t=odict([(key,array([0.0])) for key in keys]), **rawpar) # Create structure
             
             elif partype=='constant': # The constants, e.g. transmfi
@@ -1129,6 +1166,7 @@ def makepars(data=None, verbose=2, die=True, fixprops=None):
             errormsg = 'Failed to convert parameter %s:\n%s' % (parname, repr(E))
             if die: raise OptimaException(errormsg)
             else: printv(errormsg, 1, verbose)
+
     
     ###############################################################################
     ## Tidy up -- things that can't be converted automatically
@@ -1162,7 +1200,7 @@ def makepars(data=None, verbose=2, die=True, fixprops=None):
     # Circumcision
     for key in pars['numcirc'].keys():
         pars['numcirc'].y[key] = array([0.0]) # Set to 0 for all populations, since program parameter only
-
+    
     # Fix treatment from final data year
     for key in ['fixproptx', 'fixpropsupp', 'fixpropdx', 'fixpropcare', 'fixproppmtct']:
         pars[key].t = 2100 # TODO: don't use these, so just set to (hopefully) well past the end of the analysis
@@ -1212,6 +1250,10 @@ def makepars(data=None, verbose=2, die=True, fixprops=None):
     
     return pars
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> develop
 
 def makesimpars(pars, name=None, keys=None, start=None, end=None, dt=None, tvec=None, settings=None, smoothness=None, asarray=True, sample=None, tosample=None, randseed=None, verbose=2):
     ''' 

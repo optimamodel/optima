@@ -10,9 +10,10 @@ tests = [
 #'standardscen',
 #'maxcoverage',
 #'budget',
-'90-90-90',
+#'90-90-90',
 #'sensitivity',
-#'VMMC'
+#'VMMC',
+'newcascade'
 ]
 
 ##############################################################################
@@ -76,7 +77,7 @@ if 'standardscen' in tests:
              parsetname='default',
              pars=[{
                  'name': 'propcirc',
-                 'for': malelist,
+                 'for': P.pars()['propcirc'].keys(),
                  'startyear': 2015,
                  'endyear': 2020,
                  'endval': 0.,
@@ -236,12 +237,11 @@ if 'sensitivity' in tests:
     
     resultsdiff = P.result().diff(base=1)
     
-    output = '\n\n----------------\nScenario impact:\n'
-    output += 'Infections averted: %s [%s, %s]\n' % (resultsdiff.get('numinci', key='Current conditions', year='all')[0,17:].sum(), resultsdiff.get('numinci', key='Current conditions', year='all')[1,17:].sum(), resultsdiff.get('numinci', key='Current conditions', year='all')[2,17:].sum())
-    output += 'Deaths averted: %s [%s, %s]\n' % (resultsdiff.get('numdeath', key='Current conditions', year='all')[0,17:].sum(), resultsdiff.get('numdeath', key='Current conditions', year='all')[1,17:].sum(), resultsdiff.get('numdeath', key='Current conditions', year='all')[2,17:].sum())
-    output += 'DALYs averted: %s [%s, %s]\n' % (resultsdiff.get('numdaly', key='Current conditions', year='all')[0,17:].sum(), resultsdiff.get('numdaly', key='Current conditions', year='all')[1,17:].sum(), resultsdiff.get('numdaly', key='Current conditions', year='all')[2,17:].sum())
-    
-    print output
+#    output = '\n\n----------------\nScenario impact:\n'
+#    output += 'Infections averted: %s [%s, %s]\n' % (resultsdiff.get('numinci', key='Current conditions', year='all')[0,17:].sum(), resultsdiff.get('numinci', key='Current conditions', year='all')[1,17:].sum(), resultsdiff.get('numinci', key='Current conditions', year='all')[2,17:].sum())
+#    output += 'Deaths averted: %s [%s, %s]\n' % (resultsdiff.get('numdeath', key='Current conditions', year='all')[0,17:].sum(), resultsdiff.get('numdeath', key='Current conditions', year='all')[1,17:].sum(), resultsdiff.get('numdeath', key='Current conditions', year='all')[2,17:].sum())
+#    output += 'DALYs averted: %s [%s, %s]\n' % (resultsdiff.get('numdaly', key='Current conditions', year='all')[0,17:].sum(), resultsdiff.get('numdaly', key='Current conditions', year='all')[1,17:].sum(), resultsdiff.get('numdaly', key='Current conditions', year='all')[2,17:].sum())
+#    print output
 
     done(t)
 
@@ -395,24 +395,14 @@ if 'budget' in tests:
     
     # Run the scenarios
     P.addscens(scenlist)
-    P.runscenarios(nruns=5,tosample='force',ccsample='rand',verbose=3, base=2) 
-     
-#    if doplot:
-#        from optima import pygui
-#        pygui(P.results[-1], toplot='default')
-#
-    resdiff = P.results[-1]
-    output = '\n\n----------------\n'
-    output += 'Impact of current expenditure (relative to zero):\n'
-    output += 'Infections averted: %s [%s, %s]\n' % (resdiff.get('numinci', key=0, year='all')[0,17:].sum(), resdiff.get('numinci', key=0, year='all')[1,17:].sum(), resdiff.get('numinci', key=0, year='all')[2,17:].sum())
-    output += '    Deaths averted: %s [%s, %s]\n' % (resdiff.get('numdeath', key=0, year='all')[0,17:].sum(), resdiff.get('numdeath', key=0, year='all')[1,17:].sum(), resdiff.get('numdeath', key=0, year='all')[2,17:].sum())
-    output += '     DALYs averted: %s [%s, %s]\n' % (resdiff.get('numdaly', key=0, year='all')[0,17:].sum(), resdiff.get('numdaly', key=0, year='all')[1,17:].sum(), resdiff.get('numdaly', key=0, year='all')[2,17:].sum())
-    output += 'Impact of unlimited expenditure (relative to zero):\n'
-    output += 'Infections averted: %s [%s, %s]\n' % (resdiff.get('numinci', key=1, year='all')[0,17:].sum(), resdiff.get('numinci', key=1, year='all')[1,17:].sum(), resdiff.get('numinci', key=1, year='all')[2,17:].sum())
-    output += '    Deaths averted: %s [%s, %s]\n' % (resdiff.get('numdeath', key=1, year='all')[0,17:].sum(), resdiff.get('numdeath', key=1, year='all')[1,17:].sum(), resdiff.get('numdeath', key=1, year='all')[2,17:].sum())
-    output += '     DALYs averted: %s [%s, %s]\n' % (resdiff.get('numdaly', key=1, year='all')[0,17:].sum(), resdiff.get('numdaly', key=1, year='all')[1,17:].sum(), resdiff.get('numdaly', key=1, year='all')[2,17:].sum())
+    P.runscenarios(nruns=1,tosample='force',ccsample='rand',verbose=3, base=2) 
     
-    print output
+    P.result().export()
+     
+    if doplot:
+        from optima import pygui
+        pygui(P.results[-1], toplot='default')
+
 
 
 
@@ -425,10 +415,8 @@ if 'VMMC' in tests:
     from optima import Parscen, Budgetscen, defaultproject
     
     P = defaultproject('generalized',dorun=False)
-#    P.runsim()
     pops = P.data['pops']['short']
 
-    malelist = findinds(P.data['pops']['male'])
     caspships = P.parsets['default'].pars['condcas'].y.keys()
     
     ## Define scenarios
@@ -437,12 +425,12 @@ if 'VMMC' in tests:
                 parsetname='default',
                 pars=[]),
 
-        Parscen(name='Imagine that no-one gets circumcised',
+        Parscen(name='Proportion circumcised',
              parsetname='default',
              pars=[{'endval': 0.2,
                 'endyear': 2020,
                 'name': 'propcirc',
-                'for': malelist,
+                'for': P.pars()['propcirc'].keys(),
                 'startval': .85,
                 'startyear': 2015.2}]),
         
@@ -471,5 +459,52 @@ if 'VMMC' in tests:
 #        apd = plotpars([scen.scenparset.pars for scen in P.scens.values()])
         pygui(P.results[-1])
         
+
+
+## Set up project etc.
+if 'newcascade' in tests:
+    t = tic()
+
+    print('Running new cascade parameters scenario test...')
+    from optima import Parscen, Budgetscen, defaultproject
+    
+    P = defaultproject('best',dorun=False)
+    P.parset().fixprops(False)
+    P.parset().fixprops(which='tx')
+    
+    ## Define scenarios
+    scenlist = [
+        Parscen(name='Current conditions',
+                parsetname='default',
+                pars=[]),
+
+        Parscen(name='Increase treatment failure',
+             parsetname='default',
+             pars=[{'endval': 0.5,
+                'endyear': 2020,
+                'startyear': 2017.,
+                'name': 'treatfail',
+                'for': P.pars()['treatfail'].keys()}]),
+        
+        Parscen(name='Decrease regimen switching rate',
+             parsetname='default',
+             pars=[{'endval': .1,
+                'endyear': 2020,
+                'startyear': 2017.,
+                'name': 'regainvs',
+                'for': P.pars()['regainvs'].keys()}]),
+        
+        ]
+    
+    # Store these in the project
+    P.addscens(scenlist, overwrite=True)
+    
+    # Run the scenarios
+    P.runscenarios()
+     
+    if doplot:
+        from optima import pygui
+#        apd = plotpars([scen.scenparset.pars for scen in P.scens.values()])
+        pygui(P.results[-1])
 
     done(t)

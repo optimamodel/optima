@@ -1,5 +1,4 @@
-
-<div class="modal-header">
+<div class="modal-header" xmlns="http://www.w3.org/1999/html">
   CREATE/EDIT {{state.optimization.which}} OPTIMIZATION
   <div ng-if="state.optimization.which == 'outcomes'" style="display: inline-block">
     <help ref='outcomes-optimization'/>
@@ -76,7 +75,25 @@
       class="txbox"
       style="display: inline; width: 5em;"
       ng-model="state.optimization.objectives.end"/>
+
+    &nbsp;&nbsp;
+    <!--<input-->
+      <!--type="checkbox"-->
+      <!--ng-model="state.optimization.tvsettings.timevarying">-->
+      <!--Allow time-varying optimization-->
+    <!--</input>-->
+
+    <!--<span ng-show="state.optimization.tvsettings.timevarying">-->
+      <!--&nbsp;&nbsp;-->
+      <!--<input-->
+        <!--type="checkbox"-->
+        <!--ng-model="state.optimization.tvsettings.tvconstrain">-->
+        <!--Keep total budget constant-->
+      <!--</input>-->
+    <!--</span>-->
+
   </span>
+
 
   <span ng-show="state.optimization.which == 'money'">
     compare to base year &nbsp;
@@ -116,14 +133,14 @@
   <b>Weighting:</b>
 
   <span ng-show="state.optimization.which == 'money'">
-    Fraction of deaths to be averted: &nbsp;
+    Fraction of infections to be averted: &nbsp;
     <input
         type="number"
         class="txbox"
         style="display: inline; width: 5em;"
         ng-model="state.optimization.objectives.incifrac"/>
     &nbsp;
-    &nbsp; Fraction of infections to be averted:&nbsp;
+    &nbsp; Fraction of deaths to be averted:&nbsp;
     <input
         type="number"
         class="txbox"

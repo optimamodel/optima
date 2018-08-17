@@ -1,4 +1,3 @@
-from __future__ import print_function
 """
 parse.py
 ========
@@ -102,7 +101,9 @@ def normalize_obj(obj):
             return float(obj)
 
     if isinstance(obj, unicode):
-        return str(obj)
+        try:    string = str(obj) # Try to convert it to ascii
+        except: string = obj # Give up and use original
+        return string
 
     if isinstance(obj, set):
         return list(obj)
@@ -175,22 +176,25 @@ def get_populations_from_project(project):
             age_to: int
         - ...
     """
-    data_pops = normalize_obj(project.data.get("pops"))
     populations = []
-    for i in range(len(data_pops['short'])):
-        population = {
-            'short': data_pops['short'][i],
-            'name': data_pops['long'][i],
-            'male': bool(data_pops['male'][i]),
-            'female': bool(data_pops['female'][i]),
-            'age_from': int(data_pops['age'][i][0]),
-            'age_to': int(data_pops['age'][i][1]),
-        }
-        if 'injects' in data_pops:
-            population['injects'] = bool((data_pops['injects'][i]))
-        if 'sexworker' in data_pops:
-            population['sexworker'] = bool((data_pops['sexworker'][i]))
-        populations.append(population)
+    try:
+        data_pops = normalize_obj(project.data.get("pops"))
+        for i in range(len(data_pops['short'])):
+            population = {
+                'short': data_pops['short'][i],
+                'name': data_pops['long'][i],
+                'male': bool(data_pops['male'][i]),
+                'female': bool(data_pops['female'][i]),
+                'age_from': int(data_pops['age'][i][0]),
+                'age_to': int(data_pops['age'][i][1]),
+            }
+            if 'injects' in data_pops:
+                population['injects'] = bool((data_pops['injects'][i]))
+            if 'sexworker' in data_pops:
+                population['sexworker'] = bool((data_pops['sexworker'][i]))
+            populations.append(population)
+    except Exception as E:
+        print('Warning, no populations entered for project "%s", returning empty list: %s' % (project.name, repr(E)))
     return populations
 
 
@@ -248,19 +252,8 @@ def clear_project_data(project):
 
 
 def set_project_summary_on_project(project, summary):
-
     print(">> set_project_summary_on_project")
-
-    data_pops = revert_populations_to_pop(summary['populations'])
-
-    project.data["pops"] = data_pops
-    project.data["npops"] = len(data_pops)
-
     project.name = summary["name"]
-
-    if not project.settings:
-        project.settings = op.Settings()
-
     startYear = summary['startYear']
     endYear = summary['endYear']
     project.settings.start = startYear
@@ -444,7 +437,7 @@ def get_parameters_for_scenarios(project):
         result[parset_id] = pars
         for par in parset.pars.values():
             if isinstance(par, op.Timepar): # Targetable parameters are timepars
-                for pop in par.y.keys():
+                for pop in par.keys():
                     pars.append({
                         'name': par.name,
                         'short': par.short,
@@ -461,7 +454,7 @@ def get_startval_for_parameter(project, parset_id, par_short, pop, year):
         pop = tuple(pop)
     for par in parset.pars.values():
         if isinstance(par, op.Timepar) and par.short==par_short:
-            for par_pop in par.y.keys():
+            for par_pop in par.keys():
                 if par_pop == pop:
                     try:
                         par_defaults = op.setparscenvalues(
@@ -488,7 +481,7 @@ def get_parameters_for_edit_program(project):
                         'name': par.name,
                         'param': par.short,
                         'by': par.by,
-                        'pships': par.y.keys() if par.by == 'pship' else []
+                        'pships': par.keys() if par.by == 'pship' else []
                     })
                     added_par_keys.add(par_key)
     return parameters
@@ -497,7 +490,7 @@ def get_parameters_for_edit_program(project):
 def get_parameters_for_outcomes(project, progset_id, parset_id):
     progset = get_progset_from_project(project, progset_id)
     parset = get_parset_from_project(project, parset_id)
-
+    
     print(">> get_parameters_for_outcomes '%s'" % progset.name)
 
     progset.gettargetpops()
@@ -506,13 +499,12 @@ def get_parameters_for_outcomes(project, progset_id, parset_id):
 
     target_par_shorts = set([p['param'] for p in progset.targetpars])
     pars = parset.pars
-    parameters = [
+    parameters = [ # Note the loop!
         {
             'short': par_short,
             'name': pars[par_short].name,
             'coverage': (pars[par_short].limits[1]=='maxpopsize'), # Replaces "coverage" by testing if the upper limit is maxpopsize
             'limits': get_par_limits(project, pars[par_short]),
-            'interact': 'additive', # TODO: Allow different interactivity options
             'populations': [
                 {
                     'pop': popKey,
@@ -529,7 +521,7 @@ def get_parameters_for_outcomes(project, progset_id, parset_id):
         }
         for par_short in target_par_shorts
     ]
-
+    
     return {'parameters': parameters}
 
 
@@ -652,6 +644,12 @@ def revert_program_costcovdata(costcov):
             'cost': map(to_nan, pluck(costcov, 'cost')),
             'coverage': map(to_nan, pluck(costcov, 'coverage')),
         }
+        try: # Ensure it's in order -- WARNING, copied from programs.py
+            order = np.argsort(result['t']) # Get the order from the years
+            for key in ['t', 'cost', 'coverage']: # Reorder each of them to be the same
+                result[key] = [result[key][o] for o in order]
+        except Exception as E:
+            op.printv('Warning, could not order costcovdata: "%s"' % repr(E))
     return result
 
 
@@ -661,7 +659,8 @@ def revert_program_ccopars(ccopars):
         result = op.odict({
             't': ccopars['t'],
             'saturation': map(tuple, ccopars['saturation']),
-            'unitcost': map(tuple, ccopars['unitcost'])
+            'unitcost':   map(tuple, ccopars['unitcost']),
+            'popfactor':  map(tuple, ccopars['popfactor'])
         })
     return result
 
@@ -696,6 +695,8 @@ def get_program_summary(program, progset, active):
                 - 2016
             unitcost:
                 - [1.136849845773715, 1.136849845773715]
+            popfactor:
+                - [1.0, 1.0]
         costcov:
             -
                 cost: 16616289
@@ -733,7 +734,7 @@ def get_program_summary(program, progset, active):
             """
 
     ccopars_dict = normalize_obj(program.costcovfn.ccopars)
-    for key in ['saturation', 'unitcost']:
+    for key in ['saturation', 'unitcost', 'popfactor']:
         if key not in ccopars_dict:
             continue
         a_list = ccopars_dict[key]
@@ -865,7 +866,7 @@ def set_outcome_summaries_on_progset(outcomes, progset):
             poptuple = tuple(outcome['pop']) if islist else outcome['pop']
             if poptuple in covout_by_poptuple:
                 covout_by_poptuple[poptuple].addccopar(ccopar, overwrite=True)
-
+            
             covout_by_poptuple[poptuple].interaction = outcome['interact']
     
     progset.updateprogset()
@@ -894,23 +895,24 @@ def get_progset_summary(project, progset_name):
     program_summaries = active_program_summaries + inactive_program_summaries
 
     # Overwrite with default name and category if applicable
-    default_program_summaries = get_default_program_summaries(project)
-    loaded_program_shorts = []
-    default_program_summary_by_short = {
-        p['short']: p for p in default_program_summaries}
-    for program_summary in program_summaries:
-        short = program_summary['short']
-        if short in default_program_summary_by_short:
-            default_program_summary = default_program_summary_by_short[short]
-            if not program_summary['name']:
-                program_summary['name'] = default_program_summary['name']
-            program_summary['category'] = default_program_summary['category']
-        loaded_program_shorts.append(short)
-
-    # append any default programs as inactive if not already in project
-    for program_summary in default_program_summaries:
-        if program_summary['short'] not in loaded_program_shorts:
-            program_summaries.append(program_summary)
+    if len(program_summaries)==0: # Only load defaults if nothing is loaded currently
+        default_program_summaries = get_default_program_summaries(project)
+        loaded_program_shorts = []
+        default_program_summary_by_short = {
+            p['short']: p for p in default_program_summaries}
+        for program_summary in program_summaries:
+            short = program_summary['short']
+            if short in default_program_summary_by_short:
+                default_program_summary = default_program_summary_by_short[short]
+                if not program_summary['name']:
+                    program_summary['name'] = default_program_summary['name']
+                program_summary['category'] = default_program_summary['category']
+            loaded_program_shorts.append(short)
+    
+        # append any default programs as inactive if not already in project
+        for program_summary in default_program_summaries:
+            if program_summary['short'] not in loaded_program_shorts:
+                program_summaries.append(program_summary)
 
     for program_summary in program_summaries:
         if program_summary['category'] == 'No category':
@@ -1076,7 +1078,7 @@ def set_progset_summary_on_project(project, progset_summary, progset_id=None):
     """
     Updates/creates a progset from a progset_summary, with the addition
     of inactive_programs that are taken from the default programs
-    generated from pyOptima.
+    generated from pyOptima, if no programs are selected.
     """
     progset = get_progset_from_name(project, progset_summary['name'], progset_id)
     set_progset_summary_on_progset(progset, progset_summary)
@@ -1199,8 +1201,17 @@ def get_scenario_summary(project, scenario):
         scenario_type = "budget"
         variant_data["budget"] = convert_program_list(scenario.budget)
 
+    try:    
+        parset_id = project.parsets[scenario.parsetname].uid
+    except: 
+        print('>> Warning, scenario parset "%s" not in project parsets: %s; reverting to default "%s"' % (scenario.parsetname, project.parsets.keys(), project.parset().name))
+        parset_id = project.parset().uid
     if hasattr(scenario, "progsetname"):
-        progset_id = project.progsets[scenario.progsetname].uid
+        try:    
+            print('>> Warning, scenario progset "%s" not in project progset: %s; reverting to default "%s"' % (scenario.progsetname, project.progsets.keys(), project.progset().name))
+            progset_id = project.progsets[scenario.progsetname].uid
+        except: 
+            progset_id = project.progset().uid
     else:
         progset_id = None
 
@@ -1218,7 +1229,7 @@ def get_scenario_summary(project, scenario):
         'active': scenario.active,
         'name': scenario.name,
         'years': scenario.t,
-        'parset_id': project.parsets[scenario.parsetname].uid,
+        'parset_id': parset_id,
     }
     result.update(variant_data)
     return result
@@ -1294,10 +1305,10 @@ def set_scenario_summaries_on_project(project, scenario_summaries):
 ### OPTIMIZATIONS
 #############################################################################################
 
-def parse_constraints(constraints, project=None):
+def parse_constraints(constraints, project=None, progsetname=None):
     entries = []
     if constraints is None:
-        constraints = op.defaultconstraints(project=project)
+        constraints = op.defaultconstraints(project=project, progsetname=None)
     for key, value in constraints['name'].items():
         entries.append({
             'key': key,
@@ -1315,11 +1326,8 @@ def force_to_none(val):
     return val
 
 
-def revert_constraints(entries):
-    result = op.odict()
-    result['min'] = op.odict()
-    result['max'] = op.odict()
-    result['name'] = op.odict()
+def revert_constraints(entries, project=None, progsetname=None):
+    result = op.defaultconstraints(project=project, progsetname=progsetname) # Get the structure right
     for entry in entries:
         key = entry['key']
         result['min'][key] = force_to_none(entry['min'])
@@ -1334,7 +1342,8 @@ def get_default_optimization_summaries(project):
         progset_id = progset.uid
         default = {
             'constraints': parse_constraints(op.defaultconstraints(project=project, progsetname=progsetkey)),
-            'objectives': {}
+            'objectives': {},
+            'tvsettings': normalize_obj(op.defaulttvsettings())
         }
         for which in ['outcomes', 'money']:
             default['objectives'][which] = normalize_obj(
@@ -1386,6 +1395,13 @@ def get_optimization_summaries(project):
                     - inci
                 start: 2017,
                 which: outcomes,
+            tvsettings:
+                "timevarying": False
+                "tvconstrain": True
+                "tvstep":      1.0
+                "tvinit":      None
+                "asdstep":     0.1
+                "asdlim":      5.0
         -...
      '''
     optim_summaries = []
@@ -1396,23 +1412,27 @@ def get_optimization_summaries(project):
             "id": str(optim.uid),
             "name": str(optim.name),
             "objectives": normalize_obj(optim.objectives),
-            "constraints": parse_constraints(optim.constraints, project=project),
+            "constraints": parse_constraints(optim.constraints, project=project, progsetname=optim.progsetname),
+            "tvsettings": normalize_obj(optim.tvsettings),
         }
 
         optim_summary["which"] = str(optim.objectives["which"])
-
-        if optim.parsetname:
-            optim_summary["parset_id"] = str(project.parsets[optim.parsetname].uid)
-        else:
-            optim_summary["parset_id"] = None
-
-        if optim.progsetname:
-            progset = project.progsets[optim.progsetname]
-            optim_summary["progset_id"] = str(progset.uid)
-        else:
-            progset = project.progsets[0]
-            optim_summary["progset_id"] = str(progset.uid)
-
+        
+        try:
+            parset_id = project.parsets[optim.parsetname].uid # Try to extract the 
+        except:
+            print('>> Warning, optimization parset "%s" not in project parsets: %s; reverting to default "%s"' % (optim.parsetname, project.parsets.keys(), project.parset().name))
+            parset_id = project.parset().uid # Just get the default
+        
+        try:
+            progset_id = project.progsets[optim.progsetname].uid # Try to extract the 
+        except:
+            print('>> Warning, optimization progset "%s" not in project progsets: %s; reverting to default "%s"' % (optim.progsetname, project.progsets.keys(), project.progset().name))
+            progset_id = project.progset().uid # Just get the default
+        
+        optim_summary["parset_id"]   = parset_id
+        optim_summary["progset_id"] = progset_id
+        
         optim_summaries.append(optim_summary)
 
     # as some values given can be NaN
@@ -1447,7 +1467,10 @@ def set_optimization_summaries_on_project(project, optimization_summaries):
         optim.objectives["which"] = summary["which"]
 
         if "constraints" in summary:
-            optim.constraints = revert_constraints(summary['constraints'])
+            optim.constraints = revert_constraints(summary['constraints'], project=project, progsetname=optim.progsetname)
+        
+        for tvkey in optim.tvsettings.keys():
+            optim.tvsettings[tvkey] = summary["tvsettings"][tvkey]
 
         new_optims[summary["name"]] = optim
 

@@ -29,7 +29,7 @@
     "underscore": "=1.8.3"
   },
   "scripts": {
-    "postinstall": "node_modules/bower/bin/bower install"
+    "postinstall": "bower install"
   },
   "dependencies": {
     "gulp": "^3.9.1"

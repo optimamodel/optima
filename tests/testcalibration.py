@@ -96,7 +96,7 @@ if 'manualfit' in tests and doplot:
     from optima import Project, manualfit
     
     P = Project(spreadsheet='generalized.xlsx')
-    manualfit(project=P, orig='default', name='manual')
+    manualfit(project=P, orig='default')
     
     done(t)
 

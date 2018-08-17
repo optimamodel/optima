@@ -117,7 +117,7 @@
                   width: 100%;
                   margin-top: 10px">
 
-            <div style="flex: 0 0 540px;">
+            <div style="flex: 0 0 740px;">
 
               <h3>Define cost function
                 <help ref="define-cost-function"/>
@@ -127,9 +127,9 @@
                   class="section table table-bordered">
                 <tr>
                   <td>Year</td>
-                  <td>Estimated<br>population</td>
                   <td>Saturation %</td>
                   <td>Unit cost</td>
+                  <td>Population factor</td>
                   <td></td>
                 </tr>
                 <tr ng-repeat="row in vm.state.ccoparsTable.rows">
@@ -139,11 +139,6 @@
                         ng-change="vm.setEstPopulationForCcopar()"
                         ng-options="year for year in vm.state.yearSelector"
                         class="txbox"/>
-                  </td>
-                  <td valign="center">
-                    <div class="txbox">
-                      {{row[1]}}
-                    </div>
                   </td>
                   <td>
                     <ng-form name="saturationForm">
@@ -203,6 +198,37 @@
                         Invalid values
                       </div>
                       <div class="error-hint" ng-show="vm.checkLowHighViolation(row[4], row[5])">
+                        Please ensure low < high
+                      </div>
+                    </ng-form>
+                  </td>
+                  <td>
+                    <ng-form name="popForm">
+                      <input
+                        ng-class="{ invalid: popForm.low.$invalid }"
+                        name="low"
+                        ng-model="row[6]"
+                        min="0"
+                        type="number"
+                        step="any"
+                        style="width: 85px"
+                        class="txbox __inline"
+                        required/>
+                      -
+                      <input
+                        ng-class="{ invalid: popForm.high.$invalid }"
+                        name="high"
+                        ng-model="row[7]"
+                        min="0"
+                        type="number"
+                        step="any"
+                        style="width: 85px"
+                        class="txbox __inline"
+                        required/>
+                      <div class="error-hint" ng-show="popForm.$invalid">
+                        Invalid values
+                      </div>
+                      <div class="error-hint" ng-show="vm.checkLowHighViolation(row[6], row[7])">
                         Please ensure low < high
                       </div>
                     </ng-form>
@@ -464,30 +490,30 @@
                 </td>
               </tr>
 
-              <!--<tr ng-if="vm.state.parameter.coverage != 1">-->
-                <!--<td>-->
-                  <!--<i>Program interactions</i>:-->
-                  <!--&nbsp; &nbsp;-->
-                  <!--<input-->
-                      <!--type="radio"-->
-                      <!--ng-model="outcome.interact"-->
-                      <!--value="random">-->
-                  <!--<label> random </label> &nbsp; &nbsp;-->
-                  <!--<input-->
-                      <!--type="radio"-->
-                      <!--ng-model="outcome.interact"-->
-                      <!--ng-value="nested">-->
-                  <!--<label> nested </label> &nbsp; &nbsp;-->
-                  <!--<input-->
-                      <!--type="radio"-->
-                      <!--ng-model="outcome.interact"-->
-                      <!--value="additive">-->
-                  <!--<label> additive </label>-->
-                  <!--<br>-->
-                  <!--<br>-->
-                <!--</td>-->
-                <!--<td></td>-->
-              <!--</tr>-->
+              <tr ng-if="vm.state.parameter.coverage != 1">
+                <td>
+                  <i>Program interactions</i>:
+                  &nbsp; &nbsp;
+                  <input
+                      type="radio"
+                      ng-model="outcome.interact"
+                      value="random">
+                  <label> random </label> &nbsp; &nbsp;
+                  <input
+                      type="radio"
+                      ng-model="outcome.interact"
+                      value="nested">
+                  <label> nested </label> &nbsp; &nbsp;
+                  <input
+                      type="radio"
+                      ng-model="outcome.interact"
+                      value="additive">
+                  <label> additive </label>
+                  <br>
+                  <br>
+                </td>
+                <td></td>
+              </tr>
 
             </table>
 
@@ -537,8 +563,8 @@
             <tr ng-repeat="par in vm.state.summary.pars">
               <td>{{par[0]}}</td>
               <td>{{par[1]}}</td>
-              <td>{{par[2]|number:2}}</td>
-              <td>{{par[3]|number:2}}</td>
+              <td>{{par[2]|number:4}}</td>
+              <td>{{par[3]|number:4}}</td>
             </tr>
           </table>
 
