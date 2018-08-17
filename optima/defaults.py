@@ -145,8 +145,11 @@ def defaultprograms(project, addcostcovpars=False, addcostcovdata=False, filterp
                   
     PEP = Program(short='PEP',
                   name='Post-exposure prophylaxis',
-                  category='Care and treatment',
+                  category='Prevention',
+                  targetpars=[{'param': 'prep', 'pop':  pop} for pop in pops],
+                  targetpops=pops,
                   criteria = {'hivstatus': ['lt50', 'gt50', 'gt200', 'gt350'], 'pregnant': False})
+
                   
     HTC = Program(short='HTC',
                   name='HIV testing and counseling',
@@ -229,10 +232,12 @@ def defaultprograms(project, addcostcovpars=False, addcostcovdata=False, filterp
                     category='Other')
                   
     if addcostcovpars:
+        # WARNING, does not include popfactors except as an example -- assumed to be 1
         Condoms.costcovfn.addccopar({'saturation': (0.75,0.75),
                                  't': 2016.0,
-                                 'unitcost': (3,7)})
-    
+                                 'unitcost': (3,7),
+                                 'popfactor': (1,1)})    
+                                
         SBCC.costcovfn.addccopar({'saturation': (0.6,0.6),
                                  't': 2016.0,
                                  'unitcost': (8,12)})
@@ -370,13 +375,13 @@ def defaultproject(which='best', addprogset=True, addcostcovdata=True, usestanda
         dorun = kwargs.get('dorun',True) # Use specified dorun setting, otherwise assume true
         kwargs['dorun'] = False # Don't run now, run after calibration
         P = Project(name='Simple (demo)', spreadsheet=spreadsheetpath+'simple.xlsx', verbose=verbose, **kwargs)
-        P.pars()['transnorm'].y = 0.8 # "Calibration"
-        P.pars()['fixproptx'].t = 2100 # For optimization to work
+        P.pars()['transnorm'].y = 0.6 # "Calibration"
+        P.parset().fixprops(False) # For optimization to work
         if dorun: P.runsim() # Run after calibration
         
         # Programs
         R = defaultprogset(P, addcostcovpars=addcostcovpars, addcostcovdata=addcostcovdata, filterprograms=['HTC', 'ART'])
-        R.programs['HTC'].costcovdata =          {'t':[2014],'cost':[20e6],'coverage':[1e6]}
+        R.programs['HTC'].costcovdata =          {'t':[2014],'cost': [5e6],'coverage':[2e5]}
         R.programs['ART'].costcovdata =          {'t':[2014],'cost': [2e6],'coverage':[1e4]}
         R.covout['hivtest']['M 15-49'].addccopar({'intercept': (0.01,0.01), 't': 2016.0, 'HTC': (0.30,0.30)})
         R.covout['hivtest']['F 15-49'].addccopar({'intercept': (0.01,0.01), 't': 2016.0, 'HTC': (0.30,0.30)})
