@@ -13,8 +13,8 @@ Version: 2016jan05 by cliffk
 ## Define tests to run here!!!
 tests = [
 'modalities',
-'scaleup',
-'costcov'
+#'scaleup',
+#'costcov'
 ]
 
 ##############################################################################

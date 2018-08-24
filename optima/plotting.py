@@ -11,7 +11,7 @@ plotting to this file.
 Version: 2017jun03
 '''
 
-from optima import OptimaException, Resultset, Multiresultset, ICER, odict, printv, gridcolors, vectocolor, alpinecolormap, makefilepath, sigfig, dcp, findinds, findnearest, promotetolist, saveobj, promotetoodict, promotetoarray, boxoff, getvalidinds
+from optima import OptimaException, Resultset, Multiresultset, Parameterset, ICER, odict, printv, gridcolors, vectocolor, alpinecolormap, makefilepath, sigfig, dcp, findinds, findnearest, promotetolist, saveobj, promotetoodict, promotetoarray, boxoff, getvalidinds
 from optima import setylim, commaticks, SIticks
 from numpy import array, ndim, maximum, arange, zeros, mean, shape, isnan, linspace, minimum # Numeric functions
 from pylab import gcf, get_fignums, close, ion, ioff, isinteractive, figure # Plotting functions
@@ -215,7 +215,7 @@ def makeplots(results=None, toplot=None, die=False, verbose=2, plotstartyear=Non
     ## Add cascade plot(s) with bars
     if 'cascadebars' in toplot:
         toplot.remove('cascadebars') # Because everything else is passed to plotepi()
-        cascadebarplots = plotcascade(results, die=die, plotstartyear=plotstartyear, plotendyear=plotendyear, fig=fig, asbars=True, **kwargs)
+        cascadebarplots = plotcascade(results, die=die, fig=fig, asbars=True, **kwargs)
         allplots.update(cascadebarplots)
     
     ## Add deaths by CD4 plot -- WARNING, only available if results includes raw
@@ -1248,6 +1248,10 @@ def plotcostcov(program=None, year=None, parset=None, results=None, plotoptions=
     ''' Plot the cost-coverage curve for a single program'''
     
     # Put plotting imports here so fails at the last possible moment
+    if year is None: 
+        year = program.costcovfn.ccopars['t'] # Populate with default
+    if not isinstance(parset, Parameterset):
+        raise OptimaException('Please supply a parset, not "%s"' % parset)
     year = promotetoarray(year)
     colors = gridcolors(len(year))
     plotdata = odict()

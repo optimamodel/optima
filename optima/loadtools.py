@@ -59,7 +59,16 @@ def setmigrations(which='migrations'):
         ('2.6.6', ('2.6.7', '2018-04-26', None,              'Handle male- and female-only populations for parameters')),
         ('2.6.7', ('2.6.8', '2018-04-28', removecosttx,      'Remove treatment cost parameter')),
         ('2.6.8', ('2.6.9', '2018-04-28', addrelhivdeath,    'Add population-dependent relative HIV death rates')),
+        ('2.6.9', ('2.6.10','2018-05-16', addspectrumranges, 'Add ranges for optional data inputs')),
+        ('2.6.10',('2.6.11','2018-05-21', circmigration,     'Adds the missing migration for circumcision key changes')),
+        ('2.6.11',('2.6.12','2018-05-23', changehivdeathname,'Change the name of the relative HIV-related death rate')),
+        ('2.6.12',('2.7',   '2018-05-25', tvtreatfail,       'Redo treatment failure and add regimen switching/adherence support')),
+        ('2.7',   ('2.7.1', '2018-06-17', None,              'Modified minimize money algorithm')),
+        ('2.7.1', ('2.7.2', '2018-07-24', addfixedattr,      'Store whether or not proportions are fixed')),
+        ('2.7.2', ('2.7.3', '2018-07-26', addpopfactor,      'Add a population adjustment factor to programs')),
+        ('2.7.3', ('2.7.4', '2018-07-27', addpopfactor,      'Fix previous migration')),
         ])
+    
     
     # Define changelog
     changelog = op.odict()
@@ -777,6 +786,140 @@ def addrelhivdeath(project, **kwargs):
         ps.pars['hivdeath'].y[:] = array([1.]*npops)
         for key in range(npops): ps.pars['hivdeath'].prior[key].pars = array([0.9, 1.1]) 
     
+    return None
+
+
+def addspectrumranges(project, **kwargs):
+    """
+    Migration between Optima 2.6.9 and 2.6.10: add ranges for optional data inputs and rename PrEP
+    """
+    
+    # Add ranges
+    optindicators = ['optpropdx','optpropcare','optproptx','optpropsupp','optproppmtct','optnumtest','optnumdiag','optnuminfect','optprev','optplhiv','optdeath','optnewtreat']
+    for optind in optindicators:
+        if len(project.data[optind])==1:
+            tmpdata = op.dcp(project.data[optind])
+            newdata = []
+            newdata.append([nan]*len(project.data[optind][0])) # No data for high estimate
+            newdata.append(tmpdata[0]) # Previous data for best estimate
+            newdata.append([nan]*len(project.data[optind][0])) # No data for low estimate
+            project.data[optind] = newdata
+    
+    # Rename PrEP
+    for ps in project.parsets.values():
+        ps.pars['prep'].name    = 'Proportion of exposure events covered by ARV-based prophylaxis'
+        ps.pars['effprep'].name = 'Efficacy of ARV-based prophylaxis'
+    
+    return None
+
+
+def circmigration(project, **kwargs):
+    """
+    Migration between Optima 2.6.10 and 2.6.11: add circumcision migration
+    """
+    
+    ## Redo circ parameters
+    malelist = [val for i,val in enumerate(project.data['pops']['short']) if project.data['pops']['male'][i]]
+    femalelist = [val for i,val in enumerate(project.data['pops']['short']) if project.data['pops']['female'][i]]
+    
+    for pset in project.parsets.values():
+
+        if pset.pars['propcirc'].by=='pop':
+            pset.pars['propcirc'].by = 'mpop'
+            for fpop in femalelist: 
+                pset.pars['propcirc'].t.pop(fpop)
+                pset.pars['propcirc'].y.pop(fpop)
+
+        if pset.pars['numcirc'].by=='pop':
+            pset.pars['numcirc'].by = 'mpop'
+            for fpop in femalelist: 
+                pset.pars['numcirc'].t.pop(fpop)
+                pset.pars['numcirc'].y.pop(fpop)
+                
+        if pset.pars['birth'].by=='pop':
+            pset.pars['birth'].by = 'fpop'
+            for mpop in malelist: 
+                pset.pars['birth'].t.pop(mpop)
+                pset.pars['birth'].y.pop(mpop)
+            
+    return None
+    
+
+def changehivdeathname(project, **kwargs):
+    """
+    Change name of relative HIV-related death rate
+    """
+    
+    for pset in project.parsets.values():
+        pset.pars['hivdeath'].name = 'Relative HIV-related death rate (unitless)'
+    
+    return None
+
+    
+def tvtreatfail(project, **kwargs):
+    """
+    Migration between Optima 2.6.12 and 2.7: redo treatment failure
+    """
+    short = 'regainvs'
+    copyfrom = 'numvlmon'
+    kwargs['name'] = 'Proportion of cases with detected VL failure for which there is a switch to an effective regimen (%/year)'
+    kwargs['limits'] = (0, 'maxrate')
+    addparameter(project=project, copyfrom=copyfrom, short=short, **kwargs)
+    for ps in project.parsets.values():
+        ps.pars['regainvs'].y[:] = array([[1.]]) # Assume 100% are shifted (for backward compatability)
+        ps.pars['regainvs'].t[:] = array([[2017.]]) 
+    
+    removeparameter(project, short='treatfail', datashort='treatfail')
+    
+    short = 'treatfail'
+    copyfrom = 'numvlmon'
+    kwargs['name'] = 'Treatment failure rate'
+    kwargs['limits'] = (0, 'maxrate')
+    addparameter(project=project, copyfrom=copyfrom, short=short, **kwargs)
+    for ps in project.parsets.values():
+        ps.pars['treatfail'].y[:] = array([[.16]]) # Assume 16% are shifted
+        ps.pars['treatfail'].t[:] = array([[2017.]]) 
+
+    return None
+
+
+def addfixedattr(project, **kwargs):
+    """
+    Migration between Optima 2.7.1 and 2.7.2: add fixedness attribute
+    """
+    for ps in project.parsets.values():
+        if abs(ps.pars['fixproptx'].t - 2100) < 0.1:
+            ps.isfixed = False
+        else: ps.isfixed = True
+    return None
+
+
+def addpopfactor(project, **kwargs):
+    """
+    Migration between Optima 2.7.2 and 2.7.3 and 2.7.4: add popfactor attribute
+    """
+    for progset in project.progsets.values():
+        program_list = progset.programs.values()
+        try:    inactive_list = progset.inactive_programs.values()
+        except: inactive_list = [] # This might fail if there are no inactive programs; don't worry
+        all_programs = program_list + inactive_list
+        for program in all_programs:
+            try:
+                ccopars = program.costcovfn.ccopars # Won't exist or will be empty for e.g. fixed cost programs
+                if ccopars: # Don't do anything if it's empty or None
+                    if 'popfactor' not in ccopars: # Don't add it if it's already there
+                        ccopars['popfactor'] = []
+                        for yr in range(len(ccopars['t'])): # Give it the right number of elements
+                            istuple = True
+                            try: # This shouldn't fail, but it really doesn't matter if it does, so be safe
+                                if op.isnumber(ccopars['saturation'][yr]) and op.isnumber(ccopars['unitcost'][yr]):
+                                    istuple = False # If everything else is just a plain number, make this a plain number too
+                            except:
+                                pass
+                            if istuple: ccopars['popfactor'].append((1.0,1.0))
+                            else:       ccopars['popfactor'].append(1.0)
+            except:
+                pass # Don't really worry if it didn't work
     return None
 
 

@@ -6,9 +6,11 @@ Version: 2017jun04
 
 from optima import OptimaException, Link, Multiresultset, ICER, asd, getresults # Main functions
 from optima import printv, dcp, odict, findinds, today, getdate, uuid, objrepr, promotetoarray, findnearest, sanitize, inclusiverange # Utilities
-from numpy import zeros, ones, empty, arange, maximum, array, inf, isfinite, argmin, argsort, nan, floor, concatenate, exp
-from numpy.random import random, seed
+
+from numpy import zeros, ones, empty, arange, array, inf, isfinite, argmin, argsort, nan, floor, concatenate, exp, sqrt, logical_and
+from numpy.random import random, seed, randint
 from time import time
+import optima as op # Used by minmoney, at some point should make syntax consistent
 
 ################################################################################################################################################
 ### The container class
@@ -16,11 +18,11 @@ from time import time
 class Optim(object):
     ''' An object for storing an optimization '''
 
-    def __init__(self, project=None, name='default', objectives=None, constraints=None, parsetname=None, progsetname=None, timevarying=None, tvsettings=None):
+    def __init__(self, project=None, name='default', objectives=None, constraints=None, parsetname=None, progsetname=None, timevarying=None, tvsettings=None, which=None):
         if project     is None: raise OptimaException('To create an optimization, you must supply a project')
         if parsetname  is None: parsetname  = -1 # If none supplied, assume defaults
         if progsetname is None: progsetname = -1
-        if objectives  is None: objectives  = defaultobjectives(project=project,  progsetname=progsetname, verbose=0)
+        if objectives  is None: objectives  = defaultobjectives(project=project,  progsetname=progsetname, verbose=0, which=which)
         if constraints is None: constraints = defaultconstraints(project=project, progsetname=progsetname, verbose=0)
         if tvsettings  is None: tvsettings  = defaulttvsettings(timevarying=timevarying) # Create the time-varying settings
         self.name         = name # Name of the optimization, e.g. 'default'
@@ -370,7 +372,9 @@ def outcomecalc(budgetvec=None, which=None, project=None, parsetname=None, progs
     progset = project.progsets[progsetname]
     if objectives  is None: objectives  = defaultobjectives(project=project,  progsetname=progsetname, which=which)
     if constraints is None: constraints = defaultconstraints(project=project, progsetname=progsetname)
-    if totalbudget is None: totalbudget = objectives['budget']
+    if totalbudget is None:
+        if budgetvec is None: totalbudget = objectives['budget']
+        else:                 totalbudget = budgetvec[:].sum() # If a budget vector is supplied
     if origbudget  is None: origbudget  = progset.getdefaultbudget()
     if optiminds   is None: optiminds   = findinds(progset.optimizable())
     if budgetvec   is None: budgetvec   = dcp(origbudget[:][optiminds])
@@ -974,6 +978,7 @@ def minoutcomes(project=None, optim=None, tvec=None, verbose=None, maxtime=None,
         else:
             tmpresults['Optimal'] = dcp(tmpresults['Baseline']) # If zero budget, just copy current and rename
             tmpresults['Optimal'].name = 'Optimal' # Rename name to named name
+            tmpresults['Optimal'].projectref = Link(project) # Restore link
 
     ## Output
     multires = Multiresultset(resultsetlist=tmpresults.values(), name='optim-%s' % optim.name)
@@ -998,9 +1003,9 @@ def minoutcomes(project=None, optim=None, tvec=None, verbose=None, maxtime=None,
 def minmoney(project=None, optim=None, tvec=None, verbose=None, maxtime=None, maxiters=1000, 
              fundingchange=1.2, tolerance=1e-2, ccsample='best', randseed=None, keepraw=False, die=False, **kwargs):
     '''
-    A function to minimize money for a fixed objective. Note that it calls minoutcomes() in the process.
+    A function to minimize money for a fixed objective.
 
-    Version: 2016feb07
+    Version: 2018may
     '''
 
     ## Handle budget and remove fixed costs
@@ -1013,7 +1018,7 @@ def minmoney(project=None, optim=None, tvec=None, verbose=None, maxtime=None, ma
     optiminds = findinds(progset.optimizable())
     budgetvec = origbudget[:][optiminds] # Get the original budget vector
     origbudgetvec = dcp(budgetvec)
-    xmin = zeros(len(budgetvec))
+    nprogs = len(budgetvec)
 
     # Define arguments for ASD
     args = {'which':      'money', 
@@ -1022,7 +1027,6 @@ def minmoney(project=None, optim=None, tvec=None, verbose=None, maxtime=None, ma
             'progsetname':optim.progsetname, 
             'objectives': optim.objectives, 
             'constraints':optim.constraints, 
-            'totalbudget':totalbudget, 
             'optiminds':  optiminds, 
             'origbudget': origbudget, 
             'tvec':       tvec, 
@@ -1031,128 +1035,400 @@ def minmoney(project=None, optim=None, tvec=None, verbose=None, maxtime=None, ma
             'keepraw':    keepraw,
             }
 
+    #%% Preliminaries
+    start = op.tic()
+    
+    # Set parameters
+    n_throws     = max(50 ,nprogs*5) # Number of throws to try on each round
+    n_success    = max(20, nprogs*2) # The number of successes needed to terminate the throws
+    n_refine     = 200 # The maximum number of refinement steps to take
+    schedule     = [0.3, 0.6, 0.8, 0.9, 1.0] # The budget amounts to allocate on each round
+    search_step  = 2.0 # The size of the steps to establish the upper/lower limits for the binary search
+    search_tol   = 0.01 # Tolerance of the binary search (maximum difference between upper and lower limits)
+    refine_steps = [0.0, 0.5, 0.8, 0.9, 0.95, 0.99]  # During refinement, factor by which to scale programs
+    refine_keep  = 0.5 # During refinement, proportion of difference to reallocate to other programs
+    factor       = 1e6 # Units to scale printed out budget numbers
+    animate      = False # Whether or not to animate at the end
+    if animate: import pylab as pl
 
-    ##########################################################################################################################
-    ## Loop through different budget options
-    ##########################################################################################################################
-
-    terminate = False
-
-    # First, try infinite money
-    args['totalbudget'] = project.settings.infmoney
-    targetsmet, summary = outcomecalc(budgetvec, **args)
-    infinitefailed = False
-    if not(targetsmet): 
-        terminate = True
+    
+    #%% Definitions
+    def distance(target, this):
+        ''' Calculate the Euclidean distance to nearest point on the target region. '''
+        each_dist = []
+        for key in target.keys():
+            ax_dist = max(0, this[key]-target[key])
+            each_dist.append(ax_dist)
+        dist = sqrt(sum(array(each_dist)**2))
+        return dist
+        
+    def met(dist):
+        ''' Whether or not the marget is met '''
+        if dist > 0:    return False
+        elif dist == 0: return True
+        else:           raise Exception('Distance should never be negative, but it is %s' % dist)
+    
+    def outcome_met(budgetvec=None, totalbudget=None, args=None, target=None):
+        ''' Run an outcome calculation and determine if it meets the targets '''
+        res = op.outcomecalc(budgetvec, totalbudget=totalbudget, outputresults=True, **args)
+        res_final = res.outcomes['final']
+        dist = distance(target, res_final)
+        is_met = met(dist)
+        return is_met,res_final
+    
+        
+    #%% Preliminary investigations
+        
+    # Calculate current, infinite, and zero spending
+    printv('\n\n', 2, verbose)
+    printv('Preliminary investigations...', 2, verbose)
+    dists = op.odict()
+    movie = []
+    results_curr = op.outcomecalc(budgetvec, outputresults=True, **args)
+    res_targ = results_curr.outcomes['target']
+    res_curr = results_curr.outcomes['final']
+    dists['curr'] = distance(res_targ, res_curr)
+    curr_met = met(dists['curr'])
+    printv('  Current distance: %s' % dists['curr'], 2, verbose)
+    
+    totalbudget = project.settings.infmoney
+    results_inf = op.outcomecalc(budgetvec, totalbudget=totalbudget, outputresults=True, **args)
+    res_inf = results_inf.outcomes['final']
+    dists['inf'] = distance(res_targ, res_inf)
+    if not met(dists['inf']):
         infinitefailed = True
-        errormsg = "Not proceeding with money minimization since even infinite funding can't meet targets:\n%s" % summary
+        errormsg = "Not proceeding with money minimization since even infinite funding can't meet targets:\n%s" % dists['inf']
         if die: raise OptimaException(errormsg)
         else:   printv(errormsg, 1, verbose)
-    else: printv("Infinite allocation meets targets, as expected; proceeding...\n(%s)\n" % summary, 2, verbose)
-
-    # Next, try no money
-    zerofailed = False
-    if not terminate:
-        args['totalbudget'] = 1e-3
-        targetsmet, summary = outcomecalc(budgetvec, **args)
-        if targetsmet: 
-            terminate = True
-            zerofailed = True
-            errormsg = "Not proceeding with money minimization since even zero funding meets targets:\n%s" % summary
-            if die: raise OptimaException(errormsg)
-            else:   printv(errormsg, 1, verbose)
-        else: printv("Zero allocation doesn't meet targets, as expected; proceeding...\n(%s)\n" % summary, 2, verbose)
-
-    # If those did as expected, proceed with checking what's actually going on to set objective weights for minoutcomes() function
-    args['totalbudget'] = origtotalbudget
-    results = outcomecalc(budgetvec, outputresults=True, **args)
-    absreductions = odict() # Absolute reductions requested, for setting weights
-    for key in optim.objectives['keys']:
-        if optim.objectives[key+'frac'] is not None:
-            absreductions[key] = float(results.outcomes['baseline'][key]*optim.objectives[key+'frac']) # e.g. 1000 deaths * 40% reduction = 400 deaths
-        else:
-            absreductions[key] = 1e9 # A very very large number to effectively turn this off -- WARNING, not robust
-    weights = dcp(absreductions) # Copy this, since will be modifying it -- not strictly necessary but could come in handy
-    weights = 1.0/(weights[:]+project.settings.eps) # Relative weights are inversely proportional to absolute reductions -- e.g. asking for a reduction of 100 deaths and 400 new infections means 1 death = 4 new infections
-    weights /= weights.min() # Normalize such that the lowest weight is 1; arbitrary, but could be useful
-    for k,key in enumerate(optim.objectives['keys']):
-       optim.objectives[key+'weight'] = maximum(weights[k],0) # Reset objective weights according to the reduction required -- don't let it go below 0, though
-
+    else:
+        infinitefailed = False
+        printv('Infinite money check passes (distance 0)', 2, verbose)
+    
+    totalbudget = 1e-3
+    results_zero = op.outcomecalc(budgetvec, totalbudget=totalbudget, outputresults=True, **args)
+    res_zero = results_zero.outcomes['final']
+    dists['zero'] = distance(res_targ, res_zero)
+    if met(dists['zero']):
+        zerofailed = True
+        errormsg = "Not proceeding with money minimization since even zero funding meets targets:\n%s" % dists['zero']
+        if die: raise OptimaException(errormsg)
+        else:   printv(errormsg, 1, verbose)
+    else:
+        zerofailed = False
+        printv('Zero money check passes (distance: %s)' % dists['zero'], 2, verbose)
+    
+    # Plot current, infinite, and zero spending
+    movie.append('Preliminaries')
+    movie += [res_curr, res_inf, res_zero]
+        
     # If infinite or zero money met objectives, don't bother proceeding
-    if terminate:
+    if infinitefailed or zerofailed:
         if zerofailed:
-            constrainedbudgetvec = budgetvec*0.0
-            newtotalbudget = 0.0
+            budgetvec *= 0.0
+            totalbudget = 0.0
             fundingfactor = 0.0
         if infinitefailed:
             fundingfactor = 10 # For plotting, don't make the factor infinite, just very large
-            constrainedbudgetvec = 0.0*budgetvec + budgetvec.sum()*fundingfactor
-            newtotalbudget = totalbudget * fundingfactor
-
+            budgetvec = 0.0*budgetvec + budgetvec.sum()*fundingfactor
+            totalbudget *= fundingfactor
+        
+    
+    # It didn't, proceed with the algorithm
     else:
-        ##########################################################################################################################
-        ## Now run an optimization on the current budget
-        ##########################################################################################################################
+        #%% Increase/decrease current budget until targets met
+        def binary_search(budgetvec=None, totalbudget=None, args=None, target=None, curr_met=None, step=None, tol=None):
+            ''' Do a binary search to find a solution to within tol tolerance '''
+            printv('Starting binary search from %s...' % (totalbudget/factor), 2, verbose)
+            if step is None: step = search_step # Step size to increase/decrease guess
+            if tol  is None: tol  = search_tol # How close to get before declaring a solution
+            if curr_met is True: 
+                upper_lim = totalbudget
+                lower_lim = None
+            elif curr_met is False:
+                upper_lim = None
+                lower_lim = totalbudget
+            elif curr_met is None:
+                upper_lim = None
+                lower_lim = None
+            else:
+                raise OptimaException('Not sure what curr_met is: must be true, false, or None, not %s' % curr_met)
+            
+            # Find upper and lower limits
+            budget_list = []
+            result_list = []
+            while upper_lim is None:
+                totalbudget *= step
+                printv('  Scaling up budget to find upper lim: %s...' % (totalbudget/factor), 2, verbose)
+                is_met,res = outcome_met(budgetvec=budgetvec, totalbudget=totalbudget, args=args, target=target)
+                budget_list.append(totalbudget)
+                result_list.append(res)        
+                if is_met:
+                    upper_lim = totalbudget
+            while lower_lim is None:
+                totalbudget /= step
+                printv('  Scaling down budget to find upper limit: %s...' % (totalbudget/factor), 2, verbose)
+                is_met,res = outcome_met(budgetvec=budgetvec, totalbudget=totalbudget, args=args, target=target)
+                budget_list.append(totalbudget)
+                result_list.append(res)
+                if not is_met:
+                    lower_lim = totalbudget # Note, this does NOT meet targets
+            
+            # Do the binary search
+            while (upper_lim/lower_lim) > (1+tol):
+                trial = (upper_lim+lower_lim)/2.0
+                printv('  Binary search: %s (%s, %s)...' % (trial/factor, lower_lim/factor, upper_lim/factor), 2, verbose)
+                is_met,res = outcome_met(budgetvec=budgetvec, totalbudget=trial, args=args, target=target)
+                budget_list.append(totalbudget)
+                result_list.append(res)
+                if is_met:
+                    upper_lim = trial
+                else:
+                    lower_lim = trial
+            
+            printv('Final value: %s' % (upper_lim/factor), 2, verbose)
+            return upper_lim, budget_list, result_list # Since we know this meets the targets
+          
+        
+        def binary_choice(budgets=None, totalbudget=None, args=None, target=None, step=None, tol=None):
+            ''' Find the best budget '''
+            printv('Starting binary choice for %s...' % (totalbudget/factor), 2, verbose)
+            if step is None: step = search_step # Step size to increase/decrease guess
+            if tol  is None: tol  = search_tol # How close to get before declaring a solution
+            upper_lim = totalbudget # Since we know the total budget meets targets
+            lower_lim = None
+            
+            # Find lower limits
+            budget_list = []
+            result_list = []
+            meet_targets = range(len(success_budgets))
+            
+            while lower_lim is None:
+                totalbudget /= step
+                printv('  Scaling down budget to find lower lim: %s...' % (totalbudget/factor), 2, verbose)
+                still_met = []
+                for m,mt in enumerate(meet_targets):
+                    budgetvec = budgets[mt]
+                    printv('    Running %s of %s...' % (m+1, len(meet_targets)), 2, verbose)
+                    is_met,res = outcome_met(budgetvec=budgetvec, totalbudget=totalbudget, args=args, target=target)
+                    budget_list.append(totalbudget)
+                    result_list.append(res)
+                    if is_met: still_met.append(mt)
+                if len(still_met):
+                    meet_targets = still_met # Some are still met, so only check these
+                    upper_lim = totalbudget
+                else:
+                    lower_lim = totalbudget # None are met, this is the lower limit
+            
+            # Do the binary search
+            while (upper_lim/lower_lim) > (1+tol):
+                trial = (upper_lim+lower_lim)/2.0
+                printv('  Binary choice: %s (%s/%s)...' % (trial/factor, lower_lim/factor, upper_lim/factor), 2, verbose)
+                still_met = []
+                for m,mt in enumerate(meet_targets):
+                    budgetvec = budgets[mt]
+                    printv('    Running %s of %s...' % (m+1, len(meet_targets)), 2, verbose)
+                    is_met,res = outcome_met(budgetvec=budgetvec, totalbudget=trial, args=args, target=target)
+                    budget_list.append(totalbudget)
+                    result_list.append(res)
+                    if is_met: still_met.append(mt)
+                if len(still_met):
+                    meet_targets = still_met # Some are still met, so only check these
+                    upper_lim = trial
+                else:
+                    lower_lim = trial
+            
+            # Tidy up
+            if len(meet_targets)>1:
+                printv('Warning, %s budgets still meet targets (expecting 1, but not strictly so)' % len(meet_targets), 2, verbose)
+            totalbudget = upper_lim
+            new_budgetvec = budgets[meet_targets[0]] # Pull out the best budget vector (expecting only 1 left)
+            new_budgetvec /= new_budgetvec.sum()
+            new_budgetvec *= totalbudget # Rescale
+            
+            printv('Final value: %s' % (upper_lim/factor), 2, verbose)
+            return totalbudget, new_budgetvec, budget_list, result_list # Since we know this meets the targets
+        
+        #%% Do the binary search
+        printv('\n\n', 2, verbose)
+        movie.append('Scale current budget')
+        totalbudget,b_list,r_list = binary_search(budgetvec=budgetvec, totalbudget=origtotalbudget, args=args, target=res_targ, curr_met=curr_met)
+        for bud,res in zip(b_list,r_list):
+            movie.append(res)
+            
+        #%% Throw n_throws points at current budget level
+        printv('\n\n', 2, verbose)
+        printv('Throwing...', 2, verbose)
+        allocated_budget = op.dcp(budgetvec)
+        allocated_budget[:] *= 0
+        remaining_budget = totalbudget
+        for p,prop in enumerate(schedule):
+            printv('  Round %s/%s (%s being allocated)' % (p+1, len(schedule), prop), 2, verbose)
+            movie.append('Making throw %s' % (p+1))
+            success_count = 1
+            success_budgets = [budgetvec]
+            for t,throw in enumerate(range(n_throws-1)): # -1 since include current budget
+                key = 'Throw %s' % (t+2) # since starting with current
+                vec = random(nprogs)
+                vec /= vec.sum() # Normalize
+                this_budget = op.dcp(allocated_budget) + vec*remaining_budget
+                this_budget /= this_budget.sum()
+                this_budget *= totalbudget
+                results_throw = op.outcomecalc(this_budget, totalbudget=totalbudget, outputresults=True, **args)
+                res_throw = results_throw.outcomes['final']
+                dists[key] = distance(res_targ, res_throw)
+                movie.append(res_throw)
+                if met(dists[key]):
+                    success_count += 1
+                    success_budgets.append(this_budget)
+                printv('    %s of %s, %s/%s successes' % (key, n_throws, success_count, n_success), 2, verbose)
+                if success_count >= n_success:
+                    break
+            
+            # Do the refinement
+            printv('Refining throw...', 2, verbose)
+            movie.append('Refining throw %s' % (p+1))
+            totalbudget, budgetvec, b_list, r_list = binary_choice(budgets=success_budgets, totalbudget=totalbudget, args=args, target=res_targ)
+            for bud,res in zip(b_list,r_list):
+                movie.append(res)
+            
+            # Populate and restart
+            this_allocation = prop*budgetvec
+            allocated_budget[:] = this_allocation # This includes the previous allocation, so we can use = instead of +=
+            remaining_budget -= this_allocation.sum()
+            printv('Total allocated after round %s: %s\nAllocation:\n%s' % (p+1, this_allocation.sum()/factor, this_allocation/factor), 2, verbose)
+        
+        op.toc(start)
+        
+        
+        #%% Final refinement
+        printv('\n\n', 2, verbose)
+        printv('Local search...', 2, verbose)
+        for r_s,refine_step in enumerate(refine_steps):
+            movie.append('Local search %s (%s/%s)' % (refine_step, r_s+1, len(refine_steps)))
+            refine_vec = ones(len(budgetvec))
+            r = 0
+            still_choices = True
+            while r <= n_refine and still_choices:
+                r += 1
+                trial_vec = op.dcp(budgetvec)
+                choices = op.findinds(logical_and(refine_vec, trial_vec)) # It's not a choice if either is zero
+                if not len(choices):
+                    still_choices = False
+                else:
+                    # Choose program and remake vector
+                    ind = choices[randint(len(choices))]
+                    this_prog = trial_vec[ind]
+                    trial_vec[ind] = 0 # Set to zero temporarily
+                    new_prog = this_prog*refine_step
+                    reallocate = this_prog*(1-refine_step)*refine_keep
+                    reallocate_vec = trial_vec / trial_vec.sum() * reallocate
+                    trial_vec += reallocate_vec
+                    trial_vec[ind] = new_prog
+                    trial_budget = trial_vec.sum()
+                    
+                    # Try it out
+                    is_met,res = outcome_met(budgetvec=trial_vec, totalbudget=trial_budget, args=args, target=res_targ)
+                    movie.append(res)
+                    
+                    printv('', 2, verbose)
+                    printv('  Iteration %s/%s' % (r+1, n_refine), 2, verbose)
+                    printv('     Choice (choices): %s (%s)' % (ind, choices), 2, verbose)
+                    printv('     Original budget:  %s' % (totalbudget/factor), 2, verbose)
+                    printv('     New budget:       %s' % (trial_budget/factor), 2, verbose)
+                    printv('     Original program: %s' % (this_prog/factor), 2, verbose)
+                    printv('     New program:      %s' % (new_prog/factor), 2, verbose)
+                    if is_met:
+                        printv('   Target still met, keeping...', 2, verbose)
+                        budgetvec = trial_vec
+                        totalbudget = trial_budget
+                        refine_vec[:] = 1 # Reset
+                    else:
+                        printv('   Target not met, rejecting...', 2, verbose)
+                        refine_vec[ind] = 0
+            
     
-        args['totalbudget'] = origtotalbudget # Calculate new total funding
-        args['which'] = 'outcomes' # Switch back to outcome minimization -- WARNING, there must be a better way of doing this
-#        budgetvec1, fvals, details = asd(outcomecalc, budgetvec, args=args, xmin=xmin, maxtime=maxtime, maxiters=maxiters, verbose=verbose, randseed=randseed, **kwargs)
-        budgetvec2 = constrainbudget(origbudget=origbudget, budgetvec=budgetvec, totalbudget=args['totalbudget'], budgetlims=optim.constraints, optiminds=optiminds, outputtype='vec')
+    #%% Tidy up
+    op.toc(start)
+    newbudget = op.dcp(origbudget)
+    newbudget[optiminds] = budgetvec
     
-        # See if objectives are met
-        args['which'] = 'money' # Switch back to money minimization
-        targetsmet, summary = outcomecalc(budgetvec2, **args)
-        fundingfactor = 1.0
+    #%% Animation
+    if animate:
+        # Plot setup
+        pl_ax = {'x':'death','y':'inci'} # "plot axes"
+        target_color = (0.1,0.7,0.3)
+        
+        def init_fig():
+            fig = pl.figure(facecolor='w')
+            pl.xlabel(pl_ax['x'])
+            pl.ylabel(pl_ax['y'])
+            pl.fill_between([0,res_targ[pl_ax['x']]], res_targ[pl_ax['y']]*pl.ones(2), color=target_color) # Plot target
+            return fig
+        
+        def plot_point(res, color=None, budget=None, denom=None, marker=None):
+            ''' Plot a single budget-outcome point '''
+            if marker is None: marker = 'o'
+            if denom is None: denom = origtotalbudget
+            pl.scatter(res[pl_ax['x']], res[pl_ax['y']], color=color, marker=marker) # Plot current
+            return None
+        
+        def fix_lims():
+            ''' Just readjust the axis limits '''
+            xl = pl.xlim()
+            yl = pl.ylim()
+            pl.xlim((0,xl[1]))
+            pl.ylim((0,yl[1]))
+            return None
+        
+        def flush(rate=20):
+            ''' Flush the current plotting buffer '''
+            pl.pause(1/float(rate))
+            return None
+        
+        # Calculate limits
+        init_fig()
+        xmax = -1
+        ymax = -1
+        for frame in movie:
+            try:
+                xmax = max(xmax, frame[pl_ax['x']])
+                ymax = max(ymax, frame[pl_ax['y']])
+            except:
+                pass
+        pl.xlim((0,xmax))
+        pl.ylim((0,ymax))
+        
+        # Plot
+        npoints = len(movie)
+        colors = op.vectocolor(range(npoints))
+        title_text = ''
+        for i in range(npoints):
+            if isinstance(movie[i], basestring):
+                title_text = movie[i]
+            else:
+                plot_point(movie[i], color=colors[i])
+            pl.title(title_text + ' (%s/%s)' % (i+1, npoints))
+            if not i%10:
+                flush()
+                
+        pl.figure(facecolor='w')
+        pl.subplot(1,2,1)
+        pl.pie(origbudget[:], labels=origbudget.keys())
+        pl.axis('equal')
+        pl.title('Original')
+        pl.subplot(1,2,2)
+        pl.pie(newbudget[:], labels=newbudget.keys())
+        pl.axis('equal')
+        pl.title('Optimal')
     
-        # If targets are met, scale down until they're not -- this loop will be skipped entirely if targets not currently met
-        while targetsmet:
-            fundingfactor /= fundingchange
-            args['totalbudget'] = origtotalbudget * fundingfactor
-            targetsmet, summary = outcomecalc(budgetvec2, **args)
-            printv('Scaling down budget %0.0f: current funding factor: %f (%s)' % (args['totalbudget'], fundingfactor, summary), 2, verbose)
+    # Impose lower limits only
+    for key in optim.constraints['min']:
+        newbudget[key] = max(newbudget[key], optim.constraints['min'][key])
     
-        # If targets are not met, scale up until they are -- this will always be run at least once after the previous loop
-        while not(targetsmet):
-            fundingfactor *= fundingchange
-            args['totalbudget'] = origtotalbudget * fundingfactor
-            targetsmet, summary = outcomecalc(budgetvec2, **args)
-            printv('Scaling up budget %0.0f: current funding factor: %f (%s)' % (args['totalbudget'], fundingfactor, summary), 2, verbose)
-    
-    
-        ##########################################################################################################################
-        # Re-optimize based on this fairly close allocation
-        ##########################################################################################################################
-        args['which'] = 'outcomes'
-        newrandseed = None if randseed is None else 2*randseed+1 # Make the random seed different
-        budgetvec3, fvals, details = asd(outcomecalc, budgetvec, args=args, xmin=xmin, maxtime=maxtime, maxiters=maxiters, verbose=verbose, randseed=newrandseed, **kwargs) 
-        budgetvec4 = constrainbudget(origbudget=origbudget, budgetvec=budgetvec3, totalbudget=args['totalbudget'], budgetlims=optim.constraints, optiminds=optiminds, outputtype='vec')
-    
-        # Check that targets are still met
-        args['which'] = 'money'
-        targetsmet, summary = outcomecalc(budgetvec4, **args)
-        if targetsmet: budgetvec5 = dcp(budgetvec4) # Yes, keep them
-        else: budgetvec5 = dcp(budgetvec2) # No, go back to previous version that we know worked
-        newtotalbudget = args['totalbudget'] # WARNING, necessary?
-    
-        # And finally, home in on a solution
-        upperlim = 1.0
-        lowerlim = 1.0/fundingchange
-        while (upperlim-lowerlim>tolerance) or not(targetsmet): # Keep looping until they converge to within "tolerance" of the budget
-            fundingfactor = (upperlim+lowerlim)/2.0
-            args['totalbudget'] = newtotalbudget * fundingfactor
-            targetsmet, summary = outcomecalc(budgetvec5, **args)
-            printv('Homing in:\nBudget: %0.0f;\nBaseline funding factor (low, high): %f (%f, %f)\n(%s)\n' % (args['totalbudget'], fundingfactor, lowerlim, upperlim, summary), 2, verbose)
-            if targetsmet: upperlim = fundingfactor
-            else:          lowerlim = fundingfactor
-        constrainedbudget, constrainedbudgetvec, lowerlim, upperlim = constrainbudget(origbudget=origbudget, budgetvec=budgetvec5, totalbudget=newtotalbudget*upperlim, budgetlims=optim.constraints, optiminds=optiminds, outputtype='full')
-
     ## Tidy up -- WARNING, need to think of a way to process multiple inds
-    args['totalbudget'] = origtotalbudget
     args['doconstrainbudget'] = False
-    orig = outcomecalc(origbudgetvec, outputresults=True, **args)
-    args['totalbudget'] = newtotalbudget * fundingfactor
-    args['doconstrainbudget'] = False
-    new = outcomecalc(constrainedbudgetvec, outputresults=True, **args)
+    orig = outcomecalc(origbudgetvec, totalbudget=origtotalbudget,    outputresults=True, **args)
+    new  = outcomecalc(newbudget,     totalbudget=newbudget[:].sum(), outputresults=True, **args)
     
     orig.name = 'Baseline' # WARNING, is this really the best way of doing it?
     if   zerofailed:     new.name = 'Zero budget'
@@ -1165,6 +1441,8 @@ def minmoney(project=None, optim=None, tvec=None, verbose=None, maxtime=None, ma
     
     # Store optimization settings
     multires.optimsettings = odict([('maxiters',maxiters),('maxtime',maxtime),('randseed',randseed)])
+    
+    printv('Money minimization complete after %s seconds' % op.toc(start, output=True), 2, verbose)
 
     return multires
 

@@ -236,7 +236,7 @@ class Resultset(object):
         if lifeexpectancy is None: lifeexpectancy = 80 # 80 year life expectancy
         if discountrate   is None: discountrate   = 0.03 # Discounting of 3% for YLL only
         tvec = dcp(raw[0]['tvec'])
-        eps = self.settings.eps
+#        eps = self.settings.eps
         if annual is False: # Decide what to do with the time vector
             indices = arange(len(tvec)) # Use all indices
             self.tvec = tvec
@@ -253,18 +253,24 @@ class Resultset(object):
             if doround and not percent: processed = processed.round() # Optionally round
             return processed
         
-        def processdata(rawdata, uncertainty=False):
+        def processdata(rawdata, uncertainty=False, bypop=False):
             ''' Little method to turn the data into a form suitable for plotting -- basically, replace assumptions with nans '''
+            
             if uncertainty: 
-                best = dcp(rawdata[0])
-                low = dcp(rawdata[1])
-                high = dcp(rawdata[2])
+                if bypop:
+                    best = dcp(rawdata[0])
+                    low = dcp(rawdata[1])
+                    high = dcp(rawdata[2])
+                else:
+                    best = dcp([rawdata[1]])
+                    low = dcp([rawdata[0]])
+                    high = dcp([rawdata[2]])
             else:
                 best = dcp(rawdata)
                 low = dcp(rawdata)
                 high = dcp(rawdata)
             for thisdata in [best, low, high]: # Combine in loop, but actual operate on these -- thanks, pass-by-reference!
-                for p in range(len(thisdata)):
+                for p in range(len(array(thisdata))):
                     if len(array(thisdata[p]))!=len(self.datayears):
                         thisdata[p] = nan+zeros(len(self.datayears)) # Replace with NaN if an assumption
             processed = array([best, low, high]) # For plotting uncertainties
@@ -273,7 +279,7 @@ class Resultset(object):
         def processtotalpopsizedata(self, rawdata):
             ''' Little method to calculate total population size from data using nearest neighbor interpolation '''
             nyears = len(self.datayears) # Count how many years there are
-            preprocessed = processdata(rawdata, uncertainty=True) # Preprocess raw population size data by population
+            preprocessed = processdata(rawdata, uncertainty=True, bypop=True) # Preprocess raw population size data by population
             processed = zeros((3,1,nyears)) # Zero out # Initialize
             for blh in range(3): # Iterate over best, high, low
                 validinds = [] # Store valid indices in any population
@@ -325,7 +331,7 @@ class Resultset(object):
         self.main['numplhiv'].pops = process(allpeople[:,allplhiv,:,:][:,:,:,indices].sum(axis=1)) # Axis 1 is health state
         self.main['numplhiv'].tot  = process(allpeople[:,allplhiv,:,:][:,:,:,indices].sum(axis=(1,2))) # Axis 2 is populations
         if data is not None: 
-            self.main['numplhiv'].datatot = processdata(data['optplhiv'])
+            self.main['numplhiv'].datatot = processdata(data['optplhiv'], uncertainty=True)
             self.main['numplhiv'].estimate = True # It's not real data, just an estimate
         
         self.main['numdiag'].pops = process(allpeople[:,alldx,:,:][:,:,:,indices].sum(axis=1)) # Note that allpeople[:,txinds,:,indices] produces an error
@@ -341,13 +347,13 @@ class Resultset(object):
         self.main['numinci'].pops = process(allinci[:,:,indices])
         self.main['numinci'].tot  = process(allinci[:,:,indices].sum(axis=1)) # Axis 1 is populations
         if data is not None: 
-            self.main['numinci'].datatot = processdata(data['optnuminfect'])
+            self.main['numinci'].datatot = processdata(data['optnuminfect'], uncertainty=True)
             self.main['numinci'].estimate = True # It's not real data, just an estimate
         
         self.main['numincibypop'].pops = process(allincibypop[:,:,indices])
         self.main['numincibypop'].tot  = process(allincibypop[:,:,indices].sum(axis=1)) # Axis 1 is populations
         if data is not None: 
-            self.main['numincibypop'].datatot = processdata(data['optnuminfect'])
+            self.main['numincibypop'].datatot = processdata(data['optnuminfect'], uncertainty=True)
             self.main['numincibypop'].estimate = True # It's not real data, just an estimate
         
         self.main['numinciartbypop'].pops = process(alltxincibypop[:,:,indices])
@@ -359,7 +365,7 @@ class Resultset(object):
         self.main['numdeath'].pops = process(alldeaths[:,:,:,indices].sum(axis=1))
         self.main['numdeath'].tot  = process(alldeaths[:,:,:,indices].sum(axis=(1,2))) # Axis 1 is populations
         if data is not None: 
-            self.main['numdeath'].datatot = processdata(data['optdeath'])
+            self.main['numdeath'].datatot = processdata(data['optdeath'], uncertainty=True)
             self.main['numdeath'].estimate = True # It's not real data, just an estimate
         
         self.main['numartdeath'].pops = process(alldeaths[:,alltx,:,:][:,:,:,indices].sum(axis=1))

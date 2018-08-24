@@ -462,6 +462,9 @@ class Project(object):
                     if key!='initprev' or resetprevalence: # Initial prevalence is a special case: the only user-edited parameter that is also a data parameter
                         if hasattr(parset.pars[key],'y'): parset.pars[key].y = origparset.pars[key].y # Reset y (value) variable, if it exists
                         if hasattr(parset.pars[key],'t'): parset.pars[key].t = origparset.pars[key].t # Reset t (time) variable, if it exists
+                # Reset transition matrices
+                if key in ['birthtransit','agetransit','risktransit']: 
+                    parset.pars[key] = dcp(origparset.pars[key])
         
         self.modified = today()
         return None
@@ -738,7 +741,7 @@ class Project(object):
 
     def optimize(self, name=None, parsetname=None, progsetname=None, objectives=None, constraints=None, maxiters=None, maxtime=None, 
                  verbose=2, stoppingfunc=None, die=False, origbudget=None, randseed=None, mc=None, optim=None, optimname=None, multi=False, 
-                 nchains=None, nblocks=None, blockiters=None, batch=None, timevarying=None, tvsettings=None, tvconstrain=None, **kwargs):
+                 nchains=None, nblocks=None, blockiters=None, batch=None, timevarying=None, tvsettings=None, tvconstrain=None, which=None, **kwargs):
         '''
         Function to minimize outcomes or money.
         
@@ -761,12 +764,12 @@ class Project(object):
         # Check inputs
         if name is None: name = 'default'
         if optim is None:
-            if len(self.optims) and all([arg is None for arg in [objectives, constraints, parsetname, progsetname, optimname]]):
+            if len(self.optims) and all([arg is None for arg in [objectives, constraints, parsetname, progsetname, optimname, which]]):
                 optimname = -1 # No arguments supplied but optims exist, use most recent optim to run
             if optimname is not None: # Get the optimization by name if supplied
                 optim = self.optims[optimname] 
             else: # If neither an optim nor an optimname is supplied, create one
-                optim = Optim(project=self, name=name, objectives=objectives, constraints=constraints, parsetname=parsetname, progsetname=progsetname, timevarying=timevarying, tvsettings=tvsettings)
+                optim = Optim(project=self, name=name, objectives=objectives, constraints=constraints, parsetname=parsetname, progsetname=progsetname, timevarying=timevarying, tvsettings=tvsettings, which=which)
         if objectives  is not None: optim.objectives  = objectives # Update optim structure with inputs
         if constraints is not None: optim.constraints = constraints
         if tvsettings  is not None: optim.tvsettings  = tvsettings

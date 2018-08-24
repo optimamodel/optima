@@ -2,9 +2,10 @@
 ## Preliminaries
 ###########################################################################
 
-from optima import OptimaException, loaddatapars, odict, printv, today, isnumber, makefilepath
+from optima import OptimaException, loaddatapars, odict, printv, today, isnumber, makefilepath, version, compareversions, dcp
 from numpy import nan, isnan, array, shape # For reading in empty values
 from xlrd import open_workbook, colname # For opening Excel workbooks
+versioncheck = '\n(spreadsheet version not available)' # To be filled once the version is checked below
 
 
 def forcebool(entry, location=''):
@@ -25,6 +26,7 @@ def validatedata(thesedata, sheetname, thispar, row, checkupper=False, checklowe
             errormsg = 'Invalid entry in sheet "%s", parameter "%s":\n' % (sheetname, thispar) 
             errormsg += 'row=%i, column=%s, value="%s"\n' % (row+1, colname(column+startcol), datum)
             errormsg += 'Be sure all entries are numeric'
+            errormsg += versioncheck
             if ' ' or '\t' in datum: errormsg +=' (there seems to be a space or tab)'
             raise OptimaException(errormsg)
     
@@ -39,9 +41,11 @@ def validatedata(thesedata, sheetname, thispar, row, checkupper=False, checklowe
             errormsg = 'Invalid entry in sheet "%s", parameter "%s":\n' % (sheetname, thispar) 
             errormsg += 'row=%i, invalid="%s", values="%s"\n' % (row+1, invalid, validdata)
             errormsg += 'Be sure that all values are >=0 (and <=1 if a probability)'
+            errormsg += versioncheck
             raise OptimaException(errormsg)
     elif checkblank: # No data entered
         errormsg = 'No data or assumption entered for sheet "%s", parameter "%s", row=%i' % (sheetname, thispar, row) 
+        errormsg += versioncheck
         raise OptimaException(errormsg)
     else:
         return None
@@ -93,7 +97,7 @@ def loadspreadsheet(filename=None, folder=None, verbose=2):
     data['meta'] = odict()
     data['meta']['datacomments'] = [] # Store the data comments entered on the instructions sheet
     data['meta']['date'] = today()
-    data['meta']['sheets'] = sheets # Store parameter names
+    data['meta']['sheets'] = dcp(sheets) # Store parameter names
     
     ## Initialize populations
     data['pops'] = odict() # Initialize to empty list
@@ -121,6 +125,7 @@ def loadspreadsheet(filename=None, folder=None, verbose=2):
         errormsg = 'Failed to load spreadsheet "%s": %s' % (fullpath, repr(E))
         raise OptimaException(errormsg)
     
+    
     ## Open workbook and calculate columns for which data are entered, and store the year ranges
     sheetdata = workbook.sheet_by_name('Population size') # Load this workbook
     lastdatacol, data['years'] = getyears(sheetdata)
@@ -130,20 +135,43 @@ def loadspreadsheet(filename=None, folder=None, verbose=2):
     ## Now, actually load the data
     ##################################################################    
     
-    ## Load comment from front sheet
+    ## Load comment and version from front sheet
+    printv('Loading comment and version...', 3, verbose)
     instructionssheet = workbook.sheet_by_name('Instructions')
+    versionrow = 8
     commentrow = 16 # First row for comments
     if instructionssheet.nrows >= commentrow:
         for row in range(commentrow-1, instructionssheet.nrows):
             comment = instructionssheet.cell_value(row, 0) # Hardcoded comment cell in A14
             data['meta']['datacomments'].append(comment) # Store the data comment entered on the instructions sheet
-
-    ## Loop over each group of sheets
+    versioncell = instructionssheet.cell_value(versionrow, 0)
+    versionstr = versioncell.split()[-1] # Last bit should be the version
+    if compareversions(versionstr, version) != 0:
+        versioncheck = '\nNote: spreadsheet version does not match Optima version: %s vs. %s' % (versionstr, version)
+        printv(versioncheck, 1, verbose)
+    else:
+        versioncheck = '\nHowever, spreadsheet and Optima versions match (%s = %s)' % (versionstr, version)
+    
+    ## Load population data
+    printv('Loading populations...', 3, verbose)
+    popssheet = workbook.sheet_by_name('Populations')
+    for row in range(popssheet.nrows):
+        thesedata = popssheet.row_values(row, start_colx=2, end_colx=11) # Data starts in 3rd column, finishes in 11th column
+        subparam  = popssheet.cell_value(row, 1) # Figure out which population it is
+        if subparam != '': # Warning -- ugly to duplicate this, but doesn't follow the format of data sheets, either
+            printv('Loading population "%s"...' % subparam, 4, verbose)
+            data['pops']['short'].append(str(thesedata[0]))
+            data['pops']['long'].append(str(thesedata[1]))
+            data['pops']['male'].append(forcebool(thesedata[2], 'male, row %i'% row))
+            data['pops']['female'].append(forcebool(thesedata[3], 'female, row %i'% row))
+            data['pops']['age'].append([int(thesedata[4]), int(thesedata[5])])
+    
+    ## Loop over each group of data sheets
     for sheetname in sheets.keys(): # Loop over each type of data, but treat constants differently
         subparlist = sheets[sheetname] # List of subparameters
         sheetdata = workbook.sheet_by_name(sheetname) # Load this workbook
         sheettype = sheettypes[sheetname] # Get the type of this sheet -- e.g., is it a time parameter or a matrix?
-        printv('Loading "%s"...' % sheetname, 3, verbose)
+        printv('Loading sheet "%s"...' % sheetname, 3, verbose)
         
         # Loop over each row in the workbook, starting from the top
         for row in range(sheetdata.nrows): 
@@ -151,32 +179,24 @@ def loadspreadsheet(filename=None, folder=None, verbose=2):
             subparam = sheetdata.cell_value(row, 1) # Get the name of a subparameter, e.g. 'FSW', population size for a given population
             
             if paramcategory != '': # It's not blank: e.g. "HIV prevalence"
-                printv('Loading "%s"...' % paramcategory, 3, verbose)
+                printv('Loading parameter "%s"...' % paramcategory, 3, verbose)
                 
-                # It's anything other than the populations or constants sheet: create an empty list
-                if sheettype not in ['meta', 'constant']: 
+                # It's anything other than the constants sheet: create an empty list
+                if sheettype != 'constant': 
                     try:
                         thispar = subparlist.pop(0) # Get the name of this parameter, e.g. 'popsize'
                     except:
                         errormsg = 'Incorrect number of headings found for sheet "%s"\n' % sheetname
                         errormsg += 'Check that there is no extra text in the first two columns'
+                        errormsg += versioncheck
                         raise OptimaException(errormsg)
                     data[thispar] = [] # Initialize to empty list
             
             elif subparam != '': # The second column isn't blank: it's time for the data
                 printv('Parameter: %s' % subparam, 4, verbose)
                 
-                # It's pops-data, split into pieces
-                if sheettype=='meta': 
-                    thesedata = sheetdata.row_values(row, start_colx=2, end_colx=11) # Data starts in 3rd column, finishes in 11th column
-                    data['pops']['short'].append(str(thesedata[0]))
-                    data['pops']['long'].append(str(thesedata[1]))
-                    data['pops']['male'].append(forcebool(thesedata[2], 'male, row %i'% row))
-                    data['pops']['female'].append(forcebool(thesedata[3], 'female, row %i'% row))
-                    data['pops']['age'].append([int(thesedata[4]), int(thesedata[5])])
-                    
                 # It's key data, save both the values and uncertainties
-                elif sheettype=='key':
+                if sheettype=='key':
                     startcol = 3 # Extra column for high/best/low
                     if len(data[thispar])==0: 
                         data[thispar] = [[] for z in range(3)] # Create new variable for best, low, high
@@ -210,7 +230,13 @@ def loadspreadsheet(filename=None, folder=None, verbose=2):
                 elif sheettype=='constant':
                     startcol = 2
                     endcol = 5
-                    thispar = subparlist.pop(0) # Get the first item in this list
+                    try:
+                        thispar = subparlist.pop(0) # Get the first item in this list
+                    except Exception as E:
+                        errormsg = 'Error reading constants sheet: perhaps too many rows?\n'
+                        errormsg += '%s' % repr(E)
+                        errormsg += versioncheck
+                        raise OptimaException(errormsg)
                     thesedata = blank2nan(sheetdata.row_values(row, start_colx=startcol, end_colx=endcol)) # Data starts in 3rd column, finishes in 5th column
                     validatedata(thesedata, sheetname, thispar, row)
                     data[thispar] = thesedata # Store data
@@ -231,6 +257,7 @@ def loadspreadsheet(filename=None, folder=None, verbose=2):
             errormsg = 'Matrix "%s" in partnerships & transitions sheet is not the correct shape' % key
             errormsg += '(rows = %i, columns = %i, should be %i and %i)\n' % (matrixshape[0], matrixshape[1], correctfirstdim, correctseconddim)
             errormsg += 'Check for missing rows or added text'
+            errormsg += versioncheck
             raise OptimaException(errormsg)
     
     # Store tuples of partnerships
@@ -240,6 +267,17 @@ def loadspreadsheet(filename=None, folder=None, verbose=2):
             for key in ['reg', 'cas', 'com', 'inj']:
                 if data['part'+key][row][col]: data['pships'][key].append((popkeys[row],popkeys[col]))
     
+    # Do a final check
+    failedtopopulate = odict()
+    for sheetname,sheetpars in sheets.items():
+        if len(sheetpars)>0:
+            failedtopopulate[sheetname] = sheetpars
+    if len(failedtopopulate):
+        errormsg = 'Not all parameters were successfully populated; missing parameters were:'
+        errormsg += '\n%s' % failedtopopulate
+        errormsg += versioncheck
+        raise OptimaException(errormsg)
+            
     return data
 
 
