@@ -241,7 +241,8 @@ def makeplots(results=None, toplot=None, die=False, verbose=2, plotstartyear=Non
 
 def plotepi(results, toplot=None, uncertainty=True, die=True, showdata=True, verbose=2, figsize=globalfigsize, 
             alpha=0.2, lw=2, dotsize=30, titlesize=globaltitlesize, labelsize=globallabelsize, ticksize=globalticksize, 
-            legendsize=globallegendsize, position=None, useSIticks=True, colors=None, reorder=None, plotstartyear=None, plotendyear=None, interactive=None, fig=None, **kwargs):
+            legendsize=globallegendsize, position=None, useSIticks=True, colors=None, reorder=None, plotstartyear=None, 
+            plotendyear=None, interactive=None, fig=None, forreport=False, **kwargs):
         '''
         Render the plots requested and store them in a list. Argument "toplot" should be a list of form e.g.
         ['prev-tot', 'inci-pop']
@@ -314,7 +315,7 @@ def plotepi(results, toplot=None, uncertainty=True, die=True, showdata=True, ver
         toplot = [thisplot for thisplot in toplot if None not in thisplot] # Remove a plot if datatype or plotformat is None
 
         # Check if the figure will be saved to insert into a presentation or report
-        if  kwargs["for_report"]:
+        if forreport:
             forreport = True
             titlesize = 16
             labelsize = 14
