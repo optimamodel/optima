@@ -598,9 +598,6 @@ class Project(object):
             rawlist.append(raw)
 
         # Store results if required
-        print('HIIIIIIIIIIIIIIIIIIIII')
-        print(coverage)
-        print('ok')
         results = Resultset(name=resultname, pars=pars, parsetname=parsetname, progsetname=progsetname, raw=rawlist, simpars=simparslist, budget=budget, coverage=coverage, budgetyears=budgetyears, project=self, keepraw=keepraw, doround=doround, data=data, verbose=verbose) # Create structure for storing results
         if addresult:
             keyname = self.addresult(result=results, overwrite=overwrite)
