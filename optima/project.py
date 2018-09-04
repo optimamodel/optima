@@ -678,7 +678,7 @@ class Project(object):
     
     
     def outcomecalc(self, name=None, budget=None, optim=None, optimname=None, parsetname=None, progsetname=None, 
-                objectives=None, constraints=None, origbudget=None, verbose=2, doconstrainbudget=False):
+                covdenominators=None, objectives=None, constraints=None, origbudget=None, verbose=2, doconstrainbudget=False):
         '''
         Calculate the outcome for a given budget -- a substep of optimize(); similar to runbudget().
         
@@ -712,7 +712,7 @@ class Project(object):
                 optim = Optim(project=self, name=name, objectives=objectives, constraints=constraints, parsetname=parsetname, progsetname=progsetname)
 
         # Run outcome calculation        
-        results = outcomecalc(budgetvec=budget, which='outcomes', project=self, parsetname=optim.parsetname, 
+        results = outcomecalc(budgetvec=budget, which='outcomes', project=self, parsetname=optim.parsetname, covdenominators=covdenominators,
                               progsetname=optim.progsetname, objectives=optim.objectives, constraints=optim.constraints, 
                               origbudget=origbudget, outputresults=True, verbose=verbose, doconstrainbudget=doconstrainbudget)
         # Add results
