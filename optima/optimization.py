@@ -357,7 +357,7 @@ def separatetv(inputvec=None, optiminds=None):
 ### The main meat of the matter
 ################################################################################################################################################
 
-def outcomecalc(budgetvec=None, which=None, project=None, parsetname=None, progsetname=None, 
+def outcomecalc(budgetvec=None, which=None, project=None, parsetname=None, progsetname=None, covdenominators=None,
                 objectives=None, constraints=None, totalbudget=None, optiminds=None, origbudget=None, tvec=None, 
                 initpeople=None, outputresults=False, verbose=2, ccsample='best', doconstrainbudget=True, tvsettings=None, tvcontrolvec=None, **kwargs):
     ''' Function to evaluate the objective for a given budget vector (note, not time-varying) '''

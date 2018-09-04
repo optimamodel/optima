@@ -6,8 +6,8 @@ set of programs, respectively.
 Version: 2016feb06
 """
 
-from optima import OptimaException, Link, printv, uuid, today, sigfig, getdate, dcp, smoothinterp, findinds, odict, Settings, sanitize, defaultrepr, isnumber, promotetoarray, vec2obj, asd, convertlimits
-from numpy import ones, prod, array, zeros, exp, log, append, nan, isnan, maximum, minimum, sort, concatenate as cat, transpose, mean, argsort
+from optima import OptimaException, Link, printv, uuid, today, sigfig, getdate, dcp, smoothinterp, findinds, findnearest, odict, Settings, sanitize, defaultrepr, isnumber, promotetoarray, vec2obj, asd, convertlimits
+from numpy import ones, prod, array, zeros, exp, log, append, nan, isnan, maximum, minimum, transpose, mean, argsort
 from random import uniform
 
 class Programset(object):
@@ -393,7 +393,7 @@ class Programset(object):
         return targetpopsizes
 
 
-    def getprogcoverage(self, budget, t, parset=None, results=None, proportion=False, sample='best', verbose=2):
+    def getprogcoverage(self, budget=None, t=None, covdenominators=None, parset=None, results=None, proportion=False, sample='best', verbose=2):
         '''Budget is currently assumed to be a DICTIONARY OF ARRAYS'''
 
         # Initialise output
@@ -414,7 +414,7 @@ class Programset(object):
                     coverage[thisprog] = None
                 else:
                     spending = budget[thisprog] # Get the amount of money spent on this program
-                    coverage[thisprog] = self.programs[thisprog].getcoverage(x=spending, t=t, parset=parset, results=results, proportion=proportion, sample=sample)
+                    coverage[thisprog] = self.programs[thisprog].getcoverage(x=spending, t=t, covdenominators=covdenominators, parset=parset, results=results, proportion=proportion, sample=sample)
             else: coverage[thisprog] = None
 
         return coverage
@@ -920,7 +920,7 @@ class Program(object):
         return None
 
 
-    def gettargetpopsize(self, t, parset=None, results=None, total=True, useelig=False, die=False):
+    def gettargetpopsize(self, t=None, parset=None, results=None, total=True, useelig=True, die=False):
         '''Returns target population size in a given year for a given spending amount.'''
 
         # Validate inputs
@@ -939,31 +939,32 @@ class Program(object):
         if not useelig:
             initpopsizes = defaultinitpopsizes
 
-
-        # ... otherwise, have to get the PLHIV pops from results. WARNING, this should be improved.
+        # ... otherwise, have to get the targeted population sizes from results.
         else: 
-
-            # Get settings
-            try: settings = parset.projectref().settings
-            except:
-                try: settings = results.projectref().settings
-                except: settings = Settings()
 
             npops = len(parset.pars['popkeys'])
     
             if not self.criteria['pregnant']:
                 if self.criteria['hivstatus']=='allstates':
                     initpopsizes = defaultinitpopsizes
-                else: # If it's a program for HIV+ people, need to find the number of positives
+
+                else: # ... it's a program for HIV+ people
                     try:
                         if not results: results = parset.getresults(die=die)
-                        cd4index = sort(cat([settings.__dict__[state] for state in self.criteria['hivstatus']])) # CK: this should be pre-computed and stored if it's useful
+                        if self.criteria['hivstatus'] in results.main.keys():
+                            thisres = results.main[self.criteria['hivstatus']]
+                        elif self.criteria['hivstatus'] in results.other.keys():
+                            thisres = results.other[self.criteria['hivstatus']]
+                        else:
+                            errormsg = 'The targeted population "%s" can''t be found in the list of available results: %s.' % (self.criteria['hivstatus'], results.main.keys()+results.other.keys())
+                            raise OptimaException(errormsg)
+                            
                         initpopsizes = zeros((npops,len(t))) 
                         for yrno,yr in enumerate(t):
-                            initpopsizes[:,yrno] = results.raw[0]['people'][cd4index,:,findinds(results.tvec,yr)].sum(axis=0) # WARNING, is using the zeroth result OK?
+                            initpopsizes[:,yrno] = thisres.pops[0,:,findnearest(results.tvec,yr)]
+
                     except OptimaException as E: 
-                        if die: 
-                            raise E
+                        if die: raise E
                         else:
                             print('Failed to extract results because "%s", using default' % repr(E))
                             initpopsizes = defaultinitpopsizes
@@ -983,6 +984,7 @@ class Program(object):
                         else: 
                             print('Failed to extract results because "%s", using default' % repr(E))
                             initpopsizes = defaultinitpopsizes
+
         for popno, pop in enumerate(parset.pars['popkeys']):
             popsizes[pop] = initpopsizes[popno,:]
         for targetpop in self.targetpops:
@@ -997,11 +999,16 @@ class Program(object):
         else:     return targetpopsize
 
 
-    def gettargetcomposition(self, t, parset=None, results=None, total=True):
+    def gettargetcomposition(self, t=None, covdenominators=None, parset=None, results=None, total=True):
         '''Tells you the proportion of the total population targeted by a program that is comprised of members from each sub-population group.'''
         targetcomposition = odict()
 
-        poptargeted = self.gettargetpopsize(t=t, parset=parset, results=results, total=False)
+        # Only call the method to get target population sizes if you have to
+        if covdenominators is None:
+            poptargeted = self.gettargetpopsize(t=t, parset=parset, results=results, total=False)
+        else: 
+            poptargeted = covdenominators
+            
         totaltargeted = sum(poptargeted.values())
 
         for targetpop in self.targetpops:
@@ -1009,14 +1016,18 @@ class Program(object):
         return targetcomposition
 
 
-    def getcoverage(self, x, t, parset=None, results=None, total=True, proportion=False, toplot=False, sample='best'):
+    def getcoverage(self, x=None, t=None, covdenominators=None, parset=None, results=None, total=True, proportion=False, toplot=False, sample='best'):
         '''Returns coverage for a time/spending vector'''
 
         # Validate inputs
         x = promotetoarray(x)
         t = promotetoarray(t)
 
-        poptargeted = self.gettargetpopsize(t=t, parset=parset, results=results, total=False)
+        # Only call the method to get target population sizes if you have to
+        if covdenominators is None:
+            poptargeted = self.gettargetpopsize(t=t, parset=parset, results=results, total=False)
+        else: 
+            poptargeted = covdenominators
 
         totaltargeted = sum(poptargeted.values())
         totalreached = self.costcovfn.evaluate(x=x, popsize=totaltargeted, t=t, toplot=toplot, sample=sample)
@@ -1035,10 +1046,14 @@ class Program(object):
             
 
 
-    def getbudget(self, x, t, parset=None, results=None, proportion=False, toplot=False, sample='best'):
+    def getbudget(self, x=None, t=None, covdenominators=None, parset=None, results=None, proportion=False, toplot=False, sample='best'):
         '''Returns budget for a coverage vector'''
 
-        poptargeted = self.gettargetpopsize(t=t, parset=parset, results=results, total=False)
+        # Only call the method to get target population sizes if you have to
+        if covdenominators is None:
+            poptargeted = self.gettargetpopsize(t=t, parset=parset, results=results, total=False)
+        else: 
+            poptargeted = covdenominators
         totaltargeted = sum(poptargeted.values())
         if not proportion: reqbudget = self.costcovfn.evaluate(x=x,popsize=totaltargeted,t=t,inverse=True,toplot=False,sample=sample)
         else: reqbudget = self.costcovfn.evaluate(x=x*totaltargeted,popsize=totaltargeted,t=t,inverse=True,toplot=False,sample=sample)

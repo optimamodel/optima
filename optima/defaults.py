@@ -14,7 +14,6 @@ def defaultprograms(project, addcostcovpars=False, addcostcovdata=False, filterp
     
     # Shorten variable names
     pops = project.pars()['popkeys']
-    hivstates = project.settings.hivstates
     malelist   = array(pops)[project.pars()['male']].tolist()
     femalelist = array(pops)[project.pars()['female']].tolist()
     pwidlist   = array(pops)[project.pars()['injects']].tolist()
@@ -162,45 +161,43 @@ def defaultprograms(project, addcostcovpars=False, addcostcovdata=False, filterp
                   category='Care and treatment',
                   targetpars=[{'param': 'numtx', 'pop': 'tot'}],# for pop in pops],
                   targetpops=pops,
-                  criteria = {'hivstatus': hivstates, 'pregnant': False})
+                  criteria = {'hivstatus': 'numincare', 'pregnant': False})
     
     Lab = Program(short='Lab',
                   name='Lab monitoring',
                   category='Care and treatment',
                   targetpars=[{'param': 'numvlmon', 'pop': 'tot'}],# for pop in pops],
                   targetpops=pops,
-                  criteria = {'hivstatus': hivstates, 'pregnant': False})
+                  criteria = {'hivstatus': 'numtreat', 'pregnant': False})
     
     Adherence = Program(short='Adherence',
                   name='Adherence support',
                   category='Care and treatment',
                   targetpars=[{'param': 'leavecare', 'pop': pop} for pop in pops],# for pop in pops],
                   targetpops=pops,
-                  criteria = {'hivstatus': hivstates, 'pregnant': False})
+                  criteria = {'hivstatus': 'numtreat', 'pregnant': False})
     
     Tracing = Program(short='Tracing',
                   name='Pre-ART tracing',
                   category='Care and treatment',
                   targetpars=[{'param': 'linktocare', 'pop': pop} for pop in pops],# for pop in pops],
                   targetpops=pops,
-                  criteria = {'hivstatus': hivstates, 'pregnant': False})
+                  criteria = {'hivstatus': 'onlylost', 'pregnant': False})
     
     PMTCT = Program(short='PMTCT',
                   name='Prevention of mother-to-child transmission',
                   category='Care and treatment',
                   targetpars=[{'param': 'numtx', 'pop': 'tot'}, {'param': 'numpmtct', 'pop': 'tot'}],
                   targetpops=pops,
-                  criteria = {'hivstatus': hivstates, 'pregnant': True})
+                  criteria = {'hivstatus': 'numplhiv', 'pregnant': True})
                   
     OVC = Program(short='OVC',
                   name='Orphans and vulnerable children',
-                  category='Care and treatment',
-                  criteria = {'hivstatus': 'allstates', 'pregnant': False})
+                  category='Care and treatment')
     
     Other_care = Program(short='Other care',
                   name='Other HIV care',
-                  category='Care and treatment',
-                  criteria = {'hivstatus': ['lt50', 'gt50', 'gt200'], 'pregnant': False})
+                  category='Care and treatment')
     
     MGMT = Program(short='MGMT',
                   name='Management',
