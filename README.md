@@ -358,10 +358,12 @@ _On Linux_:
 
 _On Mac_:
 
+```
     brew install redis
     gem install lunchy # a convenient daemon utility script
     ln -sfv /usr/local/opt/redis/*.plist ~/Library/LaunchAgents
     lunchy start redis
+```
 
 Copy over the setup:
 
@@ -419,8 +421,36 @@ You can use `--system` as first argument to `test.sh` in order to use pre-instal
 Make sure you have user "test" with the password "test" and database "optima_test" in order to run the tests using database.
 
 
+# 6. Linux server setup
 
-# 6. Usage
+## 1. Backend installation
+
+1. Install Anaconda Python 2.7
+
+2. Clone Optima: `git clone https://github.com/optimamodel/optima.git`
+
+3. Install Optima: `python setup.py develop`
+
+4. Test that it works: `python; import optima as op; P = op.demo(doplot=False)`
+
+## 2. Client installation
+
+1. Install additional Python packages: `pip install -r server/localrequirements.txt`
+
+2. Install postgres:
+```
+sudo apt-get install install postgresql
+sudo su postgres
+createuser optima -P -s # password optima
+createdb optima
+```
+
+3. Install redis: `sudo apt-get install redis-server`
+
+4. Copy server settings: `cp server/config.example.py server/config.py`
+
+
+# 7. Usage
 
 If all steps have been completed, run ``tox -e runserver`` in the server directory, and then go to `http://optima.dev:8080` in your browser (preferably Chrome). You should see the Optima login screen.
 
@@ -430,11 +460,11 @@ Happy Optimaing!
 
 
 
-# 7. Wisdom
+# 8. Wisdom
 
 This section contains random pieces of wisdom we have encountered along the way.
 
-## 7.1 Workflows
+## 8.1 Workflows
 
 - Make sure you pull and push from the repository regularly so you know what everyone else is doing, and everyone else knows what you're doing. If your branch is 378 commits behind develop, you're the sucker who's going to have to merge it.  
 
@@ -447,7 +477,7 @@ No one knows what these mysterious commands do. Just use them.
 - For benchmarking/profiling, you can use `tests/benchmarkmodel.py`. It's a good idea to run this and see if your changes have slowed things down considerably. It shows how to use the line profiler; Spyder also comes with a good function-level (but not line) profiler.
 
 
-## 7.2 Python gotchas
+## 8.2 Python gotchas
 
 - Do not declare a mutable object in a function definition, e.g. this is bad:  
 ```
