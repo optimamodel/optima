@@ -10,7 +10,7 @@ If you have any questions, please email us at info@optimamodel.com.
 
 ## 1.2. Installation
 
-This section describes the steps involved in installing and running Optima. Follow the instructions in this section. **Unless you're a developer, you won't need to follow the rest of the instructions.**
+This section describes the steps involved in installing and running Optima. Follow the instructions in this section.
 
 1. Download and install Anaconda, using default options (https://store.continuum.io/cshop/anaconda/).  
  **Make sure you download Python 2.7, not 3.6.**
@@ -30,7 +30,9 @@ This section describes the steps involved in installing and running Optima. Foll
   i. Run Spyder (e.g. Anaconda -> Spyder from the Start Menu in Windows; Anaconda Launcher or `spyder` from the Terminal on Mac or Linux)  
   ii. In the Spyder editor (File -> Open), go to the `Optima/tests` folder and open `simple.py`  
   iii. Run (F5, or select "Run" from the "Run" menu)  
-  iv. You should see a figure appear -- note that it might appear in the console (if you're using IPython) or in a separate window but minimized.  
+  iv. You should see a figure appear -- note that it might appear in the console (if you're using IPython) or in a separate window but minimized.
+
+That's it! **Unless you're a developer, you won't need to follow the rest of the instructions.**
 
 
 
@@ -45,13 +47,20 @@ This section describes the steps involved in installing and running Optima. Foll
 
 3. Install Optima: `python setup.py develop`
 
-4. Test that it works: `python; import optima as op; P = op.demo(doplot=False)`
+4. Test that it works:
+```
+python
+import optima as op
+P = op.demo(doplot=False)
+```
 
-## 2.2. Frontend installation
+## 2.2. Database installation
 
 1. Install additional Python packages: `pip install -r server/localrequirements.txt`
 
-2. Install postgres:
+2. Install redis: `sudo apt-get install redis-server`
+
+3. Install and set up postgres:
 ```
 sudo apt-get install install postgresql
 sudo su postgres
@@ -59,14 +68,75 @@ createuser optima -P -s # password optima
 createdb optima
 ```
 
-3. Install redis: `sudo apt-get install redis-server`
-
 4. Copy server settings: `cp server/config.example.py server/config.py`
 
+## 2.3. Client installation
+
+1. Install the packages:
+```
+sudo apt-get install npm
+sudo apt-get install nodejs-legacy
+```
+
+2. Install npm and node packages:
+```
+sudo npm install -g bower # install globally, so need sudo
+sudo npm install -g gulp
+npm install
+node node_modules/bower/bin/bower install
+```
+
+3. Build the client:
+```
+cd bin
+./bulid_client.sh
+```
+
+## 2.4. Starting the service
+
+1. Create the server service, e.g. `optimahiv.service`, in `/etc/systemd/system/`, modifying ports and folders as necessary:
+```
+[Unit]
+Description=Optima HIV server
+[Service]
+ExecStart=/software/anaconda/bin/python -m server._twisted_wsgi 8080
+Restart=always
+User=optima
+WorkingDirectory=/home/optima/tools/optima
+[Install]
+WantedBy=multi-user.target
+```
+
+2. Create the Celery service, e.g. `optimahivcelery.service`
+```
+[Unit]
+Description=Optima HIV Celery
+[Service]
+ExecStart=/software/anaconda/bin/celery -A server.webapp.tasks.celery_instance worker -l info
+Restart=always
+User=optima
+WorkingDirectory=/home/optima/tools/optima
+```
+
+3. Update the service monitor and start the services:
+```
+sudo systemctl daemon-reload
+sudo service optimahiv start
+sudo service optimahivcelery start
+```
+
+## 2.5 Testing and optional setup
+
+1. Test by going to e.g. `hostname:8080`
+
+2. To populate the demo projects, go to `hostname:8080/#/devregister` and create a user with username `_OptimaDemo` and password `_OptimaDemo`. Then run `python tests/makedemos.py`, and upload the two generated projects to this account.
+
+3. That's all, folks!
 
 
 
-# 3. Setting up Optima on Windows (for developers only)
+
+# 3. Windows server setup
 
 There are four steps to get full Optima set up:
 
