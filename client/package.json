@@ -1,8 +1,8 @@
 {
-  "name": "optima-client",
-  "description": "Optima HIV client code, originally based on ng-seed by StarterSquad",
+  "name": "optima-hiv",
+  "description": "Optima HIV",
   "repository": "http://git@github.com:optimamodel/optima.git",
-  "version": "2.3.7",
+  "version": "2.7.5",
   "license": "LGPL-3.0",
   "devDependencies": {
     "amdefine": "=1.0.0",

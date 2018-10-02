@@ -315,8 +315,8 @@ define(['angular', 'ui.router'], function (angular) {
               $scope.statusMessage = 'Loading graphs...';
               try {
                 clearInterval(timer);
-              } catch {
-                console.log('Timer could not be cleared')
+              } catch(err) {
+                console.log('Timer could not be cleared: ', err);
               }
               toastr.success('Optimization completed');
               getOptimizationGraphs();
