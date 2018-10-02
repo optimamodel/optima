@@ -2,7 +2,7 @@
 import os
 import sys
 import logging
-import matplotlib
+import matplotlib.pyplot as ppl
 import redis
 
 from flask import Flask, abort, jsonify, request, json, helpers
@@ -25,7 +25,7 @@ except: # File doesn't exist
 
 # This might also fail if configuration is old or misspecified
 try:
-    matplotlib.use(app.config["MATPLOTLIB_BACKEND"])
+    ppl.switch_backend(app.config["MATPLOTLIB_BACKEND"])
 except:
     raise Exception(errormsg)
 

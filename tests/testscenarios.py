@@ -9,11 +9,11 @@ Version: 2016feb07
 tests = [
 #'standardscen',
 #'maxcoverage',
-#'budget',
+'budget',
 #'90-90-90',
 #'sensitivity',
 #'VMMC',
-'newcascade'
+#'newcascade'
 ]
 
 ##############################################################################
@@ -206,7 +206,7 @@ if 'sensitivity' in tests:
     t = tic()
 
     print('Testing scenario sensitivity...')
-    from optima import Parscen, defaultproject, pygui, findinds
+    from optima import Parscen, defaultproject, pygui
     from numpy import array
     
     P = defaultproject('best')
@@ -379,7 +379,7 @@ if 'budget' in tests:
     from numpy import array
     
     ## Set up default project
-    P = defaultproject('best',dorun=False)
+    P = defaultproject('generalized',dorun=False)
     
     ## Define scenarios
     defaultbudget = P.progsets['default'].getdefaultbudget()

@@ -313,7 +313,11 @@ define(['angular', 'ui.router'], function (angular) {
             var calcState = response.data;
             if (calcState.status === 'completed') {
               $scope.statusMessage = 'Loading graphs...';
-              clearInterval(timer);
+              try {
+                clearInterval(timer);
+              } catch {
+                console.log('Timer could not be cleared')
+              }
               toastr.success('Optimization completed');
               getOptimizationGraphs();
             } else if (calcState.status === 'started') {

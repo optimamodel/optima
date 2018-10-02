@@ -1010,7 +1010,9 @@ def minmoney(project=None, optim=None, tvec=None, verbose=None, maxtime=None, ma
 
     ## Handle budget and remove fixed costs
     if project is None or optim is None: raise OptimaException('An optimization requires both a project and an optimization object to run')
-    progset = project.progsets[optim.progsetname] # Link to the original parameter set
+    parset = project.parsets[optim.parsetname] # Original parameter set
+    parset.fixprops(False) # It doesn't really make sense to minimize money with these fixed
+    progset = project.progsets[optim.progsetname] # Link to the original program set
     totalbudget = dcp(optim.objectives['budget'])
     origtotalbudget = totalbudget
     try: origbudget = dcp(progset.getdefaultbudget())
@@ -1033,6 +1035,7 @@ def minmoney(project=None, optim=None, tvec=None, verbose=None, maxtime=None, ma
             'ccsample':   ccsample, 
             'verbose':    verbose,
             'keepraw':    keepraw,
+            'doconstrainbudget': True,
             }
 
     #%% Preliminaries
@@ -1426,7 +1429,7 @@ def minmoney(project=None, optim=None, tvec=None, verbose=None, maxtime=None, ma
         newbudget[key] = max(newbudget[key], optim.constraints['min'][key])
     
     ## Tidy up -- WARNING, need to think of a way to process multiple inds
-    args['doconstrainbudget'] = False
+    args['doconstrainbudget'] = True
     orig = outcomecalc(origbudgetvec, totalbudget=origtotalbudget,    outputresults=True, **args)
     new  = outcomecalc(newbudget,     totalbudget=newbudget[:].sum(), outputresults=True, **args)
     

@@ -502,25 +502,25 @@ def defaultproject(which='best', addprogset=True, addcostcovdata=True, usestanda
         ### Add programs
         R = defaultprogset(P, addcostcovpars=False, addcostcovdata=False, filterprograms=['VMMC', 'FSW programs', 'MSM programs', 'Condoms', 'HTC', 'PMTCT', 'Condoms', 'ART'])
         
-        R.programs['Condoms'].costcovfn.ccopars = odict([('saturation', [(0.85, 0.95)]), ('t', [2016.0]), ('unitcost', [(4.5, 4.5)]), ])
+        R.programs['Condoms'].costcovfn.ccopars = odict([('popfactor', [(1,1)]), ('saturation', [(0.85, 0.95)]), ('t', [2016.0]), ('unitcost', [(4.5, 4.5)]), ])
         R.programs['Condoms'].costcovdata = odict([('cost', [nan, nan, nan, nan, nan, 20402012.0, 16159558.0, nan, nan, nan, 2899762.5797366896, 1267895.0977615763, 1504986, 27619000.0, nan, nan, nan, nan, nan, nan, nan]), ('t', [2000.0, 2001.0, 2002.0, 2003.0, 2004.0, 2005.0, 2006.0, 2007.0, 2008.0, 2009.0, 2010.0, 2011.0, 2012.0, 2013.0, 2014.0, 2015.0, 2016.0, 2017.0, 2018.0, 2019.0, 2020.0]), ('coverage', [nan, nan, nan, nan, nan, 5240657.8067303784, 4717565.5467255022, nan, nan, nan, 631092.12248356279, 8146.7011712820877, 334441, nan, nan, nan, nan, nan, nan, nan, nan]), ])
     
-        R.programs['VMMC'].costcovfn.ccopars = odict([('saturation', [(0.85, 0.95)]), ('t', [2016.0]), ('unitcost', [(86.25, 86.25)]), ])
+        R.programs['VMMC'].costcovfn.ccopars = odict([('popfactor', [(1,1)]), ('saturation', [(0.85, 0.95)]), ('t', [2016.0]), ('unitcost', [(86.25, 86.25)]), ])
         R.programs['VMMC'].costcovdata = odict([('cost', [nan, nan, nan, nan, nan, 0.0, 0.0, nan, nan, nan, 2590232.3247760157, 3241399.741655164, 3650750.2589196907, 25398000.0, 17168666.25, nan, nan, nan, nan, nan, nan]), ('t', [2000.0, 2001.0, 2002.0, 2003.0, 2004.0, 2005.0, 2006.0, 2007.0, 2008.0, 2009.0, 2010.0, 2011.0, 2012.0, 2013.0, 2014.0, 2015.0, 2016.0, 2017.0, 2018.0, 2019.0, 2020.0]), ('coverage', [nan, nan, nan, nan, nan, nan, nan, 304.0, 2454.0, 16923.0, 63604.0, 84604.0, 173992.0, 294466.0, 199057.0, nan, nan, nan, nan, nan, nan]), ])
     
-        R.programs['FSW programs'].costcovfn.ccopars = odict([('saturation', [(0.85, 0.95)]), ('t', [2016.0]), ('unitcost', [(35.5, 35.5)]), ])
-        R.programs['FSW programs'].costcovdata = odict([('cost', [nan, nan, nan, nan, nan, 1028950.0, 5372.0, nan, nan, nan, nan, nan, 0.0, 340000.0, nan, nan, nan, nan, nan, nan, nan]), ('t', [2000.0, 2001.0, 2002.0, 2003.0, 2004.0, 2005.0, 2006.0, 2007.0, 2008.0, 2009.0, 2010.0, 2011.0, 2012.0, 2013.0, 2014.0, 2015.0, 2016.0, 2017.0, 2018.0, 2019.0, 2020.0]), ('coverage', [nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan]), ])
+        R.programs['FSW programs'].costcovfn.ccopars = odict([('popfactor', [(1,1)]), ('saturation', [(0.85, 0.95)]), ('t', [2016.0]), ('unitcost', [(35.5, 35.5)]), ])
+        R.programs['FSW programs'].costcovdata = odict([('popfactor', [(1,1)]), ('cost', [nan, nan, nan, nan, nan, 1028950.0, 5372.0, nan, nan, nan, nan, nan, 0.0, 340000.0, nan, nan, nan, nan, nan, nan, nan]), ('t', [2000.0, 2001.0, 2002.0, 2003.0, 2004.0, 2005.0, 2006.0, 2007.0, 2008.0, 2009.0, 2010.0, 2011.0, 2012.0, 2013.0, 2014.0, 2015.0, 2016.0, 2017.0, 2018.0, 2019.0, 2020.0]), ('coverage', [nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan]), ])
     
-        R.programs['MSM programs'].costcovfn.ccopars = odict([('saturation', [(0.9, 0.9)]), ('t', [2016.0]), ('unitcost', [(45.95, 45.95)]), ])
+        R.programs['MSM programs'].costcovfn.ccopars = odict([('popfactor', [(1,1)]), ('saturation', [(0.9, 0.9)]), ('t', [2016.0]), ('unitcost', [(45.95, 45.95)]), ])
         R.programs['MSM programs'].costcovdata = odict([('cost', [nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, 0.0, 30000.0, nan, nan, nan, nan, nan, nan, nan]), ('t', [2000.0, 2001.0, 2002.0, 2003.0, 2004.0, 2005.0, 2006.0, 2007.0, 2008.0, 2009.0, 2010.0, 2011.0, 2012.0, 2013.0, 2014.0, 2015.0, 2016.0, 2017.0, 2018.0, 2019.0, 2020.0]), ('coverage', [nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan]), ])
     
-        R.programs['HTC'].costcovfn.ccopars = odict([('saturation', [(1.0, 1.0)]), ('t', [2016.0]), ('unitcost', [(8.67, 8.67)]), ])
+        R.programs['HTC'].costcovfn.ccopars = odict([('popfactor', [(1,1)]), ('saturation', [(1.0, 1.0)]), ('t', [2016.0]), ('unitcost', [(8.67, 8.67)]), ])
         R.programs['HTC'].costcovdata = odict([('cost', [nan, nan, nan, nan, nan, 3563387.0, 8298787.0, nan, nan, nan, 17450949.635453127, 15213442.58553639, 11015092.261536067, 17919000.0, 21269608.14, nan, nan, nan, nan, nan, nan]), ('t', [2000.0, 2001.0, 2002.0, 2003.0, 2004.0, 2005.0, 2006.0, 2007.0, 2008.0, 2009.0, 2010.0, 2011.0, 2012.0, 2013.0, 2014.0, 2015.0, 2016.0, 2017.0, 2018.0, 2019.0, 2020.0]), ('coverage', [nan, nan, nan, nan, 63330.0, 195396.0, 234430.0, 336672.0, 511299.0, 1050137.0, 1327995.0, 1772043.0, 2138961.0, 2066216.0, 2453242.0, nan, nan, nan, nan, nan, nan]), ])
     
-        R.programs['PMTCT'].costcovfn.ccopars = odict([('saturation', [(1.0, 1.0)]), ('t', [2016.0]), ('unitcost', [(301.0, 301.0)]), ])
+        R.programs['PMTCT'].costcovfn.ccopars = odict([('popfactor', [(1,1)]), ('saturation', [(1.0, 1.0)]), ('t', [2016.0]), ('unitcost', [(301.0, 301.0)]), ])
         R.programs['PMTCT'].costcovdata = odict([('cost', [nan, nan, nan, nan, nan, 1162684.0, 17863894.0, nan, nan, nan, 12539141.068389883, 8846436.504648793, 10663078.844306767, 22317000.0, 20714820.0, 22630000.0, nan, nan, nan, nan, nan]), ('t', [2000.0, 2001.0, 2002.0, 2003.0, 2004.0, 2005.0, 2006.0, 2007.0, 2008.0, 2009.0, 2010.0, 2011.0, 2012.0, 2013.0, 2014.0, 2015.0, 2016.0, 2017.0, 2018.0, 2019.0, 2020.0]), ('coverage', [nan, nan, nan, nan, 6400.0, 18600.0, 25600.0, 35305.0, 40836.0, 58682.0, 76893.0, 82081.0, 84351.0, 74142.0, 68820.0, nan, nan, nan, nan, nan, nan]), ])
    
-        R.programs['ART'].costcovfn.ccopars = odict([('saturation', [(0.85, 0.95)]), ('t', [2016.0]), ('unitcost', [(270.0, 300.0)]), ])
+        R.programs['ART'].costcovfn.ccopars = odict([('popfactor', [(1,1)]), ('saturation', [(0.85, 0.95)]), ('t', [2016.0]), ('unitcost', [(270.0, 300.0)]), ])
         R.programs['ART'].costcovdata = odict([('cost', [nan, nan, nan, nan, nan, 25885685.0, 39021643.0, nan, nan, nan, 56453775.04472395, 72132041.93644492, 69209158.39479679, 148597000.0, 171792896.0, 177500000., nan, nan, nan, nan, nan]), ('t', [2000.0, 2001.0, 2002.0, 2003.0, 2004.0, 2005.0, 2006.0, 2007.0, 2008.0, 2009.0, 2010.0, 2011.0, 2012.0, 2013.0, 2014.0, 2015.0, 2016.0, 2017.0, 2018.0, 2019.0, 2020.0]), ('coverage', [nan, nan, nan, nan, nan, 57164.0, 81030.0, 149199.0, 219576.0, 283863.0, 344407.0, 415685.0, 480925.0, 580118.0, 671066.0, nan, nan, nan, nan, nan, nan]), ])
     
         R.covout['numcirc']['Clients'].ccopars = odict([('intercept', [(0.0, 0.0)]), ('t', [2016]), (u'VMMC', []), ])
@@ -532,7 +532,7 @@ def defaultproject(which='best', addprogset=True, addcostcovdata=True, usestanda
         R.covout['numcirc']['Males 50+'].ccopars = odict([('intercept', [(0.0, 0.0)]), ('t', [2016]), (u'VMMC', []), ])
     
         R.covout['condcom'][(u'Clients', u'FSW')].ccopars = odict([('intercept', [(0.6, 0.65)]), ('t', [2016]), (u'FSW programs', [(0.92, 0.97)]), ])
-        R.covout['condcom'][(u'MSM', u'FSW')].ccopars = odict([('intercept', [( 0.25,  0.3)]), ('t', [2016.0]), (u'FSW programs', [ 0.8,  0.9]), ])
+        R.covout['condcom'][(u'MSM', u'FSW')].ccopars = odict([('intercept', [( 0.25,  0.3)]), ('t', [2016.0]), (u'FSW programs', [(0.8,  0.9)]), ])
         R.covout['numtx']['tot'].ccopars = odict([('intercept', [(0.0, 0.0)]), ('t', [2016]), (u'PMTCT', []), (u'ART', []), ])
         R.covout['numpmtct']['tot'].ccopars = odict([('intercept', [(0.0, 0.0)]), ('t', [2016]), (u'PMTCT', []), ])
     
