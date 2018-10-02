@@ -38,9 +38,8 @@ for proj in tomake:
     P.addoptim(optim)
     
     objectives = defaultobjectives(P, which='money')
-    optim = Optim(project=P, parsetname='Treatment fixed', name='Minimal funding to reduce incidence and deaths by 25%', objectives=objectives)
+    optim = Optim(project=P, parsetname='Status quo', name='Minimal funding to reduce incidence and deaths by 25%', objectives=objectives)
     P.addoptim(optim)
-
 
     ### Save project
     P.save(filename=P.name+'.prj')
