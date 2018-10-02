@@ -67,6 +67,7 @@ def setmigrations(which='migrations'):
         ('2.7.1', ('2.7.2', '2018-07-24', addfixedattr,      'Store whether or not proportions are fixed')),
         ('2.7.2', ('2.7.3', '2018-07-26', addpopfactor,      'Add a population adjustment factor to programs')),
         ('2.7.3', ('2.7.4', '2018-07-27', addpopfactor,      'Fix previous migration')),
+        ('2.7.4', ('2.7.5', '2018-10-02', None,              'Update minimize money algorithm')),
         ])
     
     
