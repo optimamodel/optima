@@ -165,12 +165,11 @@ def make_mpld3_graph_dict(result=None, which=None, zoom=None, startYear=None, en
     mpld3_graphs = []
     for g,graph_key in enumerate(graphs):
         graph_selectors.append(extract_graph_selector(graph_key))
-#        graph_pos = 'mid' if type(graph_key)==str and graph_key.find('Care cascade')>=0 else None
         graph_pos = None
         graph_dict = convert_to_mpld3(graphs[graph_key], zoom=zoom, graph_pos=graph_pos)
         graph = graphs[graph_key]
         while len(graph.axes)>1:
-            print('WARRRRRRRRRRRRRRRRRRRRRRRNING, too many axes')
+            print('Warning, too many axes, attempting removal')
             graph.delaxes(graph.axes[1])
         ylabels = [l.get_text() for l in graph.axes[0].get_yticklabels()]
         graph_dict['ylabels'] = ylabels
@@ -178,9 +177,6 @@ def make_mpld3_graph_dict(result=None, which=None, zoom=None, startYear=None, en
         graph_dict['xlabels'] = xlabels
         graph_dict['id'] = ('graph%i-' % g) + graph_dict['id'] # Prepend graph dict
         mpld3_graphs.append(graph_dict)
-        print('TEMPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP')
-        print(graph_key)
-        print(graph_dict)
 
     return {
         'graphs': {
