@@ -48,11 +48,11 @@ def getdefaultplots(ismulti='both'):
     else:               return defaultplots,defaultmultiplots
 
 
-def makefigure(figsize=None, facecolor=None, interactive=False, fig=None, **kwargs):
+def makefigure(figsize=None, facecolor=None, interactive=False, fig=None, newfig=None, **kwargs):
     ''' Decide whether to make an interactive figure() or a non-interactive Figure()'''
     if figsize is None:   figsize = globalfigsize
     if facecolor is None: facecolor = (1,1,1)
-    if fig is None: # Create a new figure if one is not supplied
+    if fig is None or newfig: # Create a new figure if one is not supplied
         if interactive:  fig = figure(facecolor=facecolor, figsize=figsize, **kwargs)
         else:            fig = Figure(facecolor=facecolor, figsize=figsize, **kwargs)
     naxes = len(fig.axes)+1 # Count the number of existing axes
@@ -157,7 +157,7 @@ def getplotselections(results, advanced=False):
 
 
 
-def makeplots(results=None, toplot=None, die=False, verbose=2, plotstartyear=None, plotendyear=None, fig=None, **kwargs):
+def makeplots(results=None, toplot=None, die=False, verbose=2, plotstartyear=None, plotendyear=None, fig=None, newfig=False, **kwargs):
     ''' 
     Function that takes all kinds of plots and plots them -- this is the only plotting function the user should use 
     
@@ -209,13 +209,13 @@ def makeplots(results=None, toplot=None, die=False, verbose=2, plotstartyear=Non
     ## Add cascade plot(s)
     if 'cascade' in toplot:
         toplot.remove('cascade') # Because everything else is passed to plotepi()
-        cascadeplots = plotcascade(results, die=die, plotstartyear=plotstartyear, plotendyear=plotendyear, fig=fig, **kwargs)
+        cascadeplots = plotcascade(results, die=die, plotstartyear=plotstartyear, plotendyear=plotendyear, fig=fig, newfig=newfig, **kwargs)
         allplots.update(cascadeplots)
     
     ## Add cascade plot(s) with bars
     if 'cascadebars' in toplot:
         toplot.remove('cascadebars') # Because everything else is passed to plotepi()
-        cascadebarplots = plotcascade(results, die=die, fig=fig, asbars=True, **kwargs)
+        cascadebarplots = plotcascade(results, die=die, fig=fig, asbars=True, newfig=newfig, **kwargs)
         allplots.update(cascadebarplots)
     
     ## Add deaths by CD4 plot -- WARNING, only available if results includes raw
@@ -232,6 +232,9 @@ def makeplots(results=None, toplot=None, die=False, verbose=2, plotstartyear=Non
     ## Add epi plots -- WARNING, I hope this preserves the order! ...It should...
     epiplots = plotepi(results, toplot=toplot, die=die, plotstartyear=plotstartyear, plotendyear=plotendyear, fig=fig, **kwargs)
     allplots.update(epiplots)
+    
+    print('TEMPPPP')
+    print allplots
     
     return allplots
 
@@ -857,7 +860,7 @@ def plotcoverage(multires=None, die=True, figsize=globalfigsize, legendsize=glob
 def plotcascade(results=None, aspercentage=False, cascadecolors=None, figsize=globalfigsize, lw=2, titlesize=globaltitlesize, 
                 labelsize=globallabelsize, ticksize=globalticksize, legendsize=globallegendsize, position=None, useSIticks=True, 
                 showdata=True, dotsize=50, plotstartyear=None, plotendyear=None, die=False, verbose=2, interactive=False, fig=None,
-                asbars=False, allbars=True, blhind=None, **kwargs):
+                asbars=False, allbars=True, blhind=None, newfig=None, **kwargs):
 
     ''' 
     Plot the treatment cascade.
@@ -949,7 +952,7 @@ def plotcascade(results=None, aspercentage=False, cascadecolors=None, figsize=gl
     for plt in range(nsims): # WARNING, copied from plotallocs()
     
         # Create the figure and axes
-        fig,naxes = makefigure(figsize=figsize, interactive=interactive, fig=fig)
+        fig,naxes = makefigure(figsize=figsize, interactive=interactive, fig=fig, newfig=newfig)
         ax = fig.add_subplot(naxes, 1, naxes)
         setposition(ax, position, interactive)
             

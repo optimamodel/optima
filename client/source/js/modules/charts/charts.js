@@ -280,6 +280,7 @@ define(
               delete figure.initWidth;
             }
 
+            console.log('TEMPPPPPPPPPPP', attrs.chartId)
             mpld3.draw_figure(attrs.chartId, figure);
             reformatMpld3FigsInElement($element, nLegend);
 
