@@ -117,6 +117,7 @@ if 'minimizemoney' in tests:
     from optima import defaultobjectives, defaultconstraints
     
     P = defaultproject('best')
+    P.parset().fixprops(False)
     
     objectives = defaultobjectives(project=P, which='money')
     objectives['deathfrac'] = 0.25
