@@ -10,10 +10,10 @@ Version: 2017jan13
 
 ## Define tests to run here!!!
 tests = [
-'minimizeoutcomes',
+#'minimizeoutcomes',
 #'multichain',
 ##'investmentstaircase',
-#'minimizemoney',
+'minimizemoney',
 ]
 
 
@@ -118,10 +118,10 @@ if 'minimizemoney' in tests:
     
     P = defaultproject('best')
     
-    objectives = defaultobjectives(P.progsets[0], which='money')
-    objectives['deathfrac'] = 0.1 # Yes, this means an increase in deaths
-    objectives['incifrac'] = 0.2
-    constraints = defaultconstraints(P)
+    objectives = defaultobjectives(project=P, which='money')
+    objectives['deathfrac'] = 0.25
+    objectives['incifrac'] = 0.25
+    constraints = defaultconstraints(project=P)
     P.optimize(name='minmoney', parsetname='default', progsetname='default', objectives=objectives, constraints=constraints, maxtime=10, ccsample='random')
     
     print('Original allocation: ($%g)' % sum(P.results[-1].budgets[0][:]))
