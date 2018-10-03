@@ -1775,7 +1775,8 @@ def save_portfolio_by_summary(portfolio_id, portfolio_summary, db_session=None):
     for project_id in new_project_ids:
         print(">> save_portfolio_by_summary new_project_id", project_id)
         project = load_project(project_id)
-        portfolio.projects[project_id] = project
+        project.name = get_unique_name(project.name, portfolio.projects.keys()) # Ensure the name is unique
+        portfolio.projects[project.name] = project
     save_portfolio(portfolio, db_session)
     return load_portfolio_summaries()
 
