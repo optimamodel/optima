@@ -41,9 +41,6 @@ print('Running tests:')
 for i,test in enumerate(tests): print(('%i.  '+test) % (i+1))
 blank()
 
-filename1 = 'test1.prj'
-filename2 = 'test2.prj'
-
 
 ##############################################################################
 ## The tests
