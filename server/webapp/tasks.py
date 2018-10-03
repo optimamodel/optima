@@ -370,7 +370,7 @@ def boc(portfolio_id, project_id, maxtime=2, objectives=None):
     project_id = str(project.uid)
     db_session = init_db_session()
     portfolio = dataio.load_portfolio(portfolio_id, db_session) # Reload portfolio, since another BOC task probably changed it
-    portfolio.projects[project_id] = project
+    portfolio.projects[project.name] = project
     dataio.save_portfolio(portfolio, db_session)
     close_db_session(db_session)
 
