@@ -515,7 +515,7 @@ class Resultset(object):
         if len(thisbudget): # WARNING, does not support multiple years
             outputstr += '\n\n\n'
             outputstr += sep*2+'Budget\n'
-            outputstr += sep*2+sep.join(thisbudget.keys()) + '\n'
+            outputstr += ('\"'+sep+'\"')*2+('\"'+sep+'\"').join(thisbudget.keys()) + '\n'
             outputstr += sep*2+sep.join([str(val) for val in thisbudget.values()]) + '\n'
         
         if len(thiscoverage): # WARNING, does not support multiple years
@@ -526,7 +526,7 @@ class Resultset(object):
                 if covvals[c] is None: covvals[c] = 0 # Just reset
             outputstr += '\n\n\n'
             outputstr += sep*2+'Coverage\n'
-            outputstr += sep*2+sep.join(thiscoverage.keys()) + '\n'
+            outputstr += ('\"'+sep+'\"')*2+('\"'+sep+'\"').join(thiscoverage.keys())+'\n'
             outputstr += sep*2+sep.join([str(val) for val in covvals]) + '\n' # WARNING, should have this val[0] but then dies with None entries
 
         if len(tvbudget):
@@ -1043,9 +1043,13 @@ def exporttoexcel(filename=None, outdict=None):
         outlist = []
         for line in outstr.split('\n'):
             outlist.append([])
-            for cell in line.split(','):
-                if cell=='tot': cell = 'Total' # Hack to replace internal key with something more user-friendly
-                outlist[-1].append(str(cell)) # If unicode, doesn't work
+            if '"' in line:
+                for cell in line.split('","'):  # Hack to not separate program names with commas in them
+                    outlist[-1].append(str(cell))  # If unicode, doesn't work
+            else:
+                for cell in line.split(','):
+                    if cell=='tot': cell = 'Total'  # Hack to replace internal key with something more user-friendly
+                    outlist[-1].append(str(cell))  # If unicode, doesn't work
         
         # Iterate over the data and write it out row by row.
         row, col = 0, 0
