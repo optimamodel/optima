@@ -748,7 +748,7 @@ def create_project_from_spreadsheet(xlsx_filename, user_id, other_names):
     return { 'projectId': str(project.uid) }
 
 
-def download_project(project_id):
+def download_project(project_id, name):
     """
     Returns the (dirname, filename) of the .prj binary of the project on the server
     """
@@ -756,14 +756,14 @@ def download_project(project_id):
     dirname = upload_dir_user(TEMPLATEDIR)
     if not dirname:
         dirname = TEMPLATEDIR
-    server_filename = project.save(folder=dirname, saveresults=False)
+    server_filename = project.save(filename=name, folder=dirname, saveresults=False)
     print(">> download_project %s" % (server_filename))
     return server_filename
 
 
-def download_project_with_result(project_id):
+def download_project_with_result(project_id, name):
     """
-    Returns the filenae of the .prj binary of the project on the server
+    Returns the filename of the .prj binary of the project on the server
     """
     project = load_project(project_id, raise_exception=True)
     result_records = db.session.query(ResultsDb).filter_by(project_id=project_id)
@@ -775,7 +775,7 @@ def download_project_with_result(project_id):
     dirname = upload_dir_user(TEMPLATEDIR)
     if not dirname:
         dirname = TEMPLATEDIR
-    server_filename = project.save(folder=dirname, saveresults=True)
+    server_filename = project.save(filename=name, folder=dirname, saveresults=True)
     print(">> download_project_with_result %s" % (server_filename))
     return server_filename
 
