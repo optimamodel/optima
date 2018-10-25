@@ -20,7 +20,7 @@ define({
     'ui.bootstrap': './vendor/angular-bootstrap/ui-bootstrap-tpls',
     'tooltip': './vendor/tooltip/dist/tooltip',
     'rzModule': './vendor/angularjs-slider/dist/rzslider.min',
-    'd3': './vendor/d3/d3',
+    'd3': './vendor/d3/d3.v5.min',
     'mpld3': './js/modules/charts/mpld3.v0.4.1.min',
     'canvas2blob': './vendor/canvas-toBlob.js/canvas-toBlob',
     'saveAs': './vendor/FileSaver/FileSaver',
