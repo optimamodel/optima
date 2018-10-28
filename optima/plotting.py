@@ -670,7 +670,7 @@ def plotbudget(multires=None, die=True, figsize=globalfigsize, legendsize=global
                 if progkey in allprogkeys:
                     label = progkey # Only add legend if not already added
                     allprogkeys.remove(progkey) # Pop label so it doesn't get added to legend multiple times
-                ax.barh(xdata, ydata, left=bottomdata, color=colordict[progkey], linewidth=0, label=label)
+                ax.bar(xdata, ydata/1000000., color=colordict[progkey], linewidth=0, label=label)
     
         # Set up legend
         legendsettings = {'loc':'upper left', 'bbox_to_anchor':(1.07, 1), 'fontsize':legendsize, 'title':'', 'frameon':False}
@@ -678,12 +678,14 @@ def plotbudget(multires=None, die=True, figsize=globalfigsize, legendsize=global
         ax.legend(reversed(handles), reversed(legendlabels), **legendsettings)
     
         # Set up other things
-        ax.set_xlabel('Spending')
-        ax.set_yticks(arange(nallocs)+1)
-        ax.set_yticklabels(alloclabels)
-        ax.set_ylim(0,nallocs+1)
-        ax.set_title('Budget')
-        
+        ax.set_ylabel('Budget (millions USD)')
+        ax.set_xticks(arange(nallocs) + 0.6)
+        alloclabels[alloclabels.index('Optimal')] = 'Optimized'
+        ax.set_xticklabels(alloclabels)
+        ax.spines['top'].set_visible(False)
+        ax.spines['right'].set_visible(False)
+        ax.spines['bottom'].set_visible(False)
+
         SIticks(ax=ax, axis='x')
         budgetplots['budget'] = fig
     
