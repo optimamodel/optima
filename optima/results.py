@@ -498,8 +498,8 @@ class Resultset(object):
                 else:                       data = self.main[mainkey].tot[ind][:]
                 outputstr += self.main[mainkey].name+sep+popkey+sep
                 for t in range(npts):
-                    if self.main[mainkey].ispercentage: outputstr += ('%s'+sep) % sigfig(data[t], sigfigs=sigfigs)
-                    else:                           outputstr += ('%i'+sep) % data[t]
+                    if self.main[mainkey].ispercentage: outputstr += ('%s'+sep) % sigfig(data[t]*100, sigfigs=sigfigs)
+                    else:                               outputstr += ('%i'+sep) % data[t]
        
         # Handle budget and coverage
         thisbudget = []
