@@ -498,9 +498,7 @@ class Resultset(object):
                 else:                       data = self.main[mainkey].tot[ind][:]
                 outputstr += self.main[mainkey].name+sep+popkey+sep
                 for t in range(npts):
-                    if '(per 100 p.y.)' in self.main[mainkey].name:
-                        outputstr += ('%s' + sep) % sigfig(100*data[t], sigfigs=sigfigs)
-                    elif self.main[mainkey].ispercentage: outputstr += ('%s'+sep) % sigfig(data[t], sigfigs=sigfigs)
+                    if self.main[mainkey].ispercentage: outputstr += ('%s'+sep) % sigfig(data[t]*100, sigfigs=sigfigs)
                     else:                           outputstr += ('%i'+sep) % data[t]
 
         if not comparisontab:
