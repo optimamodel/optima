@@ -563,6 +563,7 @@ class Resultset(object):
         total_optimized_budget = sum(self.budgets['Optimal'].values())
         for prog, baseline_budget in self.budgets['Baseline'].items():
             outputstr += '\n'
+
             optimized_budget = self.budgets['Optimal'][prog]
             baseline_cov = self.coverages['Baseline'][prog]
             if checktype(baseline_cov, 'arraylike'):
@@ -572,6 +573,7 @@ class Resultset(object):
             if checktype(optimized_cov, 'arraylike'):
                 optimized_cov = optimized_cov[0]  # Only pull out the first element if it's an array/list
             if optimized_cov is None: optimized_cov = 0  # Just reset
+
             budget_change = 0
             cov_change = 0
             if baseline_budget > 0:
@@ -579,10 +581,13 @@ class Resultset(object):
             if baseline_cov > 0:
                 cov_change = (optimized_cov - baseline_cov) / baseline_cov
             outputstr += prog + sep + \
-                         str(baseline_budget) + sep + '%0.2fperc' % (baseline_budget/total_baseline_budget) + sep + \
-                         str(optimized_budget) + sep + '%0.2fperc' % (optimized_budget/total_optimized_budget) + \
-                         sep + '%0.2fpercconditional' % budget_change + sep + str(baseline_cov) + sep + \
-                         str(optimized_cov) + sep + '%0.2fpercconditional' % cov_change
+                         str(baseline_budget) + sep + '%fperc' % (baseline_budget/total_baseline_budget) + sep + \
+                         str(optimized_budget) + sep + '%fperc' % (optimized_budget/total_optimized_budget) + \
+                         sep + '%fpercconditional' % budget_change + sep + str(baseline_cov) + sep + \
+                         str(optimized_cov) + sep + '%fpercconditional' % cov_change
+        outputstr += '\n'
+        outputstr += sep.join(['Total', str(total_baseline_budget), '', str(total_optimized_budget), '', '',
+                               '', '', ''])
 
         return outputstr
     
