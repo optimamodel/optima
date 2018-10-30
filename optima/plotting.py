@@ -583,11 +583,6 @@ def plotimprovement(results=None, figsize=globalfigsize, lw=2, titlesize=globalt
     
     return fig
 
-
-
-
-
-
 ##################################################################
 ## Budget plot
 ##################################################################

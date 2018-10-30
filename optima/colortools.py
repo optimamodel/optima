@@ -1,16 +1,21 @@
-def processcolors(colors=None, asarray=False, reverse=False):
-    ''' 
+def processcolors(colors=None, asarray=False, ashex=False, reverse=False):
+    '''
     Small helper function to do common transformations on the colors, once generated.
-    Expects colors to be an array. If asarray is True and reverse are False, returns 
-    that array. Otherwise, does the required permutations.    
+    Expects colors to be an array. If asarray is True and reverse are False, returns
+    that array. Otherwise, does the required permutations.
     '''
     if asarray:
         output = colors
         if reverse: output = output[::-1] # Reverse the array
     else:
         output = []
-        for c in colors: output.append(tuple(c)) # Gather output
-        if reverse: output.reverse() # Reverse the list
+        for c in colors: # Gather output
+            output.append(tuple(c))
+        if reverse: # Reverse the list
+            output.reverse()
+        if ashex:
+            for c,color in enumerate(output):
+                output[c] = rgb2hex(color)
     return output
 
 
@@ -38,20 +43,22 @@ def shifthue(colors=None, hueshift=0.0):
     return colors
 
 
-def gridcolors(ncolors=10, limits=None, nsteps=10, asarray=False, reverse=False, doplot=False, hueshift=0):
+def gridcolors(ncolors=10, limits=None, nsteps=20, asarray=False, ashex=False, reverse=False, hueshift=0,
+               basis='default', doplot=False):
     """
     GRIDCOLORS
 
     Create a qualitative "color map" by assigning points according to the maximum pairwise distance in the
     color cube. Basically, the algorithm generates n points that are maximally uniformly spaced in the
     [R, G, B] color cube.
-    
+
     Arguments:
         ncolors: the number of colors to create
         limits: how close to the edges of the cube to make colors (to avoid white and black)
         nsteps: the discretization of the color cube (e.g. 10 = 10 units per side = 1000 points total)
         asarray: whether to return the colors as an array instead of as a list of tuples
         doplot: whether or not to plot the color cube itself
+        basis: what basis to use -- options are 'colorbrewer', 'kelly', 'default', or 'none'
 
     Usage example:
         from pylab import *
@@ -64,102 +71,100 @@ def gridcolors(ncolors=10, limits=None, nsteps=10, asarray=False, reverse=False,
         gridcolors(ncolors, doplot=True)
         show()
 
-    Version: 1.2 (2015dec29) 
+    Version: 2.0 (2018oct30)
     """
+    import numpy as np
+    # Choose default colors
+    if basis == 'default':
+        if ncolors <= 8:
+            basis = 'colorbrewer'  # Use these cos they're nicer
+        else:
+            basis = 'kelly'  # Use these cos there are more of them
 
-    ## Imports
-    from numpy import linspace, meshgrid, array, transpose, inf, zeros, argmax, minimum
-    from numpy.linalg import norm
-    
     # Steal colorbrewer colors for small numbers of colors
-    colorbrewercolors = array([
-    [ 55, 126, 184], # [27,  158, 119], # Old color
-    [228,  26,  28], # [217, 95,  2],
-    [ 77, 175,  74], # [117, 112, 179],
-    [162,  78, 153], # [231, 41,  138],
-    [255, 127,   0],
-    [200, 200,  51], # Was too bright yellow
-    [166,  86,  40],
-    [247, 129, 191],
-    [153, 153, 153],
-    ])/255.
+    colorbrewercolors = np.array([
+        [55, 126, 184],  # [27,  158, 119], # Old color
+        [228, 26, 28],  # [217, 95,  2],
+        [77, 175, 74],  # [117, 112, 179],
+        [162, 78, 153],  # [231, 41,  138],
+        [255, 127, 0],
+        [200, 200, 51],  # Was too bright yellow
+        [166, 86, 40],
+        [247, 129, 191],
+        # [153, 153, 153],  # remove gray to reserve grayscale for non-targeted programs
+    ]) / 255.
 
-    kelly_colors = dict(vivid_yellow=(255, 179, 0),
-                        strong_purple=(128, 62, 117),
-                        vivid_orange=(255, 104, 0),
-                        very_light_blue=(166, 189, 215),
-                        vivid_red=(193, 0, 32),
-                        grayish_yellow=(206, 162, 98),
-                        # medium_gray=(129, 112, 102), reserve gray for non-targeted programs
+    # Steal Kelly's colors from https://gist.github.com/ollieglass/f6ddd781eeae1d24e391265432297538, removing
+    # black: '222222', off-white: 'F2F3F4', mid-grey: '848482',
+    kellycolors = ['F3C300', '875692', 'F38400', 'A1CAF1', 'BE0032', 'C2B280', '008856', 'E68FAC', '0067A5', 'F99379',
+                   '604E97', 'F6A600', 'B3446C', 'DCD300', '882D17', '8DB600', '654522', 'E25822', '2B3D26']
+    for c, color in enumerate(kellycolors):
+        kellycolors[c] = list(hex2rgb(color))
+    kellycolors = np.array(kellycolors)
 
-                        # these aren't good for people with defective color vision:
-                        vivid_green=(0, 125, 52),
-                        strong_purplish_pink=(246, 118, 142),
-                        strong_blue=(0, 83, 138),
-                        strong_yellowish_pink=(255, 122, 92),
-                        strong_violet=(83, 55, 122),
-                        vivid_orange_yellow=(255, 142, 0),
-                        strong_purplish_red=(179, 40, 81),
-                        vivid_greenish_yellow=(244, 200, 0),
-                        strong_reddish_brown=(127, 24, 13),
-                        vivid_yellowish_green=(147, 170, 0),
-                        deep_yellowish_brown=(89, 51, 21),
-                        vivid_reddish_orange=(241, 58, 19),
-                        dark_olive_green=(35, 44, 22))
-
-    colorbrewercolors = kelly_colors.values()/255.
-    
-    if ncolors<=len(colorbrewercolors):
+    if basis == 'colorbrewer' and ncolors <= len(colorbrewercolors):
         colors = colorbrewercolors[:ncolors]
-        
-    else: # Too many colors, calculate instead
+    elif basis == 'kelly' and ncolors <= len(kellycolors):
+        colors = kellycolors[:ncolors]
+    else:  # Too many colors, calculate instead
         ## Calculate sliding limits if none provided
         if limits is None:
-            colorrange = 1-1/float(ncolors**0.5)
-            limits = [0.5-colorrange/2, 0.5+colorrange/2]
-        
+            colorrange = 1 - 1 / float(ncolors ** 0.5)
+            limits = [0.5 - colorrange / 2, 0.5 + colorrange / 2]
+
         ## Calculate primitives and dot locations
-        primitive = linspace(limits[0], limits[1], nsteps) # Define primitive color vector
-        x, y, z = meshgrid(primitive, primitive, primitive) # Create grid of all possible points
-        dots = transpose(array([x.flatten(), y.flatten(), z.flatten()])) # Flatten into an array of dots
-        ndots = nsteps**3 # Calculate the number of dots
-        indices = [0] # Initialize the array
-        
+        primitive = np.linspace(limits[0], limits[1], nsteps)  # Define primitive color vector
+        x, y, z = np.meshgrid(primitive, primitive, primitive)  # Create grid of all possible points
+        dots = np.transpose(np.array([x.flatten(), y.flatten(), z.flatten()]))  # Flatten into an array of dots
+        ndots = nsteps ** 3  # Calculate the number of dots
+
+        ## Start from the colorbrewer colors
+        if basis == 'colorbrewer' or basis == 'kelly':
+            indices = []  # Initialize the array
+            if basis == 'colorbrewer':
+                basiscolors = colorbrewercolors
+            elif basis == 'kelly':
+                basiscolors = kellycolors
+            for color in basiscolors:
+                rgbdistances = dots - color  # Calculate the distance in RGB space
+                totaldistances = norm(rgbdistances, axis=1)
+                closest = np.argmin(totaldistances)
+                indices.append(closest)
+        else:
+            indices = [0]
+
         ## Calculate the distances
-        for pt in range(ncolors-1): # Loop over each point
-            totaldistances = inf+zeros(ndots) # Initialize distances
-            for ind in indices: # Loop over each existing point
-                rgbdistances = dots - dots[ind] # Calculate the distance in RGB space
-                totaldistances = minimum(totaldistances, norm(rgbdistances,axis=1)) # Calculate the minimum Euclidean distance
-            maxindex = argmax(totaldistances) # Find the point that maximizes the minimum distance
-            indices.append(maxindex) # Append this index
-        
-        colors = dots[indices,:]
-    
+        for pt in range(ncolors - len(indices)):  # Loop over each point
+            totaldistances = np.inf + np.zeros(ndots)  # Initialize distances
+            for ind in indices:  # Loop over each existing point
+                rgbdistances = dots - dots[ind]  # Calculate the distance in RGB space
+                totaldistances = np.minimum(totaldistances,
+                                            norm(rgbdistances, axis=1))  # Calculate the minimum Euclidean distance
+            maxindex = np.argmax(totaldistances)  # Find the point that maximizes the minimum distance
+            indices.append(maxindex)  # Append this index
+
+        colors = dots[indices, :]
+
     ## Wrap up -- turn color array into a list, or reverse
-    if hueshift: colors = shifthue(colors, hueshift=hueshift) # Shift hue if requested
-    output = processcolors(colors=colors, asarray=asarray, reverse=reverse)
-    
+    if hueshift: colors = shifthue(colors, hueshift=hueshift)  # Shift hue if requested
+    output = processcolors(colors=colors, asarray=asarray, ashex=ashex, reverse=reverse)
+
     ## For plotting -- optional
     if doplot:
-        from mpl_toolkits.mplot3d import Axes3D # analysis:ignore
-        from pylab import figure, gca
-        if doplot=='new':
-            fig = figure(facecolor='w')
-            ax = fig.add_subplot(111, projection='3d')
-        else:
-            ax = gca()
-        ax.scatter(colors[:,0], colors[:,1], colors[:,2], c=output, s=200, depthshade=False, lw=0)
+        from mpl_toolkits.mplot3d import Axes3D  # analysis:ignore
+        fig = pl.figure(facecolor='w')
+        ax = fig.add_subplot(111, projection='3d')
+        ax.scatter(colors[:, 0], colors[:, 1], colors[:, 2], c=output, s=200, depthshade=False, lw=0)
         ax.set_xlabel('Red', fontweight='bold')
         ax.set_ylabel('Green', fontweight='bold')
         ax.set_zlabel('Blue', fontweight='bold')
-        ax.set_xlim((0,1))
-        ax.set_ylim((0,1))
-        ax.set_zlim((0,1))
-    
+        ax.set_xlim((0, 1))
+        ax.set_ylim((0, 1))
+        ax.set_zlim((0, 1))
+
     return output
-    
-    
+
+
 def graycolors(ncolors):
     import matplotlib.pyplot as plt
     cm = plt.get_cmap('gray')
@@ -222,6 +227,7 @@ def alpinecolormap(gap=0.1,mingreen=0.2,redbluemix=0.5,epsilon=0.01):
    cmap = makecolormap('alpinecolormap',cdict,256)
    return cmap
 
+
 ## Test
 def testalpinecolormap():
     from pylab import randn, show, convolve, array, seed, linspace, meshgrid, xlabel, ylabel, figure, pcolor
@@ -262,9 +268,6 @@ def testalpinecolormap():
     xlabel('Position (km)')
     ylabel('Position (km)')
     show()
-
-
-
 
 
 def vectocolor(vector, cmap=None, asarray=True, reverse=False):
@@ -317,10 +320,6 @@ def vectocolor(vector, cmap=None, asarray=True, reverse=False):
    output = processcolors(colors=colors, asarray=asarray, reverse=reverse)
 
    return output
-
-
-
-
 
 
 ## Create colormap
