@@ -171,7 +171,7 @@ define(['angular', 'ui.router'], function (angular) {
       $scope.downloadProject = function (name, id) {
         rpcService
           .rpcDownload(
-            'download_project', [id, name])
+            'download_project', [id])
           .then(function() {
             toastr.success('Project downloaded');
           });
@@ -180,7 +180,7 @@ define(['angular', 'ui.router'], function (angular) {
       $scope.downloadPrjWithResults = function (name, id) {
         rpcService
           .rpcDownload(
-            'download_project_with_result', [id, name])
+            'download_project_with_result', [id])
           .then(function() {
             toastr.success('Project downloaded');
           });
