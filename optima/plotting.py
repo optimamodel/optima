@@ -11,7 +11,7 @@ plotting to this file.
 Version: 2017jun03
 '''
 
-from optima import OptimaException, Resultset, Multiresultset, Parameterset, ICER, odict, printv, gridcolors, vectocolor, alpinecolormap, makefilepath, sigfig, dcp, findinds, findnearest, promotetolist, saveobj, promotetoodict, promotetoarray, boxoff, getvalidinds
+from optima import OptimaException, Resultset, Multiresultset, Parameterset, ICER, odict, printv, gridcolors, graycolors, vectocolor, alpinecolormap, makefilepath, sigfig, dcp, findinds, findnearest, promotetolist, saveobj, promotetoodict, promotetoarray, boxoff, getvalidinds
 from optima import setylim, commaticks, SIticks
 from numpy import array, ndim, maximum, arange, zeros, mean, shape, isnan, linspace, minimum # Numeric functions
 from pylab import gcf, get_fignums, close, ion, ioff, isinteractive, figure # Plotting functions
@@ -616,18 +616,24 @@ def plotbudget(multires=None, die=True, figsize=globalfigsize, legendsize=global
     
     alloclabels = budgets.keys() # WARNING, will this actually work if some values are None?
     allprogkeys = [] # Create master list of all programs in all budgets
+    nontargeted = []  # Create master list of all programs in all budgets
     nprogslist = []
     for budget in budgets.values():
         nprogslist.append(len(budget.keys())) # Get the number of programs in this budget
         for key in budget.keys():
-            if key not in allprogkeys:
+            if multires.projectref().programs()[key].category in ['Other', 'Management and administration'] and key not in nontargeted:
+                nontargeted.append(key)
+            elif key not in allprogkeys:
                 allprogkeys.append(key)
     nallprogs = len(allprogkeys)
     nallocs = len(alloclabels)
+    nontargetedcolors = graycolors(len(nontargeted))
     allprogcolors = gridcolors(nallprogs, hueshift=proghueshift)
     colordict = odict()
-    for k,key in enumerate(allprogkeys):
+    for k, key in enumerate(allprogkeys):
         colordict[key] = allprogcolors[k]
+    for k, key in enumerate(nontargeted):
+        colordict[key] = nontargetedcolors[k]
     
     # Handle plotting
     budgetplots = odict()
@@ -665,26 +671,28 @@ def plotbudget(multires=None, die=True, figsize=globalfigsize, legendsize=global
                 progkey = budget.keys()[p]
                 ydata = budget[p]
                 xdata = b+0.6 # 0.6 is 1 minus 0.4, which is half the bar width
-                bottomdata = sum(budget[:p])
+                bottomdata = sum(budget[:p])/1000000.
                 label = None
                 if progkey in allprogkeys:
                     label = progkey # Only add legend if not already added
                     allprogkeys.remove(progkey) # Pop label so it doesn't get added to legend multiple times
-                ax.bar(xdata, ydata/1000000., color=colordict[progkey], linewidth=0, label=label)
+                ax.bar(xdata, ydata/1000000., bottom=bottomdata, color=colordict[progkey], linewidth=0, label=label)
     
         # Set up legend
         legendsettings = {'loc':'upper left', 'bbox_to_anchor':(1.07, 1), 'fontsize':legendsize, 'title':'', 'frameon':False}
         handles, legendlabels = ax.get_legend_handles_labels()
-        ax.legend(reversed(handles), reversed(legendlabels), **legendsettings)
+        ax.legend(handles, legendlabels, **legendsettings)
     
         # Set up other things
-        ax.set_ylabel('Budget (millions USD)')
+        ax.set_ylabel('Budget (millions)')
         ax.set_xticks(arange(nallocs) + 0.6)
         alloclabels[alloclabels.index('Optimal')] = 'Optimized'
         ax.set_xticklabels(alloclabels)
         ax.spines['top'].set_visible(False)
         ax.spines['right'].set_visible(False)
         ax.spines['bottom'].set_visible(False)
+
+        fig.show()
 
         SIticks(ax=ax, axis='x')
         budgetplots['budget'] = fig

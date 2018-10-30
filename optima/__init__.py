@@ -70,7 +70,7 @@ from .asd import asd
 from .pchip import pchip, plotpchip
 
 # Color definitions
-from .colortools import alpinecolormap, bicolormap, gridcolors, vectocolor, shifthue
+from .colortools import alpinecolormap, bicolormap, gridcolors, graycolors, vectocolor, shifthue
 import colortools as _colortools; del colortools
 
 
