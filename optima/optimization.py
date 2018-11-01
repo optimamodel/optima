@@ -12,6 +12,10 @@ from numpy.random import random, seed, randint
 from time import time
 import optima as op # Used by minmoney, at some point should make syntax consistent
 
+# Import dependencies here so no biggie if they fail
+try:    from multiprocessing import Process, Queue
+except: Process, Queue = None, None # OK to skip these if batch is False
+
 ################################################################################################################################################
 ### The container class
 ################################################################################################################################################
@@ -603,9 +607,6 @@ def multioptimize(optim=None, nchains=None, nblocks=None, blockiters=None,
     You can see how after 10 iterations, the blocks talk to each other, and the optimization
     for each thread restarts from the best solution found for each.
     '''
-    
-    # Import dependencies here so no biggie if they fail
-    from multiprocessing import Process, Queue
     
     # Set defaults
     if nchains is None:    nchains = 4
