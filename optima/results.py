@@ -498,8 +498,12 @@ class Resultset(object):
                 else:                       data = self.main[mainkey].tot[ind][:]
                 outputstr += self.main[mainkey].name+sep+popkey+sep
                 for t in range(npts):
-                    if self.main[mainkey].ispercentage: outputstr += ('%s'+sep) % sigfig(data[t]*100, sigfigs=sigfigs)
-                    else:                           outputstr += ('%i'+sep) % data[t]
+                    if '(per 100 p.y.)' in self.main[mainkey].name:
+                        outputstr += ('%s' + sep) % sigfig(100 * data[t], sigfigs=sigfigs)
+                    elif self.main[mainkey].ispercentage:
+                        outputstr += ('%sperc'+sep) % sigfig(data[t], sigfigs=sigfigs)
+                    else:
+                        outputstr += ('%i'+sep) % data[t]
 
         if not comparisontab:
             # Handle budget and coverage
@@ -554,7 +558,7 @@ class Resultset(object):
         else:
             return outputstr
 
-    def comparebudgets(self, sep='\",\"'):
+    def comparebudgets(self, sep='\",\"', sigfigs=3):
         """ Make a separate sheet in the workbook with a comparison of budget and coverage for an optimization """
         outputstr = sep.join(['Programs', 'Baseline budget', '% baseline budget', 'Optimized budget',
                               '% optimized budget', '% budget change',
@@ -580,11 +584,14 @@ class Resultset(object):
                 budget_change = (optimized_budget - baseline_budget)/baseline_budget
             if baseline_cov > 0:
                 cov_change = (optimized_cov - baseline_cov) / baseline_cov
-            outputstr += prog + sep + \
-                         str(baseline_budget) + sep + '%fperc' % (baseline_budget/total_baseline_budget) + sep + \
-                         str(optimized_budget) + sep + '%fperc' % (optimized_budget/total_optimized_budget) + \
-                         sep + '%fpercconditional' % budget_change + sep + str(baseline_cov) + sep + \
-                         str(optimized_cov) + sep + '%fpercconditional' % cov_change
+            outputstr += prog + sep + '%s' % sigfig(baseline_budget, sigfigs=sigfigs) + sep + \
+                         '%sperc' % sigfig(baseline_budget / total_baseline_budget, sigfigs=sigfigs) + sep + \
+                         '%s' % sigfig(optimized_budget, sigfigs=sigfigs) + sep + \
+                         '%sperc' % sigfig(optimized_budget / total_optimized_budget, sigfigs=sigfigs) + \
+                         sep + '%spercconditional' % sigfig(budget_change, sigfigs=sigfigs) + sep + \
+                         '%s' % sigfig(baseline_cov, sigfigs=sigfigs) + sep + \
+                         '%s' % sigfig(optimized_cov, sigfigs=sigfigs) + sep + \
+                         '%spercconditional' % sigfig(cov_change, sigfigs=sigfigs)
         outputstr += '\n'
         outputstr += sep.join(['Total', str(total_baseline_budget), '', str(total_optimized_budget), '', '',
                                '', '', ''])
