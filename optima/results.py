@@ -584,14 +584,11 @@ class Resultset(object):
                 budget_change = (optimized_budget - baseline_budget)/baseline_budget
             if baseline_cov > 0:
                 cov_change = (optimized_cov - baseline_cov) / baseline_cov
-            outputstr += prog + sep + '%s' % sigfig(baseline_budget, sigfigs=sigfigs) + sep + \
-                         '%sperc' % sigfig(baseline_budget / total_baseline_budget, sigfigs=sigfigs) + sep + \
-                         '%s' % sigfig(optimized_budget, sigfigs=sigfigs) + sep + \
-                         '%sperc' % sigfig(optimized_budget / total_optimized_budget, sigfigs=sigfigs) + \
-                         sep + '%spercconditional' % sigfig(budget_change, sigfigs=sigfigs) + sep + \
-                         '%s' % sigfig(baseline_cov, sigfigs=sigfigs) + sep + \
-                         '%s' % sigfig(optimized_cov, sigfigs=sigfigs) + sep + \
-                         '%spercconditional' % sigfig(cov_change, sigfigs=sigfigs)
+            outputstr += prog + sep + str(baseline_budget) + sep + \
+                         '%fperc' % (baseline_budget/total_baseline_budget) + sep + str(optimized_budget) + sep + \
+                         '%fperc' % (optimized_budget/total_optimized_budget) + sep + \
+                         '%fpercconditional' % budget_change + sep + str(baseline_cov) + sep + \
+                         str(optimized_cov) + sep + '%fpercconditional' % cov_change
         outputstr += '\n'
         outputstr += sep.join(['Total', str(total_baseline_budget), '', str(total_optimized_budget), '', '',
                                '', '', ''])
