@@ -428,6 +428,7 @@ def outcomecalc(budgetvec=None, which=None, project=None, parsetname=None, progs
     if initpeople is None: startind = None
     else:                  startind = findnearest(tvec, objectives['start']) # Only start running the simulation from the starting point
     results = project.runsim(pars=thisparsdict, parsetname=parsetname, progsetname=progsetname, tvec=tvec, initpeople=initpeople, startind=startind, verbose=0, label=project.name+'-optim-outcomecalc', doround=False, addresult=False, **kwargs)
+    print('HI I AM RESULTS AND MY COVERAGE SHOULD BE: %s' % thiscoverage)
 
     # Figure out which indices to use
     initialind = findnearest(results.tvec, objectives['start'])
@@ -919,6 +920,7 @@ def minoutcomes(project=None, optim=None, tvec=None, verbose=None, maxtime=None,
     tmpimprovements = odict()
     tmpfullruninfo = odict()
     tmpresults['Baseline'] = extremeresults['Baseline'] # Include un-optimized original
+    print('UMMM %s' % tmpresults['Baseline'].coverage)
     scalefactors = promotetoarray(optim.objectives['budgetscale']) # Ensure it's a list
     for scalefactor in scalefactors: 
 
@@ -969,6 +971,7 @@ def minoutcomes(project=None, optim=None, tvec=None, verbose=None, maxtime=None,
             ## Calculate final outcomes for the full time vector
             args['initpeople'] = None # Set to None to get full results, not just from start year
             new = outcomecalc(asdresults[bestkey]['budget'], outputresults=True, **args)
+            print('FOOOO %s' % new.coverage)
             
             ## Name and store outputs
             if len(scalefactors)==1: new.name = 'Optimal' # If there's just one optimization, just call it optimal

@@ -758,6 +758,9 @@ class Multiresultset(Resultset):
                 self.budgets[key]      = rset.budget
                 self.budgetyears[key]  = rset.budgetyears
                 self.coverages[key]    = progset.getprogcoverage(budget=rset.budget, t=rset.budgetyears, parset=parset, results=rset) 
+                print('THIS IS CALCULATED FOR %s' % key)
+                print(rset.budget)
+                print(self.coverages[key])
             elif len(rset.coverage):   # If no budget, compute budget from coverage
                 self.coverages[key]    = rset.coverage
                 self.budgetyears[key]  = rset.budgetyears
