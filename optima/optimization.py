@@ -160,10 +160,10 @@ def defaultconstraints(project=None, progsetname=None, verbose=2):
         else:
             constraints['min'][prog.short] = 1.0
             constraints['max'][prog.short] = 1.0
-    if 'ART' in constraints['min'].keys():
-        constraints['min']['ART'] = 1.0 # By default, don't let ART funding decrease
-    if 'PMTCT' in constraints['min'].keys():
-        constraints['min']['PMTCT'] = 1.0 # By default, don't let ART funding decrease
+    fixedkeys = ['ART', 'PMTCT', 'OST']
+    for key in fixedkeys:
+        if key in constraints['min'].keys():
+            constraints['min'][key] = 1.0 # By default, don't let funding decrease
 
     return constraints
 
