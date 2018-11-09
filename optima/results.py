@@ -580,9 +580,13 @@ class Resultset(object):
 
             budget_change = 0
             cov_change = 0
-            if baseline_budget > 0:
+            if baseline_budget <= 0.1 < optimized_budget:
+                budget_change = 1.0
+            elif baseline_budget > 0.1:
                 budget_change = (optimized_budget - baseline_budget)/baseline_budget
-            if baseline_cov > 0:
+            if baseline_cov <= 0.1 < optimized_cov:
+                cov_change = 1.0
+            elif baseline_cov > 0.1:
                 cov_change = (optimized_cov - baseline_cov) / baseline_cov
             outputstr += prog + sep + str(baseline_budget) + sep + \
                          '%fperc' % (baseline_budget/total_baseline_budget) + sep + str(optimized_budget) + sep + \
