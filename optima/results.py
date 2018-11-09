@@ -757,14 +757,13 @@ class Multiresultset(Resultset):
             if len(rset.budget):       # If it has a budget, overwrite coverage information by calculating from budget
                 self.budgets[key]      = rset.budget
                 self.budgetyears[key]  = rset.budgetyears
-                self.coverages[key]    = progset.getprogcoverage(budget=rset.budget, t=rset.budgetyears, parset=parset, results=rset) 
-                print('THIS IS CALCULATED FOR %s' % key)
-                print(rset.budget)
-                print(self.coverages[key])
-            elif len(rset.coverage):   # If no budget, compute budget from coverage
+                if not len(rset.coverage):
+                    self.coverages[key] = progset.getprogcoverage(budget=rset.budget, t=rset.budgetyears, parset=parset, results=rset) 
+            if len(rset.coverage):   # If no budget, compute budget from coverage
                 self.coverages[key]    = rset.coverage
                 self.budgetyears[key]  = rset.budgetyears
-                self.budgets[key]      = progset.getprogbudget(coverage=rset.coverage, t=rset.budgetyears, parset=parset, results=rset) 
+                if not len(rset.budget):
+                    self.budgets[key] = progset.getprogbudget(coverage=rset.coverage, t=rset.budgetyears, parset=parset, results=rset) 
             
         # Handle any keys that haven't been handled already, including the barber's hair
         missingattrs = odict() # Create an odict for storing the attributes to be populated

@@ -674,6 +674,10 @@ class Project(object):
         coverage = self.progsets[progsetname].getprogcoverage(budget=budget, t=budgetyears, parset=self.parsets[parsetname])
         progpars = self.progsets[progsetname].getpars(coverage=coverage,t=budgetyears, parset=self.parsets[parsetname])
         results = self.runsim(pars=progpars, parsetname=parsetname, progsetname=progsetname, budget=budget, budgetyears=budgetyears, coverage=coverage, label=self.name+'-runbudget')
+        print('vvvvvvvvvvvvvvvvvvvvvv RUN BUDDGET vvvvvvvvvvvvvvvvvvvvvv')
+        for key in budget.keys():
+            print('%60s: %12.0f %12.0f' % (key, budget[key], coverage[key]))
+        print('^^^^^^^^^^^^^^^^^^^^^^ RUN BUDDGET ^^^^^^^^^^^^^^^^^^^^^')
         return results
     
     

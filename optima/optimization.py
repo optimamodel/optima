@@ -427,8 +427,7 @@ def outcomecalc(budgetvec=None, which=None, project=None, parsetname=None, progs
     tvec       = project.settings.maketvec(end=objectives['end'])
     if initpeople is None: startind = None
     else:                  startind = findnearest(tvec, objectives['start']) # Only start running the simulation from the starting point
-    results = project.runsim(pars=thisparsdict, parsetname=parsetname, progsetname=progsetname, tvec=tvec, initpeople=initpeople, startind=startind, verbose=0, label=project.name+'-optim-outcomecalc', doround=False, addresult=False, **kwargs)
-    print('HI I AM RESULTS AND MY COVERAGE SHOULD BE: %s' % thiscoverage)
+    results = project.runsim(pars=thisparsdict, parsetname=parsetname, progsetname=progsetname, coverage=thiscoverage, budget=budgetarray, budgetyears=paryears, tvec=tvec, initpeople=initpeople, startind=startind, verbose=0, label=project.name+'-optim-outcomecalc', doround=False, addresult=False, **kwargs)
 
     # Figure out which indices to use
     initialind = findnearest(results.tvec, objectives['start'])
@@ -637,6 +636,7 @@ def multioptimize(optim=None, nchains=None, nblocks=None, blockiters=None,
             randtime = int((time()-floor(time()))*1e4)
             if randseed is None: thisseed = (blockrand+threadrand)*randtime # Get a random number based on both the time and the thread
             else:                thisseed = randseed + blockrand+threadrand
+            optim._threadindex = thread # Store the thread index 
             optimargs = (optim, blockiters, maxtime, verbose, stoppingfunc, die, origbudget, thisseed, mc, label, outputqueue, kwargs)
             prc = Process(target=optimize, args=optimargs)
             prc.start()
@@ -645,8 +645,9 @@ def multioptimize(optim=None, nchains=None, nblocks=None, blockiters=None,
         # Tidy up: close the threads and gather the results
         for i in range(nchains):
             result = outputqueue.get() # This is needed or else the process never finishes
-            outputlist[i] = result # WARNING, this randomizes the order
-            if block==0 and i==0: results = dcp(result) # Copy the original results from the first optimization
+            threadindex = result.optim._threadindex # To ensure a robust ordering
+            outputlist[threadindex] = result
+            if block==0 and threadindex==0: origresults = dcp(result) # Copy the original results from the first optimization
         for prc in processes:
             prc.join() # Wait for them to finish
         
@@ -667,13 +668,11 @@ def multioptimize(optim=None, nchains=None, nblocks=None, blockiters=None,
         origbudget = outputlist[bestfvalind].budgets[-1] # Update the budget and use it as the input for the next block -- this is key!
     
     # Assemble final results object from the initial and final run
-    finalresults = outputlist[bestfvalind]
+    results = dcp(outputlist[bestfvalind]) # Use best results as the basis for the output
     results.improvement[0] = sanitize(fvalarray[bestfvalind,:]) # Store fval vector in normal format
     results.multiimprovement = fvalarray # Store full fval array
-    results.outcome = finalresults.outcome
-    results.budgets[-1] = finalresults.budgets[-1]
-    try: results.budgets['Optimal'] = finalresults.budgets['Optimal']
-    except: pass
+    try:    results.budgets['Baseline'] = origresults.budgets['Baseline'] # Assume it's called baseline
+    except: results.budgets[0]          = origresults.budgets[0] # If that fails, just use the first entry
     
     return results
 
@@ -920,7 +919,6 @@ def minoutcomes(project=None, optim=None, tvec=None, verbose=None, maxtime=None,
     tmpimprovements = odict()
     tmpfullruninfo = odict()
     tmpresults['Baseline'] = extremeresults['Baseline'] # Include un-optimized original
-    print('UMMM %s' % tmpresults['Baseline'].coverage)
     scalefactors = promotetoarray(optim.objectives['budgetscale']) # Ensure it's a list
     for scalefactor in scalefactors: 
 
@@ -971,7 +969,6 @@ def minoutcomes(project=None, optim=None, tvec=None, verbose=None, maxtime=None,
             ## Calculate final outcomes for the full time vector
             args['initpeople'] = None # Set to None to get full results, not just from start year
             new = outcomecalc(asdresults[bestkey]['budget'], outputresults=True, **args)
-            print('FOOOO %s' % new.coverage)
             
             ## Name and store outputs
             if len(scalefactors)==1: new.name = 'Optimal' # If there's just one optimization, just call it optimal
@@ -986,13 +983,15 @@ def minoutcomes(project=None, optim=None, tvec=None, verbose=None, maxtime=None,
 
     ## Output
     multires = Multiresultset(resultsetlist=tmpresults.values(), name='optim-%s' % optim.name)
+    optim.resultsref = multires.name # Store the reference for this result
     for k,key in enumerate(multires.keys): multires.budgetyears[key] = tmpresults[k].budgetyears 
     multires.improvement = tmpimprovements # Store full function evaluation information -- only use last one
     multires.extremeoutcomes = extremeoutcomes # Store all of these
     multires.fullruninfo = tmpfullruninfo # And the budgets/outcomes for every different run
     multires.outcomes = dcp(multires.outcome) # Initialize
     multires.outcome = multires.outcomes[-1] # Store these defaults in a convenient place
-    optim.resultsref = multires.name # Store the reference for this result
+    multires.optim = optim # Store the optimization object as well
+    
     
     # Store optimization settings
     multires.optimsettings = odict([('maxiters',maxiters),('maxtime',maxtime),('mc',mc),('randseed',randseed)])
@@ -1443,11 +1442,12 @@ def minmoney(project=None, optim=None, tvec=None, verbose=None, maxtime=None, ma
     else:                new.name = 'Optimal'
     tmpresults = [orig, new]
     multires = Multiresultset(resultsetlist=tmpresults, name='optim-%s' % optim.name)
-    for k,key in enumerate(multires.keys): multires.budgetyears[key] = tmpresults[k].budgetyears 
     optim.resultsref = multires.name # Store the reference for this result
+    for k,key in enumerate(multires.keys): multires.budgetyears[key] = tmpresults[k].budgetyears 
     
     # Store optimization settings
     multires.optimsettings = odict([('maxiters',maxiters),('maxtime',maxtime),('randseed',randseed)])
+    multires.optim = optim # Store the optimization object as well
     
     printv('Money minimization complete after %s seconds' % op.toc(start, output=True), 2, verbose)
 
