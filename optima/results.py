@@ -881,10 +881,8 @@ class Multiresultset(Resultset):
                comparisontab=False, **kwargs):
         """ A method to export each multiresult to a different sheet in Excel (or to a single large text file) """
         
-        if asexcel:
-            outputdict = odict()
-        else:
-            outputstr = ''
+        if asexcel: outputdict = odict()
+        else:       outputstr = ''
         for key in self.keys:
             thisoutput = Resultset.export(self, ind=ind, key=key, writetofile=False, comparisontab=comparisontab,
                                           **kwargs)
@@ -895,15 +893,9 @@ class Multiresultset(Resultset):
                 outputstr += thisoutput
                 outputstr += '\n'*5
 
-        if comparisontab:
+        if comparisontab and asexcel:
             thisoutput = Resultset.comparebudgets(self)
-            if asexcel:
-                outputdict['Comparison'] = thisoutput
-            else:
-                outputstr += 'Comparison\n\n'
-                outputstr += thisoutput
-                outputstr += '\n' * 5
-
+            outputdict['Comparison'] = thisoutput
         
         if writetofile: 
             ext = 'xlsx' if asexcel else 'csv'
