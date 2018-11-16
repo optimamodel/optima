@@ -501,7 +501,7 @@ class Resultset(object):
                     if '(per 100 p.y.)' in self.main[mainkey].name:
                         outputstr += ('%s' + sep) % sigfig(100 * data[t], sigfigs=sigfigs)
                     elif self.main[mainkey].ispercentage:
-                        outputstr += ('%sperc'+sep) % sigfig(data[t], sigfigs=sigfigs)
+                        outputstr += ('%s!PERC'+sep) % sigfig(data[t], sigfigs=sigfigs)
                     else:
                         outputstr += ('%i'+sep) % data[t]
 
@@ -589,10 +589,10 @@ class Resultset(object):
             elif baseline_cov > 0.1:
                 cov_change = (optimized_cov - baseline_cov) / baseline_cov
             outputstr += prog + sep + str(baseline_budget) + sep + \
-                         '%fperc' % (baseline_budget/total_baseline_budget) + sep + str(optimized_budget) + sep + \
-                         '%fperc' % (optimized_budget/total_optimized_budget) + sep + \
-                         '%fpercconditional' % budget_change + sep + str(baseline_cov) + sep + \
-                         str(optimized_cov) + sep + '%fpercconditional' % cov_change
+                         '%f!PERC' % (baseline_budget/total_baseline_budget) + sep + str(optimized_budget) + sep + \
+                         '%f!PERC' % (optimized_budget/total_optimized_budget) + sep + \
+                         '%f!PERC!COND' % budget_change + sep + str(baseline_cov) + sep + \
+                         str(optimized_cov) + sep + '%f!PERC!COND' % cov_change
         outputstr += '\n'
         outputstr += sep.join(['Total', str(total_baseline_budget), '', str(total_optimized_budget), '', '',
                                '', '', ''])
@@ -1073,10 +1073,12 @@ def getresults(project=None, pointer=None, die=True):
 
 
 def exporttoexcel(filename=None, outdict=None):
-    '''
+    """
     Little function to format an output results string nicely for Excel
     Expects an odict of output strings.
-    '''
+    """
+    percstr = '!PERC'  # included as string in cells that should be formatted as percent
+    condstr = '!COND'  # included as string in cells that should be coloured conditionally
     workbook = Workbook(filename)
     
     for key,outstr in outdict.items():
@@ -1118,38 +1120,32 @@ def exporttoexcel(filename=None, outdict=None):
                 thistxt = outlist[row][col]
                 thisformat = 'plain'
                 emptycell = not thistxt
-                percentcell = False
-                percentincrease = False
-                percentdecrease = False
-                try: 
+                percentcell = percstr in thistxt  # whether this cell should be formatted in Excel as percent
+                conditionalcell = condstr in thistxt  # whether this cell should be formatted in Excel conditionally
+                thistxt = thistxt.replace(percstr, '').replace(condstr, '')
+
+                try:
                     thistxt = float(thistxt)
                     numbercell = True
-                except ValueError:
-                    if 'perc' in thistxt:
-                        try:
-                            thistxt = thistxt.replace("perc", "")
-                            thistxt = float(thistxt)
-                            percentcell = True
-                        except ValueError:
-                            try:
-                                thistxt = thistxt.replace("conditional", "")
-                                thistxt = float(thistxt)
-                                percentcell = True
-                                if thistxt > 0:
-                                    percentincrease = True
-                                elif thistxt < 0:
-                                    percentdecrease = True
-                            finally:
-                                pass
+                except:
                     numbercell = False
-                if row == 0:                             thisformat = 'header'
-                elif str(thistxt) in budcovformats:    thisformat = 'header'
+
+                percentincrease = False
+                percentdecrease = False
+                if conditionalcell and thistxt > 0:
+                    percentincrease = True
+                elif conditionalcell and thistxt < 0:
+                    percentdecrease = True
+
+                if row == 0:                                               thisformat = 'header'
+                elif str(thistxt) in budcovformats:                        thisformat = 'header'
                 elif not emptycell and not numbercell and not percentcell: thisformat = 'bold'
-                elif col < 2 and not emptycell and not numbercell: thisformat = 'bold'
-                elif numbercell:                       thisformat = 'number'
-                elif percentcell and not percentincrease and not percentdecrease: thisformat = 'percent'
-                elif percentincrease: thisformat = 'increase'
-                elif percentdecrease: thisformat = 'decrease'
+                elif col < 2 and not emptycell and not numbercell:         thisformat = 'bold'
+                elif percentcell and not conditionalcell:                  thisformat = 'percent'
+                elif percentincrease:                                      thisformat = 'increase'
+                elif percentdecrease:                                      thisformat = 'decrease'
+                elif numbercell:                                           thisformat = 'number'
+
                 worksheet.write(row, col, thistxt, formats[thisformat])
 
         worksheet.set_column(2, maxcol, 15) # Make all columns wider
