@@ -1096,7 +1096,7 @@ def exporttoexcel(filename=None, outdict=None):
         outlist = []
         for line in outstr.split('\n'):
             outlist.append([])
-            if '"' in line:
+            if '","' in line:
                 for cell in line.split('","'):  # Hack to not separate program names with commas in them
                     outlist[-1].append(str(cell))  # If unicode, doesn't work
             else:
