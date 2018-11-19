@@ -18,6 +18,7 @@ condstr = '!COND'  # included as string in cells that should be coloured conditi
 epsbudcov = 0.1 # The minimum budget or coverage amount to consider to be nonzero -- only used for budget comparisons
 
 
+
 class Result(object):
     ''' Class to hold overall and by-population results '''
     def __init__(self, name=None, ispercentage=False, pops=None, tot=None, datapops=None, datatot=None, estimate=False, defaultplot=None):
@@ -691,6 +692,7 @@ class Resultset(object):
             return output
         
 
+
 class Multiresultset(Resultset):
     ''' Structure for holding multiple kinds of results, e.g. from an optimization, or scenarios '''
     def __init__(self, resultsetlist=None, name=None):
@@ -963,6 +965,7 @@ class BOC(object):
         if returnplot: return ax
         else: show()
         return None
+
 
 
 class ICER(object):
