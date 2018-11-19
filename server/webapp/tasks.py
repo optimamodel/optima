@@ -1,5 +1,5 @@
 import traceback
-from pprint import pprint
+import pprint
 from celery import Celery
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import sessionmaker, scoped_session
