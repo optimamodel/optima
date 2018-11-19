@@ -500,12 +500,9 @@ class Resultset(object):
                 else:                       data = self.main[mainkey].tot[ind][:]
                 outputstr += self.main[mainkey].name+sep+popkey+sep
                 for t in range(npts):
-                    if '(per 100 p.y.)' in self.main[mainkey].name:
-                        outputstr += ('%s' + sep) % sigfig(100 * data[t], sigfigs=sigfigs)
-                    elif self.main[mainkey].ispercentage:
-                        outputstr += ('%s'+prcstr+sep) % sigfig(data[t], sigfigs=sigfigs)
-                    else:
-                        outputstr += ('%i'+sep) % data[t]
+                    if '(per 100 p.y.)' in self.main[mainkey].name: outputstr += ('%s' + sep) % sigfig(100 * data[t], sigfigs=sigfigs)
+                    elif self.main[mainkey].ispercentage:           outputstr += ('%s'+prcstr+sep) % sigfig(data[t], sigfigs=sigfigs)
+                    else:                                           outputstr += ('%i'+sep) % data[t]
 
         # Handle budget and coverage
         thisbudget = []
@@ -521,7 +518,7 @@ class Resultset(object):
         if len(thisbudget): # WARNING, does not support multiple years
             outputstr += '\n\n\n'
             outputstr += sep*2+'Budget\n'
-            outputstr += ('\"'+sep+'\"')*2+('\"'+sep+'\"').join(thisbudget.keys()) + '\n'
+            outputstr += sep*2+sep.join(sanitizeseps(thisbudget.keys())) + '\n'
             outputstr += sep*2+sep.join([str(val) for val in thisbudget.values()]) + '\n'
 
         if len(thiscoverage): # WARNING, does not support multiple years
@@ -532,7 +529,7 @@ class Resultset(object):
                 if covvals[c] is None: covvals[c] = 0 # Just reset
             outputstr += '\n\n\n'
             outputstr += sep*2+'Coverage\n'
-            outputstr += ('\"'+sep+'\"')*2+('\"'+sep+'\"').join(thiscoverage.keys())+'\n'
+            outputstr += sep*2+sep.join(sanitizeseps(thiscoverage.keys()))+'\n'
             outputstr += sep*2+sep.join([str(val) for val in covvals]) + '\n' # WARNING, should have this val[0] but then dies with None entries
 
         if len(tvbudget):
@@ -900,7 +897,7 @@ class Multiresultset(Resultset):
             optimtotalstr    = '%f' % (optimbud/optimtotal)
             covchangestr     = '%f' % covchange
             budchangestr     = '%f' % budchange
-            outputstr += prog + sep + str(baselinebud) + sep + \
+            outputstr += sanitizeseps(prog) + sep + str(baselinebud) + sep + \
                          baselinetotalstr + prcstr + sep + \
                          str(optimbud) + sep + \
                          optimtotalstr + prcstr + sep + \
@@ -1065,6 +1062,17 @@ def getresults(project=None, pointer=None, die=True):
         else: return None
 
 
+def sanitizeseps(stringlist, sep=',', sub=';'):
+    ''' Ensures that the input items do not themselves contain the separator character '''
+    if isinstance(stringlist, list):
+        for s,string in enumerate(stringlist):
+            stringlist[s] = string.replace(sep, sub)
+        output =  stringlist
+    else:
+        output = stringlist.replace(sep, sub)
+    return output
+
+
 def exporttoexcel(filename=None, outdict=None):
     """
     Little function to format an output results string nicely for Excel
@@ -1093,13 +1101,9 @@ def exporttoexcel(filename=None, outdict=None):
         outlist = []
         for line in outstr.split('\n'):
             outlist.append([])
-            if '","' in line:
-                for cell in line.split('","'):  # Hack to not separate program names with commas in them
-                    outlist[-1].append(str(cell))  # If unicode, doesn't work
-            else:
-                for cell in line.split(','):
-                    if cell == 'tot': cell = 'Total'  # Hack to replace internal key with something more user-friendly
-                    outlist[-1].append(str(cell))  # If unicode, doesn't work
+            for cell in line.split(','):
+                if cell == 'tot': cell = 'Total'  # Hack to replace internal key with something more user-friendly
+                outlist[-1].append(str(cell))  # If unicode, doesn't work
         
         # Iterate over the data and write it out row by row.
         maxcol = 0
@@ -1149,3 +1153,5 @@ def exporttoexcel(filename=None, outdict=None):
     workbook.close()
     
     return None
+        
+    
