@@ -701,7 +701,7 @@ def tvoptimize(project=None, optim=None, tvec=None, verbose=None, maxtime=None, 
     optim.tvsettings['timevarying'] = False # Turn off for the first run
     prelim = optimize(optim=optim, maxtime=maxtime, maxiters=maxiters, verbose=verbose, origbudget=origbudget,
                 ccsample=ccsample, randseed=randseed, mc=mc, label=label, die=die, keepraw=True, **kwargs)
-    rawresults = prelim.raw['Baseline'][0] # Store the raw results; "Baseline" vs. "Optimal" shouldn't matter, and [0] is the first/best run -- not sure if there is a more robut way
+    rawresults = prelim.raw['Baseline'][0] # Store the raw results; "Baseline" vs. "Optimized" shouldn't matter, and [0] is the first/best run -- not sure if there is a more robut way
     
     # Add in the time-varying component
     origtotalbudget = dcp(optim.objectives['budget']) # Should be a float, but dcp just in case
@@ -740,8 +740,8 @@ def tvoptimize(project=None, optim=None, tvec=None, verbose=None, maxtime=None, 
     tmpfullruninfo = odict()
     
     # This generates the baseline results
-    tmpresults['Baseline'] = outcomecalc(prelim.budgets['Baseline'], outputresults=True, doconstrainbudget=False, **args)
-    tmpresults['Optimal']  = outcomecalc(prelim.budgets['Optimal'],  outputresults=True, doconstrainbudget=False, **args)
+    tmpresults['Baseline']  = outcomecalc(prelim.budgets['Baseline'],  outputresults=True, doconstrainbudget=False, **args)
+    tmpresults['Optimized'] = outcomecalc(prelim.budgets['Optimized'], outputresults=True, doconstrainbudget=False, **args)
     for key,result in tmpresults.items(): 
         result.name = key # Update names
         tmpimprovements[key] = [tmpresults[key].outcome] # Hacky, since expects a list
@@ -971,15 +971,15 @@ def minoutcomes(project=None, optim=None, tvec=None, verbose=None, maxtime=None,
             new = outcomecalc(asdresults[bestkey]['budget'], outputresults=True, **args)
             
             ## Name and store outputs
-            if len(scalefactors)==1: new.name = 'Optimal' # If there's just one optimization, just call it optimal
-            else: new.name = 'Optimal (%.0f%% budget)' % (scalefactor*100.) # Else, say what the budget is
+            if len(scalefactors)==1: new.name = 'Optimized' # If there's just one optimization, just call it optimal
+            else: new.name = 'Optimized (%.0f%% budget)' % (scalefactor*100.) # Else, say what the budget is
             tmpresults[new.name] = new
             tmpimprovements[new.name] = asdresults[bestkey]['fvals']
             tmpfullruninfo[new.name] = asdresults # Store everything
         else:
-            tmpresults['Optimal'] = dcp(tmpresults['Baseline']) # If zero budget, just copy current and rename
-            tmpresults['Optimal'].name = 'Optimal' # Rename name to named name
-            tmpresults['Optimal'].projectref = Link(project) # Restore link
+            tmpresults['Optimized'] = dcp(tmpresults['Baseline']) # If zero budget, just copy current and rename
+            tmpresults['Optimized'].name = 'Optimized' # Rename name to named name
+            tmpresults['Optimized'].projectref = Link(project) # Restore link
 
     ## Output
     multires = Multiresultset(resultsetlist=tmpresults.values(), name='optim-%s' % optim.name)
@@ -1425,7 +1425,7 @@ def minmoney(project=None, optim=None, tvec=None, verbose=None, maxtime=None, ma
         pl.subplot(1,2,2)
         pl.pie(newbudget[:], labels=newbudget.keys())
         pl.axis('equal')
-        pl.title('Optimal')
+        pl.title('Optimized')
     
     # Impose lower limits only
     for key in optim.constraints['min']:
@@ -1439,7 +1439,7 @@ def minmoney(project=None, optim=None, tvec=None, verbose=None, maxtime=None, ma
     orig.name = 'Baseline' # WARNING, is this really the best way of doing it?
     if   zerofailed:     new.name = 'Zero budget'
     elif infinitefailed: new.name = 'Infinite budget'
-    else:                new.name = 'Optimal'
+    else:                new.name = 'Optimized'
     tmpresults = [orig, new]
     multires = Multiresultset(resultsetlist=tmpresults, name='optim-%s' % optim.name)
     optim.resultsref = multires.name # Store the reference for this result

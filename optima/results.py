@@ -12,7 +12,10 @@ from numbers import Number
 from xlsxwriter import Workbook
 
 
-
+# Globals defining string placeholders
+prcstr = '!PERC'  # included as string in cells that should be formatted as percent
+condstr = '!COND'  # included as string in cells that should be coloured conditionally
+epsbudcov = 0.1 # The minimum budget or coverage amount to consider to be nonzero -- only used for budget comparisons
 
 
 class Result(object):
@@ -470,10 +473,9 @@ class Resultset(object):
             self.other['only'+healthkey].tot =  process(allpeople[:,healthinds,:,:][:,:,:,indices].sum(axis=(1,2))) # Axis 1 is populations
 
         return None
-        
-        
+
     def export(self, filename=None, folder=None, bypop=True, sep=',', ind=None, key=None, sigfigs=3, writetofile=True, asexcel=True, verbose=2):
-        ''' Method for exporting results to an Excel or CSV file '''
+        """ Method for exporting results to an Excel or CSV file """
 
         # Handle export by either index or key -- WARNING, still inelegant at best! Accepts key or ind, not both
         if key is not None: # Key overrides ind -- find the index corresponding to this key
@@ -487,20 +489,21 @@ class Resultset(object):
         
         npts = len(self.tvec)
         mainkeys = self.main.keys()
-        outputstr = sep.join(['Indicator','Population'] + ['%i'%t for t in self.tvec]) # Create header and years
+        outputstr = sep.join(['Indicator', 'Population'] + ['%i' % t for t in self.tvec])  # Create header and years
         for mainkey in mainkeys:
             if bypop: outputstr += '\n' # Add a line break between different indicators
-            if bypop: popkeys = ['tot']+self.popkeys # include total even for bypop -- WARNING, don't try to change this!
+            if bypop: popkeys = ['tot']+self.popkeys  # include total even for bypop -- WARNING, don't try to change this!
             else:     popkeys = ['tot']
-            for pk,popkey in enumerate(popkeys):
+            for pk, popkey in enumerate(popkeys):
                 outputstr += '\n'
-                if bypop and popkey!='tot': data = self.main[mainkey].pops[ind][pk-1,:] # WARNING, assumes 'tot' is always the first entry
+                if bypop and popkey != 'tot': data = self.main[mainkey].pops[ind][pk-1, :]  # WARNING, assumes 'tot' is always the first entry
                 else:                       data = self.main[mainkey].tot[ind][:]
                 outputstr += self.main[mainkey].name+sep+popkey+sep
                 for t in range(npts):
-                    if self.main[mainkey].ispercentage: outputstr += ('%s'+sep) % sigfig(data[t], sigfigs=sigfigs)
-                    else:                           outputstr += ('%i'+sep) % data[t]
-       
+                    if '(per 100 p.y.)' in self.main[mainkey].name: outputstr += ('%s' + sep) % sigfig(100 * data[t], sigfigs=sigfigs)
+                    elif self.main[mainkey].ispercentage:           outputstr += ('%s'+prcstr+sep) % sigfig(data[t], sigfigs=sigfigs)
+                    else:                                           outputstr += ('%i'+sep) % data[t]
+
         # Handle budget and coverage
         thisbudget = []
         thiscoverage = []
@@ -511,13 +514,13 @@ class Resultset(object):
         except: pass
         try:    tvbudget = self.timevarying[key]
         except: pass
-        
+
         if len(thisbudget): # WARNING, does not support multiple years
             outputstr += '\n\n\n'
             outputstr += sep*2+'Budget\n'
-            outputstr += sep*2+sep.join(thisbudget.keys()) + '\n'
+            outputstr += sep*2+sep.join(sanitizeseps(thisbudget.keys())) + '\n'
             outputstr += sep*2+sep.join([str(val) for val in thisbudget.values()]) + '\n'
-        
+
         if len(thiscoverage): # WARNING, does not support multiple years
             covvals = thiscoverage.values()
             for c in range(len(covvals)):
@@ -526,7 +529,7 @@ class Resultset(object):
                 if covvals[c] is None: covvals[c] = 0 # Just reset
             outputstr += '\n\n\n'
             outputstr += sep*2+'Coverage\n'
-            outputstr += sep*2+sep.join(thiscoverage.keys()) + '\n'
+            outputstr += sep*2+sep.join(sanitizeseps(thiscoverage.keys()))+'\n'
             outputstr += sep*2+sep.join([str(val) for val in covvals]) + '\n' # WARNING, should have this val[0] but then dies with None entries
 
         if len(tvbudget):
@@ -552,8 +555,8 @@ class Resultset(object):
             return fullpath
         else:
             return outputstr
-        
-    
+
+
     def get(self, what=None, year=None, key=None, pop=None, dosum=False, blhkey=None):
         '''
         A small function to make it easier to access results. For example, to 
@@ -690,10 +693,6 @@ class Resultset(object):
         else:
             return output
         
-            
-        
-
-
 
 class Multiresultset(Resultset):
     ''' Structure for holding multiple kinds of results, e.g. from an optimization, or scenarios '''
@@ -835,10 +834,9 @@ class Multiresultset(Resultset):
                 resultsobj.pops[simkey] -= basepop
         
         return resultsdiff
-    
-    
+
     def export(self, filename=None, folder=None, ind=None, writetofile=True, verbose=2, asexcel=True, **kwargs):
-        ''' A method to export each multiresult to a different sheet in Excel (or to a single large text file) '''
+        """ A method to export each multiresult to a different sheet in Excel (or to a single large text file) """
         
         if asexcel: outputdict = odict()
         else:       outputstr = ''
@@ -850,6 +848,10 @@ class Multiresultset(Resultset):
                 outputstr += '%s\n\n' % key
                 outputstr += thisoutput
                 outputstr += '\n'*5
+
+        if asexcel and hasattr(self, 'optim'): # Only produce a comparsion if it's an optimization and it's for Excel
+            thisoutput = self.comparebudgets()
+            outputdict['Comparison'] = thisoutput
         
         if writetofile: 
             ext = 'xlsx' if asexcel else 'csv'
@@ -858,16 +860,55 @@ class Multiresultset(Resultset):
             if asexcel:
                 exporttoexcel(fullpath, outputdict)
             else:
-                with open(fullpath, 'w') as f: f.write(outputstr)
+                with open(fullpath, 'w') as f:
+                    f.write(outputstr)
             printv('Results exported to "%s"' % fullpath, 2, verbose)
             return fullpath
         else:
             if asexcel: return outputdict
             else:       return outputstr
+        
+        
+    def comparebudgets(self, sep=',', sigfigs=3):
+        """ Make a separate sheet in the workbook with a comparison of budget and coverage for an optimization """
+        outputstr = sep.join(['Programs', 'Baseline budget', '% baseline budget', 
+                              'Optimized budget', '% optimized budget', '% budget change',
+                              'Baseline coverage', 'Optimized coverage', '% coverage change'])  # Create headers
+        baselinetotal = sum(self.budgets.findbykey('Base').values())
+        optimtotal    = sum(self.budgets.findbykey('Optim').values())
+        for prog, baselinebud in self.budgets.findbykey('Base').items():
+            outputstr += '\n'
 
+            optimbud = self.budgets.findbykey('Optim')[prog]
+            baselinecov = self.coverages.findbykey('Base')[prog]
+            if checktype(baselinecov, 'arraylike'):
+                baselinecov = baselinecov[0]  # Only pull out the first element if it's an array/list
+            if baselinecov is None: baselinecov = 0  # Just reset
+            optimcov = self.coverages.findbykey('Optim')[prog]
+            if checktype(optimcov, 'arraylike'):
+                optimcov = optimcov[0]  # Only pull out the first element if it's an array/list
+            if optimcov is None: optimcov = 0  # Just reset
 
+            budchange = 0.0 # By default, assume no change
+            covchange = 0.0
+            if min(baselinebud, optimbud) > epsbudcov: budchange = (optimbud - baselinebud) / baselinebud # Ensure both budgets are large enough
+            if min(baselinecov, optimcov) > epsbudcov: covchange = (optimcov - baselinecov) / baselinecov
+            baselinetotalstr = '%f' % (baselinebud/baselinetotal)
+            optimtotalstr    = '%f' % (optimbud/optimtotal)
+            covchangestr     = '%f' % covchange
+            budchangestr     = '%f' % budchange
+            outputstr += sanitizeseps(prog) + sep + str(baselinebud) + sep + \
+                         baselinetotalstr + prcstr + sep + \
+                         str(optimbud) + sep + \
+                         optimtotalstr + prcstr + sep + \
+                         budchangestr + prcstr + condstr + sep + \
+                         str(baselinecov) + sep + \
+                         str(optimcov) + sep + \
+                         covchangestr + prcstr + condstr
+        outputstr += '\n'
+        outputstr += sep.join(['Total', str(baselinetotal), '', str(optimtotal), '', '', '', '', ''])
 
-
+        return outputstr
 
 
 class BOC(object):
@@ -1021,60 +1062,96 @@ def getresults(project=None, pointer=None, die=True):
         else: return None
 
 
+def sanitizeseps(stringlist, sep=',', sub=';'):
+    ''' Ensures that the input items do not themselves contain the separator character '''
+    if isinstance(stringlist, list):
+        for s,string in enumerate(stringlist):
+            stringlist[s] = string.replace(sep, sub)
+        output =  stringlist
+    else:
+        output = stringlist.replace(sep, sub)
+    return output
+
 
 def exporttoexcel(filename=None, outdict=None):
-    '''
+    """
     Little function to format an output results string nicely for Excel
     Expects an odict of output strings.
-    '''
+    """
     workbook = Workbook(filename)
     
     for key,outstr in outdict.items():
-        worksheet = workbook.add_worksheet(sanitizefilename(key)) # A valid filename should also be a valid Excel key
+        worksheet = workbook.add_worksheet(sanitizefilename(key))  # A valid filename should also be a valid Excel key
         
         # Define formatting
         budcovformats = ['Budget', 'Coverage', 'Time-varying']
-        colors = {'gentlegreen':'#3c7d3e', 'fadedstrawberry':'#ffeecb', 'edgyblue':'#bcd5ff','accountantgrey':'#f6f6f6', 'white':'#ffffff'}
+        colors = {'gentlegreen': '#3c7d3e', 'fadedstrawberry': '#ffeecb', 'edgyblue': '#bcd5ff',
+                  'accountantgrey': '#f6f6f6', 'white': '#ffffff',
+                  'increasegreen': '#c4d79b', 'decreasered': '#ffc7ce'}
         formats = dict()
         formats['plain'] = workbook.add_format({})
         formats['bold'] = workbook.add_format({'bg_color': colors['edgyblue'], 'bold': True})
-        formats['number'] = workbook.add_format({'bg_color': colors['fadedstrawberry'], 'num_format':0x04})
+        formats['number'] = workbook.add_format({'bg_color': colors['fadedstrawberry'], 'num_format': 0x04})
+        formats['percent'] = workbook.add_format({'bg_color': colors['fadedstrawberry'], 'num_format': 0x09})
         formats['header'] = workbook.add_format({'bg_color': colors['gentlegreen'], 'color': colors['white'], 'bold': True})
+        formats['increase'] = workbook.add_format({'bg_color': colors['increasegreen'], 'num_format': 0x09})
+        formats['decrease'] = workbook.add_format({'bg_color': colors['decreasered'], 'num_format': 0x09})
         
         # Convert from a string to a 2D array
         outlist = []
         for line in outstr.split('\n'):
             outlist.append([])
             for cell in line.split(','):
-                if cell=='tot': cell = 'Total' # Hack to replace internal key with something more user-friendly
-                outlist[-1].append(str(cell)) # If unicode, doesn't work
+                if cell == 'tot': cell = 'Total'  # Hack to replace internal key with something more user-friendly
+                outlist[-1].append(str(cell))  # If unicode, doesn't work
         
         # Iterate over the data and write it out row by row.
-        row, col = 0, 0
         maxcol = 0
         for row in range(len(outlist)):
             for col in range(len(outlist[row])):
-                maxcol = max(col,maxcol)
+                maxcol = max(col, maxcol)
                 thistxt = outlist[row][col]
                 thisformat = 'plain'
-                emptycell = not(thistxt)
-                try: 
+                emptycell = not thistxt
+                percentcell = prcstr in thistxt  # whether this cell should be formatted in Excel as percent
+                conditionalcell = condstr in thistxt  # whether this cell should be formatted in Excel conditionally
+                thistxt = thistxt.replace(prcstr, '').replace(condstr, '')
+
+                try:
                     thistxt = float(thistxt)
                     numbercell = True
                 except:
                     numbercell = False
-                if row==0:                             thisformat = 'header'
-                elif str(thistxt) in budcovformats:    thisformat = 'header'
-                elif not emptycell and not numbercell: thisformat = 'bold'
-                elif col<2 and not emptycell:          thisformat = 'bold'
-                elif numbercell:                       thisformat = 'number'
+
+                percentincrease = False
+                percentdecrease = False
+                if conditionalcell and thistxt > 0:
+                    percentincrease = True
+                elif conditionalcell and thistxt < 0:
+                    percentdecrease = True
+
+                if row == 0:                                               thisformat = 'header'
+                elif str(thistxt) in budcovformats:                        thisformat = 'header'
+                elif not emptycell and not numbercell and not percentcell: thisformat = 'bold'
+                elif col < 2 and not emptycell and not numbercell:         thisformat = 'bold'
+                elif percentcell and not conditionalcell:                  thisformat = 'percent'
+                elif percentincrease:                                      thisformat = 'increase'
+                elif percentdecrease:                                      thisformat = 'decrease'
+                elif numbercell:                                           thisformat = 'number'
+
                 worksheet.write(row, col, thistxt, formats[thisformat])
-        
-        worksheet.set_column(2, maxcol, 15) # Make wider
-        worksheet.set_column(1, 1, 20) # Make wider
-        worksheet.set_column(0, 0, 50) # Make wider
-        worksheet.freeze_panes(1, 2) # Freeze first row, first two columns
+
+        worksheet.set_column(2, maxcol, 15) # Make all columns wider
+        worksheet.set_column(0, 0, 50)  # Make first column much wider
+        if key == 'Comparison':
+            worksheet.set_column(1, 1, 15)  # Make second column a little bit wider
+            worksheet.freeze_panes(1, 1)  # Freeze first row, and first column only
+        else:
+            worksheet.set_column(1, 1, 20)  # Make second column a little bit wider
+            worksheet.freeze_panes(1, 2)  # Freeze first row and first two columns
         
     workbook.close()
     
     return None
+        
+    
