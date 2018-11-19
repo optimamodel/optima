@@ -2203,6 +2203,76 @@ class odict(OrderedDict):
             thistuple = (ind,)+item # Combine into one tuple
             iterator.append(thistuple)
         return iterator
+    
+    
+    # CK: Backported from Sciris
+    @staticmethod
+    def _matchkey(key, pattern, method):
+        ''' Helper function for findkeys '''
+        import re
+        match = False
+        if isinstance(key, tuple):
+            for item in key:
+                if odict._matchkey(item, pattern, method):
+                    return True
+        else: # For everything except a tuple, treat it as a string
+            if not checktype(key, 'string'):
+                try:
+                    key = str(key) # Try to cast it to a string
+                except Exception as E:
+                    errormsg = 'Could not convert odict key of type %s to a string: %s' % (type(key), str(E))
+                    raise Exception(E)
+            if   method == 're':         match = bool(re.search(pattern, key))
+            elif method == 'in':         match = pattern in key
+            elif method == 'startswith': match = key.startswith(pattern)
+            elif method == 'endswith':   match = key.endswith(pattern)
+            else:
+                errormsg = 'Method "%s" not found; must be "re", "in", "startswith", or "endswith"' % method
+                raise Exception(errormsg)
+        return match
+        
+    
+    def findkeys(self, pattern=None, method=None, first=None):
+        '''
+        Find all keys that match a given pattern. By default uses regex, but other options 
+        are 'find', 'startswith', 'endswith'. Can also specify whether or not to only return 
+        the first result (default false). If the key is a tuple instead of a string, it will
+        search each element of the tuple.
+        '''
+        if pattern is None: pattern = ''
+        if method  is None: method  = 're'
+        if first   is None: first   = False
+        keys = []
+        for key in self.keys():
+            if self._matchkey(key, pattern, method):
+                if first: return key
+                else:     keys.append(key)
+        return keys
+    
+    
+    def findbykey(self, pattern=None, method=None, first=True):
+        ''' Same as findkeys, but returns values instead '''
+        keys = self.findkeys(pattern=pattern, method=method, first=first)
+        if not first and len(keys) == 1: keys = keys[0] # If it's a list of one element, turn it into that element instead
+        return self.__getitem__(keys)
+        
+    
+    def findbyval(self, value, first=True):
+        '''
+        Returns the key(s) that match a given value -- reverse of findbykey, except here
+        uses exact matches to values.
+        
+        Example:
+            z = odict({'dog':[2,3], 'cat':[4,6], 'mongoose':[4,6]})
+            z.findvals([4,6]) # returns 'cat'
+            z.findvals([4,6], first=False) # returns ['cat', 'mongoose']
+        '''
+        keys = []
+        for key,val in self.items():
+            if val == value:
+                if first: return key
+                else:     keys.append(key)
+        return keys
         
         
         

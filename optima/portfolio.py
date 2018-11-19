@@ -410,7 +410,7 @@ class Portfolio(object):
         output = ''
         output += 'Geospatial analysis results: minimize outcomes from %i to %i' % (self.objectives['start'], self.objectives['end'])
         output += '\n\n'
-        output += '\n\t\tInitial\tOptimal'
+        output += '\n\t\tInitial\tOptimized'
         output += '\nOverall summary'
         output += '\n\tPortfolio budget:\t%0.0f\t%0.0f' % (overallbud['init'], overallbud['opt'])
         output += '\n\tOutcome:\t%0.0f\t%0.0f' % (overallout['init'], overallout['opt'])
@@ -422,7 +422,7 @@ class Portfolio(object):
         for prj in projindices:
             output += '\n'
             output += '\n'
-            output += '\n\t\tInitial\tOptimal'
+            output += '\n\t\tInitial\tOptimized'
             output += '\nProject: "%s"' % projnames[prj]
             output += '\n'
             output += '\n\tBudget:\t%0.0f\t%0.0f' % (sum(projbudgets[prj]['init'][:]), sum(projbudgets[prj]['opt'][:]))
@@ -482,7 +482,7 @@ class Portfolio(object):
                 thisformat = 'plain'
                 if col==0: thisformat = 'bold'
                 tmptxt = thistxt.lower()
-                for word in ['budget','outcome','allocation','initial','optimal','coverage']:
+                for word in ['budget','outcome','allocation','initial','optimal','optimized','coverage']:
                     if tmptxt.find(word)>=0: thisformat = 'bold'
                 if col in [2,3] and thisformat=='plain': thisformat = 'number'
                 if thisformat=='number':thistxt = float(thistxt)

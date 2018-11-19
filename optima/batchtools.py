@@ -379,7 +379,7 @@ def reoptimizeprojects_task(project, objectives, pind, outputqueue, maxtime, max
     outcalcargs.update(sharedargs)
     resultpair['init'] = outcomecalc(**outcalcargs)
     
-    # Optimal spending -- reoptimize
+    # Optimized spending -- reoptimize
     try:
         if totalbudget: printv('%s: reoptimizing with budget $%0.0f, starting from %0.1f%% mismatch...' % (project.name, totalbudget, smallestmismatch/totalbudget*100), 2, verbose)
         else:           printv('%s: total budget is zero, skipping optimization...' % project.name, 2, verbose)

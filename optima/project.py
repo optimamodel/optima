@@ -971,12 +971,12 @@ class Project(object):
             # Actually run
             results = optimize(optim=optim, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, origbudget=origbudget, label=label, mc=mc, die=die, randseed=randseed, **kwargs)
             tmptotals[key] = budget
-            tmpallocs[key] = dcp(results.budgets['Optimal'])
+            tmpallocs[key] = dcp(results.budgets.findbykey('Optim'))
             tmpx[key] = budget # Used to be append, but can't use lists since can iterate multiple times over a single budget
             tmpy[key] = results.outcome
             boc.budgets[key] = tmpallocs[-1]
             if ratio==1.0: # Check if ratio is 1, and if so, store the baseline
-                ybaseline = results.extremeoutcomes['Baseline'] # Store baseline result, but also not part of the BOC
+                ybaseline = results.extremeoutcomes.findbykey('Base') # Store baseline result, but also not part of the BOC
                 yregionoptim = results.outcome
                 regionoptimbudget = budget
             

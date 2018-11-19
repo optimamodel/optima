@@ -12,7 +12,10 @@ from numbers import Number
 from xlsxwriter import Workbook
 
 
-
+# Globals defining string placeholders
+prcstr = '!PERC'  # included as string in cells that should be formatted as percent
+condstr = '!COND'  # included as string in cells that should be coloured conditionally
+epsbudcov = 0.1 # The minimum budget or coverage amount to consider to be nonzero -- only used for budget comparisons
 
 
 class Result(object):
@@ -471,8 +474,7 @@ class Resultset(object):
 
         return None
 
-    def export(self, filename=None, folder=None, bypop=True, sep=',', ind=None, key=None, sigfigs=3, writetofile=True,
-               comparisontab=False, asexcel=True, verbose=2):
+    def export(self, filename=None, folder=None, bypop=True, sep=',', ind=None, key=None, sigfigs=3, writetofile=True, asexcel=True, verbose=2):
         """ Method for exporting results to an Excel or CSV file """
 
         # Handle export by either index or key -- WARNING, still inelegant at best! Accepts key or ind, not both
@@ -501,48 +503,47 @@ class Resultset(object):
                     if '(per 100 p.y.)' in self.main[mainkey].name:
                         outputstr += ('%s' + sep) % sigfig(100 * data[t], sigfigs=sigfigs)
                     elif self.main[mainkey].ispercentage:
-                        outputstr += ('%s!PERC'+sep) % sigfig(data[t], sigfigs=sigfigs)
+                        outputstr += ('%s'+prcstr+sep) % sigfig(data[t], sigfigs=sigfigs)
                     else:
                         outputstr += ('%i'+sep) % data[t]
 
-        if not comparisontab:
-            # Handle budget and coverage
-            thisbudget = []
-            thiscoverage = []
-            tvbudget = []
-            try:    thisbudget = self.budgets[key]
-            except: pass
-            try:    thiscoverage = self.coverages[key]
-            except: pass
-            try:    tvbudget = self.timevarying[key]
-            except: pass
+        # Handle budget and coverage
+        thisbudget = []
+        thiscoverage = []
+        tvbudget = []
+        try:    thisbudget = self.budgets[key]
+        except: pass
+        try:    thiscoverage = self.coverages[key]
+        except: pass
+        try:    tvbudget = self.timevarying[key]
+        except: pass
 
-            if len(thisbudget): # WARNING, does not support multiple years
-                outputstr += '\n\n\n'
-                outputstr += sep*2+'Budget\n'
-                outputstr += ('\"'+sep+'\"')*2+('\"'+sep+'\"').join(thisbudget.keys()) + '\n'
-                outputstr += sep*2+sep.join([str(val) for val in thisbudget.values()]) + '\n'
+        if len(thisbudget): # WARNING, does not support multiple years
+            outputstr += '\n\n\n'
+            outputstr += sep*2+'Budget\n'
+            outputstr += ('\"'+sep+'\"')*2+('\"'+sep+'\"').join(thisbudget.keys()) + '\n'
+            outputstr += sep*2+sep.join([str(val) for val in thisbudget.values()]) + '\n'
 
-            if len(thiscoverage): # WARNING, does not support multiple years
-                covvals = thiscoverage.values()
-                for c in range(len(covvals)):
-                    if checktype(covvals[c], 'arraylike'):
-                        covvals[c] = covvals[c][0] # Only pull out the first element if it's an array/list
-                    if covvals[c] is None: covvals[c] = 0 # Just reset
-                outputstr += '\n\n\n'
-                outputstr += sep*2+'Coverage\n'
-                outputstr += ('\"'+sep+'\"')*2+('\"'+sep+'\"').join(thiscoverage.keys())+'\n'
-                outputstr += sep*2+sep.join([str(val) for val in covvals]) + '\n' # WARNING, should have this val[0] but then dies with None entries
+        if len(thiscoverage): # WARNING, does not support multiple years
+            covvals = thiscoverage.values()
+            for c in range(len(covvals)):
+                if checktype(covvals[c], 'arraylike'):
+                    covvals[c] = covvals[c][0] # Only pull out the first element if it's an array/list
+                if covvals[c] is None: covvals[c] = 0 # Just reset
+            outputstr += '\n\n\n'
+            outputstr += sep*2+'Coverage\n'
+            outputstr += ('\"'+sep+'\"')*2+('\"'+sep+'\"').join(thiscoverage.keys())+'\n'
+            outputstr += sep*2+sep.join([str(val) for val in covvals]) + '\n' # WARNING, should have this val[0] but then dies with None entries
 
-            if len(tvbudget):
-                tvyears  = tvbudget['tvyears']
-                progkeys = tvbudget['tvbudgets'].keys()
-                tvdata   = tvbudget['tvbudgets'][:]
-                outputstr += '\n\n\n'
-                outputstr += sep*2+'Time-varying' + '\n'
-                outputstr += sep+sep.join(['Year']+progkeys) + '\n'
-                for y,year in enumerate(tvyears): # Loop over years as rows
-                    outputstr += sep+str(year)+sep+sep.join([str(val) for val in tvdata[:,y]]) + '\n' # Join together programs as columns
+        if len(tvbudget):
+            tvyears  = tvbudget['tvyears']
+            progkeys = tvbudget['tvbudgets'].keys()
+            tvdata   = tvbudget['tvbudgets'][:]
+            outputstr += '\n\n\n'
+            outputstr += sep*2+'Time-varying' + '\n'
+            outputstr += sep+sep.join(['Year']+progkeys) + '\n'
+            for y,year in enumerate(tvyears): # Loop over years as rows
+                outputstr += sep+str(year)+sep+sep.join([str(val) for val in tvdata[:,y]]) + '\n' # Join together programs as columns
             
         if writetofile: 
             ext = 'xlsx' if asexcel else 'csv'
@@ -558,47 +559,7 @@ class Resultset(object):
         else:
             return outputstr
 
-    def comparebudgets(self, sep='\",\"', sigfigs=3):
-        """ Make a separate sheet in the workbook with a comparison of budget and coverage for an optimization """
-        outputstr = sep.join(['Programs', 'Baseline budget', '% baseline budget', 'Optimized budget',
-                              '% optimized budget', '% budget change',
-                              'Baseline coverage', 'Optimized coverage', '% coverage change'])  # Create headers
-        total_baseline_budget = sum(self.budgets['Baseline'].values())
-        total_optimized_budget = sum(self.budgets['Optimal'].values())
-        for prog, baseline_budget in self.budgets['Baseline'].items():
-            outputstr += '\n'
 
-            optimized_budget = self.budgets['Optimal'][prog]
-            baseline_cov = self.coverages['Baseline'][prog]
-            if checktype(baseline_cov, 'arraylike'):
-                baseline_cov = baseline_cov[0]  # Only pull out the first element if it's an array/list
-            if baseline_cov is None: baseline_cov = 0  # Just reset
-            optimized_cov = self.coverages['Optimal'][prog]
-            if checktype(optimized_cov, 'arraylike'):
-                optimized_cov = optimized_cov[0]  # Only pull out the first element if it's an array/list
-            if optimized_cov is None: optimized_cov = 0  # Just reset
-
-            budget_change = 0
-            cov_change = 0
-            if baseline_budget <= 0.1 < optimized_budget:
-                budget_change = 1.0
-            elif baseline_budget > 0.1:
-                budget_change = (optimized_budget - baseline_budget)/baseline_budget
-            if baseline_cov <= 0.1 < optimized_cov:
-                cov_change = 1.0
-            elif baseline_cov > 0.1:
-                cov_change = (optimized_cov - baseline_cov) / baseline_cov
-            outputstr += prog + sep + str(baseline_budget) + sep + \
-                         '%f!PERC' % (baseline_budget/total_baseline_budget) + sep + str(optimized_budget) + sep + \
-                         '%f!PERC' % (optimized_budget/total_optimized_budget) + sep + \
-                         '%f!PERC!COND' % budget_change + sep + str(baseline_cov) + sep + \
-                         str(optimized_cov) + sep + '%f!PERC!COND' % cov_change
-        outputstr += '\n'
-        outputstr += sep.join(['Total', str(total_baseline_budget), '', str(total_optimized_budget), '', '',
-                               '', '', ''])
-
-        return outputstr
-    
     def get(self, what=None, year=None, key=None, pop=None, dosum=False, blhkey=None):
         '''
         A small function to make it easier to access results. For example, to 
@@ -877,15 +838,13 @@ class Multiresultset(Resultset):
         
         return resultsdiff
 
-    def export(self, filename=None, folder=None, ind=None, writetofile=True, verbose=2, asexcel=True,
-               comparisontab=False, **kwargs):
+    def export(self, filename=None, folder=None, ind=None, writetofile=True, verbose=2, asexcel=True, **kwargs):
         """ A method to export each multiresult to a different sheet in Excel (or to a single large text file) """
         
         if asexcel: outputdict = odict()
         else:       outputstr = ''
         for key in self.keys:
-            thisoutput = Resultset.export(self, ind=ind, key=key, writetofile=False, comparisontab=comparisontab,
-                                          **kwargs)
+            thisoutput = Resultset.export(self, ind=ind, key=key, writetofile=False, **kwargs)
             if asexcel:
                 outputdict[key] = thisoutput
             else:
@@ -893,8 +852,8 @@ class Multiresultset(Resultset):
                 outputstr += thisoutput
                 outputstr += '\n'*5
 
-        if comparisontab and asexcel:
-            thisoutput = Resultset.comparebudgets(self)
+        if asexcel and hasattr(self, 'optim'): # Only produce a comparsion if it's an optimization and it's for Excel
+            thisoutput = self.comparebudgets()
             outputdict['Comparison'] = thisoutput
         
         if writetofile: 
@@ -911,6 +870,48 @@ class Multiresultset(Resultset):
         else:
             if asexcel: return outputdict
             else:       return outputstr
+        
+        
+    def comparebudgets(self, sep=',', sigfigs=3):
+        """ Make a separate sheet in the workbook with a comparison of budget and coverage for an optimization """
+        outputstr = sep.join(['Programs', 'Baseline budget', '% baseline budget', 
+                              'Optimized budget', '% optimized budget', '% budget change',
+                              'Baseline coverage', 'Optimized coverage', '% coverage change'])  # Create headers
+        baselinetotal = sum(self.budgets.findbykey('Base').values())
+        optimtotal    = sum(self.budgets.findbykey('Optim').values())
+        for prog, baselinebud in self.budgets.findbykey('Base').items():
+            outputstr += '\n'
+
+            optimbud = self.budgets.findbykey('Optim')[prog]
+            baselinecov = self.coverages.findbykey('Base')[prog]
+            if checktype(baselinecov, 'arraylike'):
+                baselinecov = baselinecov[0]  # Only pull out the first element if it's an array/list
+            if baselinecov is None: baselinecov = 0  # Just reset
+            optimcov = self.coverages.findbykey('Optim')[prog]
+            if checktype(optimcov, 'arraylike'):
+                optimcov = optimcov[0]  # Only pull out the first element if it's an array/list
+            if optimcov is None: optimcov = 0  # Just reset
+
+            budchange = 0.0 # By default, assume no change
+            covchange = 0.0
+            if min(baselinebud, optimbud) > epsbudcov: budchange = (optimbud - baselinebud) / baselinebud # Ensure both budgets are large enough
+            if min(baselinecov, optimcov) > epsbudcov: covchange = (optimcov - baselinecov) / baselinecov
+            baselinetotalstr = '%f' % (baselinebud/baselinetotal)
+            optimtotalstr    = '%f' % (optimbud/optimtotal)
+            covchangestr     = '%f' % covchange
+            budchangestr     = '%f' % budchange
+            outputstr += prog + sep + str(baselinebud) + sep + \
+                         baselinetotalstr + prcstr + sep + \
+                         str(optimbud) + sep + \
+                         optimtotalstr + prcstr + sep + \
+                         budchangestr + prcstr + condstr + sep + \
+                         str(baselinecov) + sep + \
+                         str(optimcov) + sep + \
+                         covchangestr + prcstr + condstr
+        outputstr += '\n'
+        outputstr += sep.join(['Total', str(baselinetotal), '', str(optimtotal), '', '', '', '', ''])
+
+        return outputstr
 
 
 class BOC(object):
@@ -1069,13 +1070,9 @@ def exporttoexcel(filename=None, outdict=None):
     Little function to format an output results string nicely for Excel
     Expects an odict of output strings.
     """
-    percstr = '!PERC'  # included as string in cells that should be formatted as percent
-    condstr = '!COND'  # included as string in cells that should be coloured conditionally
     workbook = Workbook(filename)
     
     for key,outstr in outdict.items():
-        if key == 'Optimal':
-            key = 'Optimized'  # Hack to replace optimal with optimized for sheet name
         worksheet = workbook.add_worksheet(sanitizefilename(key))  # A valid filename should also be a valid Excel key
         
         # Define formatting
@@ -1112,9 +1109,9 @@ def exporttoexcel(filename=None, outdict=None):
                 thistxt = outlist[row][col]
                 thisformat = 'plain'
                 emptycell = not thistxt
-                percentcell = percstr in thistxt  # whether this cell should be formatted in Excel as percent
+                percentcell = prcstr in thistxt  # whether this cell should be formatted in Excel as percent
                 conditionalcell = condstr in thistxt  # whether this cell should be formatted in Excel conditionally
-                thistxt = thistxt.replace(percstr, '').replace(condstr, '')
+                thistxt = thistxt.replace(prcstr, '').replace(condstr, '')
 
                 try:
                     thistxt = float(thistxt)
