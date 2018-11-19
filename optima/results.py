@@ -37,9 +37,6 @@ class Result(object):
 
 
 
-
-
-
 class Resultset(object):
     ''' Structure to hold results '''
     def __init__(self, raw=None, name=None, pars=None, simpars=None, project=None, settings=None, data=None, parsetname=None, progsetname=None, budget=None, coverage=None, budgetyears=None, domake=True, quantiles=None, keepraw=False, verbose=2, doround=True):
