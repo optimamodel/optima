@@ -339,14 +339,11 @@ def defaultprograms(project, addcostcovpars=False, addcostcovdata=False, filterp
     
 
 
-
-
 def defaultprogset(P, addcostcovpars=False, addcostcovdata=False, filterprograms=None, verbose=2):
     ''' Make a default programset (for testing optimisations)'''
     programs = defaultprograms(P, addcostcovpars=addcostcovpars, addcostcovdata=addcostcovdata, filterprograms=filterprograms)
     R = Programset(programs=programs, project=P)   
     return R
-
 
 
 
@@ -386,8 +383,6 @@ def defaultproject(which='best', addprogset=True, addcostcovdata=True, usestanda
         R.covout['numtx']['tot'].addccopar({'intercept': (10.0,10.0), 't': 2016.0})
         P.addprogset(R)
     
-
-
 
 
     ##########################################################################################################################

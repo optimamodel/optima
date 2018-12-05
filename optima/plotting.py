@@ -233,9 +233,6 @@ def makeplots(results=None, toplot=None, die=False, verbose=2, plotstartyear=Non
     epiplots = plotepi(results, toplot=toplot, die=die, plotstartyear=plotstartyear, plotendyear=plotendyear, fig=fig, **kwargs)
     allplots.update(epiplots)
     
-    print('TEMPPPP')
-    print allplots
-    
     return allplots
 
 

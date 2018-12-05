@@ -1,5 +1,5 @@
 import os
-from flask_restful_swagger import swagger
+#from flask_restful_swagger import swagger
 from sqlalchemy import text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.dialects.postgresql import JSON
@@ -7,7 +7,7 @@ import optima as op
 from .dbconn import db, redis
 
 
-@swagger.model
+#@swagger.model
 class UserDb(db.Model):
 
     __tablename__ = 'users'
@@ -47,7 +47,7 @@ class UserDb(db.Model):
         return True
 
 
-@swagger.model
+#@swagger.model
 class PyObjectDb(db.Model):
 
     __tablename__ = 'objects'
@@ -79,7 +79,7 @@ class PyObjectDb(db.Model):
         return portfolio.name + ".prt"
 
 
-@swagger.model
+#@swagger.model
 class ProjectDb(db.Model):
 
     __tablename__ = 'projects'
