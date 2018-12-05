@@ -18,7 +18,6 @@ condstr = '!COND'  # included as string in cells that should be coloured conditi
 epsbudcov = 0.1 # The minimum budget or coverage amount to consider to be nonzero -- only used for budget comparisons
 
 
-
 class Result(object):
     ''' Class to hold overall and by-population results '''
     def __init__(self, name=None, ispercentage=False, pops=None, tot=None, datapops=None, datatot=None, estimate=False, defaultplot=None):
@@ -888,10 +887,10 @@ class Multiresultset(Resultset):
                 optimcov = optimcov[0]  # Only pull out the first element if it's an array/list
             if optimcov is None: optimcov = 0  # Just reset
 
-            budchange = 0.0 # By default, assume no change
+            budchange = 0.0  # By default, assume no change
             covchange = 0.0
-            if min(baselinebud, optimbud) > epsbudcov: budchange = (optimbud - baselinebud) / baselinebud # Ensure both budgets are large enough
-            if min(baselinecov, optimcov) > epsbudcov: covchange = (optimcov - baselinecov) / baselinecov
+            if baselinebud > epsbudcov: budchange = (optimbud - baselinebud) / baselinebud  # Ensure budget to divide by is large enough
+            if baselinecov > epsbudcov: covchange = (optimcov - baselinecov) / baselinecov
             baselinetotalstr = '%f' % (baselinebud/baselinetotal)
             optimtotalstr    = '%f' % (optimbud/optimtotal)
             covchangestr     = '%f' % covchange
@@ -1129,6 +1128,8 @@ def exporttoexcel(filename=None, outdict=None):
                     percentincrease = True
                 elif conditionalcell and thistxt < 0:
                     percentdecrease = True
+                elif conditionalcell and thistxt == 0:  # Format no change as a regular percentage cell
+                    conditionalcell = False
 
                 if row == 0:                                               thisformat = 'header'
                 elif str(thistxt) in budcovformats:                        thisformat = 'header'
