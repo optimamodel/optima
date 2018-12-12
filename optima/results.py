@@ -867,7 +867,7 @@ class Multiresultset(Resultset):
             else:       return outputstr
         
         
-    def comparebudgets(self, sep=',', sigfigs=3):
+    def comparebudgets(self, sep=','):
         """ Make a separate sheet in the workbook with a comparison of budget and coverage for an optimization """
         outputstr = sep.join(['Programs', 'Baseline budget', '% baseline budget', 
                               'Optimized budget', '% optimized budget', '% budget change',

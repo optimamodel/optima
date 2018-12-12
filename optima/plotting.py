@@ -678,8 +678,6 @@ def plotbudget(multires=None, die=True, figsize=globalfigsize, legendsize=global
         # Set up other things
         ax.set_ylabel('Budget (millions)')
         ax.set_xticks(arange(nallocs) + 0.6)
-        if 'Optimal' in alloclabels:
-            alloclabels[alloclabels.index('Optimal')] = 'Optimized'
         ax.set_xticklabels(alloclabels)
         ax.spines['top'].set_visible(False)
         ax.spines['right'].set_visible(False)
@@ -687,7 +685,7 @@ def plotbudget(multires=None, die=True, figsize=globalfigsize, legendsize=global
 
         fig.show()
 
-        SIticks(ax=ax, axis='x')
+        SIticks(ax=ax, axis='y')
         budgetplots['budget'] = fig
     
     return budgetplots
