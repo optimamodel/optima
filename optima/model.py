@@ -23,6 +23,9 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
     if settings is None: raise OptimaException(label+'model() requires settings as an input')
     printv('Running model...', 1, verbose)
     
+    if initpeople is not None:
+        print('WARNING, due to parameter interpolation, results are unreliable if initpeople is not None!')
+    
     # Extract key items
     popkeys         = simpars['popkeys']
     npops           = len(popkeys)

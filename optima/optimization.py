@@ -425,6 +425,8 @@ def outcomecalc(budgetvec=None, which=None, project=None, parsetname=None, progs
     
     # Figure out which indices to run for and actually run the model
     tvec       = project.settings.maketvec(end=objectives['end'])
+#    print('TEMP')
+    initpeople = None # WARNING, unfortunately initpeople is still causing mismatches -- turning off for now despite the large (2.5x) performance penalty
     if initpeople is None: startind = None
     else:                  startind = findnearest(tvec, objectives['start']) # Only start running the simulation from the starting point
     results = project.runsim(pars=thisparsdict, parsetname=parsetname, progsetname=progsetname, coverage=thiscoverage, budget=budgetarray, budgetyears=paryears, tvec=tvec, initpeople=initpeople, startind=startind, verbose=0, label=project.name+'-optim-outcomecalc', doround=False, addresult=False, **kwargs)
