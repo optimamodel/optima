@@ -1529,7 +1529,7 @@ def icers(name=None, project=None, parsetname=None, progsetname=None, objective=
                    'origbudget':origbudget, 'outputresults':False, 'verbose':verbose, 'doconstrainbudget':False, 'initpeople':initpeople}
     
     # Calculate baseline
-    baseliney = outcomecalc(budgetvec=defaultbudget, **defaultargs)
+    baseliney = outcomecalc(budgetvec=defaultbudget[:], **defaultargs)
     
     # Define structures for storing results
     rawx    = odict().make(keys=keys, vals=[])
@@ -1548,7 +1548,7 @@ def icers(name=None, project=None, parsetname=None, progsetname=None, objective=
             thisbudget[key] *= budgetratio
             rawx[key].append(thisbudget[key])
             if budgetratio==1: outcome = baseliney # Don't need to run, just copy this
-            else:              outcome = outcomecalc(budgetvec=thisbudget, **defaultargs) # The crux of the matter!! Actually calculate
+            else:              outcome = outcomecalc(budgetvec=thisbudget[:], **defaultargs) # The crux of the matter!! Actually calculate
             rawy[key].append(outcome)
             
     # Calculate y values
