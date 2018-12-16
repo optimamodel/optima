@@ -363,7 +363,8 @@ def separatetv(inputvec=None, optiminds=None):
 
 def outcomecalc(budgetvec=None, which=None, project=None, parsetname=None, progsetname=None, 
                 objectives=None, constraints=None, totalbudget=None, optiminds=None, origbudget=None, tvec=None, 
-                initpeople=None, outputresults=False, verbose=2, ccsample='best', doconstrainbudget=True, tvsettings=None, tvcontrolvec=None, **kwargs):
+                initpeople=None, outputresults=False, verbose=2, ccsample='best', doconstrainbudget=True, 
+                tvsettings=None, tvcontrolvec=None, origoutcomes=None, penalty=1e9, **kwargs):
     ''' Function to evaluate the objective for a given budget vector (note, not time-varying) '''
 
     # Set up defaults
@@ -449,6 +450,9 @@ def outcomecalc(budgetvec=None, which=None, project=None, parsetname=None, progs
             thisoutcome = results.main['num'+key].tot[0][indices].sum() # the instantaneous outcome e.g. objectives['numdeath'] -- 0 is since best
             rawoutcomes['num'+key] = thisoutcome*results.dt
             outcome += thisoutcome*thisweight*results.dt # Calculate objective
+            if origoutcomes and penalty and thisweight>0:
+                if rawoutcomes['num'+key]>origoutcomes.rawoutcomes['num'+key]:
+                    outcome += penalty # Impose a large penalty if the solution is worse
 
         # Output results
         if outputresults:
@@ -775,6 +779,8 @@ def tvoptimize(project=None, optim=None, tvec=None, verbose=None, maxtime=None, 
     args['initpeople'] = initpeople
     
     # Now run the optimization
+    origoutcomes = outcomecalc(outputresults=True, **args) # Calculate the initial outcome and pass it back in
+    args['origoutcomes'] = origoutcomes
     tvvecnew, fvals, details = asd(outcomecalc, tvvec, args=args, xmin=xmin, xmax=xmax, sinitial=sinitial, maxtime=maxtime, maxiters=maxiters, verbose=verbose, randseed=randseed, label=thislabel, **kwargs)
     budgetvec, tvcontrolvec = separatetv(inputvec=tvvecnew, optiminds=optiminds)
     constrainedbudgetnew, constrainedbudgetvecnew, lowerlim, upperlim = constrainbudget(origbudget=origbudget, budgetvec=budgetvec, totalbudget=totalbudget, budgetlims=optim.constraints, optiminds=optiminds, outputtype='full', tvsettings=optim.tvsettings)
@@ -961,6 +967,8 @@ def minoutcomes(project=None, optim=None, tvec=None, verbose=None, maxtime=None,
                 printv('Running optimization "%s" (%i/%i) with maxtime=%s, maxiters=%s' % (key, k+1, len(allbudgetvecs), maxtime, maxiters), 2, verbose)
                 if label: thislabel = '"'+label+'-'+key+'"'
                 else: thislabel = '"'+key+'"'
+                origoutcomes = outcomecalc(outputresults=True, **args) # Calculate the initial outcome and pass it back in
+                args['origoutcomes'] = origoutcomes
                 budgetvecnew, fvals, details = asd(outcomecalc, allbudgetvecs[key], args=args, xmin=xmin, maxtime=maxtime, maxiters=maxiters, verbose=verbose, randseed=allseeds[k], label=thislabel, **kwargs)
                 constrainedbudgetnew, constrainedbudgetvecnew, lowerlim, upperlim = constrainbudget(origbudget=origbudget, budgetvec=budgetvecnew, totalbudget=totalbudget, budgetlims=optim.constraints, optiminds=optiminds, outputtype='full')
                 asdresults[key] = {'budget':constrainedbudgetnew, 'fvals':fvals}
