@@ -23,6 +23,9 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
     if settings is None: raise OptimaException(label+'model() requires settings as an input')
     printv('Running model...', 1, verbose)
     
+    if initpeople is not None:
+        print('WARNING, due to parameter interpolation, results are unreliable if initpeople is not None!')
+    
     # Extract key items
     popkeys         = simpars['popkeys']
     npops           = len(popkeys)
@@ -653,7 +656,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                     thistransit[fromstate,tostate,:] *= usvlprob
         
         # USVL to SVL
-        svlprob = min(regainvs[t]*numvlmon[t]/(eps+numtx[t]*requiredvl),1) if userate(propsupp,t) else 0.
+        svlprob = min(regainvs[t]*numvlmon[t]/(eps+people[alltx,:,t].sum()*requiredvl),1) if userate(propsupp,t) else 0.
         for fromstate in usvl:
             for tostate in fromto[fromstate]:
                 if tostate in usvl: # Probability of not receiving a VL test & thus remaining failed
