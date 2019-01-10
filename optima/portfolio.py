@@ -327,7 +327,7 @@ class Portfolio(object):
         for c,P in enumerate(self.projects.values()):
             ax = P.plotBOC(objectives=objectives, deriv=deriv, initbudget=initbudgets[c], optbudget=optbudgets[c], returnplot=True, baseline=baseline)
             if extrax != None:            
-                for k in xrange(len(extrax[c])):
+                for k in range(len(extrax[c])):
                     ax.plot(extrax[c][k], extray[c][k], 'bo')
                     if baseline==0: ax.set_ylim((0,ax.get_ylim()[1])) # Reset baseline
         return None
@@ -684,7 +684,7 @@ def makegeoprojects(project=None, spreadsheetpath=None, destination=None, dosave
     prevfactors = odict()
     plhivratio = odict()
     isdistricts = True
-    for rowindex in xrange(wspopsize.nrows):
+    for rowindex in range(wspopsize.nrows):
         if wspopsize.cell_value(rowindex, 0) == '---':
             isdistricts = False
         if isdistricts and rowindex > 0:
@@ -700,7 +700,7 @@ def makegeoprojects(project=None, spreadsheetpath=None, destination=None, dosave
             plhivratio['tot'].append(wspopsize.cell_value(rowindex, npops+3)*wsprev.cell_value(rowindex, npops+3))
             
             # Population group ratios.
-            for popid in xrange(npops):
+            for popid in range(npops):
                 popname = poplist[popid]
                 colindex = popid + 1
                 if rowindex == 1:
@@ -734,7 +734,7 @@ def makegeoprojects(project=None, spreadsheetpath=None, destination=None, dosave
     prevfactors['tot'] = [x/prevdenom for x in prevfactors['tot']]
     plhivdenom = wspopsize.cell_value(ndistricts+2, npops+3)*wsprev.cell_value(ndistricts+2, npops+3)
     plhivratio['tot'] = [x/plhivdenom for x in plhivratio['tot']]        
-    for popid in xrange(npops):
+    for popid in range(npops):
         colindex = popid + 1
         popname = poplist[popid]
         popdenom = wspopsize.cell_value(ndistricts+2, colindex)

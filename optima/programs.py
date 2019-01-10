@@ -11,6 +11,7 @@ from numpy import ones, prod, array, zeros, exp, log, append, nan, isnan, maximu
 from random import uniform
 import six
 if six.PY3:
+	basestring = str
 	unicode = str
 
 class Programset(object):

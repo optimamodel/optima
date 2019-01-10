@@ -16,6 +16,7 @@ if six.PY3: # Python 3
     from io import BytesIO as IO
     import pickle as pkl
     unicode = str
+    basestring = str
 else: # Python 2
     from cStringIO import StringIO as IO
     import cPickle as pkl

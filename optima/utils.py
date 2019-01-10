@@ -1,3 +1,8 @@
+import six
+if six.PY3:
+	basestring = str
+	unicode = str
+
 ##############################################################################
 ### PRINTING/NOTIFICATION FUNCTIONS
 ##############################################################################
@@ -41,7 +46,7 @@ def createcollist(oldkeys, title, strlen = 18, ncol = 3):
     from numpy import ceil
     nrow = int(ceil(float(len(oldkeys))/ncol))
     newkeys = []
-    for x in xrange(nrow):
+    for x in range(nrow):
         newkeys += oldkeys[x::nrow]
     
     attstring = title + ':'

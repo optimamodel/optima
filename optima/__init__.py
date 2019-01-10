@@ -39,9 +39,9 @@ Version: 2019jan09
 from .version import version, versiondate
 
 import six
-# if six.PY3:
-#     basestring = str
-#     unicode = str
+if six.PY3:
+	basestring = str
+	unicode = str
 
 # Print the license
 optimalicense = 'Optima HIV %s (%s) -- (c) Optima Consortium' % (version, versiondate)
