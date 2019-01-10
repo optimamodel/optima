@@ -7,6 +7,10 @@ Function(s) to perform calibration.
 from optima import OptimaException, Link, Par, dcp, asd, printv, findinds, isnumber, odict
 from numpy import zeros, array, mean
 
+import six
+if six.PY3:
+    unicode = str
+
 
 def autofit(project=None, name=None, fitwhat=None, fitto=None, method='wape', maxtime=None, maxiters=1000, verbose=2, doplot=False, randseed=None, **kwargs):
     ''' 

@@ -576,9 +576,12 @@ class Programset(object):
                                 accum = 0
                                 for j in range(indexes[-1]+1,len(thiscov)):
                                     accum += overlap_calc(indexes+[j],target_depth)
-                                return list(thiscov.values())[indexes[-1]]*accum
+                                output = list(thiscov.values())[indexes[-1]]*accum
+                                return output
                             else:
-                                return list(thiscov.values())[indexes[-1]]* max([list(delta.values())[x] for x in [0]],0)
+                                deltalist = list(delta.values())
+                                output = list(thiscov.values())[indexes[-1]]* max(deltalist[0][0],0)
+                                return output
     
                         # Iterate over overlap levels
                         for i in range(2,len(thiscov)): # Iterate over numbers of overlapping programs
