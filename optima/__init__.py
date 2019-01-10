@@ -51,17 +51,21 @@ _failed = []
 #####################################################################################################################
 
 # General modules
-from uuid import uuid4 as uuid
-from copy import deepcopy as dcp
+# from uuid import uuid4 as uuid
+# from copy import deepcopy as dcp
 
 # Utilities -- import alphabetically
-from .utils import blank, boxoff, checkmem, checktype, colorize, commaticks, compareversions, dataindex, dataframe, defaultrepr
-from .utils import findinds, findnearest, getdate, getfilelist, getvaliddata, getvalidinds, gitinfo, inclusiverange, indent, isnumber, isiterable
-from .utils import Link, LinkException, loadbalancer, loadtext, makefilepath, objectid, objatt, objmeth, objrepr
-from .utils import odict, percentcomplete, perturb, printarr, printdata as pd, printdr, printv, printvars, printtologfile
-from .utils import promotetoarray, promotetolist, promotetoodict, quantile, runcommand, sanitize, sanitizefilename, savetext, scaleratio, setylim
-from .utils import sigfig, SItickformatter, SIticks, slacknotification, smoothinterp, tic, toc, today, vec2obj
-from . import utils as _utils; del utils
+from sciris import *
+defaultrepr = prepr # Alias to avoid rename WARNING FIX
+today = now
+from .utils import vec2obj, promotetoodict, gitinfo
+# from .utils import blank, boxoff, checkmem, checktype, colorize, commaticks, compareversions, dataindex, dataframe, defaultrepr
+# from .utils import findinds, findnearest, getdate, getfilelist, getvaliddata, getvalidinds, gitinfo, inclusiverange, indent, isnumber, isiterable
+# from .utils import Link, LinkException, loadbalancer, loadtext, makefilepath, objectid, objatt, objmeth, objrepr
+# from .utils import odict, percentcomplete, perturb, printarr, printdata as pd, printdr, printv, printvars, printtologfile
+# from .utils import promotetoarray, promotetolist, promotetoodict, quantile, runcommand, sanitize, sanitizefilename, savetext, scaleratio, setylim
+# from .utils import sigfig, SItickformatter, SIticks, slacknotification, smoothinterp, tic, toc, today, vec2obj
+# from . import utils as _utils; del utils
 
 # Optimization algorithm
 from .asd import asd
@@ -70,8 +74,8 @@ from .asd import asd
 from .pchip import pchip, plotpchip
 
 # Color definitions
-from .colortools import alpinecolormap, bicolormap, gridcolors, vectocolor, shifthue
-from . import colortools as _colortools; del colortools
+# from .colortools import alpinecolormap, bicolormap, gridcolors, vectocolor, shifthue
+# from . import colortools as _colortools; del colortools
 
 
 #####################################################################################################################
@@ -160,7 +164,7 @@ from . import optimization as _optimization; del optimization
 # Plotting functions
 try:
     from .plotting import getplotselections, makeplots, plotepi, plotcascade, plotbudget, plottvbudget, plotcoverage, plotallocations, plotcostcov, plotbycd4, ploticers, saveplots, reanimateplots, sanitizeresults
-    import plotting as _plotting; del plotting
+    from . import plotting as _plotting; del plotting
 except Exception as E: _failed.append('plotting: %s' % repr(E))
 
 #####################################################################################################################

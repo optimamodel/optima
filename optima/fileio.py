@@ -2,16 +2,23 @@
 ### Imports
 #############################################################################################################################
 
-try:    import cPickle as pickle # For Python 2 compatibility
-except: import pickle
 from gzip import GzipFile
-from cStringIO import StringIO
 from contextlib import closing
 from numpy import ones, zeros
 from optima import odict, OptimaException, makefilepath
 from xlrd import open_workbook
 import os
 import optima as op
+
+# Handle types and Python 2/3 compatibility
+import six
+if six.PY3: # Python 3
+    from io import BytesIO as IO
+    import pickle as pkl
+    unicode = str
+else: # Python 2
+    from cStringIO import StringIO as IO
+    import cPickle as pkl
 
 
 
@@ -30,7 +37,7 @@ def saveobj(filename=None, obj=None, compresslevel=5, verbose=True, folder=None)
     '''
     fullpath = makefilepath(filename=filename, folder=folder, sanitize=True)
     with GzipFile(fullpath, 'wb', compresslevel=compresslevel) as fileobj:
-        fileobj.write(pickle.dumps(obj, protocol=-1))
+        fileobj.write(pkl.dumps(obj, protocol=-1))
     if verbose: print('Object saved to "%s"' % fullpath)
     return fullpath
 
@@ -58,9 +65,9 @@ def loadobj(filename=None, folder=None, verbose=True):
 def dumpstr(obj):
     ''' Write data to a fake file object,then read from it -- used on the FE '''
     result = None
-    with closing(StringIO()) as output:
+    with closing(IO()) as output:
         with GzipFile(fileobj = output, mode = 'wb') as fileobj: 
-            fileobj.write(pickle.dumps(obj, protocol=-1))
+            fileobj.write(pkl.dumps(obj, protocol=-1))
         output.seek(0)
         result = output.read()
     return result
@@ -68,7 +75,7 @@ def dumpstr(obj):
 
 def loadstr(source):
     ''' Load data from a fake file object -- also used on the FE '''
-    with closing(StringIO(source)) as output:
+    with closing(IO(source)) as output:
         with GzipFile(fileobj = output, mode = 'rb') as fileobj: 
             obj = loadpickle(fileobj)
     return obj
@@ -81,13 +88,13 @@ def loadpickle(fileobj, verbose=False):
     filestr = fileobj.read()
     
     try: # Try just loading it
-        obj = pickle.loads(filestr) # Actually load it
+        obj = pkl.loads(filestr) # Actually load it
     except: # If that fails, create legacy classes and try again
         if verbose: print('Initial loading failed, trying again with legacy classes...')
         class EmptyClass(object): pass
         op._project.Spreadsheet = EmptyClass
         op._portfolio.GAOptim = EmptyClass
-        obj = pickle.loads(filestr) # Actually load it with legacy classes
+        obj = pkl.loads(filestr) # Actually load it with legacy classes
         del op._project.Spreadsheet
         del op._portfolio.GAOptim
     

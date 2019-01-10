@@ -8,9 +8,8 @@ Version: 2017feb10
 
 import xlsxwriter
 from xlsxwriter.utility import xl_rowcol_to_cell
-from utils import printv, isnumber
 from numpy import isnan
-from optima import version, odict, getdate, today, loaddatapars, Settings
+from optima import printv, isnumber, version, odict, getdate, today, loaddatapars, Settings
 
 
 settings = Settings()
