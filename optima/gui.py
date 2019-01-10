@@ -110,8 +110,8 @@ def pygui(tmpresults, toplot=None, advanced=False, verbose=2, figargs=None, **kw
     checkboxnames = plotselections['names']
     isselected = []
     toplot = promotetolist(toplot) # Ensure it's a list
-    if toplot[0] is None or toplot[0]=='default': 
-        toplot.pop(0) # Remove the first element
+    if not toplot or toplot[0] is None or toplot[0]=='default': 
+        if len(toplot): toplot.pop(0) # Remove the first element
         defaultboxes = [checkboxes[i] for i,tf in enumerate(plotselections['defaults']) if tf] # Back-convert defaults from true/false list to list of keys
         toplot.extend(defaultboxes)
     if len(toplot):
