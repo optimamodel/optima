@@ -29,15 +29,15 @@ MASTER = [
 'testimports',
 'testutils',
 'testmakespreadsheet',
-'testproject',
-'testprograms',
-'testmodalities',
-'testmodel',
-'testscenarios',
-'testcalibration',
-'testoptimization',
-'testmigrations',
-'testgeospatial',
+# 'testproject',
+# 'testprograms',
+# 'testmodalities',
+# 'testmodel',
+# 'testscenarios',
+# 'testcalibration',
+# 'testoptimization',
+# 'testmigrations',
+# 'testgeospatial',
 ]
 
 ## Optionally run everything
@@ -67,13 +67,14 @@ SUCCEEDED = []
 for TEST in MASTER:
     try:
         THISSTART = TIME()
-        VARIABLES = locals().keys() # Get the state before the test is run
+        VARIABLES = list(locals().keys()) # Get the state before the test is run
         print('\n'*10+'#'*200)
         print('NOW RUNNING: %s' % TEST)
         print('#'*200+'\n'*3)
         exec(open(TEST).read()) # Run the test!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         SUCCEEDED.append({'test':TEST, 'time':TIME()-THISSTART})
-        for KEY in locals().keys(): # Clean up -- delete any new variables added
+        NEWKEYS = list(locals().keys())
+        for KEY in NEWKEYS: # Clean up -- delete any new variables added
             if KEY not in VARIABLES:
                 print('       "%s" complete; deleting "%s"' % (TEST, KEY))
                 exec('del '+KEY)

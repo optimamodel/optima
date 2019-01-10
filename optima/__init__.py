@@ -58,7 +58,7 @@ _failed = []
 from sciris import *
 defaultrepr = prepr # Alias to avoid rename WARNING FIX
 today = now
-from .utils import vec2obj, promotetoodict, gitinfo
+from .utils import vec2obj, promotetoodict, promotetolist, gitinfo, smoothinterp, printdata as pd
 # from .utils import blank, boxoff, checkmem, checktype, colorize, commaticks, compareversions, dataindex, dataframe, defaultrepr
 # from .utils import findinds, findnearest, getdate, getfilelist, getvaliddata, getvalidinds, gitinfo, inclusiverange, indent, isnumber, isiterable
 # from .utils import Link, LinkException, loadbalancer, loadtext, makefilepath, objectid, objatt, objmeth, objrepr

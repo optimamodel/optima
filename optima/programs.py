@@ -3,7 +3,7 @@ This module defines the Program and Programset classes, which are
 used to define a single program/modality (e.g., FSW programs) and a
 set of programs, respectively.
 
-Version: 2016feb06
+Version: 2019jan09
 """
 
 from optima import OptimaException, Link, printv, uuid, today, sigfig, getdate, dcp, smoothinterp, findinds, odict, Settings, sanitize, defaultrepr, isnumber, promotetoarray, vec2obj, asd, convertlimits
@@ -1157,7 +1157,7 @@ class CCOF(object):
                         raise OptimaException('Unrecognised bounds.')
         
         # CK: I feel there might be a more direct way of doing all of this...
-        ccopartuples = zip(self.ccopars['t'], *list(ccopars_sample.values())) # Rather than forming a tuple and then pulling out the elements, maybe keep the arrays separate?
+        ccopartuples = zip(self.ccopars['t'], *ccopars_sample.values()) # Rather than forming a tuple and then pulling out the elements, maybe keep the arrays separate?
         knownt = array([ccopartuple[0] for ccopartuple in ccopartuples])
 
         # Calculate interpolated parameters
