@@ -124,9 +124,9 @@ def check_task(task_id):
         .filter_by(task_id=task_id)\
         .first()
     if work_log_record:
-        print ">> check_task: existing job of '%s' with same project" % task_id
+        print(">> check_task: existing job of '%s' with same project" % task_id)
         calc_state = parse_work_log_record(work_log_record)
-    print ">> check_task", task_id, calc_state['status']
+    print(">> check_task", task_id, calc_state['status'])
     close_db_session(db_session)
     if calc_state['status'] == 'error':
         raise Exception(calc_state['error_text'])
@@ -152,16 +152,16 @@ def run_task(task_id, fn_name, args):
     else:
         raise Exception("run_task error: couldn't find '%s'" % fn_name)
 
-    print '>> run_task %s %s' % (fn_name, args)
+    print('>> run_task %s %s' % (fn_name, args))
     try:
         task_fn(*args)
-        print ">> run_task completed"
+        print(">> run_task completed")
         error_text = ""
         status = 'completed'
     except Exception:
         error_text = traceback.format_exc()
         status = 'error'
-        print ">> run_task error"
+        print(">> run_task error")
         print(error_text)
 
     db_session = init_db_session()
@@ -175,7 +175,7 @@ def run_task(task_id, fn_name, args):
 
 
 def launch_task(task_id, fn_name, args):
-    print ">> launch_task", task_id, fn_name, args
+    print(">> launch_task", task_id, fn_name, args)
 
     db_session = init_db_session()
     query = db_session.query(dbmodels.WorkLogDb)
@@ -188,17 +188,17 @@ def launch_task(task_id, fn_name, args):
             if work_log_record.status == 'started':
                 calc_state = parse_work_log_record(work_log_record)
                 calc_state["status"] = "blocked"
-                print ">> launch_task job already exists"
+                print(">> launch_task job already exists")
                 is_ready_to_start = False
 
     if is_ready_to_start:
         # clean up completed/error/cancelled records
         if work_log_records.count():
-            print ">> launch_task cleanup %d logs" %  work_log_records.count()
+            print(">> launch_task cleanup %d logs" %  work_log_records.count())
             work_log_records.delete()
 
         # create a work_log status is 'started by default'
-        print ">> launch_task new work log"
+        print(">> launch_task new work log")
         work_log_record = dbmodels.WorkLogDb(task_id=task_id)
         work_log_record.start_time = op.today()
         db_session.add(work_log_record)
@@ -236,7 +236,7 @@ def autofit(project_id, parset_id, maxtime):
 
     orig_parset = parse.get_parset_from_project_by_id(project, parset_id)
     orig_parset_name = orig_parset.name
-    print ">> autofit '%s' '%s'" % (project_id, orig_parset_name)
+    print(">> autofit '%s' '%s'" % (project_id, orig_parset_name))
     parset_id = orig_parset.uid
     autofit_parset_name = "autofit-" + str(orig_parset_name)
 
@@ -324,7 +324,7 @@ def optimize(project_id, optimization_id, maxtime):
     db_session.commit()
     close_db_session(db_session)
 
-    print ">> optimize finish"
+    print(">> optimize finish")
 
 
 
@@ -349,7 +349,7 @@ def reconcile(project_id, progset_id, parset_id, year, maxtime):
     db_session.commit()
     close_db_session(db_session)
 
-    print ">> reconcile finish"
+    print(">> reconcile finish")
 
 
 
@@ -374,7 +374,7 @@ def boc(portfolio_id, project_id, maxtime=2, objectives=None):
     dataio.save_portfolio(portfolio, db_session)
     close_db_session(db_session)
 
-    print ">> boc finish"
+    print(">> boc finish")
 
 
 
@@ -390,7 +390,7 @@ def ga_optimize(portfolio_id, maxtime):
     dataio.save_portfolio(portfolio, db_session=db_session)
     close_db_session(db_session)
 
-    print ">> ga_optimize finish"
+    print(">> ga_optimize finish")
 
 
 

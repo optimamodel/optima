@@ -564,7 +564,7 @@ def update_project_from_summary(project_summary, is_delete_data=False):
 
 
 def download_data_spreadsheet(project_id, is_blank=True):
-    print ">> download_data_spreadsheet init"
+    print(">> download_data_spreadsheet init")
     project = load_project(project_id)
     project_summary = parse.get_project_summary_from_project(project)
     new_project_template = secure_filename(
@@ -2035,22 +2035,22 @@ class UndoStack(object):
         return self.currentIndex == 0
         
     def showContents(self):
-        print 'Undo Stack Contents'
-        print '-------------------'
-        print "Project UID: '%s'" % self.projectUID
+        print('Undo Stack Contents')
+        print('-------------------')
+        print("Project UID: '%s'" % self.projectUID)
         if self.useDirtyFlag:
-            print 'Uses Dirty Flag?: Yes'
+            print('Uses Dirty Flag?: Yes')
             if self.dirtyFlag:
-                print 'Dirty Flag State: Dirty'
+                print('Dirty Flag State: Dirty')
             else:
-                print 'Dirty Flag State: Clean'
+                print('Dirty Flag State: Clean')
         else:
-            print 'Uses Dirty Flag?: No'
+            print('Uses Dirty Flag?: No')
         if self.isEmpty():
-            print 'Contents: Empty'
+            print('Contents: Empty')
         else:
-            print 'Contents: %d Project versions' % len(self.projectVersions)
-            print 'Stack Index: %d' % self.currentIndex
+            print('Contents: %d Project versions' % len(self.projectVersions))
+            print('Stack Index: %d' % self.currentIndex)
         print
         
 
@@ -2327,14 +2327,14 @@ def unit_test_build_undo_stack(project_id, useDirtyFlag=True):
             print
         else:
             print('Can we save to the stack?: No')
-            print  
+            print()
             
         # Try to push the project to the stack.
         undoStack.pushNewVersion(project)
         
         # Tell what we've done.
         print('Pushed version...')
-        print
+        print()
         
         # Show undoStack contents.
         undoStack.showContents()
@@ -2346,7 +2346,7 @@ def unit_test_build_undo_stack(project_id, useDirtyFlag=True):
             print
         else:
             print('Can we do an Undo on this stack?: No')
-            print 
+            print()
             
         # Try to push the project to the stack.
         project = undoStack.getUndoVersion()
@@ -2368,7 +2368,7 @@ def unit_test_build_undo_stack(project_id, useDirtyFlag=True):
             print
         else:
             print('Can we do an Redo on this stack?: No')
-            print 
+            print()
             
         # Try to push the project to the stack.
         project = undoStack.getRedoVersion()
@@ -2415,14 +2415,14 @@ def unit_test_build_undo_stack(project_id, useDirtyFlag=True):
     
     # Tell what we've done.
     print('Created initial UndoStack...')
-    print    
+    print()
     
     # Set whether we want to use the dirty flag.
     undoStack.setDirtyFlagUse(useDirtyFlag)
     
     # Tell what we've done.
     print('Set up whether to use dirty flag or not...')
-    print
+    print()
     
     # Show undoStack contents.
     undoStack.showContents()
