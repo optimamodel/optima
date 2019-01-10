@@ -164,7 +164,7 @@ if 'modalities' in tests:
         output += '   Random: %s\n' % (r2) 
         output += ' Additive: %s\n' % (r3) 
         output += '===================================\n'
-        print output
+        print(output)
     
     if showstats: summary()
     
@@ -328,7 +328,7 @@ if 'scaleup' in tests:
         output += '   Outreach scale-up: %s\n'    % e2
         output += '  Home-test scale-up: %s\n'    % e3
         output += '===================================\n'
-        print output
+        print(output)
     
     if showstats: summary_scaleup()
 

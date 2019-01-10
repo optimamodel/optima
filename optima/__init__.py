@@ -38,6 +38,11 @@ Version: 2019jan09
 # Specify the version, for the purposes of figuring out which version was used to create a project
 from .version import version, versiondate
 
+import six
+# if six.PY3:
+#     basestring = str
+#     unicode = str
+
 # Print the license
 optimalicense = 'Optima HIV %s (%s) -- (c) Optima Consortium' % (version, versiondate)
 print(optimalicense)
@@ -56,9 +61,7 @@ _failed = []
 
 # Utilities -- import alphabetically
 from sciris import *
-defaultrepr = prepr # Alias to avoid rename WARNING FIX
-today = now
-from .utils import vec2obj, promotetoodict, promotetolist, gitinfo, smoothinterp, printdata as pd
+from .utils import vec2obj, promotetoodict, promotetolist, gitinfo, smoothinterp, printdata as pd, defaultrepr, today
 # from .utils import blank, boxoff, checkmem, checktype, colorize, commaticks, compareversions, dataindex, dataframe, defaultrepr
 # from .utils import findinds, findnearest, getdate, getfilelist, getvaliddata, getvalidinds, gitinfo, inclusiverange, indent, isnumber, isiterable
 # from .utils import Link, LinkException, loadbalancer, loadtext, makefilepath, objectid, objatt, objmeth, objrepr
