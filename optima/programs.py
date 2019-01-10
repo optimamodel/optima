@@ -572,9 +572,9 @@ class Programset(object):
                                 accum = 0
                                 for j in range(indexes[-1]+1,len(thiscov)):
                                     accum += overlap_calc(indexes+[j],target_depth)
-                                return thiscov.values()[indexes[-1]]*accum
+                                return list(thiscov.values())[indexes[-1]]*accum
                             else:
-                                return thiscov.values()[indexes[-1]]* max([delta.values()[x] for x in [0]],0)
+                                return list(thiscov.values())[indexes[-1]]* max([list(delta.values())[x] for x in [0]],0)
     
                         # Iterate over overlap levels
                         for i in range(2,len(thiscov)): # Iterate over numbers of overlapping programs
@@ -582,7 +582,7 @@ class Programset(object):
                                 outcomes[thispartype][thispop] += overlap_calc([j],i)[0]
 
                         # All programs together
-                        outcomes[thispartype][thispop] += prod(array(thiscov.values()),0)*[max([c[j] for c in delta.values()]) for j in range(nyrs)]
+                        outcomes[thispartype][thispop] += prod(array(list(thiscov.values())),0)*[max([c[j] for c in list(delta.values())]) for j in range(nyrs)]
                     
 
                     else: raise OptimaException('Unknown reachability type "%s"',self.covout[thispartype][thispop].interaction)
@@ -987,11 +987,11 @@ class Program(object):
             popsizes[pop] = initpopsizes[popno,:]
         for targetpop in self.targetpops:
             if targetpop.lower() in ['total','tot','all']:
-                targetpopsize[targetpop] = sum(popsizes.values())
+                targetpopsize[targetpop] = sum(list(popsizes.values()))
             else:
                 targetpopsize[targetpop] = popsizes[targetpop]
                 
-        finalpopsize = array([sum(targetpopsize.values())]) if isnumber(sum(targetpopsize.values())) else sum(targetpopsize.values())
+        finalpopsize = array([sum(list(targetpopsize.values()))]) if isnumber(sum(list(targetpopsize.values()))) else sum(list(targetpopsize.values()))
                     
         if total: return finalpopsize
         else:     return targetpopsize
@@ -1002,7 +1002,7 @@ class Program(object):
         targetcomposition = odict()
 
         poptargeted = self.gettargetpopsize(t=t, parset=parset, results=results, total=False)
-        totaltargeted = sum(poptargeted.values())
+        totaltargeted = sum(list(poptargeted.values()))
 
         for targetpop in self.targetpops:
             targetcomposition[targetpop] = poptargeted[targetpop]/totaltargeted
@@ -1018,7 +1018,7 @@ class Program(object):
 
         poptargeted = self.gettargetpopsize(t=t, parset=parset, results=results, total=False)
 
-        totaltargeted = sum(poptargeted.values())
+        totaltargeted = sum(list(poptargeted.values()))
         totalreached = self.costcovfn.evaluate(x=x, popsize=totaltargeted, t=t, toplot=toplot, sample=sample)
 
         if total: 
@@ -1039,7 +1039,7 @@ class Program(object):
         '''Returns budget for a coverage vector'''
 
         poptargeted = self.gettargetpopsize(t=t, parset=parset, results=results, total=False)
-        totaltargeted = sum(poptargeted.values())
+        totaltargeted = sum(list(poptargeted.values()))
         if not proportion: reqbudget = self.costcovfn.evaluate(x=x,popsize=totaltargeted,t=t,inverse=True,toplot=False,sample=sample)
         else: reqbudget = self.costcovfn.evaluate(x=x*totaltargeted,popsize=totaltargeted,t=t,inverse=True,toplot=False,sample=sample)
         return reqbudget
@@ -1154,7 +1154,7 @@ class CCOF(object):
                         raise OptimaException('Unrecognised bounds.')
         
         # CK: I feel there might be a more direct way of doing all of this...
-        ccopartuples = zip(self.ccopars['t'], *ccopars_sample.values()) # Rather than forming a tuple and then pulling out the elements, maybe keep the arrays separate?
+        ccopartuples = zip(self.ccopars['t'], *list(ccopars_sample.values())) # Rather than forming a tuple and then pulling out the elements, maybe keep the arrays separate?
         knownt = array([ccopartuple[0] for ccopartuple in ccopartuples])
 
         # Calculate interpolated parameters
