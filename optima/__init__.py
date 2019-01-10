@@ -53,8 +53,8 @@ _failed = []
 
 import six
 if six.PY3:
-	basestring = str
-	unicode = str
+    basestring = str
+    unicode = str
     from sciris import * # Mainly to have the up-to-date, Python3-compatible version of odict
     from .utils import vec2obj, promotetoodict, promotetolist, gitinfo, smoothinterp, printdata as pd, defaultrepr, today
 else:
