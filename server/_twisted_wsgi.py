@@ -8,6 +8,7 @@ from twisted.web.server import Site
 from twisted.web.static import File
 from twisted.web.wsgi import WSGIResource
 from twisted.python.threadpool import ThreadPool
+import six
 
 from . import api
 
@@ -38,10 +39,14 @@ def run():
                 b'Cache-Control', [b'no-cache', b'no-store', b'must-revalidate'])
             request.responseHeaders.setRawHeaders(b'expires', [b'0'])
             return r
-
-    base_resource = File(b'client/build/')
-    base_resource.putChild(b'dev', File(b'client/source/'))
-    base_resource.putChild(b'api', OptimaResource(wsgi_app))
+    if six.PY3:
+        base_resource = File(b'client/build/')
+        base_resource.putChild(b'dev', File(b'client/source/'))
+        base_resource.putChild(b'api', OptimaResource(wsgi_app))
+    else:
+        base_resource = File('client/build/')
+        base_resource.putChild('dev', File('client/source/'))
+        base_resource.putChild('api', OptimaResource(wsgi_app))
 
     site = Site(base_resource)
 
