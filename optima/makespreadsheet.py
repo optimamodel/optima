@@ -614,7 +614,7 @@ class OptimaSpreadsheet:
         self.sheets = {}
         
         # Actually generate workbooks
-        self.sheet_names = self.pardefinitions['sheets'].keys()
+        self.sheet_names = list(self.pardefinitions['sheets'].keys())
         for sheetname in ['Instructions', 'Populations']+self.sheet_names:
             self.sheets[sheetname] = self.book.add_worksheet(sheetname)
         self.sheet_names.remove('Constants') # Remove constants key which is handled separately

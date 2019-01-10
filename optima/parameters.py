@@ -217,7 +217,7 @@ class Parameterset(object):
         print('ATTRIBUTES:')
         attributes = {}
         for key in self.parkeys():
-            theseattr = pars[key].__dict__.keys()
+            theseattr = list(pars[key].__dict__.keys())
             for attr in theseattr:
                 if attr not in attributes.keys(): attributes[attr] = []
                 attributes[attr].append(getattr(pars[key], attr))
@@ -1229,7 +1229,7 @@ def makesimpars(pars, name=None, keys=None, start=None, end=None, dt=None, tvec=
     # Handle inputs and initialization
     simpars = odict() 
     simpars['parsetname'] = name
-    if keys is None: keys = pars.keys() # Just get all keys
+    if keys is None: keys = list(pars.keys()) # Just get all keys
     if type(keys)==str: keys = [keys] # Listify if string
     if tvec is not None: simpars['tvec'] = tvec
     elif settings is not None: simpars['tvec'] = settings.maketvec(start=start, end=end, dt=dt)
@@ -1325,7 +1325,7 @@ def comparepars(pars1=None, pars2=None):
     '''
     if type(pars1)==Parameterset: pars1 = pars1.pars # If parset is supplied instead of pars, use that instead
     if type(pars2)==Parameterset: pars2 = pars2.pars
-    keys = pars1.keys()
+    keys = list(pars1.keys())
     nkeys = 0
     count = 0
     for key in keys:

@@ -173,7 +173,7 @@ def objectivecalc(parvec=None, pars=None, parlist=None, project=None, fitto='pre
     count = 0
     mismatch = 0
     if doplot: debugdata = []
-    if fitto in [None, 'all', ['all']]: fitto = results.main.keys() # If not specified, use everything
+    if fitto in [None, 'all', ['all']]: fitto = list(results.main.keys()) # If not specified, use everything
     for key in fitto: # The results! e.g. key='prev'
         try: this = results.main[key]
         except: 
