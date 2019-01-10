@@ -39,9 +39,9 @@ def run():
             request.responseHeaders.setRawHeaders(b'expires', [b'0'])
             return r
 
-    base_resource = File('client/build/')
-    base_resource.putChild('dev', File('client/source/'))
-    base_resource.putChild('api', OptimaResource(wsgi_app))
+    base_resource = File(b'client/build/')
+    base_resource.putChild(b'dev', File(b'client/source/'))
+    base_resource.putChild(b'api', OptimaResource(wsgi_app))
 
     site = Site(base_resource)
 
