@@ -75,8 +75,8 @@ else:
     from .colortools import alpinecolormap, bicolormap, gridcolors, vectocolor, shifthue
     from . import colortools as _colortools; del colortools
 
-# Optimization algorithm
-from .asd import asd
+    # Optimization algorithm
+    from .asd import asd
 
 # Interpolation
 from .pchip import pchip, plotpchip
