@@ -1207,7 +1207,7 @@ def makepars(data=None, verbose=2, die=True, fixprops=None):
                     pars[actsname].y[(key1,key2)] = array(tmpacts[act])[i,j,:]
                     pars[actsname].t[(key1,key2)] = array(tmpactspts[act])
                     if act!='inj':
-                        if key1 not in fpopkeys: # For condom use, only store one of the pair -- and store male first -- WARNING, would this fail with multiple MSM populations?
+                        if key1 in mpopkeys: # For condom use, only store one of the pair -- and store male first -- WARNING, would this fail with multiple MSM populations?
                             pars[condname].y[(key1,key2)] = array(tmpcond[act])[i,j,:]
                             pars[condname].t[(key1,key2)] = array(tmpcondpts[act])
     
