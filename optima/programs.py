@@ -580,7 +580,7 @@ class Programset(object):
                                 return output
                             else:
                                 deltalist = list(delta.values())
-                                output = list(thiscov.values())[indexes[-1]]* max(deltalist[0][0],0)
+                                output = list(thiscov.values())[indexes[-1]]* max(deltalist[0][0],0) # TODO WARNING, consider replacing with output = thiscov.values()[indexes[-1]] * max(delta.values()[0], 0)
                                 return output
     
                         # Iterate over overlap levels
