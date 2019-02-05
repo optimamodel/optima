@@ -502,11 +502,11 @@ def plotepi(results, toplot=None, uncertainty=True, die=True, showdata=True, ver
                     ax.set_ylabel(plotylabel)
                     try: plottitle = kwargs["popmapping"][results.popkeys[i]] # if popmapping was passed in as kwarg, use the title specified there for this population instead
                     except: plottitle = results.popkeys[i] # Add extra information to plot if by population
-                    if forreport: ax.set_ylabel(plotylabel, fontweight="bold", fontsize=labelsize) # overwrites previously set ylabel
+                    if forreport: ax.set_ylabel(plotylabel, fontsize=labelsize) # overwrites previously set ylabel
                 ax.set_title(plottitle)
                 if forreport:
-                    ax.set_xlabel('Year', fontweight="bold", fontsize=labelsize)
-                    ax.set_title(plottitle, fontweight="bold", fontsize=titlesize) # overwrites previously set title
+                    ax.set_xlabel('Year', fontsize=labelsize)
+                    ax.set_title(plottitle, fontsize=titlesize) # overwrites previously set title
                 setylim(allydata, ax=ax)
                 ax.set_xlim((results.tvec[startind], results.tvec[endind]))
                 if not ismultisim:

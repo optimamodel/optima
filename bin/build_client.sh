@@ -4,12 +4,24 @@
 # Usage is complicated:
 #    ./build_client.sh # Build full client and minify JavaScript
 #
-# Version: 2017jun03
+# Version: 2019jan17
 
 echo 'Building client...'
 
 cd `dirname $0` # Make sure we're in this folder
 cd ../client # Change to client folder
+
+# Make sure we have the right version of node -- otherwise, hope for the best
+if [ -e $HOME/.nvm/nvm.sh ]; then
+   source $HOME/.nvm/nvm.sh
+   nvm use 8.11.1
+fi
+
+
+# This causes all kinds of problems
+if [ -e "package-lock.json" ]; then 
+    rm package-lock.json; 
+fi
 
 # Sometimes, old junk gets in the build
 if [ -d "build" ]; then
@@ -41,5 +53,10 @@ node_modules/gulp/bin/gulp.js
 # is made to terminate correctly in gulpfile.js.
 echo -e '\nAdding cache-busting strings...'
 gulp cache-bust
+
+# Remove that damn package-lock.json file again
+if [ -e "package-lock.json" ]; then 
+    rm package-lock.json; 
+fi
 
 echo -e '\nDone.'
