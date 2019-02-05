@@ -21,6 +21,7 @@ tests = [
 ##############################################################################
 
 from optima import tic, toc, blank, pd # analysis:ignore
+from pylab import array
 
 if 'doplot' not in locals(): doplot = True
 
@@ -56,11 +57,11 @@ if 'odict' in tests:
     bar = foo.sorted() # Sort the list
     assert(bar['boo'] == 4) # Show get item by value
     assert(bar[1] == 4) # Show get item by index
-    assert((bar[0:2] == [3,4]).all()) # Show get item by slice
-    assert((bar['cough':'dill'] == [6,8]).all()) # Show alternate slice notation
-    assert((bar[[2,1]] == [6,4]).all()) # Show get item by list
-    assert((bar[:] == [3,4,6,8]).all()) # Show slice with everything
-    assert((bar[2:] == [6,8]).all()) # Show slice without end
+    assert(array((bar[0:2]) == [3,4]).all()) # Show get item by slice
+    assert(array((bar['cough':'dill']) == [6,8]).all()) # Show alternate slice notation
+    assert(array((bar[[2,1]]) == [6,4]).all()) # Show get item by list
+    assert(array((bar[:]) == [3,4,6,8]).all()) # Show slice with everything
+    assert(array((bar[2:]) == [6,8]).all()) # Show slice without end
     bar[3] = [3,4,5] # Show assignment by item
     bar[0:2] = ['the', 'power'] # Show assignment by slice -- NOTE, inclusive slice!!
     bar[[0,2]] = ['cat', 'trip'] # Show assignment by list

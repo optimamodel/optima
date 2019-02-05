@@ -55,9 +55,9 @@ def pchip_slopes(x, y, monotone=True):
     if not len(x) > 1:
         raise Exception('Error: Interpolation failure due to the existence of only one point!')
     else:
-        for c in xrange(len(x)-1):
+        for c in range(len(x)-1):
             secants.append((y[c+1]-y[c])/(x[c+1]-x[c]))
-        for c in xrange(len(x)):
+        for c in range(len(x)):
             if c == 0: deriv = secants[c]
             elif c == len(x)-1: deriv = secants[c-1]
             elif secants[c]*secants[c-1] <= 0: deriv = 0

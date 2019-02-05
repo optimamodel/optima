@@ -11,6 +11,10 @@ from numpy import array, nan, zeros, arange, shape, maximum, log
 from numbers import Number
 from xlsxwriter import Workbook
 
+import six
+if six.PY3:
+    unicode = str
+
 
 # Globals defining string placeholders
 prcstr = '!PERC'  # included as string in cells that should be formatted as percent

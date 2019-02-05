@@ -321,7 +321,7 @@ def reoptimizeprojects(projects=None, objectives=None, maxtime=None, maxiters=No
             resultpairs[resultpair['key']] = resultpair
         for prc in processes:
             prc.join()
-        resultpairs.sort(sortby=projects.keys()) # Ensure it's sorted
+        resultpairs.sort(sortby=list(projects.keys())) # Ensure it's sorted
         
     # Print any warnings, if they exist
     for project in projects.values(): project.getwarnings() 

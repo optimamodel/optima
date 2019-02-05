@@ -217,7 +217,7 @@ class Parameterset(object):
         print('ATTRIBUTES:')
         attributes = {}
         for key in self.parkeys():
-            theseattr = pars[key].__dict__.keys()
+            theseattr = list(pars[key].__dict__.keys())
             for attr in theseattr:
                 if attr not in attributes.keys(): attributes[attr] = []
                 attributes[attr].append(getattr(pars[key], attr))
@@ -1229,7 +1229,7 @@ def makesimpars(pars, name=None, keys=None, start=None, end=None, dt=None, tvec=
     # Handle inputs and initialization
     simpars = odict() 
     simpars['parsetname'] = name
-    if keys is None: keys = pars.keys() # Just get all keys
+    if keys is None: keys = list(pars.keys()) # Just get all keys
     if type(keys)==str: keys = [keys] # Listify if string
     if tvec is not None: simpars['tvec'] = tvec
     elif settings is not None: simpars['tvec'] = settings.maketvec(start=start, end=end, dt=dt)
@@ -1248,7 +1248,7 @@ def makesimpars(pars, name=None, keys=None, start=None, end=None, dt=None, tvec=
     for key in keys: # Loop over all keys
         if isinstance(pars[key], Par): # Check that it is actually a parameter -- it could be the popkeys odict, for example
             thissample = sample # Make a copy of it to check it against the list of things we are sampling
-            if tosample[0] is not None and key not in tosample: thissample = False # Don't sample from unselected parameters -- tosample[0] since it's been promoted to a list
+            if tosample and tosample[0] is not None and key not in tosample: thissample = False # Don't sample from unselected parameters -- tosample[0] since it's been promoted to a list
             try:
                 simpars[key] = pars[key].interp(tvec=simpars['tvec'], dt=dt, popkeys=popkeys, smoothness=smoothness, asarray=asarray, sample=thissample, randseed=randseed)
             except OptimaException as E: 
@@ -1325,7 +1325,7 @@ def comparepars(pars1=None, pars2=None):
     '''
     if type(pars1)==Parameterset: pars1 = pars1.pars # If parset is supplied instead of pars, use that instead
     if type(pars2)==Parameterset: pars2 = pars2.pars
-    keys = pars1.keys()
+    keys = list(pars1.keys())
     nkeys = 0
     count = 0
     for key in keys:

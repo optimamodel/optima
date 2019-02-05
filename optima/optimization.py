@@ -16,6 +16,11 @@ import optima as op # Used by minmoney, at some point should make syntax consist
 try:    from multiprocessing import Process, Queue
 except: Process, Queue = None, None # OK to skip these if batch is False
 
+import six
+if six.PY3:
+	basestring = str
+	unicode = str
+
 ################################################################################################################################################
 ### The container class
 ################################################################################################################################################
