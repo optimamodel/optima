@@ -94,7 +94,7 @@ def make_mpld3_graph_dict(result=None, which=None, zoom=None, startYear=None, en
               }
         }
     """
-    print ">> make_mpld3_graph_dict input which:", which
+    print(">> make_mpld3_graph_dict input which:", which)
 
     if which is None:
         advanced = False
@@ -102,7 +102,7 @@ def make_mpld3_graph_dict(result=None, which=None, zoom=None, startYear=None, en
             which = result.which
             if which is None:
                 which = {}
-            print ">> make_mpld3_graph_dict has cache:", which
+            print(">> make_mpld3_graph_dict has cache:", which)
             if 'advanced' in which:
                 advanced = True
                 which.remove("advanced")
@@ -121,7 +121,7 @@ def make_mpld3_graph_dict(result=None, which=None, zoom=None, startYear=None, en
             advanced = True
             which.remove('advanced')
 
-    print ">> make_mpld3_graph_dict advanced:", advanced
+    print(">> make_mpld3_graph_dict advanced:", advanced)
 
     graph_selectors = op.getplotselections(result, advanced=advanced)
     if advanced:
@@ -156,7 +156,7 @@ def make_mpld3_graph_dict(result=None, which=None, zoom=None, startYear=None, en
         for selector in selectors:
             selector['checked'] = selector['key'] in which
 
-    print ">> make_mpld3_graph_dict which:", which
+    print(">> make_mpld3_graph_dict which:", which)
 
     graphs = op.makeplots(result, toplot=which, plotstartyear=startYear, plotendyear=endYear, newfig=True, die=False)
     op.reanimateplots(graphs)

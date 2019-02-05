@@ -8,9 +8,8 @@ Version: 2017feb10
 
 import xlsxwriter
 from xlsxwriter.utility import xl_rowcol_to_cell
-from utils import printv, isnumber
 from numpy import isnan
-from optima import version, odict, getdate, today, loaddatapars, Settings
+from optima import printv, isnumber, version, odict, getdate, today, loaddatapars, Settings
 
 
 settings = Settings()
@@ -615,7 +614,7 @@ class OptimaSpreadsheet:
         self.sheets = {}
         
         # Actually generate workbooks
-        self.sheet_names = self.pardefinitions['sheets'].keys()
+        self.sheet_names = list(self.pardefinitions['sheets'].keys())
         for sheetname in ['Instructions', 'Populations']+self.sheet_names:
             self.sheets[sheetname] = self.book.add_worksheet(sheetname)
         self.sheet_names.remove('Constants') # Remove constants key which is handled separately

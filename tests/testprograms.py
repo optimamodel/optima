@@ -154,8 +154,8 @@ if 'addpopfactor' in tests:
                       t=2016,
                       parset=P.parsets['default'])
     
-    print cov1
-    print cov2
+    print(cov1)
+    print(cov2)
     
 
 

@@ -31,10 +31,17 @@
 
 import os, sys, time
 
-try:
-    import thread
-except ImportError:
-    import dummy_thread as thread
+import six
+if six.PY2:
+    try:
+        import thread
+    except ImportError:
+        import dummy_thread as thread
+else:
+    try:
+        import _thread as thread
+    except ImportError:
+        import _dummy_thread as thread
 
 # This import does nothing, but it's necessary to avoid some race conditions
 # in the threading module. See http://code.djangoproject.com/ticket/2330 .

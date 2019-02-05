@@ -62,7 +62,7 @@ P = op.demo(doplot=False)
 
 3. Install and set up postgres:
 ```
-sudo apt-get install install postgresql
+sudo apt install postgresql
 sudo su postgres
 createuser optima -P -s # password optima
 createdb optima
