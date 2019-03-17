@@ -105,8 +105,8 @@ class Resultset(object):
         self.main['propsuppressed'] = Result('Treated PLHIV with viral suppression (%)', ispercentage=True, defaultplot='total')
         
         self.main['prev']           = Result('HIV prevalence (%)',       ispercentage=True, defaultplot='population')
-        self.main['force']          = Result('Incidence (per 100 p.y.)', ispercentage=True, defaultplot='population')
-        self.main['numnewdiag']     = Result('New diagnoses')
+        self.main['force']          = Result('HIV incidence (per 100 p.y.)', ispercentage=True, defaultplot='population')
+        self.main['numnewdiag']     = Result('New HIV diagnoses')
         self.main['nummtct']        = Result('HIV+ births')
         self.main['numhivbirths']   = Result('Births to HIV+ women')
         self.main['numpmtct']       = Result('HIV+ women receiving PMTCT')
