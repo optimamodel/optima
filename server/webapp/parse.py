@@ -20,6 +20,9 @@ import optima as op
 
 from .exceptions import ParsetDoesNotExist, ProgramDoesNotExist, ProgsetDoesNotExist
 
+import six
+if six.PY3: # Python 3
+    unicode = str
 
 #############################################################################################
 ### UTILITIES
@@ -100,6 +103,9 @@ def normalize_obj(obj):
         else:
             return float(obj)
 
+    if isinstance(obj, np.int64):
+        return int(obj)
+
     if isinstance(obj, unicode):
         try:    string = str(obj) # Try to convert it to ascii
         except: string = obj # Give up and use original
@@ -110,6 +116,12 @@ def normalize_obj(obj):
 
     if isinstance(obj, UUID):
         return str(obj)
+
+    if isinstance(obj, map):
+        return list(obj)
+
+    if isinstance(obj, range):
+        return list(obj)
 
     return obj
 
