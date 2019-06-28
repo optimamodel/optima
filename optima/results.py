@@ -1091,10 +1091,11 @@ def exporttoexcel(filename=None, outdict=None):
         # Ensure it's a valid sheet name, not too long, and not already in use
         sheetname = sanitizefilename(key)
         if len(sheetname)>maxlength:
-            sheetname = sheetname[:maxlen]
+            sheetname = sheetname[:maxlength-1] + '~'
         if sheetname in sheetnames:
             collisions += 1
             sheetname = sheetname[:-3] + '~%0.2i' % collisions
+        sheetnames.append(sheetname) # Store final sheetname
 
         worksheet = workbook.add_worksheet(sheetname)  # A valid filename should also be a valid Excel key
         
