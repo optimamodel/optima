@@ -790,7 +790,6 @@ def plotcoverage(multires=None, die=True, figsize=globalfigsize, legendsize=glob
         fig,naxes = makefigure(figsize=figsize, interactive=interactive, fig=fig)
         ax.append(fig.add_subplot(naxes, 1, naxes))
         setposition(ax[-1], position, interactive)
-        ax[-1].hold(True)
         
         nprogs = nprogslist[plt]
         proglabels = progkeylists[plt]
@@ -1080,7 +1079,6 @@ def plotallocations(project=None, budgets=None, colors=None, factor=1e6, compare
     nplt = len(budgets)
     for plt in range(nplt):
         ax.append(fig.add_subplot(naxes+len(budgets)-1,1,naxes+plt))
-        ax[-1].hold(True)
         for p,ind in enumerate(indices):
             ax[-1].bar([xbardata[p]], [budgets[plt][ind]/factor], color=colors[p], linewidth=0)
             if plt==1 and compare:
@@ -1320,7 +1318,6 @@ def plotcostcov(program=None, year=None, parset=None, results=None, plotoptions=
         plotdata['xlinedata'] = xlinedata
     
     fig,naxes = makefigure(figsize=None, interactive=interactive, fig=existingFigure)
-    fig.hold(True)
     ax = fig.add_subplot(111)
     
     ax.set_position((0.1, 0.35, .8, .6)) # to make a bit of room for extra text
