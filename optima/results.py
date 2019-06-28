@@ -1082,9 +1082,21 @@ def exporttoexcel(filename=None, outdict=None):
     Expects an odict of output strings.
     """
     workbook = Workbook(filename)
+    sheetnames = [] # Store existing sheet names to avoid collisions
+    collisions = 0 # Keep track of the number of collisions between worksheet names
+    maxlength = 31 # Excel's limitation of sheet name length
     
     for key,outstr in outdict.items():
-        worksheet = workbook.add_worksheet(sanitizefilename(key))  # A valid filename should also be a valid Excel key
+
+        # Ensure it's a valid sheet name, not too long, and not already in use
+        sheetname = sanitizefilename(key)
+        if len(sheetname)>maxlength:
+            sheetname = sheetname[:maxlen]
+        if sheetname in sheetnames:
+            collisions += 1
+            sheetname = sheetname[:-3] + '~%0.2i' % collisions
+
+        worksheet = workbook.add_worksheet(sheetname)  # A valid filename should also be a valid Excel key
         
         # Define formatting
         budcovformats = ['Budget', 'Coverage', 'Time-varying']
