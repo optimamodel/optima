@@ -36,9 +36,17 @@ def convertproj(P):
     for structlist in [P.parsets, P.progsets, P.optims, P.results]:
         for item in structlist.values():
             try: item.created = str(item.created)
-            except Exception as E: print('Could not convert created %s (%s), moving on...' % (item, str(E)))
-            try: item.modified = str(item.modified)
-            except Exception as E: print('Could not convert modified %s (%s), moving on...' % (item, str(E)))
+            except Exception as E: print('Could not convert created for %s (%s), moving on...' % (item, str(E)))
+            if not isinstance(item, op.Resultset):
+                try: item.modified = str(item.modified)
+                except Exception as E: print('Could not convert modified for %s (%s), moving on...' % (item, str(E)))
+    for result in P.results.values():
+        for key in ['created', 'modified', 'spreadsheetdate']:
+            result.projectinfo[key] = str(result.projectinfo[key])
+            result.data['meta']['date'] = str(P.data['meta']['date'])
+            if hasattr(result, 'optim'):
+                result.optim.created = str(result.optim.created)
+                result.optim.modified = str(result.optim.modified)
     return P
 
 def convertportfolio(F):
@@ -59,6 +67,6 @@ if __name__ == '__main__':
         print('Converting files %s...' % filenames)
         for filename in filenames:
             try:
-                convertfile(filename)
+                obj = convertfile(filename)
             except Exception as E:
                 print('Could not convert %s: %s' % (filename, str(E)))
