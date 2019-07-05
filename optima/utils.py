@@ -1750,8 +1750,8 @@ class odict(OrderedDict):
             valstrs = [] # Start with an empty list which we'll save value strings in.
             vallinecounts = [] # Start with an empty list which we'll save line counts in.
             for i in range(len(self)): # Loop over the dictionary values
-                thiskeystr = flexstr(self.keys()[i]) # Grab a str representation of the current key.  
-                thisval = self.values()[i] # Grab the current value.
+                thiskeystr = flexstr(list(self.keys())[i]) # Grab a str representation of the current key.  
+                thisval = list(self.values())[i] # Grab the current value.
                                 
                 # If it's another odict, make a call increasing the recurselevel and passing the same parameters we received.
                 if isinstance(thisval, odict):

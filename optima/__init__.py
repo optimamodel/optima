@@ -57,6 +57,7 @@ if six.PY3:
     unicode = str
     from sciris import * # Mainly to have the up-to-date, Python3-compatible version of odict
     from .utils import vec2obj, promotetoodict, promotetolist, gitinfo, smoothinterp, printdata as pd, defaultrepr, today
+    from .utils import odict
 else:
     # General modules
     from uuid import uuid4 as uuid
