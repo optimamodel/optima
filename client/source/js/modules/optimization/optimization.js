@@ -446,7 +446,7 @@ define(['angular', 'ui.router'], function (angular) {
           $scope.checkNotSavable = checkNotSavable;
           $scope.defaultOptimizationsByProgsetId = optimsScope.defaultOptimizationsByProgsetId;
           $scope.selectProgset = selectProgset;
-          selectProgset();
+          selectProgset(true);
         }
 
         function checkNotSavable() {
@@ -467,7 +467,7 @@ define(['angular', 'ui.router'], function (angular) {
 
         }
 
-        function selectProgset() {
+        function selectProgset(doscale) {
           var progsetId = $scope.state.optimization.progset_id;
           $scope.defaultConstraints = deepCopyJson(
             optimsScope.defaultOptimizationsByProgsetId[progsetId].constraints);
@@ -484,7 +484,9 @@ define(['angular', 'ui.router'], function (angular) {
               constraints.push(constraint);
             }
           });
-          scaleConstraints(constraints, 100.0);
+          if (doscale) {
+            scaleConstraints(constraints, 100.0);
+          }
           $scope.state.optimization.constraints = constraints;
           console.log("selectProgset constraints", $scope.state.optimization.constraints);
         }

@@ -38,7 +38,7 @@
         class="txbox"
         type="text"
         ng-model="state.optimization.progset_id"
-        ng-change="selectProgset()"
+        ng-change="selectProgset(false)"
         required
         ng-options="progset.id as progset.name for progset in progsets">
     </select>
