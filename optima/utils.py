@@ -2279,7 +2279,23 @@ class odict(OrderedDict):
                 else:     keys.append(key)
         return keys
         
+            # Python 3 compatibility
+    if six.PY3:
+        def keys(self):
+            """ Method to get a list of keys as in Python 2. """
+            return list(OrderedDict.keys(self))
         
+        def values(self):
+            """ Method to get a list of values as in Python 2. """
+            return list(OrderedDict.values(self))
+        
+        def items(self):
+            """ Method to generate an item iterator as in Python 2. """
+            return list(OrderedDict.items(self))
+        
+        def iteritems(self):
+            """ Method to generate an item iterator as in Python 2. """
+            return list(OrderedDict.items(self))
         
         
         

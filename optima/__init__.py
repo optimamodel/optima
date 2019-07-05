@@ -58,6 +58,7 @@ if six.PY3:
     from sciris import * # Mainly to have the up-to-date, Python3-compatible version of odict
     from .utils import vec2obj, promotetoodict, promotetolist, gitinfo, smoothinterp, printdata as pd, defaultrepr, today
     from .utils import odict
+    from copy import deepcopy as dcp
 else:
     # General modules
     from uuid import uuid4 as uuid
