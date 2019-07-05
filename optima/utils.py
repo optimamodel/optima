@@ -1662,11 +1662,11 @@ class odict(OrderedDict):
                 output = OrderedDict.__getitem__(self, key)
                 return output
             except Exception as E: # WARNING, should be KeyError, but this can't print newlines!!!
-                if len(self.keys()): errormsg = '%s\nodict key "%s" not found; available keys are:\n%s' % (repr(E), flexstr(key), '\n'.join([flexstr(k) for k in self.keys()]))
+                if len(list(self.keys())): errormsg = '%s\nodict key "%s" not found; available keys are:\n%s' % (repr(E), flexstr(key), '\n'.join([flexstr(k) for k in self.keys()]))
                 else:                errormsg = 'Key "%s" not found since odict is empty'% key
                 raise Exception(errormsg)
         elif isinstance(key, Number): # Convert automatically from float...dangerous?
-            thiskey = self.keys()[int(key)]
+            thiskey = list(self.keys())[int(key)]
             return OrderedDict.__getitem__(self,thiskey)
         elif type(key)==slice: # Handle a slice -- complicated
             try:
@@ -1694,7 +1694,7 @@ class odict(OrderedDict):
         if isinstance(key, (str,tuple)):
             OrderedDict.__setitem__(self, key, value)
         elif isinstance(key, Number): # Convert automatically from float...dangerous?
-            thiskey = self.keys()[int(key)]
+            thiskey = list(self.keys())[int(key)]
             OrderedDict.__setitem__(self, thiskey, value)
         elif type(key)==slice:
             startind = self.__slicekey(key.start, 'start')
