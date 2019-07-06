@@ -37,6 +37,9 @@ from .exceptions import ProjectDoesNotExist, ParsetAlreadyExists, \
 from .dbmodels import UserDb, ProjectDb, ResultsDb, PyObjectDb, UndoStackDb
 from .plot import make_mpld3_graph_dict, convert_to_mpld3
 
+import six
+if six.PY3: # Python 3
+    basestring = str
 
 TEMPLATEDIR = "/tmp"  # CK: hotfix to prevent ownership issues
 
