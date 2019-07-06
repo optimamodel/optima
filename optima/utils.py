@@ -1662,11 +1662,11 @@ class odict(OrderedDict):
                 output = OrderedDict.__getitem__(self, key)
                 return output
             except Exception as E: # WARNING, should be KeyError, but this can't print newlines!!!
-                if len(self.keys()): errormsg = '%s\nodict key "%s" not found; available keys are:\n%s' % (repr(E), flexstr(key), '\n'.join([flexstr(k) for k in self.keys()]))
+                if len(list(self.keys())): errormsg = '%s\nodict key "%s" not found; available keys are:\n%s' % (repr(E), flexstr(key), '\n'.join([flexstr(k) for k in self.keys()]))
                 else:                errormsg = 'Key "%s" not found since odict is empty'% key
                 raise Exception(errormsg)
         elif isinstance(key, Number): # Convert automatically from float...dangerous?
-            thiskey = self.keys()[int(key)]
+            thiskey = list(self.keys())[int(key)]
             return OrderedDict.__getitem__(self,thiskey)
         elif type(key)==slice: # Handle a slice -- complicated
             try:
@@ -1694,7 +1694,7 @@ class odict(OrderedDict):
         if isinstance(key, (str,tuple)):
             OrderedDict.__setitem__(self, key, value)
         elif isinstance(key, Number): # Convert automatically from float...dangerous?
-            thiskey = self.keys()[int(key)]
+            thiskey = list(self.keys())[int(key)]
             OrderedDict.__setitem__(self, thiskey, value)
         elif type(key)==slice:
             startind = self.__slicekey(key.start, 'start')
@@ -1750,8 +1750,8 @@ class odict(OrderedDict):
             valstrs = [] # Start with an empty list which we'll save value strings in.
             vallinecounts = [] # Start with an empty list which we'll save line counts in.
             for i in range(len(self)): # Loop over the dictionary values
-                thiskeystr = flexstr(self.keys()[i]) # Grab a str representation of the current key.  
-                thisval = self.values()[i] # Grab the current value.
+                thiskeystr = flexstr(list(self.keys())[i]) # Grab a str representation of the current key.  
+                thisval = list(self.values())[i] # Grab the current value.
                                 
                 # If it's another odict, make a call increasing the recurselevel and passing the same parameters we received.
                 if isinstance(thisval, odict):
@@ -2279,7 +2279,23 @@ class odict(OrderedDict):
                 else:     keys.append(key)
         return keys
         
+            # Python 3 compatibility
+    if six.PY3:
+        def keys(self):
+            """ Method to get a list of keys as in Python 2. """
+            return list(OrderedDict.keys(self))
         
+        def values(self):
+            """ Method to get a list of values as in Python 2. """
+            return list(OrderedDict.values(self))
+        
+        def items(self):
+            """ Method to generate an item iterator as in Python 2. """
+            return list(OrderedDict.items(self))
+        
+        def iteritems(self):
+            """ Method to generate an item iterator as in Python 2. """
+            return list(OrderedDict.items(self))
         
         
         
