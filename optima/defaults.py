@@ -95,7 +95,7 @@ def defaultprograms(project, addcostcovpars=False, addcostcovdata=False, filterp
                   criteria = {'hivstatus': 'allstates', 'pregnant': False})              
                   
     FSW_programs = Program(short='FSW programs',
-                  name='Programs for female sex workers and clients',
+                  name='Programs for female sex workers',
                   category='Prevention',
                   targetpars=[{'param': 'condcom', 'pop': compship} for compship in fsw_compships] + [{'param': 'condcas', 'pop': caspship} for caspship in fsw_caspships] + [{'param': 'hivtest', 'pop': pop} for pop in fswlist],
                   targetpops=fswlist,
@@ -150,8 +150,8 @@ def defaultprograms(project, addcostcovpars=False, addcostcovdata=False, filterp
                   targetpops=pops,
                   criteria = {'hivstatus': ['lt50', 'gt50', 'gt200', 'gt350'], 'pregnant': False})
                   
-    HTC = Program(short='HTC',
-                  name='HIV testing and counseling',
+    HTC = Program(short='HTS',
+                  name='HIV testing services',
                   category='Care and treatment',
                   targetpars=[{'param': 'hivtest', 'pop': pop} for pop in pops],
                   targetpops=pops,
