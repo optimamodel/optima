@@ -70,6 +70,7 @@ def setmigrations(which='migrations'):
         ('2.7.4', ('2.7.5', '2018-10-02', None,              'Update minimize money algorithm')),
         ('2.7.5', ('2.7.6', '2018-12-11', None,              'Disable initpeople for optimization')),
         ('2.7.6', ('2.8.0', '2019-01-09', None,              'Python 3 compatibility')),
+        ('2.8.0', ('2.9.0', '2019-07-10', None,              'Additional changes for Python 3')),
         ])
     
     
