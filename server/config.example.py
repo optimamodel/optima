@@ -15,10 +15,12 @@ SQLALCHEMY_TRACK_MODIFICATIONS = bool(os.getenv('SQLALCHEMY_TRACK_MODIFICATIONS'
 MATPLOTLIB_BACKEND = os.getenv('MATPLOTLIB_BACKEND',"agg")
 SERVER_PORT = int(os.getenv('PORT', 8080))
 WORKERS = int(os.getenv('WORKERS',min(math.ceil(multiprocessing.cpu_count()/2.0),8))) # By default use half the CPUs, up to a maximum of 8
+BIND_IP = os.getenv('BIND_IP',"0.0.0.0")  # Bind address for gunicorn. '0.0.0.0' allows external connections e.g. from a remote nginx, while '127.0.0.1' allows only local access (e.g., a locally running nginx)
 
-# GUNICORN VARIABLES
-bind = '0.0.0.0:%d' % (SERVER_PORT) # Bind to 0.0.0.0 so apollo can talk to athena. The port should generally be publicly firewalled
+# GUNICORN VARIABLES - the variable names below are special and recognized by `gunicorn`
+bind = '%s:%d' % (BIND_IP,SERVER_PORT)
 workers = WORKERS
-timeout = 60 # Increase BE timeout for long running RPCs
+timeout = 60  # Increase BE timeout for long running RPCs
+
 # To use gunicorn, run 'gunicorn --config config.py server.api:app' 
 # Unfortunately, the WSGI app 'server.api:app' cannot be set in this file
