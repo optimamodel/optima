@@ -1,13 +1,15 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
-
 from setuptools import setup, find_packages
+import os
 
-with open("optima/version.py", "r") as f:
-    version_file = {}
-    exec(f.read(), version_file)
-    version = version_file["version"]
+# Read version (adapted from Atomica)
+cwd = os.path.abspath(os.path.dirname(__file__))
+with open(os.path.join(cwd, 'optima', 'version.py'), 'r') as f:
+    lines = f.readlines()
+    version = [x.split('=')[1].replace('"','').strip() for x in lines if x.startswith('version =')][0]
+
 
 try:
     from pypandoc import convert
