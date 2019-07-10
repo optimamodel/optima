@@ -1,23 +1,17 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-from __future__ import unicode_literals
+
 from setuptools import setup, find_packages
 import os
 
 # Read version (adapted from Atomica)
 cwd = os.path.abspath(os.path.dirname(__file__))
 with open(os.path.join(cwd, 'optima', 'version.py'), 'r') as f:
-    lines = f.readlines()
-    version = [x.split('=')[1].replace('"','').strip() for x in lines if x.startswith('version =')][0]
+    version = [x.split('=')[1].replace('"','').strip() for x in f if x.startswith('version =')][0]
 
-
-try:
-    from pypandoc import convert
-except ImportError:
-    import io
-    def convert(filename, fmt):
-        with io.open(filename, encoding='utf-8') as fd:
-            return fd.read()
+# Read README.md for description
+with open(os.path.join(cwd,'README.md'), 'r') as f:
+    long_description = f.read()
 
 CLASSIFIERS = [
     'Environment :: Console',
@@ -28,6 +22,7 @@ CLASSIFIERS = [
     'Topic :: Software Development :: Libraries :: Python Modules',
     'Development Status :: 4 - Beta',
     'Programming Language :: Python :: 2.7',
+	'Programming Language :: Python :: 3.7',
 ]
 
 setup(
@@ -36,7 +31,7 @@ setup(
     author='Cliff Kerr, Robyn Stuart, David Kedziora, Amber Brown, Romesh Abeysuriya, George Chadderdon, Anna Nachesa, David Wilson, and others',
     author_email='info@optimamodel.com',
     description='Software package for modeling HIV epidemics',
-    long_description=convert('README.md', 'md'),
+    long_description=long_description,
     url='http://github.com/optimamodel/optima',
     keywords=['optima'],
     platforms=['OS Independent'],
