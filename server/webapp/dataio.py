@@ -435,7 +435,11 @@ def save_project(project, db_session=None, is_skip_result=False):
 
 
 def load_project_from_record(project_record):
-    project = project_record.load()
+    try:
+        project = project_record.load()
+    except:
+        print('WARNING, could not load project!')
+        return None
     for progset in project.progsets.values():
         if not hasattr(progset, 'inactive_programs'):
             progset.inactive_programs = op.odict()
