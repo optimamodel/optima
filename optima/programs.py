@@ -766,11 +766,11 @@ class Programset(object):
         args = odict([('pardict',pardict), ('progset',self), ('parset',parset), ('year',year), ('objective',objective), ('verbose',verbose)])
         origmismatch = costfuncobjectivecalc(parmeans, **args) # Calculate initial mismatch too get initial probabilities (pinitial)
             
-        parvecnew, fvals, details = asd(costfuncobjectivecalc, parmeans, args=args, xmin=parlower, xmax=parupper, maxiters=maxiters, maxtime=maxtime, verbose=verbose, **kwargs)
-        currentmismatch = costfuncobjectivecalc(parvecnew, **args) # Calculate initial mismatch, just, because
+        res = asd(costfuncobjectivecalc, parmeans, args=args, xmin=parlower, xmax=parupper, maxiters=maxiters, maxtime=maxtime, verbose=verbose, **kwargs)
+        currentmismatch = costfuncobjectivecalc(res.x, **args) # Calculate initial mismatch, just, because
         
         # Wrap up
-        pardict[:] = replicatevec(parvecnew)
+        pardict[:] = replicatevec(res.x)
         self.odict2cco(pardict) # Copy best values
         printv('Reconciliation reduced mismatch from %f to %f' % (origmismatch, currentmismatch), 2, verbose)
         return None

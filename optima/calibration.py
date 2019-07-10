@@ -52,12 +52,12 @@ def autofit(project=None, name=None, fitwhat=None, fitto=None, method='wape', ma
     # Perform fit
     parvec = convert(pars, parlist)
     args = {'pars':pars, 'parlist':parlist, 'project':project, 'fitto':fitto, 'method':method, 'doplot':doplot, 'verbose':verbose}
-    parvecnew, fval, details = asd(objectivecalc, parvec, args=args, xmin=parlower, xmax=parhigher, maxtime=maxtime, maxiters=maxiters, randseed=randseed, verbose=verbose, **kwargs)
-    
+    res = asd(objectivecalc, parvec, args=args, xmin=parlower, xmax=parhigher, maxtime=maxtime, maxiters=maxiters, randseed=randseed, verbose=verbose, **kwargs)
+
     # Save, along with some additional info
-    pars = convert(pars, parlist, parvecnew)        
+    pars = convert(pars, parlist, res.x)
     parset.pars = pars
-    parset.improvement.append(fval) # Store improvement history
+    parset.improvement.append(res.details.fvals) # Store improvement history
     parset.autofitsettings = odict([('fitwhat', fitwhat), ('fitto', fitto), ('maxtime', maxtime), ('maxiters', maxiters), ('randseed', randseed)])
     
     return parset

@@ -786,7 +786,8 @@ def tvoptimize(project=None, optim=None, tvec=None, verbose=None, maxtime=None, 
     # Now run the optimization
     origoutcomes = outcomecalc(outputresults=True, **args) # Calculate the initial outcome and pass it back in
     args['origoutcomes'] = origoutcomes
-    tvvecnew, fvals, details = asd(outcomecalc, tvvec, args=args, xmin=xmin, xmax=xmax, sinitial=sinitial, maxtime=maxtime, maxiters=maxiters, verbose=verbose, randseed=randseed, label=thislabel, **kwargs)
+    res = asd(outcomecalc, tvvec, args=args, xmin=xmin, xmax=xmax, sinitial=sinitial, maxtime=maxtime, maxiters=maxiters, verbose=verbose, randseed=randseed, label=thislabel, **kwargs)
+    tvvecnew, fvals = res.x, res.details.fvals
     budgetvec, tvcontrolvec = separatetv(inputvec=tvvecnew, optiminds=optiminds)
     constrainedbudgetnew, constrainedbudgetvecnew, lowerlim, upperlim = constrainbudget(origbudget=origbudget, budgetvec=budgetvec, totalbudget=totalbudget, budgetlims=optim.constraints, optiminds=optiminds, outputtype='full', tvsettings=optim.tvsettings)
     asdresults[key] = {'budget':constrainedbudgetnew, 'fvals':fvals, 'tvcontrolvec':tvcontrolvec}
@@ -974,7 +975,8 @@ def minoutcomes(project=None, optim=None, tvec=None, verbose=None, maxtime=None,
                 else: thislabel = '"'+key+'"'
                 origoutcomes = outcomecalc(outputresults=True, **args) # Calculate the initial outcome and pass it back in
                 args['origoutcomes'] = origoutcomes
-                budgetvecnew, fvals, details = asd(outcomecalc, allbudgetvecs[key], args=args, xmin=xmin, maxtime=maxtime, maxiters=maxiters, verbose=verbose, randseed=allseeds[k], label=thislabel, **kwargs)
+                res = asd(outcomecalc, allbudgetvecs[key], args=args, xmin=xmin, maxtime=maxtime, maxiters=maxiters, verbose=verbose, randseed=allseeds[k], label=thislabel, **kwargs)
+                budgetvecnew, fvals = res.x, res.details.fvals
                 constrainedbudgetnew, constrainedbudgetvecnew, lowerlim, upperlim = constrainbudget(origbudget=origbudget, budgetvec=budgetvecnew, totalbudget=totalbudget, budgetlims=optim.constraints, optiminds=optiminds, outputtype='full')
                 asdresults[key] = {'budget':constrainedbudgetnew, 'fvals':fvals}
                 if fvals[-1]<bestfval: 
