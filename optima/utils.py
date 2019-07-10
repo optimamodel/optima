@@ -171,7 +171,7 @@ def indent(prefix=None, text=None, suffix='\n', n=0, pretty=False, simple=True, 
     
 
 
-def sigfig(X, sigfigs=5, SI=False, sep=False):
+def sigfig(X, sigfigs=5, SI=False, sep=False, keepints=False):
     '''
     Return a string representation of variable x with sigfigs number of significant figures -- 
     copied from asd.py.
@@ -179,7 +179,6 @@ def sigfig(X, sigfigs=5, SI=False, sep=False):
     If SI=True,  then will return e.g. 32433 as 32.433K
     If sep=True, then will return e.g. 32433 as 32,433
     '''
-    from numpy import log10, floor
     output = []
     
     try: 
@@ -206,8 +205,13 @@ def sigfig(X, sigfigs=5, SI=False, sep=False):
                 output.append('0')
             elif sigfigs is None:
                 output.append(flexstr(x)+suffix)
+            elif x>(10**sigfigs) and not SI and keepints: # e.g. x = 23432.23, sigfigs=3, output is 23432
+                roundnumber = int(round(x))
+                if sep: string = format(roundnumber, ',')
+                else:   string = '%0.0f' % x
+                output.append(string)
             else:
-                magnitude = floor(log10(abs(x)))
+                magnitude = np.floor(np.log10(abs(x)))
                 factor = 10**(sigfigs-magnitude-1)
                 x = round(x*factor)/float(factor)
                 digits = int(abs(magnitude) + max(0, sigfigs - max(0,magnitude) - 1) + 1 + (x<0) + (abs(x)<1)) # one because, one for decimal, one for minus
