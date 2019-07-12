@@ -258,7 +258,7 @@ class Project(object):
 
     def checkname(self, what=None, checkexists=None, checkabsent=None, overwrite=True):
         ''' Check that a name exists if it needs to; check that a name doesn't exist if it's not supposed to '''
-        if type(what)==odict: structlist=what # It's already a structlist
+        if isinstance(what,odict): structlist=what # It's already a structlist
         else: structlist = self.getwhat(what=what)
         if isnumber(checkexists): # It's a numerical index
             try: checkexists = structlist.keys()[checkexists] # Convert from 
