@@ -41,13 +41,14 @@ fi
 if [ -d "source/vendor" ]; then
   if [ -d "node_modules/bower/bin" ]; then
   	echo -e '\nPruning bower modules...'
-    node_modules/bower/bin/bower prune
+    node_modules/bower/bin/bower prune --allow-root
   fi
 fi
 
 # install npm and bower deps
 echo -e '\nInstalling npm dependencies...'
 npm install --skip-installed
+node_modules/bower/bin/bower install --allow-root
 
 # compile sass scripts and minify javascript and copy client and everything
 echo -e '\nCompiling client (including minifying JavaScript)...'
