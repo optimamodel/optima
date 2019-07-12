@@ -6,6 +6,7 @@ from optima import version # Get current version
 from numpy import argmin, argsort, nan
 from numpy.random import seed, randint
 import os
+import sciris as sc
 
 #######################################################################################################
 ## Project class -- this contains everything else!
@@ -258,7 +259,7 @@ class Project(object):
 
     def checkname(self, what=None, checkexists=None, checkabsent=None, overwrite=True):
         ''' Check that a name exists if it needs to; check that a name doesn't exist if it's not supposed to '''
-        if isinstance(what,odict): structlist=what # It's already a structlist
+        if type(what)==odict or type(what) == sc.odict: structlist=what # It's already a structlist
         else: structlist = self.getwhat(what=what)
         if isnumber(checkexists): # It's a numerical index
             try: checkexists = structlist.keys()[checkexists] # Convert from 

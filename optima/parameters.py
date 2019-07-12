@@ -11,6 +11,7 @@ from numpy.random import uniform, normal, seed
 from optima import OptimaException, Link, odict, dataframe, printv, sanitize, uuid, today, getdate, makefilepath, smoothinterp, dcp, defaultrepr, isnumber, findinds, getvaliddata, promotetoarray, promotetolist, inclusiverange # Utilities 
 from optima import Settings, getresults, convertlimits, gettvecdt, loadpartable, loadtranstable # Heftier functions
 import optima as op
+import sciris as sc
 
 defaultsmoothness = 1.0 # The number of years of smoothing to do by default
 generalkeys = ['male', 'female', 'popkeys', 'injects', 'fromto', 'transmatrix'] # General parameter keys that are just copied
@@ -546,7 +547,7 @@ class Metapar(Par):
         Par.__init__(self, **defaultargs)
         self.y = y # y-value data, e.g. {'FSW:'0.3, 'MSM':0.7}
         self.ysample = None
-        if type(prior)==odict:
+        if type(prior)==odict or type(prior)==sc.odict:
             self.prior = prior
         elif prior is None:
             self.prior = odict()
