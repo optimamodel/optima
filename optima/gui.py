@@ -12,6 +12,7 @@ from optima import OptimaException, dcp, printv, sigfig, makeplots, getplotselec
 from pylab import figure, close, floor, ion, ioff, isinteractive, ceil, array, show, pause
 from pylab import subplot, ylabel, transpose, legend, fill_between, xlim, title
 from matplotlib.widgets import CheckButtons, Button
+import sciris as sc
 
 global panel, results, origpars, tmppars, parset, fulllabellist, fullkeylist, fullsubkeylist, fulltypelist, fullvallist, plotfig, panelfig, check, checkboxes, updatebutton, clearbutton, defaultsbutton, advancedbutton, closebutton, plusbutton, minusbutton, plotargs, scrwid, scrhei, globaladvanced  # For manualfit GUI
 if 1:  panel, results, origpars, tmppars, parset, fulllabellist, fullkeylist, fullsubkeylist, fulltypelist, fullvallist, plotfig, panelfig, check, checkboxes, updatebutton, clearbutton, defaultsbutton, advancedbutton, closebutton, plusbutton, minusbutton, plotargs, scrwid, scrhei, globaladvanced = [None]*25
@@ -580,7 +581,7 @@ def plotpars(parslist=None, start=None, end=None, verbose=2, rows=6, cols=5, fig
                     try:
                         this = plotdata[nplt,:]
                         ax.set_title(this[0])
-                        if   type(this[1])==odict:
+                        if type(this[1])==odict or type(this[1]) == sc.odict:
                             if len(this[1].keys())==1:  this[1] = this[1][0]
                             elif len(this[1].keys())>1: raise OptimaException('Expecting a number or an array or even an odict with one key, but got an odict with multiple keys (%s)' % this[0])
                         if   isnumber(this[1]):        ax.plot(tvec, 0*tvec+this[1])

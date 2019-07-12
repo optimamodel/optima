@@ -11,6 +11,7 @@ from numpy import zeros, ones, empty, arange, array, inf, isfinite, argmin, args
 from numpy.random import random, seed, randint
 from time import time
 import optima as op # Used by minmoney, at some point should make syntax consistent
+import sciris as sc
 
 # Import dependencies here so no biggie if they fail
 try:    from multiprocessing import Process, Queue
@@ -388,7 +389,7 @@ def outcomecalc(budgetvec=None, which=None, project=None, parsetname=None, progs
     if origbudget  is None: origbudget  = progset.getdefaultbudget()
     if optiminds   is None: optiminds   = findinds(progset.optimizable())
     if budgetvec   is None: budgetvec   = dcp(origbudget[:][optiminds])
-    if type(budgetvec)==odict: budgetvec = dcp(budgetvec[:][optiminds])
+    if type(budgetvec)==odict or type(budgetvec)==sc.odict: budgetvec = dcp(budgetvec[:][optiminds])
        
     # Validate input    
     arglist = [budgetvec, which, parset, progset, objectives, totalbudget, constraints, optiminds, origbudget]
