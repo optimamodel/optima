@@ -14,6 +14,8 @@ RUN ln -s /dev/null /etc/systemd/system/nginx.service
 RUN apt-get update -y
 RUN apt-get install -y apt-utils redis-server supervisor nginx libpq-dev gcc g++ make build-essential
 
+RUN echo never > /sys/kernel/mm/transparent_hugepage/enabled
+
 RUN curl -sL https://deb.nodesource.com/setup_9.x | bash
 RUN apt-get install -yqq nodejs
 RUN apt-get clean -y

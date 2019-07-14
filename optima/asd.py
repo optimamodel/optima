@@ -232,11 +232,11 @@ class objdict(op.odict):
     ''' Exactly the same as an odict, but allows keys to be retrieved by object notiation '''
     def __getattribute__(self, attr):
         try:
-            output = odict.__getattribute__(self, attr)
+            output = op.odict.__getattribute__(self, attr)
             return output
         except Exception as E:
             try:
-                output = odict.__getitem__(self, attr)
+                output = op.odict.__getitem__(self, attr)
                 return output
             except:
                 raise E
