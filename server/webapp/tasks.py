@@ -141,6 +141,7 @@ def check_if_task_started(task_id):
         worklogs = db_session.query(dbmodels.WorkLogDb).filter_by(task_id=task_id)
         worklogs.delete()
         db_session.commit()
+        close_db_session(db_session)
         raise Exception(calc_state['error_text'])
     return calc_state
 
