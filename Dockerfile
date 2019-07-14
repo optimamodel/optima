@@ -27,7 +27,7 @@ RUN python3 setup.py develop
 RUN echo "daemon off;" >> /etc/nginx/nginx.conf
 RUN rm -f /etc/nginx/conf.d/*
 RUN rm -f /etc/nginx/sites-enabled/*
-COPY build/nginx.conf /etc/nginx/conf.d/nginx.conf
+COPY deploy/nginx.conf /etc/nginx/conf.d/nginx.conf
 
 RUN rm -rf client/node_modules
 RUN npm install -g bower
