@@ -12,9 +12,9 @@ RUN python3 -m ensurepip
 RUN ln -s /dev/null /etc/systemd/system/nginx.service
 
 RUN apt-get update -y
-RUN apt-get install -y apt-utils redis-server supervisor nginx libpq-dev gcc g++ make build-essential
+RUN apt-get install -y apt-utils curl wget redis-server supervisor nginx libpq-dev gcc g++ make build-essential
 
-RUN echo never > /sys/kernel/mm/transparent_hugepage/enabled
+# RUN echo never > /sys/kernel/mm/transparent_hugepage/enabled
 
 RUN curl -sL https://deb.nodesource.com/setup_9.x | bash
 RUN apt-get install -yqq nodejs
@@ -35,6 +35,9 @@ RUN npm install -g gulp
 
 COPY server/config.example.py server/config.py
 RUN ./bin/build_client.sh
+
+RUN wget https://dl.google.com/cloudsql/cloud_sql_proxy.linux.amd64 -O cloud_sql_proxy
+RUN chmod +x cloud_sql_proxy
 
 EXPOSE 80 443
 

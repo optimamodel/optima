@@ -4,7 +4,7 @@ import os
 import multiprocessing
 import math
 
-SQLALCHEMY_DATABASE_URI = os.getenv('SQLALCHEMY_DATABASE_URI','postgresql+psycopg2://optima:optima@vladh.net:5432/optima')
+SQLALCHEMY_DATABASE_URI = os.getenv('SQLALCHEMY_DATABASE_URI','postgresql+psycopg2://postgres:A3nl3D0jLFbk8cI4@localhost:5432/optima')
 SECRET_KEY = os.getenv('SECRET_KEY','F12Zr47j\3yX R~X@H!jmM]Lwf/,?KT')
 UPLOAD_FOLDER = os.getenv('UPLOAD_FOLDER','/tmp/uploads')
 REDIS_URL = os.getenv('REDIS_URL', 'redis://127.0.0.1:6379/4') # Shortcut for setting both the celery broker and result backend cache
