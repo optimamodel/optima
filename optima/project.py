@@ -587,8 +587,6 @@ class Project(object):
             for i in range(n):
                 if randseed is not None: sampleseed = randseed + n 
                 else:                    sampleseed = None
-                print('SDLKJSDLFKJDFLKJ')
-                print(sample)
                 simparslist.append(makesimpars(pars, start=start, end=end, dt=dt, tvec=tvec, settings=self.settings, name=parsetname, sample=sample, tosample=tosample, randseed=sampleseed))
         else:
             simparslist = promotetolist(simpars)
@@ -620,14 +618,11 @@ class Project(object):
         P.sensitivity(n=5, tosample='force')
         '''
         if tosample is None: tosample = 'force'
+        
         name, orig = self.reconcileparsets(name, orig) # Ensure that parset with the right name exists -- in most cases, does a copy
-        if updateprior:
-            print('GUGUGUGUGUGUG')
-            print(self.parsets[name].pars['force'].prior)
-            self.parsets[name].updateprior() # Ensure the limits for the priors are correct
-            print('AFFFFFFFFFFFTER')
-            print(self.parsets[name].pars['force'].prior)
         if which == 'runsim':
+            if updateprior:
+                self.parsets[name].updateprior() # Ensure the limits for the priors are correct
             results = self.runsim(name=name, n=n, sample='new', tosample=tosample, randseed=randseed, **kwargs)
         if which == 'runscenarios':
             results = self.runscenarios(name=name, nruns=n, sample='new', tosample=tosample, randseed=randseed, separateoutput=True, **kwargs)
@@ -647,14 +642,29 @@ class Project(object):
         return None
     
     
-    def runscenarios(self, scenlist=None, name=None, verbose=2, debug=False, nruns=None, base=None, ccsample=None, randseed=None, separateoutput=None, **kwargs):
+    def runscenarios(self, scenlist=None, name=None, verbose=2, debug=False, nruns=None, base=None, ccsample=None, randseed=None, separateoutput=None, updateprior=True, tosample=None, sample=None, **kwargs):
         ''' Function to run scenarios '''
 
         if scenlist is not None: self.addscens(scenlist) # Replace existing scenario list with a new one
         if name is None: name = 'scenarios' 
+        if nruns>1: # Handle uncertainty
+            if separateoutput is None: separateoutput = True # Otherwise, uncertainty results are lost
+            if tosample       is None: tosample       = 'force'
+            if sample         is None: sample         = 'new'
+        
+        if updateprior:
+            scenlist = [scen for scen in self.scens.values() if scen.active==True]
+            for scen in scenlist:
+                self.parsets[scen.parsetname].updateprior() # Ensure the limits for the priors are correct
     
-        scenres = runscenarios(project=self, verbose=verbose, name=name, debug=debug, nruns=nruns, base=base, ccsample=ccsample, randseed=randseed, separateoutput=separateoutput, **kwargs)
-        self.addresult(result=scenres[name])
+        scenres = runscenarios(project=self, verbose=verbose, name=name, debug=debug, nruns=nruns, base=base, ccsample=ccsample, randseed=randseed, separateoutput=separateoutput, tosample=tosample, sample=sample, **kwargs)
+        if isinstance(scenres, dict):
+            self.addresult(result=scenres[name])
+        elif isinstance(scenres, list): # For separateoutput = True, used for uncertainty
+            for res in scenres:
+                self.addresult(result=res)
+        else:
+            print('Warning, scenario results type not understood')
         self.modified = today()
         return scenres
     
