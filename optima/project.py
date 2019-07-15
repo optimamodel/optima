@@ -585,8 +585,10 @@ class Project(object):
                 try:    end   = self.parsets[parsetname].end # Ditto
                 except: end   = self.settings.end # Ditto
             for i in range(n):
-                maxint = 2**31-1 # See https://en.wikipedia.org/wiki/2147483647_(number)
-                sampleseed = randint(0,maxint) 
+                if randseed is not None: sampleseed = randseed + n 
+                else:                    sampleseed = None
+                print('SDLKJSDLFKJDFLKJ')
+                print(sample)
                 simparslist.append(makesimpars(pars, start=start, end=end, dt=dt, tvec=tvec, settings=self.settings, name=parsetname, sample=sample, tosample=tosample, randseed=sampleseed))
         else:
             simparslist = promotetolist(simpars)
@@ -608,7 +610,7 @@ class Project(object):
         return results
 
 
-    def sensitivity(self, name='perturb', orig=-1, n=5, tosample=None, randseed=None, **kwargs): # orig=default or orig=0?
+    def sensitivity(self, name='perturb', orig=-1, n=5, tosample=None, randseed=None, which='runsim', updateprior=True, **kwargs): # orig=default or orig=0?
         '''
         Function to perform sensitivity analysis over the parameters as a proxy for "uncertainty".
         
@@ -617,8 +619,18 @@ class Project(object):
         
         P.sensitivity(n=5, tosample='force')
         '''
-        name, orig = self.reconcileparsets(name, orig) # Ensure that parset with the right name exists
-        results = self.runsim(name=name, n=n, sample='new', tosample=tosample, randseed=randseed, **kwargs)
+        if tosample is None: tosample = 'force'
+        name, orig = self.reconcileparsets(name, orig) # Ensure that parset with the right name exists -- in most cases, does a copy
+        if updateprior:
+            print('GUGUGUGUGUGUG')
+            print(self.parsets[name].pars['force'].prior)
+            self.parsets[name].updateprior() # Ensure the limits for the priors are correct
+            print('AFFFFFFFFFFFTER')
+            print(self.parsets[name].pars['force'].prior)
+        if which == 'runsim':
+            results = self.runsim(name=name, n=n, sample='new', tosample=tosample, randseed=randseed, **kwargs)
+        if which == 'runscenarios':
+            results = self.runscenarios(name=name, nruns=n, sample='new', tosample=tosample, randseed=randseed, separateoutput=True, **kwargs)
         self.modified = today()
         return results
 
@@ -635,13 +647,13 @@ class Project(object):
         return None
     
     
-    def runscenarios(self, scenlist=None, name=None, verbose=2, debug=False, nruns=None, base=None, ccsample=None, randseed=None, **kwargs):
+    def runscenarios(self, scenlist=None, name=None, verbose=2, debug=False, nruns=None, base=None, ccsample=None, randseed=None, separateoutput=None, **kwargs):
         ''' Function to run scenarios '''
 
         if scenlist is not None: self.addscens(scenlist) # Replace existing scenario list with a new one
         if name is None: name = 'scenarios' 
     
-        scenres = runscenarios(project=self, verbose=verbose, name=name, debug=debug, nruns=nruns, base=base, ccsample=ccsample, randseed=randseed, **kwargs)
+        scenres = runscenarios(project=self, verbose=verbose, name=name, debug=debug, nruns=nruns, base=base, ccsample=ccsample, randseed=randseed, separateoutput=separateoutput, **kwargs)
         self.addresult(result=scenres[name])
         self.modified = today()
         return scenres
