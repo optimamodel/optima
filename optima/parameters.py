@@ -560,12 +560,12 @@ class Metapar(Par):
         ''' Return the valid keys for using with this parameter '''
         return self.y.keys()
     
-    def sample(self, randseed=None):
+    def sample(self, randseed=None, verbose=False):
         ''' Recalculate ysample '''
         self.ysample = odict()
         for key in self.keys():
             self.ysample[key] = self.prior[key].sample(randseed=randseed)[0]
-            print(self.name, key, self.prior[key].pars, self.ysample[key])
+            if verbose: print(self.name, key, self.prior[key].pars, self.ysample[key]) # For debugging only
         return None
     
     def updateprior(self, verbose=2):
