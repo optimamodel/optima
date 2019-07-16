@@ -11,7 +11,7 @@ steps:
       '--scopes=https://www.googleapis.com/auth/cloud-platform',
       '--tags=http-server,https-server', '--image=debian-9-stretch-v20190618', '--image-project=debian-cloud', '--boot-disk-size=20GB', '--boot-disk-type=pd-standard',
       '--container-restart-policy=always', '--labels=container-vm=cos-stable-69-10895-62-0',
-      '--boot-disk-device-name=hiv-{SHORT_SHA}',
+      '--boot-disk-device-name=hiv-${SHORT_SHA}',
       '--container-image=gcr.io/${PROJECT_ID}/github.com-optimamodel-optima:$SHORT_SHA'
     ]
   - name: 'gcr.io/cloud-builders/gcloud'
