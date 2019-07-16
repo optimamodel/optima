@@ -1,7 +1,7 @@
 #cloudbuild.yaml
 steps:
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['built', '-t', 'gcr.io/${PROJECT_ID}/github.com-optimamodel-optima:$SHORT_SHA', '.']
+    args: ['build', '-t', 'gcr.io/${PROJECT_ID}/github.com-optimamodel-optima:$SHORT_SHA', '.']
   - name: 'gcr.io/cloud-builders/gcloud'
     args: [
       'beta', 'compute', '--project=sharp-imprint-213320', 'instance-templates', 'create-with-container',
