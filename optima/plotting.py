@@ -1413,7 +1413,7 @@ def saveplots(results=None, toplot=None, filetype=None, filename=None, folder=No
             if filename and nplots==1: # Single plot, filename supplied -- use it
                 fullpath = makefilepath(filename=filename, folder=folder, default='optima-figure', ext=filetype) # NB, this filename not used for singlepdf filetype, so it's OK
             else: # Any other case, generate a filename
-                keyforfilename = filter(str.isalnum, str(key)) # Strip out non-alphanumeric stuff for key
+                keyforfilename = ''.join(filter(str.isalnum, str(key))) # Strip out non-alphanumeric stuff for key
                 defaultname = results.projectinfo['name']+'-'+keyforfilename
                 fullpath = makefilepath(filename=filename, folder=folder, default=defaultname, ext=filetype)
             
