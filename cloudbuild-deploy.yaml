@@ -1,0 +1,30 @@
+#cloudbuild.yaml
+steps:
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['tag', 'workspace_app:latest', 'gcr.io/${PROJECT_ID}/github.com-optimamodel-optima:$SHORT_SHA']
+  - name: 'gcr.io/cloud-builders/gcloud'
+    args: [
+      'beta', 'compute', '--project=sharp-imprint-213320', 'instance-templates', 'create-with-container',
+      'hiv-${SHORT_SHA}',
+      '--machine-type=n1-standard-2', '--network=projects/sharp-imprint-213320/global/networks/default', '--network-tier=PREMIUM', '--metadata=google-logging-enabled=true',
+      '--maintenance-policy=MIGRATE', '--service-account=702663043266-compute@developer.gserviceaccount.com',
+      '--scopes=https://www.googleapis.com/auth/cloud-platform',
+      '--tags=http-server,https-server', '--image=debian-9-stretch-v20190618', '--image-project=debian-cloud', '--boot-disk-size=20GB', '--boot-disk-type=pd-standard',
+      '--container-restart-policy=always', '--labels=container-vm=cos-stable-69-10895-62-0',
+      '--boot-disk-device-name=hiv-{SHORT_SHA}',
+      '--container-image=gcr.io/${PROJECT_ID}/github.com-optimamodel-optima:$SHORT_SHA'
+    ]
+  - name: 'gcr.io/cloud-builders/gcloud'
+    args: [
+      'beta', 'compute', '--project=sharp-imprint-213320', 'instance-groups',
+      'managed', 'rolling-action', 'start-update',
+      'hiv',
+      '--version',
+      'template=hiv-${SHORT_SHA}',
+      '--zone=europe-west1-b',
+      '--max-surge=20',
+      '--max-unavailable=9999'
+    ]
+images:
+  - 'gcr.io/${PROJECT_ID}/github.com-optimamodel-optima:$SHORT_SHA'
+timeout: 1200s
