@@ -648,10 +648,11 @@ class Project(object):
 
         if scenlist is not None: self.addscens(scenlist) # Replace existing scenario list with a new one
         if name is None: name = 'scenarios' 
+        if nruns is None: nruns = 1
         if nruns>1: # Handle uncertainty
             if separateoutput is None: separateoutput = True # Otherwise, uncertainty results are lost
-            if tosample       is None: tosample       = 'force'
-            if sample         is None: sample         = 'new'
+            if tosample is None: tosample = 'force'
+            if sample is None: sample = 'new'
         
         if updateprior:
             scenlist = [scen for scen in self.scens.values() if scen.active==True]
