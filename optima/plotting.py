@@ -12,8 +12,7 @@ Version: 2017jun03
 '''
 
 from optima import OptimaException, Resultset, Multiresultset, Parameterset, ICER, odict, printv, gridcolors, vectocolor, alpinecolormap, makefilepath, sigfig, dcp, findinds, findnearest, promotetolist, saveobj, promotetoodict, promotetoarray, boxoff, getvalidinds
-from optima import setylim, commaticks#, SIticks
-from sciris import SIticks
+from optima import setylim, commaticks, SIticks
 from numpy import array, ndim, maximum, arange, zeros, mean, shape, isnan, linspace, minimum # Numeric functions
 from pylab import gcf, get_fignums, close, ion, ioff, isinteractive, figure # Plotting functions
 from matplotlib.backends.backend_agg import new_figure_manager_given_figure as nfmgf # Warning -- assumes user has agg on their system, but should be ok. Use agg since doesn't require an X server
