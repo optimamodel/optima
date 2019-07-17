@@ -117,11 +117,12 @@ def normalize_obj(obj):
     if isinstance(obj, UUID):
         return str(obj)
 
-    if isinstance(obj, map):
-        return list(obj)
+    if six.PY3:
+        if isinstance(obj, map):
+            return list(obj)
 
-    if isinstance(obj, range):
-        return list(obj)
+        if isinstance(obj, range):
+            return list(obj)
 
     return obj
 
