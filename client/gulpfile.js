@@ -61,7 +61,7 @@ gulp.task('copy-assets-and-vendor-js', ['compile-sass'], function () {
       .pipe(uglify().on('error', handleError))
       .pipe(gulp.dest('build/vendor/requirejs')),
     // copy mpld3, instead of minifying because we're using constructor names for plugin identification
-    gulp.src(['source/js/modules/charts/mpld3.v0.4.1.min.js'])
+    gulp.src(['source/js/modules/charts/mpld3.v0.3.1.dev1.js'])
       .pipe(gulp.dest('build/js/modules/charts'))
   );
 });
