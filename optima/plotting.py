@@ -12,7 +12,8 @@ Version: 2017jun03
 '''
 
 from optima import OptimaException, Resultset, Multiresultset, Parameterset, ICER, odict, printv, gridcolors, vectocolor, alpinecolormap, makefilepath, sigfig, dcp, findinds, findnearest, promotetolist, saveobj, promotetoodict, promotetoarray, boxoff, getvalidinds
-from optima import setylim, commaticks, SIticks
+from optima import setylim, commaticks#, SIticks
+from sciris import SIticks
 from numpy import array, ndim, maximum, arange, zeros, mean, shape, isnan, linspace, minimum # Numeric functions
 from pylab import gcf, get_fignums, close, ion, ioff, isinteractive, figure # Plotting functions
 from matplotlib.backends.backend_agg import new_figure_manager_given_figure as nfmgf # Warning -- assumes user has agg on their system, but should be ok. Use agg since doesn't require an X server
@@ -241,7 +242,7 @@ def makeplots(results=None, toplot=None, die=False, verbose=2, plotstartyear=Non
 
 def plotepi(results, toplot=None, uncertainty=True, die=True, showdata=True, verbose=2, figsize=globalfigsize, 
             alpha=0.2, lw=2, dotsize=30, titlesize=globaltitlesize, labelsize=globallabelsize, ticksize=globalticksize, 
-            legendsize=globallegendsize, position=None, useSIticks=False, colors=None, reorder=None, plotstartyear=None, 
+            legendsize=globallegendsize, position=None, useSIticks=True, colors=None, reorder=None, plotstartyear=None, 
             plotendyear=None, interactive=None, fig=None, forreport=False, **kwargs):
         '''
         Render the plots requested and store them in a list. Argument "toplot" should be a list of form e.g.
@@ -591,7 +592,7 @@ def plotimprovement(results=None, figsize=globalfigsize, lw=2, titlesize=globalt
     
     
 def plotbudget(multires=None, die=True, figsize=globalfigsize, legendsize=globallegendsize, position=None,
-               usepie=False, verbose=2, interactive=False, fig=None, useSIticks=False, **kwargs):
+               usepie=False, verbose=2, interactive=False, fig=None, **kwargs):
     ''' 
     Plot multiple allocations on bar or pie charts -- intended for scenarios and optimizations.
 
@@ -681,7 +682,7 @@ def plotbudget(multires=None, die=True, figsize=globalfigsize, legendsize=global
         ax.set_ylim(0,nallocs+1)
         ax.set_title('Budget')
         
-        if useSIticks: SIticks(ax=ax, axis='x')
+        SIticks(ax=ax, axis='x')
         budgetplots['budget'] = fig
     
     return budgetplots
@@ -689,7 +690,7 @@ def plotbudget(multires=None, die=True, figsize=globalfigsize, legendsize=global
 
 
 def plottvbudget(multires=None, die=True, figsize=globalfigsize, legendsize=globallegendsize, position=None,
-               usepie=False, verbose=2, interactive=False, fig=None, useSIticks=False, **kwargs):
+               usepie=False, verbose=2, interactive=False, fig=None, **kwargs):
     ''' 
     Plot time-varying budget.
     
@@ -740,7 +741,7 @@ def plottvbudget(multires=None, die=True, figsize=globalfigsize, legendsize=glob
     ax.set_xlim(tvyears[0]-1,tvyears[-1]+1) # 0.6 is 1 minus 0.4, which is half the bar width
     ax.set_title('Time-varying budget')
     
-    if useSIticks: SIticks(ax=ax, axis='y')
+    SIticks(ax=ax, axis='y')
     tvbudgetplots['tvbudget'] = fig
     
     return tvbudgetplots
