@@ -853,7 +853,7 @@ def minoutcomes(project=None, optim=None, tvec=None, verbose=None, maxtime=None,
     initpeople = results.raw[0]['people'][:,:,initialind] # Pull out the people array corresponding to the start of the optimization -- there shouldn't be multiple raw arrays here
 
     # Calculate original things
-    constrainedbudgetorig, constrainedbudgetvecorig, lowerlim, upperlim = constrainbudget(origbudget=origbudget, budgetvec=budgetvec, totalbudget=origtotalbudget, budgetlims=optim.constraints, optiminds=optiminds, outputtype='full')
+    constrainedbudgetorig, constrainedbudgetvecorig, _, _ = constrainbudget(origbudget=origbudget, budgetvec=budgetvec, totalbudget=origtotalbudget, budgetlims=optim.constraints, optiminds=optiminds, outputtype='full')
     
     # Set up arguments which are shared between outcomecalc and asd
     args = {'which':      'outcomes', 
@@ -874,17 +874,15 @@ def minoutcomes(project=None, optim=None, tvec=None, verbose=None, maxtime=None,
     
     # Set up extremes
     extremebudgets = odict()
-    extremebudgets['Baseline'] = zeros(nprogs)
-    for i,p in enumerate(optiminds): extremebudgets['Baseline'][p] = constrainedbudgetvecorig[i] # Must be a better way of doing this :(
-    for i in nonoptiminds:           extremebudgets['Baseline'][i] = origbudget[i] # Copy the original budget
+    extremebudgets['Baseline'] = origbudget[:].copy() # Original budget including non-optimizable entries
     extremebudgets['Zero']     = zeros(nprogs)
     extremebudgets['Infinite'] = origbudget[:]+project.settings.infmoney
     firstkeys = ['Baseline', 'Zero', 'Infinite'] # These are special, store them
     if mc: # Only run these if MC is being run
         for p,prog in zip(optiminds,optimkeys):
             extremebudgets[prog] = zeros(nprogs)
-            extremebudgets[prog][p] = sum(constrainedbudgetvecorig)
-            for i in nonoptiminds: extremebudgets[prog][p] = origbudget[p] # Copy the original budget
+            extremebudgets[prog][p] = origbudget[optiminds].sum() # Entire reallocatable budget is spent on this program...
+            for i in nonoptiminds: extremebudgets[prog][p] = origbudget[p] # ...with the same original spending on non-optimizable programs
     
     # Set up storage for extreme budgets
     extremeresults  = odict()
