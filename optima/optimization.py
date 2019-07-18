@@ -206,23 +206,22 @@ def constrainbudget(origbudget=None, budgetvec=None, totalbudget=None, budgetlim
 
     # Calculate the current total budget
     currenttotal = sum(constrainedbudget[:]) # WARNING, assumes it's an odict
-    scaleratio = totalbudget/float(currenttotal) # Calculate the ratio between the original budget and the supplied budget
-
-    # Calculate a uniformly scaled budget
-    rescaledbudget = dcp(constrainedbudget)
-    for key in rescaledbudget.keys(): rescaledbudget[key] *= scaleratio # This is the original budget scaled to the total budget
-    if abs(sum(rescaledbudget[:])-totalbudget)>overalltolerance:
-        errormsg = 'Rescaling budget failed (%f != %f)' % (sum(rescaledbudget[:]), totalbudget)
-        raise OptimaException(errormsg)
 
     # Calculate the minimum amount that can be spent on the fixed costs
-    rescaledminfixed = dcp(rescaledbudget) # This is the rescaled budget, but with the minimum fixed costs -- should be <= totalbudget
     proginds = arange(len(origbudget)) # Array of all allowable indices
     fixedinds = array([p for p in proginds if p not in optiminds]) # Get the complement of optiminds
     minfixed = 0.0
     for ind in fixedinds:
-        rescaledminfixed[ind] = rescaledbudget[ind]*budgetlims['min'][ind]
-        minfixed += rescaledminfixed[ind]
+        minfixed += constrainedbudget[ind]
+
+    # Uniformly scale the budget
+    scaleratio = (totalbudget-minfixed)/float(currenttotal-minfixed) # Calculate the ratio between the original budget and the supplied budget
+    rescaledbudget = dcp(constrainedbudget)
+    for ind in optiminds:
+        rescaledbudget[ind] *= scaleratio # This is the original budget scaled to the total budget
+    if abs(sum(rescaledbudget[:])-totalbudget)>overalltolerance:
+        errormsg = 'Rescaling budget failed (%f != %f)' % (sum(rescaledbudget[:]), totalbudget)
+        raise OptimaException(errormsg)
 
     # Calculate the total amount available for the optimizable programs
     optimbudget = totalbudget - minfixed
@@ -287,7 +286,7 @@ def constrainbudget(origbudget=None, budgetvec=None, totalbudget=None, budgetlim
                 scaledbudgetvec[oi] = proposed
 
     # Reconstruct the budget odict using the rescaled budgetvec and the rescaled original amount
-    constrainedbudget = dcp(rescaledminfixed) # This budget has the right fixed costs
+    constrainedbudget = dcp(rescaledbudget) # This budget has the right fixed costs
     for oi,oind in enumerate(optiminds):
         constrainedbudget[oind] = scaledbudgetvec[oi]
     if abs(sum(constrainedbudget[:])-totalbudget)>overalltolerance:
@@ -979,6 +978,7 @@ def minoutcomes(project=None, optim=None, tvec=None, verbose=None, maxtime=None,
                 res = asd(outcomecalc, allbudgetvecs[key], args=args, xmin=xmin, maxtime=maxtime, maxiters=maxiters, verbose=verbose, randseed=allseeds[k], label=thislabel, **kwargs)
                 budgetvecnew, fvals = res.x, res.details.fvals
                 constrainedbudgetnew, constrainedbudgetvecnew, lowerlim, upperlim = constrainbudget(origbudget=origbudget, budgetvec=budgetvecnew, totalbudget=totalbudget, budgetlims=optim.constraints, optiminds=optiminds, outputtype='full')
+                for i in nonoptiminds: constrainedbudgetnew[i] = origbudget[i]  # Copy the original budget
                 asdresults[key] = {'budget':constrainedbudgetnew, 'fvals':fvals}
                 if fvals[-1]<bestfval: 
                     bestkey = key # Reset key
