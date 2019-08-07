@@ -370,7 +370,7 @@ def separatetv(inputvec=None, optiminds=None):
 def outcomecalc(budgetvec=None, which=None, project=None, parsetname=None, progsetname=None, 
                 objectives=None, constraints=None, totalbudget=None, optiminds=None, origbudget=None, tvec=None, 
                 initpeople=None, outputresults=False, verbose=2, ccsample='best', doconstrainbudget=True, 
-                tvsettings=None, tvcontrolvec=None, origoutcomes=None, penalty=1e9, die=False, **kwargs):
+                tvsettings=None, tvcontrolvec=None, origoutcomes=None, penalty=1e9, **kwargs):
     ''' Function to evaluate the objective for a given budget vector (note, not time-varying) '''
 
     # Set up defaults
@@ -436,14 +436,7 @@ def outcomecalc(budgetvec=None, which=None, project=None, parsetname=None, progs
     initpeople = None # WARNING, unfortunately initpeople is still causing mismatches -- turning off for now despite the large (2.5x) performance penalty
     if initpeople is None: startind = None
     else:                  startind = findnearest(tvec, objectives['start']) # Only start running the simulation from the starting point
-    try:
-        results = project.runsim(pars=thisparsdict, parsetname=parsetname, progsetname=progsetname, coverage=thiscoverage, budget=budgetarray, budgetyears=paryears, tvec=tvec, initpeople=initpeople, startind=startind, verbose=0, label=project.name+'-optim-outcomecalc', doround=False, addresult=False, **kwargs)
-    except Exception as E:
-        if outputresults or die: # Can't proceed, no results, or asked to die
-            raise E
-        else:
-            print('outcomecalc() warning: exception encountered during model run, returning nan: %s' % str(E)) # Attempt to proceed
-            return nan
+    results = project.runsim(pars=thisparsdict, parsetname=parsetname, progsetname=progsetname, coverage=thiscoverage, budget=budgetarray, budgetyears=paryears, tvec=tvec, initpeople=initpeople, startind=startind, verbose=0, label=project.name+'-optim-outcomecalc', doround=False, addresult=False, **kwargs)
 
     # Figure out which indices to use
     initialind = findnearest(results.tvec, objectives['start'])
@@ -1028,12 +1021,12 @@ def minoutcomes(project=None, optim=None, tvec=None, verbose=None, maxtime=None,
 
 
 
-def minmoney(project=None, optim=None, tvec=None, verbose=None, maxtime=None, maxiters=1000, fundingchange=1.2, 
-             tolerance=1e-2, ccsample='best', randseed=None, keepraw=False, die=False, parallel=False, **kwargs):
+def minmoney(project=None, optim=None, tvec=None, verbose=None, maxtime=None, maxiters=1000, 
+             fundingchange=1.2, tolerance=1e-2, ccsample='best', randseed=None, keepraw=False, die=False, **kwargs):
     '''
     A function to minimize money for a fixed objective.
 
-    Version: 2019aug06
+    Version: 2018may
     '''
 
     ## Handle budget and remove fixed costs
@@ -1101,15 +1094,11 @@ def minmoney(project=None, optim=None, tvec=None, verbose=None, maxtime=None, ma
     
     def outcome_met(budgetvec=None, totalbudget=None, args=None, target=None):
         ''' Run an outcome calculation and determine if it meets the targets '''
-        try:
-            res = op.outcomecalc(budgetvec, totalbudget=totalbudget, outputresults=True, **args)
-            res_final = res.outcomes['final']
-            dist = distance(target, res_final)
-            is_met = met(dist)
-            return is_met,res_final
-        except Exception as E:
-            print('outcome_met() warning: Exception encountered, returning nan: %s' % str(E))
-            return False,nan
+        res = op.outcomecalc(budgetvec, totalbudget=totalbudget, outputresults=True, **args)
+        res_final = res.outcomes['final']
+        dist = distance(target, res_final)
+        is_met = met(dist)
+        return is_met,res_final
     
         
     #%% Preliminary investigations
