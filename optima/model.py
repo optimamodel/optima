@@ -25,6 +25,25 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
     
     if initpeople is not None:
         print('WARNING, due to parameter interpolation, results are unreliable if initpeople is not None!')
+        
+    # Check simpars
+    def checksimpars(sp, keyhistory=None):
+        if keyhistory is None: keyhistory = ''
+        for key,val in sp.items():
+            if isinstance(val, dict):
+                checksimpars(val, keyhistory=keyhistory+'->'+key)
+            else:
+                try:
+                    isvalid = all(~isnan(array([3,4,2])))
+                except:
+                    pass # It's probably not numeric
+                if not isvalid:
+                    errormsg = 'Not all simulation parameters are non-NaN: failed on key %s, value %s' % (keyhistory+'->'+key, val)
+                    raise OptimaException(errormsg)
+        return None
+    
+    checksimpars(simpars)
+            
     
     # Extract key items
     popkeys         = simpars['popkeys']

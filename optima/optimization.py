@@ -1284,8 +1284,8 @@ def minmoney(project=None, optim=None, tvec=None, verbose=None, maxtime=None, ma
         printv('Throwing...', 2, verbose)
         allocated_budget = op.dcp(budgetvec)
         allocated_budget[:] *= 0
-        remaining_budget = totalbudget
         for p,prop in enumerate(schedule):
+            remaining_budget = totalbudget - allocated_budget.sum()
             printv('  Round %s/%s (%s being allocated)' % (p+1, len(schedule), prop), 2, verbose)
             movie.append('Making throw %s' % (p+1))
             success_count = 1
@@ -1318,7 +1318,8 @@ def minmoney(project=None, optim=None, tvec=None, verbose=None, maxtime=None, ma
             # Populate and restart
             this_allocation = prop*budgetvec
             allocated_budget[:] = this_allocation # This includes the previous allocation, so we can use = instead of +=
-            remaining_budget -= this_allocation.sum()
+            if any(this_allocation<0):
+                raise Exception('BOOOOOOOO')
             printv('Total allocated after round %s: %s\nAllocation:\n%s' % (p+1, this_allocation.sum()/factor, this_allocation/factor), 2, verbose)
         
         op.toc(start)
