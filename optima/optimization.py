@@ -1318,8 +1318,6 @@ def minmoney(project=None, optim=None, tvec=None, verbose=None, maxtime=None, ma
             # Populate and restart
             this_allocation = prop*budgetvec
             allocated_budget[:] = this_allocation # This includes the previous allocation, so we can use = instead of +=
-            if any(this_allocation<0):
-                raise Exception('BOOOOOOOO')
             printv('Total allocated after round %s: %s\nAllocation:\n%s' % (p+1, this_allocation.sum()/factor, this_allocation/factor), 2, verbose)
         
         op.toc(start)
