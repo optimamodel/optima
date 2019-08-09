@@ -780,13 +780,13 @@ class Project(object):
         if optim.tvsettings['timevarying']: # Call time-varying optimization
             multires = tvoptimize(optim=optim, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, 
                                      die=die, origbudget=origbudget, randseed=randseed, mc=mc, **kwargs)
-        elif multi: # It's a multi-run optimization
+        elif multi and not optim.objectives['which']=='money': # It's a multi-run objectives optimization
             multires = multioptimize(optim=optim, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, 
                                      die=die, origbudget=origbudget, randseed=randseed, mc=mc, nchains=nchains, nblocks=nblocks, 
                                      blockiters=blockiters, batch=batch, **kwargs)      
         else: # Neither special case
             multires = optimize(optim=optim, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, 
-                                die=die, origbudget=origbudget, randseed=randseed, mc=mc, **kwargs)
+                                die=die, origbudget=origbudget, randseed=randseed, mc=mc, multi=multi, nchains=nchains, **kwargs)
         
         # Tidy up
         optim.resultsref = multires.name
