@@ -509,7 +509,6 @@ def plotepi(results, toplot=None, uncertainty=True, die=True, showdata=True, ver
                     ax.set_title(plottitle, fontsize=titlesize) # overwrites previously set title
                 setylim(allydata, ax=ax)
                 ax.set_xlim((results.tvec[startind], results.tvec[endind]))
-                ax.xaxis.set_major_locator(ticker.MaxNLocator(integer=True))
                 if not ismultisim:
                     if isstacked: 
                         handles, legendlabels = ax.get_legend_handles_labels()
