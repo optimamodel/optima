@@ -20,6 +20,9 @@ import optima as op
 
 from .exceptions import ParsetDoesNotExist, ProgramDoesNotExist, ProgsetDoesNotExist
 
+import six
+if six.PY3: # Python 3
+    unicode = str
 
 #############################################################################################
 ### UTILITIES
@@ -100,6 +103,9 @@ def normalize_obj(obj):
         else:
             return float(obj)
 
+    if isinstance(obj, np.int64):
+        return int(obj)
+
     if isinstance(obj, unicode):
         try:    string = str(obj) # Try to convert it to ascii
         except: string = obj # Give up and use original
@@ -110,6 +116,13 @@ def normalize_obj(obj):
 
     if isinstance(obj, UUID):
         return str(obj)
+
+    if six.PY3:
+        if isinstance(obj, map):
+            return list(obj)
+
+        if isinstance(obj, range):
+            return list(obj)
 
     return obj
 
@@ -415,7 +428,7 @@ def get_par_limits(project, par):
             return project.settings.convertlimits(limits=limit)
         else:
             return limit
-    return map(convert, par.limits)
+    return list(map(convert, par.limits))
 
 
 def get_parameters_for_scenarios(project):
@@ -640,9 +653,9 @@ def revert_program_costcovdata(costcov):
     if costcov:
         costcov = normalize_obj(costcov)
         result = {
-            't': map(to_nan, pluck(costcov, 'year')),
-            'cost': map(to_nan, pluck(costcov, 'cost')),
-            'coverage': map(to_nan, pluck(costcov, 'coverage')),
+            't': list(map(to_nan, pluck(costcov, 'year'))),
+            'cost': list(map(to_nan, pluck(costcov, 'cost'))),
+            'coverage': list(map(to_nan, pluck(costcov, 'coverage'))),
         }
         try: # Ensure it's in order -- WARNING, copied from programs.py
             order = np.argsort(result['t']) # Get the order from the years
@@ -658,9 +671,9 @@ def revert_program_ccopars(ccopars):
     if ccopars:
         result = op.odict({
             't': ccopars['t'],
-            'saturation': map(tuple, ccopars['saturation']),
-            'unitcost':   map(tuple, ccopars['unitcost']),
-            'popfactor':  map(tuple, ccopars['popfactor'])
+            'saturation': list(map(tuple, ccopars['saturation'])),
+            'unitcost':   list(map(tuple, ccopars['unitcost'])),
+            'popfactor':  list(map(tuple, ccopars['popfactor']))
         })
     return result
 

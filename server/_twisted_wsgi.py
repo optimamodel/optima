@@ -31,7 +31,7 @@ def run():
 
         def render(self, request):
             request.prepath = []
-            request.postpath = ['api'] + request.postpath[:]
+            request.postpath = [b'api'] + request.postpath[:]
 
             r = self._wsgi.render(request)
 

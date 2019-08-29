@@ -37,6 +37,9 @@ from .exceptions import ProjectDoesNotExist, ParsetAlreadyExists, \
 from .dbmodels import UserDb, ProjectDb, ResultsDb, PyObjectDb, UndoStackDb
 from .plot import make_mpld3_graph_dict, convert_to_mpld3
 
+import six
+if six.PY3: # Python 3
+    basestring = str
 
 TEMPLATEDIR = "/tmp"  # CK: hotfix to prevent ownership issues
 
@@ -432,7 +435,11 @@ def save_project(project, db_session=None, is_skip_result=False):
 
 
 def load_project_from_record(project_record):
-    project = project_record.load()
+    try:
+        project = project_record.load()
+    except:
+        print('WARNING, could not load project!')
+        return None
     for progset in project.progsets.values():
         if not hasattr(progset, 'inactive_programs'):
             progset.inactive_programs = op.odict()

@@ -62,7 +62,12 @@ class PyObjectDb(db.Model):
     def load(self):
         print(">> PyObjectDb.load " + self.id.hex)
         redis_entry = redis.get(self.id.hex)
-        return op.loadstr(redis_entry)
+        print(redis_entry)
+        if redis_entry is None:
+            print('WARNING, object %s not found' % self.id.hex) 
+            return None
+        else:
+            return op.loadstr(redis_entry)
 
     def save_obj(self, obj):
         print(">> PyObjectDb.save " + self.id.hex)

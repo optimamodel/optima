@@ -50,33 +50,31 @@ _failed = []
 ### Load helper functions/modules
 #####################################################################################################################
 
-
+# For Python 3 compatibility
 import six
 if six.PY3:
     basestring = str
     unicode = str
-    from sciris import * # Mainly to have the up-to-date, Python3-compatible version of odict
-    from .utils import vec2obj, promotetoodict, promotetolist, gitinfo, smoothinterp, printdata as pd, defaultrepr, today
-else:
-    # General modules
-    from uuid import uuid4 as uuid
-    from copy import deepcopy as dcp
-    
-    # Utilities -- import alphabetically
-    from .utils import blank, boxoff, checkmem, checktype, colorize, commaticks, compareversions, dataindex, dataframe, defaultrepr
-    from .utils import findinds, findnearest, getdate, getfilelist, getvaliddata, getvalidinds, gitinfo, inclusiverange, indent, isnumber, isiterable
-    from .utils import Link, LinkException, loadbalancer, loadtext, makefilepath, objectid, objatt, objmeth, objrepr
-    from .utils import odict, percentcomplete, perturb, printarr, printdata as pd, printdr, printv, printvars, printtologfile
-    from .utils import promotetoarray, promotetolist, promotetoodict, quantile, runcommand, sanitize, sanitizefilename, savetext, scaleratio, setylim
-    from .utils import sigfig, SItickformatter, SIticks, slacknotification, smoothinterp, tic, toc, today, vec2obj
-    from . import utils as _utils; del utils
-    
-    # Color definitions
-    from .colortools import alpinecolormap, bicolormap, gridcolors, vectocolor, shifthue
-    from . import colortools as _colortools; del colortools
 
-    # Optimization algorithm
-    from .asd import asd
+# General modules
+from uuid import uuid4 as uuid
+from copy import deepcopy as dcp
+
+# Utilities -- import alphabetically
+from .utils import blank, boxoff, checkmem, checktype, colorize, commaticks, compareversions, dataindex, dataframe, defaultrepr
+from .utils import findinds, findnearest, getdate, getfilelist, getvaliddata, getvalidinds, gitinfo, inclusiverange, indent, isnumber, isiterable
+from .utils import Link, LinkException, loadbalancer, loadtext, makefilepath, objectid, objatt, objmeth, objrepr
+from .utils import odict, percentcomplete, perturb, printarr, printdata as pd, printdr, printv, printvars, printtologfile
+from .utils import promotetoarray, promotetolist, promotetoodict, quantile, runcommand, sanitize, sanitizefilename, savetext, scaleratio, setylim
+from .utils import sigfig, SItickformatter, SIticks, slacknotification, smoothinterp, tic, toc, today, vec2obj
+from . import utils as _utils; del utils
+
+# Color definitions
+from .colortools import alpinecolormap, bicolormap, gridcolors, vectocolor, shifthue
+from . import colortools as _colortools; del colortools
+
+# Optimization algorithm
+from .asd import asd
 
 # Interpolation
 from .pchip import pchip, plotpchip
@@ -125,7 +123,9 @@ class OptimaException(Exception):
 #####################################################################################################################
 
 # File I/O
-from .fileio import loadobj, saveobj, loadstr, dumpstr, optimafolder, loadpartable, loadtranstable, loaddatapars # CK: may want to tidy up
+try:    from sciris  import loadobj, saveobj, loadstr, dumpstr # If Sciris is installed, use more up to date functions
+except: from .fileio import loadobj, saveobj, loadstr, dumpstr # Fall back in built-in methods
+from .fileio import optimafolder, loadpartable, loadtranstable, loaddatapars # CK: may want to tidy up
 from . import fileio as _fileio; del fileio
 
 # Project settings

@@ -16,11 +16,15 @@ if [ -e $HOME/.nvm/nvm.sh ]; then
    source $HOME/.nvm/nvm.sh
    nvm use 8.11.1
 fi
+if [ -e /usr/local/opt/nvm/nvm.sh ]; then
+   source /usr/local/opt/nvm/nvm.sh
+   nvm use 8.11.1
+fi
 
 
 # This causes all kinds of problems
-if [ -e "package-lock.json" ]; then 
-    rm package-lock.json; 
+if [ -e "package-lock.json" ]; then
+    rm package-lock.json;
 fi
 
 # Sometimes, old junk gets in the build
@@ -37,26 +41,27 @@ fi
 if [ -d "source/vendor" ]; then
   if [ -d "node_modules/bower/bin" ]; then
   	echo -e '\nPruning bower modules...'
-    node_modules/bower/bin/bower prune
+    node_modules/bower/bin/bower prune --allow-root
   fi
 fi
 
 # install npm and bower deps
 echo -e '\nInstalling npm dependencies...'
 npm install --skip-installed
+node_modules/bower/bin/bower install --allow-root
 
 # compile sass scripts and minify javascript and copy client and everything
 echo -e '\nCompiling client (including minifying JavaScript)...'
 node_modules/gulp/bin/gulp.js
 
-# This needs to be done separately, until the compile-build-js-client-uglify task 
+# This needs to be done separately, until the compile-build-js-client-uglify task
 # is made to terminate correctly in gulpfile.js.
 echo -e '\nAdding cache-busting strings...'
 gulp cache-bust
 
 # Remove that damn package-lock.json file again
-if [ -e "package-lock.json" ]; then 
-    rm package-lock.json; 
+if [ -e "package-lock.json" ]; then
+    rm package-lock.json;
 fi
 
 echo -e '\nDone.'

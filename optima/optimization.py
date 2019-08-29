@@ -388,7 +388,7 @@ def outcomecalc(budgetvec=None, which=None, project=None, parsetname=None, progs
     if origbudget  is None: origbudget  = progset.getdefaultbudget()
     if optiminds   is None: optiminds   = findinds(progset.optimizable())
     if budgetvec   is None: budgetvec   = dcp(origbudget[:][optiminds])
-    if type(budgetvec)==odict: budgetvec = dcp(budgetvec[:][optiminds])
+    if isinstance(budgetvec, dict): budgetvec = dcp(budgetvec[:][optiminds]) # Assuming odict
        
     # Validate input    
     arglist = [budgetvec, which, parset, progset, objectives, totalbudget, constraints, optiminds, origbudget]
@@ -579,6 +579,10 @@ def optimize(optim=None, maxiters=None, maxtime=None, verbose=2, stoppingfunc=No
         else:
             errormsg = 'The program set that you provided does not include any optimizable programs, so optimization cannot be performed.'
         raise OptimaException(errormsg)
+        
+#    print('HII203948III')
+#    print(multi)
+#    print(nchains)
 
     # Run outcomes minimization
     if which=='outcomes':
@@ -786,7 +790,8 @@ def tvoptimize(project=None, optim=None, tvec=None, verbose=None, maxtime=None, 
     # Now run the optimization
     origoutcomes = outcomecalc(outputresults=True, **args) # Calculate the initial outcome and pass it back in
     args['origoutcomes'] = origoutcomes
-    tvvecnew, fvals, details = asd(outcomecalc, tvvec, args=args, xmin=xmin, xmax=xmax, sinitial=sinitial, maxtime=maxtime, maxiters=maxiters, verbose=verbose, randseed=randseed, label=thislabel, **kwargs)
+    res = asd(outcomecalc, tvvec, args=args, xmin=xmin, xmax=xmax, sinitial=sinitial, maxtime=maxtime, maxiters=maxiters, verbose=verbose, randseed=randseed, label=thislabel, **kwargs)
+    tvvecnew, fvals = res.x, res.details.fvals
     budgetvec, tvcontrolvec = separatetv(inputvec=tvvecnew, optiminds=optiminds)
     constrainedbudgetnew, constrainedbudgetvecnew, lowerlim, upperlim = constrainbudget(origbudget=origbudget, budgetvec=budgetvec, totalbudget=totalbudget, budgetlims=optim.constraints, optiminds=optiminds, outputtype='full', tvsettings=optim.tvsettings)
     asdresults[key] = {'budget':constrainedbudgetnew, 'fvals':fvals, 'tvcontrolvec':tvcontrolvec}
@@ -974,7 +979,8 @@ def minoutcomes(project=None, optim=None, tvec=None, verbose=None, maxtime=None,
                 else: thislabel = '"'+key+'"'
                 origoutcomes = outcomecalc(outputresults=True, **args) # Calculate the initial outcome and pass it back in
                 args['origoutcomes'] = origoutcomes
-                budgetvecnew, fvals, details = asd(outcomecalc, allbudgetvecs[key], args=args, xmin=xmin, maxtime=maxtime, maxiters=maxiters, verbose=verbose, randseed=allseeds[k], label=thislabel, **kwargs)
+                res = asd(outcomecalc, allbudgetvecs[key], args=args, xmin=xmin, maxtime=maxtime, maxiters=maxiters, verbose=verbose, randseed=allseeds[k], label=thislabel, **kwargs)
+                budgetvecnew, fvals = res.x, res.details.fvals
                 constrainedbudgetnew, constrainedbudgetvecnew, lowerlim, upperlim = constrainbudget(origbudget=origbudget, budgetvec=budgetvecnew, totalbudget=totalbudget, budgetlims=optim.constraints, optiminds=optiminds, outputtype='full')
                 asdresults[key] = {'budget':constrainedbudgetnew, 'fvals':fvals}
                 if fvals[-1]<bestfval: 
@@ -1019,13 +1025,14 @@ def minoutcomes(project=None, optim=None, tvec=None, verbose=None, maxtime=None,
 
 
 def minmoney(project=None, optim=None, tvec=None, verbose=None, maxtime=None, maxiters=1000, 
-             fundingchange=1.2, tolerance=1e-2, ccsample='best', randseed=None, keepraw=False, die=False, **kwargs):
+             fundingchange=1.2, tolerance=1e-2, ccsample='best', randseed=None, keepraw=False, die=False, 
+             n_throws=None, n_success=None, n_refine=None, schedule=None, multi=None, nchains=None, **kwargs):
     '''
     A function to minimize money for a fixed objective.
 
-    Version: 2018may
+    Version: 2019aug08
     '''
-
+    
     ## Handle budget and remove fixed costs
     if project is None or optim is None: raise OptimaException('An optimization requires both a project and an optimization object to run')
     parset = project.parsets[optim.parsetname] # Original parameter set
@@ -1039,7 +1046,7 @@ def minmoney(project=None, optim=None, tvec=None, verbose=None, maxtime=None, ma
     budgetvec = origbudget[:][optiminds] # Get the original budget vector
     origbudgetvec = dcp(budgetvec)
     nprogs = len(budgetvec)
-
+    
     # Define arguments for ASD
     args = {'which':      'money', 
             'project':    project, 
@@ -1060,10 +1067,11 @@ def minmoney(project=None, optim=None, tvec=None, verbose=None, maxtime=None, ma
     start = op.tic()
     
     # Set parameters
-    n_throws     = max(50 ,nprogs*5) # Number of throws to try on each round
-    n_success    = max(20, nprogs*2) # The number of successes needed to terminate the throws
-    n_refine     = 200 # The maximum number of refinement steps to take
-    schedule     = [0.3, 0.6, 0.8, 0.9, 1.0] # The budget amounts to allocate on each round
+    if n_throws  is None: n_throws  = max(50 ,nprogs*5) # Number of throws to try on each round
+    if n_success is None: n_success = max(20, nprogs*2) # The number of successes needed to terminate the throws
+    if n_refine  is None: n_refine  = 200 # The maximum number of refinement steps to take
+    if schedule  is None: schedule  = [0.3, 0.6, 0.8, 0.9, 1.0] # The budget amounts to allocate on each round
+    if multi     is None: multi     = False
     search_step  = 2.0 # The size of the steps to establish the upper/lower limits for the binary search
     search_tol   = 0.01 # Tolerance of the binary search (maximum difference between upper and lower limits)
     refine_steps = [0.0, 0.5, 0.8, 0.9, 0.95, 0.99]  # During refinement, factor by which to scale programs
@@ -1071,6 +1079,9 @@ def minmoney(project=None, optim=None, tvec=None, verbose=None, maxtime=None, ma
     factor       = 1e6 # Units to scale printed out budget numbers
     animate      = False # Whether or not to animate at the end
     if animate: import pylab as pl
+    
+    if multi: printv('Performing parallel money optimization with %s chains...' % nchains, 2, verbose)
+    else:     printv('Performing serial money optimization...', 2, verbose)
 
     
     #%% Definitions
@@ -1281,29 +1292,60 @@ def minmoney(project=None, optim=None, tvec=None, verbose=None, maxtime=None, ma
         printv('Throwing...', 2, verbose)
         allocated_budget = op.dcp(budgetvec)
         allocated_budget[:] *= 0
-        remaining_budget = totalbudget
         for p,prop in enumerate(schedule):
+            remaining_budget = totalbudget - allocated_budget.sum()
             printv('  Round %s/%s (%s being allocated)' % (p+1, len(schedule), prop), 2, verbose)
             movie.append('Making throw %s' % (p+1))
             success_count = 1
             success_budgets = [budgetvec]
-            for t,throw in enumerate(range(n_throws-1)): # -1 since include current budget
-                key = 'Throw %s' % (t+2) # since starting with current
-                vec = random(nprogs)
-                vec /= vec.sum() # Normalize
-                this_budget = op.dcp(allocated_budget) + vec*remaining_budget
-                this_budget /= this_budget.sum()
-                this_budget *= totalbudget
-                results_throw = op.outcomecalc(this_budget, totalbudget=totalbudget, outputresults=True, **args)
-                res_throw = results_throw.outcomes['final']
-                dists[key] = distance(res_targ, res_throw)
-                movie.append(res_throw)
-                if met(dists[key]):
-                    success_count += 1
-                    success_budgets.append(this_budget)
-                printv('    %s of %s, %s/%s successes' % (key, n_throws, success_count, n_success), 2, verbose)
-                if success_count >= n_success:
-                    break
+            
+            if not multi:
+                for t,throw in enumerate(range(n_throws-1)): # -1 since include current budget
+                    key = 'Throw %s' % (t+2) # since starting with current
+                    vec = random(nprogs)
+                    vec /= vec.sum() # Normalize
+                    this_budget = op.dcp(allocated_budget) + vec*remaining_budget
+                    this_budget /= this_budget.sum()
+                    this_budget *= totalbudget
+                    results_throw = op.outcomecalc(this_budget, totalbudget=totalbudget, outputresults=True, **args)
+                    res_throw = results_throw.outcomes['final']
+                    dists[key] = distance(res_targ, res_throw)
+                    movie.append(res_throw)
+                    if met(dists[key]):
+                        success_count += 1
+                        success_budgets.append(this_budget)
+                    printv('    %s of %s, %s/%s successes' % (key, n_throws, success_count, n_success), 2, verbose)
+                    if success_count >= n_success:
+                        break
+            
+            else:
+                import sciris as sc # Optional dependency
+                allkeys = []
+                allvecs = []
+                allbudgets = []
+                for t,throw in enumerate(range(n_throws-1)): # -1 since include current budget
+                    key = 'Throw %s' % (t+2) # since starting with current
+                    vec = random(nprogs)
+                    vec /= vec.sum() # Normalize
+                    this_budget = op.dcp(allocated_budget) + vec*remaining_budget
+                    this_budget /= this_budget.sum()
+                    this_budget *= totalbudget
+                    allkeys.append(key)
+                    allvecs.append(vec)
+                    allbudgets.append(this_budget)
+                parallelargs = sc.dcp(args)
+                parallelargs.update({'totalbudget':totalbudget, 'outputresults':True})
+                all_results_throws = sc.parallelize(op.outcomecalc, iterarg=allbudgets, kwargs=parallelargs, ncpus=nchains)
+                for t,throw in enumerate(range(n_throws-1)): # -1 since include current budget
+                    res_throw = all_results_throws[t].outcomes['final']
+                    dists[allkeys[t]] = distance(res_targ, res_throw)
+                    movie.append(res_throw)
+                    if met(dists[allkeys[t]]):
+                        success_count += 1
+                        success_budgets.append(allbudgets[t])
+                    printv('    %s of %s, %s/%s successes' % (allkeys[t], n_throws, success_count, n_success), 2, verbose)
+                    if success_count >= n_success:
+                        break
             
             # Do the refinement
             printv('Refining throw...', 2, verbose)
@@ -1315,7 +1357,6 @@ def minmoney(project=None, optim=None, tvec=None, verbose=None, maxtime=None, ma
             # Populate and restart
             this_allocation = prop*budgetvec
             allocated_budget[:] = this_allocation # This includes the previous allocation, so we can use = instead of +=
-            remaining_budget -= this_allocation.sum()
             printv('Total allocated after round %s: %s\nAllocation:\n%s' % (p+1, this_allocation.sum()/factor, this_allocation/factor), 2, verbose)
         
         op.toc(start)

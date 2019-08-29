@@ -29,3 +29,4 @@ tests/geo/*.xlsx
 *.pid
 dump.rdb
 config.py
+client/package-lock.json

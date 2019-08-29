@@ -546,7 +546,7 @@ class Metapar(Par):
         Par.__init__(self, **defaultargs)
         self.y = y # y-value data, e.g. {'FSW:'0.3, 'MSM':0.7}
         self.ysample = None
-        if type(prior)==odict:
+        if isinstance(prior, dict):
             self.prior = prior
         elif prior is None:
             self.prior = odict()
