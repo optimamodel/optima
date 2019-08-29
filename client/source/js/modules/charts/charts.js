@@ -262,18 +262,6 @@ define(
               }
             });
 
-            var xlabels;
-            if ('xlabels' in figure) {
-              xlabels = figure.xlabels;
-              delete figure.xlabels;
-            }
-
-            var ylabels;
-            if ('ylabels' in figure) {
-              ylabels = figure.ylabels;
-              delete figure.ylabels;
-            }
-
             var initWidth;
             if ('initWidth' in figure) {
               initWidth = figure.initWidth;
