@@ -271,25 +271,6 @@ define(
             mpld3.draw_figure(attrs.chartId, figure);
             reformatMpld3FigsInElement($element, nLegend);
 
-            if (!_.isUndefined(xlabels)) {
-              var $xaxis = $element.find('.mpld3-xaxis');
-              var $labels = $xaxis.find('g.tick > text');
-              $labels.each(function(i, v) {
-                var $label = $(this);
-                $label.text(xlabels[i]);
-              });
-            }
-
-            if (!_.isUndefined(ylabels)) {
-              var $yaxis = $element.find('.mpld3-yaxis');
-              var $labels = $yaxis.find('g.tick > text');
-              $labels.each(function(i, v) {
-                var $label = $(this);
-                var newText = reformatYTickStr(ylabels[i]);
-                $label.text(newText);
-              });
-            }
-
             if (!_.isUndefined(initWidth)) {
               changeWidthOfSvg($element.find('svg'), initWidth);
             }
