@@ -12,44 +12,44 @@
   <div style="float: left; width: 40%; padding-right:20px">
     <label> Name </label>
     <input
-        class="txbox"
-        type="text"
-        ng-model="state.optimization.name"
-        required/>
+            class="txbox"
+            type="text"
+            ng-model="state.optimization.name"
+            required/>
     <div
-        class="error-hint"
-        ng-show="isNameClash(state.optimization.name)">
+            class="error-hint"
+            ng-show="isNameClash(state.optimization.name)">
       Optimization with this name already exists, please choose a different name.
     </div>
   </div>
   <div style="float: left; width: 30%; padding-right: 20px">
     <label>Parameter set</label>
     <select
-        class="txbox"
-        type="text"
-        ng-model="state.optimization.parset_id"
-        required
-        ng-options="parset.id as parset.name for parset in parsets">
+            class="txbox"
+            type="text"
+            ng-model="state.optimization.parset_id"
+            required
+            ng-options="parset.id as parset.name for parset in parsets">
     </select>
   </div>
   <div style="float: left; width: 30%; padding-right: 20px">
     <label>Program set</label>
     <select
-        class="txbox"
-        type="text"
-        ng-model="state.optimization.progset_id"
-        ng-change="selectProgset(false)"
-        required
-        ng-options="progset.id as progset.name for progset in progsets">
+            class="txbox"
+            type="text"
+            ng-model="state.optimization.progset_id"
+            ng-change="selectProgset(false)"
+            required
+            ng-options="progset.id as progset.name for progset in progsets">
     </select>
   </div>
   <br clear="all">
 </div>
 
 <div
-    style="margin-top: 1.5em"
-    class="section"
-    ng-if="state.optimization.objectives">
+        style="margin-top: 1.5em"
+        class="section"
+        ng-if="state.optimization.objectives">
 
   <h3>
     Objectives
@@ -60,109 +60,183 @@
       <help ref="optimization-set-money-objectives"/>
     </div>
   </h3>
-  <b>Timeline: </b>
+  <b>Timeline </b>
 
   <span ng-show="state.optimization.which == 'outcomes'">
-    from &nbsp;
+    <p>From &nbsp;
     <input
-      type="number"
-      class="txbox"
-      style="display: inline; width: 5em;"
-      ng-model="state.optimization.objectives.start"/>
+            type="number"
+            class="txbox"
+            style="display: inline; width: 5em;"
+            ng-model="state.optimization.objectives.start"/>
     &nbsp; to &nbsp;
     <input
-      type="number"
-      class="txbox"
-      style="display: inline; width: 5em;"
-      ng-model="state.optimization.objectives.end"/>
+            type="number"
+            class="txbox"
+            style="display: inline; width: 5em;"
+            ng-model="state.optimization.objectives.end"/>
 
     &nbsp;&nbsp;
-    <!--<input-->
+      <!--<input-->
       <!--type="checkbox"-->
       <!--ng-model="state.optimization.tvsettings.timevarying">-->
       <!--Allow time-varying optimization-->
-    <!--</input>-->
+      <!--</input>-->
 
-    <!--<span ng-show="state.optimization.tvsettings.timevarying">-->
+      <!--<span ng-show="state.optimization.tvsettings.timevarying">-->
       <!--&nbsp;&nbsp;-->
       <!--<input-->
-        <!--type="checkbox"-->
-        <!--ng-model="state.optimization.tvsettings.tvconstrain">-->
-        <!--Keep total budget constant-->
+      <!--type="checkbox"-->
+      <!--ng-model="state.optimization.tvsettings.tvconstrain">-->
+      <!--Keep total budget constant-->
       <!--</input>-->
-    <!--</span>-->
+      <!--</span>-->
+    </p>
 
   </span>
 
 
   <span ng-show="state.optimization.which == 'money'">
-    compare to base year &nbsp;
+    <p>Compare to base year &nbsp;
     <input
-      type="number"
-      class="txbox"
-      style="display: inline; width: 5em;"
-      ng-model="state.optimization.objectives.base"/>
+            type="number"
+            class="txbox"
+            style="display: inline; width: 5em;"
+            ng-model="state.optimization.objectives.base"/>
     &nbsp; and run from &nbsp;
     <input
-      type="number"
-      class="txbox"
-      style="display: inline; width: 5em;"
-      ng-model="state.optimization.objectives.start"/>
+            type="number"
+            class="txbox"
+            style="display: inline; width: 5em;"
+            ng-model="state.optimization.objectives.start"/>
     &nbsp; to &nbsp;
     <input
-      type="number"
-      class="txbox"
-      style="display: inline; width: 5em;"
-      ng-model="state.optimization.objectives.end"/>
+            type="number"
+            class="txbox"
+            style="display: inline; width: 5em;"
+            ng-model="state.optimization.objectives.end"/>
+    </p>
   </span>
 
-  <br/>
-  <br/>
+  <b>Budget</b> &nbsp;
+  <p>
 
-  <b>Budget:</b> &nbsp;
-  <input
-    type="number"
-    class="txbox"
-    style="display: inline; width: 12em;"
-    ng-model="state.optimization.objectives.budget"/>
-  &nbsp; per year
-
-  <br/>
-  <br/>
-
-  <b>Weighting:</b>
-
-  <span ng-show="state.optimization.which == 'money'">
-    Fraction of infections to be averted: &nbsp;
     <input
-        type="number"
-        class="txbox"
-        style="display: inline; width: 5em;"
-        ng-model="state.optimization.objectives.incifrac"/>
-    &nbsp;
-    &nbsp; Fraction of deaths to be averted:&nbsp;
-    <input
-        type="number"
-        class="txbox"
-        style="display: inline; width: 5em;"
-        ng-model="state.optimization.objectives.deathfrac"/>
-  </span>
+            type="number"
+            class="txbox"
+            style="display: inline; width: 12em;"
+            ng-model="state.optimization.objectives.budget"/>
+    &nbsp; per year
+  </p>
+
+  <br>
 
   <span ng-show="state.optimization.which == 'outcomes'">
-    Infections:&nbsp;
-    <input
-        type="number"
-        class="txbox"
-        style="display: inline; width: 5em;"
-        ng-model="state.optimization.objectives.inciweight"/>
-    &nbsp; Deaths: &nbsp;
-    <input
-        type="number"
-        class="txbox"
-        style="display: inline; width: 5em;"
-        ng-model="state.optimization.objectives.deathweight"/>
+    <p><b>Weightings</b></p>
+    <div style="display:flex; width:100%; justify-content: space-around;">
+      <div style="display: inline-block; width: 30%;">
+        <p>Weight assigned to each:</p>
+        <p>New HIV infection:&nbsp;
+        <input
+                type="number"
+                class="txbox"
+                style="display: inline; width: 5em;"
+                ng-model="state.optimization.objectives.inciweight"/></p>
+        <p>HIV-related death: &nbsp;
+        <input
+                type="number"
+                class="txbox"
+                style="display: inline; width: 5em;"
+                ng-model="state.optimization.objectives.deathweight"/></p>
+        <p>HIV-related DALY: &nbsp;
+        <input
+                type="number"
+                class="txbox"
+                style="display: inline; width: 5em;"
+                ng-model="state.optimization.objectives.dalyweight"/></p>
+        </div>
+      <div style="display: flex; min-height: 100%; width: 10%; vertical-align: middle">
+        <p style="margin: auto;"><b>or</b></p>
+      </div>
+      <div style="display: inline-block; width: 30%; ">
+        <p>Weight assigned to the proportion of people who are:</p>
+        <p>Diagnosed:&nbsp;
+        <input
+                type="number"
+                class="txbox"
+                style="display: inline; width: 5em;"
+                ng-model="state.optimization.objectives.propdiag"/></p>
+        <p>On treatment: &nbsp;
+        <input
+                type="number"
+                class="txbox"
+                style="display: inline; width: 5em;"
+                ng-model="state.optimization.objectives.proptreat"/></p>
+        <p>Virally suppressed: &nbsp;
+        <input
+                type="number"
+                class="txbox"
+                style="display: inline; width: 5em;"
+                ng-model="state.optimization.objectives.propsuppressed"/></p>
+      </div>
+    </div>
   </span>
+
+  <span ng-show="state.optimization.which == 'money'">
+    <p><b>Targets</b></p>
+    <div style="display:flex; width:100%; justify-content: space-around;">
+      <div style="display: inline-block; width: 30%;">
+        <p>Minimum fraction to avert of:</p>
+        <p>Infections: &nbsp;
+        <input
+                type="number"
+                class="txbox"
+                style="display: inline; width: 5em;"
+                ng-model="state.optimization.objectives.incifrac"/></p>
+        <p>Deaths:&nbsp;
+        <input
+                type="number"
+                class="txbox"
+                style="display: inline; width: 5em;"
+                ng-model="state.optimization.objectives.deathfrac"/></p>
+        <p>DALYs:&nbsp;
+        <input
+                type="number"
+                class="txbox"
+                style="display: inline; width: 5em;"
+                ng-model="state.optimization.objectives.dalyfrac"/></p>
+      </div>
+      <div style="display: flex; min-height: 100%; width: 10%; vertical-align: middle">
+        <p style="margin: auto;"><b>or</b></p>
+      </div>
+      <div style="display: inline-block; width: 30%; ">
+        <p>Minimum proportion of people who are:</p>
+        <p>Diagnosed:&nbsp;
+        <input
+                type="number"
+                class="txbox"
+                style="display: inline; width: 5em;"
+                ng-model="state.optimization.objectives.propdiag"/></p>
+        <p>On treatment: &nbsp;
+        <input
+                type="number"
+                class="txbox"
+                style="display: inline; width: 5em;"
+                ng-model="state.optimization.objectives.proptreat"/></p>
+        <p>Virally suppressed: &nbsp;
+        <input
+                type="number"
+                class="txbox"
+                style="display: inline; width: 5em;"
+                ng-model="state.optimization.objectives.propsuppressed"/></p>
+      </div>
+    </div>
+
+  </span>
+
 </div>
+
+<br><br>
 
 <div ng-if="state.optimization.constraints" class="section">
 
@@ -184,8 +258,8 @@
   </style>
 
   <table
-      class="mytable"
-      style="
+          class="mytable"
+          style="
           width: 100%;
           margin-top: 1em;
           border-spacing: 10px;">
@@ -204,41 +278,41 @@
       </td>
       <td style="width: 6em">
         <input
-            style="width: 5em; display: inline;"
-            class="txbox"
-            type="number"
-            ng-model="constraint.min"/> %
+                style="width: 5em; display: inline;"
+                class="txbox"
+                type="number"
+                ng-model="constraint.min"/> %
       </td>
       <td style="width: 5em">
         <input
-            style="width: 5em; display: inline;"
-            class="txbox"
-            type="number"
-            ng-model="constraint.max"/> %
+                style="width: 5em; display: inline;"
+                class="txbox"
+                type="number"
+                ng-model="constraint.max"/> %
       </td>
     </tr>
   </table>
 </div>
 
 <a
-  class="modal-close fa fa-times"
-  ng-click="cancel()">
+        class="modal-close fa fa-times"
+        ng-click="cancel()">
 </a>
 
 <div
-  style="
+        style="
     width: 100%;
     text-align: center;
     padding-top: 2em;">
   <button
-      class="btn"
-      ng-click="cancel()">
+          class="btn"
+          ng-click="cancel()">
     Cancel
   </button>
   <button
-      class="btn"
-      ng-click="save()"
-      ng-disabled="checkNotSavable()">
+          class="btn"
+          ng-click="save()"
+          ng-disabled="checkNotSavable()">
     Save
   </button>
 </div>

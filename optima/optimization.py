@@ -103,11 +103,16 @@ def defaultobjectives(project=None, progsetname=None, which=None, verbose=2):
     objectives['which'] = which
     objectives['keys'] = ['death', 'inci', 'daly'] # Define valid keys
     objectives['keylabels'] = odict([('death','Deaths'), ('inci','New infections'), ('daly','DALYs')]) # Define key labels
+    objectives['cascadekeys'] = ['diag', 'treat', 'suppressed']
+    objectives['cascadelabels'] = odict([('diag', 'Diagnosed'), ('treat', 'On treatment'), ('suppressed', 'Virally suppressed')])
+    objectives['propdiag']       = 0
+    objectives['proptreat']      = 0
+    objectives['propsuppressed'] = 0
+    objectives['start']       = 2020 # "Year to begin optimization"
+    objectives['end']         = 2030 # "Year to project outcomes to"
+    objectives['budget']      = defaultbudget # "Annual budget to optimize"
     if which in ['outcome', 'outcomes']:
         objectives['base']        = None # "Baseline year to compare outcomes to"
-        objectives['start']       = 2017 # "Year to begin optimization"
-        objectives['end']         = 2030 # "Year to project outcomes to"
-        objectives['budget']      = defaultbudget # "Annual budget to optimize"
         objectives['budgetscale'] = [1.] # "Scale factors to apply to budget"
         objectives['deathweight'] = 5    # "Relative weight per death"
         objectives['inciweight']  = 1    # "Relative weight per new infection"
@@ -117,9 +122,6 @@ def defaultobjectives(project=None, progsetname=None, which=None, verbose=2):
         objectives['dalyfrac']    = None # Fraction of DALYs to get to
     elif which=='money':
         objectives['base']        = 2015 # "Baseline year to compare outcomes to"
-        objectives['start']       = 2017 # "Year to begin optimization"
-        objectives['end']         = 2027 # "Year by which to achieve objectives"
-        objectives['budget']      = defaultbudget # "Starting budget"
         objectives['deathweight'] = None # "Death weighting"
         objectives['inciweight']  = None # "Incidence weighting"
         objectives['dalyweight']  = None # "Incidence weighting"
@@ -451,7 +453,7 @@ def outcomecalc(budgetvec=None, which=None, project=None, parsetname=None, progs
 
         # Calculate the outcome
         for key in objectives['keys']:
-            thisweight = objectives[key+'weight'] # e.g. objectives['inciweight']
+            thisweight = objectives[key+'weight'] # e.g. objectives['inciweight'] #CKCHANGE
             thisoutcome = results.main['num'+key].tot[0][indices].sum() # the instantaneous outcome e.g. objectives['numdeath'] -- 0 is since best
             rawoutcomes['num'+key] = thisoutcome*results.dt
             outcome += thisoutcome*thisweight*results.dt # Calculate objective
@@ -488,12 +490,12 @@ def outcomecalc(budgetvec=None, which=None, project=None, parsetname=None, progs
         target = odict()
         targetfrac = odict([(key,objectives[key+'frac']) for key in objectives['keys']]) # e.g. {'inci':objectives['incifrac']} = 0.4 = 40% reduction in incidence
         for key in objectives['keys']:
-            thisresult = results.main['num'+key].tot[0] # the instantaneous outcome e.g. objectives['numdeath'] -- 0 is since best
+            thisresult = results.main['num'+key].tot[0] # the instantaneous outcome e.g. objectives['numdeath'] -- 0 is since best #CKCHANGE
             baseline[key] = float(thisresult[baseind])
             final[key] = float(thisresult[finalind])
             if targetfrac[key] is not None:
                 target[key] = float(baseline[key]*(1-targetfrac[key]))
-                if final[key] > target[key]: targetsmet = False # Targets are NOT met
+                if final[key] > target[key]: targetsmet = False # Targets are NOT met #CKCHANGE
             else: target[key] = -1 # WARNING, must be a better way of showing no defined objective
 
         # Output results

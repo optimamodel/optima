@@ -72,6 +72,7 @@ def setmigrations(which='migrations'):
         ('2.7.6', ('2.8.0', '2019-01-09', None,              'Python 3 compatibility')),
         ('2.8.0', ('2.8.1', '2019-07-10', None,              'Additional changes for Python 3')),
         ('2.8.1', ('2.8.2', '2019-08-07', None,              'Update to money minimization algorithm')),
+        ('2.8.2', ('2.9.0', '2019-10-11', addcascadeopt,     'Add cascade optimization objectives')),
         ])
     
     
@@ -928,13 +929,24 @@ def addpopfactor(project, **kwargs):
     return None
 
 
-#def redoprograms(project, **kwargs):
-#    """
-#    Migration between Optima 2.2.1 and 2.3 -- convert CCO objects from simple dictionaries to parameters.
-#    """
-#    project.version = "2.2"
-#    print('NOT IMPLEMENTED')
-#    return None
+def addcascadeopt(project=None, portfolio=None, **kwargs):
+    '''
+    Migration between Optima 2.8.2 and 2.9.0 -- for both projects and portfolios
+    '''
+    if project is not None:
+        objectives_list = project.optims.values()
+    elif portfolio is not None:
+        objectives_list = [portfolio.objectives]
+    else:
+        raise Exception('Must supply either a project or a portfolio')
+    for objectives in objectives_list:
+        objectives['cascadekeys']    = ['diag', 'treat', 'suppressed']
+        objectives['cascadelabels']  = op.odict([('diag', 'Diagnosed'), ('treat', 'On treatment'), ('suppressed', 'Virally suppressed')])
+        objectives['propdiag']       = 0
+        objectives['proptreat']      = 0
+        objectives['propsuppressed'] = 0
+    return None
+
 
 
 
@@ -1040,8 +1052,12 @@ def migrateportfolio(portfolio=None, verbose=2, die=True):
         op.printv('Migrating portfolio "%s" from %6s -> %6s' % (portfolio.name, portfolio.version, '2.3.5'), 2, verbose)
         portfolio = removegaoptim(portfolio)
     
+    if op.compareversions(portfolio.version, '2.9.0')<0:
+        op.printv('Migrating portfolio "%s" from %6s -> %6s' % (portfolio.name, portfolio.version, '2.9.0'), 2, verbose)
+        portfolio = addcascadeopt(portfolio=portfolio)
+    
     # Update version number to the latest -- no other changes  should be necessary
-    if op.compareversions(portfolio.version, '2.3.5')>=0:
+    if op.compareversions(portfolio.version, '2.9.0')>=0:
         portfolio.version = op.version
     
     # Check to make sure it's the latest version -- should not happen, but just in case!
