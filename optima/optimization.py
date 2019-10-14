@@ -102,9 +102,7 @@ def defaultobjectives(project=None, progsetname=None, which=None, verbose=2):
     objectives = odict() # Dictionary of all objectives
     objectives['which'] = which
     objectives['keys'] = ['death', 'inci', 'daly'] # Define valid keys
-    objectives['keylabels'] = odict([('death','Deaths'), ('inci','New infections'), ('daly','DALYs')]) # Define key labels
-    objectives['cascadekeys'] = ['diag', 'treat', 'suppressed']
-    objectives['cascadelabels'] = odict([('diag', 'Diagnosed'), ('treat', 'On treatment'), ('suppressed', 'Virally suppressed')])
+    objectives['cascadekeys'] = ['propdiag', 'proptreat', 'propsuppressed']
     objectives['propdiag']       = 0
     objectives['proptreat']      = 0
     objectives['propsuppressed'] = 0
@@ -433,7 +431,6 @@ def outcomecalc(budgetvec=None, which=None, project=None, parsetname=None, progs
     
     # Figure out which indices to run for and actually run the model
     tvec       = project.settings.maketvec(end=objectives['end'])
-#    print('TEMP')
     initpeople = None # WARNING, unfortunately initpeople is still causing mismatches -- turning off for now despite the large (2.5x) performance penalty
     if initpeople is None: startind = None
     else:                  startind = findnearest(tvec, objectives['start']) # Only start running the simulation from the starting point
@@ -454,11 +451,21 @@ def outcomecalc(budgetvec=None, which=None, project=None, parsetname=None, progs
         # Calculate the outcome
         for key in objectives['keys']:
             thisweight = objectives[key+'weight'] # e.g. objectives['inciweight'] #CKCHANGE
-            thisoutcome = results.main['num'+key].tot[0][indices].sum() # the instantaneous outcome e.g. objectives['numdeath'] -- 0 is since best
+            thisoutcome = results.main['num'+key].tot[0][indices].sum() # The instantaneous outcome e.g. main['numdeath'] -- 0 is since best
             rawoutcomes['num'+key] = thisoutcome*results.dt
             outcome += thisoutcome*thisweight*results.dt # Calculate objective
             if origoutcomes and penalty and thisweight>0:
                 if rawoutcomes['num'+key]>origoutcomes.rawoutcomes['num'+key]:
+                    outcome += penalty # Impose a large penalty if the solution is worse
+        
+        # Include cascade values
+        for key in objectives['cascadekeys']:
+            thisweight = objectives[key] # e.g. objectives['proptreat']
+            thisoutcome = 1.0 - results.main[key].tot[0][indices].mean() # e.g. main['proptreat']kkkkkkkkllk -- 0 is since best, subtract from 1 to invert
+            rawoutcomes[key] = thisoutcome
+            outcome += thisoutcome*thisweight # Calculate objective
+            if origoutcomes and penalty and thisweight>0:
+                if rawoutcomes[key]>origoutcomes.rawoutcomes[key]:
                     outcome += penalty # Impose a large penalty if the solution is worse
 
         # Output results
@@ -497,10 +504,19 @@ def outcomecalc(budgetvec=None, which=None, project=None, parsetname=None, progs
                 target[key] = float(baseline[key]*(1-targetfrac[key]))
                 if final[key] > target[key]: targetsmet = False # Targets are NOT met #CKCHANGE
             else: target[key] = -1 # WARNING, must be a better way of showing no defined objective
+        
+        targetprops = odict([(key,objectives[key]) for key in objectives['cascadekeys']])
+        for key in objectives['cascadekeys']:
+            thisresult = results.main[key].tot[0] # the instantaneous outcome e.g. objectives['numdeath'] -- 0 is since best #CKCHANGE
+            final[key] = float(thisresult[finalind])
+            if objectives[key] is not None:
+                target[key] = objectives[key]
+                if final[key] < objectives[key]: targetsmet = False # Targets are NOT met #CKCHANGE
+            else: target[key] = -1 # WARNING, must be a better way of showing no defined objective
 
         # Output results
         if outputresults:
-            results.outcomes = odict([('baseline',baseline), ('final',final), ('target',target), ('targetfrac',targetfrac)])
+            results.outcomes = odict([('baseline',baseline), ('final',final), ('target',target), ('targetfrac',targetfrac), ('targetprop',targetprops)])
             results.budgetyears = [objectives['start']] # Use the starting year
             results.budget = constrainedbudget # Convert to budget
             results.targetsmet = targetsmet

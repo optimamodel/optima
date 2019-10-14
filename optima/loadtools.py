@@ -940,11 +940,11 @@ def addcascadeopt(project=None, portfolio=None, **kwargs):
     else:
         raise Exception('Must supply either a project or a portfolio')
     for objectives in objectives_list:
-        objectives['cascadekeys']    = ['diag', 'treat', 'suppressed']
-        objectives['cascadelabels']  = op.odict([('diag', 'Diagnosed'), ('treat', 'On treatment'), ('suppressed', 'Virally suppressed')])
+        objectives['cascadekeys']    = ['propdiag', 'proptreat', 'propsuppressed']
         objectives['propdiag']       = 0
         objectives['proptreat']      = 0
         objectives['propsuppressed'] = 0
+        objectives.pop('keylabels') # Never used
     return None
 
 
