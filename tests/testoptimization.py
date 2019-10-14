@@ -174,13 +174,15 @@ if 'meet909090' in tests:
     
     P = defaultproject('best')
     P.parset().fixprops(False)
+    P.pars()['leavecare'].m = 0 # Warning -- without this, targets can't be met
     
     objectives = defaultobjectives(project=P, which='money')
-    objectives['deathfrac'] = 0.0
-    objectives['incifrac']  = 0.0
-    objectives['propdiag']       = 0.1
-    objectives['proptreat']      = 0.1
-    objectives['propsuppressed'] = 0.1
+    objectives['deathfrac'] = -10.0 # Ignore epi side
+    objectives['incifrac']  = -10.0
+    objectives['dalyfrac']  = -10.0
+    objectives['propdiag']       = 0.90
+    objectives['proptreat']      = 0.81
+    objectives['propsuppressed'] = 0.73
     constraints = defaultconstraints(project=P)
     P.optimize(name='minmoney', parsetname='default', progsetname='default', objectives=objectives, constraints=constraints, maxtime=10, ccsample='random')
     

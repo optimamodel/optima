@@ -507,11 +507,11 @@ def outcomecalc(budgetvec=None, which=None, project=None, parsetname=None, progs
         
         targetprops = odict([(key,objectives[key]) for key in objectives['cascadekeys']])
         for key in objectives['cascadekeys']:
-            thisresult = results.main[key].tot[0] # the instantaneous outcome e.g. objectives['numdeath'] -- 0 is since best #CKCHANGE
+            thisresult = 1 - results.main[key].tot[0] # the instantaneous outcome e.g. objectives['numdeath'] -- 0 is since best #CKCHANGE
             final[key] = float(thisresult[finalind])
             if objectives[key] is not None:
-                target[key] = objectives[key]
-                if final[key] < objectives[key]: targetsmet = False # Targets are NOT met #CKCHANGE
+                target[key] = 1 - objectives[key]
+                if final[key] > objectives[key]: targetsmet = False # Targets are NOT met #CKCHANGE
             else: target[key] = -1 # WARNING, must be a better way of showing no defined objective
 
         # Output results
@@ -1048,7 +1048,7 @@ def minmoney(project=None, optim=None, tvec=None, verbose=None, maxtime=None, ma
     '''
     A function to minimize money for a fixed objective.
 
-    Version: 2019aug08
+    Version: 2019oct14
     '''
     
     ## Handle budget and remove fixed costs
