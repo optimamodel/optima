@@ -14,8 +14,8 @@ tests = [
 # 'multichain',
 # 'investmentstaircase',
 #'minimizemoney',
-'optimizetesting',
-#'meet909090',
+#'optimizetesting',
+'meet909090',
 ]
 
 
@@ -165,6 +165,34 @@ if 'optimizetesting' in tests:
     
     done(t)
     
+
+if 'meet909090' in tests:
+    t = tic()
+
+    print('Running minimize money test...')
+    from optima import defaultobjectives, defaultconstraints
+    
+    P = defaultproject('best')
+    P.parset().fixprops(False)
+    
+    objectives = defaultobjectives(project=P, which='money')
+    objectives['deathfrac'] = 0.0
+    objectives['incifrac']  = 0.0
+    objectives['propdiag']       = 0.1
+    objectives['proptreat']      = 0.1
+    objectives['propsuppressed'] = 0.1
+    constraints = defaultconstraints(project=P)
+    P.optimize(name='minmoney', parsetname='default', progsetname='default', objectives=objectives, constraints=constraints, maxtime=10, ccsample='random')
+    
+    print('Original allocation: ($%g)' % sum(P.results[-1].budgets[0][:]))
+    print(P.results[-1].budgets[0])
+    print('Optimal allocation: ($%g)' % sum(P.optims[-1].getresults().budgets[1][:]))
+    print(P.optims[-1].getresults().budgets[1]) # Showing that results are "stored" in the optimization -- same object as before
+    if doplot: 
+        from optima import pygui
+        pygui(P.results[-1], toplot=['budgets', 'prev-total', 'prev-population', 'numinci-total'], advanced=True)
+    
+    done(t)
 
 
 print('\n\n\nDONE: ran %i tests' % len(tests))
