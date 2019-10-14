@@ -181,8 +181,8 @@ if 'meet909090' in tests:
     objectives['incifrac']  = -10.0
     objectives['dalyfrac']  = -10.0
     objectives['propdiag']       = 0.90
-    objectives['proptreat']      = 0.81
-    objectives['propsuppressed'] = 0.73
+    objectives['proptreat']      = 0.90
+    objectives['propsuppressed'] = 0.90
     constraints = defaultconstraints(project=P)
     P.optimize(name='minmoney', parsetname='default', progsetname='default', objectives=objectives, constraints=constraints, maxtime=10, ccsample='random')
     
