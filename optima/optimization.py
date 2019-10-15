@@ -461,7 +461,7 @@ def outcomecalc(budgetvec=None, which=None, project=None, parsetname=None, progs
         # Include cascade values
         for key in objectives['cascadekeys']:
             thisweight = objectives[key] # e.g. objectives['proptreat']
-            thisoutcome = 1.0 - results.main[key].tot[0][indices].mean() # e.g. main['proptreat']kkkkkkkkllk -- 0 is since best, subtract from 1 to invert
+            thisoutcome = 1.0 - results.main[key].tot[0][-1] # e.g. main['proptreat'] -- 0 is since best, subtract from 1 to invert, use final value
             rawoutcomes[key] = thisoutcome
             outcome += thisoutcome*thisweight # Calculate objective
             if origoutcomes and penalty and thisweight>0:

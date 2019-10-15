@@ -934,7 +934,7 @@ def addcascadeopt(project=None, portfolio=None, **kwargs):
     Migration between Optima 2.8.2 and 2.9.0 -- for both projects and portfolios
     '''
     if project is not None:
-        objectives_list = project.optims.values()
+        objectives_list = [optim.objectives for optim in project.optims.values()]
     elif portfolio is not None:
         objectives_list = [portfolio.objectives]
     else:

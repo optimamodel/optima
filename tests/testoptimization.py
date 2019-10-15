@@ -10,12 +10,12 @@ Version: 2019oct14
 
 ## Define tests to run here!!!
 tests = [
-#'minimizeoutcomes',
+'minimizeoutcomes',
 # 'multichain',
 # 'investmentstaircase',
 #'minimizemoney',
 #'optimizetesting',
-'meet909090',
+#'meet909090',
 ]
 
 
