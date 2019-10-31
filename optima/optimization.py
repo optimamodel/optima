@@ -1383,7 +1383,8 @@ def minmoney(project=None, optim=None, tvec=None, verbose=None, maxtime=None, ma
                     trial_vec[ind] = 0 # Set to zero temporarily
                     new_prog = this_prog*refine_step
                     reallocate = this_prog*(1-refine_step)*refine_keep
-                    reallocate_vec = trial_vec / trial_vec.sum() * reallocate
+
+                    reallocate_vec = trial_vec / max(trial_vec.sum(), 1e-15) * reallocate
                     trial_vec += reallocate_vec
                     trial_vec[ind] = new_prog
                     trial_budget = trial_vec.sum()
