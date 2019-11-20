@@ -11,7 +11,6 @@ from numpy import zeros, ones, empty, arange, array, inf, isfinite, argmin, args
 from numpy.random import random, seed, randint
 from time import time
 import optima as op # Used by minmoney, at some point should make syntax consistent
-import sciris as sc
 
 # Import dependencies here so no biggie if they fail
 try:    from multiprocessing import Process, Queue
@@ -103,12 +102,15 @@ def defaultobjectives(project=None, progsetname=None, which=None, verbose=2):
     objectives = odict() # Dictionary of all objectives
     objectives['which'] = which
     objectives['keys'] = ['death', 'inci', 'daly'] # Define valid keys
-    objectives['keylabels'] = odict([('death','Deaths'), ('inci','New infections'), ('daly','DALYs')]) # Define key labels
+    objectives['cascadekeys'] = ['propdiag', 'proptreat', 'propsuppressed']
+    objectives['propdiag']       = 0
+    objectives['proptreat']      = 0
+    objectives['propsuppressed'] = 0
+    objectives['start']       = 2020 # "Year to begin optimization"
+    objectives['end']         = 2030 # "Year to project outcomes to"
+    objectives['budget']      = defaultbudget # "Annual budget to optimize"
     if which in ['outcome', 'outcomes']:
         objectives['base']        = None # "Baseline year to compare outcomes to"
-        objectives['start']       = 2017 # "Year to begin optimization"
-        objectives['end']         = 2030 # "Year to project outcomes to"
-        objectives['budget']      = defaultbudget # "Annual budget to optimize"
         objectives['budgetscale'] = [1.] # "Scale factors to apply to budget"
         objectives['deathweight'] = 5    # "Relative weight per death"
         objectives['inciweight']  = 1    # "Relative weight per new infection"
@@ -118,9 +120,6 @@ def defaultobjectives(project=None, progsetname=None, which=None, verbose=2):
         objectives['dalyfrac']    = None # Fraction of DALYs to get to
     elif which=='money':
         objectives['base']        = 2015 # "Baseline year to compare outcomes to"
-        objectives['start']       = 2017 # "Year to begin optimization"
-        objectives['end']         = 2027 # "Year by which to achieve objectives"
-        objectives['budget']      = defaultbudget # "Starting budget"
         objectives['deathweight'] = None # "Death weighting"
         objectives['inciweight']  = None # "Incidence weighting"
         objectives['dalyweight']  = None # "Incidence weighting"
@@ -389,7 +388,7 @@ def outcomecalc(budgetvec=None, which=None, project=None, parsetname=None, progs
     if origbudget  is None: origbudget  = progset.getdefaultbudget()
     if optiminds   is None: optiminds   = findinds(progset.optimizable())
     if budgetvec   is None: budgetvec   = dcp(origbudget[:][optiminds])
-    if type(budgetvec)==odict or type(budgetvec)==sc.odict: budgetvec = dcp(budgetvec[:][optiminds])
+    if isinstance(budgetvec, dict): budgetvec = dcp(budgetvec[:][optiminds]) # Assuming odict
        
     # Validate input    
     arglist = [budgetvec, which, parset, progset, objectives, totalbudget, constraints, optiminds, origbudget]
@@ -432,7 +431,6 @@ def outcomecalc(budgetvec=None, which=None, project=None, parsetname=None, progs
     
     # Figure out which indices to run for and actually run the model
     tvec       = project.settings.maketvec(end=objectives['end'])
-#    print('TEMP')
     initpeople = None # WARNING, unfortunately initpeople is still causing mismatches -- turning off for now despite the large (2.5x) performance penalty
     if initpeople is None: startind = None
     else:                  startind = findnearest(tvec, objectives['start']) # Only start running the simulation from the starting point
@@ -452,12 +450,22 @@ def outcomecalc(budgetvec=None, which=None, project=None, parsetname=None, progs
 
         # Calculate the outcome
         for key in objectives['keys']:
-            thisweight = objectives[key+'weight'] # e.g. objectives['inciweight']
-            thisoutcome = results.main['num'+key].tot[0][indices].sum() # the instantaneous outcome e.g. objectives['numdeath'] -- 0 is since best
+            thisweight = objectives[key+'weight'] # e.g. objectives['inciweight'] #CKCHANGE
+            thisoutcome = results.main['num'+key].tot[0][indices].sum() # The instantaneous outcome e.g. main['numdeath'] -- 0 is since best
             rawoutcomes['num'+key] = thisoutcome*results.dt
             outcome += thisoutcome*thisweight*results.dt # Calculate objective
             if origoutcomes and penalty and thisweight>0:
                 if rawoutcomes['num'+key]>origoutcomes.rawoutcomes['num'+key]:
+                    outcome += penalty # Impose a large penalty if the solution is worse
+        
+        # Include cascade values
+        for key in objectives['cascadekeys']:
+            thisweight = objectives[key] # e.g. objectives['proptreat']
+            thisoutcome = 1.0 - results.main[key].tot[0][-1] # e.g. main['proptreat'] -- 0 is since best, subtract from 1 to invert, use final value
+            rawoutcomes[key] = thisoutcome
+            outcome += thisoutcome*thisweight # Calculate objective
+            if origoutcomes and penalty and thisweight>0:
+                if rawoutcomes[key]>origoutcomes.rawoutcomes[key]:
                     outcome += penalty # Impose a large penalty if the solution is worse
 
         # Output results
@@ -489,17 +497,26 @@ def outcomecalc(budgetvec=None, which=None, project=None, parsetname=None, progs
         target = odict()
         targetfrac = odict([(key,objectives[key+'frac']) for key in objectives['keys']]) # e.g. {'inci':objectives['incifrac']} = 0.4 = 40% reduction in incidence
         for key in objectives['keys']:
-            thisresult = results.main['num'+key].tot[0] # the instantaneous outcome e.g. objectives['numdeath'] -- 0 is since best
+            thisresult = results.main['num'+key].tot[0] # the instantaneous outcome e.g. objectives['numdeath'] -- 0 is since best #CKCHANGE
             baseline[key] = float(thisresult[baseind])
             final[key] = float(thisresult[finalind])
             if targetfrac[key] is not None:
                 target[key] = float(baseline[key]*(1-targetfrac[key]))
-                if final[key] > target[key]: targetsmet = False # Targets are NOT met
+                if final[key] > target[key]: targetsmet = False # Targets are NOT met #CKCHANGE
+            else: target[key] = -1 # WARNING, must be a better way of showing no defined objective
+        
+        targetprops = odict([(key,objectives[key]) for key in objectives['cascadekeys']])
+        for key in objectives['cascadekeys']:
+            thisresult = 1 - results.main[key].tot[0] # the instantaneous outcome e.g. objectives['numdeath'] -- 0 is since best #CKCHANGE
+            final[key] = float(thisresult[finalind])
+            if objectives[key] is not None:
+                target[key] = 1 - objectives[key]
+                if final[key] > objectives[key]: targetsmet = False # Targets are NOT met #CKCHANGE
             else: target[key] = -1 # WARNING, must be a better way of showing no defined objective
 
         # Output results
         if outputresults:
-            results.outcomes = odict([('baseline',baseline), ('final',final), ('target',target), ('targetfrac',targetfrac)])
+            results.outcomes = odict([('baseline',baseline), ('final',final), ('target',target), ('targetfrac',targetfrac), ('targetprop',targetprops)])
             results.budgetyears = [objectives['start']] # Use the starting year
             results.budget = constrainedbudget # Convert to budget
             results.targetsmet = targetsmet
@@ -580,6 +597,10 @@ def optimize(optim=None, maxiters=None, maxtime=None, verbose=2, stoppingfunc=No
         else:
             errormsg = 'The program set that you provided does not include any optimizable programs, so optimization cannot be performed.'
         raise OptimaException(errormsg)
+        
+#    print('HII203948III')
+#    print(multi)
+#    print(nchains)
 
     # Run outcomes minimization
     if which=='outcomes':
@@ -1022,13 +1043,14 @@ def minoutcomes(project=None, optim=None, tvec=None, verbose=None, maxtime=None,
 
 
 def minmoney(project=None, optim=None, tvec=None, verbose=None, maxtime=None, maxiters=1000, 
-             fundingchange=1.2, tolerance=1e-2, ccsample='best', randseed=None, keepraw=False, die=False, **kwargs):
+             fundingchange=1.2, tolerance=1e-2, ccsample='best', randseed=None, keepraw=False, die=False, 
+             n_throws=None, n_success=None, n_refine=None, schedule=None, multi=None, nchains=None, **kwargs):
     '''
     A function to minimize money for a fixed objective.
 
-    Version: 2018may
+    Version: 2019oct14
     '''
-
+    
     ## Handle budget and remove fixed costs
     if project is None or optim is None: raise OptimaException('An optimization requires both a project and an optimization object to run')
     parset = project.parsets[optim.parsetname] # Original parameter set
@@ -1042,7 +1064,7 @@ def minmoney(project=None, optim=None, tvec=None, verbose=None, maxtime=None, ma
     budgetvec = origbudget[:][optiminds] # Get the original budget vector
     origbudgetvec = dcp(budgetvec)
     nprogs = len(budgetvec)
-
+    
     # Define arguments for ASD
     args = {'which':      'money', 
             'project':    project, 
@@ -1063,10 +1085,11 @@ def minmoney(project=None, optim=None, tvec=None, verbose=None, maxtime=None, ma
     start = op.tic()
     
     # Set parameters
-    n_throws     = max(50 ,nprogs*5) # Number of throws to try on each round
-    n_success    = max(20, nprogs*2) # The number of successes needed to terminate the throws
-    n_refine     = 200 # The maximum number of refinement steps to take
-    schedule     = [0.3, 0.6, 0.8, 0.9, 1.0] # The budget amounts to allocate on each round
+    if n_throws  is None: n_throws  = max(50 ,nprogs*5) # Number of throws to try on each round
+    if n_success is None: n_success = max(20, nprogs*2) # The number of successes needed to terminate the throws
+    if n_refine  is None: n_refine  = 200 # The maximum number of refinement steps to take
+    if schedule  is None: schedule  = [0.3, 0.6, 0.8, 0.9, 1.0] # The budget amounts to allocate on each round
+    if multi     is None: multi     = False
     search_step  = 2.0 # The size of the steps to establish the upper/lower limits for the binary search
     search_tol   = 0.01 # Tolerance of the binary search (maximum difference between upper and lower limits)
     refine_steps = [0.0, 0.5, 0.8, 0.9, 0.95, 0.99]  # During refinement, factor by which to scale programs
@@ -1074,6 +1097,9 @@ def minmoney(project=None, optim=None, tvec=None, verbose=None, maxtime=None, ma
     factor       = 1e6 # Units to scale printed out budget numbers
     animate      = False # Whether or not to animate at the end
     if animate: import pylab as pl
+    
+    if multi: printv('Performing parallel money optimization with %s chains...' % nchains, 2, verbose)
+    else:     printv('Performing serial money optimization...', 2, verbose)
 
     
     #%% Definitions
@@ -1284,29 +1310,60 @@ def minmoney(project=None, optim=None, tvec=None, verbose=None, maxtime=None, ma
         printv('Throwing...', 2, verbose)
         allocated_budget = op.dcp(budgetvec)
         allocated_budget[:] *= 0
-        remaining_budget = totalbudget
         for p,prop in enumerate(schedule):
+            remaining_budget = totalbudget - allocated_budget.sum()
             printv('  Round %s/%s (%s being allocated)' % (p+1, len(schedule), prop), 2, verbose)
             movie.append('Making throw %s' % (p+1))
             success_count = 1
             success_budgets = [budgetvec]
-            for t,throw in enumerate(range(n_throws-1)): # -1 since include current budget
-                key = 'Throw %s' % (t+2) # since starting with current
-                vec = random(nprogs)
-                vec /= vec.sum() # Normalize
-                this_budget = op.dcp(allocated_budget) + vec*remaining_budget
-                this_budget /= this_budget.sum()
-                this_budget *= totalbudget
-                results_throw = op.outcomecalc(this_budget, totalbudget=totalbudget, outputresults=True, **args)
-                res_throw = results_throw.outcomes['final']
-                dists[key] = distance(res_targ, res_throw)
-                movie.append(res_throw)
-                if met(dists[key]):
-                    success_count += 1
-                    success_budgets.append(this_budget)
-                printv('    %s of %s, %s/%s successes' % (key, n_throws, success_count, n_success), 2, verbose)
-                if success_count >= n_success:
-                    break
+            
+            if not multi:
+                for t,throw in enumerate(range(n_throws-1)): # -1 since include current budget
+                    key = 'Throw %s' % (t+2) # since starting with current
+                    vec = random(nprogs)
+                    vec /= vec.sum() # Normalize
+                    this_budget = op.dcp(allocated_budget) + vec*remaining_budget
+                    this_budget /= this_budget.sum()
+                    this_budget *= totalbudget
+                    results_throw = op.outcomecalc(this_budget, totalbudget=totalbudget, outputresults=True, **args)
+                    res_throw = results_throw.outcomes['final']
+                    dists[key] = distance(res_targ, res_throw)
+                    movie.append(res_throw)
+                    if met(dists[key]):
+                        success_count += 1
+                        success_budgets.append(this_budget)
+                    printv('    %s of %s, %s/%s successes' % (key, n_throws, success_count, n_success), 2, verbose)
+                    if success_count >= n_success:
+                        break
+            
+            else:
+                import sciris as sc # Optional dependency
+                allkeys = []
+                allvecs = []
+                allbudgets = []
+                for t,throw in enumerate(range(n_throws-1)): # -1 since include current budget
+                    key = 'Throw %s' % (t+2) # since starting with current
+                    vec = random(nprogs)
+                    vec /= vec.sum() # Normalize
+                    this_budget = op.dcp(allocated_budget) + vec*remaining_budget
+                    this_budget /= this_budget.sum()
+                    this_budget *= totalbudget
+                    allkeys.append(key)
+                    allvecs.append(vec)
+                    allbudgets.append(this_budget)
+                parallelargs = sc.dcp(args)
+                parallelargs.update({'totalbudget':totalbudget, 'outputresults':True})
+                all_results_throws = sc.parallelize(op.outcomecalc, iterarg=allbudgets, kwargs=parallelargs, ncpus=nchains)
+                for t,throw in enumerate(range(n_throws-1)): # -1 since include current budget
+                    res_throw = all_results_throws[t].outcomes['final']
+                    dists[allkeys[t]] = distance(res_targ, res_throw)
+                    movie.append(res_throw)
+                    if met(dists[allkeys[t]]):
+                        success_count += 1
+                        success_budgets.append(allbudgets[t])
+                    printv('    %s of %s, %s/%s successes' % (allkeys[t], n_throws, success_count, n_success), 2, verbose)
+                    if success_count >= n_success:
+                        break
             
             # Do the refinement
             printv('Refining throw...', 2, verbose)
@@ -1318,7 +1375,6 @@ def minmoney(project=None, optim=None, tvec=None, verbose=None, maxtime=None, ma
             # Populate and restart
             this_allocation = prop*budgetvec
             allocated_budget[:] = this_allocation # This includes the previous allocation, so we can use = instead of +=
-            remaining_budget -= this_allocation.sum()
             printv('Total allocated after round %s: %s\nAllocation:\n%s' % (p+1, this_allocation.sum()/factor, this_allocation/factor), 2, verbose)
         
         op.toc(start)
@@ -1346,6 +1402,7 @@ def minmoney(project=None, optim=None, tvec=None, verbose=None, maxtime=None, ma
                     new_prog = this_prog*refine_step
                     reallocate = this_prog*(1-refine_step)*refine_keep
                     reallocate_vec = trial_vec / trial_vec.sum() * reallocate
+                    reallocate_vec = op.sanitize(reallocate_vec, replacenans=0) # Ensure in the corner case that 0/0 is replaced with 0
                     trial_vec += reallocate_vec
                     trial_vec[ind] = new_prog
                     trial_budget = trial_vec.sum()

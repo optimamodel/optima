@@ -609,7 +609,7 @@ def plotbudget(multires=None, die=True, figsize=globalfigsize, legendsize=global
                 budgets[b][p] = mean(budgets[b][p]) # If it's over multiple years (or not!), take the mean
     for key in budgets.keys(): # Budgets is an odict
         for i,val in enumerate(budgets[key].values()):
-            if not(val>0): budgets[key][i] = 0.0 # Turn None, nan, etc. into 0.0
+            if not val: budgets[key][i] = 0.0 # Turn None, nan, etc. into 0.0 -- note that val>0 is no longer valid in Python 3!
     
     alloclabels = budgets.keys() # WARNING, will this actually work if some values are None?
     allprogkeys = [] # Create master list of all programs in all budgets

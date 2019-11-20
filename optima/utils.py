@@ -179,6 +179,7 @@ def sigfig(X, sigfigs=5, SI=False, sep=False, keepints=False):
     If SI=True,  then will return e.g. 32433 as 32.433K
     If sep=True, then will return e.g. 32433 as 32,433
     '''
+    import numpy as np
     output = []
     
     try: 
@@ -1573,27 +1574,6 @@ def setylim(data=None, ax=None):
     return lowerlim,upperlim
 
 
-def SItickformatter(x, pos, sigfigs=2, SI=True, *args, **kwargs):  # formatter function takes tick label and tick position
-    ''' Formats axis ticks so that e.g. 34,243 becomes 34K '''
-    output = sigfig(x, sigfigs=sigfigs, SI=SI) # Pretty simple since sigfig() does all the work
-    return output
-
-
-def SIticks(fig=None, ax=None, axis='y'):
-    ''' Apply SI tick formatting to one axis of a figure '''
-    from matplotlib import ticker
-    if  fig is not None: axlist = fig.axes
-    elif ax is not None: axlist = promotetolist(ax)
-    else: raise Exception('Must supply either figure or axes')
-    for ax in axlist:
-        if   axis=='x': thisaxis = ax.xaxis
-        elif axis=='y': thisaxis = ax.yaxis
-        elif axis=='z': thisaxis = ax.zaxis
-        else: raise Exception('Axis must be x, y, or z')
-        thisaxis.set_major_formatter(ticker.FuncFormatter(SItickformatter))
-    return None
-
-
 def commaticks(fig=None, ax=None, axis='y'):
     ''' Use commas in formatting the y axis of a figure -- see http://stackoverflow.com/questions/25973581/how-to-format-axis-number-format-to-thousands-with-a-comma-in-matplotlib '''
     from matplotlib import ticker
@@ -1606,6 +1586,35 @@ def commaticks(fig=None, ax=None, axis='y'):
         elif axis=='z': thisaxis = ax.zaxis
         else: raise Exception('Axis must be x, y, or z')
         thisaxis.set_major_formatter(ticker.FuncFormatter(lambda x, p: format(int(x), ',')))
+    return None
+
+    
+def SItickformatter(x, pos=None, sigfigs=2, SI=True, *args, **kwargs):  # formatter function takes tick label and tick position
+    ''' Formats axis ticks so that e.g. 34,243 becomes 34K '''
+    output = sigfig(x, sigfigs=sigfigs, SI=SI) # Pretty simple since ut.sigfig() does all the work
+    return output
+
+
+
+def SIticks(fig=None, ax=None, axis='y', fixed=False):
+    ''' Apply SI tick formatting to one axis of a figure '''
+    from matplotlib import ticker
+    if  fig is not None: axlist = fig.axes
+    elif ax is not None: axlist = promotetolist(ax)
+    else: raise Exception('Must supply either figure or axes')
+    for ax in axlist:
+        if   axis=='x': thisaxis = ax.xaxis
+        elif axis=='y': thisaxis = ax.yaxis
+        elif axis=='z': thisaxis = ax.zaxis
+        else: raise Exception('Axis must be x, y, or z')
+        if fixed:
+            ticklocs = thisaxis.get_ticklocs()
+            ticklabels = []
+            for tickloc in ticklocs:
+                ticklabels.append(SItickformatter(tickloc))
+            thisaxis.set_major_formatter(ticker.FixedFormatter(ticklabels))
+        else:
+            thisaxis.set_major_formatter(ticker.FuncFormatter(SItickformatter))
     return None
 
 

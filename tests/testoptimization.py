@@ -5,15 +5,17 @@ To use: comment out lines in the definition of 'tests' to not run those tests.
 NOTE: for best results, run in interactive mode, e.g.
 python -i tests.py
 
-Version: 2017jan13
+Version: 2019oct14
 """
 
 ## Define tests to run here!!!
 tests = [
-#'minimizeoutcomes',
-#'multichain',
-##'investmentstaircase',
-'minimizemoney',
+'minimizeoutcomes',
+# 'multichain',
+# 'investmentstaircase',
+#'minimizemoney',
+#'optimizetesting',
+#'meet909090',
 ]
 
 
@@ -137,6 +139,62 @@ if 'minimizemoney' in tests:
 
 
 
+if 'optimizetesting' in tests:
+    t = tic()
+
+    print('Running optimize testing test...')
+    from optima import defaultobjectives, defaultconstraints
+    
+    P = defaultproject('best')
+    P.parset().fixprops(False)
+    
+    objectives = defaultobjectives(project=P, which='outcome')
+    objectives['inciweight'] = 0
+    objectives['deathweight'] = 0
+    objectives['proptreat'] = 1.0
+    constraints = defaultconstraints(project=P)
+    P.optimize(name='maxdiag', mc=1, maxtime=30, parsetname='default', progsetname='default', objectives=objectives, constraints=constraints, ccsample='random')
+    
+    print('Original allocation: ($%g)' % sum(P.results[-1].budgets[0][:]))
+    print(P.results[-1].budgets[0])
+    print('Optimal allocation: ($%g)' % sum(P.optims[-1].getresults().budgets[1][:]))
+    print(P.optims[-1].getresults().budgets[1]) # Showing that results are "stored" in the optimization -- same object as before
+    if doplot: 
+        from optima import pygui
+        pygui(P.results[-1], toplot=['budgets', 'prev-total', 'prev-population', 'numinci-total'], advanced=True)
+    
+    done(t)
+    
+
+if 'meet909090' in tests:
+    t = tic()
+
+    print('Running minimize money test...')
+    from optima import defaultobjectives, defaultconstraints
+    
+    P = defaultproject('best')
+    P.parset().fixprops(False)
+    P.pars()['leavecare'].m = 0 # Warning -- without this, targets can't be met
+    
+    objectives = defaultobjectives(project=P, which='money')
+    objectives['deathfrac'] = -10.0 # Ignore epi side
+    objectives['incifrac']  = -10.0
+    objectives['dalyfrac']  = -10.0
+    objectives['propdiag']       = 0.90
+    objectives['proptreat']      = 0.90
+    objectives['propsuppressed'] = 0.90
+    constraints = defaultconstraints(project=P)
+    P.optimize(name='minmoney', parsetname='default', progsetname='default', objectives=objectives, constraints=constraints, maxtime=10, ccsample='random')
+    
+    print('Original allocation: ($%g)' % sum(P.results[-1].budgets[0][:]))
+    print(P.results[-1].budgets[0])
+    print('Optimal allocation: ($%g)' % sum(P.optims[-1].getresults().budgets[1][:]))
+    print(P.optims[-1].getresults().budgets[1]) # Showing that results are "stored" in the optimization -- same object as before
+    if doplot: 
+        from optima import pygui
+        pygui(P.results[-1], toplot=['budgets', 'prev-total', 'prev-population', 'numinci-total'], advanced=True)
+    
+    done(t)
 
 
 print('\n\n\nDONE: ran %i tests' % len(tests))

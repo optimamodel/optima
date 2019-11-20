@@ -6,7 +6,6 @@ from optima import version # Get current version
 from numpy import argmin, argsort, nan
 from numpy.random import seed, randint
 import os
-import sciris as sc
 
 #######################################################################################################
 ## Project class -- this contains everything else!
@@ -259,7 +258,7 @@ class Project(object):
 
     def checkname(self, what=None, checkexists=None, checkabsent=None, overwrite=True):
         ''' Check that a name exists if it needs to; check that a name doesn't exist if it's not supposed to '''
-        if type(what)==odict or type(what) == sc.odict: structlist=what # It's already a structlist
+        if isinstance(what, dict): structlist=what # It's already a structlist
         else: structlist = self.getwhat(what=what)
         if isnumber(checkexists): # It's a numerical index
             try: checkexists = structlist.keys()[checkexists] # Convert from 
@@ -804,13 +803,13 @@ class Project(object):
         if optim.tvsettings['timevarying']: # Call time-varying optimization
             multires = tvoptimize(optim=optim, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, 
                                      die=die, origbudget=origbudget, randseed=randseed, mc=mc, **kwargs)
-        elif multi: # It's a multi-run optimization
+        elif multi and not optim.objectives['which']=='money': # It's a multi-run objectives optimization
             multires = multioptimize(optim=optim, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, 
                                      die=die, origbudget=origbudget, randseed=randseed, mc=mc, nchains=nchains, nblocks=nblocks, 
                                      blockiters=blockiters, batch=batch, **kwargs)      
         else: # Neither special case
             multires = optimize(optim=optim, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, 
-                                die=die, origbudget=origbudget, randseed=randseed, mc=mc, **kwargs)
+                                die=die, origbudget=origbudget, randseed=randseed, mc=mc, multi=multi, nchains=nchains, **kwargs)
         
         # Tidy up
         optim.resultsref = multires.name
