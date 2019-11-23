@@ -1,5 +1,5 @@
 from optima import OptimaException, Link, gitinfo, tic, toc, odict, getdate, today, uuid, dcp, objrepr, makefilepath, printv, findnearest, saveobj, loadproj, promotetolist # Import utilities
-from optima import version, defaultobjectives, Project, pchip, getfilelist, batchBOC, reoptimizeprojects, eps
+from optima import version, defaultobjectives, Project, pchip, getfilelist, batchBOC, reoptimizeprojects
 from numpy import arange, argsort, zeros, nonzero, linspace, log, exp, inf, argmax, array
 from xlsxwriter import Workbook
 from xlsxwriter.utility import xl_rowcol_to_cell as rc
@@ -417,7 +417,10 @@ class Portfolio(object):
         #Divide by population size to get the correct proportional outcome across projects
         for io in iokeys:
             for caskey in self.objectives['cascadekeys']:
-                overalloutcomesplit[caskey][io] /= denominator[caskey][io] + eps
+                if denominator[caskey][io]>0:
+                    overalloutcomesplit[caskey][io] /= denominator[caskey][io]
+                else:
+                    overalloutcomesplit[caskey][io] = 0. #nan?
         
         # Add to the results structure
         self.GAresults['overallbudget']       = overallbud
