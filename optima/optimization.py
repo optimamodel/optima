@@ -1,7 +1,7 @@
 """
 Functions for running optimizations.
 
-Version: 2017jun04
+Version: 2019dec02
 """
 
 from optima import OptimaException, Link, Multiresultset, ICER, asd, getresults # Main functions
@@ -100,15 +100,22 @@ def defaultobjectives(project=None, progsetname=None, which=None, verbose=2):
         printv('defaultobjectives() did not get a project or progset, so setting budget to %0.0f' % defaultbudget, 2, verbose)
         
     objectives = odict() # Dictionary of all objectives
-    objectives['which'] = which
-    objectives['keys'] = ['death', 'inci', 'daly'] # Define valid keys
-    objectives['cascadekeys'] = ['propdiag', 'proptreat', 'propsuppressed']
+    objectives['which']          = which
+    objectives['keys']           = ['death', 'inci', 'daly'] # Define valid keys
+    objectives['cascadekeys']    = ['propdiag', 'proptreat', 'propsuppressed']
+    objectives['keylabels']      = odict({ # Define key labels
+                                        'death':          'Deaths', 
+                                        'inci':           'New infections', 
+                                        'daly':           'DALYs', 
+                                        'propdiag':       'Proportion diagnosed',
+                                        'proptreat':      'Proportion treated (of those diagnosed)',
+                                        'propsuppressed': 'Proportion suppressed (of those treated)'})
     objectives['propdiag']       = 0
     objectives['proptreat']      = 0
     objectives['propsuppressed'] = 0
-    objectives['start']       = 2020 # "Year to begin optimization"
-    objectives['end']         = 2030 # "Year to project outcomes to"
-    objectives['budget']      = defaultbudget # "Annual budget to optimize"
+    objectives['start']          = 2020 # "Year to begin optimization"
+    objectives['end']            = 2030 # "Year to project outcomes to"
+    objectives['budget']         = defaultbudget # "Annual budget to optimize"
     if which in ['outcome', 'outcomes']:
         objectives['base']        = None # "Baseline year to compare outcomes to"
         objectives['budgetscale'] = [1.] # "Scale factors to apply to budget"

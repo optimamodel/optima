@@ -345,6 +345,9 @@ class Portfolio(object):
         # Keys for initial and optimized
         iokeys = ['init', 'opt'] 
         
+        # Labels and denominators for determining output across a GA
+        denominators = odict([('propdiag','numplhiv'), ('proptreat','numdiag'), ('propsuppressed','numtreat')]) 
+        
         # Initialize to zero
         projnames        = []
         projbudgets      = []
@@ -359,14 +362,21 @@ class Portfolio(object):
         
         # Set up dict for the outcome split
         overalloutcomesplit = odict()
+        denominator = odict()
         for obkey in self.objectives['keys']:
             overalloutcomesplit['num'+obkey] = odict()
             for io in iokeys:
                 overalloutcomesplit['num'+obkey][io] = 0
+        for caskey in self.objectives['cascadekeys']:
+            overalloutcomesplit[caskey] = odict()
+            denominator[caskey] = odict()
+            for io in iokeys:
+                overalloutcomesplit[caskey][io] = 0
+                denominator[caskey][io] = 0
         
-        for k,key in enumerate(self.results.keys()):
+        for k,reskey in enumerate(self.results.keys()):
             # Figure out which indices to use
-            projectname = self.results[key]['init'].projectinfo['name']
+            projectname = self.results[reskey]['init'].projectinfo['name']
             projnames.append(projectname)
             projbudgets.append(odict())
             projoutcomes.append(odict())
@@ -374,19 +384,20 @@ class Portfolio(object):
             projcov.append(odict())
             tvector, initial, final, indices, alloc, outcome, sumalloc = [odict() for o in range(7)] # Allocate all dicts
             for io in iokeys:
-                tvector[io]  = self.results[key][io].tvec # WARNING, can differ between initial and optimized!
+                tvector[io]  = self.results[reskey][io].tvec # WARNING, can differ between initial and optimized!
                 initial[io]  = findnearest(tvector[io], self.objectives['start'])
                 final[io]    = findnearest(tvector[io], self.objectives['end'])
                 indices[io]  = arange(initial[io], final[io])
-                alloc[io]    = self.results[key][io].budgets[-1]
-                outcome[io]  = self.results[key][io].outcome 
+                alloc[io]    = self.results[reskey][io].budgets[-1]
+                outcome[io]  = self.results[reskey][io].outcome 
                 sumalloc[io] = alloc[io][:].sum() # Should be a budget odict that we're summing
+                
                 overallbud[io] += sumalloc[io]
                 overallout[io] += outcome[io]
                 projbudgets[k][io]  = alloc[io]
                 projoutcomes[k][io] = outcome[io]
                 
-                thisioresult = self.results[key][io]
+                thisioresult = self.results[reskey][io]
                 tmppars = thisioresult.projectref().parsets[thisioresult.parsetname]
                 tmpprog = thisioresult.projectref().progsets[thisioresult.progsetname]
                 tmpcov = tmpprog.getprogcoverage(alloc[io], self.objectives['start'], parset=tmppars)
@@ -394,8 +405,20 @@ class Portfolio(object):
                 
                 projoutcomesplit[k][io] = odict()
                 for obkey in self.objectives['keys']:
-                    projoutcomesplit[k][io]['num'+obkey] = self.results[key][io].main['num'+obkey].tot[bestindex][indices[io]].sum()     # Again, current and optimal should be same for 0 second optimisation, but being explicit -- WARNING, need to fix properly!
+                    projoutcomesplit[k][io]['num'+obkey] = self.results[reskey][io].main['num'+obkey].tot[bestindex][indices[io]].sum()     # Again, current and optimal should be same for 0 second optimisation, but being explicit -- WARNING, need to fix properly!
                     overalloutcomesplit['num'+obkey][io] += projoutcomesplit[k][io]['num'+obkey]
+                for caskey in self.objectives['cascadekeys']:
+                    denominator[caskey][io] =  self.results[reskey][io].main[denominators[caskey]].tot[bestindex][indices[io]].sum()  #need to weight results by population size
+                    projoutcomesplit[k][io][caskey] = self.results[reskey][io].main[caskey].tot[bestindex][indices[io]].sum()     # Again, current and optimal should be same for 0 second optimisation, but being explicit -- WARNING, need to fix properly!
+                    overalloutcomesplit[caskey][io] += projoutcomesplit[k][io][caskey] * denominator[caskey][io]
+        
+        # Divide by population size to get the correct proportional outcome across projects
+        for io in iokeys:
+            for caskey in self.objectives['cascadekeys']:
+                if denominator[caskey][io]>0:
+                    overalloutcomesplit[caskey][io] /= denominator[caskey][io]
+                else:
+                    overalloutcomesplit[caskey][io] = 0. #nan?
         
         # Add to the results structure
         self.GAresults['overallbudget']       = overallbud
@@ -416,6 +439,9 @@ class Portfolio(object):
         output += '\n\tOutcome:\t%0.0f\t%0.0f' % (overallout['init'], overallout['opt'])
         for obkey in self.objectives['keys']:
             output += '\n\t' + self.objectives['keylabels'][obkey] + ':\t%0.0f\t%0.0f' % (overalloutcomesplit['num'+obkey]['init'], overalloutcomesplit['num'+obkey]['opt'])
+        for caskey in self.objectives['cascadekeys']:
+            output += '\n\t' + self.objectives['keylabels'][caskey] + ':\t%0.0f\t%0.0f' % (overalloutcomesplit[caskey]['init'], overalloutcomesplit[caskey]['opt'])
+        
         
         ## Sort, then export
         projindices = argsort(projnames)
