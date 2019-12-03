@@ -73,6 +73,7 @@ def setmigrations(which='migrations'):
         ('2.8.0', ('2.8.1', '2019-07-10', None,              'Additional changes for Python 3')),
         ('2.8.1', ('2.8.2', '2019-08-07', None,              'Update to money minimization algorithm')),
         ('2.8.2', ('2.9.0', '2019-10-11', addcascadeopt,     'Add cascade optimization objectives')),
+        ('2.9.0', ('2.9.1', '2019-12-02', fixcascadeopt,     'Fix cascade optimization objectives')),
         ])
     
     
@@ -946,6 +947,29 @@ def addcascadeopt(project=None, portfolio=None, **kwargs):
         objectives['propsuppressed'] = 0
         objectives.pop('keylabels') # Never used
     return None
+
+
+
+def fixcascadeopt(project=None, portfolio=None, **kwargs):
+    '''
+    Migration between Optima 2.9.0 and 2.9.1 -- for both projects and portfolios -- fixes the previous migration
+    '''
+    if project is not None:
+        objectives_list = [optim.objectives for optim in project.optims.values()]
+    elif portfolio is not None:
+        objectives_list = [portfolio.objectives]
+    else:
+        raise Exception('Must supply either a project or a portfolio')
+    for objectives in objectives_list:
+        objectives['keylabels'] = op.odict({ # Define key labels
+                                        'death':          'Deaths', 
+                                        'inci':           'New infections', 
+                                        'daly':           'DALYs', 
+                                        'propdiag':       'Proportion diagnosed',
+                                        'proptreat':      'Proportion treated (of those diagnosed)',
+                                        'propsuppressed': 'Proportion suppressed (of those treated)'})
+    return None
+
 
 
 

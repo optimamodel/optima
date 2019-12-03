@@ -137,8 +137,6 @@ def plotpchip(x, y, deriv=False, returnplot=False, initbudget=None, optbudget=No
     xstart = x[0]
     xend = x[-1]
     
-    print(f'hiiii {maxbudget} {xend}')
-    
     if xend > maxbudget: xend = x[-2]    # This handles any artificially big value
     if initbudget is not None:
         xstart = min(xstart,initbudget[0])
@@ -165,6 +163,10 @@ def plotpchip(x, y, deriv=False, returnplot=False, initbudget=None, optbudget=No
     if optbudget is not None:
         plot(optbudget, pchip(x,y,optbudget,deriv), 'ro', label='Optimized')
     ax.legend(loc='best')
+    ax.set_xlim((xstart, xend)) # Do not bother plotting the large x value, even though its effect on interpolation is visible
+    ax.set_xlabel('Budget')
+    if not deriv: ax.set_ylabel('Outcome')
+    else:         ax.set_ylabel('Marginal outcome')
     if returnplot:
         return ax
     else:

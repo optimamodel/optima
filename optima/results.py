@@ -951,22 +951,14 @@ class BOC(object):
         
     def plot(self, deriv=False, returnplot=False, initbudget=None, optbudget=None, maxbudget=None, baseline=0):
         ''' Plot the budget-outcome curve '''
-        from pylab import xlabel, ylabel, show
-        
         x = dcp(self.x)
         y = dcp(self.y)
         x.append(1e15+max(self.x))  # Big number
         y.append(min(self.y))
-        
         ax = plotpchip(x, y, deriv=deriv, returnplot=True, initbudget=initbudget, optbudget=optbudget, maxbudget=maxbudget) # Plot interpolation
-        xlabel('Budget')
-        if not deriv: ylabel('Outcome')
-        else: ylabel('Marginal outcome')
         if baseline==0: ax.set_ylim((0,ax.get_ylim()[1])) # Reset baseline
         
-        if returnplot: return ax
-        else: show()
-        return None
+        return ax
 
 
 
