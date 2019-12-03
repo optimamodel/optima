@@ -347,8 +347,6 @@ class Portfolio(object):
         
         #Labels and denominators for determining output across a GA
         denominators = odict([('propdiag','numplhiv'), ('proptreat','numdiag'), ('propsuppressed','numtreat')]) 
-        keylabels = odict([('death','Deaths'), ('inci','New infections'), ('daly','DALYs'),
-                                     ('propdiag','Proportion diagnosed'), ('proptreat','Proportion treated (of those diagnosed)'), ('propsuppressed','Proportion suppressed (of those treated)')]) # Define key labels
 
         
         # Initialize to zero
@@ -379,7 +377,7 @@ class Portfolio(object):
         
         for k,reskey in enumerate(self.results.keys()):
             # Figure out which indices to use
-            projectname = self.results[key]['init'].projectinfo['name']
+            projectname = self.results[reskey]['init'].projectinfo['name']
             projnames.append(projectname)
             projbudgets.append(odict())
             projoutcomes.append(odict())
@@ -414,7 +412,8 @@ class Portfolio(object):
                     denominator[caskey][io] =  self.results[reskey][io].main[denominators[caskey]].tot[bestindex][indices[io]].sum()  #need to weight results by population size
                     projoutcomesplit[k][io][caskey] = self.results[reskey][io].main[caskey].tot[bestindex][indices[io]].sum()     # Again, current and optimal should be same for 0 second optimisation, but being explicit -- WARNING, need to fix properly!
                     overalloutcomesplit[caskey][io] += projoutcomesplit[k][io][caskey] * denominator[caskey][io]
-        #Divide by population size to get the correct proportional outcome across projects
+        
+        # Divide by population size to get the correct proportional outcome across projects
         for io in iokeys:
             for caskey in self.objectives['cascadekeys']:
                 if denominator[caskey][io]>0:
