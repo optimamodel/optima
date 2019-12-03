@@ -124,8 +124,6 @@ def plotpchip(x, y, deriv=False, returnplot=False, initbudget=None, optbudget=No
     
     if maxbudget is None: maxbudget = 1e9
     
-    
-    
     xorder = argsort(x)
     x = dcp(array(x)[xorder])
     y = dcp(array(y)[xorder])

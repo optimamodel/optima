@@ -345,9 +345,8 @@ class Portfolio(object):
         # Keys for initial and optimized
         iokeys = ['init', 'opt'] 
         
-        #Labels and denominators for determining output across a GA
+        # Labels and denominators for determining output across a GA
         denominators = odict([('propdiag','numplhiv'), ('proptreat','numdiag'), ('propsuppressed','numtreat')]) 
-
         
         # Initialize to zero
         projnames        = []
