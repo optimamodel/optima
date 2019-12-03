@@ -383,7 +383,7 @@ class Portfolio(object):
             projoutcomes.append(odict())
             projoutcomesplit.append(odict())
             projcov.append(odict())
-            tvector, initial, final, indices, alloc, outcome, sumalloc, denominator = [odict() for o in range(8)] # Allocate all dicts
+            tvector, initial, final, indices, alloc, outcome, sumalloc = [odict() for o in range(7)] # Allocate all dicts
             for io in iokeys:
                 tvector[io]  = self.results[reskey][io].tvec # WARNING, can differ between initial and optimized!
                 initial[io]  = findnearest(tvector[io], self.objectives['start'])

@@ -949,7 +949,7 @@ class BOC(object):
         output = pchip(x, y, budgets, deriv=deriv, method=method, smoothness=smoothness)
         return output
         
-    def plot(self, deriv=False, returnplot=False, initbudget=None, optbudget=None, baseline=0):
+    def plot(self, deriv=False, returnplot=False, initbudget=None, optbudget=None, maxbudget=None, baseline=0):
         ''' Plot the budget-outcome curve '''
         from pylab import xlabel, ylabel, show
         
@@ -958,9 +958,8 @@ class BOC(object):
         x.append(1e15+max(self.x))  # Big number
         y.append(min(self.y))
         
-        ax = plotpchip(x, y, deriv = deriv, returnplot = True, initbudget = initbudget, optbudget = optbudget)                 # Plot interpolation
+        ax = plotpchip(x, y, deriv=deriv, returnplot=True, initbudget=initbudget, optbudget=optbudget, maxbudget=maxbudget) # Plot interpolation
         xlabel('Budget')
-        ax.set_xlim((ax.get_xlim()[0],max(self.x+[optbudget]))) # Do not bother plotting the large x value, even though its effect on interpolation is visible
         if not deriv: ylabel('Outcome')
         else: ylabel('Marginal outcome')
         if baseline==0: ax.set_ylim((0,ax.get_ylim()[1])) # Reset baseline

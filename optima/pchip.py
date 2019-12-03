@@ -118,9 +118,13 @@ def pchip_eval(x, y, m, xvec, deriv = False):
 
 ##=========================================================
 
-def plotpchip(x, y, deriv=False, returnplot=False, initbudget=None, optbudget=None, subsample=50):
+def plotpchip(x, y, deriv=False, returnplot=False, initbudget=None, optbudget=None, subsample=50, maxbudget=None):
 
     from pylab import figure, plot, show
+    
+    if maxbudget is None: maxbudget = 1e9
+    
+    
     
     xorder = argsort(x)
     x = dcp(array(x)[xorder])
@@ -132,11 +136,14 @@ def plotpchip(x, y, deriv=False, returnplot=False, initbudget=None, optbudget=No
     
     xstart = x[0]
     xend = x[-1]
-    if xend > 1e15: xend = x[-2]    # This handles any artificially big value
-    if not initbudget == None:
+    
+    print(f'hiiii {maxbudget} {xend}')
+    
+    if xend > maxbudget: xend = x[-2]    # This handles any artificially big value
+    if initbudget is not None:
         xstart = min(xstart,initbudget[0])
         xend = max(xend,initbudget[-1])
-    if not optbudget == None:
+    if optbudget is not None:
         xstart = min(xstart,optbudget[0])
         xend = max(xend,optbudget[-1])
     
@@ -153,9 +160,9 @@ def plotpchip(x, y, deriv=False, returnplot=False, initbudget=None, optbudget=No
     plot(xnew, pchip(x,y,xnew,deriv), linewidth=2)
     xs = [a+pchipeps for a in x]    # Shift the original points slightly when plotting them, otherwise derivatives become zero-like.
     plot(xs, pchip(x,y,xs,deriv), 'k+', markeredgewidth=2, markersize=20, label='Budget-objective curve')
-    if not initbudget == None:
+    if initbudget is not None:
         plot(initbudget, pchip(x,y,initbudget,deriv), 'gs', label='Initial')
-    if not optbudget == None:
+    if optbudget is not None:
         plot(optbudget, pchip(x,y,optbudget,deriv), 'ro', label='Optimized')
     ax.legend(loc='best')
     if returnplot:
