@@ -74,6 +74,7 @@ def setmigrations(which='migrations'):
         ('2.8.1', ('2.8.2', '2019-08-07', None,              'Update to money minimization algorithm')),
         ('2.8.2', ('2.9.0', '2019-10-11', addcascadeopt,     'Add cascade optimization objectives')),
         ('2.9.0', ('2.9.1', '2019-12-02', fixcascadeopt,     'Fix cascade optimization objectives')),
+        ('2.9.1', ('2.9.2', '2019-12-04', None,              'Add PrEP for injection-related infections')),
         ])
     
     
