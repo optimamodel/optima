@@ -1,6 +1,7 @@
 import traceback
 import pprint
 from celery import Celery
+from celery.contrib.abortable import AbortableTask, AbortableAsyncResult
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import sessionmaker, scoped_session
 import optima as op
@@ -84,12 +85,11 @@ celery_instance.Task = ContextTask
 def parse_work_log_record(work_log):
     return {
         'status': work_log.status,
-        'task_id': work_log.task_id,
+        'id': work_log.id,
         'error_text': work_log.error,
         'start_time': work_log.start_time,
         'stop_time': work_log.stop_time,
         'task_id': work_log.task_id,
-        'current_time': op.today()
     }
 
 
@@ -112,26 +112,36 @@ def check_task(task_id):
     """
     Returns current calculation state of a work_log.
     """
-    calc_state = {
-        'status': 'unknown',
-        'error_text': None,
-        'start_time': None,
-        'stop_time': None,
-        'task_id': ''
-    }
+
     db_session = init_db_session()
-    work_log_record = db_session.query(dbmodels.WorkLogDb)\
-        .filter_by(task_id=task_id)\
-        .first()
+    work_log_record = db_session.query(dbmodels.WorkLogDb).filter_by(task_id=task_id).first()
+
     if work_log_record:
         print(">> check_task: existing job of '%s' with same project" % task_id)
         calc_state = parse_work_log_record(work_log_record)
-    print(">> check_task", task_id, calc_state['status'])
-    close_db_session(db_session)
-    if calc_state['status'] == 'error':
-        raise Exception(calc_state['error_text'])
     else:
-        return calc_state
+        print(">> check_task: No task found")
+        return
+
+    print(">> check_task", task_id, calc_state['status'])
+
+    if calc_state['status'] == 'started':
+        if work_log_record.start_time is None:
+            calc_state['status_string'] = 'Waiting to start...'
+        else:
+            calc_state['status_string'] = 'Running for %d seconds' % ((op.today()-work_log_record.start_time).seconds)
+    elif calc_state['status'] == 'cancelled':
+        calc_state['status_string'] = 'Job cancelled' # Probably won't get shown?
+    elif calc_state['status'] == 'error':
+        calc_state['status_string'] = 'Job error'
+    elif calc_state['status'] == 'completed':
+        calc_state['status_string'] = 'Completed'
+
+    # Shouldn't *throw* an error when checking the task if the task errored
+    # Instead, should return a valid status containing the error message and have the
+    # FE present it as required. As in, nothing went wrong *checking* the task, therefore
+    # an error shouldn't be raised
+    return calc_state
 
 
 def check_if_task_started(task_id):
@@ -146,24 +156,59 @@ def check_if_task_started(task_id):
     return calc_state
 
 
-@celery_instance.task()
-def run_task(task_id, fn_name, args):
+@celery_instance.task(bind=True, base=AbortableTask)
+def run_task(self, task_id, fn_name, args, kwargs=None):
+    if kwargs is None:
+        kwargs = {}
+
     if fn_name in globals():
         task_fn = globals()[fn_name]
     else:
         raise Exception("run_task error: couldn't find '%s'" % fn_name)
 
     print('>> run_task %s %s' % (fn_name, args))
+
+    # Set the start time when the job actually starts
+    # Also clear the error message
+    db_session = init_db_session()
+    worklog = db_session.query(dbmodels.WorkLogDb).filter_by(task_id=task_id).first()
+    if worklog is None:
+        # The work log was deleted (e.g. as a dangling work log) but the celery task was not revoked
+        # Overall, if the work log is missing then the celery task has become disconnected and it's not
+        # possible for anyone to retrieve it
+        # Therefore, we should just return immediately
+        print('>> run_task WorkLogDb record missing, so task is effectively revoked, returning immediately')
+        return
+
+    worklog.start_time = op.today()
+    db_session.add(worklog)
+    db_session.commit()
+    close_db_session(db_session)
+
+    if fn_name in {'optimize'}:
+        kwargs['stoppingfunc'] = self.is_aborted
+
     try:
-        task_fn(*args)
+        task_fn(*args, **kwargs)
         print(">> run_task completed")
         error_text = ""
         status = 'completed'
+    except op.CancelException:
+        print(">> run_task cancelled via exception")
+        # Return immediately, the WorkLogDb entry has already been deleted
+        return
     except Exception:
         error_text = traceback.format_exc()
         status = 'error'
         print(">> run_task error")
         print(error_text)
+
+    if self.is_aborted():
+        # The task_fn e.g. `asd` *MAY* cancel by returning early resulting in us getting
+        # to this block, but we still want to throw out the result in the FE context.
+        # Thus return immediately, noting that the WorkLogDb entry has already been deleted
+        print(">> run_task cancelled via return")
+        return
 
     db_session = init_db_session()
     worklog = db_session.query(dbmodels.WorkLogDb).filter_by(task_id=task_id).first()
@@ -201,19 +246,30 @@ def launch_task(task_id, fn_name, args):
         # create a work_log status is 'started by default'
         print(">> launch_task new work log")
         work_log_record = dbmodels.WorkLogDb(task_id=task_id)
-        work_log_record.start_time = op.today()
         db_session.add(work_log_record)
-        db_session.flush()
-
+        db_session.commit() # Trigger the server-side default for start time
+        work_log_record.start_time = None  # start time of 'None' means that the task is waiting to run
+        db_session.commit() # Override the start time
         calc_state = parse_work_log_record(work_log_record)
+    else:
+        db_session.commit()
 
-    db_session.commit()
     close_db_session(db_session)
 
     if calc_state['status'] != "blocked":
-        run_task.delay(task_id, fn_name, args)
-
+        result = run_task.apply_async(args=(task_id, fn_name, args), task_id=str(calc_state['id']))
     return calc_state
+
+def cancel_task(task_id):
+    print(">> cancel_task", task_id)
+    db_session = init_db_session()
+    work_log_record = db_session.query(dbmodels.WorkLogDb).filter(dbmodels.WorkLogDb.task_id == task_id).first()
+    celery_instance.control.revoke(str(work_log_record.id))
+    res = AbortableAsyncResult(str(work_log_record.id), app=celery_instance)
+    res.abort() # This triggers the WorkLogDb cleanup in run_task()
+    db_session.delete(work_log_record)
+    db_session.commit()
+    close_db_session(db_session)
 
 
 ### PROJECT DEFINED TASKS
@@ -278,8 +334,10 @@ def autofit(project_id, parset_id, maxtime):
     print("> autofit finish")
 
 
-def optimize(project_id, optimization_id, maxtime):
+def optimize(project_id, optimization_id, maxtime, stoppingfunc=None):
 
+    print('STOPPING FUNCTION')
+    print(stoppingfunc)
     db_session = init_db_session()
     project = dataio.load_project(project_id, db_session=db_session, authenticate=False)
     close_db_session(db_session)
@@ -305,7 +363,7 @@ def optimize(project_id, optimization_id, maxtime):
     maxtime = float(maxtime)
     if maxtime>3600: mc = 9 # Arbitrary threshold for "unlimited" run: run with uncertainty
     else:            mc = 0
-    result = project.optimize(optim=optim, maxtime=maxtime, mc=mc)  # Set this to zero for now while we decide how to handle uncertainties etc.
+    result = project.optimize(optim=optim, maxtime=maxtime, mc=mc, stoppingfunc=stoppingfunc)  # Set this to zero for now while we decide how to handle uncertainties etc.
 
     print(">> optimize budgets %s" % result.budgets)
     

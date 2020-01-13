@@ -31,7 +31,8 @@ define(['angular', 'ui.router'], function (angular) {
         optimizations: [],
         years: null,
         start: null,
-        end: null
+        end: null,
+        timer: null,
       };
 
       $scope.editOptimization = openEditOptimizationModal;
@@ -44,6 +45,10 @@ define(['angular', 'ui.router'], function (angular) {
         if (!_.isUndefined($scope.state.project) && ($scope.state.project.id !== projectService.project.id)) {
           reloadActiveProject();
         }
+      });
+
+      $scope.$on('$destroy', function(){
+        $timeout.cancel($scope.state.timer);
       });
 
       reloadActiveProject();
@@ -131,46 +136,21 @@ define(['angular', 'ui.router'], function (angular) {
 
     $scope.setActiveOptimization = function(optimization) {
       $scope.state.optimization = optimization;
-      selectOptimization();
-    };
-
-    function makeTaskId() {
-      return 'optimize:'
-          + $scope.state.project.id + ":"
-          + $scope.state.optimization.id + ":"
-          + $scope.state.maxtime;
-    }
-
-    function selectOptimization() {
-      pollerService.stopPolls();
-
-      $scope.state.isRunnable = true;
-      var optimization = $scope.state.optimization;
+      $timeout.cancel($scope.state.timer);
+      $scope.task_id = makeTaskId();
 
       // clear screen
       $scope.optimizationCharts = [];
       $scope.selectors = [];
       $scope.state.graphs = {};
-      $scope.statusMessage = '';
 
-      // not a new optimization
-      if (optimization.id) {
-        console.log('selectOptimization check task');
-        rpcService
-          .rpcAsyncRun(
-            'check_if_task_started',
-            [makeTaskId()])
-          .then(
-            function(response) {
-              if (response.data.status === 'started') {
-                $scope.state.isRunnable = false;
-                initPollOptimizations();
-              } else {
-                $scope.statusMessage = 'Checking for pre-calculated figures...';
-                getOptimizationGraphs();
-              }
-            });
-      }
+      updateOptimizationStatus();
+    };
+
+    function makeTaskId() {
+      return 'optimize:'
+          + $scope.state.project.id + ":"
+          + $scope.state.optimization.id;
     }
 
     function loadOptimizations(response) {
@@ -277,13 +257,13 @@ define(['angular', 'ui.router'], function (angular) {
         });
     };
 
-    $scope.startOptimization = function(optimization) {
+    $scope.startOptimization = function() {
       $scope.state.isRunnable = false;
       console.log('startOptimization');
       rpcService
         .rpcAsyncRun(
           'launch_task', [
-            makeTaskId(),
+            $scope.task_id,
             'optimize',
             [
               $scope.state.project.id,
@@ -292,40 +272,57 @@ define(['angular', 'ui.router'], function (angular) {
             ]
           ])
         .then(function(response) {
-          $scope.task_id = response.data.task_id;
           if (response.data.status === 'started') {
-            $scope.statusMessage = 'Optimization started.';
-            $scope.elapsedTime = 0;
-            var timer = setInterval(function(){$scope.elapsedTime++}, 1000);
-            initPollOptimizations();
+            updateOptimizationStatus();
           } else if (response.data.status === 'blocked') {
             $scope.statusMessage = 'Another calculation on this project is already running.'
           }
         });
     };
 
-    function initPollOptimizations() {
-      pollerService
-        .startPollForRpc(
-          $scope.state.project.id,
-          makeTaskId(),
-          function(response) {
+    $scope.cancelOptimization = function() {
+      console.log('cancelOptimization');
+      $scope.statusMessage = 'Optimization cancelled';
+      $timeout.cancel($scope.state.timer);
+      $scope.state.isRunnable = true;
+
+      rpcService
+        .rpcAsyncRun(
+          'cancel_task', [
+            makeTaskId(),
+          ])
+        .then(function(response) {
+            console.log('Task cancelled');
+        });
+    };
+
+
+    function updateOptimizationStatus() {
+      console.log('Updating optimization status');
+      rpcService.rpcAsyncRun('check_task', [$scope.task_id])
+          .then(function (response) {
             var calcState = response.data;
-            if (calcState.status === 'completed') {
-              $scope.statusMessage = 'Loading graphs...';
-              // try {
-              //   clearInterval(timer);
-              // } catch(err) {
-              //   console.log('Timer could not be cleared: ', err);
-              // }
-              toastr.success('Optimization completed');
-              getOptimizationGraphs();
-            } else if (calcState.status === 'started') {
-              $scope.task_id = calcState.task_id;
-              $scope.statusMessage = "Optimization running for " + $scope.elapsedTime + " s";
+            if (calcState.status === 'started') {
+              $scope.state.isRunnable = false;
+              $scope.statusMessage = calcState.status_string;
+              $scope.state.timer = $timeout(updateOptimizationStatus, 1000);
             } else {
-              $scope.statusMessage = 'Optimization failed';
               $scope.state.isRunnable = true;
+              if (calcState.status === 'cancelled') {
+                $scope.statusMessage = 'Optimization cancelled';
+              } else if (calcState.status === 'completed') {
+                $scope.statusMessage = 'Loading graphs...';
+                toastr.success('Optimization completed');
+                getOptimizationGraphs();
+              } else if (calcState.status === 'error') {
+                $scope.statusMessage = 'Optimization error';
+              } else if (typeof calcState.status === "undefined") {
+                console.log('Task status not found');
+                $scope.statusMessage = '';
+              } else {
+                console.log(calcState.status);
+                $scope.statusMessage = 'Unknown error';
+              }
             }
           });
     }

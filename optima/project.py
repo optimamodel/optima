@@ -761,7 +761,7 @@ class Project(object):
             
             pygui(P) # To plot results
         '''
-        
+        print(stoppingfunc)
         # Check inputs
         if name is None: name = 'default'
         if optim is None:
