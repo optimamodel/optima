@@ -81,18 +81,18 @@ if 'demonstrateprogrammethods' in tests:
     P = defaultproject('best',addprogset=True,addcostcovdata=True,addcostcovpars=True)
     R = P.progsets[0]
     progs = P.programs()
-    HTC = progs['HTC']
+    HTS = progs['HTS']
 
     # 1. Get parameters for defining cost-coverage function for any given year (even if not explicitly entered).
-    HTC.costcovfn.getccopar(2014)
+    HTS.costcovfn.getccopar(2014)
 
     # 2. Get target population size
-    HTC.gettargetpopsize(t=[2013,2015],parset=P.parsets['default'])
+    HTS.gettargetpopsize(t=[2013,2015],parset=P.parsets['default'])
 
     # 3. Evaluate cost-coverage function to get coverage for a given year, spending amount and population size
     from numpy import linspace, array
-    HTC.getcoverage(x=linspace(0,1e6,3),t=[2013,2015,2017],parset=P.parsets['default'],total=False)
-    HTC.targetcomposition = {'Clients': array([ 0.01]),
+    HTS.getcoverage(x=linspace(0,1e6,3),t=[2013,2015,2017],parset=P.parsets['default'],total=False)
+    HTS.targetcomposition = {'Clients': array([ 0.01]),
                        'F 15+': array([ 0.3]),
                        'FSW': array([ 0.12]),
                        'PWID': array([ 0.12]),
@@ -100,11 +100,11 @@ if 'demonstrateprogrammethods' in tests:
                        'MSM': [ 0.15]}
     
     # Make sure that getcoverage and getbudget are the reciprocal of each other.
-    a = HTC.getcoverage(x=1e6,t=2016,parset=P.parsets['default'])
-    b = HTC.getbudget(x=a,t=2016,parset=P.parsets['default'])
+    a = HTS.getcoverage(x=1e6,t=2016,parset=P.parsets['default'])
+    b = HTS.getbudget(x=a,t=2016,parset=P.parsets['default'])
     assert_allclose(1e6,b,rtol=rtol)
     # NB, if you want to evaluate it for a particular population size, can also do...
-    HTC.costcovfn.evaluate(x=[1e6],popsize=[1e5],t=[2015],toplot=False)
+    HTS.costcovfn.evaluate(x=[1e6],popsize=[1e5],t=[2015],toplot=False)
 
     # 3. Get default budget and coverage
     defaultbudget = R.getdefaultbudget()
@@ -164,11 +164,11 @@ if 'plotprogram' in tests:
     P = defaultproject('best',addprogset=True,addcostcovdata=True,addcostcovpars=True)
     R = P.progsets[0]
     progs = P.programs()
-    HTC = progs['HTC']
-    caption = 'Spending data includes all HTC spending. Global Fund spending on HTC in 2012 was $40,245. '\
-                  'In the reporting period, a total of 676 MARPs received HTC services, which makes a cumulative '\
-                  'total of 1,102 MARPs that received HTC including provision of results. Due to changes in '\
-                  'the definition and focus of the indicator, PWID that received HTC in DST Centers and prisoners '\
+    HTS = progs['HTS']
+    caption = 'Spending data includes all HTS spending. Global Fund spending on HTS in 2012 was $40,245. '\
+                  'In the reporting period, a total of 676 MARPs received HTS services, which makes a cumulative '\
+                  'total of 1,102 MARPs that received HTS including provision of results. Due to changes in '\
+                  'the definition and focus of the indicator, PWID that received HTS in DST Centers and prisoners '\
                   'are included, both of them previously omitted in the reports.'
     plotoptions = {}
     plotoptions['caption'] = caption
@@ -176,7 +176,7 @@ if 'plotprogram' in tests:
     plotoptions['perperson'] = False
 
     if doplot:
-        HTC.plotcoverage(t=[2014,2015],parset=P.parsets['default'],plotoptions=plotoptions,doplot=doplot)
+        HTS.plotcoverage(t=[2014,2015],parset=P.parsets['default'],plotoptions=plotoptions,doplot=doplot)
 
 
 

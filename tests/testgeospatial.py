@@ -9,7 +9,7 @@ NOTE: for best results, run in interactive mode, e.g.
 
 python -i tests.py
 
-Version: 2017mar19
+Version: 2019dec02
 """
 
 
@@ -17,6 +17,7 @@ Version: 2017mar19
 ## Define tests to run here!!!
 tests = [
 'makespreadsheet',
+'genBOC',
 'runGA',
 #'geogui',
 ]
@@ -61,6 +62,20 @@ if 'makespreadsheet' in tests:
     makegeospreadsheet(project=P, filename=spreadsheetpath, copies=2, refyear=2015)
     if not dosave: remove(spreadsheetpath)
     done(t)
+    
+    
+
+## Make BOC test
+if 'genBOC' in tests:
+    t = tic()
+    print('Running genBOC...')
+    from optima import defaultproject, defaultobjectives
+    
+    # Make projects
+    P = defaultproject('simple')
+    
+    P.genBOC(maxtime=1, mc=0, budgetratios=[1.0, 0.5, 2.0], objectives=defaultobjectives())
+    done(t)
    
 
 
@@ -81,7 +96,7 @@ if 'runGA' in tests:
     
     # Make portfolio and run
     F = Portfolio(projects=projlist, objectives=defaultobjectives())
-    F.objectives['end'] = 2020 # This speeds it up by only simulating 3 years
+    F.objectives['end'] = F.objectives['start']+3 # This speeds it up by only simulating 3 years
     F.genBOCs(maxtime=1, mc=0, budgetratios=[1.0, 0.5, 2.0]) # Generate BOCs
     F.runGA(maxtime=1, mc=0) # Run GA
     F.export(filename=outputpath) # Export

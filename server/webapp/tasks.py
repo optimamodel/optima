@@ -412,7 +412,7 @@ def reconcile(project_id, progset_id, parset_id, year, maxtime):
 
 
 
-def boc(portfolio_id, project_id, maxtime=2, objectives=None):
+def boc(portfolio_id, project_id, maxtime=2):
 
     db_session = init_db_session()
     portfolio = dataio.load_portfolio(portfolio_id, db_session)
@@ -424,7 +424,7 @@ def boc(portfolio_id, project_id, maxtime=2, objectives=None):
     else:
         raise Exception("Couldn't find project in portfolio")
 
-    project.genBOC(maxtime=float(maxtime), objectives=objectives, mc=0) # TODO: Enable MC
+    project.genBOC(maxtime=float(maxtime), objectives=portfolio.objectives, mc=0) # TODO: Enable MC
 
     project_id = str(project.uid)
     db_session = init_db_session()
