@@ -1061,7 +1061,7 @@ def minoutcomes(project=None, optim=None, tvec=None, verbose=None, maxtime=None,
 
 def minmoney(project=None, optim=None, tvec=None, verbose=None, maxtime=None, maxiters=1000, 
              fundingchange=1.2, tolerance=1e-2, ccsample='best', randseed=None, keepraw=False, die=False, 
-             n_throws=None, n_success=None, n_refine=None, schedule=None, multi=None, nchains=None, stoppingfunc=None **kwargs):
+             n_throws=None, n_success=None, n_refine=None, schedule=None, multi=None, nchains=None, stoppingfunc=None, **kwargs):
     '''
     A function to minimize money for a fixed objective.
 
