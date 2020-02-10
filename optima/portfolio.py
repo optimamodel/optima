@@ -807,10 +807,10 @@ def makegeoprojects(project=None, spreadsheetpath=None, destination=None, dosave
         if len(project.progsets) > 0:
             for progid in newproject.progsets[-1].programs:
                 program = newproject.progsets[-1].programs[progid]
-                program.costcovdata['cost'] = popratio['tot'][c]*array(program.costcovdata['cost'],dtype=float)
+                program.costcovdata['cost'] = plhivratio['tot'][c]*array(program.costcovdata['cost'],dtype=float)
                 if program.costcovdata.get('coverage') is not None:
                     if not program.costcovdata['coverage'] == [None]:
-                        program.costcovdata['coverage'] = popratio['tot'][c]*array(program.costcovdata['coverage'],dtype=float)
+                        program.costcovdata['coverage'] = plhivratio['tot'][c]*array(program.costcovdata['coverage'],dtype=float)
             
         datayears = len(newproject.data['years'])
         newproject.data['hivprev'] = [[[z*prevfactors[poplist[yind]][c] for z in y[0:datayears]] for yind, y in enumerate(x)] for x in results.main['prev'].pops]
