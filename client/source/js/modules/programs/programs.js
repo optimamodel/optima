@@ -364,6 +364,8 @@ define(['angular', 'ui.router', './program-modal'], function (angular) {
       return $modal.open({
         templateUrl: 'js/modules/programs/program-modal.html?cacheBust=xxx',
         controller: 'ProgramModalController',
+        backdrop: 'static',
+        keyboard: false,
         size: 'lg',
         resolve: {
           program: function () { return program; },
