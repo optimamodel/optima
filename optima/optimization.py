@@ -222,6 +222,7 @@ def constrainbudget(origbudget=None, budgetvec=None, totalbudget=None, budgetlim
         raise OptimaException(errormsg)
 
     # Calculate the minimum amount that can be spent on the fixed costs
+    rescaledminfixed = dcp(rescaledbudget) # This is the rescaled budget, but with the minimum fixed costs -- should be <= totalbudget
     proginds = arange(len(origbudget)) # Array of all allowable indices
     fixedinds = array([p for p in proginds if p not in optiminds]) # Get the complement of optiminds
     minfixed = 0.0
