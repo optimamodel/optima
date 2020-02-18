@@ -18,8 +18,8 @@ except: Process, Queue = None, None # OK to skip these if batch is False
 
 import six
 if six.PY3:
-	basestring = str
-	unicode = str
+    basestring = str
+    unicode = str
 
 ################################################################################################################################################
 ### The container class
@@ -212,22 +212,22 @@ def constrainbudget(origbudget=None, budgetvec=None, totalbudget=None, budgetlim
 
     # Calculate the current total budget
     currenttotal = sum(constrainedbudget[:]) # WARNING, assumes it's an odict
+    scaleratio = totalbudget/float(currenttotal) # Calculate the ratio between the original budget and the supplied budget
+
+    # Calculate a uniformly scaled budget
+    rescaledbudget = dcp(constrainedbudget)
+    for key in rescaledbudget.keys(): rescaledbudget[key] *= scaleratio # This is the original budget scaled to the total budget
+    if abs(sum(rescaledbudget[:])-totalbudget)>overalltolerance:
+        errormsg = 'Rescaling budget failed (%f != %f)' % (sum(rescaledbudget[:]), totalbudget)
+        raise OptimaException(errormsg)
 
     # Calculate the minimum amount that can be spent on the fixed costs
     proginds = arange(len(origbudget)) # Array of all allowable indices
     fixedinds = array([p for p in proginds if p not in optiminds]) # Get the complement of optiminds
     minfixed = 0.0
     for ind in fixedinds:
-        minfixed += constrainedbudget[ind]
-
-    # Uniformly scale the budget
-    scaleratio = (totalbudget-minfixed)/float(currenttotal-minfixed) # Calculate the ratio between the original budget and the supplied budget
-    rescaledbudget = dcp(constrainedbudget)
-    for ind in optiminds:
-        rescaledbudget[ind] *= scaleratio # This is the original budget scaled to the total budget
-    if abs(sum(rescaledbudget[:])-totalbudget)>overalltolerance:
-        errormsg = 'Rescaling budget failed (%f != %f)' % (sum(rescaledbudget[:]), totalbudget)
-        raise OptimaException(errormsg)
+        rescaledminfixed[ind] = rescaledbudget[ind]*budgetlims['min'][ind]
+        minfixed += rescaledminfixed[ind]
 
     # Calculate the total amount available for the optimizable programs
     optimbudget = totalbudget - minfixed
@@ -292,7 +292,7 @@ def constrainbudget(origbudget=None, budgetvec=None, totalbudget=None, budgetlim
                 scaledbudgetvec[oi] = proposed
 
     # Reconstruct the budget odict using the rescaled budgetvec and the rescaled original amount
-    constrainedbudget = dcp(rescaledbudget) # This budget has the right fixed costs
+    constrainedbudget = dcp(rescaledminfixed) # This budget has the right fixed costs
     for oi,oind in enumerate(optiminds):
         constrainedbudget[oind] = scaledbudgetvec[oi]
     if abs(sum(constrainedbudget[:])-totalbudget)>overalltolerance:
@@ -884,8 +884,7 @@ def minoutcomes(project=None, optim=None, tvec=None, verbose=None, maxtime=None,
         raise op.CancelException
 
     # Calculate original things
-    constrainedbudgetorig, constrainedbudgetvecorig, _, _ = constrainbudget(origbudget=origbudget, budgetvec=budgetvec, totalbudget=origtotalbudget, budgetlims=optim.constraints, optiminds=optiminds, outputtype='full')
-
+    constrainedbudgetorig, constrainedbudgetvecorig, lowerlim, upperlim = constrainbudget(origbudget=origbudget, budgetvec=budgetvec, totalbudget=origtotalbudget, budgetlims=optim.constraints, optiminds=optiminds, outputtype='full')
 
     # Set up arguments which are shared between outcomecalc and asd
     args = {'which':      'outcomes', 
@@ -906,15 +905,17 @@ def minoutcomes(project=None, optim=None, tvec=None, verbose=None, maxtime=None,
     
     # Set up extremes
     extremebudgets = odict()
-    extremebudgets['Baseline'] = origbudget[:].copy() # Original budget including non-optimizable entries
+    extremebudgets['Baseline'] = zeros(nprogs)
+    for i,p in enumerate(optiminds): extremebudgets['Baseline'][p] = constrainedbudgetvecorig[i] # Must be a better way of doing this :(
+    for i in nonoptiminds:           extremebudgets['Baseline'][i] = origbudget[i] # Copy the original budget
     extremebudgets['Zero']     = zeros(nprogs)
     extremebudgets['Infinite'] = origbudget[:]+project.settings.infmoney
     firstkeys = ['Baseline', 'Zero', 'Infinite'] # These are special, store them
     if mc: # Only run these if MC is being run
         for p,prog in zip(optiminds,optimkeys):
             extremebudgets[prog] = zeros(nprogs)
-            extremebudgets[prog][p] = origbudget[optiminds].sum() # Entire reallocatable budget is spent on this program...
-            for i in nonoptiminds: extremebudgets[prog][p] = origbudget[p] # ...with the same original spending on non-optimizable programs
+            extremebudgets[prog][p] = sum(constrainedbudgetvecorig)
+            for i in nonoptiminds: extremebudgets[prog][p] = origbudget[p] # Copy the original budget
     
     # Set up storage for extreme budgets
     extremeresults  = odict()
@@ -1016,7 +1017,6 @@ def minoutcomes(project=None, optim=None, tvec=None, verbose=None, maxtime=None,
                 res = asd(outcomecalc, allbudgetvecs[key], args=args, xmin=xmin, maxtime=maxtime, maxiters=maxiters, verbose=verbose, randseed=allseeds[k], label=thislabel, stoppingfunc=stoppingfunc, **kwargs)
                 budgetvecnew, fvals = res.x, res.details.fvals
                 constrainedbudgetnew, constrainedbudgetvecnew, lowerlim, upperlim = constrainbudget(origbudget=origbudget, budgetvec=budgetvecnew, totalbudget=totalbudget, budgetlims=optim.constraints, optiminds=optiminds, outputtype='full')
-                for i in nonoptiminds: constrainedbudgetnew[i] = origbudget[i]  # Copy the original budget
                 asdresults[key] = {'budget':constrainedbudgetnew, 'fvals':fvals}
                 if fvals[-1]<bestfval: 
                     bestkey = key # Reset key
