@@ -83,14 +83,18 @@ celery_instance.Task = ContextTask
 
 
 def parse_work_log_record(work_log):
-    return {
-        'status': work_log.status,
-        'id': work_log.id,
-        'error_text': work_log.error,
-        'start_time': work_log.start_time,
-        'stop_time': work_log.stop_time,
-        'task_id': work_log.task_id,
-    }
+    calc_state = dict.fromkeys(['status','id','error_txt','start_time','stop_time','task_id'])
+
+    if work_log:
+        calc_state['status'] = work_log.status
+        calc_state['id'] = work_log.id
+        calc_state['error_text'] = work_log.error
+        calc_state['start_time'] = work_log.start_time
+        calc_state['stop_time'] = work_log.stop_time
+        calc_state['task_id'] = work_log.task_id
+
+    return calc_state
+
 
 
 def init_db_session():
@@ -115,13 +119,7 @@ def check_task(task_id):
 
     db_session = init_db_session()
     work_log_record = db_session.query(dbmodels.WorkLogDb).filter_by(task_id=task_id).first()
-
-    if work_log_record:
-        print(">> check_task: existing job of '%s' with same project" % task_id)
-        calc_state = parse_work_log_record(work_log_record)
-    else:
-        print(">> check_task: No task found")
-        return
+    calc_state = parse_work_log_record(work_log_record)
 
     print(">> check_task", task_id, calc_state['status'])
 
