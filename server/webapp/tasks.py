@@ -121,6 +121,10 @@ def check_task(task_id):
     work_log_record = db_session.query(dbmodels.WorkLogDb).filter_by(task_id=task_id).first()
     calc_state = parse_work_log_record(work_log_record)
 
+    if calc_state is None:
+        print(">> check_task: Task found but the work log record was empty")
+        return
+
     print(">> check_task", task_id, calc_state['status'])
 
     if calc_state['status'] == 'started':
@@ -183,7 +187,7 @@ def run_task(self, task_id, fn_name, args, kwargs=None):
     db_session.commit()
     close_db_session(db_session)
 
-    if fn_name in {'optimize'}:
+    if fn_name in {'optimize','autofit'}:
         kwargs['stoppingfunc'] = self.is_aborted
 
     try:
@@ -283,7 +287,7 @@ def cancel_task(task_id):
 #   the `rpcService.runAsyncTask('launch_task')` interface
 
 
-def autofit(project_id, parset_id, maxtime):
+def autofit(project_id, parset_id, maxtime, stoppingfunc=None):
 
     db_session = init_db_session()
     project = dataio.load_project(project_id, db_session=db_session, authenticate=False)
@@ -298,7 +302,8 @@ def autofit(project_id, parset_id, maxtime):
     project.autofit(
         name=autofit_parset_name,
         orig=orig_parset_name,
-        maxtime=float(maxtime)
+        maxtime=float(maxtime),
+        stoppingfunc=stoppingfunc,
     )
 
     result = project.parsets[autofit_parset_name].getresults()
@@ -334,8 +339,6 @@ def autofit(project_id, parset_id, maxtime):
 
 def optimize(project_id, optimization_id, maxtime, stoppingfunc=None):
 
-    print('STOPPING FUNCTION')
-    print(stoppingfunc)
     db_session = init_db_session()
     project = dataio.load_project(project_id, db_session=db_session, authenticate=False)
     close_db_session(db_session)

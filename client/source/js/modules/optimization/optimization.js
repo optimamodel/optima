@@ -26,7 +26,8 @@ define(['angular', 'ui.router'], function (angular) {
       $scope.state = {
         project: undefined,
         maxtime: 10,
-        isRunnable: false,
+        isRunnable: false, // Decide whether to disable the button to launch task (disabled while loading task status)
+        isRunning: false, // Decide whether or not to show cancel button (NOT shown while loading task status)
         graphs: undefined,
         optimizations: [],
         years: null,
@@ -135,6 +136,8 @@ define(['angular', 'ui.router'], function (angular) {
     };
 
     $scope.setActiveOptimization = function(optimization) {
+      $scope.state.isRunning = false;
+      $scope.state.isRunnable = false;
       $scope.state.optimization = optimization;
       $timeout.cancel($scope.state.timer);
       $scope.task_id = makeTaskId();
@@ -259,6 +262,7 @@ define(['angular', 'ui.router'], function (angular) {
 
     $scope.startOptimization = function() {
       $scope.state.isRunnable = false;
+      $scope.state.isRunning = true;
       console.log('startOptimization');
       rpcService
         .rpcAsyncRun(
@@ -275,7 +279,7 @@ define(['angular', 'ui.router'], function (angular) {
           if (response.data.status === 'started') {
             updateOptimizationStatus();
           } else if (response.data.status === 'blocked') {
-            $scope.statusMessage = 'Another calculation on this project is already running.'
+            $scope.statusMessage = 'Another calculation on this optimization is already running.'
           }
         });
     };
@@ -285,11 +289,12 @@ define(['angular', 'ui.router'], function (angular) {
       $scope.statusMessage = 'Optimization cancelled';
       $timeout.cancel($scope.state.timer);
       $scope.state.isRunnable = true;
+      $scope.state.isRunning = false;
 
       rpcService
         .rpcAsyncRun(
           'cancel_task', [
-            makeTaskId(),
+            $scope.task_id,
           ])
         .then(function(response) {
             console.log('Task cancelled');
@@ -304,10 +309,12 @@ define(['angular', 'ui.router'], function (angular) {
             var calcState = response.data;
             if (calcState.status === 'started') {
               $scope.state.isRunnable = false;
+              $scope.state.isRunning = true;
               $scope.statusMessage = calcState.status_string;
               $scope.state.timer = $timeout(updateOptimizationStatus, 1000);
             } else {
               $scope.state.isRunnable = true;
+              $scope.state.isRunning = false;
               if (calcState.status === 'cancelled') {
                 $scope.statusMessage = 'Optimization cancelled';
               } else if (calcState.status === 'completed') {
@@ -316,10 +323,11 @@ define(['angular', 'ui.router'], function (angular) {
                 getOptimizationGraphs();
               } else if (calcState.status === 'error') {
                 $scope.statusMessage = 'Optimization error';
-              } else if (typeof calcState.status === "undefined") {
+              } else if (typeof calcState.status === "undefined" || calcState.status === null) {
                 console.log('Task status not found');
                 $scope.statusMessage = '';
-              } else {
+              }
+              else {
                 console.log(calcState.status);
                 $scope.statusMessage = 'Unknown error';
               }
