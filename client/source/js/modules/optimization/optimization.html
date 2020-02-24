@@ -71,7 +71,7 @@
           <div style="display: table-cell;">
             <button
               class="btn __green __m"
-              ng-click="startOptimization(state.optimization)"
+              ng-click="startOptimization()"
               ng-disabled="checkNotRunnable()">
               Optimize
             </button>
@@ -84,9 +84,15 @@
             </select>
             <help ref='viewing-optimizations'/>
             &nbsp
-          <span style="color: #00aeef; margin-top: 25px; margin-left: 15px">
-            {{ statusMessage }}
-          </span>
+            <span style="color: #00aeef; margin-top: 25px; margin-left: 15px">
+              {{ statusMessage }}
+            </span>
+            <button
+              class="btn __red __m"
+              ng-click="cancelOptimization()"
+              ng-show="state.isRunning">
+              Cancel
+            </button>
 
             <div class="error-hint" ng-show="isMissingProgset">
               Please <a ui-sref="programs">add programs to a program set</a> for budget and coverage scenario.
