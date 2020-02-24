@@ -2675,5 +2675,6 @@ class Link(object):
     def __deepcopy__(self, *args, **kwargs):
         ''' Same as copy '''
         return self.__copy__(self, *args, **kwargs)
-        
-        
+
+class CancelException(Exception):
+    pass

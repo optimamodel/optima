@@ -42,10 +42,10 @@
             <select
               ng-model="state.endYear"
               ng-options="year for year in years"></select>
-			 
+
             <icon action="undo" click="undo()"/>
             <icon action="redo" click="redo()"/>
-			
+
           </div>
         </div>
         <div style="display: table-cell; padding-right: 80px;">
@@ -78,6 +78,12 @@
         </div>
         <div style="display: table-cell">
           <span style="color: #00aeef;"> {{ statusMessage }} </span>
+          <button
+              class="btn __red __m"
+              ng-click="cancelAutoCalibration()"
+              ng-show="state.isRunning">
+            Cancel
+          </button>
         </div>
       </div>
 
@@ -128,14 +134,17 @@
           <div class="automatic-calibration">
             &nbsp;&nbsp;<b>Automatic calibration</b><help ref="automatic-calibration"/><br>
             &nbsp;&nbsp;<button class="btn" ng-click="startAutoCalibration()" ng-disabled="checkNotRunnable()">Calibrate</button>
+
             &nbsp; for &nbsp;
-            <select ng-init="state.maxtime=10" ng-model="state.maxtime">
+
+            <select ng-disabled="checkNotRunnable()" ng-init="state.maxtime=10" ng-model="state.maxtime">
               <option value=10>10 seconds</option>
               <option value=30>30 seconds</option>
               <option value=60>1 minute</option>
               <option value=300>5 minutes</option>
               <option value=9999>unlimited</option>
             </select>
+
           </div>
           <br>
           &nbsp;&nbsp;<b>Manual calibration</b><help ref="manual-calibration"/><br>
