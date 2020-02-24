@@ -185,6 +185,8 @@ define([
         templateUrl: templateUrl,
         controller: controller,
         windowClass: 'fat-modal',
+        backdrop: 'static',
+        keyboard: false,
         resolve: {
           project: function() { return $scope.project },
           scenarios: function () { return $scope.scenarios; },

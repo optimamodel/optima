@@ -518,6 +518,8 @@ define(['angular', 'ui.router'], function (angular) {
           templateUrl: 'js/modules/optimization/optimization-modal.html?cacheBust=xxx',
           controller: OptimizationModalController,
           windowClass: 'fat-modal',
+          backdrop: 'static',
+          keyboard: false,
         })
         .result
         .then(function(optimization) {
