@@ -93,7 +93,10 @@ class Programset(object):
                     interaction = self.covout[targetpartype][thispop].interaction 
                 else: # ... or if not, set it up
                     ccopars = odict()
-                    ccopars['intercept'] = []
+                    # set intercept
+                    intercept = []
+
+                    ccopars['intercept'] = intercept
                     ccopars['t'] = []
                     interaction = self.default_interaction
                 targetingprogs = [thisprog.short for thisprog in self.progs_by_targetpar(targetpartype)[thispop]]

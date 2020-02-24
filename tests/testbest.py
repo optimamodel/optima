@@ -24,6 +24,7 @@ ind = -1 # Default index
 
 ## Housekeeping
 
+doplot = False
 if 'doplot' not in locals(): doplot = True
 if 'runsensitivity' not in locals(): runsensitivity = False
 
