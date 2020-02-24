@@ -509,27 +509,39 @@ class Resultset(object):
         thisbudget = []
         thiscoverage = []
         tvbudget = []
-        try:    thisbudget = self.budgets[key]
+        budgetyear = None
+        try:    thisbudget   = self.budgets[key]
         except: pass
         try:    thiscoverage = self.coverages[key]
         except: pass
-        try:    tvbudget = self.timevarying[key]
+        try:    tvbudget     = self.timevarying[key]
         except: pass
+        
+        try:    
+            budcovyear   = self.budgetyears[key][-1]
+            budcovyearstring = ' (%s)' % budcovyear
+        except:
+            budcovyearstring = ''
 
-        if len(thisbudget): # WARNING, does not support multiple years
+        if len(thisbudget): # WARNING, does not support multiple years, only uses the most recent year
+            budvals = thisbudget.values()
+            for c in range(len(budvals)):
+                if checktype(budvals[c], 'arraylike'):
+                    budvals[c] = budvals[c][-1] # Only pull out the last element if it's an array/list
+                if budvals[c] is None: budvals[c] = 0 # Just reset
             outputstr += '\n\n\n'
-            outputstr += sep*2+'Budget\n'
+            outputstr += sep*2+'Budget%s\n' % (budcovyearstring)
             outputstr += sep*2+sep.join(sanitizeseps(thisbudget.keys())) + '\n'
-            outputstr += sep*2+sep.join([str(val) for val in thisbudget.values()]) + '\n'
+            outputstr += sep*2+sep.join([str(val) for val in budvals]) + '\n'
 
-        if len(thiscoverage): # WARNING, does not support multiple years
+        if len(thiscoverage): # WARNING, does not support multiple years, only uses the most recent year
             covvals = thiscoverage.values()
             for c in range(len(covvals)):
                 if checktype(covvals[c], 'arraylike'):
-                    covvals[c] = covvals[c][0] # Only pull out the first element if it's an array/list
+                    covvals[c] = covvals[c][-1] # Only pull out the last element if it's an array/list
                 if covvals[c] is None: covvals[c] = 0 # Just reset
             outputstr += '\n\n\n'
-            outputstr += sep*2+'Coverage\n'
+            outputstr += sep*2+'Coverage%s\n' % (budcovyearstring)
             outputstr += sep*2+sep.join(sanitizeseps(thiscoverage.keys()))+'\n'
             outputstr += sep*2+sep.join([str(val) for val in covvals]) + '\n' # WARNING, should have this val[0] but then dies with None entries
 
