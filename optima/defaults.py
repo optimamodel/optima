@@ -375,13 +375,14 @@ def defaultproject(which='best', addprogset=True, addcostcovdata=True, usestanda
         if dorun: P.runsim() # Run after calibration
         
         # Programs
-        R = defaultprogset(P, addcostcovpars=addcostcovpars, addcostcovdata=addcostcovdata, filterprograms=['HTS', 'ART'])
-        R.programs['HTS'].costcovdata =          {'t':[2014],'cost':[5e6],'coverage':[2e5]}
-        R.programs['ART'].costcovdata =          {'t':[2014],'cost': [2e6],'coverage':[1e4]}
-        R.covout['hivtest']['M 15-49'].addccopar({'intercept': (0.01,0.01), 't': 2016.0, 'HTS': (0.30,0.30)})
-        R.covout['hivtest']['F 15-49'].addccopar({'intercept': (0.01,0.01), 't': 2016.0, 'HTS': (0.30,0.30)})
-        R.covout['numtx']['tot'].addccopar({'intercept': (10.0,10.0), 't': 2016.0})
-        P.addprogset(R)
+        if addprogset:
+            R = defaultprogset(P, addcostcovpars=addcostcovpars, addcostcovdata=addcostcovdata, filterprograms=['HTS', 'ART'])
+            R.programs['HTS'].costcovdata =          {'t':[2014],'cost':[5e6],'coverage':[2e5]}
+            R.programs['ART'].costcovdata =          {'t':[2014],'cost': [2e6],'coverage':[1e4]}
+            R.covout['hivtest']['M 15-49'].addccopar({'intercept': (0.01,0.01), 't': 2016.0, 'HTS': (0.30,0.30)})
+            R.covout['hivtest']['F 15-49'].addccopar({'intercept': (0.01,0.01), 't': 2016.0, 'HTS': (0.30,0.30)})
+            R.covout['numtx']['tot'].addccopar({'intercept': (10.0,10.0), 't': 2016.0})
+            P.addprogset(R)
     
 
 
@@ -411,54 +412,55 @@ def defaultproject(which='best', addprogset=True, addcostcovdata=True, usestanda
         if dorun: P.runsim() # Run after calibration
     
         # Get a default progset 
-        R = defaultprogset(P, addcostcovpars=addcostcovpars, addcostcovdata=addcostcovdata, filterprograms=['Condoms', 'FSW programs', 'MSM programs', 'HTS', 'ART', 'Lab', 'Adherence', 'Tracing', 'Other'])
-        
-        R.programs['Condoms'].costcovdata =      {'t':[2015],'cost':[1.3e7],'coverage':[3e5]}
-        R.programs['FSW programs'].costcovdata = {'t':[2015],'cost':[2.5e6],'coverage':[1e9]}
-        R.programs['MSM programs'].costcovdata = {'t':[2015],'cost':[1e5],'coverage':[1e9]}
-        R.programs['HTS'].costcovdata =          {'t':[2015],'cost':[1e7],'coverage':[1.3e6]}
-        R.programs['ART'].costcovdata =          {'t':[2015],'cost':[2.35e7],'coverage':[39324]}
-        R.programs['Lab'].costcovdata =          {'t':[2015],'cost':[1.9e6],'coverage':[1e4]}
-        R.programs['Adherence'].costcovdata =    {'t':[2015],'cost':[1e6],'coverage':[1e4]}
-        R.programs['Tracing'].costcovdata =      {'t':[2015],'cost':[8e5],'coverage':[1e4]}
-        R.programs['Other'].costcovdata =        {'t':[2015],'cost':[1.5e7],'coverage':[None]}
-        
-        # Add program effects
-        R.covout['condcas'][('Clients', 'FSW')].addccopar({'intercept':  (0.35,0.4), 't': 2016.0, 'Condoms':(0.55,0.65), 'FSW programs':(0.9,0.99)})
-        R.covout['condcas'][('Clients','F 15+')].addccopar({'intercept': (0.25,0.3), 't': 2016.0, 'Condoms':(0.85,0.95)})
-        R.covout['condcas'][('M 15+', 'FSW')].addccopar({'intercept':    (0.2,0.35), 't': 2016.0, 'Condoms':(0.4,0.5), 'FSW programs':(0.8,0.9)})
-        R.covout['condcas'][('M 15+','F 15+')].addccopar({'intercept':  (0.15,0.25), 't': 2016.0, 'Condoms':(0.4,0.5)})
-        R.covout['condcas'][('PWID','F 15+')].addccopar({'intercept':   (0.1,0.2), 't': 2016.0, 'Condoms':(0.35,0.45)})
-        R.covout['condcas'][('MSM', 'MSM')].addccopar({'intercept': (0.05,0.15), 't': 2016.0, 'Condoms':(0.2,0.3), 'MSM programs':(0.8,0.9)})
-    
-        R.covout['condcom'][('Clients', 'FSW')].addccopar({'intercept': (0.18,0.25), 't': 2016.0, 'FSW programs':(0.85,0.95)})
-    
-        R.covout['hivtest']['FSW'].addccopar({'intercept': (0.30,0.40), 't': 2016.0, 'HTS': (0.90,0.95), 'FSW programs':(0.90,0.95)})
-        R.covout['hivtest']['Clients'].addccopar({'intercept': (0.10,0.15), 't': 2016.0, 'HTS': (0.40,0.60)})
-        R.covout['hivtest']['M 15+'].addccopar({'intercept': (0.01,0.02), 't': 2016.0, 'HTS': (0.20,0.30)})
-        R.covout['hivtest']['F 15+'].addccopar({'intercept': (0.01,0.02), 't': 2016.0, 'HTS': (0.20,0.30)})
-        R.covout['hivtest']['PWID'].addccopar({'intercept': (0.10,0.15), 't': 2016.0, 'HTS': (0.80,0.90)})
-        R.covout['hivtest']['MSM'].addccopar({'intercept': (0.15,0.20), 't': 2016.0, 'HTS': (0.85,0.90), 'MSM programs':(0.95,0.99)})
-    
-        R.covout['numtx']['tot'].addccopar({'intercept': (10.0,15.0), 't': 2016.0})
-        R.covout['numvlmon']['tot'].addccopar({'intercept': (10.0,15.0), 't': 2016.0})
-        
-        R.covout['leavecare']['FSW'].addccopar({'intercept': (0.30,0.40), 't': 2016.0, 'Adherence': (0.05,0.1)})
-        R.covout['leavecare']['Clients'].addccopar({'intercept': (0.30,0.40), 't': 2016.0, 'Adherence': (0.05,0.1)})
-        R.covout['leavecare']['M 15+'].addccopar({'intercept': (0.30,0.40), 't': 2016.0, 'Adherence': (0.05,0.1)})
-        R.covout['leavecare']['F 15+'].addccopar({'intercept': (0.30,0.40), 't': 2016.0, 'Adherence': (0.05,0.1)})
-        R.covout['leavecare']['PWID'].addccopar({'intercept': (0.50,0.60), 't': 2016.0, 'Adherence': (0.3,0.4)})
-        R.covout['leavecare']['MSM'].addccopar({'intercept': (0.30,0.40), 't': 2016.0, 'Adherence': (0.05,0.1)})
-    
-        R.covout['linktocare']['FSW'].addccopar({'intercept': (1.40,1.60), 't': 2016.0, 'Tracing': (0.1,0.3)})
-        R.covout['linktocare']['Clients'].addccopar({'intercept': (1.40,1.60), 't': 2016.0, 'Tracing': (0.1,0.3)})
-        R.covout['linktocare']['M 15+'].addccopar({'intercept': (1.40,1.60), 't': 2016.0, 'Tracing': (0.1,0.3)})
-        R.covout['linktocare']['F 15+'].addccopar({'intercept': (1.40,1.60), 't': 2016.0, 'Tracing': (0.1,0.3)})
-        R.covout['linktocare']['PWID'].addccopar({'intercept': (1.40,1.60), 't': 2016.0, 'Tracing': (0.1,0.3)})
-        R.covout['linktocare']['MSM'].addccopar({'intercept': (1.40,1.60), 't': 2016.0, 'Tracing': (0.1,0.3)})
-    
-        # Store this program set in the project
-        P.addprogset(R)
+        if addprogset:
+            R = defaultprogset(P, addcostcovpars=addcostcovpars, addcostcovdata=addcostcovdata, filterprograms=['Condoms', 'FSW programs', 'MSM programs', 'HTS', 'ART', 'Lab', 'Adherence', 'Tracing', 'Other'])
+
+            R.programs['Condoms'].costcovdata =      {'t':[2015],'cost':[1.3e7],'coverage':[3e5]}
+            R.programs['FSW programs'].costcovdata = {'t':[2015],'cost':[2.5e6],'coverage':[1e9]}
+            R.programs['MSM programs'].costcovdata = {'t':[2015],'cost':[1e5],'coverage':[1e9]}
+            R.programs['HTS'].costcovdata =          {'t':[2015],'cost':[1e7],'coverage':[1.3e6]}
+            R.programs['ART'].costcovdata =          {'t':[2015],'cost':[2.35e7],'coverage':[39324]}
+            R.programs['Lab'].costcovdata =          {'t':[2015],'cost':[1.9e6],'coverage':[1e4]}
+            R.programs['Adherence'].costcovdata =    {'t':[2015],'cost':[1e6],'coverage':[1e4]}
+            R.programs['Tracing'].costcovdata =      {'t':[2015],'cost':[8e5],'coverage':[1e4]}
+            R.programs['Other'].costcovdata =        {'t':[2015],'cost':[1.5e7],'coverage':[None]}
+
+            # Add program effects
+            R.covout['condcas'][('Clients', 'FSW')].addccopar({'intercept':  (0.35,0.4), 't': 2016.0, 'Condoms':(0.55,0.65), 'FSW programs':(0.9,0.99)})
+            R.covout['condcas'][('Clients','F 15+')].addccopar({'intercept': (0.25,0.3), 't': 2016.0, 'Condoms':(0.85,0.95)})
+            R.covout['condcas'][('M 15+', 'FSW')].addccopar({'intercept':    (0.2,0.35), 't': 2016.0, 'Condoms':(0.4,0.5), 'FSW programs':(0.8,0.9)})
+            R.covout['condcas'][('M 15+','F 15+')].addccopar({'intercept':  (0.15,0.25), 't': 2016.0, 'Condoms':(0.4,0.5)})
+            R.covout['condcas'][('PWID','F 15+')].addccopar({'intercept':   (0.1,0.2), 't': 2016.0, 'Condoms':(0.35,0.45)})
+            R.covout['condcas'][('MSM', 'MSM')].addccopar({'intercept': (0.05,0.15), 't': 2016.0, 'Condoms':(0.2,0.3), 'MSM programs':(0.8,0.9)})
+
+            R.covout['condcom'][('Clients', 'FSW')].addccopar({'intercept': (0.18,0.25), 't': 2016.0, 'FSW programs':(0.85,0.95)})
+
+            R.covout['hivtest']['FSW'].addccopar({'intercept': (0.30,0.40), 't': 2016.0, 'HTS': (0.90,0.95), 'FSW programs':(0.90,0.95)})
+            R.covout['hivtest']['Clients'].addccopar({'intercept': (0.10,0.15), 't': 2016.0, 'HTS': (0.40,0.60)})
+            R.covout['hivtest']['M 15+'].addccopar({'intercept': (0.01,0.02), 't': 2016.0, 'HTS': (0.20,0.30)})
+            R.covout['hivtest']['F 15+'].addccopar({'intercept': (0.01,0.02), 't': 2016.0, 'HTS': (0.20,0.30)})
+            R.covout['hivtest']['PWID'].addccopar({'intercept': (0.10,0.15), 't': 2016.0, 'HTS': (0.80,0.90)})
+            R.covout['hivtest']['MSM'].addccopar({'intercept': (0.15,0.20), 't': 2016.0, 'HTS': (0.85,0.90), 'MSM programs':(0.95,0.99)})
+
+            R.covout['numtx']['tot'].addccopar({'intercept': (10.0,15.0), 't': 2016.0})
+            R.covout['numvlmon']['tot'].addccopar({'intercept': (10.0,15.0), 't': 2016.0})
+
+            R.covout['leavecare']['FSW'].addccopar({'intercept': (0.30,0.40), 't': 2016.0, 'Adherence': (0.05,0.1)})
+            R.covout['leavecare']['Clients'].addccopar({'intercept': (0.30,0.40), 't': 2016.0, 'Adherence': (0.05,0.1)})
+            R.covout['leavecare']['M 15+'].addccopar({'intercept': (0.30,0.40), 't': 2016.0, 'Adherence': (0.05,0.1)})
+            R.covout['leavecare']['F 15+'].addccopar({'intercept': (0.30,0.40), 't': 2016.0, 'Adherence': (0.05,0.1)})
+            R.covout['leavecare']['PWID'].addccopar({'intercept': (0.50,0.60), 't': 2016.0, 'Adherence': (0.3,0.4)})
+            R.covout['leavecare']['MSM'].addccopar({'intercept': (0.30,0.40), 't': 2016.0, 'Adherence': (0.05,0.1)})
+
+            R.covout['linktocare']['FSW'].addccopar({'intercept': (1.40,1.60), 't': 2016.0, 'Tracing': (0.1,0.3)})
+            R.covout['linktocare']['Clients'].addccopar({'intercept': (1.40,1.60), 't': 2016.0, 'Tracing': (0.1,0.3)})
+            R.covout['linktocare']['M 15+'].addccopar({'intercept': (1.40,1.60), 't': 2016.0, 'Tracing': (0.1,0.3)})
+            R.covout['linktocare']['F 15+'].addccopar({'intercept': (1.40,1.60), 't': 2016.0, 'Tracing': (0.1,0.3)})
+            R.covout['linktocare']['PWID'].addccopar({'intercept': (1.40,1.60), 't': 2016.0, 'Tracing': (0.1,0.3)})
+            R.covout['linktocare']['MSM'].addccopar({'intercept': (1.40,1.60), 't': 2016.0, 'Tracing': (0.1,0.3)})
+
+            # Store this program set in the project
+            P.addprogset(R)
     
     
     
@@ -495,74 +497,76 @@ def defaultproject(which='best', addprogset=True, addcostcovdata=True, usestanda
         pars['mtctbreast'].y *= .5
         
         ### Add programs
-        R = defaultprogset(P, addcostcovpars=False, addcostcovdata=False, filterprograms=['VMMC', 'FSW programs', 'MSM programs', 'Condoms', 'HTS', 'PMTCT', 'Condoms', 'ART'])
-        
-        R.programs['Condoms'].costcovfn.ccopars = odict([('popfactor', [(1,1)]), ('saturation', [(0.85, 0.95)]), ('t', [2016.0]), ('unitcost', [(4.5, 4.5)]), ])
-        R.programs['Condoms'].costcovdata = odict([('cost', [nan, nan, nan, nan, nan, 20402012.0, 16159558.0, nan, nan, nan, 2899762.5797366896, 1267895.0977615763, 1504986, 27619000.0, nan, nan, nan, nan, nan, nan, nan]), ('t', [2000.0, 2001.0, 2002.0, 2003.0, 2004.0, 2005.0, 2006.0, 2007.0, 2008.0, 2009.0, 2010.0, 2011.0, 2012.0, 2013.0, 2014.0, 2015.0, 2016.0, 2017.0, 2018.0, 2019.0, 2020.0]), ('coverage', [nan, nan, nan, nan, nan, 5240657.8067303784, 4717565.5467255022, nan, nan, nan, 631092.12248356279, 8146.7011712820877, 334441, nan, nan, nan, nan, nan, nan, nan, nan]), ])
-    
-        R.programs['VMMC'].costcovfn.ccopars = odict([('popfactor', [(1,1)]), ('saturation', [(0.85, 0.95)]), ('t', [2016.0]), ('unitcost', [(86.25, 86.25)]), ])
-        R.programs['VMMC'].costcovdata = odict([('cost', [nan, nan, nan, nan, nan, 0.0, 0.0, nan, nan, nan, 2590232.3247760157, 3241399.741655164, 3650750.2589196907, 25398000.0, 17168666.25, nan, nan, nan, nan, nan, nan]), ('t', [2000.0, 2001.0, 2002.0, 2003.0, 2004.0, 2005.0, 2006.0, 2007.0, 2008.0, 2009.0, 2010.0, 2011.0, 2012.0, 2013.0, 2014.0, 2015.0, 2016.0, 2017.0, 2018.0, 2019.0, 2020.0]), ('coverage', [nan, nan, nan, nan, nan, nan, nan, 304.0, 2454.0, 16923.0, 63604.0, 84604.0, 173992.0, 294466.0, 199057.0, nan, nan, nan, nan, nan, nan]), ])
-    
-        R.programs['FSW programs'].costcovfn.ccopars = odict([('popfactor', [(1,1)]), ('saturation', [(0.85, 0.95)]), ('t', [2016.0]), ('unitcost', [(35.5, 35.5)]), ])
-        R.programs['FSW programs'].costcovdata = odict([('popfactor', [(1,1)]), ('cost', [nan, nan, nan, nan, nan, 1028950.0, 5372.0, nan, nan, nan, nan, nan, 0.0, 340000.0, nan, nan, nan, nan, nan, nan, nan]), ('t', [2000.0, 2001.0, 2002.0, 2003.0, 2004.0, 2005.0, 2006.0, 2007.0, 2008.0, 2009.0, 2010.0, 2011.0, 2012.0, 2013.0, 2014.0, 2015.0, 2016.0, 2017.0, 2018.0, 2019.0, 2020.0]), ('coverage', [nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan]), ])
-    
-        R.programs['MSM programs'].costcovfn.ccopars = odict([('popfactor', [(1,1)]), ('saturation', [(0.9, 0.9)]), ('t', [2016.0]), ('unitcost', [(45.95, 45.95)]), ])
-        R.programs['MSM programs'].costcovdata = odict([('cost', [nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, 0.0, 30000.0, nan, nan, nan, nan, nan, nan, nan]), ('t', [2000.0, 2001.0, 2002.0, 2003.0, 2004.0, 2005.0, 2006.0, 2007.0, 2008.0, 2009.0, 2010.0, 2011.0, 2012.0, 2013.0, 2014.0, 2015.0, 2016.0, 2017.0, 2018.0, 2019.0, 2020.0]), ('coverage', [nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan]), ])
-    
-        R.programs['HTS'].costcovfn.ccopars = odict([('popfactor', [(1,1)]), ('saturation', [(1.0, 1.0)]), ('t', [2016.0]), ('unitcost', [(8.67, 8.67)]), ])
-        R.programs['HTS'].costcovdata = odict([('cost', [nan, nan, nan, nan, nan, 3563387.0, 8298787.0, nan, nan, nan, 17450949.635453127, 15213442.58553639, 11015092.261536067, 17919000.0, 21269608.14, nan, nan, nan, nan, nan, nan]), ('t', [2000.0, 2001.0, 2002.0, 2003.0, 2004.0, 2005.0, 2006.0, 2007.0, 2008.0, 2009.0, 2010.0, 2011.0, 2012.0, 2013.0, 2014.0, 2015.0, 2016.0, 2017.0, 2018.0, 2019.0, 2020.0]), ('coverage', [nan, nan, nan, nan, 63330.0, 195396.0, 234430.0, 336672.0, 511299.0, 1050137.0, 1327995.0, 1772043.0, 2138961.0, 2066216.0, 2453242.0, nan, nan, nan, nan, nan, nan]), ])
-    
-        R.programs['PMTCT'].costcovfn.ccopars = odict([('popfactor', [(1,1)]), ('saturation', [(1.0, 1.0)]), ('t', [2016.0]), ('unitcost', [(301.0, 301.0)]), ])
-        R.programs['PMTCT'].costcovdata = odict([('cost', [nan, nan, nan, nan, nan, 1162684.0, 17863894.0, nan, nan, nan, 12539141.068389883, 8846436.504648793, 10663078.844306767, 22317000.0, 20714820.0, 22630000.0, nan, nan, nan, nan, nan]), ('t', [2000.0, 2001.0, 2002.0, 2003.0, 2004.0, 2005.0, 2006.0, 2007.0, 2008.0, 2009.0, 2010.0, 2011.0, 2012.0, 2013.0, 2014.0, 2015.0, 2016.0, 2017.0, 2018.0, 2019.0, 2020.0]), ('coverage', [nan, nan, nan, nan, 6400.0, 18600.0, 25600.0, 35305.0, 40836.0, 58682.0, 76893.0, 82081.0, 84351.0, 74142.0, 68820.0, nan, nan, nan, nan, nan, nan]), ])
-   
-        R.programs['ART'].costcovfn.ccopars = odict([('popfactor', [(1,1)]), ('saturation', [(0.85, 0.95)]), ('t', [2016.0]), ('unitcost', [(270.0, 300.0)]), ])
-        R.programs['ART'].costcovdata = odict([('cost', [nan, nan, nan, nan, nan, 25885685.0, 39021643.0, nan, nan, nan, 56453775.04472395, 72132041.93644492, 69209158.39479679, 148597000.0, 171792896.0, 177500000., nan, nan, nan, nan, nan]), ('t', [2000.0, 2001.0, 2002.0, 2003.0, 2004.0, 2005.0, 2006.0, 2007.0, 2008.0, 2009.0, 2010.0, 2011.0, 2012.0, 2013.0, 2014.0, 2015.0, 2016.0, 2017.0, 2018.0, 2019.0, 2020.0]), ('coverage', [nan, nan, nan, nan, nan, 57164.0, 81030.0, 149199.0, 219576.0, 283863.0, 344407.0, 415685.0, 480925.0, 580118.0, 671066.0, nan, nan, nan, nan, nan, nan]), ])
-    
-        R.covout['numcirc']['Clients'].ccopars = odict([('intercept', [(0.0, 0.0)]), ('t', [2016]), (u'VMMC', []), ])
-        R.covout['numcirc']['MSM'].ccopars = odict([('intercept', [(0.0, 0.0)]), ('t', [2016]), (u'VMMC', []), ])
-        R.covout['numcirc']['Males 0-9'].ccopars = odict([('intercept', [(0.0, 0.0)]), ('t', [2016]), (u'VMMC', []), ])
-        R.covout['numcirc']['Males 10-19'].ccopars = odict([('intercept', [(0.0, 0.0)]), ('t', [2016]), (u'VMMC', []), ])
-        R.covout['numcirc']['Males 20-24'].ccopars = odict([('intercept', [(0.0, 0.0)]), ('t', [2016]), (u'VMMC', []), ])
-        R.covout['numcirc']['Males 25-49'].ccopars = odict([('intercept', [(0.0, 0.0)]), ('t', [2016]), (u'VMMC', []), ])
-        R.covout['numcirc']['Males 50+'].ccopars = odict([('intercept', [(0.0, 0.0)]), ('t', [2016]), (u'VMMC', []), ])
-    
-        R.covout['condcom'][(u'Clients', u'FSW')].ccopars = odict([('intercept', [(0.6, 0.65)]), ('t', [2016]), (u'FSW programs', [(0.92, 0.97)]), ])
-        R.covout['condcom'][(u'MSM', u'FSW')].ccopars = odict([('intercept', [( 0.25,  0.3)]), ('t', [2016.0]), (u'FSW programs', [(0.8,  0.9)]), ])
-        R.covout['numtx']['tot'].ccopars = odict([('intercept', [(0.0, 0.0)]), ('t', [2016]), (u'PMTCT', []), (u'ART', []), ])
-        R.covout['numpmtct']['tot'].ccopars = odict([('intercept', [(0.0, 0.0)]), ('t', [2016]), (u'PMTCT', []), ])
-    
-        R.covout['condcas'][(u'Clients', u'Females 20-24')].ccopars = odict([('intercept', [(0.2, 0.3)]), ('t', [2016]), (u'Condoms', [(0.5, 0.6)]), ])
-        R.covout['condcas'][(u'Clients', u'Females 25-49',)].ccopars = odict([('intercept', [(0.2, 0.25)]), ('t', [2016]), (u'Condoms', [(0.55, 0.65)]), ])
-        R.covout['condcas'][(u'MSM', u'MSM')].ccopars = odict([('intercept', [(0.15, 0.25)]), ('t', [2016]), (u'MSM programs', [(0.8, 0.9)]), (u'Condoms', [(0.25, 0.35)])])
-        R.covout['condcas'][(u'Males 10-19', u'Females 10-19')].ccopars = odict([('intercept', [(0.2, 0.3)]), ('t', [2016]), (u'Condoms', [(0.6, 0.7)]), ])
-        R.covout['condcas'][(u'Males 10-19', u'Females 20-24')].ccopars = odict([('intercept', [(0.2, 0.3)]), ('t', [2016]), (u'Condoms', [(0.65, 0.8)]), ])
-        R.covout['condcas'][(u'Males 10-19', u'Females 25-49')].ccopars = odict([('intercept', [(0.2, 0.3)]), ('t', [2016]), (u'Condoms', [(0.65, 0.75)]), ])
-        R.covout['condcas'][(u'Males 20-24', u'Females 10-19')].ccopars = odict([('intercept', [(0.2, 0.3)]), ('t', [2016]), (u'Condoms', [(0.75, 0.85)]), ])
-        R.covout['condcas'][(u'Males 20-24', u'Females 20-24')].ccopars = odict([('intercept', [(0.2, 0.3)]), ('t', [2016]), (u'Condoms', [(0.8, 0.9)]), ])
-        R.covout['condcas'][(u'Males 20-24', u'Females 25-49')].ccopars = odict([('intercept', [(0.2, 0.3)]), ('t', [2016]), (u'Condoms', [(0.8, 0.95)]), ])
-        R.covout['condcas'][(u'Males 25-49', u'Females 10-19')].ccopars = odict([('intercept', [(0.2, 0.3)]), ('t', [2016]), (u'Condoms', [(0.8, 0.95)]), ])
-        R.covout['condcas'][(u'Males 25-49', u'Females 20-24')].ccopars = odict([('intercept', [(0.25, 0.35)]), ('t', [2016]), (u'Condoms', [(0.85, 0.95)]), ])
-        R.covout['condcas'][(u'Males 25-49', u'Females 25-49')].ccopars = odict([('intercept', [(0.25, 0.35)]), ('t', [2016]), (u'Condoms', [(0.85, 0.95)]), ])
-        R.covout['condcas'][(u'Males 25-49', u'Females 50+')].ccopars = odict([('intercept', [( 0.25,  0.35)]), ('t', [2016.0]), (u'Condoms', [(0.7, 0.8)]), ])
-        R.covout['condcas'][(u'Males 50+', u'Females 20-24')].ccopars = odict([('intercept', [( 0.25,  0.35)]), ('t', [2016.0]), (u'Condoms', [(0.6,  0.65)]), ])
-        R.covout['condcas'][(u'Males 50+', u'Females 25-49')].ccopars = odict([('intercept', [( 0.2,  0.25)]), ('t', [2016.0]), (u'Condoms', [(0.7,  0.75)]), ])
-        R.covout['condcas'][(u'Males 50+', u'Females 50+')].ccopars = odict([('intercept', [(0.2, 0.25)]), ('t', [2016]), (u'Condoms', [(0.55, 0.65)]), ])
-    
-        R.covout['hivtest']['FSW'].ccopars = odict([('intercept', [(0.05,  0.1)]), ('t', [2016.0]), (u'FSW programs', [(0.9,  0.99)]), (u'HTS', [(0.1,  0.15)]),])
-        R.covout['hivtest']['MSM'].ccopars = odict([('intercept', [(0.01,  0.03)]), ('t', [2016.0]), (u'MSM programs', [(0.4,  0.5)]), (u'HTS', [(0.1,  0.15)]), ])
-        R.covout['hivtest']['Clients'].ccopars = odict([('intercept', [(0.01, 0.05)]), ('t', [2016]), (u'HTS', [(0.3, 0.35)]), ])
-        R.covout['hivtest']['Males 0-9'].ccopars = odict([('intercept', [(0.5, 0.5)]), ('t', [2016]), (u'HTS', [(0.5, 0.5)]), ])
-        R.covout['hivtest']['Females 0-9'].ccopars = odict([('intercept', [(0.5,  0.5)]), ('t', [2016.0]), (u'HTS', [(0.5,  0.5)]), ])
-        R.covout['hivtest']['Males 10-19'].ccopars = odict([('intercept', [(0.01, 0.05)]), ('t', [2016]), (u'HTS', [(0.25, 0.3)]), ])
-        R.covout['hivtest']['Females 10-19'].ccopars = odict([('intercept', [(0.01,  0.05)]), ('t', [2016.0]), (u'HTS', [(0.7,  0.8)]), ])
-        R.covout['hivtest']['Males 20-24'].ccopars = odict([('intercept', [(0.01,  0.05)]), ('t', [2016.0]), (u'HTS', [(0.15,  0.25)]), ])
-        R.covout['hivtest']['Females 20-24'].ccopars = odict([('intercept', [(0.01, 0.05)]), ('t', [2016]), (u'HTS', [(0.7, 0.8)]), ])
-        R.covout['hivtest']['Males 25-49'].ccopars = odict([('intercept', [(0.01, 0.05)]), ('t', [2016]), (u'HTS', [(0.2, 0.35)]), ])
-        R.covout['hivtest']['Females 25-49'].ccopars = odict([('intercept', [(0.01, 0.05)]), ('t', [2016]), (u'HTS', [(0.7, 0.8)]), ])
-        R.covout['hivtest']['Males 50+'].ccopars = odict([('intercept', [( 0.01,  0.05)]), ('t', [2016.0]), (u'HTS', [(0.25,  0.3)]), ])
-        R.covout['hivtest']['Females 50+'].ccopars = odict([('intercept', [(0.01, 0.05)]), ('t', [2016]), (u'HTS', [(0.7, 0.8)]), ])
-    
-        P.addprogset(progset=R)
+        if addprogset:
+
+            R = defaultprogset(P, addcostcovpars=False, addcostcovdata=False, filterprograms=['VMMC', 'FSW programs', 'MSM programs', 'Condoms', 'HTS', 'PMTCT', 'Condoms', 'ART'])
+
+            R.programs['Condoms'].costcovfn.ccopars = odict([('popfactor', [(1,1)]), ('saturation', [(0.85, 0.95)]), ('t', [2016.0]), ('unitcost', [(4.5, 4.5)]), ])
+            R.programs['Condoms'].costcovdata = odict([('cost', [nan, nan, nan, nan, nan, 20402012.0, 16159558.0, nan, nan, nan, 2899762.5797366896, 1267895.0977615763, 1504986, 27619000.0, nan, nan, nan, nan, nan, nan, nan]), ('t', [2000.0, 2001.0, 2002.0, 2003.0, 2004.0, 2005.0, 2006.0, 2007.0, 2008.0, 2009.0, 2010.0, 2011.0, 2012.0, 2013.0, 2014.0, 2015.0, 2016.0, 2017.0, 2018.0, 2019.0, 2020.0]), ('coverage', [nan, nan, nan, nan, nan, 5240657.8067303784, 4717565.5467255022, nan, nan, nan, 631092.12248356279, 8146.7011712820877, 334441, nan, nan, nan, nan, nan, nan, nan, nan]), ])
+
+            R.programs['VMMC'].costcovfn.ccopars = odict([('popfactor', [(1,1)]), ('saturation', [(0.85, 0.95)]), ('t', [2016.0]), ('unitcost', [(86.25, 86.25)]), ])
+            R.programs['VMMC'].costcovdata = odict([('cost', [nan, nan, nan, nan, nan, 0.0, 0.0, nan, nan, nan, 2590232.3247760157, 3241399.741655164, 3650750.2589196907, 25398000.0, 17168666.25, nan, nan, nan, nan, nan, nan]), ('t', [2000.0, 2001.0, 2002.0, 2003.0, 2004.0, 2005.0, 2006.0, 2007.0, 2008.0, 2009.0, 2010.0, 2011.0, 2012.0, 2013.0, 2014.0, 2015.0, 2016.0, 2017.0, 2018.0, 2019.0, 2020.0]), ('coverage', [nan, nan, nan, nan, nan, nan, nan, 304.0, 2454.0, 16923.0, 63604.0, 84604.0, 173992.0, 294466.0, 199057.0, nan, nan, nan, nan, nan, nan]), ])
+
+            R.programs['FSW programs'].costcovfn.ccopars = odict([('popfactor', [(1,1)]), ('saturation', [(0.85, 0.95)]), ('t', [2016.0]), ('unitcost', [(35.5, 35.5)]), ])
+            R.programs['FSW programs'].costcovdata = odict([('popfactor', [(1,1)]), ('cost', [nan, nan, nan, nan, nan, 1028950.0, 5372.0, nan, nan, nan, nan, nan, 0.0, 340000.0, nan, nan, nan, nan, nan, nan, nan]), ('t', [2000.0, 2001.0, 2002.0, 2003.0, 2004.0, 2005.0, 2006.0, 2007.0, 2008.0, 2009.0, 2010.0, 2011.0, 2012.0, 2013.0, 2014.0, 2015.0, 2016.0, 2017.0, 2018.0, 2019.0, 2020.0]), ('coverage', [nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan]), ])
+
+            R.programs['MSM programs'].costcovfn.ccopars = odict([('popfactor', [(1,1)]), ('saturation', [(0.9, 0.9)]), ('t', [2016.0]), ('unitcost', [(45.95, 45.95)]), ])
+            R.programs['MSM programs'].costcovdata = odict([('cost', [nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, 0.0, 30000.0, nan, nan, nan, nan, nan, nan, nan]), ('t', [2000.0, 2001.0, 2002.0, 2003.0, 2004.0, 2005.0, 2006.0, 2007.0, 2008.0, 2009.0, 2010.0, 2011.0, 2012.0, 2013.0, 2014.0, 2015.0, 2016.0, 2017.0, 2018.0, 2019.0, 2020.0]), ('coverage', [nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan]), ])
+
+            R.programs['HTS'].costcovfn.ccopars = odict([('popfactor', [(1,1)]), ('saturation', [(1.0, 1.0)]), ('t', [2016.0]), ('unitcost', [(8.67, 8.67)]), ])
+            R.programs['HTS'].costcovdata = odict([('cost', [nan, nan, nan, nan, nan, 3563387.0, 8298787.0, nan, nan, nan, 17450949.635453127, 15213442.58553639, 11015092.261536067, 17919000.0, 21269608.14, nan, nan, nan, nan, nan, nan]), ('t', [2000.0, 2001.0, 2002.0, 2003.0, 2004.0, 2005.0, 2006.0, 2007.0, 2008.0, 2009.0, 2010.0, 2011.0, 2012.0, 2013.0, 2014.0, 2015.0, 2016.0, 2017.0, 2018.0, 2019.0, 2020.0]), ('coverage', [nan, nan, nan, nan, 63330.0, 195396.0, 234430.0, 336672.0, 511299.0, 1050137.0, 1327995.0, 1772043.0, 2138961.0, 2066216.0, 2453242.0, nan, nan, nan, nan, nan, nan]), ])
+
+            R.programs['PMTCT'].costcovfn.ccopars = odict([('popfactor', [(1,1)]), ('saturation', [(1.0, 1.0)]), ('t', [2016.0]), ('unitcost', [(301.0, 301.0)]), ])
+            R.programs['PMTCT'].costcovdata = odict([('cost', [nan, nan, nan, nan, nan, 1162684.0, 17863894.0, nan, nan, nan, 12539141.068389883, 8846436.504648793, 10663078.844306767, 22317000.0, 20714820.0, 22630000.0, nan, nan, nan, nan, nan]), ('t', [2000.0, 2001.0, 2002.0, 2003.0, 2004.0, 2005.0, 2006.0, 2007.0, 2008.0, 2009.0, 2010.0, 2011.0, 2012.0, 2013.0, 2014.0, 2015.0, 2016.0, 2017.0, 2018.0, 2019.0, 2020.0]), ('coverage', [nan, nan, nan, nan, 6400.0, 18600.0, 25600.0, 35305.0, 40836.0, 58682.0, 76893.0, 82081.0, 84351.0, 74142.0, 68820.0, nan, nan, nan, nan, nan, nan]), ])
+
+            R.programs['ART'].costcovfn.ccopars = odict([('popfactor', [(1,1)]), ('saturation', [(0.85, 0.95)]), ('t', [2016.0]), ('unitcost', [(270.0, 300.0)]), ])
+            R.programs['ART'].costcovdata = odict([('cost', [nan, nan, nan, nan, nan, 25885685.0, 39021643.0, nan, nan, nan, 56453775.04472395, 72132041.93644492, 69209158.39479679, 148597000.0, 171792896.0, 177500000., nan, nan, nan, nan, nan]), ('t', [2000.0, 2001.0, 2002.0, 2003.0, 2004.0, 2005.0, 2006.0, 2007.0, 2008.0, 2009.0, 2010.0, 2011.0, 2012.0, 2013.0, 2014.0, 2015.0, 2016.0, 2017.0, 2018.0, 2019.0, 2020.0]), ('coverage', [nan, nan, nan, nan, nan, 57164.0, 81030.0, 149199.0, 219576.0, 283863.0, 344407.0, 415685.0, 480925.0, 580118.0, 671066.0, nan, nan, nan, nan, nan, nan]), ])
+
+            R.covout['numcirc']['Clients'].ccopars = odict([('intercept', [(0.0, 0.0)]), ('t', [2016]), (u'VMMC', []), ])
+            R.covout['numcirc']['MSM'].ccopars = odict([('intercept', [(0.0, 0.0)]), ('t', [2016]), (u'VMMC', []), ])
+            R.covout['numcirc']['Males 0-9'].ccopars = odict([('intercept', [(0.0, 0.0)]), ('t', [2016]), (u'VMMC', []), ])
+            R.covout['numcirc']['Males 10-19'].ccopars = odict([('intercept', [(0.0, 0.0)]), ('t', [2016]), (u'VMMC', []), ])
+            R.covout['numcirc']['Males 20-24'].ccopars = odict([('intercept', [(0.0, 0.0)]), ('t', [2016]), (u'VMMC', []), ])
+            R.covout['numcirc']['Males 25-49'].ccopars = odict([('intercept', [(0.0, 0.0)]), ('t', [2016]), (u'VMMC', []), ])
+            R.covout['numcirc']['Males 50+'].ccopars = odict([('intercept', [(0.0, 0.0)]), ('t', [2016]), (u'VMMC', []), ])
+
+            R.covout['condcom'][(u'Clients', u'FSW')].ccopars = odict([('intercept', [(0.6, 0.65)]), ('t', [2016]), (u'FSW programs', [(0.92, 0.97)]), ])
+            R.covout['condcom'][(u'MSM', u'FSW')].ccopars = odict([('intercept', [( 0.25,  0.3)]), ('t', [2016.0]), (u'FSW programs', [(0.8,  0.9)]), ])
+            R.covout['numtx']['tot'].ccopars = odict([('intercept', [(0.0, 0.0)]), ('t', [2016]), (u'PMTCT', []), (u'ART', []), ])
+            R.covout['numpmtct']['tot'].ccopars = odict([('intercept', [(0.0, 0.0)]), ('t', [2016]), (u'PMTCT', []), ])
+
+            R.covout['condcas'][(u'Clients', u'Females 20-24')].ccopars = odict([('intercept', [(0.2, 0.3)]), ('t', [2016]), (u'Condoms', [(0.5, 0.6)]), ])
+            R.covout['condcas'][(u'Clients', u'Females 25-49',)].ccopars = odict([('intercept', [(0.2, 0.25)]), ('t', [2016]), (u'Condoms', [(0.55, 0.65)]), ])
+            R.covout['condcas'][(u'MSM', u'MSM')].ccopars = odict([('intercept', [(0.15, 0.25)]), ('t', [2016]), (u'MSM programs', [(0.8, 0.9)]), (u'Condoms', [(0.25, 0.35)])])
+            R.covout['condcas'][(u'Males 10-19', u'Females 10-19')].ccopars = odict([('intercept', [(0.2, 0.3)]), ('t', [2016]), (u'Condoms', [(0.6, 0.7)]), ])
+            R.covout['condcas'][(u'Males 10-19', u'Females 20-24')].ccopars = odict([('intercept', [(0.2, 0.3)]), ('t', [2016]), (u'Condoms', [(0.65, 0.8)]), ])
+            R.covout['condcas'][(u'Males 10-19', u'Females 25-49')].ccopars = odict([('intercept', [(0.2, 0.3)]), ('t', [2016]), (u'Condoms', [(0.65, 0.75)]), ])
+            R.covout['condcas'][(u'Males 20-24', u'Females 10-19')].ccopars = odict([('intercept', [(0.2, 0.3)]), ('t', [2016]), (u'Condoms', [(0.75, 0.85)]), ])
+            R.covout['condcas'][(u'Males 20-24', u'Females 20-24')].ccopars = odict([('intercept', [(0.2, 0.3)]), ('t', [2016]), (u'Condoms', [(0.8, 0.9)]), ])
+            R.covout['condcas'][(u'Males 20-24', u'Females 25-49')].ccopars = odict([('intercept', [(0.2, 0.3)]), ('t', [2016]), (u'Condoms', [(0.8, 0.95)]), ])
+            R.covout['condcas'][(u'Males 25-49', u'Females 10-19')].ccopars = odict([('intercept', [(0.2, 0.3)]), ('t', [2016]), (u'Condoms', [(0.8, 0.95)]), ])
+            R.covout['condcas'][(u'Males 25-49', u'Females 20-24')].ccopars = odict([('intercept', [(0.25, 0.35)]), ('t', [2016]), (u'Condoms', [(0.85, 0.95)]), ])
+            R.covout['condcas'][(u'Males 25-49', u'Females 25-49')].ccopars = odict([('intercept', [(0.25, 0.35)]), ('t', [2016]), (u'Condoms', [(0.85, 0.95)]), ])
+            R.covout['condcas'][(u'Males 25-49', u'Females 50+')].ccopars = odict([('intercept', [( 0.25,  0.35)]), ('t', [2016.0]), (u'Condoms', [(0.7, 0.8)]), ])
+            R.covout['condcas'][(u'Males 50+', u'Females 20-24')].ccopars = odict([('intercept', [( 0.25,  0.35)]), ('t', [2016.0]), (u'Condoms', [(0.6,  0.65)]), ])
+            R.covout['condcas'][(u'Males 50+', u'Females 25-49')].ccopars = odict([('intercept', [( 0.2,  0.25)]), ('t', [2016.0]), (u'Condoms', [(0.7,  0.75)]), ])
+            R.covout['condcas'][(u'Males 50+', u'Females 50+')].ccopars = odict([('intercept', [(0.2, 0.25)]), ('t', [2016]), (u'Condoms', [(0.55, 0.65)]), ])
+
+            R.covout['hivtest']['FSW'].ccopars = odict([('intercept', [(0.05,  0.1)]), ('t', [2016.0]), (u'FSW programs', [(0.9,  0.99)]), (u'HTS', [(0.1,  0.15)]),])
+            R.covout['hivtest']['MSM'].ccopars = odict([('intercept', [(0.01,  0.03)]), ('t', [2016.0]), (u'MSM programs', [(0.4,  0.5)]), (u'HTS', [(0.1,  0.15)]), ])
+            R.covout['hivtest']['Clients'].ccopars = odict([('intercept', [(0.01, 0.05)]), ('t', [2016]), (u'HTS', [(0.3, 0.35)]), ])
+            R.covout['hivtest']['Males 0-9'].ccopars = odict([('intercept', [(0.5, 0.5)]), ('t', [2016]), (u'HTS', [(0.5, 0.5)]), ])
+            R.covout['hivtest']['Females 0-9'].ccopars = odict([('intercept', [(0.5,  0.5)]), ('t', [2016.0]), (u'HTS', [(0.5,  0.5)]), ])
+            R.covout['hivtest']['Males 10-19'].ccopars = odict([('intercept', [(0.01, 0.05)]), ('t', [2016]), (u'HTS', [(0.25, 0.3)]), ])
+            R.covout['hivtest']['Females 10-19'].ccopars = odict([('intercept', [(0.01,  0.05)]), ('t', [2016.0]), (u'HTS', [(0.7,  0.8)]), ])
+            R.covout['hivtest']['Males 20-24'].ccopars = odict([('intercept', [(0.01,  0.05)]), ('t', [2016.0]), (u'HTS', [(0.15,  0.25)]), ])
+            R.covout['hivtest']['Females 20-24'].ccopars = odict([('intercept', [(0.01, 0.05)]), ('t', [2016]), (u'HTS', [(0.7, 0.8)]), ])
+            R.covout['hivtest']['Males 25-49'].ccopars = odict([('intercept', [(0.01, 0.05)]), ('t', [2016]), (u'HTS', [(0.2, 0.35)]), ])
+            R.covout['hivtest']['Females 25-49'].ccopars = odict([('intercept', [(0.01, 0.05)]), ('t', [2016]), (u'HTS', [(0.7, 0.8)]), ])
+            R.covout['hivtest']['Males 50+'].ccopars = odict([('intercept', [( 0.01,  0.05)]), ('t', [2016.0]), (u'HTS', [(0.25,  0.3)]), ])
+            R.covout['hivtest']['Females 50+'].ccopars = odict([('intercept', [(0.01, 0.05)]), ('t', [2016]), (u'HTS', [(0.7, 0.8)]), ])
+
+            P.addprogset(progset=R)
     
     else:
         raise OptimaException('Default project type "%s" not understood: choices are "simple", "generalized", or "concentrated"' % which)
