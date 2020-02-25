@@ -18,8 +18,8 @@ except: Process, Queue = None, None # OK to skip these if batch is False
 
 import six
 if six.PY3:
-	basestring = str
-	unicode = str
+    basestring = str
+    unicode = str
 
 ################################################################################################################################################
 ### The container class
@@ -564,7 +564,7 @@ def optimize(optim=None, maxiters=None, maxtime=None, verbose=2, stoppingfunc=No
 
     Version: 1.4 (2017apr01)
     '''
-    
+
     ## Input validation
     if not kwargs: 
         if not args: kwargs = {}
@@ -612,12 +612,12 @@ def optimize(optim=None, maxiters=None, maxtime=None, verbose=2, stoppingfunc=No
     # Run outcomes minimization
     if which=='outcomes':
         multires = minoutcomes(project=project, optim=optim, tvec=tvec, verbose=verbose, maxtime=maxtime, maxiters=maxiters, 
-                               origbudget=origbudget, randseed=randseed, mc=mc, label=label, die=die, **kwargs)
+                               origbudget=origbudget, randseed=randseed, mc=mc, label=label, die=die, stoppingfunc=stoppingfunc, **kwargs)
 
     # Run money minimization
     elif which=='money':
         multires = minmoney(project=project, optim=optim, tvec=tvec, verbose=verbose, maxtime=maxtime, maxiters=maxiters, 
-                            fundingchange=1.2, randseed=randseed, **kwargs)
+                            fundingchange=1.2, randseed=randseed, stoppingfunc=stoppingfunc, **kwargs)
     
     # If running parallel, put on the queue; otherwise, return
     if outputqueue is not None:
@@ -852,7 +852,7 @@ def tvoptimize(project=None, optim=None, tvec=None, verbose=None, maxtime=None, 
 
 
 def minoutcomes(project=None, optim=None, tvec=None, verbose=None, maxtime=None, maxiters=1000, 
-                origbudget=None, ccsample='best', randseed=None, mc=3, label=None, die=False, timevarying=None, keepraw=False, **kwargs):
+                origbudget=None, ccsample='best', randseed=None, mc=3, label=None, die=False, timevarying=None, keepraw=False, stoppingfunc=None, **kwargs):
     ''' Split out minimize outcomes '''
 
     ## Handle budget and remove fixed costs
@@ -875,15 +875,18 @@ def minoutcomes(project=None, optim=None, tvec=None, verbose=None, maxtime=None,
     noptimprogs = len(budgetvec) # Number of optimizable programs
     xmin = zeros(noptimprogs)
     if label is None: label = ''
-    
+
     # Calculate the initial people distribution
     results = project.runsim(pars=parset.pars, parsetname=optim.parsetname, progsetname=optim.progsetname, tvec=tvec, keepraw=True, verbose=0, label=project.name+'-minoutcomes', addresult=False)
     initialind = findnearest(results.raw[0]['tvec'], optim.objectives['start'])
     initpeople = results.raw[0]['people'][:,:,initialind] # Pull out the people array corresponding to the start of the optimization -- there shouldn't be multiple raw arrays here
 
+    if stoppingfunc and stoppingfunc():
+        raise op.CancelException
+
     # Calculate original things
     constrainedbudgetorig, constrainedbudgetvecorig, lowerlim, upperlim = constrainbudget(origbudget=origbudget, budgetvec=budgetvec, totalbudget=origtotalbudget, budgetlims=optim.constraints, optiminds=optiminds, outputtype='full')
-    
+
     # Set up arguments which are shared between outcomecalc and asd
     args = {'which':      'outcomes', 
             'project':    project, 
@@ -920,6 +923,10 @@ def minoutcomes(project=None, optim=None, tvec=None, verbose=None, maxtime=None,
     extremeoutcomes = odict()
 
     for key,exbudget in extremebudgets.items():
+
+        if stoppingfunc and stoppingfunc():
+            raise op.CancelException
+
         doconstrainbudget = False # Budget is specified fully, don't constrain
         if key=='Baseline': 
             args['initpeople'] = None # Do this so it runs for the full time series, and is comparable to the optimization result
@@ -963,7 +970,7 @@ def minoutcomes(project=None, optim=None, tvec=None, verbose=None, maxtime=None,
     tmpfullruninfo = odict()
     tmpresults['Baseline'] = extremeresults['Baseline'] # Include un-optimized original
     scalefactors = promotetoarray(optim.objectives['budgetscale']) # Ensure it's a list
-    for scalefactor in scalefactors: 
+    for scalefactor in scalefactors:
 
         # Get the total budget & constrain it 
         totalbudget = origtotalbudget*scalefactor
@@ -999,12 +1006,16 @@ def minoutcomes(project=None, optim=None, tvec=None, verbose=None, maxtime=None,
             bestfval = inf # Value of outcome
             asdresults = odict()
             for k,key in enumerate(allbudgetvecs.keys()):
+
+                if stoppingfunc and stoppingfunc():
+                    raise op.CancelException
+
                 printv('Running optimization "%s" (%i/%i) with maxtime=%s, maxiters=%s' % (key, k+1, len(allbudgetvecs), maxtime, maxiters), 2, verbose)
                 if label: thislabel = '"'+label+'-'+key+'"'
                 else: thislabel = '"'+key+'"'
                 origoutcomes = outcomecalc(outputresults=True, **args) # Calculate the initial outcome and pass it back in
                 args['origoutcomes'] = origoutcomes
-                res = asd(outcomecalc, allbudgetvecs[key], args=args, xmin=xmin, maxtime=maxtime, maxiters=maxiters, verbose=verbose, randseed=allseeds[k], label=thislabel, **kwargs)
+                res = asd(outcomecalc, allbudgetvecs[key], args=args, xmin=xmin, maxtime=maxtime, maxiters=maxiters, verbose=verbose, randseed=allseeds[k], label=thislabel, stoppingfunc=stoppingfunc, **kwargs)
                 budgetvecnew, fvals = res.x, res.details.fvals
                 constrainedbudgetnew, constrainedbudgetvecnew, lowerlim, upperlim = constrainbudget(origbudget=origbudget, budgetvec=budgetvecnew, totalbudget=totalbudget, budgetlims=optim.constraints, optiminds=optiminds, outputtype='full')
                 asdresults[key] = {'budget':constrainedbudgetnew, 'fvals':fvals}
@@ -1051,7 +1062,7 @@ def minoutcomes(project=None, optim=None, tvec=None, verbose=None, maxtime=None,
 
 def minmoney(project=None, optim=None, tvec=None, verbose=None, maxtime=None, maxiters=1000, 
              fundingchange=1.2, tolerance=1e-2, ccsample='best', randseed=None, keepraw=False, die=False, 
-             n_throws=None, n_success=None, n_refine=None, schedule=None, multi=None, nchains=None, **kwargs):
+             n_throws=None, n_success=None, n_refine=None, schedule=None, multi=None, nchains=None, stoppingfunc=None, **kwargs):
     '''
     A function to minimize money for a fixed objective.
 

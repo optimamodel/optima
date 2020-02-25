@@ -67,6 +67,7 @@ from .utils import Link, LinkException, loadbalancer, loadtext, makefilepath, ob
 from .utils import odict, percentcomplete, perturb, printarr, printdata as pd, printdr, printv, printvars, printtologfile
 from .utils import promotetoarray, promotetolist, promotetoodict, quantile, runcommand, sanitize, sanitizefilename, savetext, scaleratio, setylim
 from .utils import sigfig, SItickformatter, SIticks, slacknotification, smoothinterp, tic, toc, today, vec2obj
+from .utils import CancelException
 from . import utils as _utils; del utils
 
 # Color definitions
