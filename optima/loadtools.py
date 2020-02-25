@@ -982,7 +982,10 @@ def addprogdefault(project=None, **kwargs):
         if project.parsets:
             for ps in project.parsets.values():
                 for par in ps.pars.values():
-                    if isinstance(par, op.Par): par.progdefault = None
+                    if isinstance(par, op.Par):
+                        if par.short in ['hivtest', 'aidstest', 'numtx', 'numpmtct', 'prep', 'numvlmon', 'regainvs', 'numost']:
+                            par.progdefault = 0.  # For this migration, all the defaults should be zero.
+                        else: par.progdefault = None
     else:
         raise Exception('Must supply a project')
     return None
