@@ -979,9 +979,9 @@ def addprogdefault(project=None, **kwargs):
     Migration between Optima 2.9.3 and 2.9.4 -- add default values for parameters in absence of programs
     '''
     if project is not None:
-        if P.parsets:
-            for ps in P.parsets.values():
-                for par in ps.values():
+        if project.parsets:
+            for ps in project.parsets.values():
+                for par in ps.pars.values():
                     if isinstance(par, op.Par): par.progdefault = None
     else:
         raise Exception('Must supply a project')
