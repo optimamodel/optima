@@ -76,6 +76,7 @@ def setmigrations(which='migrations'):
         ('2.9.0', ('2.9.1', '2019-12-02', fixcascadeopt,     'Fix cascade optimization objectives')),
         ('2.9.1', ('2.9.2', '2019-12-04', None,              'Add PrEP for injection-related infections')),
         ('2.9.2', ('2.9.3', '2020-02-24', None,              'Improves scenario export, changes district budget allocation algorithm, and contains frontend fixes')),
+        ('2.9.3', ('2.9.4', '2020-02-25', addprogdefault,    'Add default values for parameters in absence of programs')),
         ])
     
     
@@ -972,6 +973,22 @@ def fixcascadeopt(project=None, portfolio=None, **kwargs):
                                         'propsuppressed': 'Proportion suppressed (of those treated)'})
     return None
 
+
+def addprogdefault(project=None, **kwargs):
+    '''
+    Migration between Optima 2.9.3 and 2.9.4 -- add default values for parameters in absence of programs
+    '''
+    if project is not None:
+        if project.parsets:
+            for ps in project.parsets.values():
+                for par in ps.pars.values():
+                    if isinstance(par, op.Par):
+                        if par.short in ['hivtest', 'aidstest', 'numtx', 'numpmtct', 'prep', 'numvlmon', 'regainvs', 'numost']:
+                            par.progdefault = 0.  # For this migration, all the defaults should be zero.
+                        else: par.progdefault = None
+    else:
+        raise Exception('Must supply a project')
+    return None
 
 
 

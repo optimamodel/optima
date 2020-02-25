@@ -22,12 +22,12 @@ class Programset(object):
         self.uid = uuid()
         self.default_interaction = default_interaction
         self.programs = odict()
+        self.projectref = Link(project) # Store pointer for the project, if available
         if programs is not None: self.addprograms(programs)
         else: self.updateprogset()
         self.defaultbudget = odict()
         self.created = today()
         self.modified = today()
-        self.projectref = Link(project) # Store pointer for the project, if available
 
     def __repr__(self):
         ''' Print out useful information'''
@@ -84,6 +84,7 @@ class Programset(object):
            Parameters for actually defining these should be added using 
            R.covout[paramtype][parampop].addccopar()'''
         if not hasattr(self, 'covout'): self.covout = odict()
+        progdefaultpars = self.projectref().parset().getprogdefaultpars() # Get list of parameters that have default values under zero program coverage
 
         for targetpartype in self.targetpartypes: # Loop over parameter types
             if not self.covout.get(targetpartype): self.covout[targetpartype] = odict() # Initialize if it's not there already
@@ -95,6 +96,10 @@ class Programset(object):
                     ccopars = odict()
                     ccopars['intercept'] = []
                     ccopars['t'] = []
+                    if targetpartype in progdefaultpars:  # It has a default intercept value
+                        defaultintercept = self.projectref().pars()[targetpartype].progdefault
+                        ccopars['intercept'].append((defaultintercept,defaultintercept)) # Append default intercepts
+                        ccopars['t'].append(2020) # Append a year
                     interaction = self.default_interaction
                 targetingprogs = [thisprog.short for thisprog in self.progs_by_targetpar(targetpartype)[thispop]]
                 for tp in targetingprogs:

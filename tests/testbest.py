@@ -4,14 +4,15 @@ Create a good test project.
 Version: 2016feb08
 """
 
-from optima import defaultproject, pygui, manualfit, Parscen, Budgetscen, Coveragescen, dcp, plotpars, plotpeople, loadproj, saveobj, migrate, makespreadsheet # analysis:ignore
+from optima import defaultproject, pygui, manualfit, Program, Programset, Parscen, Budgetscen, Coveragescen, dcp, plotpars, plotpeople, loadproj, saveobj, migrate, makespreadsheet # analysis:ignore
 from optima import tic, toc, blank, pd # analysis:ignore
 
 ## Options
 tests = [
-'standardrun',
+#'standardrun',
 #'autocalib',
 #'manualcalib',
+'testprogdefaults',
 #'reconcile',
 #'runscenarios',
 #'optimize',
@@ -24,6 +25,7 @@ ind = -1 # Default index
 
 ## Housekeeping
 
+doplot = False
 if 'doplot' not in locals(): doplot = True
 if 'runsensitivity' not in locals(): runsensitivity = False
 
@@ -67,6 +69,21 @@ if 'manualcalib' in tests:
 
 if 'reconcile' in tests:
     P.progsets[ind].reconcile(parset=P.parsets[ind], year=2016)
+
+
+## Programs
+if 'testprogdefaults' in tests:
+    P = defaultproject('best',dorun=False,addprogset=False)
+    pops = P.pars()['popkeys']
+    HTS = Program(short='HTS',
+                  name='HIV testing services',
+                  category='Care and treatment',
+                  targetpars=[{'param': 'hivtest', 'pop': pop} for pop in pops],
+                  targetpops=pops,
+                  criteria = {'hivstatus': 'allstates', 'pregnant': False})
+    R = Programset(programs=HTS, project=P)
+    P.addprogset(R)
+
 
 ## Scenarios
 if 'runscenarios' in tests:

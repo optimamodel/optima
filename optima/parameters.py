@@ -67,7 +67,13 @@ class Parameterset(object):
         '''Method for getting a list of coverage-only parameters'''
         coveragepars = [par.short for par in self.pars.values() if isinstance(par, Par) and par.iscoveragepar()]
         return coveragepars
-        
+
+
+    def getprogdefaultpars(self):
+        '''Method for getting a list of parameters that have defaults when there are no parameters'''
+        progdefaultpars = [par.short for par in self.pars.values() if isinstance(par, Par) and par.isprogdefaultpar()]
+        return progdefaultpars
+
 
     def parkeys(self):
         ''' Return a list of the keys in pars that are actually parameter objects '''
@@ -458,7 +464,7 @@ class Par(object):
     
     Version: 2016nov06 
     '''
-    def __init__(self, short=None, name=None, limits=(0.,1.), by=None, manual='', fromdata=None, m=1.0, prior=None, verbose=None, **defaultargs): # "type" data needed for parameter table, but doesn't need to be stored
+    def __init__(self, short=None, name=None, limits=(0.,1.), by=None, manual='', fromdata=None, m=1.0, progdefault=None, prior=None, verbose=None, **defaultargs): # "type" data needed for parameter table, but doesn't need to be stored
         ''' To initialize with a prior, prior should be a dict with keys 'dist' and 'pars' '''
         self.short = short # The short name, e.g. "hivtest"
         self.name = name # The full name, e.g. "HIV testing rate"
@@ -466,6 +472,7 @@ class Par(object):
         self.by = by # Whether it's by population, partnership, or total
         self.manual = manual # Whether or not this parameter can be manually fitted: options are '', 'meta', 'pop', 'exp', etc...
         self.fromdata = fromdata # Whether or not the parameter is made from data
+        self.progdefault = progdefault # Whether or not the parameter has a default value when not targeted by programs
         self.m = m # Multiplicative metaparameter, e.g. 1
         self.msample = None # The latest sampled version of the metaparameter -- None unless uncertainty has been run, and only used for uncertainty runs 
         if prior is None:             self.prior = Dist() # Not supplied, create default distribution
@@ -483,6 +490,10 @@ class Par(object):
     def iscoveragepar(self):
         ''' Determine whether it's a coverage parameter'''
         return True if self.limits[1] == 'maxpopsize' else False
+
+    def isprogdefaultpar(self):
+        ''' Determine whether it's a parameter that has a default value when there are no programs targeting it'''
+        return True if self.progdefault is not None else False
 
 
 class Constant(Par):
@@ -613,7 +624,7 @@ class Timepar(Par):
         if y is None: y = odict()
         self.t = t # Time data, e.g. [2002, 2008]
         self.y = y # Value data, e.g. [0.3, 0.7]
-    
+
     def keys(self):
         ''' Return the valid keys for using with this parameter '''
         return self.y.keys()
@@ -943,7 +954,7 @@ def data2timepar(data=None, years=None, keys=None, defaultind=0, verbose=2, **de
     except: 
         errormsg = 'Cannot create a time parameter without keyword arguments "name" and "short"! \n\nArguments:\n %s' % defaultargs.items()
         raise OptimaException(errormsg)
-        
+
     # Process data
     if isinstance(data,dict): # The entire structure has been passed
         thisdata = data[short]
@@ -1092,7 +1103,8 @@ def makepars(data=None, verbose=2, die=True, fixprops=None):
             by = rawpar['by']
             fromdata = rawpar['fromdata']
             rawpar['verbose'] = verbose # Easiest way to pass it in
-            
+            rawpar['progdefault'] = None if rawpar['progdefault'] is '' else rawpar['progdefault']
+
             # Decide what the keys are
             if   by=='tot' : keys = totkey
             elif by=='pop' : keys = popkeys
@@ -1113,7 +1125,7 @@ def makepars(data=None, verbose=2, die=True, fixprops=None):
                 if domake:
                     pars[parname] = data2timepar(data=data, keys=keys, **rawpar) 
                 else:
-                    pars[parname] = Timepar(m=1.0, y=odict([(key,array([nan])) for key in keys]), t=odict([(key,array([0.0])) for key in keys]), **rawpar) # Create structure
+                    pars[parname] = Timepar(y=odict([(key,array([nan])) for key in keys]), t=odict([(key,array([0.0])) for key in keys]), **rawpar) # Create structure
             
             elif partype=='constant': # The constants, e.g. transmfi
                 best = data[parname][0] if fromdata else nan
