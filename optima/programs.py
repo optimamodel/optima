@@ -95,10 +95,11 @@ class Programset(object):
                 else: # ... or if not, set it up
                     ccopars = odict()
                     ccopars['intercept'] = []
+                    ccopars['t'] = []
                     if targetpartype in progdefaultpars:  # It has a default intercept value
                         defaultintercept = self.projectref().pars()[targetpartype].progdefault
-                        ccopars['intercept'].append((defaultintercept,defaultintercept))
-                    ccopars['t'] = []
+                        ccopars['intercept'].append((defaultintercept,defaultintercept)) # Append default intercepts
+                        ccopars['t'].append(2020) # Append a year
                     interaction = self.default_interaction
                 targetingprogs = [thisprog.short for thisprog in self.progs_by_targetpar(targetpartype)[thispop]]
                 for tp in targetingprogs:
