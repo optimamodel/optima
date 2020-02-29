@@ -260,11 +260,10 @@ def init_db():
     dbconn.db.create_all()
 
     # clear dangling tasks from the last session
-    from server.webapp.dbmodels import WorkLogDb
-    work_logs = dbconn.db.session.query(WorkLogDb)
-
-    print("> Deleting dangling work_logs", work_logs.count())
-    work_logs.delete()
+    # from server.webapp.dbmodels import WorkLogDb
+    # work_logs = dbconn.db.session.query(WorkLogDb)
+    # print("> Deleting dangling work_logs", work_logs.count())
+    # work_logs.delete()
 
     dbconn.db.session.commit()
 
