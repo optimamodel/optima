@@ -181,7 +181,7 @@ def makescenarios(project=None, scenlist=None, verbose=2, ccsample=False, randse
                         this_y = promotetoarray(scenpar['startval']) # Use supplied starting value if there is one
                     else:
                         if int(thispar.fromdata): # If it's a regular parameter made from data, we get the default start value from the data
-                            this_y = thispar.interp(tvec=scenpar['startyear'], sample=False)[popind] # Find what the model would get for this value
+                            this_y = thispar.interp(tvec=scenpar['startyear'], sample='no')[popind] # Find what the model would get for this value
                         else:
                             this_y = inf # Another special value, indicating this should be filled in to the maximum                 
                             fixproppar = thisparset.pars['fix'+scenpar['name']] # Pull out e.g. fixpropdx
