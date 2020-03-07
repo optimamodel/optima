@@ -680,6 +680,8 @@ class Timepar(Par):
         # Figure out sample
         if not sample:
             m = self.m
+        elif sample =='no':
+            m = 1.
         else:
             if sample=='new' or self.msample is None: self.sample(randseed=randseed) # msample doesn't exist, make it
             m = self.msample
