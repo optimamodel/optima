@@ -303,7 +303,7 @@ def setparscenvalues(parset=None, parname=None, forwhom=None, startyear=None, ve
     ## Generate dictionary
     if parset.pars[parname].fromdata: # If it's a regular parameter made from data, we get the default start value from the data
         if startyear is None: startyear = parset.pars[parname].t[forwhom][-1]
-        startval = parset.pars[parname].interp(startyear,asarray=False)[forwhom][0]
+        startval = parset.pars[parname].interp(startyear,asarray=False, sample='no')[forwhom][0]
     else: # Otherwise, give up -- we can't predict a proportion until the model is run
         if startyear is None: startyear = parset.projectref().settings.now
         startval = None
