@@ -167,7 +167,7 @@ def makescenarios(project=None, scenlist=None, verbose=2, ccsample=False, randse
 
                 # Find last good value 
                 last_t = scenpar['startyear'] - project.settings.dt # Last timestep before the scenario starts
-                last_y = thispar.interp(tvec=last_t, dt=project.settings.dt, asarray=False, sample=False) # Find what the model would get for this value
+                last_y = thispar.interp(tvec=last_t, dt=project.settings.dt, asarray=False, usemeta=False) # Find what the model would get for this value
 
                 # Loop over populations
                 for pop in pops:
@@ -181,7 +181,7 @@ def makescenarios(project=None, scenlist=None, verbose=2, ccsample=False, randse
                         this_y = promotetoarray(scenpar['startval']) # Use supplied starting value if there is one
                     else:
                         if int(thispar.fromdata): # If it's a regular parameter made from data, we get the default start value from the data
-                            this_y = thispar.interp(tvec=scenpar['startyear'], sample=False)[popind] # Find what the model would get for this value
+                            this_y = thispar.interp(tvec=scenpar['startyear'], usemeta=False)[popind] # Find what the model would get for this value
                         else:
                             this_y = inf # Another special value, indicating this should be filled in to the maximum                 
                             fixproppar = thisparset.pars['fix'+scenpar['name']] # Pull out e.g. fixpropdx
@@ -303,7 +303,7 @@ def setparscenvalues(parset=None, parname=None, forwhom=None, startyear=None, ve
     ## Generate dictionary
     if parset.pars[parname].fromdata: # If it's a regular parameter made from data, we get the default start value from the data
         if startyear is None: startyear = parset.pars[parname].t[forwhom][-1]
-        startval = parset.pars[parname].interp(startyear,asarray=False)[forwhom][0]
+        startval = parset.pars[parname].interp(startyear,asarray=False, usemeta=False)[forwhom][0]
     else: # Otherwise, give up -- we can't predict a proportion until the model is run
         if startyear is None: startyear = parset.projectref().settings.now
         startval = None

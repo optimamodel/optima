@@ -457,9 +457,9 @@ class Par(object):
     
     Consequently, some of them have different sample(), updateprior(), and interp() methods; in brief:
         * Constants have sample() = ysample, interp() = y
-        * Metapars have sample() = ysample[], interp() = m*y[]
-        * Timepars have sample() = msample, interp() = m*y[]
-        * Popsizepars have sample() = msample, interp() = m*i[]*exp(e[])
+        * Metapars have sample() = ysample[], interp() = m*y[] if usemeta=True, else y[]
+        * Timepars have sample() = msample, interp() = m*y[] if usemeta=True, else y[]
+        * Popsizepars have sample() = msample, interp() = m*i[]*exp(e[]) if usemeta=True, else i[]*exp(e[])
         * Yearpars have no sampling methods, and interp() = t
     
     Version: 2016nov06 
@@ -526,7 +526,7 @@ class Constant(Par):
             raise OptimaException(errormsg)
         return None
     
-    def interp(self, tvec=None, dt=None, smoothness=None, asarray=True, sample=False, randseed=None, popkeys=None): # Keyword arguments are for consistency but not actually used
+    def interp(self, tvec=None, dt=None, smoothness=None, asarray=True, sample=False, randseed=None, usemeta=True, popkeys=None): # Keyword arguments are for consistency but not actually used
         """
         Take parameters and turn them into model parameters -- here, just return a constant value at every time point
         
@@ -590,7 +590,7 @@ class Metapar(Par):
                 raise OptimaException(errormsg)
         return None
     
-    def interp(self, tvec=None, dt=None, smoothness=None, asarray=True, sample=None, randseed=None, popkeys=None): # Keyword arguments are for consistency but not actually used
+    def interp(self, tvec=None, dt=None, smoothness=None, asarray=True, sample=None, randseed=None, usemeta=True, popkeys=None): # Keyword arguments are for consistency but not actually used
         """ Take parameters and turn them into model parameters -- here, just return a constant value at every time point """
         
         # Figure out sample
@@ -604,9 +604,10 @@ class Metapar(Par):
         outkeys = getoutkeys(self, popkeys) # Get the list of keys for the output
         if asarray: output = zeros(len(outkeys))
         else: output = odict()
-        
+        meta = self.m if usemeta else 1.0
+
         for pop,key in enumerate(outkeys): # Loop over each population, always returning an [npops x npts] array
-            if key in self.keys(): yval = y[key]*self.m
+            if key in self.keys(): yval = y[key]*meta
             else:                  yval = 0. # Population not present, set to zero
             yinterp = applylimits(par=self, y=yval, limits=self.limits, dt=dt) 
             if asarray: output[pop] = yinterp
@@ -666,7 +667,7 @@ class Timepar(Par):
             raise OptimaException(errormsg)
         return None
     
-    def interp(self, tvec=None, dt=None, smoothness=None, asarray=True, sample=None, randseed=None, popkeys=None):
+    def interp(self, tvec=None, dt=None, smoothness=None, asarray=True, sample=None, randseed=None, usemeta=True, popkeys=None):
         """ Take parameters and turn them into model parameters """
         
         # Validate input
@@ -677,21 +678,25 @@ class Timepar(Par):
         if smoothness is None: smoothness = int(defaultsmoothness/dt) # Handle smoothness
         outkeys = getoutkeys(self, popkeys) # Get the list of keys for the output
         
-        # Figure out sample
-        if not sample:
-            m = self.m
+        # Figure out metaparameter
+        if not usemeta:
+            meta = 1.0
         else:
-            if sample=='new' or self.msample is None: self.sample(randseed=randseed) # msample doesn't exist, make it
-            m = self.msample
+            if not sample:
+                meta = self.m
+            else:
+                if sample=='new' or self.msample is None: self.sample(randseed=randseed) # msample doesn't exist, make it
+                meta = self.msample
         
         # Set things up and do the interpolation
         npops = len(outkeys)
         if self.by=='pship': asarray= False # Force odict since too dangerous otherwise
         if asarray: output = zeros((npops,len(tvec)))
         else:       output = odict()
+
         for pop,key in enumerate(outkeys): # Loop over each population, always returning an [npops x npts] array
             if key in self.keys():
-                yinterp = m * smoothinterp(tvec, self.t[key], self.y[key], smoothness=smoothness) # Use interpolation
+                yinterp = meta * smoothinterp(tvec, self.t[key], self.y[key], smoothness=smoothness) # Use interpolation
                 yinterp = applylimits(par=self, y=yinterp, limits=self.limits, dt=dt)
             else:
                 yinterp = zeros(len(tvec)) # Population not present, just set to zero
@@ -734,7 +739,7 @@ class Popsizepar(Par):
             raise OptimaException(errormsg)
         return None
 
-    def interp(self, tvec=None, dt=None, smoothness=None, asarray=True, sample=None, randseed=None, popkeys=None): # WARNING: smoothness isn't used, but kept for consistency with other methods...
+    def interp(self, tvec=None, dt=None, smoothness=None, asarray=True, sample=None, randseed=None, usemeta=True, popkeys=None): # WARNING: smoothness isn't used, but kept for consistency with other methods...
         """ Take population size parameter and turn it into a model parameters """
         
         # Validate input
@@ -744,20 +749,23 @@ class Popsizepar(Par):
         tvec, dt = gettvecdt(tvec=tvec, dt=dt) # Method for getting these as best possible
         outkeys = getoutkeys(self, popkeys) # Get the list of keys for the output
         
-        # Figure out sample
-        if not sample:
-            m = self.m
+        # Figure out metaparameter
+        if not usemeta:
+            meta = 1.0
         else:
-            if sample=='new' or self.msample is None: self.sample(randseed=randseed) # msample doesn't exist, make it
-            m = self.msample
-        
+            if not sample:
+                meta = self.m
+            else:
+                if sample=='new' or self.msample is None: self.sample(randseed=randseed) # msample doesn't exist, make it
+                meta = self.msample
+
         # Do interpolation
         npops = len(outkeys)
         if asarray: output = zeros((npops,len(tvec)))
         else: output = odict()
         for pop,key in enumerate(outkeys):
             if key in self.keys():
-                yinterp = m * self.i[key] * grow(self.e[key], array(tvec)-self.start)
+                yinterp = meta * self.i[key] * grow(self.e[key], array(tvec)-self.start)
                 yinterp = applylimits(par=self, y=yinterp, limits=self.limits, dt=dt)
             else:
                 yinterp = zeros(len(tvec))
@@ -788,7 +796,7 @@ class Yearpar(Par):
         '''No prior, so return nothing'''
         return None
     
-    def interp(self, tvec=None, dt=None, smoothness=None, sample=None, randseed=None, asarray=True, popkeys=None): # Keyword arguments are for consistency but not actually used
+    def interp(self, tvec=None, dt=None, smoothness=None, sample=None, randseed=None, asarray=True, usemeta=True, popkeys=None): # Keyword arguments are for consistency but not actually used
         '''No interpolation, so simply return the value'''
         return self.t
 
