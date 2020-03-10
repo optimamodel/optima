@@ -635,7 +635,7 @@ class Programset(object):
             
             # Find last good value -- WARNING, copied from scenarios.py!!! and shouldn't be in this loop!
             last_t = min(years) - settings.dt # Last timestep before the scenario starts
-            last_y = thispar.interp(tvec=last_t, dt=settings.dt, asarray=False, sample='no') # Find what the model would get for this value
+            last_y = thispar.interp(tvec=last_t, dt=settings.dt, asarray=False, usemeta=False) # Find what the model would get for this value
             
             for pop in outcomes[outcome].keys(): # WARNING, 'pop' should be renamed 'key' or something for e.g. partnerships
                 
@@ -685,7 +685,7 @@ class Programset(object):
                 name = parset.pars[key1].name
                 maxnamelen = max(len(name),maxnamelen)
                 maxkeylen = max(len(str(key2)),maxkeylen)
-                parvalue = parset.pars[key1].interp(tvec=year, asarray=False, sample='no')[key2]
+                parvalue = parset.pars[key1].interp(tvec=year, asarray=False, usemeta=False)[key2]
                 budgetvalue = outcomes[key1][key2] 
                 if budgetvalue is not None: comparison.append([name, key2, parvalue[0], budgetvalue[0]])
                 else: comparison.append([name, key2, parvalue[0], None])
