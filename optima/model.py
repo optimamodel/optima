@@ -189,7 +189,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
     numvlmon  = simpars['numvlmon']     # Number of viral load tests done per year (N)
     hivtest   = simpars['hivtest']*dt   # HIV testing (P) [npop,npts]
     aidstest  = simpars['aidstest']*dt  # HIV testing in AIDS stage (P) [npts]
-    numcirc   = simpars['numcirc']      # Number of programmatic circumcisions performed (N)
+    numcirc   = simpars['numcirc']*dt   # Number of programmatic circumcisions performed (N)
     numpmtct  = simpars['numpmtct']     # Number of people receiving PMTCT (N)
     
     # Uptake of OST
