@@ -189,7 +189,9 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
     numvlmon  = simpars['numvlmon']     # Number of viral load tests done per year (N)
     hivtest   = simpars['hivtest']*dt   # HIV testing (P) [npop,npts]
     aidstest  = simpars['aidstest']*dt  # HIV testing in AIDS stage (P) [npts]
-    numcirc   = simpars['numcirc']*dt   # Number of programmatic circumcisions performed (N)
+    numcirc   = (simpars['numcirc']*dt)/(1-simpars['propcirc'])   # Number of programmatic circumcisions performed (N)
+        # divided by (1-propcirc) to account for propcirc proportion of people in sus already being circumcised and not needing programmatic circumcision
+        # this results in an increase in circumcised people matching the desired number.
     numpmtct  = simpars['numpmtct']     # Number of people receiving PMTCT (N)
     
     # Uptake of OST
