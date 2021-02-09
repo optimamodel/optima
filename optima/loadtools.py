@@ -949,7 +949,7 @@ def addcascadeopt(project=None, portfolio=None, **kwargs):
         objectives['propdiag']       = 0
         objectives['proptreat']      = 0
         objectives['propsuppressed'] = 0
-        objectives.pop('keylabels') # Never used
+#        objectives.pop('keylabels') # Never used
     return None
 
 
