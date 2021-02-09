@@ -1002,6 +1002,7 @@ def addpepreturntocare(project=None, **kwargs):
         for ps in project.parsets.values():
             ps.pars['prep'].name    = 'Proportion of exposure events covered by ARV-based pre-exposure prophylaxis'
             ps.pars['effprep'].name = 'Efficacy of ARV-based pre-exposure prophylaxis'
+            ps.pars['numcirc'].name = 'Number of voluntary medical male circumcisions'
         #add PEP pars
         short = 'pep'
         copyfrom = 'prep'
@@ -1033,6 +1034,18 @@ def addpepreturntocare(project=None, **kwargs):
         if 't' in kwargs.keys(): kwargs.pop('t')
         if 'y' in kwargs.keys(): kwargs.pop('y')
         addparameter(project=project, copyfrom=copyfrom, short=short, **kwargs)
+        
+        
+        #add data for PEP, PrEP, and return to care
+        project.data['meta']['sheets']['Sexual behavior'].append('numcirc')
+        project.data['numcirc'] = [[nan]*len(project.data['years']) for _ in range(project.data['npops'])]
+        project.data['meta']['sheets']['Constants'].append('effpep')
+        project.data['effpep'] = [0.73, 0.65, 0.80]
+        project.data['meta']['sheets']['Testing & treatment'].append('pep')
+        project.data['pep'] = [[nan]*len(project.data['years']) for _ in range(project.data['npops'])]
+        project.data['meta']['sheets']['Cascade'].append('returntocare')
+        project.data['returntocare'] = [[nan]*len(project.data['years']) for _ in range(project.data['npops'])]
+        
     else:
         raise Exception('Must supply a project')
     return None
