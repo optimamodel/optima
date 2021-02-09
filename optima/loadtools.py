@@ -1019,7 +1019,8 @@ def addpepreturntocare(project=None, **kwargs):
         kwargs['name'] = 'Efficacy of ARV-based pre-exposure prophylaxis'
         kwargs['dataname'] = 'Efficacy of ARV-based pre-exposure prophylaxis'
         kwargs['datashort'] = 'effpep'
-#        kwargs['y'] = 0.73 #yop.odict([('tot',array([0.73]))])
+        if 't' in kwargs.keys(): kwargs.pop('t')
+        kwargs['y'] = 0.73 #default efficacy value of PrEP
         addparameter(project=project, copyfrom=copyfrom, short=short, **kwargs)
         
         #add return to care par - all values should be copied from link to care to maintain consistency
@@ -1029,6 +1030,8 @@ def addpepreturntocare(project=None, **kwargs):
         kwargs['name'] = 'Average time taken to be returned to care after loss to follow-up (years)'
         kwargs['dataname'] = 'Average time taken to be returned to care after loss to follow-up (years)'
         kwargs['datashort'] = 'returntocare'
+        if 't' in kwargs.keys(): kwargs.pop('t')
+        if 'y' in kwargs.keys(): kwargs.pop('y')
         addparameter(project=project, copyfrom=copyfrom, short=short, **kwargs)
     else:
         raise Exception('Must supply a project')
