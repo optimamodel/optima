@@ -77,7 +77,7 @@ def setmigrations(which='migrations'):
         ('2.9.1', ('2.9.2', '2019-12-04', None,              'Add PrEP for injection-related infections')),
         ('2.9.2', ('2.9.3', '2020-02-24', None,              'Improves scenario export, changes district budget allocation algorithm, and contains frontend fixes')),
         ('2.9.3', ('2.9.4', '2020-02-25', addprogdefault,    'Add default values for parameters in absence of programs')),
-        ('2.9.4', ('2.9.5', '2020-07-31', addpepreturntocare,'Add PEP parameters, rename PrEP parameters, and add a return to care parameter distinct from link to care')),
+        ('2.9.4', ('2.10.0', '2021-02-09', addpepreturntocare,'Add PEP parameters, rename PrEP parameters, and add a return to care parameter distinct from link to care')),
         ])
     
     
@@ -994,7 +994,7 @@ def addprogdefault(project=None, **kwargs):
 
 def addpepreturntocare(project=None, **kwargs):
     '''
-    Migration between Optima 2.9.4 and 2.9.5 -- Add PEP parameters, rename PrEP parameters, and add a return to care parameter distinct from link to care
+    Migration between Optima 2.9.4 and 2.10.0 -- Add PEP parameters, rename PrEP parameters, and add a return to care parameter distinct from link to care
     '''
     if project is not None:
         #rename prep pars
