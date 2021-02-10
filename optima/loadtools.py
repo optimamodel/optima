@@ -999,9 +999,11 @@ def addpepreturntocare(project=None, **kwargs):
     if project is not None:
         #rename prep pars
         # Rename PrEP
+        #rename and re-add circumcision parameters
         for ps in project.parsets.values():
             ps.pars['prep'].name    = 'Proportion of exposure events covered by ARV-based pre-exposure prophylaxis'
             ps.pars['effprep'].name = 'Efficacy of ARV-based pre-exposure prophylaxis'
+            ps.pars['propcirc'].name = 'Percentage of males who have been traditionally circumcised'
             ps.pars['numcirc'].name = 'Number of voluntary medical male circumcisions'
         #add PEP pars
         short = 'pep'
@@ -1045,6 +1047,15 @@ def addpepreturntocare(project=None, **kwargs):
         project.data['pep'] = [[nan]*len(project.data['years']) for _ in range(project.data['npops'])]
         project.data['meta']['sheets']['Cascade'].append('returntocare')
         project.data['returntocare'] = [[nan]*len(project.data['years']) for _ in range(project.data['npops'])]
+        
+        
+        #Rename year to fix parameters to clarify their use
+        for ps in project.parsets.values():
+            ps.pars['fixpropdx'].name    = 'Year to fix proportion of PLHIV aware of their status'
+            ps.pars['fixpropcare'].name  = 'Year to fix proportion of diagnosed PLHIV in care'
+            ps.pars['fixproptx'].name    = 'Year to fix proportion of PLHIV in care on treatment'
+            ps.pars['fixpropsupp'].name  = 'Year to fix proportion of people on ART with viral suppression'
+            ps.pars['fixproppmtct'].name = 'Year to fix proportion of pregnant women and mothers on PMTCT'
         
     else:
         raise Exception('Must supply a project')
