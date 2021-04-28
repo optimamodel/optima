@@ -1019,8 +1019,8 @@ def addpepreturntocare(project=None, **kwargs):
         short = 'effpep'
         copyfrom = 'effprep'
         kwargs['by'] = 'tot'
-        kwargs['name'] = 'Efficacy of ARV-based pre-exposure prophylaxis'
-        kwargs['dataname'] = 'Efficacy of ARV-based pre-exposure prophylaxis'
+        kwargs['name'] = 'Efficacy of ARV-based post-exposure prophylaxis'
+        kwargs['dataname'] = 'Efficacy of ARV-based post-exposure prophylaxis'
         kwargs['datashort'] = 'effpep'
         if 't' in kwargs.keys(): kwargs.pop('t')
         kwargs['y'] = 0.73 #default efficacy value of PrEP
