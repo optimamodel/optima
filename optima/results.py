@@ -265,7 +265,7 @@ class Resultset(object):
                 low = dcp(rawdata)
                 high = dcp(rawdata)
             for thisdata in [best, low, high]: # Combine in loop, but actual operate on these -- thanks, pass-by-reference!
-                for p in range(len(array(thisdata))):
+                for p in range(len(array(thisdata, dtype=object))):
                     if len(array(thisdata[p]))!=len(self.datayears):
                         thisdata[p] = nan+zeros(len(self.datayears)) # Replace with NaN if an assumption
             processed = array([best, low, high]) # For plotting uncertainties
