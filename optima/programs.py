@@ -1149,7 +1149,7 @@ class CCOF(object):
         # Get the appropriate sample type
         for parname, parvalue in self.ccopars.iteritems():
             parvalue = promotetoarray(parvalue)
-            if parname is not 't' and len(parvalue):
+            if parname != 't' and len(parvalue):
                 ccopars_sample[parname] = zeros(len(parvalue))
                 for j in range(len(parvalue)):
                     thisval = parvalue[j]
