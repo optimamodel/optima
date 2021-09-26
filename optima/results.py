@@ -112,6 +112,9 @@ class Resultset(object):
         self.main['numpmtct']       = Result('HIV+ women receiving PMTCT')
         self.main['popsize']        = Result('Population size')
         self.main['numdaly']        = Result('HIV-related DALYs')
+        
+        self.other['numyll']        = Result('HIV-related YLL')
+        self.other['numyld']        = Result('HIV-related YLD')
 
         self.other['adultprev']     = Result('Adult HIV prevalence (%)', ispercentage=True)
         self.other['childprev']     = Result('Child HIV prevalence (%)', ispercentage=True)
@@ -216,7 +219,7 @@ class Resultset(object):
         return R
             
         
-    def make(self, raw, quantiles=None, annual=True, verbose=2, doround=True, lifeexpectancy=None, discountrate=None):
+    def make(self, raw, quantiles=None, annual=True, verbose=2, doround=True, lifeexpectancy=None, discountrate=None, yllconstrained=None):
         """
         Gather standard results into a form suitable for plotting with uncertainties.
         Life expectancy is measured in years, and the discount rate is in absolute
@@ -230,6 +233,8 @@ class Resultset(object):
         if quantiles      is None: quantiles      = [0.5, 0.25, 0.75] # Can't be a kwarg since mutable
         if lifeexpectancy is None: lifeexpectancy = 80 # 80 year life expectancy
         if discountrate   is None: discountrate   = 0.03 # Discounting of 3% for YLL only
+        if yllconstrained is None: yllconstrained = True # False by default (count all YLL for deaths incurred during model run), True = count only YLL within the timeframe of the model run, to be used with care if at all
+        
         tvec = dcp(raw[0]['tvec'])
         eps = self.settings.eps
         if annual is False: # Decide what to do with the time vector
@@ -420,15 +425,29 @@ class Resultset(object):
         for pk,popkey in enumerate(self.popkeys): # Loop over each population
             meanage = self.pars['age'][pk].mean()
             potentialyearslost = max(0,lifeexpectancy-meanage) # Don't let this go negative!
-            if discountrate>0 and discountrate<1: # Make sure it has reasonable bounds
-                denominator = log(1-discountrate) # Start calculating the integral of (1-discountrate)**potentialyearslost
-                numerator = (1-discountrate)**potentialyearslost - 1 # Minus 1 for t=0
-                discountedyearslost = numerator/denominator # See https://en.wikipedia.org/wiki/Lists_of_integrals#Exponential_functions
-            elif discountrate==0: # Nothing to discount
-                discountedyearslost = potentialyearslost
+            
+            if yllconstrained:
+                timesteps = len(alldeaths[0][0][0])
+                potentialyearslost_array = [min(potentialyearslost, (timesteps-x)/4.) for x in range(0, timesteps)]
+                if discountrate>0 and discountrate<1: # Make sure it has reasonable bounds
+                    discountedyearslost_array = [((1-discountrate)**pyl - 1)/log(1-discountrate) for pyl in potentialyearslost_array]
+                elif discountrate==0: # Nothing to discount
+                    discountedyearslost_array = potentialyearslost_array
+                else:
+                    raise OptimaException('Invalid discount rate (%s)' % discountrate)
+                yllpops[:,pk,:] *= discountedyearslost_array # Multiply by the number of potential years of life lost which can be different in each timestep.
+                
             else:
-                raise OptimaException('Invalid discount rate (%s)' % discountrate)
-            yllpops[:,pk,:] *= discountedyearslost # Multiply by the number of potential years of life lost
+                if discountrate>0 and discountrate<1: # Make sure it has reasonable bounds
+                    denominator = log(1-discountrate) # Start calculating the integral of (1-discountrate)**potentialyearslost
+                    numerator = (1-discountrate)**potentialyearslost - 1 # Minus 1 for t=0
+                    discountedyearslost = numerator/denominator # See https://en.wikipedia.org/wiki/Lists_of_integrals#Exponential_functions
+                elif discountrate==0: # Nothing to discount
+                    discountedyearslost = potentialyearslost
+                else:
+                    raise OptimaException('Invalid discount rate (%s)' % discountrate)
+                yllpops[:,pk,:] *= discountedyearslost # Multiply by the number of potential years of life lost
+            
         ylltot = yllpops.sum(axis=1) # Sum over populations
         
         ## Years lived with disability
@@ -448,6 +467,11 @@ class Resultset(object):
         dalytot  = ylltot + yldtot
         self.main['numdaly'].pops = process(dalypops[:,:,indices])
         self.main['numdaly'].tot  = process(dalytot[:,indices])
+        
+        self.other['numyll'].pops = process(yllpops[:,:,indices])
+        self.other['numyld'].pops = process(yldpops[:,:,indices])
+        self.other['numyll'].tot  = process(ylltot[:,indices])
+        self.other['numyld'].tot  = process(yldtot[:,indices])
         
         
         ## Other indicators
