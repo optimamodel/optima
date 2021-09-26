@@ -233,7 +233,7 @@ class Resultset(object):
         if quantiles      is None: quantiles      = [0.5, 0.25, 0.75] # Can't be a kwarg since mutable
         if lifeexpectancy is None: lifeexpectancy = 80 # 80 year life expectancy
         if discountrate   is None: discountrate   = 0.03 # Discounting of 3% for YLL only
-        if yllconstrained is None: yllconstrained = True # False by default (count all YLL for deaths incurred during model run), True = count only YLL within the timeframe of the model run, to be used with care if at all
+        if yllconstrained is None: yllconstrained = False # False by default (count all YLL for deaths incurred during model run), True = count only YLL within the timeframe of the model run, to be used with care if at all
         
         tvec = dcp(raw[0]['tvec'])
         eps = self.settings.eps
