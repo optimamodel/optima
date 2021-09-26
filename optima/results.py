@@ -427,8 +427,9 @@ class Resultset(object):
             potentialyearslost = max(0,lifeexpectancy-meanage) # Don't let this go negative!
             
             if yllconstrained:
-                timesteps = len(alldeaths[0][0][0])
-                potentialyearslost_array = [min(potentialyearslost, (timesteps-x)/4.) for x in range(0, timesteps)]
+                numtimes = len(alldeaths[0][0][0]) #number of timesteps in the raw results
+                raw_dt = 1./int((numtimes-1)/(len(self.tvec)-1)) #TODO replace this
+                potentialyearslost_array = [min(potentialyearslost, (numtimes-timestep)*raw_dt) for timestep in range(0, numtimes)]
                 if discountrate>0 and discountrate<1: # Make sure it has reasonable bounds
                     discountedyearslost_array = [((1-discountrate)**pyl - 1)/log(1-discountrate) for pyl in potentialyearslost_array]
                 elif discountrate==0: # Nothing to discount
