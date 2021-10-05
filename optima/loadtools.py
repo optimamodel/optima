@@ -1080,9 +1080,9 @@ def updatedisutilities(project=None, **kwargs):
         #update disutility weights in each parset - both the parset value and the prior for uncertainty
         for ps in project.parsets.values():
             for parname in ['disutilacute', 'disutilgt500', 'disutilgt350', 'disutilgt200', 'disutilgt50', 'disutillt50', 'disutiltx']:
-                ps.pars['parname'].y = project.data['parname'][0]
-                ps.pars['parname'].prior.pars[0] = project.data['parname'][1]
-                ps.pars['parname'].prior.pars[1] = project.data['parname'][2]
+                ps.pars[parname].y = project.data[parname][0]
+                ps.pars[parname].prior.pars[0] = project.data[parname][1]
+                ps.pars[parname].prior.pars[1] = project.data[parname][2]
             
     else:
         raise Exception('Must supply a project')
