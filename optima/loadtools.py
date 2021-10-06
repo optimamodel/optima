@@ -77,7 +77,8 @@ def setmigrations(which='migrations'):
         ('2.9.1', ('2.9.2', '2019-12-04', None,              'Add PrEP for injection-related infections')),
         ('2.9.2', ('2.9.3', '2020-02-24', None,              'Improves scenario export, changes district budget allocation algorithm, and contains frontend fixes')),
         ('2.9.3', ('2.9.4', '2020-02-25', addprogdefault,    'Add default values for parameters in absence of programs')),
-        ('2.9.4', ('2.10.0', '2021-02-09', addpepreturntocare,'Add PEP parameters, rename PrEP parameters, and add a return to care parameter distinct from link to care')),
+        ('2.9.4', ('2.10.0','2021-02-09', addpepreturntocare,'Add PEP parameters, rename PrEP parameters, and add a return to care parameter distinct from link to care')),
+        ('2.10.0',('2.10.1','2021-02-09', updatedisutilities,'Update disutility weights for HIV to match GBD 2019')),
         ])
     
     
@@ -1023,7 +1024,7 @@ def addpepreturntocare(project=None, **kwargs):
         kwargs['dataname'] = 'Efficacy of ARV-based post-exposure prophylaxis'
         kwargs['datashort'] = 'effpep'
         if 't' in kwargs.keys(): kwargs.pop('t')
-        kwargs['y'] = 0.73 #default efficacy value of PrEP
+        kwargs['y'] = 0.73 #default efficacy value of ARV-based prophylaxis combining PrEP and PEP use, not the updated values for either to maintain project consistency
         addparameter(project=project, copyfrom=copyfrom, short=short, **kwargs)
         
         #add return to care par - all values should be copied from link to care to maintain consistency
@@ -1042,7 +1043,7 @@ def addpepreturntocare(project=None, **kwargs):
         project.data['meta']['sheets']['Sexual behavior'].append('numcirc')
         project.data['numcirc'] = [[nan]*len(project.data['years']) for _ in range(project.data['npops'])]
         project.data['meta']['sheets']['Constants'].append('effpep')
-        project.data['effpep'] = [0.73, 0.65, 0.80]
+        project.data['effpep'] = [0.73, 0.65, 0.80] #default efficacy value of ARV-based prophylaxis combining PrEP and PEP use, not the updated values for either to maintain project consistency
         project.data['meta']['sheets']['Testing & treatment'].append('pep')
         project.data['pep'] = [[nan]*len(project.data['years']) for _ in range(project.data['npops'])]
         project.data['meta']['sheets']['Cascade'].append('returntocare')
@@ -1057,6 +1058,32 @@ def addpepreturntocare(project=None, **kwargs):
             ps.pars['fixpropsupp'].name  = 'Year to fix proportion of people on ART with viral suppression'
             ps.pars['fixproppmtct'].name = 'Year to fix proportion of pregnant women and mothers on PMTCT'
         
+    else:
+        raise Exception('Must supply a project')
+    return None
+
+
+def updatedisutilities(project=None, **kwargs):
+    '''
+    Migration between Optima 2.10.0 and 2.10.1 -- Update disutility weights for DALYs from GBD 2010 to GBD 2019
+    '''
+    if project is not None:
+        #update disutility weights in the data
+        project.data['disutilacute'] = [0.181, 0.121, 0.249]
+        project.data['disutilgt500'] = [0.010, 0.007, 0.014]
+        project.data['disutilgt350'] = [0.025, 0.017, 0.035]
+        project.data['disutilgt200'] = [0.081, 0.055, 0.107]
+        project.data['disutilgt50']  = [0.289, 0.128, 0.499]
+        project.data['disutillt50']  = [0.582, 0.406, 0.743]
+        project.data['disutiltx']    = [0.078, 0.052, 0.111]
+        
+        #update disutility weights in each parset - both the parset value and the prior for uncertainty
+        for ps in project.parsets.values():
+            for parname in ['disutilacute', 'disutilgt500', 'disutilgt350', 'disutilgt200', 'disutilgt50', 'disutillt50', 'disutiltx']:
+                ps.pars[parname].y = project.data[parname][0]
+                ps.pars[parname].prior.pars[0] = project.data[parname][1]
+                ps.pars[parname].prior.pars[1] = project.data[parname][2]
+            
     else:
         raise Exception('Must supply a project')
     return None
