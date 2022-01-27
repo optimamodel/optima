@@ -79,6 +79,7 @@ def setmigrations(which='migrations'):
         ('2.9.3', ('2.9.4', '2020-02-25', addprogdefault,    'Add default values for parameters in absence of programs')),
         ('2.9.4', ('2.10.0','2021-02-09', addpepreturntocare,'Add PEP parameters, rename PrEP parameters, and add a return to care parameter distinct from link to care')),
         ('2.10.0',('2.10.1','2021-02-09', updatedisutilities,'Update disutility weights for HIV to match GBD 2019')),
+        ('2.10.1',('2.10.2','2022-01-28', updateprepconstants,'Update constants for PrEP, PEP, and ART efficacy for all parsets')),
         ])
     
     
@@ -1088,7 +1089,29 @@ def updatedisutilities(project=None, **kwargs):
         raise Exception('Must supply a project')
     return None
 
-
+def updateprepconstants(project=None, **kwargs):
+    '''
+    Migration between Optima 2.10.1 and 2.10.2 -- Actually force prep/pep constants to be updated
+    WARNING: this will likely change calibration restults as the result of changing treatment efficacy as well as prep/pep
+    '''
+    if project is not None:
+        #update data values
+        project.data['effpep'] = [0.73, 0.65, 0.80] #default efficacy value of ARV-based prophylaxis combining PrEP and PEP use, not the updated values for either to maintain project consistency
+        project.data['effprep'] = [0.95, 0.92, 0.97] #default efficacy value of ARV-based prophylaxis combining PrEP and PEP use, not the updated values for either to maintain project consistency
+        project.data['efftxsupp'] = [1.0, 0.92, 1.0] #default efficacy value of ARV-based prophylaxis combining PrEP and PEP use, not the updated values for either to maintain project consistency
+        
+        #Update parameter values in each parset
+        for ps in project.parsets.values():
+            ps.pars['effpep'].y   = 0.73
+            ps.pars['effpep'].prior.pars = array([0.65, 0.80])
+            ps.pars['effprep'].y  = 0.95
+            ps.pars['effprep'].prior.pars = array([0.92, 0.97])
+            ps.pars['efftxsupp'].y  = 1.0
+            ps.pars['efftxsupp'].prior.pars = array([0.92, 1.0])
+        
+    else:
+        raise Exception('Must supply a project')
+    return None
 
 ##########################################################################################
 ### CORE MIGRATION FUNCTIONS
