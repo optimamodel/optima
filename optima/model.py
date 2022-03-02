@@ -118,8 +118,8 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
 
     # Births, deaths and transitions
     birth           = simpars['birth']*dt           # Multiply birth rates by dt
-    agetransit      = simpars['agetransit']         # Multiply age transition rates by dt
-    risktransit     = simpars['risktransit']        # Don't multiply risk trnsitions by dt! These are stored as the mean number of years before transitioning, and we incorporate dt later
+    agetransit      = simpars['agetransit']         # Don't multiply age transitions by dt! These are stored as the mean number of years before transitioning, and we incorporate dt later
+    risktransit     = simpars['risktransit']        # Don't multiply risk transitions by dt! These are stored as the mean number of years before transitioning, and we incorporate dt later
     birthtransit    = simpars['birthtransit']       # Don't multiply the birth transitions by dt as have already multiplied birth rates by dt
     
     # Shorten to lists of key tuples so don't have to iterate over every population twice for every timestep
