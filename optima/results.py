@@ -528,7 +528,7 @@ class Resultset(object):
                 for t in range(npts):
                     if '(per 100 p.y.)' in self.main[mainkey].name: outputstr += ('%s' + sep) % sigfig(100 * data[t], sigfigs=sigfigs)
                     elif self.main[mainkey].ispercentage:           outputstr += ('%s'+prcstr+sep) % sigfig(data[t], sigfigs=sigfigs)
-                    else:                                           outputstr += ('%i'+sep) % data[t]
+                    else:                                           outputstr += ('%s'+sep) % sigfig(data[t], sigfigs=sigfigs)
 
         # Handle budget and coverage
         thisbudget = []
