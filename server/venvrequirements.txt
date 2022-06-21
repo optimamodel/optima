@@ -1,5 +1,5 @@
 # Backend packages
-numpy==1.14.2
+numpy==1.22.0
 matplotlib==2.2.2
 mpld3==0.3
 xlrd==0.9.3
