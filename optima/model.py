@@ -627,8 +627,8 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
             careprob = [linktocare[:,t]]*ncd4
             returnprob = [returntocare[:,t]]*ncd4
             for cd4 in range(aidsind, ncd4):
-                careprob[cd4]   = maximum(aidslinktocare[t],linktocare[:,t])
-                returnprob[cd4] = maximum(aidslinktocare[t],returntocare[:,t])
+                careprob[cd4]   = maximum(aidslinktocare[t],linktocare[:,t]) #people with AIDS potentially linked to care faster than people with high CD4 counts (at least historically)
+                returnprob[cd4] = maximum(aidstest[t],returntocare[:,t]) ##people with AIDS who are lost to follow-up may be returned to care based on re-testing
         else:
             careprob   = zeros(ncd4)
             returnprob = zeros(ncd4)
