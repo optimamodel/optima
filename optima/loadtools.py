@@ -80,6 +80,7 @@ def setmigrations(which='migrations'):
         ('2.9.4', ('2.10.0','2021-02-09', addpepreturntocare,'Add PEP parameters, rename PrEP parameters, and add a return to care parameter distinct from link to care')),
         ('2.10.0',('2.10.1','2021-02-09', updatedisutilities,'Update disutility weights for HIV to match GBD 2019')),
         ('2.10.1',('2.10.2','2022-01-28', updateprepconstants,'Update constants for PrEP, PEP, and ART efficacy for all parsets')),
+        ('2.10.2',('2.10.3','2022-07-11', addageingrates,    'Update ageing to allow non-uniform age rates')),
         ])
     
     
@@ -1108,6 +1109,35 @@ def updateprepconstants(project=None, **kwargs):
             ps.pars['effprep'].prior.pars = array([0.92, 0.97])
             ps.pars['efftxsupp'].y  = 1.0
             ps.pars['efftxsupp'].prior.pars = array([0.92, 1.0])
+        
+    else:
+        raise Exception('Must supply a project')
+    return None
+
+def addageingrates(project=None, **kwargs):
+    '''
+    Migration between Optima 2.10.2 and 2.11.0
+    -- Add an ageing table to allow ageing to occur by year to reflect non-uniform population distributions
+    
+    '''
+    if project is not None:
+        #update data values
+        for ps in project.parsets.values():
+            #add PEP pars
+            short = 'agerate'
+            copyfrom = 'death'
+            kwargs['by'] = 'pop'
+            kwargs['name'] = 'Percentage of people who age into the next age category per year'
+            kwargs['dataname'] = 'Ageing rate (per year)'
+            kwargs['datashort'] = 'agerate'
+            kwargs['t'] = op.odict([(pop,array([2000.])) for pop in ps.popkeys])
+            kwargs['y'] = op.odict([(pop,array([1./(popages[1]-popages[0]+1)])) for pop, popages in zip(ps.popkeys, ps.pars['age'])])
+            addparameter(project=project, copyfrom=copyfrom, short=short, **kwargs)
+
+        
+        #add data for PEP, PrEP, and return to care
+        project.data['meta']['sheets']['Other epidemiology'].append('agerate')
+        project.data['agerate'] = [[1./(popages[1]-popages[0]+1)] for popages in project.data['pops']['age']]
         
     else:
         raise Exception('Must supply a project')

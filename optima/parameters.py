@@ -1170,14 +1170,14 @@ def makepars(data=None, verbose=2, die=True, fixprops=None):
             c += 1
     pars['birthtransit'] = birthtransit 
 
-    # Aging transitions - these are time-constant
+    # Aging transitions - these are stored as the proportion of transitions, which is constant, and is multiplied by time-varying age rates in model.py
     agetransit = zeros((npopkeys,npopkeys))
-    duration = array([age[1]-age[0]+1.0 for age in data['pops']['age']])
-    for rowno,row in enumerate(data['agetransit']):
-        if sum(row):
-            for colno,colval in enumerate(row):
-                if colval:
-                    agetransit[rowno,colno] = sum(row)*duration[rowno]/colval
+    c = 0
+    for pkno,popkey in enumerate(popkeys):
+        for colno,col in enumerate(data['agetransit'][c]):
+            if sum(data['agetransit'][c]):
+                agetransit[pkno,colno] = col/sum(data['agetransit'][c])
+        c += 1    
     pars['agetransit'] = agetransit
 
     # Risk transitions - these are time-constant

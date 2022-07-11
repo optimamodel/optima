@@ -118,6 +118,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
 
     # Births, deaths and transitions
     birth           = simpars['birth']*dt           # Multiply birth rates by dt
+    agerate         = simpars['agerate']*dt         # Multiply ageing rates by dt
     agetransit      = simpars['agetransit']         # Don't multiply age transitions by dt! These are stored as the mean number of years before transitioning, and we incorporate dt later
     risktransit     = simpars['risktransit']        # Don't multiply risk transitions by dt! These are stored as the mean number of years before transitioning, and we incorporate dt later
     birthtransit    = simpars['birthtransit']       # Don't multiply the birth transitions by dt as have already multiplied birth rates by dt
@@ -126,7 +127,8 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
     risktransitlist,agetransitlist = [],[]
     for p1 in range(npops):
         for p2 in range(npops):
-            if agetransit[p1,p2]:   agetransitlist.append((p1,p2, (1.-exp(-dt/agetransit[p1,p2]))))
+            if agetransit[p1,p2]:   
+                agetransitlist.append((p1,p2, (1.-exp(-dt/agetransit[p1,p2]))))
             if risktransit[p1,p2]:  risktransitlist.append((p1,p2, (1.-exp(-dt/risktransit[p1,p2]))))
     
     # Figure out which populations have age inflows -- don't force population
@@ -475,7 +477,19 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
             if birthrates.any():
                 birthslist.append(tuple([p1,p2,birthrates,alleligbirthrate]))
     motherpops = set([thisbirth[0] for thisbirth in birthslist]) # Get the list of all populations who are mothers
-    
+
+
+    ##############################################################################################################
+    ### Age precalculation
+    ##############################################################################################################
+
+    agelist = dict()
+    for p1 in range(npops): 
+        agelist[p1] = dict()
+        # allagerate = einsum('i,j->j',agetransit[p1, :],agerate[p1, :])
+        for p2 in range(npops):
+            agerates = agetransit[p1, p2] * agerate[p1, :]
+            agelist[p1][p2] = agerates
     
     ##################################################################################################################
     ### Define error checking
@@ -751,7 +765,13 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
             raw_hivbirths[p1, t] += thisbirthrate * fsums[p1]['allplhiv'] / dt
             
         raw_inci[:,t] += raw_mtct[:,t] # Update infections acquired based on PMTCT calculation
-        raw_incibypop[:,t] += raw_mtctfrom[:,t] # Update infections caused based on PMTCT calculation
+        raw_incibypop[:,t] += raw_mtctfrom[:,t] # Update infections caused based on PMTCT 
+        
+        
+       
+        ##############################################################################################################
+        ### Check infection consistency
+        ##############################################################################################################
 
         if debug and abs(raw_inci[:,t].sum() - raw_incibypop[:,t].sum()) > eps:
             errormsg = label + 'Number of infections received (%f) is not equal to the number of infections caused (%f) at time %i' % (raw_inci[:,t].sum(), raw_incibypop[:,t].sum(), t)
@@ -776,7 +796,8 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
 
             ## Age-related transitions
             for p1,p2,thisagetransprob in agetransitlist:
-                peopleleaving = people[:, p1, t+1] * thisagetransprob
+                thisagerate = agelist[p1][p2][t]
+                peopleleaving = people[:, p1, t+1] * thisagerate #thisagetransprob
                 if debug and (peopleleaving > people[:, p1, t+1]).any():
                     errormsg = label + 'Age transitions between pops %s and %s at time %i are too high: the age transitions you specified say that %f%% of the population should age in a single time-step.' % (popkeys[p1], popkeys[p2], t+1, agetransit[p1, p2]*100.)
                     if die: raise OptimaException(errormsg)
