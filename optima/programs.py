@@ -1267,7 +1267,6 @@ class Costcov(CCOF):
         
         nyrs,npts = len(u),len(x)
         
-        print (nyrs, npts, u, s)
         eps = array([eps]*npts)
         effpop = popsize * pf
         
@@ -1293,12 +1292,14 @@ class Costcov(CCOF):
 
         nyrs,npts = len(u),len(x)
         eps = array([eps]*npts)
+        effpop = popsize * pf
+        
         if nyrs==npts: 
-            y = -0.5*popsize*pf*s*u*log(maximum(s*popsize*pf-x,0)/(s*popsize*pf+x))
+            y = -0.5*effpop*s*u*log(maximum(s*effpop-x,0)/(s*effpop+x))
         else:
             y = zeros((nyrs,npts))
             for yr in range(nyrs):
-                y[yr,:] = -0.5*popsize[yr]*pf[yr]*s[yr]*u[yr]*log(maximum(s[yr]*popsize[yr]*pf[yr]-x,0)/(s[yr]*popsize[yr]*pf[yr]+x))
+                y[yr,:] = -0.5*effpop[yr]*s[yr]*u[yr]*log(maximum(s[yr]*effpop[yr]-x,0)/(s[yr]*effpop[yr]+x))
         
         return maximum(y, eps)
             
