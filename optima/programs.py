@@ -1193,9 +1193,12 @@ class CCOF(object):
                 x = array([0]) # WARNING, this should maybe not be here, or should be handled with kwargs
                 t = array([2015])
             printv('x needs to be the same length as t, we assume one spending amount per time point.', 1, verbose)
-        ccopar = self.getccopar(t=t,sample=sample)
-        if not inverse: return self.function(x=x,ccopar=ccopar,popsize=popsize)
-        else: return self.inversefunction(x=x,ccopar=ccopar,popsize=popsize)
+        ccopar  = self.getccopar(t=t,sample=sample)
+        saturationlower = self.getccopar(t=t,sample='lower')['saturation']
+        saturationupper = self.getccopar(t=t,sample='upper')['saturation']
+        
+        if not inverse: return self.function(x=x,ccopar=ccopar,popsize=popsize, saturationlower=saturationlower, saturationupper=saturationupper)
+        else: return self.inversefunction(x=x,ccopar=ccopar,popsize=popsize, saturationlower=saturationlower, saturationupper=saturationupper)
 
     def function(self, x, ccopar, popsize):
         pass
@@ -1254,8 +1257,9 @@ class Costcov(CCOF):
 
     '''
 
-    def function(self, x, ccopar, popsize, eps=None):
-        '''Returns coverage in a given year for a given spending amount.'''
+    def function(self, x, ccopar, popsize, eps=None, saturationlower=None, saturationupper=None):
+        '''Returns coverage in a given year for a given spending amount.
+        Linear coverage up to saturationlower, scaling non-linearly to saturationupper'''
         
         if eps is None: eps = Settings().eps # Warning, this uses project-nonspecific eps
 
@@ -1267,20 +1271,38 @@ class Costcov(CCOF):
         
         nyrs,npts = len(u),len(x)
         
+        #if saturationlowwer andd saturationupper are not specified, default to previous behaviour using fully non-linear scaling to the median saturation value
+        if saturationlower is None:
+            saturationlower = zeros(npts)
+        if saturationupper is None:
+            saturationupper = maximum(saturationlower, s)
+        
         eps = array([eps]*npts)
-        effpop = popsize * pf
+        effpop = popsize * pf #the effective population size that requires coverage adjusted by the population factor
         
         if nyrs==npts:
-            y = (2*s/(1+exp(-2*x/(effpop*s*u)))-s)*effpop
+            naivey = x/(effpop*u) #naive coverage (just total spend/unit cost as a proportion of the population)
+            liny  = minimum(naivey, saturationlower) #linear component of coverage (naive cover, or lower saturation limit if that's lower)
+            
+            covscale = maximum((1.-saturationlower), eps) #this is the remaining proportion of the coverage space that needs to be scaled nonlinearly
+            sa      = maximum((saturationupper - saturationlower)/covscale, eps)  #saturation as a proportion of remaining space
+            nlinnaivey = (naivey - liny) / covscale #Naively covered proportion of the remaining space
+
+            nliny = maximum(2*sa/(1+exp(-2*nlinnaivey/sa))-sa, 0)*covscale #nonlinear component of coverage, needs to be scaled back by covscale 
+            
+            y = (liny + nliny)*effpop
+            # y = (2*s/(1+exp(-2*x/(effpop*s*u)))-s) #*effpop
         else:
+            raise Exception('Not implemented (adjust as for nyrs=npts option): does this line ever come up?')
             y = zeros((nyrs,npts))
             for yr in range(nyrs):
                 y[yr,:] = (2*s[yr]/(1+exp(-2*x/(effpop[yr]*s[yr]*u[yr])))-s[yr])*effpop[yr]
             
         return maximum(y, eps)
 
-    def inversefunction(self, x, ccopar, popsize, eps=None):
-        '''Returns coverage in a given year for a given spending amount.'''
+    def inversefunction(self, x, ccopar, popsize, eps=None, saturationlower=None, saturationupper=None):
+        '''Returns spending in a given year for a given coverage amount.
+        Linear coverage up to saturationlower, scaling non-linearly to saturationupper'''
         
         if eps is None: eps = Settings().eps # Warning, use project-nonspecific eps
 
@@ -1290,13 +1312,31 @@ class Costcov(CCOF):
         pf = promotetoarray(ccopar['popfactor'])
         popsize = promotetoarray(popsize)
 
-        nyrs,npts = len(u),len(x)
-        eps = array([eps]*npts)
-        effpop = popsize * pf
+        nyrs,npts = len(u),len(x)             
         
-        if nyrs==npts: 
-            y = -0.5*effpop*s*u*log(maximum(s*effpop-x,0)/(s*effpop+x))
+        #if saturationlowwer and saturationupper are not specified, default to previous behaviour using fully non-linear scaling to the median saturation value
+        if saturationlower is None:
+            saturationlower = zeros(npts)
+        if saturationupper is None:
+            saturationupper = maximum(saturationlower, s)
+            
+        eps = array([eps]*npts)
+        effpop = popsize * pf #the effective population size that requires coverage adjusted by the population factor
+        
+        if nyrs==npts:
+            linx  = minimum(x/effpop, saturationlower) #TODO should this be effpop or popsize?
+            nlinx = maximum(x/effpop - saturationlower, 0) #TODO should this be effpop or popsize?
+
+            liny = linx*effpop*u        #TODO should this be effpop or popsize?     
+            
+            satnumber = effpop * (saturationupper - saturationlower) #The number of people that would be covered by the nonlinear scaling if fully saturated
+            
+            nliny = -0.5*satnumber*u*log(maximum(satnumber-nlinx*effpop,eps)/maximum((satnumber+nlinx*effpop), eps)) #TODO check this confirm that function (inversefunction()) = input
+            
+            y = liny + nliny
+            # y = -0.5*effpop*s*u*log(maximum(s*effpop-x,0)/(s*effpop+x))
         else:
+            raise Exception('Not implemented (adjust as for nyrs=npts option): does this line ever come up?')
             y = zeros((nyrs,npts))
             for yr in range(nyrs):
                 y[yr,:] = -0.5*effpop[yr]*s[yr]*u[yr]*log(maximum(s[yr]*effpop[yr]-x,0)/(s[yr]*effpop[yr]+x))

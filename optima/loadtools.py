@@ -1,5 +1,5 @@
 import optima as op
-from numpy import nan, isnan, concatenate as cat, array
+from numpy import nan, isnan, mean, concatenate as cat, array
 
 
 ##########################################################################################
@@ -81,6 +81,7 @@ def setmigrations(which='migrations'):
         ('2.10.0',('2.10.1','2021-02-09', updatedisutilities,'Update disutility weights for HIV to match GBD 2019')),
         ('2.10.1',('2.10.2','2022-01-28', updateprepconstants,'Update constants for PrEP, PEP, and ART efficacy for all parsets')),
         ('2.10.2',('2.10.3','2022-07-11', addageingrates,    'Update ageing to allow non-uniform age rates')),
+        ('2.10.3',('2.10.4','2022-07-12', partlinearccopars, 'Update cost-coverage curves to be linear to saturation_low then non-linear to saturation high')),
         ])
     
     
@@ -1116,9 +1117,8 @@ def updateprepconstants(project=None, **kwargs):
 
 def addageingrates(project=None, **kwargs):
     '''
-    Migration between Optima 2.10.2 and 2.11.0
+    Migration between Optima 2.10.2 and 2.10.3
     -- Add an ageing table to allow ageing to occur by year to reflect non-uniform population distributions
-    
     '''
     if project is not None:
         #update data values
@@ -1139,6 +1139,21 @@ def addageingrates(project=None, **kwargs):
         project.data['meta']['sheets']['Other epidemiology'].append('agerate')
         project.data['agerate'] = [[1./(popages[1]-popages[0]+1)] for popages in project.data['pops']['age']]
         
+    else:
+        raise Exception('Must supply a project')
+    return None
+
+def partlinearccopars(project=None, **kwargs):
+    '''
+    Migration between Optima 2.10.3 and 2.10.4
+    -- Update cost-coverage curves to be linear to saturation_low then non-linear to saturation high
+    '''
+    if project is not None:
+        for ps in project.progsets.values():
+            for prog in ps.programs.values():
+                #for each program convert saturation values (lower, upper) to (0, average(lower, upper)) to maintain consistent results with partially linear cost-coverage curves
+                if prog.costcovfn.ccopars:
+                        prog.costcovfn.ccopars['saturation'] = [(0., mean(sat)) for sat in prog.costcovfn.ccopars['saturation']]
     else:
         raise Exception('Must supply a project')
     return None
