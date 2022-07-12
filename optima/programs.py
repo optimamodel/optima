@@ -1266,13 +1266,19 @@ class Costcov(CCOF):
         popsize = promotetoarray(popsize)
         
         nyrs,npts = len(u),len(x)
+        
+        print (nyrs, npts, u, s)
         eps = array([eps]*npts)
-        if nyrs==npts: return maximum((2*s/(1+exp(-2*x/(popsize*pf*s*u)))-s)*popsize*pf,eps)
+        effpop = popsize * pf
+        
+        if nyrs==npts:
+            y = (2*s/(1+exp(-2*x/(effpop*s*u)))-s)*effpop
         else:
             y = zeros((nyrs,npts))
             for yr in range(nyrs):
-                y[yr,:] = maximum((2*s[yr]/(1+exp(-2*x/(popsize[yr]*pf[yr]*s[yr]*u[yr])))-s[yr])*popsize[yr]*pf[yr],eps)
-            return y
+                y[yr,:] = (2*s[yr]/(1+exp(-2*x/(effpop[yr]*s[yr]*u[yr])))-s[yr])*effpop[yr]
+            
+        return maximum(y, eps)
 
     def inversefunction(self, x, ccopar, popsize, eps=None):
         '''Returns coverage in a given year for a given spending amount.'''
@@ -1287,12 +1293,14 @@ class Costcov(CCOF):
 
         nyrs,npts = len(u),len(x)
         eps = array([eps]*npts)
-        if nyrs==npts: return maximum(-0.5*popsize*pf*s*u*log(maximum(s*popsize*pf-x,0)/(s*popsize*pf+x)),eps)
+        if nyrs==npts: 
+            y = -0.5*popsize*pf*s*u*log(maximum(s*popsize*pf-x,0)/(s*popsize*pf+x))
         else:
             y = zeros((nyrs,npts))
             for yr in range(nyrs):
-                y[yr,:] = maximum(-0.5*popsize[yr]*pf[yr]*s[yr]*u[yr]*log(maximum(s[yr]*popsize[yr]*pf[yr]-x,0)/(s[yr]*popsize[yr]*pf[yr]+x)),eps)
-            return y
+                y[yr,:] = -0.5*popsize[yr]*pf[yr]*s[yr]*u[yr]*log(maximum(s[yr]*popsize[yr]*pf[yr]-x,0)/(s[yr]*popsize[yr]*pf[yr]+x))
+        
+        return maximum(y, eps)
             
 
 ########################################################
