@@ -895,7 +895,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                         if totalppltomoveup>eps:
                             diff = min(diff, totalppltomoveup-eps) # Make sure we don't move more people than are available
                             if name == 'proptx': # For treatment, we move people in lower CD4 states first
-                                if treatbycd4:
+                                if simpars['tvec'][t] <= treatbycd4: #If this is during or before the final year of prioritized treatment by CD4 count in the country
                                     tmpdiff = diff
                                     newmovers = zeros((ncd4,npops))
                                     for cd4 in reversed(range(ncd4)): # Going backwards so that lower CD4 counts move up the cascade first

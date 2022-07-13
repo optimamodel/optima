@@ -83,6 +83,7 @@ def setmigrations(which='migrations'):
         ('2.10.2',('2.10.3','2022-07-11', addageingrates,    'Update ageing to allow non-uniform age rates')),
         ('2.10.3',('2.10.4','2022-07-12', partlinearccopars, 'Update cost-coverage curves to be linear to saturation_low then non-linear to saturation high')),
         ('2.10.4',('2.10.5','2022-07-13', None ,             'Rename optional indicators in the databook to align with UNAIDS terminology')),
+        ('2.10.5',('2.10.6','2022-07-13', updatetreatbycd4 , 'Change treatbycd4 to be a float representing the final year of treatment by cd4 rather than a binary')),
         ])
     
     
@@ -1092,6 +1093,7 @@ def updatedisutilities(project=None, **kwargs):
         raise Exception('Must supply a project')
     return None
 
+
 def updateprepconstants(project=None, **kwargs):
     '''
     Migration between Optima 2.10.1 and 2.10.2 -- Actually force prep/pep constants to be updated
@@ -1115,6 +1117,7 @@ def updateprepconstants(project=None, **kwargs):
     else:
         raise Exception('Must supply a project')
     return None
+
 
 def addageingrates(project=None, **kwargs):
     '''
@@ -1144,6 +1147,7 @@ def addageingrates(project=None, **kwargs):
         raise Exception('Must supply a project')
     return None
 
+
 def partlinearccopars(project=None, **kwargs):
     '''
     Migration between Optima 2.10.3 and 2.10.4
@@ -1155,6 +1159,20 @@ def partlinearccopars(project=None, **kwargs):
                 #for each program convert saturation values (lower, upper) to (0, average(lower, upper)) to maintain consistent results with partially linear cost-coverage curves
                 if prog.costcovfn.ccopars:
                         prog.costcovfn.ccopars['saturation'] = [(0., mean(sat)) for sat in prog.costcovfn.ccopars['saturation']]
+    else:
+        raise Exception('Must supply a project')
+    return None
+
+
+def updatetreatbycd4(project=None, **kwargs):
+    '''
+    Migration between Optima 2.10.5 and 2.10.6 -- change treatbycd4 to be a float representing the final year of treatment by cd4 rather than a binary
+    '''
+    if project is not None:
+        if project.settings.treatbycd4:
+            project.settings.treatbycd4 = 2100. #treatbycd4 = True means treatment by cd4 for all years in the future to arbitary 2100 date
+        else:
+            project.settings.treatbycd4 = 1900. #treatbycd4 = False means no treatment by cd4 in any year from arbitrary 1900 date
     else:
         raise Exception('Must supply a project')
     return None

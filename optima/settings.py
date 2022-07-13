@@ -92,7 +92,7 @@ class Settings(object):
         self.eps = 1e-3 # Must be small enough to be applied to prevalence, which might be ~0.1% or less
         self.infmoney = 1e10 # A lot of money
         self.forcepopsize = False # Whether or not to force the population size to match the parameters
-        self.treatbycd4 = True # Whether or not to preferentially put people on treatment from lower CD4 counts
+        self.treatbycd4 = 2100. # Whether or not to preferentially put people on treatment from lower CD4 counts - the final year of this
         printv('Initialized settings', 4, self.verbose) # And show how verbose is used
     
     
