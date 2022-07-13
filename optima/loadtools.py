@@ -83,7 +83,8 @@ def setmigrations(which='migrations'):
         ('2.10.2',('2.10.3','2022-07-11', addageingrates,    'Update ageing to allow non-uniform age rates')),
         ('2.10.3',('2.10.4','2022-07-12', partlinearccopars, 'Update cost-coverage curves to be linear to saturation_low then non-linear to saturation high')),
         ('2.10.4',('2.10.5','2022-07-13', None ,             'Rename optional indicators in the databook to align with UNAIDS terminology')),
-        ('2.10.5',('2.10.6','2022-07-13', updatetreatbycd4 , 'Change treatbycd4 to be a float representing the final year of treatment by cd4 rather than a binary')),
+        ('2.10.5',('2.10.6','2022-07-13', updatetreatbycd4,  'Change treatbycd4 to be a float representing the final year of treatment by cd4 rather than a binary')),
+        ('2.10.6',('2.10.7','2022-07-14', removerequiredvl,  'Remove the required VL parameter to better capture treatment failure identification')),
         ])
     
     
@@ -1167,6 +1168,25 @@ def partlinearccopars(project=None, **kwargs):
         raise Exception('Must supply a project')
     return None
 
+# def renameunaidspars(project=None, **kwawrgs):
+#     '''
+#     Migration between Optima 2.10.4 and 2.10.5
+#     -- Rename optional indicators to align with UNAIDS terminology
+#     -	PLHIV aware of their status (%)  -> Percent of people living with HIV who know their status
+#     -	Diagnosed PLHIV in care (%)  -> Percent of people who know their status who are retained in care
+#     -	PLHIV in care on treatment (%) -> Percent of people who know their status who are on ART (note this was always used in model output comparisons as % diagnosed/%treated, so this renaming is an actual correction!)
+#     -	Pregnant women on PMTCT (%) -> Percent of pregnant women with HIV on PMTCT
+#     -	People on ART with viral suppression (%)  -> Percent of people on ART who achieve viral suppression
+#     '''
+#     if project is not None:
+#         #No need to rename anything in data (never saved!)
+#         #May need to rename the output/results long names in all result sets, might have other side effects though?            
+#     else:
+#         raise Exception('Must supply a project')
+#     return None
+    
+#     return None
+
 
 def updatetreatbycd4(project=None, **kwargs):
     '''
@@ -1181,24 +1201,22 @@ def updatetreatbycd4(project=None, **kwargs):
         raise Exception('Must supply a project')
     return None
 
-# def renameunaidspars(project=None, **kwawrgs):
-#     '''
-#     Migration between Optima 2.10.4 and 2.10.5
-#     -- Rename optional indicators to align with UNAIDS terminology
-#     -	PLHIV aware of their status (%)  -> Percent of people living with HIV who know their status
-#     -	Diagnosed PLHIV in care (%)  -> Percent of people who know their status who are retained in care
-#     -	PLHIV in care on treatment (%) -> Percent of people who know their status who are on ART (note this was always used in model output comparisons as % diagnosed/%treated, so this renaming is an actual correction!)
-#     -	Pregnant women on PMTCT (%) -> Percent of pregnant women with HIV on PMTCT
-#     -	People on ART with viral suppression (%)  -> Percent of people on ART who achieve viral suppression
-#     '''
-#     if project is not None:
-#         for ps in project.parsets.values():
-            
-#     else:
-#         raise Exception('Must supply a project')
-#     return None
-    
-#     return None
+def removerequiredvl(project=None, **kwwargs):
+    '''
+    Migration between Optima 2.10.6 and 2.10.7 -- remove the "required VL tests" parameter - as the implementation doesn't match the interpretation
+    The model uses this to determine the proportion of treatment failures identified every timestep, so this should be hardcoded as 1/dt instead
+    It has been appropriate to adjust this to reflect better targeting of limited viral load testing to those most at risk of treatment failure in many countries,
+    but that would be better achieved through adjustment of the metaparameter for 'numvlmon' instead, with the same overall impact.
+    '''
+    if project is not None:
+        #First adjust the metaparameter for number of viral load tests given to account for better targeting of viral load tests
+        for ps in project.parsets.values():
+            ps.pars['numvlmon'].m *= (1./project.settings.dt) / ps.pars['requiredvl'].y
+        #Then remove the parameter from all parsets
+        removeparameter(project=project, short='requiredvl', data='requiredvl')
+    else:
+        raise Exception('Must supply a project')
+    return None
 
 ##########################################################################################
 ### CORE MIGRATION FUNCTIONS

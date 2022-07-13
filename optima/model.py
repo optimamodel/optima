@@ -76,7 +76,6 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
     deathprob       = zeros((nstates,npops))        # Initialise death probability array
 
     # Cascade-related parameters
-    requiredvl      = simpars['requiredvl']                               # Number of VL tests required per year
     treatvs         = 1.-exp(-dt/(maximum(eps,simpars['treatvs'])))       # Probability of becoming virally suppressed after 1 time step
     treatfail       = simpars['treatfail']*dt                             # Probability of treatment failure in 1 time step
     linktocare      = 1.-exp(-dt/(maximum(eps,simpars['linktocare'])))    # Probability of being linked to care in 1 time step
@@ -685,7 +684,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                     thistransit[fromstate,tostate,:] *= usvlprob
         
         # USVL to SVL
-        svlprob = min(regainvs[t]*numvlmon[t]/(eps+people[alltx,:,t].sum()*requiredvl),1) if userate(propsupp,t) else 0.
+        svlprob = min(regainvs[t]*numvlmon[t]*dt/(eps+people[alltx,:,t].sum()),1) if userate(propsupp,t) else 0.
         for fromstate in usvl:
             for tostate in fromto[fromstate]:
                 if tostate in usvl: # Probability of not receiving a VL test & thus remaining failed
