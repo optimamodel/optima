@@ -1291,7 +1291,7 @@ class Costcov(CCOF):
             nliny = maximum(2*sa/(1+exp(-2*nlinnaivey/sa))-sa, 0)*covscale #nonlinear component of coverage, needs to be scaled back by covscale 
             
             y = (liny + nliny)*effpop
-            # y = (2*s/(1+exp(-2*x/(effpop*s*u)))-s) #*effpop
+            # y = (2*s/(1+exp(-2*x/(effpop*s*u)))-s)*effpop
         else:
             raise Exception('Not implemented (adjust as for nyrs=npts option): does this line ever come up?')
             y = zeros((nyrs,npts))
@@ -1324,14 +1324,14 @@ class Costcov(CCOF):
         effpop = popsize * pf #the effective population size that requires coverage adjusted by the population factor
         
         if nyrs==npts:
-            linx  = minimum(x/effpop, saturationlower) #TODO should this be effpop or popsize?
-            nlinx = maximum(x/effpop - saturationlower, 0) #TODO should this be effpop or popsize?
+            linx  = minimum(x/effpop, saturationlower)*effpop #NUMBER of coverage that would have been achieved with linear cost-coverage (everything below saturationlower)
+            nlinx = maximum(x/effpop - saturationlower, 0)*effpop #NUMBER of coverage that needs to be costed based on non-linear cost-coverage (everything above saturationlower and below saturationupper)
 
-            liny = linx*effpop*u        #TODO should this be effpop or popsize?     
+            liny = linx*u #proportion of linear spending = number of people covered * unit cost
             
             satnumber = effpop * (saturationupper - saturationlower) #The number of people that would be covered by the nonlinear scaling if fully saturated
             
-            nliny = -0.5*satnumber*u*log(maximum(satnumber-nlinx*effpop,eps)/maximum((satnumber+nlinx*effpop), eps)) #TODO check this confirm that function (inversefunction()) = input
+            nliny = -0.5*satnumber*u*log(maximum(satnumber-nlinx,eps)/maximum((satnumber+nlinx), eps)) #proportion of spending at non-linear scaling
             
             y = liny + nliny
             # y = -0.5*effpop*s*u*log(maximum(s*effpop-x,0)/(s*effpop+x))
