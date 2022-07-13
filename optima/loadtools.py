@@ -85,6 +85,7 @@ def setmigrations(which='migrations'):
         ('2.10.4',('2.10.5','2022-07-13', None ,             'Rename optional indicators in the databook to align with UNAIDS terminology')),
         ('2.10.5',('2.10.6','2022-07-13', updatetreatbycd4,  'Change treatbycd4 to be a float representing the final year of treatment by cd4 rather than a binary')),
         ('2.10.6',('2.10.7','2022-07-14', removerequiredvl,  'Remove the required VL parameter to better capture treatment failure identification')),
+        ('2.10.7',('2.10.8','2022-07-14', addinitcd4weight,  'Add project setting to weight initialization toward earlier/later stage infections')),
         ])
     
     
@@ -1214,6 +1215,19 @@ def removerequiredvl(project=None, **kwwargs):
             ps.pars['numvlmon'].m *= (1./project.settings.dt) / ps.pars['requiredvl'].y
         #Then remove the parameter from all parsets
         removeparameter(project=project, short='requiredvl', data='requiredvl')
+    else:
+        raise Exception('Must supply a project')
+    return None
+
+def addinitcd4weight(project=None, **kwargs):
+    '''
+    Migration between Optima 2.10.7 and 2.10.8 -- Add project setting to weight initialization toward earlier/later stage infections
+    This setting has a default value of 1. which will initialize based on average duration in each stage of infection
+    Values <1 mean the initialization will be weighted toward high CD4 counts and especially acute infections for people who are not on treatment [early stage epidemics]
+    Values >1 mean the initialization will be weighted toward low CD4 counts and especially CD4<50 infections for people who are not on treatment [early stage epidemics]
+    '''
+    if project is not None:
+        project.settings.initcd4weight = 1.
     else:
         raise Exception('Must supply a project')
     return None

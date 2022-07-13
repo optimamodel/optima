@@ -38,6 +38,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
     eps             = settings.eps                  # Define another small number to avoid divide-by-zero errors
     forcepopsize    = settings.forcepopsize         # Whether or not to force the population size to match the parameters
     treatbycd4      = settings.treatbycd4           # Whether or not to preferentially put people on treatment from lower CD4 counts
+    initcd4weight   = settings.initcd4weight        # How to initialize the epidemic weighting either toward lower (with <1 values) or higher (with >1 values) CD4 counts based on the maturity of the epidemic
     fromto          = simpars['fromto']             # States to and from
     transmatrix     = simpars['transmatrix']        # Raw transitions matrix
 
@@ -377,6 +378,10 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
         lostdist = dxfrac*linktocarefrac*lostfrac
 
         # Set initial distributions within treated & untreated 
+        # Weight the initial distribution according to model settings to get an "earlier" or "later" stage epidemic to better match trends in years after initialization
+        # Note that the multiplier is quite heavily weighting toward acute infections - note less multiplier for CD4<50 given diagnosis/death
+        cd4weightings = maximum(minimum(array([initcd4weight**3., initcd4weight**2, initcd4weight, 1./initcd4weight, initcd4weight**-2, initcd4weight**-3]), 10.), 0.1)
+        prog *= cd4weightings
         untxdist    = (1./prog) / sum(1./prog) # Normalize progression rates to get initial distribution
         txdist      = cat([[1.,1.], svlrecov[2:]]) # Use 1s for the first two entries so that the proportion of people on tx with acute infection is v small
         txdist      = (1./txdist)  / sum(1./txdist) # Normalize
