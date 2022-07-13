@@ -1127,7 +1127,7 @@ def addageingrates(project=None, **kwargs):
     if project is not None:
         #update data values
         for ps in project.parsets.values():
-            #add PEP pars
+            #add a parameter for ageing rate
             short = 'agerate'
             copyfrom = 'death'
             kwargs['by'] = 'pop'
@@ -1138,6 +1138,10 @@ def addageingrates(project=None, **kwargs):
             kwargs['y'] = op.odict([(pop,array([1./(popages[1]-popages[0]+1)])) for pop, popages in zip(ps.popkeys, ps.pars['age'])])
             addparameter(project=project, copyfrom=copyfrom, short=short, **kwargs)
 
+            #Also neeed to adjust the agetransit parameter to be proportions rather than absolute value
+            for rn, row in enumerate(ps.pars['agetransit']):
+                if sum(ps.pars['agetransit'][rn])>0:
+                    ps.pars['agetransit'][rn] = ps.pars['agetransit'][rn]/sum(ps.pars['agetransit'][rn])
         
         #add data for PEP, PrEP, and return to care
         project.data['meta']['sheets']['Other epidemiology'].append('agerate')
