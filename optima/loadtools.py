@@ -82,6 +82,7 @@ def setmigrations(which='migrations'):
         ('2.10.1',('2.10.2','2022-01-28', updateprepconstants,'Update constants for PrEP, PEP, and ART efficacy for all parsets')),
         ('2.10.2',('2.10.3','2022-07-11', addageingrates,    'Update ageing to allow non-uniform age rates')),
         ('2.10.3',('2.10.4','2022-07-12', partlinearccopars, 'Update cost-coverage curves to be linear to saturation_low then non-linear to saturation high')),
+        ('2.10.4',('2.10.5','2022-07-13', None ,             'Rename optional indicators in the databook to align with UNAIDS terminology')),
         ])
     
     
@@ -1157,6 +1158,25 @@ def partlinearccopars(project=None, **kwargs):
     else:
         raise Exception('Must supply a project')
     return None
+
+# def renameunaidspars(project=None, **kwawrgs):
+#     '''
+#     Migration between Optima 2.10.4 and 2.10.5
+#     -- Rename optional indicators to align with UNAIDS terminology
+#     -	PLHIV aware of their status (%)  -> Percent of people living with HIV who know their status
+#     -	Diagnosed PLHIV in care (%)  -> Percent of people who know their status who are retained in care
+#     -	PLHIV in care on treatment (%) -> Percent of people who know their status who are on ART (note this was always used in model output comparisons as % diagnosed/%treated, so this renaming is an actual correction!)
+#     -	Pregnant women on PMTCT (%) -> Percent of pregnant women with HIV on PMTCT
+#     -	People on ART with viral suppression (%)  -> Percent of people on ART who achieve viral suppression
+#     '''
+#     if project is not None:
+#         for ps in project.parsets.values():
+            
+#     else:
+#         raise Exception('Must supply a project')
+#     return None
+    
+#     return None
 
 ##########################################################################################
 ### CORE MIGRATION FUNCTIONS
