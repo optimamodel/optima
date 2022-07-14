@@ -91,9 +91,6 @@ class Settings(object):
         self.safetymargin = 0.5 # Do not move more than this fraction of people on a single timestep
         self.eps = 1e-3 # Must be small enough to be applied to prevalence, which might be ~0.1% or less
         self.infmoney = 1e10 # A lot of money
-        self.forcepopsize = False # Whether or not to force the population size to match the parameters
-        self.treatbycd4 = 2100. # Whether or not to preferentially put people on treatment from lower CD4 counts - the final year of this
-        self.initcd4weight = 1. # How to initialize the epidemic weighting either toward lower (with <1 values) or higher (with >1 values) CD4 counts based on the maturity of the epidemic
         printv('Initialized settings', 4, self.verbose) # And show how verbose is used
     
     

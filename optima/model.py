@@ -36,9 +36,9 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
     ncd4            = settings.ncd4                 # Shorten number of CD4 states
     nstates         = settings.nstates              # Shorten number of health states
     eps             = settings.eps                  # Define another small number to avoid divide-by-zero errors
-    forcepopsize    = settings.forcepopsize         # Whether or not to force the population size to match the parameters
-    treatbycd4      = settings.treatbycd4           # Whether or not to preferentially put people on treatment from lower CD4 counts
-    initcd4weight   = settings.initcd4weight        # How to initialize the epidemic weighting either toward lower (with <1 values) or higher (with >1 values) CD4 counts based on the maturity of the epidemic
+    forcepopsize    = simpars['forcepopsize']       # Whether or not to force all population sizes to match the initial value and exponential growth curve
+    treatbycd4before= simpars['treatbycd4before']   # Whether or not to preferentially put people on treatment from lower CD4 counts (for timesteps before this date)
+    initcd4weight   = simpars['initcd4weight']      # How to initialize the epidemic weighting either toward lower (with <1 values) or higher (with >1 values) CD4 counts based on the maturity of the epidemic
     fromto          = simpars['fromto']             # States to and from
     transmatrix     = simpars['transmatrix']        # Raw transitions matrix
 
@@ -899,7 +899,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                         if totalppltomoveup>eps:
                             diff = min(diff, totalppltomoveup-eps) # Make sure we don't move more people than are available
                             if name == 'proptx': # For treatment, we move people in lower CD4 states first
-                                if simpars['tvec'][t] <= treatbycd4: #If this is during or before the final year of prioritized treatment by CD4 count in the country
+                                if simpars['tvec'][t] <= treatbycd4before: #If this is during or before the final year of prioritized treatment by CD4 count in the country
                                     tmpdiff = diff
                                     newmovers = zeros((ncd4,npops))
                                     for cd4 in reversed(range(ncd4)): # Going backwards so that lower CD4 counts move up the cascade first

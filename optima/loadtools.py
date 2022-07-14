@@ -83,9 +83,8 @@ def setmigrations(which='migrations'):
         ('2.10.2',('2.10.3','2022-07-11', addageingrates,    'Update ageing to allow non-uniform age rates')),
         ('2.10.3',('2.10.4','2022-07-12', partlinearccopars, 'Update cost-coverage curves to be linear to saturation_low then non-linear to saturation high')),
         ('2.10.4',('2.10.5','2022-07-13', None ,             'Rename optional indicators in the databook to align with UNAIDS terminology')),
-        ('2.10.5',('2.10.6','2022-07-13', updatetreatbycd4,  'Change treatbycd4 to be a float representing the final year of treatment by cd4 rather than a binary')),
-        ('2.10.6',('2.10.7','2022-07-14', removerequiredvl,  'Remove the required VL parameter to better capture treatment failure identification')),
-        ('2.10.7',('2.10.8','2022-07-14', addinitcd4weight,  'Add project setting to weight initialization toward earlier/later stage infections')),
+        ('2.10.5',('2.10.6','2022-07-14', removerequiredvl,  'Remove the required VL parameter to better capture treatment failure identification')),
+        ('2.10.6',('2.10.7','2022-07-14', addmetapars,       'Add/change from settings meta parameters for forcepopsize, treatbycd4before, initcd4weight')),
         ])
     
     
@@ -1188,23 +1187,9 @@ def partlinearccopars(project=None, **kwargs):
     
 #     return None
 
-
-def updatetreatbycd4(project=None, **kwargs):
-    '''
-    Migration between Optima 2.10.5 and 2.10.6 -- change treatbycd4 to be a float representing the final year of treatment by cd4 rather than a binary
-    '''
-    if project is not None:
-        if project.settings.treatbycd4:
-            project.settings.treatbycd4 = 2100. #treatbycd4 = True means treatment by cd4 for all years in the future to arbitary 2100 date
-        else:
-            project.settings.treatbycd4 = 1900. #treatbycd4 = False means no treatment by cd4 in any year from arbitrary 1900 date
-    else:
-        raise Exception('Must supply a project')
-    return None
-
 def removerequiredvl(project=None, **kwwargs):
     '''
-    Migration between Optima 2.10.6 and 2.10.7 -- remove the "required VL tests" parameter - as the implementation doesn't match the interpretation
+    Migration between Optima 2.10.5 and 2.10.6 -- remove the "required VL tests" parameter - as the implementation doesn't match the interpretation
     The model uses this to determine the proportion of treatment failures identified every timestep, so this should be hardcoded as 1/dt instead
     It has been appropriate to adjust this to reflect better targeting of limited viral load testing to those most at risk of treatment failure in many countries,
     but that would be better achieved through adjustment of the metaparameter for 'numvlmon' instead, with the same overall impact.
@@ -1219,15 +1204,38 @@ def removerequiredvl(project=None, **kwwargs):
         raise Exception('Must supply a project')
     return None
 
-def addinitcd4weight(project=None, **kwargs):
+def addmetapars(project=None, **kwargs):
     '''
-    Migration between Optima 2.10.7 and 2.10.8 -- Add project setting to weight initialization toward earlier/later stage infections
-    This setting has a default value of 1. which will initialize based on average duration in each stage of infection
-    Values <1 mean the initialization will be weighted toward high CD4 counts and especially acute infections for people who are not on treatment [early stage epidemics]
-    Values >1 mean the initialization will be weighted toward low CD4 counts and especially CD4<50 infections for people who are not on treatment [early stage epidemics]
+    Migration between Optima 2.10.6 and 2.10.7 
+    -- Add meta parameter initcd4weight to weight initialization toward earlier/later stage infections
+        This setting has a default value of 1. which will initialize based on average duration in each stage of infection
+        Values <1 mean the initialization will be weighted toward high CD4 counts and especially acute infections for people who are not on treatment [early stage epidemics]
+        Values >1 mean the initialization will be weighted toward low CD4 counts and especially CD4<50 infections for people who are not on treatment [early stage epidemics]
+    -- Migrate binary project setting forcepopsize to a parameter
+    -- Migrate binary project setting treatbycd4 to a parameter representing year in which treatment prioritization changes from by cd4 count to eligibility for all
+    
     '''
     if project is not None:
-        project.settings.initcd4weight = 1.
+        if hasattr(project.settings, 'forcepopsize'):
+            forcepopsize = 1 if project.settings.forcepopsize else 0
+            delattr(project.settings, 'forcepopsize')
+        else:
+            forcepopsize = 0 #default
+        if hasattr(project.settings, 'treatbycd4'):
+            treatbycd4before = 2100 if project.settings.treatbycd4 else 1900
+            delattr(project.settings, 'treatbycd4')
+        else:
+            treatbycd4before = 1900 #default (all CD4 equally eligible for treatment all years
+        
+        newpars = {'forcepopsize': {'name': 'Force all population sizes to match initial value with exponential growth curve', 'y': forcepopsize, 'limits': (0,1)},
+                   'treatbycd4before': {'name': 'Treatment prioritized by CD4 count before this date', 'y': treatbycd4before, 'limits': (1900, 2100)},
+                   'initcd4weight': {'name': 'Weighting for initialization where low values represent early stage epidemics', 'y': 1., 'limits': (0, 'maxmeta')},
+                   }
+        
+        for par, parkwargs in newpars.items():
+            addparameter(project=project, copyfrom='transnorm', short=par, **parkwargs)
+            for ps in project.parsets.values():
+                ps.pars[par].updateprior()
     else:
         raise Exception('Must supply a project')
     return None
