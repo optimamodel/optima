@@ -84,7 +84,7 @@ def setmigrations(which='migrations'):
         ('2.10.3',('2.10.4','2022-07-12', partlinearccopars, 'Update cost-coverage curves to be linear to saturation_low then non-linear to saturation high')),
         ('2.10.4',('2.10.5','2022-07-13', None ,             'Rename optional indicators in the databook to align with UNAIDS terminology')),
         ('2.10.5',('2.10.6','2022-07-14', removerequiredvl,  'Remove the required VL parameter to better capture treatment failure identification')),
-        ('2.10.6',('2.10.7','2022-07-14', addmetapars,       'Add/change from settings meta parameters for forcepopsize, treatbycd4before, initcd4weight')),
+        ('2.10.6',('2.10.7','2022-07-14', addmetapars,       'Add/change meta parameters for forcepopsize, treatbycd4before, initcd4weight, transdeathtx, relhivbirth')),
         ])
     
     
@@ -1213,7 +1213,8 @@ def addmetapars(project=None, **kwargs):
         Values >1 mean the initialization will be weighted toward low CD4 counts and especially CD4<50 infections for people who are not on treatment [early stage epidemics]
     -- Migrate binary project setting forcepopsize to a parameter
     -- Migrate binary project setting treatbycd4 to a parameter representing year in which treatment prioritization changes from by cd4 count to eligibility for all
-    
+    -- Add meta parameter 'transdeathtx' (by time and population) to modify relative death rates for people on ART (e.g. improved treatment of comorbidities)
+    -- Add meta parameter 'relhivbirth' to capture the relative likelihood that a female with HIV gives birth relative to the overall birth rate
     '''
     if project is not None:
         if hasattr(project.settings, 'forcepopsize'):
@@ -1230,12 +1231,23 @@ def addmetapars(project=None, **kwargs):
         newpars = {'forcepopsize': {'name': 'Force all population sizes to match initial value with exponential growth curve', 'y': forcepopsize, 'limits': (0,1)},
                    'treatbycd4before': {'name': 'Treatment prioritized by CD4 count before this date', 'y': treatbycd4before, 'limits': (1900, 2100)},
                    'initcd4weight': {'name': 'Weighting for initialization where low values represent early stage epidemics', 'y': 1., 'limits': (0, 'maxmeta')},
+                   'transdeathtx': {'name': 'Time dependent additional reduction in relative death rate on ART (unitless)', 'limits': (0, 1)},
+                   'relhivbirth': {'name': 'Relative likelihood that females with HIV give birth', 'y': 1, 'limits': (0,'maxmeta')},
                    }
         
         for par, parkwargs in newpars.items():
-            addparameter(project=project, copyfrom='transnorm', short=par, **parkwargs)
+            copyfrom = 'death' if par=='transdeathtx' else 'transnorm'
+
+            addparameter(project=project, copyfrom=copyfrom, short=par, **parkwargs)
             for ps in project.parsets.values():
-                ps.pars[par].updateprior()
+                try:
+                    ps.pars[par].updateprior() #may not work on old projects
+                except:
+                    pass
+                
+                if par == 'transdeathtx':
+                    for pop in ps.pars[par].y.keys():
+                        ps.pars[par].y[pop] = array([0.])
     else:
         raise Exception('Must supply a project')
     return None

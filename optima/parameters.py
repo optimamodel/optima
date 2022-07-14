@@ -1198,12 +1198,15 @@ def makepars(data=None, verbose=2, die=True, fixprops=None):
     pars['forcepopsize'].y = 0 # Whether or not to force the population size to match the parameters
     pars['treatbycd4before'].y = 2100. # Whether or not to preferentially put people on treatment from lower CD4 counts - the final year of this
     pars['initcd4weight'].y = 1. # How to initialize the epidemic weighting either toward lower (with <1 values) or higher (with >1 values) CD4 counts based on the maturity of the epidemic
+    pars['relhivbirth'].y = 1. # Relative likelihood that females with HIV give birth (relative to the overall birth rate)
+
     
     for key in popkeys: # Define values for each population
         pars['force'].y[key] = 1.0
         pars['hivdeath'].y[key] = 1.0
         pars['inhomo'].y[key] = 0.0
         pars['inhomo'].prior[key].pars = array([0.0, 0.3]) # Arbitrary
+        pars['transdeathtx'].y[key] = 0.0
     
     # Impose limits on force and transnorm so their values don't get too extreme (note, force.m functions identically to transnorm.y, but use the latter)
     for foipar in ['force','transnorm']:
