@@ -334,8 +334,8 @@ class Resultset(object):
             self.main['numinci'].datatot = processdata(data['optnuminfect'], uncertainty=True)
             self.main['numinci'].estimate = True # It's not real data, just an estimate
         
-        self.main['numincibypop'].pops = process(allincibypop[:,:,indices])
-        self.main['numincibypop'].tot  = process(allincibypop[:,:,indices].sum(axis=1)) # Axis 1 is populations
+        self.main['numincibypop'].pops = process(allincibypop[:,:,:,indices].sum(axis=1)) # Axis 1 is health state
+        self.main['numincibypop'].tot  = process(allincibypop[:,:,:,indices].sum(axis=(1,2))) # Axis 2 is populations
         if data is not None: 
             self.main['numincibypop'].datatot = processdata(data['optnuminfect'], uncertainty=True)
             self.main['numincibypop'].estimate = True # It's not real data, just an estimate
@@ -355,8 +355,8 @@ class Resultset(object):
             self.main['numnewdiag'].datatot = processdata(data['optnumdiag'], uncertainty=True)
             self.main['numnewdiag'].estimate = False # It's real data, not just an estimate
         
-        self.main['numdeath'].pops = process(alldeaths[:,:,:,indices].sum(axis=1))
-        self.main['numdeath'].tot  = process(alldeaths[:,:,:,indices].sum(axis=(1,2))) # Axis 1 is populations
+        self.main['numdeath'].pops = process(alldeaths[:,:,:,indices].sum(axis=1))  # Axis 1 is health state
+        self.main['numdeath'].tot  = process(alldeaths[:,:,:,indices].sum(axis=(1,2))) # Axis 2 is populations
         if data is not None: 
             self.main['numdeath'].datatot = processdata(data['optdeath'], uncertainty=True)
             self.main['numdeath'].estimate = True # It's not real data, just an estimate

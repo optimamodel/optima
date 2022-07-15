@@ -52,10 +52,10 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
 
     # Initialize raw arrays -- reporting annual quantities (so need to divide by dt!)
     raw_inci        = zeros((npops, npts))          # Total incidence acquired by each population
-    raw_incibypop   = zeros((npops, npts))          # Total incidence caused by each population
+    raw_incibypop   = zeros((nstates, npops, npts)) # Total incidence caused by each population and each state
     raw_births      = zeros((npops, npts))          # Total number of births to each population
     raw_mtct        = zeros((npops, npts))          # Number of mother-to-child transmissions to each population
-    raw_mtctfrom    = zeros((npops, npts))          # Number of mother-to-child transmissions from each population
+    raw_mtctfrom    = zeros((nstates, npops, npts)) # Number of mother-to-child transmissions from each population and each state
     raw_hivbirths   = zeros((npops, npts))          # Number of births to HIV+ pregnant women
     raw_receivepmtct= zeros((npops, npts))          # Initialise a place to store the number of people in each population receiving PMTCT
     raw_diag        = zeros((npops, npts))          # Number diagnosed per timestep
@@ -64,6 +64,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
     raw_newsupp     = zeros((npops, npts))          # Number newly suppressed per timestep
     raw_death       = zeros((nstates, npops, npts)) # Number of deaths per timestep
     raw_otherdeath  = zeros((npops, npts))          # Number of other deaths per timestep
+    
     
     # Biological and failure parameters
     prog            = maximum(eps,1-exp(-dt/array([simpars['progacute'], simpars['proggt500'], simpars['proggt350'], simpars['proggt200'], simpars['proggt50'], 1./simpars['deathlt50']]) ))
@@ -605,9 +606,8 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
         thistransit[pi,ui,:] *= infections_to[pi] # Index for moving from circ to infection
 
         # Calculate infections acquired and transmitted
-        raw_inci[:,t]       = einsum('ij,ijkl->j', people[sus,:,t], forceinffull)/dt
-        raw_incibypop[:,t]  = einsum('ij,ijkl->l', people[sus,:,t], forceinffull)/dt
-
+        raw_inci[:,t]          = einsum('ij,ijkl->j', people[sus,:,t], forceinffull)/dt
+        raw_incibypop[:,:,t]   = einsum('ij,ijkl->kl', people[sus,:,t], forceinffull)/dt
             
         ##############################################################################################################
         ### Calculate deaths
@@ -762,17 +762,18 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
             thisreceivepmtct = thiseligbirths * calcproppmtct
             thispopmtct = mtctundx + mtctdx + mtcttx + mtctpmtct # Total MTCT, adding up all components         
 
-            undxhivbirths[p2] += mtctundx                       # Births to add to undx  
+            undxhivbirths[p2] += mtctundx                        # Births to add to undx  
             dxhivbirths[p2]   += (mtctdx + mtcttx + mtctpmtct)   # Births add to dx
             
-            raw_receivepmtct[p1, t] += thisreceivepmtct * timestepsonpmtct
+            raw_receivepmtct[p1, t] += thisreceivepmtct
             raw_mtct[p2, t] += thispopmtct/dt
-            raw_mtctfrom[p1, t] += thispopmtct/dt
+            state_distribution_plhiv_from = array([x if i in allplhiv else 0 for i,x in enumerate(people[:, p1, t])]) #TODO more efficient implementation
+            raw_mtctfrom[:, p1, t] += (thispopmtct/dt) * state_distribution_plhiv_from/state_distribution_plhiv_from.sum() #WARNING: not accurate based on differential diagnosis by state potentially, but the best that's feasible
             raw_births[p2, t] += popbirths/dt
             raw_hivbirths[p1, t] += thisbirthrate * fsums[p1]['allplhiv'] / dt
             
         raw_inci[:,t] += raw_mtct[:,t] # Update infections acquired based on PMTCT calculation
-        raw_incibypop[:,t] += raw_mtctfrom[:,t] # Update infections caused based on PMTCT 
+        raw_incibypop[:,:,t] += raw_mtctfrom[:,:,t] # Update infections caused based on PMTCT 
         
         
        
@@ -780,8 +781,8 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
         ### Check infection consistency
         ##############################################################################################################
 
-        if debug and abs(raw_inci[:,t].sum() - raw_incibypop[:,t].sum()) > eps:
-            errormsg = label + 'Number of infections received (%f) is not equal to the number of infections caused (%f) at time %i' % (raw_inci[:,t].sum(), raw_incibypop[:,t].sum(), t)
+        if debug and abs(raw_inci[:,t].sum() - raw_incibypop[:,:,t].sum()) > eps:
+            errormsg = label + 'Number of infections received (%f) is not equal to the number of infections caused (%f) at time %i' % (raw_inci[:,t].sum(), raw_incibypop[:,:,t].sum(), t)
             if die: raise OptimaException(errormsg)
             else: printv(errormsg, 1, verbose)
 
