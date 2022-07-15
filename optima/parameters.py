@@ -133,7 +133,7 @@ class Parameterset(object):
             fix = True # By default, do fix
         self.isfixed = fix # Store fixed status
         if   which is None:  which = ['tx','supp']
-        elif which is 'all': which = ['dx','tx','supp']
+        elif which == 'all': which = ['dx','tx','supp']
         else:                which = promotetolist(which)
         if startyear is None:
             if fix:  startyear = self.pars['numtx'].t['tot'][-1]
@@ -155,7 +155,7 @@ class Parameterset(object):
         '''
         if use is None: use = True # By default, use the data
         if   which is None:  which = ['supp'] # By default, only use the indicator on the proportion suppressed
-        elif which is 'all': which = ['dx','tx','supp']
+        elif which == 'all': which = ['dx','tx','supp']
         else:                which = promotetolist(which)
         
         data = self.projectref().data
@@ -1111,7 +1111,7 @@ def makepars(data=None, verbose=2, die=True, fixprops=None):
             by = rawpar['by']
             fromdata = rawpar['fromdata']
             rawpar['verbose'] = verbose # Easiest way to pass it in
-            rawpar['progdefault'] = None if rawpar['progdefault'] is '' else rawpar['progdefault']
+            rawpar['progdefault'] = None if rawpar['progdefault'] == '' else rawpar['progdefault']
 
             # Decide what the keys are
             if   by=='tot' : keys = totkey
