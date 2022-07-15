@@ -238,7 +238,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
     force = simpars['force']
     inhomopar = simpars['inhomo']
 
-
+    plhivmap = array([0 if i in allplhiv else 1 for i in range(nstates)]) #Must be simpler syntax
 
     ##################################################################################################################
     ### Make time-constant, dt-dependent transitions 
@@ -767,8 +767,9 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
             
             raw_receivepmtct[p1, t] += thisreceivepmtct
             raw_mtct[p2, t] += thispopmtct/dt
-            state_distribution_plhiv_from = array([x if i in allplhiv else 0 for i,x in enumerate(people[:, p1, t])]) #TODO more efficient implementation
-            raw_mtctfrom[:, p1, t] += (thispopmtct/dt) * state_distribution_plhiv_from/state_distribution_plhiv_from.sum() #WARNING: not accurate based on differential diagnosis by state potentially, but the best that's feasible
+            state_distribution_plhiv_from = people[:,p1,t] * plhivmap
+
+            raw_mtctfrom[:, p1, t] += (thispopmtct/dt) * state_distribution_plhiv_from/(state_distribution_plhiv_from.sum()+eps) #WARNING: not accurate based on differential diagnosis by state potentially, but the best that's feasible
             raw_births[p2, t] += popbirths/dt
             raw_hivbirths[p1, t] += thisbirthrate * fsums[p1]['allplhiv'] / dt
             
