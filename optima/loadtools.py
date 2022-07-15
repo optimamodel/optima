@@ -84,7 +84,8 @@ def setmigrations(which='migrations'):
         ('2.10.3',('2.10.4','2022-07-12', partlinearccopars, 'Update cost-coverage curves to be linear to saturation_low then non-linear to saturation high')),
         ('2.10.4',('2.10.5','2022-07-13', None ,             'Rename optional indicators in the databook to align with UNAIDS terminology')),
         ('2.10.5',('2.10.6','2022-07-14', removerequiredvl,  'Remove the required VL parameter to better capture treatment failure identification')),
-        ('2.10.6',('2.10.7','2022-07-14', addmetapars,       'Add/change meta parameters for forcepopsize, treatbycd4before, initcd4weight, transdeathtx, relhivbirth')),
+        ('2.10.6',('2.10.7','2022-07-15', addmetapars,       'Add/change meta parameters for forcepopsize, treatbycd4before, initcd4weight, transdeathtx, relhivbirth')),
+        ('2.10.7',('2.10.8','2022-07-15', fixpriors,         'Fix priors that are dicts instead of Dists and causing trouble as a result')),
         ])
     
     
@@ -1248,6 +1249,29 @@ def addmetapars(project=None, **kwargs):
                 if par == 'transdeathtx':
                     for pop in ps.pars[par].y.keys():
                         ps.pars[par].y[pop] = array([0.])
+    else:
+        raise Exception('Must supply a project')
+    return None
+
+def fixpriors(project=None, **kwargs):
+    '''
+    Migration between Optima 2.10.7 and 2.10.8 
+    Some legacy projects have some priors as dicts instead of op.Dists and that causes errors (e.g. with updatepriors) - do that here
+    '''
+    if project is not None:
+        for ps in project.parsets.values():
+            for par in ps.pars.values():
+                # Handle specific changes
+                if isinstance(par, op.Metapar): # Get priors right
+                    for popkey in par.keys():
+                        if isinstance(par.prior[popkey], dict): 
+                            par.prior[popkey] = op.Dist(dist=par.prior[popkey]['uniform'], pars=par.prior[popkey]['pars'])
+                            par.updateprior()
+                if isinstance(par, op.Constant): # Get priors right, if required
+                    if isinstance(par.prior, dict): 
+                            par.prior = op.Dist(dist=par.prior['uniform'], pars=par.prior['pars'])
+                            par.updateprior()
+                        
     else:
         raise Exception('Must supply a project')
     return None
