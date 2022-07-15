@@ -736,12 +736,12 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
             fsumpop = people[:, p1, t] # Pull out the people who will be summed
             fsums[p1] = dict() # Use another dict, since only referring to by key
             fsums[p1]['all']       = fsumpop[:].sum()
-            fsums[p1]['allplhiv']  = fsumpop[allplhiv].sum()
-            fsums[p1]['undx']      = fsumpop[undx].sum()
-            fsums[p1]['alldx']     = fsumpop[alldx].sum()
-            fsums[p1]['alltx']     = fsumpop[alltx].sum()
+            fsums[p1]['allplhiv']  = fsumpop[allplhiv].sum() * relhivbirth 
+            fsums[p1]['undx']      = fsumpop[undx].sum() * relhivbirth 
+            fsums[p1]['alldx']     = fsumpop[alldx].sum() * relhivbirth 
+            fsums[p1]['alltx']     = fsumpop[alltx].sum() * relhivbirth 
         for p1,p2,birthrates,alleligbirthrate in birthslist: # p1 is mothers, p2 is children
-            numhivpospregwomen += birthrates[t] * fsums[p1]['alldx'] * timestepsonpmtct * relhivbirth # Divide by dt to get number of women
+            numhivpospregwomen += birthrates[t] * fsums[p1]['alldx'] * timestepsonpmtct # Divide by dt to get number of women
         if isnan(proppmtct[t]): calcproppmtct = numpmtct[t]/(eps+numhivpospregwomen) # Proportion on PMTCT is not specified: use number
         else:                   calcproppmtct = proppmtct[t] # Else, just use the proportion specified
         calcproppmtct = min(calcproppmtct, 1.)
