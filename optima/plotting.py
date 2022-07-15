@@ -480,7 +480,7 @@ def plotepi(results, toplot=None, uncertainty=True, die=True, showdata=True, ver
                     if isestimate: # This is stupid, but since IE can't handle linewidths sensibly, plot a new point smaller than the other one
                         ydata = factor*databest[i]
                         allydata.append(ydata)
-                        ax.scatter(results.datayears, ydata, c=estimatecolor, s=dotsize*0.6, lw=0, zorder=datazorder+1)
+                        ax.scatter(results.datayears, ydata, color=estimatecolor, s=dotsize*0.6, lw=0, zorder=datazorder+1)
 
 
 
