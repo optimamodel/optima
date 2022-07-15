@@ -476,7 +476,7 @@ def plotepi(results, toplot=None, uncertainty=True, die=True, showdata=True, ver
                         ydata = factor*array([datalow[i][y], datahigh[i][y]])
                         allydata.append(ydata)
                         ax.plot(results.datayears[y]*array([1,1]), ydata, c=datacolor, lw=1)
-                    ax.scatter(results.datayears, factor*databest[i], c=realdatacolor, s=dotsize, lw=0, zorder=datazorder) # Without zorder, renders behind the graph
+                    ax.scatter(results.datayears, factor*databest[i], color=realdatacolor, s=dotsize, lw=0, zorder=datazorder) # Without zorder, renders behind the graph
                     if isestimate: # This is stupid, but since IE can't handle linewidths sensibly, plot a new point smaller than the other one
                         ydata = factor*databest[i]
                         allydata.append(ydata)
