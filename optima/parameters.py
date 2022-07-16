@@ -1208,7 +1208,7 @@ def makepars(data=None, verbose=2, die=True, fixprops=None):
         pars['hivdeath'].y[key] = 1.0
         pars['inhomo'].y[key] = 0.0
         pars['inhomo'].prior[key].pars = array([0.0, 0.3]) # Arbitrary
-        pars['transdeathtx'].y[key] = 0.0
+        pars['transdeathtx'].y[key] = 1.0
     
     # Impose limits on force and transnorm so their values don't get too extreme (note, force.m functions identically to transnorm.y, but use the latter)
     for foipar in ['force','transnorm']:

@@ -84,8 +84,7 @@ def setmigrations(which='migrations'):
         ('2.10.3',('2.10.4','2022-07-12', partlinearccopars, 'Update cost-coverage curves to be linear to saturation_low then non-linear to saturation high')),
         ('2.10.4',('2.10.5','2022-07-13', None ,             'Rename optional indicators in the databook to align with UNAIDS terminology')),
         ('2.10.5',('2.10.6','2022-07-14', removerequiredvl,  'Remove the required VL parameter to better capture treatment failure identification')),
-        ('2.10.6',('2.10.7','2022-07-15', addmetapars,       'Add/change meta parameters for forcepopsize, treatbycd4before, initcd4weight, transdeathtx, relhivbirth')),
-        ('2.10.7',('2.10.8','2022-07-15', fixpriors,         'Fix priors that are dicts instead of Dists and causing trouble as a result')),
+        ('2.10.6',('2.10.7','2022-07-17', addmetapars,       'Add/change meta parameters for forcepopsize, treatbycd4before, initcd4weight, transdeathtx, relhivbirth')),
         ])
     
     
@@ -1208,6 +1207,9 @@ def removerequiredvl(project=None, **kwwargs):
 def addmetapars(project=None, **kwargs):
     '''
     Migration between Optima 2.10.6 and 2.10.7 
+    
+    First fix where legacy projects have some priors as dicts instead of op.Dists and that causes errors (e.g. with updatepriors) - do that here
+    
     -- Add meta parameter initcd4weight to weight initialization toward earlier/later stage infections
         This setting has a default value of 1. which will initialize based on average duration in each stage of infection
         Values <1 mean the initialization will be weighted toward high CD4 counts and especially acute infections for people who are not on treatment [early stage epidemics]
@@ -1218,6 +1220,7 @@ def addmetapars(project=None, **kwargs):
     -- Add meta parameter 'relhivbirth' to capture the relative likelihood that a female with HIV gives birth relative to the overall birth rate
     '''
     if project is not None:
+        #Calculate what the new paramater values should be consistent with as previously defined
         if hasattr(project.settings, 'forcepopsize'):
             forcepopsize = 1 if project.settings.forcepopsize else 0
             delattr(project.settings, 'forcepopsize')
@@ -1229,52 +1232,57 @@ def addmetapars(project=None, **kwargs):
         else:
             treatbycd4before = 1900 #default (all CD4 equally eligible for treatment all years
         
-        newpars = {'forcepopsize': {'name': 'Force all population sizes to match initial value with exponential growth curve', 'y': forcepopsize, 'limits': (0,1)},
-                   'treatbycd4before': {'name': 'Treatment prioritized by CD4 count before this date', 'y': treatbycd4before, 'limits': (1900, 2100)},
-                   'initcd4weight': {'name': 'Weighting for initialization where low values represent early stage epidemics', 'y': 1., 'limits': (0, 'maxmeta')},
-                   'transdeathtx': {'name': 'Time dependent additional reduction in relative death rate on ART (unitless)', 'limits': (0, 1)},
-                   'relhivbirth': {'name': 'Relative likelihood that females with HIV give birth', 'y': 1, 'limits': (0,'maxmeta')},
+        newpars = {'forcepopsize':     {'copyfrom': 'transnorm', 'name': 'Force all population sizes to match initial value with exponential growth curve',
+                                        'y': forcepopsize, 'limits': (0,1)},
+                   'treatbycd4before': {'copyfrom': 'fixpropdx', 'name': 'Treatment prioritized by CD4 count before this date', 
+                                        'y': treatbycd4before, 'limits': (0, 'maxyear')},
+                   'initcd4weight':    {'copyfrom': 'transnorm', 'name': 'Weighting for initialization where low values represent early stage epidemics', 
+                                        'y': 1., 'limits': (0, 'maxmeta')},
+                   'transdeathtx':     {'copyfrom': 'death', 'name': 'Time dependent additional reduction in relative death rate on ART (unitless)', 
+                                        'limits': (0, 'maxmeta')}, #set y values below
+                   'relhivbirth':      {'copyfrom': 'transnorm', 'name': 'Relative likelihood that females with HIV give birth', 
+                                        'y': 1, 'limits': (0,'maxmeta')},
                    }
         
-        for par, parkwargs in newpars.items():
-            copyfrom = 'death' if par=='transdeathtx' else 'transnorm'
-
-            addparameter(project=project, copyfrom=copyfrom, short=par, **parkwargs)
-            for ps in project.parsets.values():
-                try:
-                    ps.pars[par].updateprior() #may not work on old projects
-                except:
-                    pass
-                
-                if par == 'transdeathtx':
-                    for pop in ps.pars[par].y.keys():
-                        ps.pars[par].y[pop] = array([0.])
-    else:
-        raise Exception('Must supply a project')
-    return None
-
-def fixpriors(project=None, **kwargs):
-    '''
-    Migration between Optima 2.10.7 and 2.10.8 
-    Some legacy projects have some priors as dicts instead of op.Dists and that causes errors (e.g. with updatepriors) - do that here
-    '''
-    if project is not None:
+        #Fix any outdated priors that were defined as dicts instead of Dists in the project before copying parameters
         for ps in project.parsets.values():
             for par in ps.pars.values():
                 # Handle specific changes
-                if isinstance(par, op.Metapar): # Get priors right
+                if isinstance(par, op.Metapar): # Should be a dict of Dists (one per population)
                     for popkey in par.keys():
                         if isinstance(par.prior[popkey], dict): 
-                            par.prior[popkey] = op.Dist(dist=par.prior[popkey]['uniform'], pars=par.prior[popkey]['pars'])
-                            par.updateprior()
-                if isinstance(par, op.Constant): # Get priors right, if required
-                    if isinstance(par.prior, dict): 
-                            par.prior = op.Dist(dist=par.prior['uniform'], pars=par.prior['pars'])
-                            par.updateprior()
+                            par.prior[popkey] = op.Dist(**par.prior[popkey])
+                elif isinstance(par, (op.Constant, op.Timepar, op.Popsizepar)): # Shhould be a single Dist
+                    if isinstance(par.prior, dict):
+                        print (f'Updating {par.name}')
+                        par.prior = op.Dist(**par.prior)
+                
+                if hasattr(par, 'prior'): #update all priors while there?
+                    par.updateprior()
+        
+        #Now actually add the new parameters
+        for parname, parkwargs in newpars.items():
+
+            addparameter(project=project, short=parname, **parkwargs)
+            par = ps.pars[parname]
+            for ps in project.parsets.values():               
+                if parname == 'transdeathtx':
+                    for pop in par.y.keys():
+                        par.y[pop] = array([1.])
+                        
+                if isinstance(par, op.Metapar): # Should be a dict of Dists (one per population)
+                    for popkey in par.keys():
+                        if isinstance(par.prior[popkey], dict): 
+                            par.prior[popkey] = op.Dist(**par.prior[popkey])
+                elif isinstance(par, (op.Constant, op.Timepar, op.Popsizepar)): # Shhould be a single Dist
+                    if isinstance(par.prior, dict):
+                        print (f'Updating {par.name}')
+                        par.prior = op.Dist(**par.prior)
                         
     else:
         raise Exception('Must supply a project')
     return None
+
 
 ##########################################################################################
 ### CORE MIGRATION FUNCTIONS
