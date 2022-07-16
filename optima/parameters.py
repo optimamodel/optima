@@ -519,7 +519,8 @@ class Constant(Par):
         ''' Update the prior parameters to match the metaparameter, so e.g. can recalibrate and then do uncertainty '''
         if self.prior.dist=='uniform':
             tmppars = array(self.prior.pars) # Convert to array for numerical magic
-            self.prior.pars = tuple(self.y*tmppars/tmppars.mean()) # Recenter the limits around the mean
+            priorrange = array((0.9, 1.1)) if (tmppars == (0., 0.)).all() else tmppars/(tmppars.mean())
+            self.prior.pars = tuple(self.y*priorrange) # Recenter the limits around the mean
             printv('Priors updated for %s' % self.short, 3, verbose)
         else:
             errormsg = 'Distribution "%s" not defined; available choices are: uniform or bust, bro!' % self.dist
@@ -583,7 +584,8 @@ class Metapar(Par):
         for key in self.keys():
             if self.prior[key].dist=='uniform':
                 tmppars = array(self.prior[key].pars) # Convert to array for numerical magic
-                self.prior[key].pars = tuple(self.y[key]*tmppars/tmppars.mean()) # Recenter the limits around the mean
+                priorrange = array((0.9, 1.1)) if (tmppars == (0., 0.)).all() else tmppars/(tmppars.mean())
+                self.prior[key].pars = tuple(self.y[key]*priorrange) # Recenter the limits around the mean
                 printv('Priors updated for %s' % self.short, 3, verbose)
             else:
                 errormsg = 'Distribution "%s" not defined; available choices are: uniform or bust, bro!' % self.dist
