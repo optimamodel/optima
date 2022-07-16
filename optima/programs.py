@@ -1281,7 +1281,7 @@ class Costcov(CCOF):
         effpop = popsize * pf #the effective population size that requires coverage adjusted by the population factor
         
         if nyrs==npts:
-            naivey = x/(effpop*u) #naive coverage (just total spend/unit cost as a proportion of the population)
+            naivey = x/maximum(eps, effpop*u) #naive coverage (just total spend/unit cost as a proportion of the population)
             liny  = minimum(naivey, saturationlower) #linear component of coverage (naive cover, or lower saturation limit if that's lower)
             
             covscale = maximum((1.-saturationlower), eps) #this is the remaining proportion of the coverage space that needs to be scaled nonlinearly
@@ -1321,7 +1321,7 @@ class Costcov(CCOF):
             saturationupper = maximum(saturationlower, s)
             
         eps = array([eps]*npts)
-        effpop = popsize * pf #the effective population size that requires coverage adjusted by the population factor
+        effpop = maimum(eps, popsize * pf) #the effective population size that requires coverage adjusted by the population factor
         
         if nyrs==npts:
             linx  = minimum(x/effpop, saturationlower)*effpop #NUMBER of coverage that would have been achieved with linear cost-coverage (everything below saturationlower)
