@@ -512,7 +512,12 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                 for errstate in range(nstates): # Loop over all heath states
                     for errpop in range(npops): # Loop over all populations
                         if not(people[errstate,errpop,t]>=0):
-                            errormsg = label + 'WARNING, Non-positive people found!\npeople[%i, %i, %i] = people[%s, %s, %s] = %s' % (errstate, errpop, t, settings.statelabels[errstate], popkeys[errpop], simpars['tvec'][t], people[errstate,errpop,t])
+                            errlines = ['WARNING, Non-positive people found (more people leaving compartment than exist in that compartment)!',
+                                        'people[%i, %i, %i] = people[%s, %s, %s] = %s' % (errstate, errpop, t, settings.statelabels[errstate], popkeys[errpop], simpars['tvec'][t], people[errstate,errpop,t]),
+                                        'Possible reasons include unrealistic numbers of deaths or infection rates in population %s.'%(popkeys[errpop]),
+                                        'Check for mortality rates or other inputs that might be missing a decimal point or try lowering force of infection']
+                            
+                            errormsg = label + str.join('\n',errlines)
                             if die: raise OptimaException(errormsg)
                             else:   printv(errormsg, 1, verbose=verbose)
                             people[errstate,errpop,t] = 0.0 # Reset
