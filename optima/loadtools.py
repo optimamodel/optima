@@ -1252,9 +1252,8 @@ def addmetapars(project=None, **kwargs):
                     for popkey in par.keys():
                         if isinstance(par.prior[popkey], dict): 
                             par.prior[popkey] = op.Dist(**par.prior[popkey])
-                elif isinstance(par, (op.Constant, op.Timepar, op.Popsizepar)): # Shhould be a single Dist
+                elif isinstance(par, (op.Constant, op.Timepar, op.Popsizepar)): # Should be a single Dist
                     if isinstance(par.prior, dict):
-                        print (f'Updating {par.name}')
                         par.prior = op.Dist(**par.prior)
                 
                 if hasattr(par, 'prior'): #update all priors while there?
@@ -1269,15 +1268,15 @@ def addmetapars(project=None, **kwargs):
                 if parname == 'transdeathtx':
                     for pop in par.y.keys():
                         par.y[pop] = array([1.])
-                        
+                
+                #We don't actually want to sample these by default: set the priors to have no sampling range
                 if isinstance(par, op.Metapar): # Should be a dict of Dists (one per population)
                     for popkey in par.keys():
                         if isinstance(par.prior[popkey], dict): 
-                            par.prior[popkey] = op.Dist(**par.prior[popkey])
-                elif isinstance(par, (op.Constant, op.Timepar, op.Popsizepar)): # Shhould be a single Dist
+                            par.prior[popkey].pars = (par.y[popkey], par.y[popkey])
+                elif isinstance(par, (op.Constant, op.Timepar, op.Popsizepar)): # Should be a single Dist
                     if isinstance(par.prior, dict):
-                        print (f'Updating {par.name}')
-                        par.prior = op.Dist(**par.prior)
+                        par.prior.pars = (par.y, par.y)
                         
     else:
         raise Exception('Must supply a project')
