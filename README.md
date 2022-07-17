@@ -289,3 +289,4 @@ def myfunc(args=None):
 `type(rand(1)[0])==float`  
 is `False` because its type is `<type 'numpy.float64'>`; use `isinstance()` instead, e.g.   `isinstance(rand(1)[0], (int, float))`  
  will catch anything that looks like a number, which is usually what you _really_ want.  
+
