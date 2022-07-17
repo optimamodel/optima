@@ -1293,10 +1293,21 @@ class Costcov(CCOF):
             y = (liny + nliny)*effpop
             # y = (2*s/(1+exp(-2*x/(effpop*s*u)))-s)*effpop
         else:
-            raise Exception('Not implemented (adjust as for nyrs=npts option): does this line ever come up?')
+            if (len(saturationlower)!=nyrs or len(saturationupper)!=nyrs):
+                raise OptimaException('If passing multiple year arguments at once, must also pass multiple saturation arguments') 
             y = zeros((nyrs,npts))
             for yr in range(nyrs):
-                y[yr,:] = (2*s[yr]/(1+exp(-2*x/(effpop[yr]*s[yr]*u[yr])))-s[yr])*effpop[yr]
+                naivey = x/maximum(eps, effpop[yr]*u[yr]) #naive coverage (just total spend/unit cost as a proportion of the population)
+                liny  = minimum(naivey, saturationlower[yr]) #linear component of coverage (naive cover, or lower saturation limit if that's lower)
+                
+                covscale = maximum((1.-saturationlower[yr]), eps) #this is the remaining proportion of the coverage space that needs to be scaled nonlinearly
+                sa      = maximum((saturationupper[yr] - saturationlower[yr])/covscale, eps)  #saturation as a proportion of remaining space
+                nlinnaivey = (naivey - liny) / covscale #Naively covered proportion of the remaining space
+        
+                nliny = maximum(2*sa/(1+exp(-2*nlinnaivey/sa))-sa, 0)*covscale #nonlinear component of coverage, needs to be scaled back by covscale 
+                
+                y[yr,:] = (liny + nliny)*effpop[yr]
+                # y[yr,:] = (2*s[yr]/(1+exp(-2*x/(effpop[yr]*s[yr]*u[yr])))-s[yr])*effpop[yr]
             
         return maximum(y, eps)
 
@@ -1336,10 +1347,21 @@ class Costcov(CCOF):
             y = liny + nliny
             # y = -0.5*effpop*s*u*log(maximum(s*effpop-x,0)/(s*effpop+x))
         else:
-            raise Exception('Not implemented (adjust as for nyrs=npts option): does this line ever come up?')
+            if (len(saturationlower)!=nyrs or len(saturationupper)!=nyrs):
+                raise OptimaException('If passing multiple year arguments at once, must also pass multiple saturation arguments')
             y = zeros((nyrs,npts))
             for yr in range(nyrs):
-                y[yr,:] = -0.5*effpop[yr]*s[yr]*u[yr]*log(maximum(s[yr]*effpop[yr]-x,0)/(s[yr]*effpop[yr]+x))
+                linx  = minimum(x/effpop[yr], saturationlower[yr])*effpop[yr] #NUMBER of coverage that would have been achieved with linear cost-coverage (everything below saturationlower)
+                nlinx = maximum(x/effpop[yr] - saturationlower[yr], 0)*effpop[yr] #NUMBER of coverage that needs to be costed based on non-linear cost-coverage (everything above saturationlower and below saturationupper)
+        
+                liny = linx*u[yr] #proportion of linear spending = number of people covered * unit cost
+                
+                satnumber = effpop[yr] * (saturationupper[yr] - saturationlower[yr]) #The number of people that would be covered by the nonlinear scaling if fully saturated
+                
+                nliny = -0.5*satnumber*u[yr]*log(maximum(satnumber-nlinx,eps)/maximum((satnumber+nlinx), eps)) #proportion of spending at non-linear scaling
+                
+                y[yr,:] = liny + nliny
+                # y[yr,:] = -0.5*effpop[yr]*s[yr]*u[yr]*log(maximum(s[yr]*effpop[yr]-x,0)/(s[yr]*effpop[yr]+x))
         
         return maximum(y, eps)
             
