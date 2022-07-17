@@ -137,7 +137,7 @@ class Project(object):
         ''' Load a data spreadsheet -- enormous, ugly function so located in its own file '''
         ## Load spreadsheet and update metadata
         newdata = loadspreadsheet(filename=filename, folder=folder, verbose=self.settings.verbose) # Do the hard work of actually loading the spreadsheet
-        if newdata['pops']['short'] != self.data['pops']['short']:
+        if self.data and newdata['pops']['short'] != self.data['pops']['short']:
             raise OptimaException('Loading a databook with different populations to the existing project is not allowed: create a new project instead.')
         self.data = newdata
         self.spreadsheetdate = today() # Update date when spreadsheet was last loaded
