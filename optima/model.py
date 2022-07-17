@@ -278,7 +278,8 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
             transmatrix[fromstate,tostate,:] *= (1.-deathhiv[fromhealthstate]*relhivdeath*deathsvl*dt)    
             deathprob[fromstate,:] = deathhiv[fromhealthstate]*relhivdeath*deathsvl*dt
 
-    transdeathmatrix = array([(1. if x in alltx else 0)*transdeathtx for x in range(nstates)])
+    transdeathmatrix = ones(people.shape)
+    transdeathmatrix[alltx] = transdeathtx
 
     # Recovery and progression and deaths for people on unsuppressive ART
     for fromstate in usvl:
