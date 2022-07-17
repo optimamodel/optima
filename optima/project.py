@@ -833,7 +833,7 @@ class Project(object):
         output += "if 'calibrate' in torun:\n"
         output += "    defaultps = dcp(P.parsets[0]) # Copy the default parset\n"
         output += "    P.rmparset(0) # Remove the default parset\n\n"
-        for psn,ps in self.parsets.iteritems():
+        for psn,ps in self.parsets.items():
             output += "    parset = dcp(defaultps)\n"
             output += "    parset.name = '"+psn+"'\n"
             output += "    pars = parset.pars\n"
@@ -842,10 +842,10 @@ class Project(object):
         output += "### Make programs\n" 
         output += "if 'makeprograms' in torun:\n"
         output += "    P.rmprogset(0) # Remove the default progset\n\n"
-        for prn,pr in self.progsets.iteritems():
+        for prn,pr in self.progsets.items():
             pi = 0
             plist = "["
-            for pn,p in pr.programs.iteritems():
+            for pn,p in pr.programs.items():
                 output += "    p"+str(pi)+" = Program(short='"+p.short+"',name='"+p.name+"',targetpars="+str(p.targetpars)+",targetpops="+str(p.targetpops)+")\n"
                 output += "    p"+str(pi)+".costcovfn.ccopars = "+p.costcovfn.ccopars.export(doprint=False)+"\n"
                 output += "    p"+str(pi)+".costcovdata = "+promotetoodict(p.costcovdata).export(doprint=False)+"\n\n"
@@ -864,7 +864,7 @@ class Project(object):
         output += "### Scenarios\n" 
         output += "if 'scens' in torun:\n"
         slist = "["
-        for sn,s in self.scens.iteritems():
+        for sn,s in self.scens.items():
             parsetname = "'"+s.parsetname+"'" if isinstance(s.parsetname,str) else str(s.parsetname)
             if isinstance(s,Parscen):
                 scentoadd = "Parscen(name='"+s.name+"',parsetname="+parsetname+",pars="+str(s.pars)+")"
@@ -883,7 +883,7 @@ class Project(object):
 
         output += "### Optimizations\n" 
         output += "if 'optims' in torun:\n"
-        for on,o in self.optims.iteritems():
+        for on,o in self.optims.items():
             parsetname = "'"+o.parsetname+"'" if isinstance(o.parsetname,str) else str(o.parsetname)
             progsetname = "'"+o.progsetname+"'" if isinstance(o.progsetname,str) else str(o.progsetname)
             constraints = promotetoodict(o.constraints).export(doprint=False) if o.constraints is not None else 'None'

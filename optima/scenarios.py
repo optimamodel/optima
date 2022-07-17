@@ -230,7 +230,7 @@ def makescenarios(project=None, scenlist=None, verbose=2, ccsample=False, randse
                 scen.budget = tmpbudget
                 
                 # Ensure budget values are lists
-                for budgetkey, budgetentry in scen.budget.iteritems():
+                for budgetkey, budgetentry in scen.budget.items():
                     if isnumber(budgetentry):
                         scen.budget[budgetkey] = [budgetentry]
                 
@@ -253,7 +253,7 @@ def makescenarios(project=None, scenlist=None, verbose=2, ccsample=False, randse
                 scen.coverage = tmpcoverage
 
                 # Ensure coverage level values are lists
-                for covkey, coventry in scen.coverage.iteritems():
+                for covkey, coventry in scen.coverage.items():
                     if isnumber(coventry):
                         scen.coverage[covkey] = [coventry]
 

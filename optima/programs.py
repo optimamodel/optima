@@ -288,7 +288,7 @@ class Programset(object):
                     
         # Change name in covout objects
         for covoutpar in self.covout.keys():
-            self.covout[covoutpar] = odict((changepopobj(k, oldname=oldname, newname=newname) if oldname in k else k, v) for k, v in self.covout[covoutpar].iteritems())
+            self.covout[covoutpar] = odict((changepopobj(k, oldname=oldname, newname=newname) if oldname in k else k, v) for k, v in self.covout[covoutpar].items())
         
         # Update WARNING IS THIS REQUIRED?
         self.updateprogset()
@@ -397,7 +397,7 @@ class Programset(object):
     def gettargetpopsizes(self, t=None, parset=None, results=None, verbose=2):
         ''' Extract a disctionary of target pop sizes'''
         targetpopsizes = odict()
-        for pn,prog in self.programs.iteritems():
+        for pn,prog in self.programs.items():
             targetpopsizes[prog.short] = self.programs[pn].gettargetpopsize(t=t, parset=parset)
         return targetpopsizes
 
@@ -496,7 +496,7 @@ class Programset(object):
                 except: raise OptimaException('Please provide either a parset or a resultset that contains a parset')
         if coverage is None:
             coverage = self.getdefaultcoverage(t=t, parset=parset, results=results, sample=sample, proportion=False)
-        for covkey, coventry in coverage.iteritems(): # Ensure coverage level values are lists
+        for covkey, coventry in coverage.items(): # Ensure coverage level values are lists
             if isnumber(coventry): coverage[covkey] = [coventry]
 
         # Set up internal variables
@@ -1147,7 +1147,7 @@ class CCOF(object):
         nyrs = len(t)
         
         # Get the appropriate sample type
-        for parname, parvalue in self.ccopars.iteritems():
+        for parname, parvalue in self.ccopars.items():
             parvalue = promotetoarray(parvalue)
             if parname != 't' and len(parvalue):
                 ccopars_sample[parname] = zeros(len(parvalue))

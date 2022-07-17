@@ -207,7 +207,7 @@ def update_user(user_id, args):
         if u is None:
             abort(403)
 
-    for key, value in args.iteritems():
+    for key, value in args.items():
         # Skip update of the password if a '' value is passed in for it.
         if key == 'password' and value == '':
             continue
