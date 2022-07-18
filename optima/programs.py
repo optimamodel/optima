@@ -525,7 +525,6 @@ class Programset(object):
 
                 # If it's an outcome parameter, need to get outcomes
                 else:
-                    
                     delta, thiscov = odict(), odict()
     
                     # Loop over the programs that target this parameter/population combo
@@ -537,74 +536,37 @@ class Programset(object):
                             outcomes[thispartype][thispop] = self.covout[thispartype][thispop].getccopar(t=t, sample=sample)['intercept']
                             thiscov[thisprog.short] = propcovered[thisprog.short]
                             delta[thisprog.short] = [self.covout[thispartype][thispop].getccopar(t=t, sample=sample)[thisprog.short][j] - outcomes[thispartype][thispop][j] for j in range(nyrs)]
-                            
-                    # ADDITIVE CALCULATION
-                    # NB, if there's only one program targeting this parameter, just do simple additive calc
-                    if self.covout[thispartype][thispop].interaction == 'additive' or len(self.progs_by_targetpar(thispartype)[thispop])==1:
-                        # Outcome += c1*delta_out1 + c2*delta_out2
-                        for thisprog in self.progs_by_targetpar(thispartype)[thispop]:
-                            if not self.covout[thispartype][thispop].ccopars[thisprog.short]:
-                                print('WARNING: no coverage-outcome parameters defined for program  "%s", population "%s" and parameter "%s". Skipping over... ' % (thisprog.short, thispop, thispartype))
-                                outcomes[thispartype][thispop] = None
-                            else: 
-                                outcomes[thispartype][thispop] += thiscov[thisprog.short]*delta[thisprog.short]
-                            
-                    # NESTED CALCULATION
-                    elif self.covout[thispartype][thispop].interaction == 'nested':
-                        # Outcome += c3*max(delta_out1,delta_out2,delta_out3) + (c2-c3)*max(delta_out1,delta_out2) + (c1 -c2)*delta_out1, where c3<c2<c1.
-                        for yr in range(nyrs):
-                            cov,delt = [],[]
-                            for thisprog in thiscov.keys():
-                                cov.append(thiscov[thisprog][yr])
-                                delt.append(delta[thisprog][yr])
-                            cov_tuple = sorted(zip(cov,delt)) # A tuple storing the coverage and delta out, ordered by coverage
-                            for j in range(len(cov_tuple)): # For each entry in here
-                                if j == 0: c1 = cov_tuple[j][0]
-                                else: c1 = cov_tuple[j][0]-cov_tuple[j-1][0]
-                                outcomes[thispartype][thispop][yr] += c1*max([ct[1] for ct in cov_tuple[j:]])                
-                
-                    # RANDOM CALCULATION
-                    elif self.covout[thispartype][thispop].interaction == 'random':
-                        # Outcome += c1(1-c2)* delta_out1 + c2(1-c1)*delta_out2 + c1c2* max(delta_out1,delta_out2)
-    
-                        for prog1 in thiscov.keys():
-                            product = ones(thiscov[prog1].shape)
-                            for prog2 in thiscov.keys():
-                                if prog1 != prog2:
-                                    product *= (1-thiscov[prog2])
-            
-                            outcomes[thispartype][thispop] += delta[prog1]*thiscov[prog1]*product 
-    
-                        # Recursion over overlap levels
-                        def overlap_calc(indexes,target_depth):
-                            if len(indexes) < target_depth:
-                                accum = 0
-                                for j in range(indexes[-1]+1,len(thiscov)):
-                                    accum += overlap_calc(indexes+[j],target_depth)
-                                output = list(thiscov.values())[indexes[-1]]*accum
-                                return output
-                            else:
-                                deltalist = list(delta.values())
-                                output = list(thiscov.values())[indexes[-1]]* max(deltalist[0][0],0) # TODO WARNING, consider replacing with output = thiscov.values()[indexes[-1]] * max(delta.values()[0], 0)
-                                return output
-    
-                        # Iterate over overlap levels
-                        for i in range(2,len(thiscov)): # Iterate over numbers of overlapping programs
-                            for j in range(0,len(thiscov)-1): # Iterate over the index of the first program in the sum
-                                outcomes[thispartype][thispop] += overlap_calc([j],i)[0]
-
-                        # All programs together
-                        outcomes[thispartype][thispop] += prod(array(list(thiscov.values())),0)*[max([c[j] for c in list(delta.values())]) for j in range(nyrs)]
                     
-
-                    else: raise OptimaException('Unknown reachability type "%s"',self.covout[thispartype][thispop].interaction)
+                    if outcomes[thispartype][thispop] is not None:
+                        for yr in range(nyrs):
+                            delt, cov = [],[]
+                            for thisprog in thiscov.keys():
+                                delt.append(delta[thisprog][yr])
+                                cov.append(thiscov[thisprog][yr])
+                            # A tuple storing the coverage and delta out, ordered descending by absolute value of delta change, e.g. most impactful program first
+                            cov_tuple = sorted(zip(delt,cov), key= lambda x: abs(x[0]), reverse=True)  
+                            
+                            cumulative_covered = 0. #make sure we can't have more than 100% coverage
+                            #By sorting in descending order of program impact, and assuming that each person is only reached by the one most impactful program that they are reached by, we simplify the results.
+                            for delt, cov in cov_tuple:
+                                #Coverage determined by interaction type
+                                #WARNING: a parameter with 'nested' or 'random' coverage and strong negative and strong positive deltas could get strange flipping results, but that's probably a problem with program definitions
+                                if self.covout[thispartype][thispop].interaction == 'additive' or len(self.progs_by_targetpar(thispartype)[thispop])==1:
+                                    this_cov = min(1-cumulative_covered, cov) #e.g. full coverage unless exceeding 100%
+                                elif self.covout[thispartype][thispop].interaction == 'nested':
+                                    this_cov = max(cov - cumulative_covered, 0) #e.g. only anything overlapping outside the circle of coverage from more impactful programs
+                                elif self.covout[thispartype][thispop].interaction == 'random':
+                                    this_cov = (1 - cumulative_covered) * cov  #e.g. a proportional random amount of coverage outside of what has been covered by more impactful programs 
+                                else:
+                                    raise OptimaException('Unknown reachability type "%s"',self.covout[thispartype][thispop].interaction)
+                                outcomes[thispartype][thispop][yr] += this_cov*delt
+                                cumulative_covered += this_cov                      
         
         # Validate
         for outcome in outcomes.keys():
             for key in outcomes[outcome].keys():
                 if outcomes[outcome][key] is not None and len(outcomes[outcome][key])!=nyrs:
                     raise OptimaException('Parameter lengths must match (len(outcome)=%i, nyrs=%i)' % (len(outcomes[outcome][key]), nyrs))
-
         return outcomes
         
         
