@@ -1293,6 +1293,7 @@ def adjustreturnpar(project=None, **kwargs):
             ps.pars['returntocare'].name = 'Return to care rate (per year)'
             ps.pars['returntocare'].dataname = 'Percentage of people lost to follow-up who are returned to care per year (%/year)'
             ps.pars['returntocare'].y[:] = minimum(1./ps.pars['returntocare'].y[:],5.)  #all values should be 1/previous values for duration -> rate; constrain at maximum of 5.
+            ps.pars['returntocare'].updateprior()
             
         #also need to invert values in any covouts for returntocare
         for pg in project.progsets.values():
