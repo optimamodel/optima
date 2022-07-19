@@ -1,5 +1,5 @@
 import optima as op
-from numpy import nan, isnan, mean, concatenate as cat, array
+from numpy import nan, isnan, mean, concatenate as cat, array, minimum, maximum
 
 
 ##########################################################################################
@@ -85,6 +85,7 @@ def setmigrations(which='migrations'):
         ('2.10.4',('2.10.5','2022-07-13', None ,             'Rename optional indicators in the databook to align with UNAIDS terminology')),
         ('2.10.5',('2.10.6','2022-07-14', removerequiredvl,  'Remove the required VL parameter to better capture treatment failure identification')),
         ('2.10.6',('2.10.7','2022-07-17', addmetapars,       'Add/change meta parameters for forcepopsize, allcd4eligibletx, initcd4weight, transdeathtx, relhivbirth')),
+        ('2.10.7',('2.10.8','2022-07-19', adjustreturnpar,   'Change return to care to be a rate instead of a duration')),
         ])
     
     
@@ -1278,6 +1279,29 @@ def addmetapars(project=None, **kwargs):
                         
     else:
         raise Exception('Must supply a project')
+    return None
+
+def adjustreturnpar(project=None, **kwargs):
+    '''
+    Migration between Optima 2.10.7 and 2.10.8 
+    
+    - Make return to care a rate instead of a duration to facilitate more accurate program impacts
+    - Includes simplification of program coverage logic
+    '''
+    if project is not None:
+        for ps in project.parsets.values():
+            ps.pars['returntocare'].name = 'Return to care rate (per year)'
+            ps.pars['returntocare'].dataname = 'Percentage of people lost to follow-up who are returned to care per year (%/year)'
+            ps.pars['returntocare'].y[:] = minimum(1./ps.pars['returntocare'].y[:],5.)  #all values should be 1/previous values for duration -> rate; constrain at maximum of 5.
+            
+        #also need to invert values in any covouts for returntocare
+        for pg in project.progsets.values():
+            if 'returntocare' in pg.covout.keys():
+                for pop in pg.covout['returntocare'].keys():
+                    for impact in pg.covout['returntocare'][pop].ccopars.keys():
+                        if impact != 't': #impact includes 'intercept' and all populations, but not t!
+                            pg.covout['returntocare'][pop].ccopars[impact] = [(min(1./high, 5), min(1./low, 5)) for low, high in pg.covout['returntocare'][pop].ccopars[impact]]                          
+            
     return None
 
 

@@ -459,12 +459,12 @@ def defaultproject(which='best', addprogset=True, addcostcovdata=True, usestanda
             R.covout['linktocare']['PWID'].addccopar({'intercept': (1.40,1.60), 't': 2016.0, 'Tracing': (0.1,0.3)})
             R.covout['linktocare']['MSM'].addccopar({'intercept': (1.40,1.60), 't': 2016.0, 'Tracing': (0.1,0.3)})
             
-            R.covout['returntocare']['FSW'].addccopar({'intercept': (1.40,1.60), 't': 2016.0, 'Tracing': (0.1,0.3)})
-            R.covout['returntocare']['Clients'].addccopar({'intercept': (1.40,1.60), 't': 2016.0, 'Tracing': (0.1,0.3)})
-            R.covout['returntocare']['M 15+'].addccopar({'intercept': (1.40,1.60), 't': 2016.0, 'Tracing': (0.1,0.3)})
-            R.covout['returntocare']['F 15+'].addccopar({'intercept': (1.40,1.60), 't': 2016.0, 'Tracing': (0.1,0.3)})
-            R.covout['returntocare']['PWID'].addccopar({'intercept': (1.40,1.60), 't': 2016.0, 'Tracing': (0.1,0.3)})
-            R.covout['returntocare']['MSM'].addccopar({'intercept': (1.40,1.60), 't': 2016.0, 'Tracing': (0.1,0.3)})
+            R.covout['returntocare']['FSW'].addccopar({'intercept': (0.625,0.715), 't': 2016.0, 'Tracing': (3.,5.)})
+            R.covout['returntocare']['Clients'].addccopar({'intercept': (0.625,0.715), 't': 2016.0, 'Tracing': (3.,5.)})
+            R.covout['returntocare']['M 15+'].addccopar({'intercept': (0.625,0.715), 't': 2016.0, 'Tracing': (3.,5.)})
+            R.covout['returntocare']['F 15+'].addccopar({'intercept': (0.625,0.715), 't': 2016.0, 'Tracing': (3.,5.)})
+            R.covout['returntocare']['PWID'].addccopar({'intercept': (0.625,0.715), 't': 2016.0, 'Tracing': (3.,5.)})
+            R.covout['returntocare']['MSM'].addccopar({'intercept': (0.625,0.715), 't': 2016.0, 'Tracing': (3.,5.)})
 
             # Store this program set in the project
             P.addprogset(R)
