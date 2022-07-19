@@ -1659,9 +1659,9 @@ class odict(OrderedDict):
     def __sanitize_items(self, items):
         ''' Try to convert the output of a slice to an array, but give up easily and return a list '''
         try: 
-            output = array(items) # Try standard Numpy array...
-            if 'S' in str(output.dtype): # ...but instead of converting to string, convert to object array
-                output = array(items, dtype=object)
+            output = array(items, dtype=object) # Try standard Numpy array...
+            # if 'S' in str(output.dtype): # ...but instead of converting to string, convert to object array
+            #     output = array(items, dtype=object)
         except:
             output = items # If that fails, just give up and return the list
         return output
