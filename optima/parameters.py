@@ -1198,7 +1198,7 @@ def makepars(data=None, verbose=2, die=True, fixprops=None):
     pars['transnorm'].prior.pars *= pars['transnorm'].y # Scale default range
     
     pars['forcepopsize'].y = 0 # Whether or not to force the population size to match the parameters
-    pars['treatbycd4before'].t = 2100. # Whether or not to preferentially put people on treatment from lower CD4 counts - the final year of this
+    pars['allcd4eligibletx'].t = 2100. # Whether or not to preferentially put people on treatment from lower CD4 counts - the final year of this
     pars['initcd4weight'].y = 1. # How to initialize the epidemic weighting either toward lower (with <1 values) or higher (with >1 values) CD4 counts based on the maturity of the epidemic
     pars['relhivbirth'].y = 1. # Relative likelihood that females with HIV give birth (relative to the overall birth rate)
 

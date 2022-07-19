@@ -84,7 +84,7 @@ def setmigrations(which='migrations'):
         ('2.10.3',('2.10.4','2022-07-12', partlinearccopars, 'Update cost-coverage curves to be linear to saturation_low then non-linear to saturation high')),
         ('2.10.4',('2.10.5','2022-07-13', None ,             'Rename optional indicators in the databook to align with UNAIDS terminology')),
         ('2.10.5',('2.10.6','2022-07-14', removerequiredvl,  'Remove the required VL parameter to better capture treatment failure identification')),
-        ('2.10.6',('2.10.7','2022-07-17', addmetapars,       'Add/change meta parameters for forcepopsize, treatbycd4before, initcd4weight, transdeathtx, relhivbirth')),
+        ('2.10.6',('2.10.7','2022-07-17', addmetapars,       'Add/change meta parameters for forcepopsize, allcd4eligibletx, initcd4weight, transdeathtx, relhivbirth')),
         ])
     
     
@@ -1227,15 +1227,15 @@ def addmetapars(project=None, **kwargs):
         else:
             forcepopsize = 0 #default
         if hasattr(project.settings, 'treatbycd4'):
-            treatbycd4before = 2100 if project.settings.treatbycd4 else 1900
+            allcd4eligibletx = 2100 if project.settings.treatbycd4 else 1900
             delattr(project.settings, 'treatbycd4')
         else:
-            treatbycd4before = 1900 #default (all CD4 equally eligible for treatment all years
+            allcd4eligibletx = 1900 #default (all CD4 equally eligible for treatment all years
         
         newpars = {'forcepopsize':     {'copyfrom': 'transnorm', 'name': 'Force all population sizes to match initial value with exponential growth curve',
                                         'y': forcepopsize, 'limits': (0,1)},
-                   'treatbycd4before': {'copyfrom': 'fixpropdx', 'name': 'Treatment prioritized by CD4 count before this date', 
-                                        'y': treatbycd4before, 'limits': (0, 'maxyear')},
+                   'allcd4eligibletx': {'copyfrom': 'fixpropdx', 'name': 'Return to care rate (per year)', 
+                                        'y': allcd4eligibletx, 'limits': (0, 'maxyear')},
                    'initcd4weight':    {'copyfrom': 'transnorm', 'name': 'Weighting for initialization where low values represent early stage epidemics', 
                                         'y': 1., 'limits': (0, 'maxmeta')},
                    'transdeathtx':     {'copyfrom': 'death', 'name': 'Time dependent additional reduction in relative death rate on ART (unitless)', 
@@ -1272,11 +1272,9 @@ def addmetapars(project=None, **kwargs):
                 #We don't actually want to sample these by default: set the priors to have no sampling range
                 if isinstance(par, op.Metapar): # Should be a dict of Dists (one per population)
                     for popkey in par.keys():
-                        if isinstance(par.prior[popkey], dict): 
-                            par.prior[popkey].pars = (par.y[popkey], par.y[popkey])
+                        par.prior[popkey].pars = (par.y[popkey], par.y[popkey])
                 elif isinstance(par, (op.Constant, op.Timepar, op.Popsizepar)): # Should be a single Dist
-                    if isinstance(par.prior, dict):
-                        par.prior.pars = (par.y, par.y)
+                    par.prior.pars = (par.y, par.y)
                         
     else:
         raise Exception('Must supply a project')
