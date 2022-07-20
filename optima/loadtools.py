@@ -1,5 +1,5 @@
 import optima as op
-from numpy import nan, isnan, mean, concatenate as cat, array, minimum, maximum
+from numpy import nan, isnan, mean, concatenate as cat, array, exp
 
 
 ##########################################################################################
@@ -1289,10 +1289,13 @@ def adjustreturnpar(project=None, **kwargs):
     - Includes simplification of program coverage logic
     '''
     if project is not None:
+        dt = project.settings.dt
+        eps = project.settings.eps
         for ps in project.parsets.values():
             ps.pars['returntocare'].name = 'Return to care rate (per year)'
             ps.pars['returntocare'].dataname = 'Percentage of people lost to follow-up who are returned to care per year (%/year)'
-            ps.pars['returntocare'].y[:] = minimum(1./maximum(project.settings.eps, ps.pars['returntocare'].y[:]),5.)  #all values should be 1/previous values for duration -> rate; constrain at maximum of 5.
+            for popkey in ps.pars['returntocare'].y.keys():
+                ps.pars['returntocare'].y[popkey] = array([(1-exp(-dt/max(eps, yrval)))/dt for yrval in ps.pars['returntocare'].y[popkey]])
             ps.pars['returntocare'].updateprior()
             
         #also need to invert values in any covouts for returntocare
@@ -1301,7 +1304,7 @@ def adjustreturnpar(project=None, **kwargs):
                 for pop in pg.covout['returntocare'].keys():
                     for impact in pg.covout['returntocare'][pop].ccopars.keys():
                         if impact != 't': #impact includes 'intercept' and all populations, but not t!
-                            pg.covout['returntocare'][pop].ccopars[impact] = [(min(1./high, 5), min(1./low, 5)) for low, high in pg.covout['returntocare'][pop].ccopars[impact]]                          
+                            pg.covout['returntocare'][pop].ccopars[impact] = [((1-exp(-dt/max(eps, high)))/dt, (1-exp(-dt/max(eps, low)))/dt) for low, high in pg.covout['returntocare'][pop].ccopars[impact]]                          
             
     return None
 
