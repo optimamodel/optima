@@ -632,7 +632,7 @@ def redoparameters(project, die=True, **kwargs):
                         newpars[parname].prior[popkey] = op.Dist() # Initialise with defaults
                         newpars[parname].prior[popkey].pars *= newpars[parname].y[popkey]
                 if isinstance(newpars[parname], op.Constant): # Get priors right, if required
-                    if all(newpars['treatvs'].prior.pars==op.Dist().pars): # See if defaults are used
+                    if all(newpars[parname].prior.pars==op.Dist().pars): # See if defaults are used
                         newpars[parname].prior.pars *= newpars[parname].y # If so, rescale
                 elif isinstance(newpars[parname], op.Popsizepar): # Messy -- rearrange object
                     newpars['popsize'].i = op.odict()
