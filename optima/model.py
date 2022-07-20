@@ -75,7 +75,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
     cd4trans        = array([simpars['cd4transacute'], simpars['cd4transgt500'], simpars['cd4transgt350'], simpars['cd4transgt200'], simpars['cd4transgt50'], simpars['cd4translt50']])
     background      = simpars['death']*dt           # Background death rates
     relhivdeath     = simpars['hivdeath']           # Relative HIV-related death rates
-    transdeathtx    = simpars['transdeathtx']       # Further relative reduction in HIV-related death rates by time and population
+    rrcomorbiditydeathtx = simpars['rrcomorbiditydeathtx']  # Relative HIV-related death rates for people on treatment (whether suppressive or unsuppressive) by time and population
     deathprob       = zeros((nstates,npops))        # Initialise death probability array
 
     # Cascade-related parameters
@@ -279,7 +279,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
             deathprob[fromstate,:] = deathhiv[fromhealthstate]*relhivdeath*deathsvl*dt
 
     transdeathmatrix = ones(people.shape)
-    transdeathmatrix[alltx] = transdeathtx
+    transdeathmatrix[alltx] = rrcomorbiditydeathtx
 
     # Recovery and progression and deaths for people on unsuppressive ART
     for fromstate in usvl:

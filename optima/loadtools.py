@@ -84,7 +84,7 @@ def setmigrations(which='migrations'):
         ('2.10.3',('2.10.4','2022-07-12', partlinearccopars, 'Update cost-coverage curves to be linear to saturation_low then non-linear to saturation high')),
         ('2.10.4',('2.10.5','2022-07-13', None ,             'Rename optional indicators in the databook to align with UNAIDS terminology')),
         ('2.10.5',('2.10.6','2022-07-14', removerequiredvl,  'Remove the required VL parameter to better capture treatment failure identification')),
-        ('2.10.6',('2.10.7','2022-07-17', addmetapars,       'Add/change meta parameters for forcepopsize, allcd4eligibletx, initcd4weight, transdeathtx, relhivbirth')),
+        ('2.10.6',('2.10.7','2022-07-17', addmetapars,       'Add/change meta parameters for forcepopsize, allcd4eligibletx, initcd4weight, rrcomorbiditydeathtx, relhivbirth')),
         ('2.10.7',('2.10.8','2022-07-19', adjustreturnpar,   'Change return to care to be a rate instead of a duration')),
         ])
     
@@ -1176,7 +1176,7 @@ def partlinearccopars(project=None, **kwargs):
 #     -	PLHIV aware of their status (%)  -> Percent of people living with HIV who know their status
 #     -	Diagnosed PLHIV in care (%)  -> Percent of people who know their status who are retained in care
 #     -	PLHIV in care on treatment (%) -> Percent of people who know their status who are on ART (note this was always used in model output comparisons as % diagnosed/%treated, so this renaming is an actual correction!)
-#     -	Pregnant women on PMTCT (%) -> Percent of pregnant women with HIV on PMTCT
+#     -	Pregnant women on PMTCT (%) -> Coverage of pregnant women who receive ARV for PMTCT
 #     -	People on ART with viral suppression (%)  -> Percent of people on ART who achieve viral suppression
 #     '''
 #     if project is not None:
@@ -1217,7 +1217,7 @@ def addmetapars(project=None, **kwargs):
         Values >1 mean the initialization will be weighted toward low CD4 counts and especially CD4<50 infections for people who are not on treatment [early stage epidemics]
     -- Migrate binary project setting forcepopsize to a parameter
     -- Migrate binary project setting treatbycd4 to a parameter representing year in which treatment prioritization changes from by cd4 count to eligibility for all
-    -- Add meta parameter 'transdeathtx' (by time and population) to modify relative death rates for people on ART (e.g. improved treatment of comorbidities)
+    -- Add meta parameter 'rrcomorbiditydeathtx' (by time and population) to modify relative death rates for people on ART (e.g. improved treatment of comorbidities)
     -- Add meta parameter 'relhivbirth' to capture the relative likelihood that a female with HIV gives birth relative to the overall birth rate
     '''
     if project is not None:
@@ -1239,7 +1239,7 @@ def addmetapars(project=None, **kwargs):
                                         't': allcd4eligibletx, 'limits': (0, 'maxyear')},
                    'initcd4weight':    {'copyfrom': 'transnorm', 'name': 'Weighting for initialization where low values represent early stage epidemics', 
                                         'y': 1., 'limits': (0, 'maxmeta')},
-                   'transdeathtx':     {'copyfrom': 'death', 'name': 'Time dependent additional reduction in relative death rate on ART (unitless)', 
+                   'rrcomorbiditydeathtx':     {'copyfrom': 'death', 'name': 'Relative risk of death rate on ART (unitless, time-based adjustment for treatment of comorbidities)', 
                                         'limits': (0, 'maxmeta')}, #set y values below
                    'relhivbirth':      {'copyfrom': 'transnorm', 'name': 'Relative likelihood that females with HIV give birth', 
                                         'y': 1, 'limits': (0,'maxmeta')},
@@ -1266,7 +1266,7 @@ def addmetapars(project=None, **kwargs):
             addparameter(project=project, short=parname, **parkwargs)
             par = ps.pars[parname]
             for ps in project.parsets.values():               
-                if parname == 'transdeathtx':
+                if parname == 'rrcomorbiditydeathtx':
                     for pop in par.y.keys():
                         par.y[pop] = array([1.])
                 
