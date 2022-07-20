@@ -895,7 +895,9 @@ class Program(object):
 
 
     def gettargetpopsize(self, t, parset=None, results=None, total=True, useelig=False, die=False):
-        '''Returns target population size in a given year for a given spending amount.'''
+        '''Returns target population size in a given year (either total or by population).
+        Target population size is adjusted according to the population factor for the program.
+        '''
 
         # Validate inputs
         if isnumber(t): t = array([t])
@@ -959,11 +961,15 @@ class Program(object):
                             initpopsizes = defaultinitpopsizes
         for popno, pop in enumerate(parset.pars['popkeys']):
             popsizes[pop] = initpopsizes[popno,:]
+        
+        popfactor = promotetoarray(self.costcovfn.getccopar(t=t)['popfactor'])
         for targetpop in self.targetpops:
             if targetpop.lower() in ['total','tot','all']:
                 targetpopsize[targetpop] = sum(list(popsizes.values()))
             else:
                 targetpopsize[targetpop] = popsizes[targetpop]
+            #Adjust by population factor for the program
+            targetpopsize[targetpop] *= popfactor
                 
         finalpopsize = array([sum(list(targetpopsize.values()))]) if isnumber(sum(list(targetpopsize.values()))) else sum(list(targetpopsize.values()))
                     
@@ -1221,7 +1227,8 @@ class Costcov(CCOF):
 
     def function(self, x, ccopar, popsize, eps=None, saturationlower=None, saturationupper=None):
         '''Returns coverage in a given year for a given spending amount.
-        Linear coverage up to saturationlower, scaling non-linearly to saturationupper'''
+        Linear coverage up to saturationlower, scaling non-linearly to saturationupper
+        popsize should have been adjusted by population factor if appropriate before reaching this function'''
         
         if eps is None: eps = Settings().eps # Warning, this uses project-nonspecific eps
 
@@ -1240,10 +1247,9 @@ class Costcov(CCOF):
             saturationupper = maximum(saturationlower, s)
         
         eps = array([eps]*npts)
-        effpop = popsize * pf #the effective population size that requires coverage adjusted by the population factor
         
         if nyrs==npts:
-            naivey = x/maximum(eps, effpop*u) #naive coverage (just total spend/unit cost as a proportion of the population)
+            naivey = x/maximum(eps, popsize*u) #naive coverage (just total spend/unit cost as a proportion of the population)
             liny  = minimum(naivey, saturationlower) #linear component of coverage (naive cover, or lower saturation limit if that's lower)
             
             covscale = maximum((1.-saturationlower), eps) #this is the remaining proportion of the coverage space that needs to be scaled nonlinearly
@@ -1252,14 +1258,14 @@ class Costcov(CCOF):
 
             nliny = maximum(2*sa/(1+exp(-2*nlinnaivey/sa))-sa, 0)*covscale #nonlinear component of coverage, needs to be scaled back by covscale 
             
-            y = (liny + nliny)*effpop
-            # y = (2*s/(1+exp(-2*x/(effpop*s*u)))-s)*effpop
+            y = (liny + nliny)*popsize
+            # y = (2*s/(1+exp(-2*x/(popsize*s*u)))-s)*popsize
         else:
             if (len(saturationlower)!=nyrs or len(saturationupper)!=nyrs):
                 raise OptimaException('If passing multiple year arguments at once, must also pass multiple saturation arguments') 
             y = zeros((nyrs,npts))
             for yr in range(nyrs):
-                naivey = x/maximum(eps, effpop[yr]*u[yr]) #naive coverage (just total spend/unit cost as a proportion of the population)
+                naivey = x/maximum(eps, popsize[yr]*u[yr]) #naive coverage (just total spend/unit cost as a proportion of the population)
                 liny  = minimum(naivey, saturationlower[yr]) #linear component of coverage (naive cover, or lower saturation limit if that's lower)
                 
                 covscale = maximum((1.-saturationlower[yr]), eps) #this is the remaining proportion of the coverage space that needs to be scaled nonlinearly
@@ -1268,8 +1274,8 @@ class Costcov(CCOF):
         
                 nliny = maximum(2*sa/(1+exp(-2*nlinnaivey/sa))-sa, 0)*covscale #nonlinear component of coverage, needs to be scaled back by covscale 
                 
-                y[yr,:] = (liny + nliny)*effpop[yr]
-                # y[yr,:] = (2*s[yr]/(1+exp(-2*x/(effpop[yr]*s[yr]*u[yr])))-s[yr])*effpop[yr]
+                y[yr,:] = (liny + nliny)*popsize[yr]
+                # y[yr,:] = (2*s[yr]/(1+exp(-2*x/(popsize[yr]*s[yr]*u[yr])))-s[yr])*popsize[yr]
             
         return maximum(y, eps)
 
@@ -1294,36 +1300,35 @@ class Costcov(CCOF):
             saturationupper = maximum(saturationlower, s)
             
         eps = array([eps]*npts)
-        effpop = maimum(eps, popsize * pf) #the effective population size that requires coverage adjusted by the population factor
         
         if nyrs==npts:
-            linx  = minimum(x/effpop, saturationlower)*effpop #NUMBER of coverage that would have been achieved with linear cost-coverage (everything below saturationlower)
-            nlinx = maximum(x/effpop - saturationlower, 0)*effpop #NUMBER of coverage that needs to be costed based on non-linear cost-coverage (everything above saturationlower and below saturationupper)
+            linx  = minimum(x/popsize, saturationlower)*popsize #NUMBER of coverage that would have been achieved with linear cost-coverage (everything below saturationlower)
+            nlinx = maximum(x/popsize - saturationlower, 0)*popsize #NUMBER of coverage that needs to be costed based on non-linear cost-coverage (everything above saturationlower and below saturationupper)
 
             liny = linx*u #proportion of linear spending = number of people covered * unit cost
             
-            satnumber = effpop * (saturationupper - saturationlower) #The number of people that would be covered by the nonlinear scaling if fully saturated
+            satnumber = popsize * (saturationupper - saturationlower) #The number of people that would be covered by the nonlinear scaling if fully saturated
             
             nliny = -0.5*satnumber*u*log(maximum(satnumber-nlinx,eps)/maximum((satnumber+nlinx), eps)) #proportion of spending at non-linear scaling
             
             y = liny + nliny
-            # y = -0.5*effpop*s*u*log(maximum(s*effpop-x,0)/(s*effpop+x))
+            # y = -0.5*popsize*s*u*log(maximum(s*popsize-x,0)/(s*popsize+x))
         else:
             if (len(saturationlower)!=nyrs or len(saturationupper)!=nyrs):
                 raise OptimaException('If passing multiple year arguments at once, must also pass multiple saturation arguments')
             y = zeros((nyrs,npts))
             for yr in range(nyrs):
-                linx  = minimum(x/effpop[yr], saturationlower[yr])*effpop[yr] #NUMBER of coverage that would have been achieved with linear cost-coverage (everything below saturationlower)
-                nlinx = maximum(x/effpop[yr] - saturationlower[yr], 0)*effpop[yr] #NUMBER of coverage that needs to be costed based on non-linear cost-coverage (everything above saturationlower and below saturationupper)
+                linx  = minimum(x/popsize[yr], saturationlower[yr])*popsize[yr] #NUMBER of coverage that would have been achieved with linear cost-coverage (everything below saturationlower)
+                nlinx = maximum(x/popsize[yr] - saturationlower[yr], 0)*popsize[yr] #NUMBER of coverage that needs to be costed based on non-linear cost-coverage (everything above saturationlower and below saturationupper)
         
                 liny = linx*u[yr] #proportion of linear spending = number of people covered * unit cost
                 
-                satnumber = effpop[yr] * (saturationupper[yr] - saturationlower[yr]) #The number of people that would be covered by the nonlinear scaling if fully saturated
+                satnumber = popsize[yr] * (saturationupper[yr] - saturationlower[yr]) #The number of people that would be covered by the nonlinear scaling if fully saturated
                 
                 nliny = -0.5*satnumber*u[yr]*log(maximum(satnumber-nlinx,eps)/maximum((satnumber+nlinx), eps)) #proportion of spending at non-linear scaling
                 
                 y[yr,:] = liny + nliny
-                # y[yr,:] = -0.5*effpop[yr]*s[yr]*u[yr]*log(maximum(s[yr]*effpop[yr]-x,0)/(s[yr]*effpop[yr]+x))
+                # y[yr,:] = -0.5*popsize[yr]*s[yr]*u[yr]*log(maximum(s[yr]*popsize[yr]-x,0)/(s[yr]*popsize[yr]+x))
         
         return maximum(y, eps)
             

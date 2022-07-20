@@ -86,7 +86,7 @@ def setmigrations(which='migrations'):
         ('2.10.5',('2.10.6','2022-07-14', removerequiredvl,  'Remove the required VL parameter to better capture treatment failure identification')),
         ('2.10.6',('2.10.7','2022-07-17', addmetapars,       'Add/change meta parameters for forcepopsize, allcd4eligibletx, initcd4weight, rrcomorbiditydeathtx, relhivbirth')),
         ('2.10.7',('2.10.8','2022-07-20', adjustreturnpar,   'Change return to care to be a rate instead of a duration')),
-        #('2.10.8',('2.11.0','2022-07-20', None,              'Cumulative stable update')),
+        ('2.10.8',('2.10.9','2022-07-20', None,              'Make popfactor apply directly to target population size, instead of the function for coverage')),
         ])
     
     
