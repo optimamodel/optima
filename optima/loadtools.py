@@ -1236,7 +1236,7 @@ def addmetapars(project=None, **kwargs):
         newpars = {'forcepopsize':     {'copyfrom': 'transnorm', 'name': 'Force all population sizes to match initial value with exponential growth curve',
                                         'y': forcepopsize, 'limits': (0,1)},
                    'allcd4eligibletx': {'copyfrom': 'fixpropdx', 'name': 'Return to care rate (per year)', 
-                                        'y': allcd4eligibletx, 'limits': (0, 'maxyear')},
+                                        't': allcd4eligibletx, 'limits': (0, 'maxyear')},
                    'initcd4weight':    {'copyfrom': 'transnorm', 'name': 'Weighting for initialization where low values represent early stage epidemics', 
                                         'y': 1., 'limits': (0, 'maxmeta')},
                    'transdeathtx':     {'copyfrom': 'death', 'name': 'Time dependent additional reduction in relative death rate on ART (unitless)', 
