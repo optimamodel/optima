@@ -901,7 +901,7 @@ class Program(object):
 
         # Validate inputs
         if isnumber(t): t = array([t])
-        elif type(t)==list: t = array(t)
+        elif isinstance(t, (range, list)): t = array(t)
         if parset is None:
             if results and results.parset: parset = results.parset
             else: raise OptimaException('Please provide either a parset or a resultset that contains a parset')
