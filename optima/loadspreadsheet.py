@@ -147,6 +147,10 @@ def loadspreadsheet(filename=None, folder=None, verbose=2):
     versioncell = instructionssheet.cell_value(versionrow, 0)
     versionstr = versioncell.split()[-1] # Last bit should be the version
     if compareversions(versionstr, version) != 0:
+        strict_version_controls = ['2.10.8'] #versions to strictly enforce that the spreadsheet exceeds this as there will be known errors
+        for svc in strict_version_controls:
+            if compareversions(versionstr, svc)< 0:
+                raise OptimaException('Optima version %s, cannot load incompatible databook with version %s (databook needs to be updated to at least %s: review user guide for changes or create a new project and copy data).' %(version, versionstr, svc))
         versioncheck = '\nNote: spreadsheet version does not match Optima version: %s vs. %s' % (versionstr, version)
         printv(versioncheck, 1, verbose)
     else:
