@@ -651,6 +651,7 @@ def multioptimize(optim=None, nchains=None, nblocks=None, blockiters=None,
     # Set defaults
     if nchains is None:    nchains = 4
     if nblocks is None:    nblocks = 10
+    nblocks = 1 #TEMPORARY fix as blocks don't apply constraints properly - TODO fix properly
     if blockiters is None: blockiters = 10
     if mc is None:         mc = 0
     if abs(mc)>0:
