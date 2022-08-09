@@ -41,7 +41,7 @@ setup(
     install_requires=[
         'matplotlib>=1.4.2',
         'numpy>=1.10.1',
-        'xlrd',
+        'xlrd==1.2.0', #WARNING temporary to read xlsx files and needs to to be replaced with a migration to openpyxl
         'xlsxwriter',
         'sciris',
     ],
