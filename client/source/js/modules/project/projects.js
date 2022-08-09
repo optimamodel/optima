@@ -149,6 +149,41 @@ define(['angular', 'ui.router'], function (angular) {
             toastr.success('Uploaded spreadsheet for project');
           });
       };
+      
+      $scope.uploadSpreadsheet = function(projectName, projectId) {
+          function upss(updatepars) {
+            rpcService
+              .rpcUpload(
+                'update_project_from_uploaded_spreadsheet', [projectId, updatepars])
+              .then(function(response) {
+                toastr.success('Uploaded spreadsheet for project');
+              });
+          }
+    
+          // Because passing arguments is too hard -- to supply the options for the choice below
+          function refreshexisting() {
+            upss(true);
+          }
+    
+          function addnewdefault() {
+            upss(false);
+          }
+    
+          modalService.choice(
+              refreshexisting,
+              addnewdefault,
+              'Refresh old parsets with new data',
+              'Keep old parsets and add/overwrite "default" from new data',
+              'How would you like to update the project parameter sets with the new databook? If you choose "keep old parsets" then parsets can be refreshed individually from the calibration tab later.',
+              'Uploading new databook to existing project'
+          );
+        };
+      
+      
+      
+      
+      
+      
 
       $scope.editProjectName = function(project) {
         modalService.rename(
