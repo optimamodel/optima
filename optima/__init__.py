@@ -21,12 +21,12 @@ Now, the legal part:
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 3 of the License, or
     (at your option) any later version.
-    
+
     This program is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
-    
+
     You should have received a copy of the GNU Lesser General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
@@ -43,7 +43,7 @@ optimalicense = 'Optima HIV %s (%s) -- (c) Optima Consortium' % (version, versio
 print(optimalicense)
 
 # Create an empty list to stored failed imports
-_failed = [] 
+_failed = []
 
 
 #####################################################################################################################
@@ -105,15 +105,15 @@ def debuginfo(dooutput=False):
     output += '   Branch:  %s\n' % gitinfo()[0]
     output += '   SHA:     %s\n' % gitinfo()[1][:7]
     output += '   Path:    %s\n' % optimapath()
-    if dooutput: 
+    if dooutput:
         return output
-    else: 
+    else:
         print(output)
         return None
 
 class OptimaException(Exception):
     ''' A tiny class to allow for Optima-specific exceptions -- define this here to allow for Optima-specific info '''
-    
+
     def __init__(self, errormsg, *args, **kwargs):
         if isinstance(errormsg, basestring): errormsg = errormsg+debuginfo(dooutput=True) # If it's not a string, not sure what it is, but don't bother with this
         Exception.__init__(self, errormsg, *args, **kwargs)
@@ -205,12 +205,12 @@ from . import defaults as _defaults; del defaults
 #####################################################################################################################
 
 # Load high level GUI module
-try: 
+try:
     from .gui import plotresults, pygui, plotpeople, plotpars, manualfit, showplots, loadplot, geogui
     from . import gui as _gui; del gui
 except Exception as E: _failed.append('gui: %s' % repr(E))
 
-try: 
+try:
     from .webserver import browser
     from . import webserver as _webserver; del webserver
 except Exception as E: _failed.append('webserver: %s' % repr(E))
