@@ -23,7 +23,7 @@ from werkzeug.utils import secure_filename
 
 from . import dataio
 from .dataio import report_exception_decorator, verify_admin_request_decorator
-from .parse import normalize_obj
+from sciris import sanitizejson
 
 # there's a circular import when celery is loaded so must use absolute import
 
@@ -41,7 +41,7 @@ def output_json(data, code, headers=None):
 
 
 def get_post_data_json():
-    return normalize_obj(json.loads(request.data))
+    return sanitizejson(json.loads(request.data))
 
 
 def get_upload_file(dirname):

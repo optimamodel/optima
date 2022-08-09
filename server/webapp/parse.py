@@ -14,6 +14,7 @@ There should be no references to the database or web-handlers.
 from collections import defaultdict, OrderedDict
 from pprint import pformat
 from uuid import UUID
+from sciris import sanitizejson
 
 import numpy as np
 import optima as op
@@ -35,7 +36,7 @@ def print_odict(name, an_odict):
     Helper function to print an odict to the console
     """
     print(">> print_odict %s = <odict>" % name)
-    obj = normalize_obj(an_odict)
+    obj = sanitizejson(an_odict)
     s = pformat(obj, indent=2)
     for line in s.splitlines():
         print(">> " + line)
@@ -55,76 +56,6 @@ def convert_dict_list_to_odict(dict_list):
         result[a_dict["key"]] = a_dict["value"]
     return result
 
-
-
-def normalize_obj(obj):
-    """
-    This is the main conversion function for Python data-structures into
-    JSON-compatible data structures.
-
-    Use this as much as possible to guard against data corruption!
-
-    Args:
-        obj: almost any kind of data structure that is a combination
-            of list, numpy.ndarray, odicts etc
-
-    Returns:
-        A converted dict/list/value that should be JSON compatible
-    """
-
-    if isinstance(obj, list) or isinstance(obj, tuple):
-        return [normalize_obj(p) for p in list(obj)]
-    
-    if isinstance(obj, np.ndarray):
-        if obj.shape: # Handle most cases, incluing e.g. array([5])
-            return [normalize_obj(p) for p in list(obj)]
-        else: # Handle the special case of e.g. array(5)
-            return [normalize_obj(p) for p in list(np.array([obj]))]
-
-    if isinstance(obj, dict):
-        return {str(k): normalize_obj(v) for k, v in obj.items()}
-
-    if isinstance(obj, op.odict):
-        result = OrderedDict()
-        for k, v in obj.items():
-            result[str(k)] = normalize_obj(v)
-        return result
-
-    if isinstance(obj, np.bool_):
-        return bool(obj)
-
-    if isinstance(obj, float):
-        if np.isnan(obj):
-            return None
-
-    if isinstance(obj, np.float64):
-        if np.isnan(obj):
-            return None
-        else:
-            return float(obj)
-
-    if isinstance(obj, np.int64):
-        return int(obj)
-
-    if isinstance(obj, unicode):
-        try:    string = str(obj) # Try to convert it to ascii
-        except: string = obj # Give up and use original
-        return string
-
-    if isinstance(obj, set):
-        return list(obj)
-
-    if isinstance(obj, UUID):
-        return str(obj)
-
-    if six.PY3:
-        if isinstance(obj, map):
-            return list(obj)
-
-        if isinstance(obj, range):
-            return list(obj)
-
-    return obj
 
 
 
@@ -191,7 +122,7 @@ def get_populations_from_project(project):
     """
     populations = []
     try:
-        data_pops = normalize_obj(project.data.get("pops"))
+        data_pops = sanitizejson(project.data.get("pops"))
         for i in range(len(data_pops['short'])):
             population = {
                 'short': data_pops['short'][i],
@@ -546,7 +477,7 @@ def get_parameters_for_outcomes(project, progset_id, parset_id):
 def get_budgets_for_scenarios(project):
     print(">> get_budgets_for_scenarios")
     result = {
-        str(progset.uid): normalize_obj(progset.getdefaultbudget())
+        str(progset.uid): sanitizejson(progset.getdefaultbudget())
         for progset in project.progsets.values()}
     return result
 
@@ -574,7 +505,7 @@ def get_coverages_for_scenarios(project, year=None):
             for year in years:
                 try:
                     coverage = progset.getdefaultcoverage(t=year, parset=parset)
-                    coverage = normalize_obj(coverage)
+                    coverage = sanitizejson(coverage)
                 except:
                     coverage = None
                 result[parset_id][progset_id][year] = coverage
@@ -605,7 +536,7 @@ def revert_program_targetpars(pars):
     if pars is None:
         return []
     targetpars = []
-    for par in normalize_obj(pars):
+    for par in sanitizejson(pars):
         if par.get('active', False):
             for pop in par['pops']:
                 targetpars.append({
@@ -631,7 +562,7 @@ def convert_program_costcovdata(costcovdata):
     if costcovdata is None:
         return None
     result = []
-    costcovdata = normalize_obj(costcovdata)
+    costcovdata = sanitizejson(costcovdata)
     n_year = len(costcovdata['t'])
     for i_year in range(n_year):
         entry = {}
@@ -651,7 +582,7 @@ to_nan = lambda v: v if v is not None and v != "" else np.nan
 def revert_program_costcovdata(costcov):
     result = {}
     if costcov:
-        costcov = normalize_obj(costcov)
+        costcov = sanitizejson(costcov)
         result = {
             't': list(map(to_nan, pluck(costcov, 'year'))),
             'cost': list(map(to_nan, pluck(costcov, 'cost'))),
@@ -746,7 +677,7 @@ def get_program_summary(program, progset, active):
                     - Females 50+
             """
 
-    ccopars_dict = normalize_obj(program.costcovfn.ccopars)
+    ccopars_dict = sanitizejson(program.costcovfn.ccopars)
     for key in ['saturation', 'unitcost', 'popfactor']:
         if key not in ccopars_dict:
             continue
@@ -761,7 +692,7 @@ def get_program_summary(program, progset, active):
         'active': active,
         'name': program.name,
         'short': program.short,
-        'populations': normalize_obj(program.targetpops),
+        'populations': sanitizejson(program.targetpops),
         'criteria': program.criteria,
         'targetpars': convert_program_targetpars(program.targetpars),
         'ccopars': ccopars_dict,
@@ -942,13 +873,13 @@ def get_progset_summary(project, progset_name):
         'programs': program_summaries,
         'isOptimizable': is_progset_optimizable(progset),
     }
-    return normalize_obj(progset_summary)
+    return sanitizejson(progset_summary)
 
 
 def get_progset_summaries(project):
     progset_summaries = [
         get_progset_summary(project, name) for name in project.progsets]
-    return {'progsets': normalize_obj(progset_summaries)}
+    return {'progsets': sanitizejson(progset_summaries)}
 
 
 def get_program_from_progset(progset, program_id, include_inactive=False):
@@ -1254,7 +1185,7 @@ def get_scenario_summaries(project):
     for scen in project.scens.values():
         summary = get_scenario_summary(project, scen)
         scenario_summaries.append(summary)
-    return normalize_obj(scenario_summaries)
+    return sanitizejson(scenario_summaries)
 
 
 def set_scenario_summaries_on_project(project, scenario_summaries):
@@ -1356,14 +1287,14 @@ def get_default_optimization_summaries(project):
         default = {
             'constraints': parse_constraints(op.defaultconstraints(project=project, progsetname=progsetkey)),
             'objectives': {},
-            'tvsettings': normalize_obj(op.defaulttvsettings())
+            'tvsettings': sanitizejson(op.defaulttvsettings())
         }
         for which in ['outcomes', 'money']:
-            default['objectives'][which] = normalize_obj(
+            default['objectives'][which] = sanitizejson(
                 op.defaultobjectives(project=project, progsetname=progsetkey, which=which))
         defaults_by_progset_id[progset_id] = default
 
-    return normalize_obj(defaults_by_progset_id)
+    return sanitizejson(defaults_by_progset_id)
 
 
 def get_optimization_from_project(project, optim_id):
@@ -1424,9 +1355,9 @@ def get_optimization_summaries(project):
         optim_summary = {
             "id": str(optim.uid),
             "name": str(optim.name),
-            "objectives": normalize_obj(optim.objectives),
+            "objectives": sanitizejson(optim.objectives),
             "constraints": parse_constraints(optim.constraints, project=project, progsetname=optim.progsetname),
-            "tvsettings": normalize_obj(optim.tvsettings),
+            "tvsettings": sanitizejson(optim.tvsettings),
         }
 
         optim_summary["which"] = str(optim.objectives["which"])
@@ -1449,7 +1380,7 @@ def get_optimization_summaries(project):
         optim_summaries.append(optim_summary)
 
     # as some values given can be NaN
-    optim_summaries = normalize_obj(optim_summaries)
+    optim_summaries = sanitizejson(optim_summaries)
 
     print(">> get_optimization_summaries" + pformat(optim_summaries, indent=2))
     return optim_summaries

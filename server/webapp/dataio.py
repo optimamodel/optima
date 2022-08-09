@@ -29,6 +29,7 @@ from validate_email import validate_email
 
 import optima as op
 from pylab import argsort
+from sciris import sanitizejson
 
 from .dbconn import db
 from . import parse
@@ -1310,7 +1311,7 @@ def load_target_popsizes(project_id, parset_id, progset_id, program_id):
     program = parse.get_program_from_progset(progset, program_id)
     years = parse.get_project_years(project)
     popsizes = program.gettargetpopsize(t=years, parset=parset)
-    return parse.normalize_obj(dict(zip(years, popsizes)))
+    return sanitizejson(dict(zip(years, popsizes)))
 
 
 def load_project_program_summaries(project_id):
@@ -1459,8 +1460,8 @@ def load_reconcile_summary(project_id, progset_id, parset_id, t):
         pars = [[msg, '', 0, 0]]
 
     return {
-        'budgets': parse.normalize_obj(budgets),
-        'pars': parse.normalize_obj(pars),
+        'budgets': sanitizejson(budgets),
+        'pars': sanitizejson(pars),
     }
 
 
