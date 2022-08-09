@@ -133,38 +133,18 @@ class Project(object):
     ### Methods for I/O and spreadsheet loading
     #######################################################################################################
 
-    def loadspreadsheet(self, filename=None, folder=None, name=None, overwrite=True, makedefaults=None, refreshparsets=None, dorun=True, **kwargs):
-        ''' Load a data spreadsheet -- enormous, ugly function so located in its own file
-        :param overwrite: whether to replace an existing spreadsheet if it has the same name as specified
-        :param makedefaults: whether to add a default parset, progset, scenario, and optimization to the project.
-        :param refreshparsets: Boolean for whether to update with the new data. Happens AFTER creating new parset if requested (may refresh the same parset!)
-        '''
+    def loadspreadsheet(self, filename=None, folder=None, name=None, overwrite=False, makedefaults=True, dorun=True, **kwargs):
+        ''' Load a data spreadsheet -- enormous, ugly function so located in its own file '''
         ## Load spreadsheet and update metadata
         newdata = loadspreadsheet(filename=filename, folder=folder, verbose=self.settings.verbose) # Do the hard work of actually loading the spreadsheet
-        firstbook = True if self.data==odict() else False #is this the first time a databook has ever been loaded to the project?
-        if refreshparsets is None:
-            refreshparsets = False if firstbook else True #Generally True unless making a first parset in which case no need to refresh it immediately
-        if makedefaults is None:
-            makedefaults = True if firstbook else False #Probably don't want defaults if there was already some data (unless parset/progset are entirely missing but that's handled below)
-        
-        if (not firstbook) and newdata['pops']['short'] != self.data['pops']['short']:
-            raise OptimaException('Loading a databook with different population short names to the existing project is not allowed: create a new project instead.')
+        if self.data and newdata['pops']['short'] != self.data['pops']['short']:
+            raise OptimaException('Loading a databook with different populations to the existing project is not allowed: create a new project instead.')
         self.data = newdata
         self.spreadsheetdate = today() # Update date when spreadsheet was last loaded
         self.modified = today()
-        
-        
-        if makedefaults or self.parsets==odict(): #always make a new parset if there isn't one
-            if name is None: name = 'default'
-            self.makeparset(name=name, overwrite=overwrite)
-        else:
-            if name is None: name = self.parsets[-1].name #Use the most recent parset if not creating a new one.
-        if makedefaults or self.progsets==odict(): #always make a new progset (and default scenario/opt) if there isn't one
-            self.makedefaults(name)
-        
-        if refreshparsets:
-            self.refreshparset(name=None, orig=None, resetprevalence=False) #name=None means refresh ALL parsets, orig=None means from data, resetprevalence means don't update initprev
-        
+        if name is None: name = 'default'
+        self.makeparset(name=name, overwrite=overwrite)
+        if makedefaults: self.makedefaults(name)
         self.settings.start = self.data['years'][0] # Reset the default simulation start to initial year of data
         if dorun: self.runsim(name, addresult=True, **kwargs) # Pass all kwargs to runsim as well
         if self.name == 'default' and filename.endswith('.xlsx'): self.name = os.path.basename(filename)[:-5] # If no project filename is given, reset it to match the uploaded spreadsheet, assuming .xlsx extension
