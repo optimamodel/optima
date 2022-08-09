@@ -87,7 +87,8 @@ def setmigrations(which='migrations'):
         ('2.10.6',('2.10.7','2022-07-17', addmetapars,       'Add/change meta parameters for forcepopsize, allcd4eligibletx, initcd4weight, rrcomorbiditydeathtx, relhivbirth')),
         ('2.10.7',('2.10.8','2022-07-20', adjustreturnpar,   'Change return to care to be a rate instead of a duration')),
         ('2.10.8',('2.10.9','2022-07-20', None,              'Make popfactor apply directly to target population size, instead of the function for coverage')),
-        ('2.10.9',('2.10.10','2022-08-09', None,             'Updates to loading databooks')),
+        ('2.10.9',('2.10.10','2022-08-09',None,              'Compatibility and FE updates')),
+        ('2.10.10',('2.10.11','2022-08-09',fixmanfitsettings,'Fix manual fit settings (which impact on FE display)')),
         ])
     
     
@@ -1308,6 +1309,21 @@ def adjustreturnpar(project=None, **kwargs):
                         if impact != 't': #impact includes 'intercept' and all populations, but not t!
                             pg.covout['returntocare'][pop].ccopars[impact] = [((1-exp(-dt/max(eps, high)))/dt, (1-exp(-dt/max(eps, low)))/dt) for low, high in pg.covout['returntocare'][pop].ccopars[impact]]                          
             
+    return None
+
+def fixmanfitsettings(project=None, **kwargs):
+    '''
+    Migration between Optima 2.10.10 and 2.10.11 
+    
+    - Adjust manual calibration flags for added parameters
+    '''
+    if project is not None:            
+        for ps in project.parsets.values():
+            ps.pars['allcd4eligibletx'].manual = 'year'
+            ps.pars['initcd4weight'].manual    = 'const'
+            ps.pars['forcepopsize'].manual     = 'const'
+            ps.pars['relhivbirth'].manual      = 'const'
+            ps.pars['rrcomorbiditydeathtx'].manual = 'no'
     return None
 
 
