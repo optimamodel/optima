@@ -124,7 +124,9 @@ class OptimaException(Exception):
 #####################################################################################################################
 
 # File I/O
-from sciris  import loadobj, saveobj, loadstr, dumpstr #sciris now mandatory
+try:    from sciris  import loadobj, saveobj, loadstr, dumpstr # If Sciris is installed, use more up to date functions
+except: from .fileio import loadobj, saveobj, loadstr, dumpstr # Fall back in built-in methods
+from .fileio import optimafolder, loadpartable, loadtranstable, loaddatapars # CK: may want to tidy up
 from . import fileio as _fileio; del fileio
 
 # Project settings

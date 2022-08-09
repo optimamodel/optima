@@ -9,7 +9,6 @@ from flask import Flask, abort, jsonify, request, json, helpers
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 from werkzeug.utils import secure_filename
-from sciris import sanitizejson
 
 
 # Create Flask app that does everything
@@ -92,6 +91,8 @@ def root():
 
 from .webapp.handlers import api_blueprint, get_post_data_json, report_exception_decorator, login_required
 from .webapp import dataio
+from .webapp.parse import normalize_obj
+
 
 # this is used only to load the user-related url handlers
 app.register_blueprint(api_blueprint, url_prefix='')
@@ -148,7 +149,7 @@ def run_remote_procedure():
     if result is None:
         result = ''
     else:
-        result = jsonify(sanitizejson(result))
+        result = jsonify(normalize_obj(result))
     return result
 
 
@@ -175,7 +176,7 @@ def run_remote_async_task():
     if result is None:
         result = ''
     else:
-        result = jsonify(sanitizejson(result))
+        result = jsonify(normalize_obj(result))
     return result
 
 
@@ -249,7 +250,7 @@ def receive_uploaded_file():
     if result is None:
         return ''
     else:
-        return jsonify(sanitizejson(result))
+        return jsonify(normalize_obj(result))
 
 
 def init_db():

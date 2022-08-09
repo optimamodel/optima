@@ -7,7 +7,7 @@ from numpy import array
 
 import optima as op
 
-from sciris import sanitizejson
+from .parse import normalize_obj
 
 frontendfigsize = (5.5, 2)
 frontendpositionnolegend = [[0.19, 0.12], [0.85, 0.85]]
@@ -52,7 +52,7 @@ def convert_to_mpld3(figure, zoom=None, graph_pos=None):
             ax.set_position(Bbox(array(frontendpositionnolegend)))
 
     mpld3_dict = mpld3.fig_to_dict(figure)
-    graph_dict = sanitizejson(mpld3_dict)
+    graph_dict = normalize_obj(mpld3_dict)
     
     return graph_dict
 
