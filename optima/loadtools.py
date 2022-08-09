@@ -87,6 +87,7 @@ def setmigrations(which='migrations'):
         ('2.10.6',('2.10.7','2022-07-17', addmetapars,       'Add/change meta parameters for forcepopsize, allcd4eligibletx, initcd4weight, rrcomorbiditydeathtx, relhivbirth')),
         ('2.10.7',('2.10.8','2022-07-20', adjustreturnpar,   'Change return to care to be a rate instead of a duration')),
         ('2.10.8',('2.10.9','2022-07-20', None,              'Make popfactor apply directly to target population size, instead of the function for coverage')),
+        ('2.10.9',('2.10.10','2022-08-09', None,             'Updates to loading databooks')),
         ])
     
     
