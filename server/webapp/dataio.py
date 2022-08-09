@@ -790,7 +790,7 @@ def download_project_with_result(project_id):
 
 def update_project_from_uploaded_spreadsheet(spreadsheet_fname, project_id):
     def modify(project):
-        project.loadspreadsheet(spreadsheet_fname, name='default', overwrite=True, makedefaults=True)
+        project.loadspreadsheet(spreadsheet_fname, name=None, overwrite=None, makedefaults=None, refreshparsets=None)
     update_project_with_fn(project_id, modify)
     return { 'success': True }
 
