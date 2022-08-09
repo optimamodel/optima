@@ -788,12 +788,9 @@ def download_project_with_result(project_id):
     return server_filename
 
 
-def update_project_from_uploaded_spreadsheet(spreadsheet_fname, project_id, updatepars):
+def update_project_from_uploaded_spreadsheet(spreadsheet_fname, project_id):
     def modify(project):
-        if updatepars:
-            project.loadspreadsheet(spreadsheet_fname, name=None, overwrite=None, makedefaults=None, refreshparsets=None)
-        else:
-            project.loadspreadsheet(spreadsheet_fname, name='default', overwrite=True, makedefaults=True, refreshparsets=False)
+        project.loadspreadsheet(spreadsheet_fname, name=None, overwrite=None, makedefaults=None, refreshparsets=None)
     update_project_with_fn(project_id, modify)
     return { 'success': True }
 
