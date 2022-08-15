@@ -6,7 +6,7 @@ from gzip import GzipFile
 from contextlib import closing
 from numpy import ones, zeros
 from optima import odict, OptimaException, makefilepath
-import xlrd
+import xlrd #WARNING TODO temporary fix for compatibility in Python 3.9 until replacing with openpyxl
 xlrd.xlsx.ensure_elementtree_imported(False, None)
 xlrd.xlsx.Element_has_iter = True
 from xlrd import open_workbook
