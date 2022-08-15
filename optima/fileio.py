@@ -6,6 +6,9 @@ from gzip import GzipFile
 from contextlib import closing
 from numpy import ones, zeros
 from optima import odict, OptimaException, makefilepath
+import xlrd
+xlrd.xlsx.ensure_elementtree_imported(False, None)
+xlrd.xlsx.Element_has_iter = True
 from xlrd import open_workbook
 import os
 import optima as op
