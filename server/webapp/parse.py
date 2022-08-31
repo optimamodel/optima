@@ -93,14 +93,26 @@ def normalize_obj(obj):
     if isinstance(obj, np.bool_):
         return bool(obj)
 
-    if op.isnumber(obj): # It's a number
-        if np.isnan(obj): # It's nan, so return None
+    #WARNING below looks more generalizable, but results in no checkboxes in the FE working, minimum changes to add int32 as well as int64 instead seem okay
+    # if op.isnumber(obj): # It's a number
+    #     if np.isnan(obj): # It's nan, so return None
+    #         return None
+    #     else:
+    #         if isinstance(obj, (int, np.int64)):
+    #             return int(obj) # It's an integer
+    #         else:
+    #             return float(obj)# It's something else, treat it as a float
+    
+    if isinstance(obj, float):
+        if np.isnan(obj):
+            return None
+    if isinstance(obj, np.float64):
+        if np.isnan(obj):
             return None
         else:
-            if isinstance(obj, (int, np.int64)):
-                return int(obj) # It's an integer
-            else:
-                return float(obj)# It's something else, treat it as a float
+            return float(obj)
+    if isinstance(obj, (np.int32, np.int64)):
+        return int(obj)
 
     if isinstance(obj, unicode):
         try:    string = str(obj) # Try to convert it to ascii
