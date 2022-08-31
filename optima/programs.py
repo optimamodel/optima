@@ -962,7 +962,11 @@ class Program(object):
         for popno, pop in enumerate(parset.pars['popkeys']):
             popsizes[pop] = initpopsizes[popno,:]
         
-        popfactor = promotetoarray(self.costcovfn.getccopar(t=t)['popfactor'])
+        if self.costcovfn.ccopars:
+            popfactor = promotetoarray(self.costcovfn.getccopar(t=t)['popfactor'])
+        else:
+            popfactor = array([1.])
+            
         for targetpop in self.targetpops:
             if targetpop.lower() in ['total','tot','all']:
                 targetpopsize[targetpop] = sum(list(popsizes.values()))
