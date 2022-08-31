@@ -6,7 +6,7 @@ parameters, the Parameterset class.
 Version: 2.1 (2017apr04)
 """
 
-from numpy import array, nan, isnan, isfinite, zeros, argmax, mean, log, polyfit, exp, maximum, minimum, Inf, linspace, median, shape
+from numpy import array, nan, isnan, isfinite, zeros, ones, argmax, mean, log, polyfit, exp, maximum, minimum, Inf, linspace, median, shape
 from numpy.random import uniform, normal, seed
 from optima import OptimaException, Link, odict, dataframe, printv, sanitize, uuid, today, getdate, makefilepath, smoothinterp, dcp, defaultrepr, isnumber, findinds, getvaliddata, promotetoarray, promotetolist, inclusiverange # Utilities 
 from optima import Settings, getresults, convertlimits, gettvecdt, loadpartable, loadtranstable # Heftier functions
@@ -900,7 +900,11 @@ def data2popsize(data=None, keys=None, blh=0, uniformgrowth=False, doplot=False,
         tdata[key] = sanitizedt[key]-startyear
         ydata[key] = log(sanitizedy[key])
         try:
-            fitpars = polyfit(tdata[key], ydata[key], 1)
+            w = ones(shape(ydata[key])) #weighting for the data points
+            if startyear in sanitizedt[key] and sanitizedt[key][0] == startyear: #we have a population size specified in the first year of data, so fit exponential growth from that
+                w[0] = 1000
+            
+            fitpars = polyfit(tdata[key], ydata[key], 1, w=w)
             par.i[key] = exp(fitpars[1]) # Intercept/initial value
             par.e[key] = fitpars[0] # Exponent
         except:
