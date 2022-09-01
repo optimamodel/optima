@@ -6,9 +6,9 @@ parameters, the Parameterset class.
 Version: 2.1 (2017apr04)
 """
 
-from numpy import array, nan, isnan, isfinite, zeros, ones, argmax, mean, log, polyfit, exp, maximum, minimum, Inf, linspace, median, shape
+from numpy import array, nan, isnan, isfinite, zeros, ones, argmax, mean, log, polyfit, exp, maximum, minimum, Inf, linspace, median, shape, append
 from numpy.random import uniform, normal, seed
-from optima import OptimaException, Link, odict, dataframe, printv, sanitize, uuid, today, getdate, makefilepath, smoothinterp, dcp, defaultrepr, isnumber, findinds, getvaliddata, promotetoarray, promotetolist, inclusiverange # Utilities 
+from optima import OptimaException, Link, odict, dataframe, printv, sanitize, uuid, today, getdate, makefilepath, smoothinterp, dcp, defaultrepr, isnumber, findinds, findnearest, getvaliddata, promotetoarray, promotetolist, inclusiverange # Utilities 
 from optima import Settings, getresults, convertlimits, gettvecdt, loadpartable, loadtranstable # Heftier functions
 import optima as op
 
@@ -313,7 +313,7 @@ class Parameterset(object):
                         keylist.append(key)
                         subkeylist.append(subkey)
                         typelist.append('exp')
-                        valuelist.append(par.i[subkey])
+                        valuelist.append(par.y[subkey])
                         labellist.append('%s: %s' % (par.name, str(subkey)))
                 else:
                     print('Parameter type "%s" not implemented!' % par.manual)
@@ -343,8 +343,8 @@ class Parameterset(object):
                 tmppars[key].y[subkey] = float(value)
                 printv('%s.y[%s] = %s' % (key, subkey, value), 4, verbose)
             elif ptype=='exp':  # Population growth
-                tmppars[key].i[subkey] = float(value)
-                printv('%s.i[%s] = %s' % (key, subkey, value), 4, verbose)
+                tmppars[key].y[subkey] = float(value)
+                printv('%s.y[%s] = %s' % (key, subkey, value), 4, verbose)
             elif ptype in ['const', 'advanced']:  # Constants
                 tmppars[key].y = float(value)
                 printv('%s.y = %s' % (key, value), 4, verbose)
@@ -402,12 +402,13 @@ class Parameterset(object):
                     prefix = "pars['%s'].m = " % parname
                     if cpars is not None: cvalues = cpars[parname].m
                 elif par.manual=='exp':
-                    values  = par.i[:].tolist()
+                    values = par.y[:].tolist()
+                    prefix = "pars['%s'].y[:] = " % parname
+                    
                     values2 = par.e[:].tolist()
-                    prefix  = "pars['%s'].i[:] = " % parname
                     prefix2 = "pars['%s'].e[:] = " % parname
                     if cpars is not None: 
-                        cvalues  = cpars[parname].i[:].tolist()
+                        cvalues  = cpars[parname].y[:].tolist()
                         cvalues2 = cpars[parname].e[:].tolist()
                 elif par.manual=='no':
                     values = None
@@ -451,8 +452,8 @@ class Par(object):
     These four thus have different structures (where [] denotes dict):
         * Constants   have y, ysample
         * Metapars    have y[], ysample[], m, msample
-        * Timepars    have y[], m, msample
-        * Popsizepars have i[], e[], m, msample
+        * Timepars    have y[], t[], m, msample
+        * Popsizepars have t[], y[], start, e[], m, msample
         * Yearpars    have t
     
     Consequently, some of them have different sample(), updateprior(), and interp() methods; in brief:
@@ -712,18 +713,21 @@ class Timepar(Par):
 class Popsizepar(Par):
     ''' The definition of the population size parameter '''
     
-    def __init__(self, i=None, e=None, m=1.0, start=2000., **defaultargs):
+    def __init__(self, e=None, m=1.0, start=None, t=None, y=None, **defaultargs):
         Par.__init__(self, **defaultargs)
-        if i is None: i = odict()
         if e is None: e = odict()
-        self.i = i # Exponential fit intercept, e.g. 3.4e6
+        if t is None: t = odict()
+        if y is None: y = odict()
+        if start is None: start = 2000.
         self.e = e # Exponential fit exponent, e.g. 0.03
         self.m = m # Multiplicative metaparameter, e.g. 1
-        self.start = start # Year for which population growth start is calibrated to
+        self.start = start # Year for which population growth start is calibrated : this is the year that exponential population growth starts; before this exact (interpolated) data values are assumed to be correct
+        self.t = t # Time data, e.g. [2002, 2008]
+        self.y = y # Population sizes, e.g. [2002, 2008]
     
     def keys(self):
         ''' Return the valid keys for using with this parameter '''
-        return self.i.keys()
+        return self.y.keys()
     
     def sample(self, randseed=None):
         ''' Recalculate msample -- same as Timepar'''
@@ -767,7 +771,12 @@ class Popsizepar(Par):
         else: output = odict()
         for pop,key in enumerate(outkeys):
             if key in self.keys():
-                yinterp = meta * self.i[key] * grow(self.e[key], array(tvec)-self.start)
+                #1. Linear interpolation between data points to tvec until self.forcegrowth[key]
+                yinterp = meta * smoothinterp(tvec, self.t[key], self.y[key], smoothness=smoothness) # Use interpolation
+                #2. Replace linear interpolation after self.start
+                expstartind = findnearest(tvec, self.start)
+                yinterp[expstartind:] = meta * yinterp[expstartind] * grow(self.e[key], array(tvec[expstartind:])-self.start)
+                #3. Apply limits
                 yinterp = applylimits(par=self, y=yinterp, limits=self.limits, dt=dt)
             else:
                 yinterp = zeros(len(tvec))
@@ -878,6 +887,9 @@ def data2popsize(data=None, keys=None, blh=0, uniformgrowth=False, doplot=False,
     for row,key in enumerate(keys):
         sanitizedy[key] = sanitize(data['popsize'][blh][row]) # Store each extant value
         sanitizedt[key] = array(data['years'])[~isnan(data['popsize'][blh][row])] # Store each year
+
+        par.y[key] = sanitizedy[key]
+        par.t[key] = sanitizedt[key]
     
     # Store a list of population sizes that have at least 2 data points
     atleast2datapoints = [] 
@@ -901,11 +913,15 @@ def data2popsize(data=None, keys=None, blh=0, uniformgrowth=False, doplot=False,
         ydata[key] = log(sanitizedy[key])
         try:
             w = ones(shape(ydata[key])) #weighting for the data points
-            if startyear in sanitizedt[key] and sanitizedt[key][0] == startyear: #we have a population size specified in the first year of data, so fit exponential growth from that
-                w[0] = 1000
+            if startyear in par.t[key] and par.t[key][0] == startyear: #we have a population size specified in the first year of data, so fit exponential growth from that
+                ind = findnearest(par.t[key], startyear)    
+                w[ind] = 100000
             
             fitpars = polyfit(tdata[key], ydata[key], 1, w=w)
-            par.i[key] = exp(fitpars[1]) # Intercept/initial value
+            if not startyear in par.t[key]:
+                par.t[key] = append([startyear], par.t[key])
+                par.y[key] = append([exp(fitpars[1])], par.y[key]) # Intercept/initial value
+            
             par.e[key] = fitpars[0] # Exponent
         except:
             errormsg = 'Fitting population size data for population "%s" failed' % key
@@ -916,7 +932,7 @@ def data2popsize(data=None, keys=None, blh=0, uniformgrowth=False, doplot=False,
     thisyear = odict()
     thispopsize = odict()
     for key in only1datapoint:
-        largest_i = par.i[largestpopkey] # Get the parameters from the largest population
+        largest_i = par.y[largestpopkey][0] # Get the parameters from the largest population
         largest_e = par.e[largestpopkey]
         if len(sanitizedt[key]) != 1:
             errormsg = 'Error interpreting population size for population "%s"\n' % key
@@ -925,9 +941,11 @@ def data2popsize(data=None, keys=None, blh=0, uniformgrowth=False, doplot=False,
         thisyear[key] = sanitizedt[key][0]
         thispopsize[key] = sanitizedy[key][0]
         largestthatyear = largest_i*grow(largest_e, thisyear[key]-startyear)
-        par.i[key] = largest_i*thispopsize[key]/largestthatyear # Scale population size
+        par.y[key] = array([largest_i*thispopsize[key]/largestthatyear]) # Scale population size)
+        par.t[key] = array([startyear])
         par.e[key] = largest_e # Copy exponent
-    par.i.sort(keys) # Sort to regain the original key order -- WARNING, causes horrendous problems later if this isn't done!
+    par.y.sort(keys) # Sort to regain the original key order -- WARNING, causes horrendous problems later if this isn't done!
+    par.t.sort(keys)
     par.e.sort(keys)
     
     if uniformgrowth:
@@ -935,10 +953,11 @@ def data2popsize(data=None, keys=None, blh=0, uniformgrowth=False, doplot=False,
             par.e[key] = par.e[largestpopkey] # Reset exponent to match the largest population
             meanpopulationsize = mean(sanitizedy[key]) # Calculate the mean of all the data
             weightedyear = mean(sanitizedy[key][:]*sanitizedt[key][:])/meanpopulationsize # Calculate the "mean year"
-            par.i[key] = meanpopulationsize*(1+par.e[key])**(startyear-weightedyear) # Project backwards to starting population size
+            par.y[key] = array([meanpopulationsize*(1+par.e[key])**(startyear-weightedyear)]) # Project backwards to starting population size
+            par.t[key] = array([startyear])
     
     for key in keys:
-        par.i[key] = round(par.i[key]) # Fractional people look weird
+        par.y[key][0] = round(par.y[key][0]) # Fractional people look weird
         
     if doplot:
         from pylab import figure, subplot, plot, scatter, arange, show, title
@@ -953,7 +972,7 @@ def data2popsize(data=None, keys=None, blh=0, uniformgrowth=False, doplot=False,
             else: raise OptimaException('This population is nonexistent')
             plot(tvec, yvec[k])
             title('Pop size: ' + key)
-            print([par.i[key], par.e[key]])
+            print([par.y[key][0], par.e[key]])
             show()
     
     return par

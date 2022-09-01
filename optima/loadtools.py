@@ -1,5 +1,5 @@
 import optima as op
-from numpy import nan, isnan, mean, concatenate as cat, array, exp
+from numpy import nan, isnan, mean, concatenate as cat, array, exp, append
 
 
 ##########################################################################################
@@ -89,6 +89,7 @@ def setmigrations(which='migrations'):
         ('2.10.8',('2.10.9','2022-07-20', None,              'Make popfactor apply directly to target population size, instead of the function for coverage')),
         ('2.10.9',('2.10.10','2022-08-09',None,              'Compatibility and FE updates')),
         ('2.10.10',('2.10.11','2022-08-09',fixmanfitsettings,'Fix manual fit settings (which impact on FE display)')),
+        ('2.10.11',('2.10.12','2022-08-31',popgrowthoptions, 'Change forcepopsize to be forcepopgrowth by population and impact differently on key pops without inflows')),
         ])
     
     
@@ -1324,6 +1325,37 @@ def fixmanfitsettings(project=None, **kwargs):
             ps.pars['forcepopsize'].manual     = 'const'
             ps.pars['relhivbirth'].manual      = 'const'
             ps.pars['rrcomorbiditydeathtx'].manual = 'no'
+    return None
+
+def popgrowthoptions(project=None, **kwargs):
+    '''
+    Migration between Optima 2.10.11 and 2.10.12 
+    
+    - Add extra attributes to Popsizepar parameters to capture the full data values
+    - Before .start year use interpolated pop sizes from the databook
+    - From .start year use exponential growth from the last data pop size
+    '''
+    if project is not None:        
+        for ps in project.parsets.values():
+            par = ps.pars['popsize']
+            
+            par.y = op.odict()
+            par.t = op.odict() 
+            par.start = ps.start #reset to be sure
+            for popind, pop in enumerate(par.e.keys()):
+                #as if loading data into y and t values
+                blh = 0 #best-low-high = 0-1-2           
+                par.y[pop] = op.sanitize(project.data['popsize'][blh][popind]) # Store each extant value
+                par.t[pop] = array(project.data['years'])[~isnan(project.data['popsize'][blh][popind])] # Store each year
+                
+                #check if a start year value exists
+                if not ps.start in par.t[pop]: #add an initial value dummy 'data' point
+                    par.y[pop] = append([par.i[pop]], par.y[pop])
+                    par.t[pop] = append([ps.start], par.t[pop])
+                else: #reset the first value to the previous .i value for consistency
+                    par.y[pop][0] = array([par.i[pop]])
+                
+            del(ps.pars['popsize'].i)
     return None
 
 

@@ -796,7 +796,7 @@ def makegeoprojects(project=None, spreadsheetpath=None, destination=None, dosave
         newproject.data['numost'] = [[y*plhivratio['tot'][c] for y in x] for x in newproject.data['numost']]
         
         # Scale calibration
-        newproject.parsets[-1].pars['popsize'].i[:]  *= popratio[popname][c]
+        newproject.parsets[-1].pars['popsize'].m  *= popratio[popname][c] #TODO check change from ['popsize'].i[:] was appropriate
         newproject.parsets[-1].pars['initprev'].y[:] *= prevfactors[popname][c]
         newproject.parsets[-1].pars['numcirc'].y[:]  *= plhivratio['tot'][c]
         newproject.parsets[-1].pars['numtx'].y[:]    *= plhivratio['tot'][c]
