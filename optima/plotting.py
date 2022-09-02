@@ -136,11 +136,13 @@ def getplotselections(results, advanced=False):
         for key in epikeys: # e.g. 'prev'
             for subkey in epiplottypes: # e.g. 'total'
                 if not(ismultisim and subkey=='stacked'): # Stacked multisim plots don't make sense
-                    plotepikeys.append(key+'-'+subkey)
+                    if (not subkey=='population+stacked'): #disallow not population+stacked, make sure to disallow below as well
+                        plotepikeys.append(key+'-'+subkey)
         for name in epinames: # e.g. 'HIV prevalence'
             for subname in epiplottypes: # e.g. 'total'
                 if not(ismultisim and subname=='stacked'): # Stacked multisim plots don't make sense -- TODO: handle this better
-                    plotepinames.append(name+' - '+subname)
+                    if (not subname == 'population+stacked'):  # disallow not population+stacked, make sure to disallow above as well
+                        plotepinames.append(name+' - '+subname)
     else:
         plotepikeys = dcp(epikeys)
         plotepinames = dcp(epinames)
