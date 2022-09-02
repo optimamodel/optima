@@ -53,9 +53,11 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
     # Initialize raw arrays -- reporting annual quantities (so need to divide by dt!)
     raw_inci        = zeros((npops, npts))          # Total incidence acquired by each population
     raw_incibypop   = zeros((nstates, npops, npts)) # Total incidence caused by each population and each state
+    raw_incionpopbypop   = zeros((npops, nstates, npops, npts))  # Total incidence in each population caused by each population and each state, 1st axis is acquired population. 2nd axis is caused state, 3rd axis is caused population
     raw_births      = zeros((npops, npts))          # Total number of births to each population
     raw_mtct        = zeros((npops, npts))          # Number of mother-to-child transmissions to each population
     raw_mtctfrom    = zeros((nstates, npops, npts)) # Number of mother-to-child transmissions from each population and each state
+    raw_mtcttoandfrom=zeros((npops, nstates, npops, npts)) # Number of mother-to-child transmissions to each population and from each population and each state, similar to raw_incionpopbypop
     raw_hivbirths   = zeros((npops, npts))          # Number of births to HIV+ pregnant women
     raw_receivepmtct= zeros((npops, npts))          # Initialise a place to store the number of people in each population receiving PMTCT
     raw_diag        = zeros((npops, npts))          # Number diagnosed per timestep
@@ -612,8 +614,9 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
         thistransit[pi,ui,:] *= infections_to[pi] # Index for moving from circ to infection
 
         # Calculate infections acquired and transmitted
-        raw_inci[:,t]          = einsum('ij,ijkl->j', people[sus,:,t], forceinffull)/dt
-        raw_incibypop[:,:,t]   = einsum('ij,ijkl->kl', people[sus,:,t], forceinffull)/dt
+        raw_inci[:,t]               = einsum('ij,ijkl->j', people[sus,:,t], forceinffull)/dt
+        raw_incibypop[:,:,t]        = einsum('ij,ijkl->kl', people[sus,:,t], forceinffull)/dt
+        raw_incionpopbypop[:,:,:,t] = einsum('ij,ijkl->jkl', people[sus,:,t], forceinffull)/dt
             
         ##############################################################################################################
         ### Calculate deaths
@@ -776,12 +779,13 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
             state_distribution_plhiv_from = people[:,p1,t] * plhivmap
 
             raw_mtctfrom[:, p1, t] += (thispopmtct/dt) * state_distribution_plhiv_from/(state_distribution_plhiv_from.sum()+eps) #WARNING: not accurate based on differential diagnosis by state potentially, but the best that's feasible
+            raw_mtcttoandfrom[p2,:,p1,t] += (thispopmtct/dt) * state_distribution_plhiv_from/(state_distribution_plhiv_from.sum()+eps) #WARNING: same warning as above, but I'm not 100% sure this is correct
             raw_births[p2, t] += popbirths/dt
             raw_hivbirths[p1, t] += thisbirthrate * fsums[p1]['allplhiv'] / dt
             
         raw_inci[:,t] += raw_mtct[:,t] # Update infections acquired based on PMTCT calculation
         raw_incibypop[:,:,t] += raw_mtctfrom[:,:,t] # Update infections caused based on PMTCT 
-        
+        raw_incionpopbypop[:,:,:,t] += raw_mtcttoandfrom[:,:,:,t]
         
        
         ##############################################################################################################
@@ -950,20 +954,21 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                             raw_new[:,t+1]               -= newmovers.sum(axis=0)/dt # Save new movers, inverting again
             if debug: checkfornegativepeople(people, tind=t+1) # If ebugging, check for negative people on every timestep
         
-    raw                 = odict()    # Sim output structure
-    raw['tvec']         = tvec
-    raw['popkeys']      = popkeys
-    raw['people']       = people
-    raw['inci']         = raw_inci
-    raw['incibypop']    = raw_incibypop
-    raw['mtct']         = raw_mtct
-    raw['births']       = raw_births
-    raw['hivbirths']    = raw_hivbirths
-    raw['pmtct']        = raw_receivepmtct
-    raw['diag']         = raw_diag
-    raw['newtreat']     = raw_newtreat
-    raw['death']        = raw_death
-    raw['otherdeath']   = raw_otherdeath
+    raw                   = odict()    # Sim output structure
+    raw['tvec']           = tvec
+    raw['popkeys']        = popkeys
+    raw['people']         = people
+    raw['inci']           = raw_inci
+    raw['incibypop']      = raw_incibypop
+    raw['incionpopbypop'] = raw_incionpopbypop
+    raw['mtct']           = raw_mtct
+    raw['births']         = raw_births
+    raw['hivbirths']      = raw_hivbirths
+    raw['pmtct']          = raw_receivepmtct
+    raw['diag']           = raw_diag
+    raw['newtreat']       = raw_newtreat
+    raw['death']          = raw_death
+    raw['otherdeath']     = raw_otherdeath
     
     checkfornegativepeople(people) # Check only once for negative people, right before finishing
     
