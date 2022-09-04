@@ -989,7 +989,8 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
     raw['incionpopbypop'] = raw_incionpopbypop
     raw['mtct']           = raw_mtct
     raw['births']         = raw_births
-    raw['immi']         = raw_immi
+    raw['hivbirths']      = raw_hivbirths
+    raw['immi']           = raw_immi
     raw['pmtct']          = raw_receivepmtct
     raw['diag']           = raw_diag
     raw['newtreat']       = raw_newtreat
