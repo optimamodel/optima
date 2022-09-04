@@ -90,6 +90,7 @@ def setmigrations(which='migrations'):
         ('2.10.9',('2.10.10','2022-08-09',None,              'Compatibility and FE updates')),
         ('2.10.10',('2.10.11','2022-08-09',fixmanfitsettings,'Fix manual fit settings (which impact on FE display)')),
         ('2.10.11',('2.10.12','2022-08-31',popgrowthoptions, 'Change forcepopsize to be forcepopgrowth by population and impact differently on key pops without inflows')),
+        ('2.10.12',('2.10.13','2022-09-01',migrationmigration,'Add migration parameters and modeling')),
         ])
     
     
@@ -1356,6 +1357,38 @@ def popgrowthoptions(project=None, **kwargs):
                     par.y[pop][0] = array([par.i[pop]])
                 
             del(ps.pars['popsize'].i)
+    return None
+
+def migrationmigration(project=None, **kwargs):
+    '''
+    Migration between Optima 2.10.12 and 2.10.13 
+    
+    This migration adds migration parameters (all of which are Timepars per population)
+    - propemigrate, numimmigrate, immihivprev, immipropdiag
+    Also included with this version update are changes to the model code to implement migration
+    '''
+    if project is not None:        
+        for ps in project.parsets.values():
+            
+            newpars = {'propemigrate': {'copyfrom': 'death', 'name': 'Percentage of people who emigrate per year',
+                                        'limits': (0,'maxrate')},
+                   'numimmigrate': {'copyfrom': 'death', 'name': 'Number of people who immigrate into population per year', 
+                                        'limits': (0, 'maxpopsize')},
+                   'immihivprev':  {'copyfrom': 'stiprev', 'name': 'HIV prevalence of immigrants into population per year', 
+                                        'limits': (0, 1)},
+                   'immipropdiag': {'copyfrom': 'stiprev', 'name': 'Proportion of people living with HIV who immigrate who are diagnosed prior to arrival', 
+                                        'limits': (0, 1)},
+                   }
+            
+            #Now actually add the new parameters
+            for parname, parkwargs in newpars.items():
+                addparameter(project=project, short=parname, **parkwargs)
+                par = ps.pars[parname]
+                for ps in project.parsets.values():
+                    for pop in par.y.keys():
+                        par.t[pop] = array([ps.start])
+                        par.y[pop] = array([0.])
+            
     return None
 
 

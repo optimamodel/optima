@@ -64,6 +64,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
     raw_newsupp     = zeros((npops, npts))          # Number newly suppressed per timestep
     raw_death       = zeros((nstates, npops, npts)) # Number of deaths per timestep
     raw_otherdeath  = zeros((npops, npts))          # Number of other deaths per timestep
+    raw_immi        = zeros((nstates, npops, npts)) # Number of migrants by state per timestep
     
     
     # Biological and failure parameters
@@ -73,7 +74,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
     deathsvl        = simpars['deathsvl']           # Death rate whilst on suppressive ART
     deathusvl       = simpars['deathusvl']          # Death rate whilst on unsuppressive ART
     cd4trans        = array([simpars['cd4transacute'], simpars['cd4transgt500'], simpars['cd4transgt350'], simpars['cd4transgt200'], simpars['cd4transgt50'], simpars['cd4translt50']])
-    background      = simpars['death']*dt           # Background death rates
+    background      = (simpars['death']+simpars['propemigrate'])*dt           # Background death rates
     relhivdeath     = simpars['hivdeath']           # Relative HIV-related death rates
     rrcomorbiditydeathtx = simpars['rrcomorbiditydeathtx']  # Relative HIV-related death rates for people on treatment (whether suppressive or unsuppressive) by time and population
     deathprob       = zeros((nstates,npops))        # Initialise death probability array
@@ -125,6 +126,11 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
     agetransit      = simpars['agetransit']         # Don't multiply age transitions by dt! These are stored as the mean number of years before transitioning, and we incorporate dt later
     risktransit     = simpars['risktransit']        # Don't multiply risk transitions by dt! These are stored as the mean number of years before transitioning, and we incorporate dt later
     birthtransit    = simpars['birthtransit']       # Don't multiply the birth transitions by dt as have already multiplied birth rates by dt
+    
+    #Immigration
+    numimmigrate    = simpars['numimmigrate']*dt    #Multiply immigration number of people by dt
+    immihivprev     = simpars['immihivprev']        #Proportion of immigrants with HIV
+    immipropdiag    = simpars['immipropdiag']       #Proportion of immigrants with HIV who are already diagnosed (will be assumed linked to care but not on treatment)
     
     # Shorten to lists of key tuples so don't have to iterate over every population twice for every timestep
     risktransitlist,agetransitlist = [],[]
@@ -238,7 +244,10 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
     force = simpars['force']
     inhomopar = simpars['inhomo']
 
+    susmap   = array([0 if i in sus      else 1 for i in range(nstates)]) #Must be simpler syntax
     plhivmap = array([0 if i in allplhiv else 1 for i in range(nstates)]) #Must be simpler syntax
+    undxmap  = array([0 if i in undx     else 1 for i in range(nstates)]) #Must be simpler syntax
+    alldxmap = array([0 if i in alldx    else 1 for i in range(nstates)]) #Must be simpler syntax
 
     ##################################################################################################################
     ### Make time-constant, dt-dependent transitions 
@@ -387,8 +396,8 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
         # Weight the initial distribution according to model settings to get an "earlier" or "later" stage epidemic to better match trends in years after initialization
         # Note that the multiplier is quite heavily weighting toward acute infections - note less multiplier for CD4<50 given diagnosis/death
         cd4weightings = maximum(minimum(array([initcd4weight**3., initcd4weight**2, initcd4weight, 1./initcd4weight, initcd4weight**-2, initcd4weight**-3]), 10.), 0.1)
-        prog *= cd4weightings
-        untxdist    = (1./prog) / sum(1./prog) # Normalize progression rates to get initial distribution
+        initprog = prog * cd4weightings
+        untxdist    = (1./initprog) / sum(1./initprog) # Normalize progression rates to get initial distribution
         txdist      = cat([[1.,1.], svlrecov[2:]]) # Use 1s for the first two entries so that the proportion of people on tx with acute infection is v small
         txdist      = (1./txdist)  / sum(1./txdist) # Normalize
 
@@ -783,6 +792,20 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
         raw_incibypop[:,:,t] += raw_mtctfrom[:,:,t] # Update infections caused based on PMTCT 
         
         
+        ##############################################################################################################
+        ### Calculate immigration
+        ##############################################################################################################
+        for p in range(npops):
+            state_distribution_sus_immi   = people[sus,p,t]
+            state_distribution_undx_immi  = people[undx,p,t]
+            state_distribution_alldx_immi = people[alldx,p,t]
+            
+            raw_immi[sus, p,t]  = numimmigrate[p,t] * (1 - immihivprev[p,t]) * state_distribution_sus_immi / state_distribution_sus_immi.sum()
+            raw_immi[undx,p,t]  = numimmigrate[p,t] * immihivprev[p,t] * (1 - immipropdiag[p,t]) * state_distribution_undx_immi / state_distribution_undx_immi.sum()
+            raw_immi[alldx,p,t] = numimmigrate[p,t] * immihivprev[p,t] *immipropdiag[p,t] * state_distribution_alldx_immi / state_distribution_alldx_immi.sum()
+
+            
+        
        
         ##############################################################################################################
         ### Check infection consistency
@@ -801,7 +824,10 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
             ## Births 
             people[susreg, :, t+1] += raw_births[:,t]*dt - undxhivbirths - dxhivbirths # HIV- babies assigned to uncircumcised compartment
             people[undx[0], :, t+1] += undxhivbirths # HIV+ babies born to undiagnosed mothers assigned to undiagnosed compartment 
-            people[dx[0], :, t+1]   += dxhivbirths   # HIV+ babies born to diagnosed mothers assigned to diagnosed compartment
+            people[dx[0], :, t+1]   += dxhivbirths   # HIV+ babies born to diagnosed mothers assigned to diagnosed 
+            
+            ## Immigration
+            people[:, :, t+1]   += raw_immi[:,:,t]
 
             ## Circumcision 
             circppl = minimum(numcirc[:,t+1], people[susreg,:,t+1])
@@ -958,6 +984,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
     raw['incibypop']    = raw_incibypop
     raw['mtct']         = raw_mtct
     raw['births']       = raw_births
+    raw['immi']         = raw_immi
     raw['hivbirths']    = raw_hivbirths
     raw['pmtct']        = raw_receivepmtct
     raw['diag']         = raw_diag
