@@ -120,7 +120,8 @@ class Resultset(object):
         self.other['childprev']     = Result('Child HIV prevalence (%)', ispercentage=True)
         self.other['numotherdeath'] = Result('Non-HIV-related deaths)')
         self.other['numbirths']     = Result('Total births)')
-        
+        self.other['numincionpopbypop'] = Result('New HIV infections acquired from pop', defaultplot='population+stacked')
+
         # Add all health states
         for healthkey,healthname in zip(self.settings.healthstates, self.settings.healthstatesfull): # Health keys: ['susreg', 'progcirc', 'undx', 'dx', 'care', 'lost', 'usvl', 'svl']
             self.other['only'+healthkey]   = Result(healthname) # Pick out only people in these health states
@@ -301,6 +302,7 @@ class Resultset(object):
         allpeople    = assemble('people')
         allinci      = assemble('inci')
         allincibypop = assemble('incibypop')
+        allincionpopbypop = assemble('incionpopbypop')
         alldeaths    = assemble('death')
         otherdeaths  = assemble('otherdeath') 
         alldiag      = assemble('diag')
@@ -491,6 +493,11 @@ class Resultset(object):
         
         self.other['numbirths'].pops = process(allbirths[:,:,indices])
         self.other['numbirths'].tot = process(allbirths[:,:,indices].sum(axis=1))
+
+        self.other['numincionpopbypop'].pops = process(allincionpopbypop[:, :, :, :, indices].sum(axis=2))  # Axis 2 is health state of causers
+        self.other['numincionpopbypop'].tot  = process(allincionpopbypop[:, :, :, :, indices].sum(axis=(2, 3)))  # Axis 3 is causer populations
+        self.other['numincionpopbypop'].datatot = process(array([allinci[:,:,indices],allinci[:,:,indices],allinci[:,:,indices]])) # summing over both causing state and population gives total per acquired population
+        self.other['numincionpopbypop'].estimate = False  # Not an estimate because the model produced the "data" - should match up
         
         # Add in each health state
         for healthkey in self.settings.healthstates: # Health keys: ['susreg', 'progcirc', 'undx', 'dx', 'care', 'lost', 'usvl', 'svl']
