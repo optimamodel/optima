@@ -246,10 +246,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
     force = simpars['force']
     inhomopar = simpars['inhomo']
 
-    susmap   = array([0 if i in sus      else 1 for i in range(nstates)]) #Must be simpler syntax
     plhivmap = array([0 if i in allplhiv else 1 for i in range(nstates)]) #Must be simpler syntax
-    undxmap  = array([0 if i in undx     else 1 for i in range(nstates)]) #Must be simpler syntax
-    alldxmap = array([0 if i in alldx    else 1 for i in range(nstates)]) #Must be simpler syntax
 
     ##################################################################################################################
     ### Make time-constant, dt-dependent transitions
@@ -804,11 +801,9 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
             state_distribution_undx_immi  = people[undx,p,t]
             state_distribution_alldx_immi = people[alldx,p,t]
 
-            raw_immi[sus, p,t]  = numimmigrate[p,t] * (1 - immihivprev[p,t]) * state_distribution_sus_immi / state_distribution_sus_immi.sum()
-            raw_immi[undx,p,t]  = numimmigrate[p,t] * immihivprev[p,t] * (1 - immipropdiag[p,t]) * state_distribution_undx_immi / state_distribution_undx_immi.sum()
-            raw_immi[alldx,p,t] = numimmigrate[p,t] * immihivprev[p,t] *immipropdiag[p,t] * state_distribution_alldx_immi / state_distribution_alldx_immi.sum()
-
-
+            raw_immi[sus, p,t]  = numimmigrate[p,t] * (1 - immihivprev[p,t]) * state_distribution_sus_immi / (state_distribution_sus_immi.sum()+eps)
+            raw_immi[undx,p,t]  = numimmigrate[p,t] * immihivprev[p,t] * (1 - immipropdiag[p,t]) * state_distribution_undx_immi / (state_distribution_undx_immi.sum()+eps)
+            raw_immi[alldx,p,t] = numimmigrate[p,t] * immihivprev[p,t] *immipropdiag[p,t] * state_distribution_alldx_immi / (state_distribution_alldx_immi.sum()+eps)
 
 
         ##############################################################################################################
