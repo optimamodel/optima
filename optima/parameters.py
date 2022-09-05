@@ -764,27 +764,32 @@ class Popsizepar(Par):
             else:
                 if sample=='new' or self.msample is None: self.sample(randseed=randseed) # msample doesn't exist, make it
                 meta = self.msample
-
+                
+                
         # Do interpolation
         npops = len(outkeys)
         if asarray: output = zeros((npops,len(tvec)))
         else: output = odict()
         for pop,key in enumerate(outkeys):
+            localtvec = linspace(min(self.t[key]), max(tvec), (int(max(tvec)/dt)-int(min(self.t[key])/dt))+1) #TODO all populations should be precalculated somewhere else, going to be slow to keep regenerating this?
             if key in self.keys():
                 # if self.start[key] == tvec[0]: #just apply the pure exponential growth
                 #     yinterp= meta * self.y[key][0] * grow(self.e[key], array(tvec)-self.start[key]) 
                 # else:
                 #1. Linear interpolation between data points to tvec until self.forcegrowth[key]
-                yinterp = meta * smoothinterp(tvec, self.t[key], self.y[key], smoothness=0) # Use interpolation without smoothness so that it aligns exactly with a starting point for 
+                yinterp = meta * smoothinterp(localtvec, self.t[key], self.y[key], smoothness=0) # Use interpolation without smoothness so that it aligns exactly with a starting point for 
                 #2. Replace linear interpolation after self.start
-                expstartind = findnearest(tvec, self.start[key])
-                yinterp[expstartind:] = yinterp[expstartind] * grow(self.e[key], array(tvec[expstartind:])-self.start[key]) #don't apply meta again (it's already factored into the linear part)
+                expstartind = findnearest(localtvec, self.start[key])
+                yinterp[expstartind:] = yinterp[expstartind] * grow(self.e[key], array(localtvec[expstartind:])-self.start[key]) #don't apply meta again (it's already factored into the linear part)
                 #3. Apply limits
                 yinterp = applylimits(par=self, y=yinterp, limits=self.limits, dt=dt)
             else:
                 yinterp = zeros(len(tvec))
-            if asarray: output[pop,:] = yinterp
-            else:       output[key] = yinterp
+
+            yinterpreturn = array([yval for tind, yval in enumerate(yinterp) if localtvec[tind] in tvec]) #TODO likely this is slow
+            
+            if asarray: output[pop,:] = yinterpreturn
+            else:       output[key] = yinterpreturn
         return output
 
 
