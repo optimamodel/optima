@@ -453,7 +453,7 @@ class Par(object):
         * Constants   have y, ysample
         * Metapars    have y[], ysample[], m, msample
         * Timepars    have y[], t[], m, msample
-        * Popsizepars have t[], y[], start, e[], m, msample
+        * Popsizepars have y[], t[], start[], e[], m, msample
         * Yearpars    have t
     
     Consequently, some of them have different sample(), updateprior(), and interp() methods; in brief:
@@ -718,7 +718,7 @@ class Popsizepar(Par):
         if e is None: e = odict()
         if t is None: t = odict()
         if y is None: y = odict()
-        if start is None: start = 2000.
+        if start is None: start = odict()
         self.e = e # Exponential fit exponent, e.g. 0.03
         self.m = m # Multiplicative metaparameter, e.g. 1
         self.start = start # Year for which population growth start is calibrated : this is the year that exponential population growth starts; before this exact (interpolated) data values are assumed to be correct
@@ -771,14 +771,14 @@ class Popsizepar(Par):
         else: output = odict()
         for pop,key in enumerate(outkeys):
             if key in self.keys():
-                # if self.start == tvec[0]: #just apply the pure exponential growth
-                #     yinterp= meta * self.y[key][0] * grow(self.e[key], array(tvec)-self.start) 
+                # if self.start[key] == tvec[0]: #just apply the pure exponential growth
+                #     yinterp= meta * self.y[key][0] * grow(self.e[key], array(tvec)-self.start[key]) 
                 # else:
                 #1. Linear interpolation between data points to tvec until self.forcegrowth[key]
                 yinterp = meta * smoothinterp(tvec, self.t[key], self.y[key], smoothness=0) # Use interpolation without smoothness so that it aligns exactly with a starting point for 
                 #2. Replace linear interpolation after self.start
-                expstartind = findnearest(tvec, self.start)
-                yinterp[expstartind:] = yinterp[expstartind] * grow(self.e[key], array(tvec[expstartind:])-self.start) #don't apply meta again (it's already factored into the linear part)
+                expstartind = findnearest(tvec, self.start[key])
+                yinterp[expstartind:] = yinterp[expstartind] * grow(self.e[key], array(tvec[expstartind:])-self.start[key]) #don't apply meta again (it's already factored into the linear part)
                 #3. Apply limits
                 yinterp = applylimits(par=self, y=yinterp, limits=self.limits, dt=dt)
             else:
@@ -908,7 +908,7 @@ def data2popsize(data=None, keys=None, blh=0, uniformgrowth=False, doplot=False,
     
     # Perform 2-parameter exponential fit to data
     startyear = data['years'][0]
-    par.start = data['years'][0]
+    par.start = odict({pop: data['years'][0] for pop in keys})
     tdata = odict()
     ydata = odict()
     for key in atleast2datapoints:
@@ -1152,7 +1152,7 @@ def makepars(data=None, verbose=2, die=True, fixprops=None):
             if partype=='initprev': # Initialize prevalence only
                 pars['initprev'] = data2prev(data=data, keys=keys, **rawpar) # Pull out first available HIV prevalence point
             
-            elif partype=='popsize': # Population size only
+            elif partype=='popsize': # Population size 
                 pars['popsize'] = data2popsize(data=data, keys=keys, **rawpar)
             
             elif partype=='timepar': # Otherwise it's a regular time par, made from data
