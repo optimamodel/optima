@@ -496,6 +496,12 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                 birthslist.append(tuple([p1,p2,birthrates,alleligbirthrate]))
     motherpops = set([thisbirth[0] for thisbirth in birthslist]) # Get the list of all populations who are mothers
 
+    ## Immigration precalculation (can do this in advance as it doesn't depend on epidemic state)
+    ##############################################################################################################
+    raw_immi[susreg, :,:]  = einsum('ij,ij,k->kij', numimmigrate, (1. - immihivprev), array([1.])) #assume not programmatically circumcised
+    raw_immi[undx,:,:]     = einsum('ij,ij,ij,k->kij', numimmigrate, immihivprev, (1. - immipropdiag), untxdist) #assume never treated
+    raw_immi[dx,:,:]       = einsum('ij,ij,ij,k->kij', numimmigrate, immihivprev, immipropdiag, txdist) #assume previously treated and come into the model as "diagnosed" and ready to be linked to care
+
 
     ##############################################################################################################
     ### Age precalculation
@@ -793,17 +799,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
         raw_incibypop[:,:,t] += raw_mtctfrom[:,:,t] # Update infections caused based on PMTCT
         raw_incionpopbypop[:,:,:,t] += raw_mtcttoandfrom[:,:,:,t]
 
-        ##############################################################################################################
-        ### Calculate immigration
-        ##############################################################################################################
-        for p in range(npops):
-            state_distribution_sus_immi   = people[sus,p,t]
-            state_distribution_undx_immi  = people[undx,p,t]
-            state_distribution_alldx_immi = people[alldx,p,t]
 
-            raw_immi[sus, p,t]  = numimmigrate[p,t] * (1 - immihivprev[p,t]) * state_distribution_sus_immi / (state_distribution_sus_immi.sum()+eps)
-            raw_immi[undx,p,t]  = numimmigrate[p,t] * immihivprev[p,t] * (1 - immipropdiag[p,t]) * state_distribution_undx_immi / (state_distribution_undx_immi.sum()+eps)
-            raw_immi[alldx,p,t] = numimmigrate[p,t] * immihivprev[p,t] *immipropdiag[p,t] * state_distribution_alldx_immi / (state_distribution_alldx_immi.sum()+eps)
 
 
         ##############################################################################################################
