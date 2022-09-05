@@ -771,7 +771,11 @@ class Popsizepar(Par):
         if asarray: output = zeros((npops,len(tvec)))
         else: output = odict()
         for pop,key in enumerate(outkeys):
-            localtvec = linspace(min(self.t[key]), max(tvec), (int(max(tvec)/dt)-int(min(self.t[key])/dt))+1) #TODO all populations should be precalculated somewhere else, going to be slow to keep regenerating this?
+            if min(tvec) != self.start[key]:
+                localtvec = linspace(min(self.t[key]), max(tvec), (int(max(tvec)/dt)-int(min(self.t[key])/dt))+1) #TODO all populations should be precalculated somewhere else, going to be slow to keep regenerating this?
+            else:
+                localtvec = tvec
+            
             if key in self.keys():
                 # if self.start[key] == tvec[0]: #just apply the pure exponential growth
                 #     yinterp= meta * self.y[key][0] * grow(self.e[key], array(tvec)-self.start[key]) 
