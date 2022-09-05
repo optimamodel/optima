@@ -1347,15 +1347,21 @@ def popgrowthoptions(project=None, **kwargs):
                 #as if loading data into y and t values
                 blh = 0 #best-low-high = 0-1-2
                 par.start[pop] = op.dcp(ps.start)
-                par.y[pop] = op.sanitize(project.data['popsize'][blh][popind]) # Store each extant value
-                par.t[pop] = array(project.data['years'])[~isnan(project.data['popsize'][blh][popind])] # Store each year
+                
+                popsizedata = project.data['popsize'][blh][popind]
+                if len(popsizedata)==1: #it's an assumption (very uncommon)
+                    popsizedata = array(popsizedata*len(project.data['years']))
+                    
+                par.y[pop] = op.sanitize(popsizedata) # Store each extant value
+                par.t[pop] = array(project.data['years'])[~isnan(popsizedata)] # Store each year
                 
                 #check if a start year value exists
-                if not par.start[pop] in par.t[pop]: #add an initial value dummy 'data' point
+                if not ps.start in par.t[pop]: #add an initial value dummy 'data' point
                     par.y[pop] = append([par.i[pop]], par.y[pop])
-                    par.t[pop] = append([par.start[pop]], par.t[pop])
+                    par.t[pop] = append([ps.start], par.t[pop])
                 else: #reset the first value to the previous .i value for consistency
                     par.y[pop][0] = array([par.i[pop]])
+                    
             del(ps.pars['popsize'].i)
     return None
 
