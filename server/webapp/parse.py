@@ -413,8 +413,8 @@ def set_parameters_on_parset(parameters, parset):
             pars[key].m = value
         elif par_type in ['pop', 'pship']:  # Populations or partnerships
             pars[key].y[subkey] = value
-        elif par_type == 'exp':  # Population growth
-            pars[key].i[subkey] = value
+        elif par_type == 'exp':  # Population growth (initial population size)
+            pars[key].y[subkey][0] = value
         elif par_type == 'const':
             pars[key].y = value
         elif par_type == 'year':

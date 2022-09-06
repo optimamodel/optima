@@ -313,7 +313,7 @@ class Parameterset(object):
                         keylist.append(key)
                         subkeylist.append(subkey)
                         typelist.append('exp')
-                        valuelist.append(par.y[subkey])
+                        valuelist.append(par.y[subkey][0]) #Initial population size - editing exponent would be more useful but runs into negative numbers that the FE doesn't like as they're outside of the parameter bounds
                         labellist.append('%s: %s' % (par.name, str(subkey)))
                 else:
                     print('Parameter type "%s" not implemented!' % par.manual)
