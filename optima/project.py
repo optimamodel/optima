@@ -564,7 +564,7 @@ class Project(object):
 
     def runsim(self, name=None, pars=None, simpars=None, start=None, end=None, dt=None, tvec=None, 
                budget=None, coverage=None, budgetyears=None, data=None, n=1, sample=None, tosample=None, randseed=None,
-               addresult=True, overwrite=True, keepraw=False, doround=True, die=True, debug=False, verbose=None, 
+               addresult=True, overwrite=True, keepraw=False, doround=False, die=True, debug=False, verbose=None, 
                parsetname=None, progsetname=None, resultname=None, label=None, smoothness=None, **kwargs):
         ''' 
         This function runs a single simulation, or multiple simulations if n>1. This is the

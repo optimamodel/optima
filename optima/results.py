@@ -43,7 +43,7 @@ class Result(object):
 
 class Resultset(object):
     ''' Structure to hold results '''
-    def __init__(self, raw=None, name=None, pars=None, simpars=None, project=None, settings=None, data=None, parsetname=None, progsetname=None, budget=None, coverage=None, budgetyears=None, domake=True, quantiles=None, keepraw=False, verbose=2, doround=True):
+    def __init__(self, raw=None, name=None, pars=None, simpars=None, project=None, settings=None, data=None, parsetname=None, progsetname=None, budget=None, coverage=None, budgetyears=None, domake=True, quantiles=None, keepraw=False, verbose=2, doround=False):
         # Basic info
         self.uid = uuid()
         self.created = today()
@@ -220,7 +220,7 @@ class Resultset(object):
         return R
             
         
-    def make(self, raw, quantiles=None, annual=True, verbose=2, doround=True, lifeexpectancy=None, discountrate=None, yllconstrained=None):
+    def make(self, raw, quantiles=None, annual=True, verbose=2, doround=False, lifeexpectancy=None, discountrate=None, yllconstrained=None):
         """
         Gather standard results into a form suitable for plotting with uncertainties.
         Life expectancy is measured in years, and the discount rate is in absolute
