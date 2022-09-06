@@ -1,5 +1,5 @@
 import optima as op
-from numpy import nan, isnan, mean, concatenate as cat, array, exp
+from numpy import nan, isnan, mean, concatenate as cat, array, exp, append
 
 
 ##########################################################################################
@@ -89,6 +89,8 @@ def setmigrations(which='migrations'):
         ('2.10.8',('2.10.9','2022-07-20', None,              'Make popfactor apply directly to target population size, instead of the function for coverage')),
         ('2.10.9',('2.10.10','2022-08-09',None,              'Compatibility and FE updates')),
         ('2.10.10',('2.10.11','2022-08-09',fixmanfitsettings,'Fix manual fit settings (which impact on FE display)')),
+        ('2.10.11',('2.10.12','2022-08-31',popgrowthoptions, 'Change forcepopsize to be forcepopgrowth by population and impact differently on key pops without inflows')),
+        ('2.10.12',('2.10.13','2022-09-01',migrationmigration,'Add migration parameters and modeling')),
         ])
     
     
@@ -1324,6 +1326,75 @@ def fixmanfitsettings(project=None, **kwargs):
             ps.pars['forcepopsize'].manual     = 'const'
             ps.pars['relhivbirth'].manual      = 'const'
             ps.pars['rrcomorbiditydeathtx'].manual = 'no'
+    return None
+
+def popgrowthoptions(project=None, **kwargs):
+    '''
+    Migration between Optima 2.10.11 and 2.10.12 
+    
+    - Add extra attributes to Popsizepar parameters to capture the full data values
+    - Before .start year use interpolated pop sizes from the databook
+    - From .start year use exponential growth from the last data pop size
+    '''
+    if project is not None:        
+        for ps in project.parsets.values():
+            par = ps.pars['popsize']
+            
+            par.y = op.odict()
+            par.t = op.odict() 
+            par.start = op.odict()
+            for popind, pop in enumerate(par.e.keys()):
+                #as if loading data into y and t values
+                blh = 0 #best-low-high = 0-1-2
+                par.start[pop] = op.dcp(ps.start)
+                
+                popsizedata = project.data['popsize'][blh][popind]
+                if len(popsizedata)==1: #it's an assumption (very uncommon)
+                    popsizedata = array(popsizedata*len(project.data['years']))
+                    
+                par.y[pop] = op.sanitize(popsizedata) # Store each extant value
+                par.t[pop] = array(project.data['years'])[~isnan(popsizedata)] # Store each year
+                
+                #check if a start year value exists
+                if not ps.start in par.t[pop]: #add an initial value dummy 'data' point
+                    par.y[pop] = append([par.i[pop]], par.y[pop])
+                    par.t[pop] = append([ps.start], par.t[pop])
+                else: #reset the first value to the previous .i value for consistency
+                    par.y[pop][0] = array([par.i[pop]])
+                    
+            del(ps.pars['popsize'].i)
+    return None
+
+def migrationmigration(project=None, **kwargs):
+    '''
+    Migration between Optima 2.10.12 and 2.10.13 
+    
+    This migration adds migration parameters (all of which are Timepars per population)
+    - propemigrate, numimmigrate, immihivprev, immipropdiag
+    Also included with this version update are changes to the model code to implement migration
+    '''
+    if project is not None:        
+        for ps in project.parsets.values():
+            
+            newpars = {'propemigrate': {'copyfrom': 'death', 'name': 'Percentage of people who emigrate per year',
+                                        'limits': (0,'maxrate')},
+                   'numimmigrate': {'copyfrom': 'death', 'name': 'Number of people who immigrate into population per year', 
+                                        'limits': (0, 'maxpopsize')},
+                   'immihivprev':  {'copyfrom': 'stiprev', 'name': 'HIV prevalence of immigrants into population per year', 
+                                        'limits': (0, 1)},
+                   'immipropdiag': {'copyfrom': 'stiprev', 'name': 'Proportion of people living with HIV who immigrate who are diagnosed prior to arrival', 
+                                        'limits': (0, 1)},
+                   }
+            
+            #Now actually add the new parameters
+            for parname, parkwargs in newpars.items():
+                addparameter(project=project, short=parname, **parkwargs)
+                par = ps.pars[parname]
+                for ps in project.parsets.values():
+                    for pop in par.y.keys():
+                        par.t[pop] = array([ps.start])
+                        par.y[pop] = array([0.])
+            
     return None
 
 
