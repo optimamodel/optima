@@ -772,7 +772,7 @@ class Popsizepar(Par):
         else: output = odict()
         for pop,key in enumerate(outkeys):
             if min(tvec) != self.start[key]:
-                localtvec = linspace(min(self.t[key]), max(tvec), (int(max(tvec)/dt)-int(min(self.t[key])/dt))+1) #TODO all populations should be precalculated somewhere else, going to be slow to keep regenerating this?
+                localtvec = linspace(self.t[key][0], max(tvec), (int(max(tvec)/dt)-int(self.t[key][0]/dt))+1) #TODO all populations should be precalculated somewhere else, going to be slow to keep regenerating this?
             else:
                 localtvec = tvec
             
