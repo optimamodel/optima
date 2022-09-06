@@ -496,8 +496,9 @@ class Resultset(object):
 
         self.other['numincionpopbypop'].pops = process(allincionpopbypop[:, :, :, :, indices].sum(axis=2))  # Axis 2 is health state of causers
         self.other['numincionpopbypop'].tot  = process(allincionpopbypop[:, :, :, :, indices].sum(axis=(2, 3)))  # Axis 3 is causer populations
-        self.other['numincionpopbypop'].datatot = process(array([allinci[:,:,indices],allinci[:,:,indices],allinci[:,:,indices]])) # summing over both causing state and population gives total per acquired population
-        self.other['numincionpopbypop'].estimate = False  # Not an estimate because the model produced the "data" - should match up
+        # Uncomment the lines below to check that numincionpopbypop is being calculated properly compared with numinci - it will show as data on the plots
+        # self.other['numincionpopbypop'].datatot = process(array([allinci[:,:,indices],allinci[:,:,indices],allinci[:,:,indices]])) # summing over both causing state and population gives total per acquired population
+        # self.other['numincionpopbypop'].estimate = False  # Not an estimate because the model produced the "data" - should match up
         
         # Add in each health state
         for healthkey in self.settings.healthstates: # Health keys: ['susreg', 'progcirc', 'undx', 'dx', 'care', 'lost', 'usvl', 'svl']
