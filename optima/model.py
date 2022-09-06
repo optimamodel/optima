@@ -1,5 +1,5 @@
 ## Imports
-from numpy import zeros, exp, maximum, minimum, inf, array, isnan, einsum, floor, ones, power as npow, concatenate as cat, interp, nan, squeeze, isinf, isfinite
+from numpy import zeros, exp, maximum, minimum, inf, array, isnan, einsum, floor, ones, power as npow, concatenate as cat, interp, nan, squeeze, isinf, isfinite, argsort, take_along_axis, put_along_axis, expand_dims
 from optima import OptimaException, printv, dcp, odict, findinds
 
 def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False, debug=False, label=None, startind=None):
@@ -53,11 +53,11 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
     # Initialize raw arrays -- reporting annual quantities (so need to divide by dt!)
     raw_inci        = zeros((npops, npts))          # Total incidence acquired by each population
     raw_incibypop   = zeros((nstates, npops, npts)) # Total incidence caused by each population and each state
-    raw_incionpopbypop   = zeros((npops, nstates, npops, npts))  # Total incidence in each population caused by each population and each state, 1st axis is acquired population. 2nd axis is caused state, 3rd axis is caused population
+    raw_incionpopbypopmethods   = zeros((settings.nmethods, npops, nstates, npops, npts))  # Total incidence in each population caused by each population and each state, 1st axis is method of transmission, 2nd axis is acquired population. 3rd axis is caused state, 4th axis is caused population
     raw_births      = zeros((npops, npts))          # Total number of births to each population
     raw_mtct        = zeros((npops, npts))          # Number of mother-to-child transmissions to each population
     raw_mtctfrom    = zeros((nstates, npops, npts)) # Number of mother-to-child transmissions from each population and each state
-    raw_mtcttoandfrom=zeros((npops, nstates, npops, npts)) # Number of mother-to-child transmissions to each population and from each population and each state, similar to raw_incionpopbypop
+    raw_mtcttoandfrom=zeros((npops, nstates, npops, npts)) # Number of mother-to-child transmissions to each population and from each population and each state, similar to raw_incionpopbypopcauses
     raw_hivbirths   = zeros((npops, npts))          # Number of births to HIV+ pregnant women
     raw_receivepmtct= zeros((npops, npts))          # Initialise a place to store the number of people in each population receiving PMTCT
     raw_diag        = zeros((npops, npts))          # Number diagnosed per timestep
@@ -115,6 +115,9 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
     gt50            = settings.gt50                 # >50
     lt50            = settings.lt50                 # <50
     aidsind         = settings.aidsind              # AIDS
+    sex             = settings.sex                  # Infection via sex
+    inj             = settings.inj                  # Infection via injection
+    mtct            = settings.mtct                 # Infection via MTCT
     allcd4          = [acute,gt500,gt350,gt200,gt50,lt50]
 
     if debug and len(sus)!=2:
@@ -582,15 +585,17 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
         # Probability of getting infected. In the first stage of construction, we actually store this as the probability of NOT getting infected
         # First dimension: infection acquired by (circumcision status). Second dimension:  infection acquired by (pop). Third dimension: infection caused by (pop). Fourth dimension: infection caused by (health/treatment state)
         forceinffull = ones((len(sus), npops, nstates, npops))
+        forceinffullsexinj = ones((2,len(sus), npops, nstates, npops)) # note that inj and sex should be 0 and 1
 
         # Loop over all acts (partnership pairs) -- probability of pop1 getting infected by pop2
         for pop1,pop2,wholeacts,fracacts,cond,thistrans in sexactslist:
 
             thisforceinfsex = (1-fracacts[t]*thistrans*cond[t]*einsum('a,b',alleff[pop1,t,:],effallprev[:,pop2]))
             if wholeacts[t]: thisforceinfsex  *= npow((1-thistrans*cond[t]*einsum('a,b',alleff[pop1,t,:],effallprev[:,pop2])), int(wholeacts[t]))
-            forceinffull[:,pop1,:,pop2] *= thisforceinfsex
+            # forceinffull[:,pop1,:,pop2] *= thisforceinfsex # don't need to do as doing the same for forceinffullsexinj
+            forceinffullsexinj[sex,:,pop1,:,pop2] *= thisforceinfsex # note that inj and sex should be 0 and 1
 
-            if debug and not((forceinffull[:,pop1,:,pop2]>=0).all()):
+            if debug and not((forceinffullsexinj[sex,:,pop1,:,pop2]>=0).all()):
                 errormsg = label + 'Sexual force-of-infection is invalid between populations %s and %s, time %0.1f, FOI:\n%s)' % (popkeys[pop1], popkeys[pop2], tvec[t], forceinffull[:,pop1,:,pop2])
                 for var in ['thistrans', 'circeff[pop1,t]', 'prepeff[pop1,t]', 'stieff[pop1,t]', 'cond', 'wholeacts', 'fracacts', 'effallprev[:,pop2]']:
                     errormsg += '\n%20s = %f' % (var, eval(var)) # Print out extra debugging information
@@ -603,15 +608,18 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
             if wholeacts[t]: thisforceinfinj *= npow((1-transinj*sharing[pop1,t]*osteff[t]*prepeff[pop1,t]*effallprev[:,pop2]), int(wholeacts[t]))
 
             for index in sus: # Assign the same probability of getting infected by injection to both circs and uncircs, as it doesn't matter
-                forceinffull[index,pop1,:,pop2] *= thisforceinfinj
+                # forceinffull[index,pop1,:,pop2] *= thisforceinfinj # don't need to do as doing the same for forceinffullsexinj
+                forceinffullsexinj[inj,index,pop1,:,pop2] *= thisforceinfinj # note that inj and sex should be 0 and 1
 
-            if debug and not((forceinffull[:,pop1,:,pop2]>=0).all()):
+            if debug and not((forceinffullsexinj[inj,:,pop1,:,pop2]>=0).all()):
                 errormsg = label + 'Injecting force-of-infection is invalid between populations %s and %s, time %0.1f, FOI:\n%s)' % (popkeys[pop1], popkeys[pop2], tvec[t], forceinffull[:,pop1,:,pop2])
                 for var in ['transinj', 'sharing[pop1,t]', 'wholeacts', 'fracacts', 'osteff[t]', 'effallprev[:,pop2]']:
                     errormsg += '\n%20s = %f' % (var, eval(var)) # Print out extra debugging information
                 raise OptimaException(errormsg)
 
-        # Probability of getting infected is one minus forceinffull times any scaling factors
+        forceinffull = forceinffullsexinj[sex,:,:,:,:] * forceinffullsexinj[inj,:,:,:,:]
+
+        # Probability of getting infected is one minus forceinffull times any scaling factors !! copied below !!
         forceinffull  = einsum('ijkl,j,j,j->ijkl', 1.-forceinffull, force, inhomo,(1.-background[:,t]))
         infections_to = forceinffull.sum(axis=(2,3)) # Infections acquired through sex and injecting - by population who gets infected
         infections_to = minimum(infections_to, 1.0-eps-background[:,t].max()) # Make sure it never exceeds the limit
@@ -628,7 +636,22 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
         # Calculate infections acquired and transmitted
         raw_inci[:,t]               = einsum('ij,ijkl->j', people[sus,:,t], forceinffull)/dt
         raw_incibypop[:,:,t]        = einsum('ij,ijkl->kl', people[sus,:,t], forceinffull)/dt
-        raw_incionpopbypop[:,:,:,t] = einsum('ij,ijkl->jkl', people[sus,:,t], forceinffull)/dt
+
+        # Some people (although small) will have gotten infected from both sex and injections, we default these people to the higher probability (higher risk) method
+        forceinffullsexinj = 1 - forceinffullsexinj
+        probsexinjsortindices = argsort(forceinffullsexinj,axis=0)
+        probsmallerlocations  = expand_dims(probsexinjsortindices[0,:,:,:,:], axis=0)
+        probbiggerlocations   = expand_dims(probsexinjsortindices[1,:,:,:,:], axis=0)
+
+        smallerprob = take_along_axis(forceinffullsexinj, probsmallerlocations, axis=0)
+        largerprob  = take_along_axis(forceinffullsexinj, probbiggerlocations, axis=0)
+        put_along_axis(forceinffullsexinj, probsmallerlocations, smallerprob - smallerprob * largerprob, axis=0) # The assumption that the two infection events are independent, same assumption as above
+
+        # Probability of getting infected by each method is probsexinjsortindices times any scaling factors, !! copied from above !!
+        forceinffullcauses = einsum('mijkl,j,j,j->mijkl', forceinffullsexinj, force, inhomo, (1. - background[:, t]))
+
+        raw_incionpopbypopmethods[[sex,inj],:,:,:,t] = einsum('ij,mijkl->mjkl', people[sus,:,t], forceinffullcauses[[sex,inj],:,:,:,:])/dt
+        # raw_incionpopbypop[:,:,:,t] = einsum('ij,ijkl->jkl', people[sus,:,t], forceinffull)/dt
 
         ##############################################################################################################
         ### Calculate deaths
@@ -797,8 +820,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
 
         raw_inci[:,t] += raw_mtct[:,t] # Update infections acquired based on PMTCT calculation
         raw_incibypop[:,:,t] += raw_mtctfrom[:,:,t] # Update infections caused based on PMTCT
-        raw_incionpopbypop[:,:,:,t] += raw_mtcttoandfrom[:,:,:,t]
-
+        raw_incionpopbypopmethods[[mtct],:,:,:,t] += raw_mtcttoandfrom[:,:,:,t]
 
 
 
@@ -977,7 +999,8 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
     raw['people']         = people
     raw['inci']           = raw_inci
     raw['incibypop']      = raw_incibypop
-    raw['incionpopbypop'] = raw_incionpopbypop
+    raw['incionpopbypop'] = raw_incionpopbypopmethods.sum(axis=0) # removes the method of transmission
+    raw['incimethods']    = raw_incionpopbypopmethods
     raw['mtct']           = raw_mtct
     raw['births']         = raw_births
     raw['hivbirths']      = raw_hivbirths

@@ -67,6 +67,13 @@ class Settings(object):
         self.allaids        = cat([self.lt50, self.gt50]) # All people with AIDS
         self.allstates      = cat([self.sus, self.allplhiv]) # All states
         self.nstates        = len(self.allstates) # Total number of states
+
+        # Infection methods
+        self.inj = 0  # Injection, don't change from 0 or 1
+        self.sex = 1  # Sexual transmission, don't change from 0 or 1
+        self.mtct = 2 # MTCT
+        self.nmethods = 3 # 3 methods of transmission
+        self.methodnames = ['Injection','Sex','MTCT']
         
         # Set labels for each health state
         thesestates = dcp(self.healthstates)

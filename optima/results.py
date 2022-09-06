@@ -7,7 +7,7 @@ Version: 2018nov19
 from optima import OptimaException, Link, Settings, odict, pchip, plotpchip, sigfig # Classes/functions
 from optima import uuid, today, makefilepath, getdate, printv, dcp, objrepr, defaultrepr, sanitizefilename, sanitize # Printing/file utilities
 from optima import quantile, findinds, findnearest, promotetolist, promotetoarray, checktype # Numeric utilities
-from numpy import array, nan, zeros, arange, shape, maximum, log
+from numpy import array, nan, zeros, arange, shape, maximum, log, swapaxes
 from numbers import Number
 from xlsxwriter import Workbook
 
@@ -121,6 +121,7 @@ class Resultset(object):
         self.other['numotherdeath'] = Result('Non-HIV-related deaths)')
         self.other['numbirths']     = Result('Total births)')
         self.other['numincionpopbypop'] = Result('New HIV infections acquired from pop', defaultplot='population+stacked')
+        self.other['numincimethods'] = Result('New HIV infections by method of transmission', defaultplot='population+stacked')
 
         # Add all health states
         for healthkey,healthname in zip(self.settings.healthstates, self.settings.healthstatesfull): # Health keys: ['susreg', 'progcirc', 'undx', 'dx', 'care', 'lost', 'usvl', 'svl']
@@ -303,6 +304,7 @@ class Resultset(object):
         allinci      = assemble('inci')
         allincibypop = assemble('incibypop')
         allincionpopbypop = assemble('incionpopbypop')
+        allincimethods = assemble('incimethods')
         alldeaths    = assemble('death')
         otherdeaths  = assemble('otherdeath') 
         alldiag      = assemble('diag')
@@ -499,7 +501,14 @@ class Resultset(object):
         # Uncomment the lines below to check that numincionpopbypop is being calculated properly compared with numinci - it will show as data on the plots
         # self.other['numincionpopbypop'].datatot = process(array([allinci[:,:,indices],allinci[:,:,indices],allinci[:,:,indices]])) # summing over both causing state and population gives total per acquired population
         # self.other['numincionpopbypop'].estimate = False  # Not an estimate because the model produced the "data" - should match up
-        
+
+        self.other['numincimethods'].pops = swapaxes(process(allincimethods[:, :, :, :, :, indices].sum(axis=(3,4))), 1, 2)  # Axis 3 is health state of causers, axis 4 is causer population
+                                                                # put population acquired into axis 1, method into axis 2
+        self.other['numincimethods'].tot  = process(allincimethods[:, :, :, :, :, indices].sum(axis=(1, 3, 4)))  # Axis 1 is method
+        # Uncomment the lines below to check that numincimethods is being calculated properly compared with numinci - it will show as data on the plots
+        # self.other['numincimethods'].datatot = process(array([allinci[:,:,indices],allinci[:,:,indices],allinci[:,:,indices]])) # summing over both causing state and population gives total per acquired population
+        # self.other['numincimethods'].estimate = False  # Not an estimate because the model produced the "data" - should match up
+
         # Add in each health state
         for healthkey in self.settings.healthstates: # Health keys: ['susreg', 'progcirc', 'undx', 'dx', 'care', 'lost', 'usvl', 'svl']
             healthinds = getattr(self.settings, healthkey)
