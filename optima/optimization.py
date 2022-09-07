@@ -286,7 +286,7 @@ def constrainbudget(origbudget=None, budgetvec=None, totalbudget=None, budgetlim
         count += 1
         if count>countmax: raise OptimaException('Tried %i times to fix budget and failed! (wanted: %g; actual: %g' % (count, optimbudget, sum(scaledbudgetvec)))
         undershoot = optimbudget - sum(scaledbudgetvec)
-        toolittle = (sum(scaledbudgetvec[~limhigh]) + undershoot) / float(sum(scaledbudgetvec[~limhigh]))
+        toolittle = (sum(scaledbudgetvec[~limhigh]) + undershoot) / float(sum(scaledbudgetvec[~limhigh])+tolerance)
         for oi,oind in enumerate(optiminds):
             if not(limhigh[oi]):
                 proposed = scaledbudgetvec[oi] * toolittle

@@ -121,6 +121,7 @@ class Resultset(object):
         self.other['numotherdeath'] = Result('Non-HIV-related deaths)')
         self.other['numbirths']     = Result('Total births)')
         self.other['numincionpopbypop'] = Result('New HIV infections acquired from pop', defaultplot='population+stacked')
+        self.other['numtransitpopbypop'] = Result('HIV infections transitioned from pop', defaultplot='population+stacked')
 
         # Add all health states
         for healthkey,healthname in zip(self.settings.healthstates, self.settings.healthstatesfull): # Health keys: ['susreg', 'progcirc', 'undx', 'dx', 'care', 'lost', 'usvl', 'svl']
@@ -303,6 +304,7 @@ class Resultset(object):
         allinci      = assemble('inci')
         allincibypop = assemble('incibypop')
         allincionpopbypop = assemble('incionpopbypop')
+        alltransitpopbypop = assemble('transitpopbypop')
         alldeaths    = assemble('death')
         otherdeaths  = assemble('otherdeath') 
         alldiag      = assemble('diag')
@@ -499,6 +501,9 @@ class Resultset(object):
         # Uncomment the lines below to check that numincionpopbypop is being calculated properly compared with numinci - it will show as data on the plots
         # self.other['numincionpopbypop'].datatot = process(array([allinci[:,:,indices],allinci[:,:,indices],allinci[:,:,indices]])) # summing over both causing state and population gives total per acquired population
         # self.other['numincionpopbypop'].estimate = False  # Not an estimate because the model produced the "data" - should match up
+        
+        self.other['numtransitpopbypop'].pops = process(alltransitpopbypop[:, :, :, :, indices].sum(axis=2))  # Axis 2 is health state of causers
+        self.other['numtransitpopbypop'].tot  = process(alltransitpopbypop[:, :, :, :, indices].sum(axis=(2, 3)))  # Axis 3 is causer populations
         
         # Add in each health state
         for healthkey in self.settings.healthstates: # Health keys: ['susreg', 'progcirc', 'undx', 'dx', 'care', 'lost', 'usvl', 'svl']

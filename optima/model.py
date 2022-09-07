@@ -51,23 +51,23 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
     inhomo          = zeros(npops)                  # Inhomogeneity calculations
 
     # Initialize raw arrays -- reporting annual quantities (so need to divide by dt!)
-    raw_inci        = zeros((npops, npts))          # Total incidence acquired by each population
-    raw_incibypop   = zeros((nstates, npops, npts)) # Total incidence caused by each population and each state
-    raw_incionpopbypop   = zeros((npops, nstates, npops, npts))  # Total incidence in each population caused by each population and each state, 1st axis is acquired population. 2nd axis is caused state, 3rd axis is caused population
-    raw_births      = zeros((npops, npts))          # Total number of births to each population
-    raw_mtct        = zeros((npops, npts))          # Number of mother-to-child transmissions to each population
-    raw_mtctfrom    = zeros((nstates, npops, npts)) # Number of mother-to-child transmissions from each population and each state
-    raw_mtcttoandfrom=zeros((npops, nstates, npops, npts)) # Number of mother-to-child transmissions to each population and from each population and each state, similar to raw_incionpopbypop
-    raw_hivbirths   = zeros((npops, npts))          # Number of births to HIV+ pregnant women
-    raw_receivepmtct= zeros((npops, npts))          # Initialise a place to store the number of people in each population receiving PMTCT
-    raw_diag        = zeros((npops, npts))          # Number diagnosed per timestep
-    raw_newcare     = zeros((npops, npts))          # Number newly in care per timestep
-    raw_newtreat    = zeros((npops, npts))          # Number initiating ART per timestep
-    raw_newsupp     = zeros((npops, npts))          # Number newly suppressed per timestep
-    raw_death       = zeros((nstates, npops, npts)) # Number of deaths per timestep
-    raw_otherdeath  = zeros((npops, npts))          # Number of other deaths per timestep
-    raw_immi        = zeros((nstates, npops, npts)) # Number of migrants by state per timestep
-
+    raw_inci            = zeros((npops, npts))                 # Total incidence acquired by each population
+    raw_incibypop       = zeros((nstates, npops, npts))        # Total incidence caused by each population and each state
+    raw_incionpopbypop  = zeros((npops, nstates, npops, npts)) # Total incidence in each population caused by each population and each state, 1st axis is acquired population. 2nd axis is caused state, 3rd axis is caused population
+    raw_births          = zeros((npops, npts))                 # Total number of births to each population
+    raw_mtct            = zeros((npops, npts))                 # Number of mother-to-child transmissions to each population
+    raw_mtctfrom        = zeros((nstates, npops, npts))        # Number of mother-to-child transmissions from each population and each state
+    raw_mtcttoandfrom   = zeros((npops, nstates, npops, npts)) # Number of mother-to-child transmissions to each population and from each population and each state, similar to raw_incionpopbypop
+    raw_hivbirths       = zeros((npops, npts))                 # Number of births to HIV+ pregnant women
+    raw_receivepmtct    = zeros((npops, npts))                 # Initialise a place to store the number of people in each population receiving PMTCT
+    raw_diag            = zeros((npops, npts))                 # Number diagnosed per timestep
+    raw_newcare         = zeros((npops, npts))                 # Number newly in care per timestep
+    raw_newtreat        = zeros((npops, npts))                 # Number initiating ART per timestep
+    raw_newsupp         = zeros((npops, npts))                 # Number newly suppressed per timestep
+    raw_death           = zeros((nstates, npops, npts))        # Number of deaths per timestep
+    raw_otherdeath      = zeros((npops, npts))                 # Number of other deaths per timestep
+    raw_immi            = zeros((nstates, npops, npts))        # Number of migrants by state per timestep
+    raw_transitpopbypop = zeros((npops, nstates, npops, npts)) # Number of ageing AND risk transitions to and from each population and each state
 
     # Biological and failure parameters
     prog            = maximum(eps,1-exp(-dt/array([simpars['progacute'], simpars['proggt500'], simpars['proggt350'], simpars['proggt200'], simpars['proggt50'], 1./simpars['deathlt50']]) ))
@@ -843,6 +843,8 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
 
                 people[:, p1, t+1] -= peopleleaving # Take away from pop1...
                 people[:, p2, t+1] += peopleleaving # ... then add to pop2
+                
+                raw_transitpopbypop[p2,allplhiv,p1, t+1] += peopleleaving[allplhiv]
 
 
             ## Risk-related transitions
@@ -852,6 +854,9 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                 # Symmetric flow in totality, but the state distribution will ideally change.
                 people[:, p1, t+1] += peoplemoving2 - peoplemoving1 # NOTE: this should not cause negative people; peoplemoving1 is guaranteed to be strictly greater than 0 and strictly less that people[:, p1, t+1]
                 people[:, p2, t+1] += peoplemoving1 - peoplemoving2 # NOTE: this should not cause negative people; peoplemoving2 is guaranteed to be strictly greater than 0 and strictly less that people[:, p2, t+1]
+
+                raw_transitpopbypop[p2,allplhiv,p1, t+1] += peoplemoving1[allplhiv]
+                raw_transitpopbypop[p1,allplhiv,p2, t+1] += peoplemoving2[allplhiv]
 
 
             ###############################################################################
@@ -987,6 +992,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
     raw['newtreat']       = raw_newtreat
     raw['death']          = raw_death
     raw['otherdeath']     = raw_otherdeath
+    raw['transitpopbypop']= raw_transitpopbypop
 
     checkfornegativepeople(people) # Check only once for negative people, right before finishing
 

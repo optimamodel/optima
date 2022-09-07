@@ -283,7 +283,7 @@ def plotepi(results, toplot=None, uncertainty=True, die=True, showdata=True, ver
         colorsarg = dcp(colors) # This is annoying, but it gets overwritten later and need to preserve it here
 
         ## Validate plot keys
-        valid_plotkeys = results.main.keys() + ['numincionpopbypop'] # allow all main keys + selected others
+        valid_plotkeys = results.main.keys() + results.other.keys() #['numincionpopbypop', 'numtransitpopbypop'] # allow all main keys + selected others
         for pk,plotkeys in enumerate(toplot):
             epikey = None # By default, don't make any assumptions
             plottype = 'stacked' # Assume stacked by default
@@ -334,10 +334,10 @@ def plotepi(results, toplot=None, uncertainty=True, die=True, showdata=True, ver
             datatype, plotformat = plotkey 
 
             # store result.main[datatype] as resultsmaindatatype, in order to allow selected other variables from results.other to be plotted
-            if datatype == 'numincionpopbypop':
-                resultsmaindatatype = results.other[datatype]
-            else:
+            if datatype in results.main.keys():
                 resultsmaindatatype = results.main[datatype]
+            else:
+                resultsmaindatatype = results.other[datatype]
 
             ispercentage = resultsmaindatatype.ispercentage # Indicate whether result is a percentage
             isestimate = resultsmaindatatype.estimate # Indicate whether data is an estimate
@@ -379,7 +379,7 @@ def plotepi(results, toplot=None, uncertainty=True, die=True, showdata=True, ver
                     databest = tmp[0]
                     datalow = tmp[1]
                     datahigh = tmp[2]
-                    if datatype == 'numincionpopbypop': #because we are comparing numincionpopbypop to numinci, which has multiple possible resultsets
+                    if datatype in ['numincionpopbypop', 'numtransitpopbypop']: #because we are comparing numincionpopbypop to numinci, which has multiple possible resultsets
                         databest = databest[0] #take the first resultset for numinci as "data"
                         datalow = datalow[0]
                         datahigh = datahigh[0]
