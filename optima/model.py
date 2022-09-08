@@ -844,7 +844,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                 people[:, p1, t+1] -= peopleleaving # Take away from pop1...
                 people[:, p2, t+1] += peopleleaving # ... then add to pop2
                 
-                raw_transitpopbypop[p2,allplhiv,p1, t+1] += peopleleaving[allplhiv]
+                raw_transitpopbypop[p2,allplhiv,p1, t+1] += peopleleaving[allplhiv]/dt #annualize
 
 
             ## Risk-related transitions
@@ -855,8 +855,8 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                 people[:, p1, t+1] += peoplemoving2 - peoplemoving1 # NOTE: this should not cause negative people; peoplemoving1 is guaranteed to be strictly greater than 0 and strictly less that people[:, p1, t+1]
                 people[:, p2, t+1] += peoplemoving1 - peoplemoving2 # NOTE: this should not cause negative people; peoplemoving2 is guaranteed to be strictly greater than 0 and strictly less that people[:, p2, t+1]
 
-                raw_transitpopbypop[p2,allplhiv,p1, t+1] += peoplemoving1[allplhiv]
-                raw_transitpopbypop[p1,allplhiv,p2, t+1] += peoplemoving2[allplhiv]
+                raw_transitpopbypop[p2,allplhiv,p1, t+1] += peoplemoving1[allplhiv]/dt #annualize
+                raw_transitpopbypop[p1,allplhiv,p2, t+1] += peoplemoving2[allplhiv]/dt #annualize
 
 
             ###############################################################################
