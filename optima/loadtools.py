@@ -1343,7 +1343,7 @@ def popgrowthoptions(project=None, **kwargs):
             par.y = op.odict()
             par.t = op.odict() 
             par.start = op.odict()
-            for popind, pop in enumerate(par.e.keys()):
+            for popind, pop in enumerate(ps.pars['popkeys']):
                 #as if loading data into y and t values
                 blh = 0 #best-low-high = 0-1-2
                 par.start[pop] = op.dcp(ps.start)
