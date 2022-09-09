@@ -66,7 +66,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
     raw_newsupp         = zeros((npops, npts))                 # Number newly suppressed per timestep
     raw_death           = zeros((nstates, npops, npts))        # Number of deaths per timestep
     raw_otherdeath      = zeros((npops, npts))                 # Number of other deaths per timestep
-    raw_immi            = zeros((nstates, npops, npts))        # Number of migrants by state per timestep
+    raw_immi            = zeros((nstates, npops, npts))        # Number of immigrants by state per year
     raw_transitpopbypop = zeros((npops, nstates, npops, npts)) # Number of ageing AND risk transitions to and from each population and each state
 
     # Biological and failure parameters
@@ -498,9 +498,10 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
 
     ## Immigration precalculation (can do this in advance as it doesn't depend on epidemic state)
     ##############################################################################################################
-    raw_immi[susreg, :,:]  = einsum('ij,ij,k->kij', numimmigrate, (1. - immihivprev), array([1.])) #assume not programmatically circumcised
-    raw_immi[undx,:,:]     = einsum('ij,ij,ij,k->kij', numimmigrate, immihivprev, (1. - immipropdiag), untxdist) #assume never treated
-    raw_immi[dx,:,:]       = einsum('ij,ij,ij,k->kij', numimmigrate, immihivprev, immipropdiag, txdist) #assume previously treated and come into the model as "diagnosed" and ready to be linked to care
+    # raw_immi annualised here
+    raw_immi[susreg, :,:]  = einsum('ij,ij,k->kij', numimmigrate, (1. - immihivprev), array([1.]))/dt #assume not programmatically circumcised
+    raw_immi[undx,:,:]     = einsum('ij,ij,ij,k->kij', numimmigrate, immihivprev, (1. - immipropdiag), untxdist)/dt #assume never treated
+    raw_immi[dx,:,:]       = einsum('ij,ij,ij,k->kij', numimmigrate, immihivprev, immipropdiag, txdist)/dt #assume previously treated and come into the model as "diagnosed" and ready to be linked to care
 
 
     ##############################################################################################################
@@ -822,7 +823,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
             people[dx[0], :, t+1]   += dxhivbirths   # HIV+ babies born to diagnosed mothers assigned to diagnosed
 
             ## Immigration
-            people[:, :, t+1]   += raw_immi[:,:,t]
+            people[:, :, t+1]   += raw_immi[:,:,t]*dt #unannualise
 
             ## Circumcision
             circppl = minimum(numcirc[:,t+1], people[susreg,:,t+1])
