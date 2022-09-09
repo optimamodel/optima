@@ -230,6 +230,28 @@ def makeplots(results=None, toplot=None, die=False, verbose=2, plotstartyear=Non
         toplot.remove('plhivbycd4') # Because everything else is passed to plotepi()
         allplots['plhivbycd4'] = plotbycd4(results, whattoplot='people', die=die, fig=fig, **kwargs)
     
+    ## Plot new infections, transitions, deaths and other death, giving total change in PLHIV
+    if 'changeinplhivallsources' in toplot:
+        toplot.remove('changeinplhivallsources')
+        scen = 0 # 0th is best
+        numincionpopbypop  = results.other['numincionpopbypop'].pops[scen]
+        numtransitpopbypop = results.other['numtransitpopbypop'].pops[scen]
+        numdeath = results.main['numdeath'].pops[scen]
+
+        propdeath = results.other['numotherdeath'].pops[scen] / results.main['popsize'].pops[scen]
+        numotherhivdeath = propdeath * results.main['numplhiv'].pops[scen]
+
+        stackedabove = [ [ numincionpopbypop, numtransitpopbypop ] ]
+        stackedbelow = [ [ -swapaxes(numtransitpopbypop,axis1=0,axis2=1), -numdeath, -numotherhivdeath] ]
+
+        stackedabovelabels = [ [ ['Infection from: '+pk for pk in results.popkeys], ['Transition in: '+pk for pk in results.popkeys] ] ]
+        stackedbelowlabels = [ [ ['Transition out: '+pk for pk in results.popkeys], ['Death: '+pk for pk in results.popkeys], ['Other death + emigration: '+pk for pk in results.popkeys] ] ]
+
+        plotname = 'Change in PLHIV'
+
+        plots = plotstackedabovestackedbelow(results, toplot=[('changeinplhivallsources','population+stacked')], stackedabove=stackedabove, stackedbelow=stackedbelow, showoverall=True,
+                                         stackedabovelabels=stackedabovelabels,stackedbelowlabels=stackedbelowlabels,plotnames=[plotname], die=die, fig=fig, **kwargs)
+        allplots.update(plots)
 
     ## Add epi plots -- WARNING, I hope this preserves the order! ...It should...
     epiplots = plotepi(results, toplot=toplot, die=die, plotstartyear=plotstartyear, plotendyear=plotendyear, fig=fig, **kwargs)
