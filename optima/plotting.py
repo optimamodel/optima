@@ -242,10 +242,10 @@ def makeplots(results=None, toplot=None, die=False, verbose=2, plotstartyear=Non
         propdeath = results.other['numotherdeath'].pops[scen] / results.main['popsize'].pops[scen]
         numotherhivdeath = propdeath * results.main['numplhiv'].pops[scen]
 
-        stackedabove = [ [ numincionpopbypop, numtransitpopbypop, numimmiplhiv] ]
+        stackedabove = [ [ numimmiplhiv, numincionpopbypop, numtransitpopbypop] ]
         stackedbelow = [ [ -swapaxes(numtransitpopbypop,axis1=0,axis2=1), -numdeath, -numotherhivdeath] ]
 
-        stackedabovelabels = [ [ ['Infection from: '+pk for pk in results.popkeys], ['Transition in: '+pk for pk in results.popkeys], ['Immigrant HIV+ in: '+pk for pk in results.popkeys] ] ]
+        stackedabovelabels = [ [ ['Immigrant HIV+ in: '+pk for pk in results.popkeys], ['Infection from: '+pk for pk in results.popkeys], ['Transition in: '+pk for pk in results.popkeys] ] ]
         stackedbelowlabels = [ [ ['Transition out: '+pk for pk in results.popkeys], ['Death: '+pk for pk in results.popkeys], ['Other death + emigration: '+pk for pk in results.popkeys] ] ]
 
         plotname = 'Change in PLHIV'
@@ -1390,9 +1390,10 @@ def plotstackedabovestackedbelow(results, toplot=None,stackedabove=None,stackedb
                             ax.plot((0, 0), (0, 0), color=colors[indexcolour], linewidth=10, zorder=linezorder)
 
                         if showoverall:
-                            overall = currentstackedabove.sum(axis=0) + currentstackedbelow.sum(axis=0)
                             # overall = bottombottom+bottomofabove # bottomofabove is actually the (positive) height of the top, bottombottom is actually the (negative) height of the bottom
-                            print(f'{pk}:overall increase in PLHIV: {None}, {list(zip(cumsum(overall),results.main["numplhiv"].pops[0][i]))}')#list(zip(xdata,overall))
+                            #print(f'{pk}:overall increase in PLHIV: {None}, {list(zip(cumsum(overall),results.main["numplhiv"].pops[0][i]))}')#list(zip(xdata,overall))
+
+                            overall = currentstackedabove.sum(axis=0) + currentstackedbelow.sum(axis=0)
                             ax.plot(xdata, overall, color=realdatacolor, linewidth=2,
                                        zorder=datazorder+1, label='Overall change')  # Without zorder, renders behind the graph
 
