@@ -115,7 +115,8 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
     gt50            = settings.gt50                 # >50
     lt50            = settings.lt50                 # <50
     aidsind         = settings.aidsind              # AIDS
-    sex             = settings.sex                  # Infection via sex
+    heterosexsex    = settings.heterosexsex         # Infection via heterosexual sex
+    homosexsex      = settings.homosexsex           # Infection via homosexual sex
     inj             = settings.inj                  # Infection via injection
     mtct            = settings.mtct                 # Infection via MTCT
     allcd4          = [acute,gt500,gt350,gt200,gt50,lt50]
@@ -584,18 +585,22 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
 
         # Probability of getting infected. In the first stage of construction, we actually store this as the probability of NOT getting infected
         # First dimension: infection acquired by (circumcision status). Second dimension:  infection acquired by (pop). Third dimension: infection caused by (pop). Fourth dimension: infection caused by (health/treatment state)
-        forceinffull = ones((len(sus), npops, nstates, npops))
-        forceinffullsexinj = ones((2,len(sus), npops, nstates, npops)) # note that inj and sex should be 0 and 1
+        forceinffull        = ones((len(sus), npops, nstates, npops))
+        forceinffullsexinj  = ones((3, len(sus), npops, nstates, npops)) # note that inj and sex should be 0 and 1
 
         # Loop over all acts (partnership pairs) -- probability of pop1 getting infected by pop2
         for pop1,pop2,wholeacts,fracacts,cond,thistrans in sexactslist:
 
             thisforceinfsex = (1-fracacts[t]*thistrans*cond[t]*einsum('a,b',alleff[pop1,t,:],effallprev[:,pop2]))
             if wholeacts[t]: thisforceinfsex  *= npow((1-thistrans*cond[t]*einsum('a,b',alleff[pop1,t,:],effallprev[:,pop2])), int(wholeacts[t]))
-            # forceinffull[:,pop1,:,pop2] *= thisforceinfsex # don't need to do as doing the same for forceinffullsexinj
-            forceinffullsexinj[sex,:,pop1,:,pop2] *= thisforceinfsex # note that inj and sex should be 0 and 1
 
-            if debug and not((forceinffullsexinj[sex,:,pop1,:,pop2]>=0).all()):
+            if male[pop1] and male[pop2]:
+                forceinffullsexinj[homosexsex, :, pop1, :, pop2] *= thisforceinfsex
+            else:
+                forceinffullsexinj[heterosexsex, :, pop1, :, pop2] *= thisforceinfsex
+            # forceinffull[:,pop1,:,pop2] *= thisforceinfsex # don't need to do as doing the same for forceinffullsexinj
+
+            if debug and (not((forceinffullsexinj[heterosexsex,:,pop1,:,pop2]>=0).all()) or not((forceinffullsexinj[homosexsex,:,pop1,:,pop2]>=0).all())):
                 errormsg = label + 'Sexual force-of-infection is invalid between populations %s and %s, time %0.1f, FOI:\n%s)' % (popkeys[pop1], popkeys[pop2], tvec[t], forceinffull[:,pop1,:,pop2])
                 for var in ['thistrans', 'circeff[pop1,t]', 'prepeff[pop1,t]', 'stieff[pop1,t]', 'cond', 'wholeacts', 'fracacts', 'effallprev[:,pop2]']:
                     errormsg += '\n%20s = %f' % (var, eval(var)) # Print out extra debugging information
@@ -617,7 +622,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                     errormsg += '\n%20s = %f' % (var, eval(var)) # Print out extra debugging information
                 raise OptimaException(errormsg)
 
-        forceinffull = forceinffullsexinj[sex,:,:,:,:] * forceinffullsexinj[inj,:,:,:,:]
+        forceinffull = forceinffullsexinj[homosexsex,:,:,:,:] * forceinffullsexinj[heterosexsex,:,:,:,:] * forceinffullsexinj[inj,:,:,:,:]
 
         # Probability of getting infected is one minus forceinffull times any scaling factors !! copied below !!
         forceinffull  = einsum('ijkl,j,j,j->ijkl', 1.-forceinffull, force, inhomo,(1.-background[:,t]))
@@ -640,17 +645,22 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
         # Some people (although small) will have gotten infected from both sex and injections, we default these people to the higher probability (higher risk) method
         forceinffullsexinj = 1 - forceinffullsexinj
         probsexinjsortindices = argsort(forceinffullsexinj,axis=0)
-        probsmallerlocations  = expand_dims(probsexinjsortindices[0,:,:,:,:], axis=0)
-        probbiggerlocations   = expand_dims(probsexinjsortindices[1,:,:,:,:], axis=0)
+        probsmallestlocations  = expand_dims(probsexinjsortindices[0,:,:,:,:], axis=0)
+        probmiddlelocations = expand_dims(probsexinjsortindices[1, :, :, :, :], axis=0)
+        probbiggestlocations   = expand_dims(probsexinjsortindices[2,:,:,:,:], axis=0)
 
-        smallerprob = take_along_axis(forceinffullsexinj, probsmallerlocations, axis=0)
-        largerprob  = take_along_axis(forceinffullsexinj, probbiggerlocations, axis=0)
-        put_along_axis(forceinffullsexinj, probsmallerlocations, smallerprob - smallerprob * largerprob, axis=0) # The assumption that the two infection events are independent, same assumption as above
+        smallestprob = take_along_axis(forceinffullsexinj, probsmallestlocations, axis=0)
+        middleprob  = take_along_axis(forceinffullsexinj, probmiddlelocations, axis=0)
+        largestprob  = take_along_axis(forceinffullsexinj, probbiggestlocations, axis=0)
+        #inclusion exclusion but the intersections are distributed to the larger probabilities
+        put_along_axis(forceinffullsexinj, probsmallestlocations, smallestprob - smallestprob * largestprob - smallestprob * middleprob + smallestprob * middleprob * largestprob, axis=0) # The assumption that the two infection events are independent, same assumption as above
+        put_along_axis(forceinffullsexinj, probmiddlelocations, middleprob - middleprob * largestprob, axis=0) # The assumption that the two infection events are independent, same assumption as above
 
         # Probability of getting infected by each method is probsexinjsortindices times any scaling factors, !! copied from above !!
         forceinffullcauses = einsum('mijkl,j,j,j->mijkl', forceinffullsexinj, force, inhomo, (1. - background[:, t]))
 
-        raw_incionpopbypopmethods[[sex,inj],:,:,:,t] = einsum('ij,mijkl->mjkl', people[sus,:,t], forceinffullcauses[[sex,inj],:,:,:,:])/dt
+        nonmtctmethods = [heterosexsex,homosexsex,inj]
+        raw_incionpopbypopmethods[nonmtctmethods,:,:,:,t] = einsum('ij,mijkl->mjkl', people[sus,:,t], forceinffullcauses[nonmtctmethods,:,:,:,:])/dt
         # raw_incionpopbypop[:,:,:,t] = einsum('ij,ijkl->jkl', people[sus,:,t], forceinffull)/dt
 
         ##############################################################################################################

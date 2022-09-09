@@ -69,11 +69,12 @@ class Settings(object):
         self.nstates        = len(self.allstates) # Total number of states
 
         # Infection methods
-        self.inj = 0  # Injection, don't change from 0 or 1
-        self.sex = 1  # Sexual transmission, don't change from 0 or 1
-        self.mtct = 2 # MTCT
-        self.nmethods = 3 # 3 methods of transmission
-        self.methodnames = ['Injection','Sex','MTCT']
+        self.inj = 0            # Injection, don't change number
+        self.heterosexsex = 1   # Homosexual sexual transmission, don't change number
+        self.homosexsex = 2     # Heterosexual sexual transmission, don't change number
+        self.mtct = 3           # MTCT
+        self.nmethods = 4       # 4 methods of transmission
+        self.methodnames = ['Injection','Heterosexual sex','Homosexual sex','MTCT']
         
         # Set labels for each health state
         thesestates = dcp(self.healthstates)

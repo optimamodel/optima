@@ -1408,7 +1408,8 @@ def addsexinjmtctsettings(project=None, **kwargs):
     '''
     if project is not None and project.settings is not None:
         base_settings = op.Settings()
-        project.settings.sex = base_settings.sex
+        project.settings.heterosexsex = base_settings.heterosexsex
+        project.settings.homosexsex = base_settings.homosexsex
         project.settings.inj = base_settings.inj
         project.settings.mtct = base_settings.mtct
         project.settings.nmethods = base_settings.nmethods
