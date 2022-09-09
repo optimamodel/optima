@@ -246,7 +246,7 @@ def makeplots(results=None, toplot=None, die=False, verbose=2, plotstartyear=Non
         stackedbelow = [ [ -swapaxes(numtransitpopbypop,axis1=0,axis2=1), -numdeath, -numotherhivdeath] ]
 
         stackedabovelabels = [ [ ['Immigrant HIV+ in: '+pk for pk in results.popkeys], ['Infection from: '+pk for pk in results.popkeys], ['Transition in: '+pk for pk in results.popkeys] ] ]
-        stackedbelowlabels = [ [ ['Transition out: '+pk for pk in results.popkeys], ['Death: '+pk for pk in results.popkeys], ['Other death + emigration: '+pk for pk in results.popkeys] ] ]
+        stackedbelowlabels = [ [ ['Transition out: '+pk for pk in results.popkeys], ['HIV-related death: '+pk for pk in results.popkeys], ['Other death + emigration: '+pk for pk in results.popkeys] ] ]
 
         plotname = 'Change in PLHIV'
 
