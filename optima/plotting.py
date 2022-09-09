@@ -237,14 +237,15 @@ def makeplots(results=None, toplot=None, die=False, verbose=2, plotstartyear=Non
         numincionpopbypop  = results.other['numincionpopbypop'].pops[scen]
         numtransitpopbypop = results.other['numtransitpopbypop'].pops[scen]
         numdeath = results.main['numdeath'].pops[scen]
+        numimmiplhiv = results.other['numimmiplhiv'].pops[scen]
 
         propdeath = results.other['numotherdeath'].pops[scen] / results.main['popsize'].pops[scen]
         numotherhivdeath = propdeath * results.main['numplhiv'].pops[scen]
 
-        stackedabove = [ [ numincionpopbypop, numtransitpopbypop ] ]
+        stackedabove = [ [ numincionpopbypop, numtransitpopbypop, numimmiplhiv] ]
         stackedbelow = [ [ -swapaxes(numtransitpopbypop,axis1=0,axis2=1), -numdeath, -numotherhivdeath] ]
 
-        stackedabovelabels = [ [ ['Infection from: '+pk for pk in results.popkeys], ['Transition in: '+pk for pk in results.popkeys] ] ]
+        stackedabovelabels = [ [ ['Infection from: '+pk for pk in results.popkeys], ['Transition in: '+pk for pk in results.popkeys], ['Immigrant HIV+ in: '+pk for pk in results.popkeys] ] ]
         stackedbelowlabels = [ [ ['Transition out: '+pk for pk in results.popkeys], ['Death: '+pk for pk in results.popkeys], ['Other death + emigration: '+pk for pk in results.popkeys] ] ]
 
         plotname = 'Change in PLHIV'
