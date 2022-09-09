@@ -11,9 +11,9 @@ plotting to this file.
 Version: 2017jun03
 '''
 
-from optima import OptimaException, Resultset, Multiresultset, Parameterset, ICER, odict, printv, gridcolors, vectocolor, alpinecolormap, makefilepath, sigfig, dcp, findinds, findnearest, promotetolist, saveobj, promotetoodict, promotetoarray, boxoff, getvalidinds
+from optima import OptimaException, Resultset, Multiresultset, Parameterset, Settings, ICER, odict, printv, gridcolors, vectocolor, alpinecolormap, makefilepath, sigfig, dcp, findinds, findnearest, promotetolist, saveobj, promotetoodict, promotetoarray, boxoff, getvalidinds
 from optima import setylim, commaticks, SIticks
-from numpy import array, ndim, maximum, arange, zeros, mean, shape, isnan, linspace, minimum # Numeric functions
+from numpy import array, ndim, maximum, arange, zeros, mean, shape, isnan, linspace, minimum, concatenate,invert, swapaxes, flip, abs,cumsum # Numeric functions
 from pylab import gcf, get_fignums, close, ion, ioff, isinteractive, figure # Plotting functions
 from matplotlib.backends.backend_agg import new_figure_manager_given_figure as nfmgf # Warning -- assumes user has agg on their system, but should be ok. Use agg since doesn't require an X server
 from matplotlib.figure import Figure # This is the non-interactive version
@@ -230,7 +230,7 @@ def makeplots(results=None, toplot=None, die=False, verbose=2, plotstartyear=Non
         toplot.remove('plhivbycd4') # Because everything else is passed to plotepi()
         allplots['plhivbycd4'] = plotbycd4(results, whattoplot='people', die=die, fig=fig, **kwargs)
     
-    
+
     ## Add epi plots -- WARNING, I hope this preserves the order! ...It should...
     epiplots = plotepi(results, toplot=toplot, die=die, plotstartyear=plotstartyear, plotendyear=plotendyear, fig=fig, **kwargs)
     allplots.update(epiplots)
@@ -1121,8 +1121,314 @@ def plotallocations(project=None, budgets=None, colors=None, factor=1e6, compare
         a.set_ylim([ymin,ymax])
     
     return fig
-    
-    
+
+
+############################################################################################################
+## Plot infections from each population and transitions of PLHIV to and from each population
+############################################################################################################
+def plotstackedabovestackedbelow(results, toplot=None,stackedabove=None,stackedbelow=None,showoverall=None,
+                stackedabovelabels=None, stackedbelowlabels=None,plotnames=None,
+                uncertainty=True, die=True, showdata=True, verbose=2, figsize=globalfigsize,
+                alpha=0.2, lw=2, dotsize=30, titlesize=globaltitlesize, labelsize=globallabelsize,
+                ticksize=globalticksize,
+                legendsize=globallegendsize, position=None, useSIticks=True, colors=None, reorder=None,
+                plotstartyear=None,
+                plotendyear=None, interactive=None, fig=None, forreport=False, forceintegerxaxis=False, **kwargs):
+        '''
+        Used for plots which have multiple things stacked above and below the x-axis. The overall height of the
+        positive stack and the height of the negative stack can be subtracted and plotted through the showoverall.
+
+        At the moment it is designed for 'fullnewtransinfdeaths' with 'population+stacked' plottype.
+
+        Could theoretically plot a single plot not split by population ie 'stacked' but I haven't tested -
+        it may need to be modified / fixed.
+
+        This function cannot extract the results itself, you must pass them in through stackedabove and stackedbelow
+
+        WARNING copied from plotepi() optima version 2.10.13, commit: a3062175a5550b87edb55fba0f74072bdfa4bebe
+        with some things REMOVED and a lot changed
+        NOTE: do not call this function directly; instead, call via plotresults().
+
+        :param: toplot: list of tuples of the form (plotname, plottype), the length defines the number of main plots.
+        :param: stackedabove: follow the shape given by the implementation in makeplots but should have length=len(toplot)
+        '''
+
+        # Figure out what kind of result it is
+        if type(results) == Resultset:
+            ismultisim = False
+        elif type(results) == Multiresultset:  # not implemented at the moment
+            errormsg = 'Results input to plotfulltransandinfections() must be Resultset, not "%s".' % type(results)
+            raise OptimaException(errormsg)
+
+            # ismultisim = True
+            # labels = results.keys  # Figure out the labels for the different lines
+            # nsims = len(labels)  # How ever many things are in results
+        else:
+            errormsg = 'Results input to plotbymethod() must be Resultset, not "%s".' % type(results)
+            raise OptimaException(errormsg)
+
+        # Get year indices for producing plots
+        startind, endind = getplotinds(plotstartyear=plotstartyear, plotendyear=plotendyear, tvec=results.tvec, die=die, verbose=verbose)
+
+        # This function must have toplot given
+        if toplot is None:
+            errormsg = 'toplot was None for plotstackedabovestackedbelow() so could not continue.'
+            if die: raise OptimaException(errormsg)
+            else:
+                printv(errormsg, 2, verbose)
+                return
+
+        # Initialize
+        if stackedabove is None and stackedbelow is None:
+            errormsg = 'stackedabove was None and stackedbelow was None for plotstackedabovestackedbelow() so could not continue.'
+            if die: raise OptimaException(errormsg)
+            else:
+                printv(errormsg, 2, verbose)
+                return
+
+        toplot = promotetolist(toplot)  # If single value, put inside list
+        epiplots = odict()
+        colorsarg = dcp(colors)  # This is annoying, but it gets overwritten later and need to preserve it here
+
+        if showoverall is None:
+            showoverall = True
+
+        if stackedabovelabels is None:
+            stackedabovelabels = [None]*len(stackedabove)
+        if stackedbelowlabels is None:
+            stackedbelowlabels = [None]*len(stackedbelow)
+
+        # ## Validate plot keys
+        ## REMOVED -- validate keys outside of calling this function
+
+        # Remove failed ones
+
+        toplot = [thisplot for thisplot in toplot if None not in thisplot]  # Remove a plot if datatype or plotformat is None
+
+        # Check if the figure will be saved to insert into a presentation or report
+        if forreport:
+            forreport = True
+            titlesize = 16
+            labelsize = 14
+
+        ################################################################################################################
+        ## Loop over each plot
+        ################################################################################################################
+        for mainplotindex, plotkey in enumerate(toplot): # probably only works if toplot contains one item
+            # print('mainplotindex',mainplotindex)
+            # print('stackedabove', stackedabove)
+            # Unpack tuple
+            datatype, plotformat = plotkey
+
+            ispercentage = False  # Indicate whether result is a percentage
+            isestimate = False  # Indicate whether data is an estimate
+            factor = 100.0 if ispercentage else 1.0  # Swap between number and percent
+            datacolor = estimatecolor if isestimate else realdatacolor  # Light grey for
+            # istotal = (plotformat == 'total') # only stacked or population+stacked implemented
+            isstacked = (plotformat == 'stacked')
+            # isperpop = (plotformat == 'population') # only stacked or population+stacked implemented
+            isperpopandstacked = (plotformat == 'population+stacked')
+
+            ################################################################################################################
+            ## Process the plot data
+            ################################################################################################################
+
+            # REMOVED, too hard to process multiple sources of data within this function,
+            # data is passed in through stackedabove and stackedbelow
+
+
+            ################################################################################################################
+            ## Set up figure and do plot
+            ################################################################################################################
+            if isperpopandstacked:
+                pkeys = [str(plotkey) + '-' + key for key in
+                         results.popkeys]  # Create list of plot keys (pkeys), one for each population
+            else:
+                pkeys = [plotkey]  # If it's anything else, just go with the original, but turn into a list so can iterate
+
+            if stackedabovelabels[mainplotindex] is None:
+                print(f'Warning stackedabovelabels[{mainplotindex}] is None. This will probably cause the labels to not be right.')
+                stackedabovelabels[mainplotindex] = [[key for key in
+                                       results.popkeys] for above in range(len(stackedabove[mainplotindex]))]  # Assume one for each population
+
+            if stackedbelowlabels[mainplotindex] is None:
+                print(f'Warning stackedbelowlabels[{mainplotindex}] is None. This will probably cause the labels to not be right.')
+                stackedbelowlabels[mainplotindex] = [[key for key in
+                                       results.popkeys] for below in range(len(stackedbelow[mainplotindex]))]  # Assume one for each population
+
+            for i, pk in enumerate(pkeys):  # Either loop over individual population plots, or just plot a single plot, e.g. pk='prev-pop-FSW'
+                epiplots[pk], naxes = makefigure(figsize=figsize, interactive=interactive, fig=fig)  # If it's anything other than HIV prevalence by population, create a single plot
+                ax = epiplots[pk].add_subplot(naxes, 1, naxes)
+                setposition(ax, position, interactive)
+                allydata = []  # Keep track of the lowest value in the data
+
+                if isperpopandstacked:
+                    currentstackedabove = concatenate(tuple(arr[i] if len(arr.shape)==3 else [arr[i]] for arr in stackedabove[mainplotindex]), axis=0)
+                    currentstackedbelow = concatenate(tuple(arr[i] if len(arr.shape)==3 else [arr[i]] for arr in stackedbelow[mainplotindex]), axis=0)
+                else: # only stacked
+                    currentstackedabove = concatenate(tuple(arr for arr in stackedabove[mainplotindex]), axis=0)
+                    currentstackedbelow = concatenate(tuple(arr for arr in stackedbelow[mainplotindex]), axis=0)
+
+
+                currentlabelsabove = concatenate(tuple(arr if len(stackedabove[mainplotindex][j].shape)==3 else [arr[i]] for j,arr in enumerate(stackedabovelabels[mainplotindex])), axis=0)
+                currentlabelsbelow = concatenate(tuple(arr if len(stackedbelow[mainplotindex][j].shape)==3 else [arr[i]] for j,arr in enumerate(stackedbelowlabels[mainplotindex])), axis=0)
+
+                nlinesabove = shape(currentstackedabove)[0]
+                nlinesbelow = shape(currentstackedbelow)[0]
+
+                ################################################################################################################
+                ## Validate the plot data
+                ################################################################################################################
+
+                for ir,row in enumerate(currentstackedabove):
+                    if not (row >= 0).all():
+                        if (row <= 0).all():
+                            print(f'WARNING with plot {plotkey} in plotstackedabovestackedbelow(): row in stackedabove are all non-positive - should be all non-negative')
+                            print('Flipping them all to be positive')
+                            currentstackedabove[ir] = - row
+                        else:
+                            print(
+                                f'WARNING with plot {plotkey} in plotstackedabovestackedbelow(): row in stackedabove aren\'t all >=0. This shouldn\'t happen - check your inputs.')
+
+                    for ir,row in enumerate(currentstackedbelow):
+                        if not (row <= 0).all():
+                            if (row >= 0).all():
+                                print(f'WARNING with plot {plotkey} in plotstackedabovestackedbelow(): row in stackedbelow are all non-negative - should be all non-positive')
+                                print('Flipping them all to be negative')
+                                currentstackedbelow[ir] = - row
+                            else:
+                                print(f'WARNING with plot {plotkey} in plotstackedabovestackedbelow(): row in stackedbelow aren\'t all <>>=0. This shouldn\'t happen - check your inputs.')
+
+                ################################################################################################################
+                # Plot model estimates with uncertainty -- different for each of the different possibilities
+                ################################################################################################################
+
+                xdata = results.tvec  # Pull this out here for clarity
+
+                plotorderabove = []
+                origorderabove = arange(nlinesabove)
+                plotorderbelow = []
+                origorderbelow = arange(nlinesbelow)
+
+                eps = 1e-2
+
+                for k in flip(origorderbelow):  # Loop backwards so correct ordering -- first one at the top, not bottom
+                    if not (currentstackedbelow[k] > -eps).all():
+                        plotorderbelow.append(k)
+                for k in flip(origorderabove):  # Loop backwards so correct ordering -- first one at the top, not bottom
+                    if not (currentstackedabove[k] < eps).all():
+                        plotorderabove.append(k)
+
+                origorderbelow = flip(plotorderbelow)
+                origorderabove = flip(plotorderabove)
+
+                nlinesbelow = len(origorderbelow)
+                nlinesabove = len(origorderabove)
+
+                if colorsarg is None: colors = gridcolors(nlinesabove + nlinesbelow + 1)[1:]  # skip black
+                # if reorder: plotordermethod = [reorder[k] for k in plotorder]
+
+
+                # e.g. single simulation, prev-sta: either multiple lines or a stacked plot, depending on whether or not it's a number
+                if not ismultisim and (isstacked or isperpopandstacked):  # Always in here
+                    if ispercentage:  # Not implemented here, relic from plotepi()
+                        pass
+                    else:  # Stacked plot
+                        bottom = 0 * results.tvec  # Easy way of setting to 0...
+
+                        # go to the very bottom
+                        for k in origorderbelow:
+                            yupper = factor * bottom
+                            ylower = factor * (bottom + currentstackedbelow[k]) #stacked below should all be negative or 0
+                            bottom += currentstackedbelow[k]
+                        bottombottom = dcp(bottom)
+
+                        # from the bottom, work upwards
+                        for indexcolour, k in enumerate(plotorderbelow):  # Loop backwards so correct ordering -- first one at the top, not bottom
+                            yupper = factor * bottom
+                            ylower = factor * (bottom - currentstackedbelow[k]) #stacked below should all be negative or 0
+                            allydata.append(ylower)
+                            allydata.append(yupper)
+                            ax.fill_between(xdata, ylower, yupper, facecolor=colors[indexcolour+nlinesabove], alpha=1, lw=0, label=currentlabelsbelow[k], zorder=fillzorder)
+                            bottom -= currentstackedbelow[k]
+                        for indexcolour, l in enumerate(plotorderbelow):  # This loop is JUST for the legends! since fill_between doesn't count as a plot object, stupidly...
+                            ax.plot((0, 0), (0, 0), color=colors[indexcolour+nlinesabove], linewidth=10, zorder=linezorder)
+
+                        bottomofabove = 0 * results.tvec  # Easy way of setting to 0...
+                        for indexcolour, k in enumerate(plotorderabove):  # Loop backwards so correct ordering -- first one at the top, not bottom
+                            ylower = factor * bottomofabove
+                            yupper = factor * (bottomofabove + currentstackedabove[k])
+                            allydata.append(ylower)
+                            allydata.append(yupper)
+                            ax.fill_between(xdata, ylower, yupper, facecolor=colors[indexcolour], alpha=1, lw=0,
+                                            label=currentlabelsabove[k], zorder=fillzorder)
+                            bottomofabove += currentstackedabove[k]
+                        for indexcolour, k in enumerate(plotorderabove):  # This loop is JUST for the legends! since fill_between doesn't count as a plot object, stupidly...
+                            ax.plot((0, 0), (0, 0), color=colors[indexcolour], linewidth=10, zorder=linezorder)
+
+                        if showoverall:
+                            overall = currentstackedabove.sum(axis=0) + currentstackedbelow.sum(axis=0)
+                            # overall = bottombottom+bottomofabove # bottomofabove is actually the (positive) height of the top, bottombottom is actually the (negative) height of the bottom
+                            print(f'{pk}:overall increase in PLHIV: {None}, {list(zip(cumsum(overall),results.main["numplhiv"].pops[0][i]))}')#list(zip(xdata,overall))
+                            ax.plot(xdata, overall, color=realdatacolor, linewidth=2,
+                                       zorder=datazorder+1, label='Overall change')  # Without zorder, renders behind the graph
+
+                        ax.axhline(y=0, color='k',linewidth=1, zorder=datazorder)
+
+                # REMOVED other things - not implemented in this function
+
+                ################################################################################################################
+                # Plot data points with uncertainty
+                ################################################################################################################
+
+                #removed - not implemented in this function
+
+                ################################################################################################################
+                # Configure axes -- from http://www.randalolson.com/2014/06/28/how-to-make-beautiful-data-visualizations-in-python-with-matplotlib/
+                ################################################################################################################
+
+                # General configuration
+                boxoff(ax)
+                ax.yaxis.label.set_fontsize(labelsize)
+                for item in ax.get_xticklabels() + ax.get_yticklabels(): item.set_fontsize(ticksize)
+
+                # Configure plot specifics
+                legendsettings = {'loc': 'upper left', 'bbox_to_anchor': (1, 1), 'fontsize': legendsize, 'title': '',
+                                  'frameon': False, 'borderaxespad': 2}
+
+                plottitle = plotnames[mainplotindex]
+                if isperpopandstacked:
+                    plotylabel = plottitle
+                    ax.set_ylabel(plotylabel)
+                    try:
+                        plottitle = kwargs["popmapping"][results.popkeys[i]]  # if popmapping was passed in as kwarg, use the title specified there for this population instead
+                    except:
+                        plottitle = results.popkeys[i]  # Add extra information to plot if by population
+                    if forreport: ax.set_ylabel(plotylabel, fontsize=labelsize)  # overwrites previously set ylabel
+                ax.set_title(plottitle)
+                if forreport:
+                    ax.set_xlabel('Year', fontsize=labelsize)
+                    ax.set_title(plottitle, fontsize=titlesize)  # overwrites previously set title
+                setylim(allydata, ax=ax)
+                if forceintegerxaxis:
+                    ax.xaxis.set_major_locator(ticker.MaxNLocator(integer=True))
+                ax.set_xlim((results.tvec[startind], results.tvec[endind]))
+                if not ismultisim:
+                    if isstacked or isperpopandstacked:
+                        handles, legendlabels = ax.get_legend_handles_labels()
+                        ax.legend(handles[::-1], legendlabels[::-1],
+                                  **legendsettings)  # Multiple entries, all populations
+                else:
+                    handles, legendlabels = ax.get_legend_handles_labels()
+                    ax.legend(handles[::-1], legendlabels, **legendsettings)  # Multiple simulations
+                if useSIticks:
+                    SIticks(ax=ax)
+                else:
+                    commaticks(ax=ax)
+
+        return epiplots
+
+
 ##################################################################
 ## Plot things by CD4
 ##################################################################
