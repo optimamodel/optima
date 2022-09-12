@@ -231,7 +231,7 @@ def makeplots(results=None, toplot=None, die=False, verbose=2, plotstartyear=Non
         allplots['plhivbycd4'] = plotbycd4(results, whattoplot='people', die=die, fig=fig, **kwargs)
 
     ## Plot new infections, transitions, deaths and other death, giving total change in PLHIV
-    if 'changeinplhivallsources' in toplot:
+    if 'changeinplhivallsources' in toplot: #TODO add changeinplhivallsources-stacked, not just population+stacked
         toplot.remove('changeinplhivallsources')
         scen = 0 # 0th is best
         numincionpopbypop  = results.other['numincionpopbypop'].pops[scen]
@@ -255,7 +255,7 @@ def makeplots(results=None, toplot=None, die=False, verbose=2, plotstartyear=Non
         allplots.update(plots)
 
     ## Plot infections by method of transmission, and by population
-    if 'numincimethods' in toplot:
+    if 'numincimethods' in toplot: #TODO add numincimethods-stacked, not just population+stacked
         toplot.remove('numincimethods')  # Because everything else is passed to plotepi()
         plots = plotbymethod(results, toplot='numincimethods', die=die, fig=fig, **kwargs)
         allplots.update(plots)

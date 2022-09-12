@@ -588,7 +588,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
         # First dimension: infection acquired by (circumcision status). Second dimension:  infection acquired by (pop). Third dimension: infection caused by (pop). Fourth dimension: infection caused by (health/treatment state)
 
         if advancedtracking: # need the if statement outside the for loop for speed
-            forceinffullsexinj = ones((3, len(sus), npops, nstates, npops))  # note that inj and sex should be 0 and 1
+            forceinffullsexinj = ones((3, len(sus), npops, nstates, npops))  # First dimension is now method of transmission, everything else moves over one dimension.
             # Loop over all acts (partnership pairs) -- probability of pop1 getting infected by pop2
             for pop1,pop2,wholeacts,fracacts,cond,thistrans in sexactslist:
 
@@ -911,7 +911,8 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                 people[:, p1, t+1] -= peopleleaving # Take away from pop1...
                 people[:, p2, t+1] += peopleleaving # ... then add to pop2
 
-                raw_transitpopbypop[p2,allplhiv,p1, t+1] += peopleleaving[allplhiv]/dt #annualize
+                if advancedtracking:
+                    raw_transitpopbypop[p2,allplhiv,p1, t+1] += peopleleaving[allplhiv]/dt #annualize
 
 
             ## Risk-related transitions
@@ -922,8 +923,9 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                 people[:, p1, t+1] += peoplemoving2 - peoplemoving1 # NOTE: this should not cause negative people; peoplemoving1 is guaranteed to be strictly greater than 0 and strictly less that people[:, p1, t+1]
                 people[:, p2, t+1] += peoplemoving1 - peoplemoving2 # NOTE: this should not cause negative people; peoplemoving2 is guaranteed to be strictly greater than 0 and strictly less that people[:, p2, t+1]
 
-                raw_transitpopbypop[p2,allplhiv,p1, t+1] += peoplemoving1[allplhiv]/dt #annualize
-                raw_transitpopbypop[p1,allplhiv,p2, t+1] += peoplemoving2[allplhiv]/dt #annualize
+                if advancedtracking:
+                    raw_transitpopbypop[p2,allplhiv,p1, t+1] += peoplemoving1[allplhiv]/dt #annualize
+                    raw_transitpopbypop[p1,allplhiv,p2, t+1] += peoplemoving2[allplhiv]/dt #annualize
 
 
             ###############################################################################
