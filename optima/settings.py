@@ -18,7 +18,7 @@ from optima import OptimaException, defaultrepr, printv, dcp, isnumber, inclusiv
 
 
 class Settings(object):
-    def __init__(self, verbose=2):
+    def __init__(self, verbose=2, advancedtracking=False):
         self.dt = 0.2 # Timestep
         self.start = 2000.0 # Default start year
         self.now = 2017.0 # Default current year
@@ -67,6 +67,16 @@ class Settings(object):
         self.allaids        = cat([self.lt50, self.gt50]) # All people with AIDS
         self.allstates      = cat([self.sus, self.allplhiv]) # All states
         self.nstates        = len(self.allstates) # Total number of states
+
+        # Infection methods
+        self.inj = 0            # Injection, don't change number
+        self.heterosexsex = 1   # Homosexual sexual transmission, don't change number
+        self.homosexsex = 2     # Heterosexual sexual transmission, don't change number
+        self.mtct = 3           # MTCT
+        self.nmethods = 4       # 4 methods of transmission
+        self.methodnames = ['Injection','Heterosexual sex','Homosexual sex','MTCT']
+
+        self.advancedtracking = advancedtracking # Try to always set to False to save time when running model
         
         # Set labels for each health state
         thesestates = dcp(self.healthstates)

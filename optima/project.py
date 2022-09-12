@@ -438,8 +438,10 @@ class Project(object):
             if type(result)!=BOC: self.results.pop(key)
         return None
     
-    def save(self, filename=None, folder=None, saveresults=False, verbose=2):
+    def save(self, filename=None, folder=None, saveresults=False, verbose=2, advancedtracking=False):
         ''' Save the current project, by default using its name, and without results '''
+        origadvancedtracking = self.settings.advancedtracking
+        self.settings.advancedtracking = advancedtracking # Default to turning advancedtracking off
         fullpath = makefilepath(filename=filename, folder=folder, default=[self.filename, self.name], ext='prj', sanitize=True)
         self.filename = fullpath # Store file path
         if saveresults:
@@ -450,6 +452,7 @@ class Project(object):
             tmpproject.cleanresults() # Get rid of all results
             saveobj(fullpath, tmpproject, verbose=verbose) # Save it to file
             del tmpproject # Don't need it hanging around any more
+        self.settings.advancedtracking = origadvancedtracking
         return fullpath
 
 
@@ -564,8 +567,9 @@ class Project(object):
 
     def runsim(self, name=None, pars=None, simpars=None, start=None, end=None, dt=None, tvec=None, 
                budget=None, coverage=None, budgetyears=None, data=None, n=1, sample=None, tosample=None, randseed=None,
-               addresult=True, overwrite=True, keepraw=False, doround=False, die=True, debug=False, verbose=None, 
-               parsetname=None, progsetname=None, resultname=None, label=None, smoothness=None, **kwargs):
+               addresult=True, overwrite=True, keepraw=False, doround=False, die=True, debug=False, verbose=None,
+               parsetname=None, progsetname=None, resultname=None, label=None, smoothness=None,
+               advancedtracking=None, **kwargs):
         ''' 
         This function runs a single simulation, or multiple simulations if n>1. This is the
         core function for actually running the model!!!!!!
@@ -574,7 +578,8 @@ class Project(object):
         '''
         if dt      is None: dt      = self.settings.dt # Specify the timestep
         if verbose is None: verbose = self.settings.verbose
-        
+        if advancedtracking is None: advancedtracking = self.settings.advancedtracking # settings.advancedtracking defaults to False
+
         # Extract parameters either from a parset stored in project or from input
         if parsetname is None:
             if name is not None: parsetname = name # This is mostly for backwards compatibility -- allow the first argument to set the parset
@@ -617,11 +622,11 @@ class Project(object):
         # Run the model!
         rawlist = []
         for ind,simpars in enumerate(simparslist):
-            raw = model(simpars, self.settings, die=die, debug=debug, verbose=verbose, label=self.name, **kwargs) # ACTUALLY RUN THE MODEL
+            raw = model(simpars, self.settings, die=die, debug=debug, verbose=verbose, label=self.name, advancedtracking=advancedtracking, **kwargs) # ACTUALLY RUN THE MODEL
             rawlist.append(raw)
 
         # Store results if required
-        results = Resultset(name=resultname, pars=pars, parsetname=parsetname, progsetname=progsetname, raw=rawlist, simpars=simparslist, budget=budget, coverage=coverage, budgetyears=budgetyears, project=self, keepraw=keepraw, doround=doround, data=data, verbose=verbose) # Create structure for storing results
+        results = Resultset(name=resultname, pars=pars, parsetname=parsetname, progsetname=progsetname, raw=rawlist, simpars=simparslist, budget=budget, coverage=coverage, budgetyears=budgetyears, project=self, keepraw=keepraw, doround=doround, data=data, verbose=verbose, advancedtracking=advancedtracking) # Create structure for storing results
         if addresult:
             keyname = self.addresult(result=results, overwrite=overwrite)
             if parsetname is not None:
