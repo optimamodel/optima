@@ -233,11 +233,11 @@ def makeplots(results=None, toplot=None, die=False, verbose=2, plotstartyear=Non
     ## Plot infections by method of transmission, and by population
     if 'numincimethods' in toplot:
         toplot.remove('numincimethods')  # Because everything else is passed to plotepi()
-        plots = plotbymethod(results, whattoplot='numincimethods', die=die, fig=fig, **kwargs)
+        plots = plotbymethod(results, toplot='numincimethods', die=die, fig=fig, **kwargs)
         allplots.update(plots)
     if 'numincimethods-population+stacked' in toplot:
         toplot.remove('numincimethods-population+stacked')  # Because everything else is passed to plotepi()
-        plots = plotbymethod(results, whattoplot='numincimethods', die=die, fig=fig, **kwargs)
+        plots = plotbymethod(results, toplot='numincimethods', die=die, fig=fig, **kwargs)
         allplots.update(plots)
     
     

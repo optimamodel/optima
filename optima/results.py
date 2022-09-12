@@ -43,7 +43,7 @@ class Result(object):
 
 class Resultset(object):
     ''' Structure to hold results '''
-    def __init__(self, raw=None, name=None, pars=None, simpars=None, project=None, settings=None, data=None, parsetname=None, progsetname=None, budget=None, coverage=None, budgetyears=None, domake=True, quantiles=None, keepraw=False, verbose=2, doround=False):
+    def __init__(self, raw=None, name=None, pars=None, simpars=None, project=None, settings=None, data=None, parsetname=None, progsetname=None, budget=None, coverage=None, budgetyears=None, domake=True, quantiles=None, keepraw=False, verbose=2, doround=False, advancedtracking=False):
         # Basic info
         self.uid = uuid()
         self.created = today()
@@ -53,6 +53,7 @@ class Resultset(object):
         self.keys = [0] # Used for comparison with multiresultsets -- 0 corresponds to e.g. self.main[<key>].tot[0]
         self.parsetname = parsetname
         self.progsetname = progsetname
+        self.advancedtracking = advancedtracking
         
         # Turn inputs into lists if not already
         if raw is None: raise OptimaException('To generate results, you must feed in model output: none provided')
@@ -120,14 +121,15 @@ class Resultset(object):
         self.other['childprev']     = Result('Child HIV prevalence (%)', ispercentage=True)
         self.other['numotherdeath'] = Result('Non-HIV-related deaths)')
         self.other['numbirths']     = Result('Total births)')
-        self.other['numincionpopbypop'] = Result('New HIV infections acquired from pop', defaultplot='population+stacked')
-        self.other['numincimethods'] = Result('New HIV infections by method of transmission', defaultplot='population+stacked')
+        if advancedtracking:
+            self.other['numincionpopbypop'] = Result('New HIV infections acquired from pop', defaultplot='population+stacked')
+            self.other['numincimethods']    = Result('New HIV infections by method of transmission', defaultplot='population+stacked')
 
         # Add all health states
         for healthkey,healthname in zip(self.settings.healthstates, self.settings.healthstatesfull): # Health keys: ['susreg', 'progcirc', 'undx', 'dx', 'care', 'lost', 'usvl', 'svl']
             self.other['only'+healthkey]   = Result(healthname) # Pick out only people in these health states
             
-        if domake: self.make(raw, verbose=verbose, quantiles=quantiles, doround=doround)
+        if domake: self.make(raw, verbose=verbose, quantiles=quantiles, doround=doround, advancedtracking=advancedtracking)
     
     
     def __repr__(self):
@@ -221,7 +223,7 @@ class Resultset(object):
         return R
             
         
-    def make(self, raw, quantiles=None, annual=True, verbose=2, doround=False, lifeexpectancy=None, discountrate=None, yllconstrained=None):
+    def make(self, raw, quantiles=None, annual=True, verbose=2, doround=False, lifeexpectancy=None, discountrate=None, yllconstrained=None, advancedtracking=False):
         """
         Gather standard results into a form suitable for plotting with uncertainties.
         Life expectancy is measured in years, and the discount rate is in absolute
@@ -303,8 +305,6 @@ class Resultset(object):
         allpeople    = assemble('people')
         allinci      = assemble('inci')
         allincibypop = assemble('incibypop')
-        allincionpopbypop = assemble('incionpopbypop')
-        allincimethods = assemble('incimethods')
         alldeaths    = assemble('death')
         otherdeaths  = assemble('otherdeath') 
         alldiag      = assemble('diag')
@@ -321,6 +321,9 @@ class Resultset(object):
         alltx        = self.settings.alltx
         svl          = self.settings.svl
         data         = self.data
+        if advancedtracking:
+            allincionpopbypop = assemble('incionpopbypop')
+            allincimethods    = assemble('incimethods')
 
         # Actually do calculations
         self.main['prev'].pops = process(allpeople[:,allplhiv,:,:][:,:,:,indices].sum(axis=1) / (eps+allpeople[:,:,:,indices].sum(axis=1)), percent=True) # Axis 1 is health state
@@ -496,18 +499,19 @@ class Resultset(object):
         self.other['numbirths'].pops = process(allbirths[:,:,indices])
         self.other['numbirths'].tot = process(allbirths[:,:,indices].sum(axis=1))
 
-        self.other['numincionpopbypop'].pops = process(allincionpopbypop[:, :, :, :, indices].sum(axis=2))  # Axis 2 is health state of causers
-        self.other['numincionpopbypop'].tot  = process(allincionpopbypop[:, :, :, :, indices].sum(axis=(2, 3)))  # Axis 3 is causer populations
-        # Uncomment the lines below to check that numincionpopbypop is being calculated properly compared with numinci - it will show as data on the plots
-        # self.other['numincionpopbypop'].datatot = process(array([allinci[:,:,indices],allinci[:,:,indices],allinci[:,:,indices]])) # summing over both causing state and population gives total per acquired population
-        # self.other['numincionpopbypop'].estimate = False  # Not an estimate because the model produced the "data" - should match up
+        if advancedtracking:
+            self.other['numincionpopbypop'].pops = process(allincionpopbypop[:, :, :, :, indices].sum(axis=2))  # Axis 2 is health state of causers
+            self.other['numincionpopbypop'].tot  = process(allincionpopbypop[:, :, :, :, indices].sum(axis=(2, 3)))  # Axis 3 is causer populations
+            # Uncomment the lines below to check that numincionpopbypop is being calculated properly compared with numinci - it will show as data on the plots
+            # self.other['numincionpopbypop'].datatot = process(array([allinci[:,:,indices],allinci[:,:,indices],allinci[:,:,indices]])) # summing over both causing state and population gives total per acquired population
+            # self.other['numincionpopbypop'].estimate = False  # Not an estimate because the model produced the "data" - should match up
 
-        self.other['numincimethods'].pops = swapaxes(process(allincimethods[:, :, :, :, :, indices].sum(axis=(3,4))), 1, 2)  # Axis 3 is health state of causers, axis 4 is causer population
-                                                                # put population acquired into axis 1, method into axis 2
-        self.other['numincimethods'].tot  = process(allincimethods[:, :, :, :, :, indices].sum(axis=(1, 3, 4)))  # Axis 1 is method
-        # Uncomment the lines below to check that numincimethods is being calculated properly compared with numinci - it will show as data on the plots
-        # self.other['numincimethods'].datatot = process(array([allinci[:,:,indices],allinci[:,:,indices],allinci[:,:,indices]])) # summing over both causing state and population gives total per acquired population
-        # self.other['numincimethods'].estimate = False  # Not an estimate because the model produced the "data" - should match up
+            self.other['numincimethods'].pops = swapaxes(process(allincimethods[:, :, :, :, :, indices].sum(axis=(3,4))), 1, 2)  # Axis 3 is health state of causers, axis 4 is causer population
+                                                                    # put population acquired into axis 1, method into axis 2
+            self.other['numincimethods'].tot  = process(allincimethods[:, :, :, :, :, indices].sum(axis=(1, 3, 4)))  # Axis 1 is method
+            # Uncomment the lines below to check that numincimethods is being calculated properly compared with numinci - it will show as data on the plots
+            # self.other['numincimethods'].datatot = process(array([allinci[:,:,indices],allinci[:,:,indices],allinci[:,:,indices]])) # summing over both causing state and population gives total per acquired population
+            # self.other['numincimethods'].estimate = False  # Not an estimate because the model produced the "data" - should match up
 
         # Add in each health state
         for healthkey in self.settings.healthstates: # Health keys: ['susreg', 'progcirc', 'undx', 'dx', 'care', 'lost', 'usvl', 'svl']

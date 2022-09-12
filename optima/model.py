@@ -2,7 +2,7 @@
 from numpy import zeros, exp, maximum, minimum, inf, array, isnan, einsum, floor, ones, power as npow, concatenate as cat, interp, nan, squeeze, isinf, isfinite, argsort, take_along_axis, put_along_axis, expand_dims
 from optima import OptimaException, printv, dcp, odict, findinds
 
-def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False, debug=False, label=None, startind=None):
+def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False, debug=False, label=None, startind=None, advancedtracking=False):
     """
     Runs Optima's epidemiological model.
 
@@ -15,12 +15,12 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
 
     # Initialize basic quantities
 
-    if verbose is None:  verbose = settings.verbose # Verbosity of output
     if label is None:    label = ''
     else:                label += ': '# An optional label to add to error messages
     if startind is None: startind = 0 # Point to start from -- used with non-empty initpeople
     if simpars is None:  raise OptimaException(label+'model() requires simpars as an input')
     if settings is None: raise OptimaException(label+'model() requires settings as an input')
+    if verbose is None:  verbose = settings.verbose  # Verbosity of output
     printv('Running model...', 1, verbose)
 
     if initpeople is not None:
@@ -585,44 +585,75 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
 
         # Probability of getting infected. In the first stage of construction, we actually store this as the probability of NOT getting infected
         # First dimension: infection acquired by (circumcision status). Second dimension:  infection acquired by (pop). Third dimension: infection caused by (pop). Fourth dimension: infection caused by (health/treatment state)
-        forceinffull        = ones((len(sus), npops, nstates, npops))
-        forceinffullsexinj  = ones((3, len(sus), npops, nstates, npops)) # note that inj and sex should be 0 and 1
 
-        # Loop over all acts (partnership pairs) -- probability of pop1 getting infected by pop2
-        for pop1,pop2,wholeacts,fracacts,cond,thistrans in sexactslist:
+        if advancedtracking: # need the if statement outside the for loop for speed
+            forceinffullsexinj = ones((3, len(sus), npops, nstates, npops))  # note that inj and sex should be 0 and 1
+            # Loop over all acts (partnership pairs) -- probability of pop1 getting infected by pop2
+            for pop1,pop2,wholeacts,fracacts,cond,thistrans in sexactslist:
 
-            thisforceinfsex = (1-fracacts[t]*thistrans*cond[t]*einsum('a,b',alleff[pop1,t,:],effallprev[:,pop2]))
-            if wholeacts[t]: thisforceinfsex  *= npow((1-thistrans*cond[t]*einsum('a,b',alleff[pop1,t,:],effallprev[:,pop2])), int(wholeacts[t]))
+                thisforceinfsex = (1-fracacts[t]*thistrans*cond[t]*einsum('a,b',alleff[pop1,t,:],effallprev[:,pop2]))
+                if wholeacts[t]: thisforceinfsex  *= npow((1-thistrans*cond[t]*einsum('a,b',alleff[pop1,t,:],effallprev[:,pop2])), int(wholeacts[t]))
 
-            if male[pop1] and male[pop2]:
-                forceinffullsexinj[homosexsex, :, pop1, :, pop2] *= thisforceinfsex
-            else:
-                forceinffullsexinj[heterosexsex, :, pop1, :, pop2] *= thisforceinfsex
-            # forceinffull[:,pop1,:,pop2] *= thisforceinfsex # don't need to do as doing the same for forceinffullsexinj
+                if male[pop1] and male[pop2]:
+                    forceinffullsexinj[homosexsex, :, pop1, :, pop2] *= thisforceinfsex
+                else:
+                    forceinffullsexinj[heterosexsex, :, pop1, :, pop2] *= thisforceinfsex
+                # forceinffull[:,pop1,:,pop2] *= thisforceinfsex # don't need to do as doing the same for forceinffullsexinj
 
-            if debug and (not((forceinffullsexinj[heterosexsex,:,pop1,:,pop2]>=0).all()) or not((forceinffullsexinj[homosexsex,:,pop1,:,pop2]>=0).all())):
-                errormsg = label + 'Sexual force-of-infection is invalid between populations %s and %s, time %0.1f, FOI:\n%s)' % (popkeys[pop1], popkeys[pop2], tvec[t], forceinffull[:,pop1,:,pop2])
-                for var in ['thistrans', 'circeff[pop1,t]', 'prepeff[pop1,t]', 'stieff[pop1,t]', 'cond', 'wholeacts', 'fracacts', 'effallprev[:,pop2]']:
-                    errormsg += '\n%20s = %f' % (var, eval(var)) # Print out extra debugging information
-                raise OptimaException(errormsg)
+                if debug and (not((forceinffullsexinj[heterosexsex,:,pop1,:,pop2]>=0).all()) or not((forceinffullsexinj[homosexsex,:,pop1,:,pop2]>=0).all())):
+                    errormsg = label + 'Sexual force-of-infection is invalid between populations %s and %s, time %0.1f, FOI:\n%s)' % (popkeys[pop1], popkeys[pop2], tvec[t], forceinffull[:,pop1,:,pop2])
+                    for var in ['thistrans', 'circeff[pop1,t]', 'prepeff[pop1,t]', 'stieff[pop1,t]', 'cond', 'wholeacts', 'fracacts', 'effallprev[:,pop2]']:
+                        errormsg += '\n%20s = %f' % (var, eval(var)) # Print out extra debugging information
+                    raise OptimaException(errormsg)
 
-        # Injection-related infections -- probability of pop1 getting infected by pop2
-        for pop1,pop2,wholeacts,fracacts in injactslist:
+            # Injection-related infections -- probability of pop1 getting infected by pop2
+            for pop1,pop2,wholeacts,fracacts in injactslist:
 
-            thisforceinfinj = 1-transinj*sharing[pop1,t]*osteff[t]*prepeff[pop1,t]*fracacts[t]*effallprev[:,pop2]
-            if wholeacts[t]: thisforceinfinj *= npow((1-transinj*sharing[pop1,t]*osteff[t]*prepeff[pop1,t]*effallprev[:,pop2]), int(wholeacts[t]))
+                thisforceinfinj = 1-transinj*sharing[pop1,t]*osteff[t]*prepeff[pop1,t]*fracacts[t]*effallprev[:,pop2]
+                if wholeacts[t]: thisforceinfinj *= npow((1-transinj*sharing[pop1,t]*osteff[t]*prepeff[pop1,t]*effallprev[:,pop2]), int(wholeacts[t]))
 
-            for index in sus: # Assign the same probability of getting infected by injection to both circs and uncircs, as it doesn't matter
-                # forceinffull[index,pop1,:,pop2] *= thisforceinfinj # don't need to do as doing the same for forceinffullsexinj
-                forceinffullsexinj[inj,index,pop1,:,pop2] *= thisforceinfinj # note that inj and sex should be 0 and 1
+                for index in sus: # Assign the same probability of getting infected by injection to both circs and uncircs, as it doesn't matter
+                    # forceinffull[index,pop1,:,pop2] *= thisforceinfinj # don't need to do as doing the same for forceinffullsexinj
+                    forceinffullsexinj[inj,index,pop1,:,pop2] *= thisforceinfinj # note that inj and sex should be 0 and 1
 
-            if debug and not((forceinffullsexinj[inj,:,pop1,:,pop2]>=0).all()):
-                errormsg = label + 'Injecting force-of-infection is invalid between populations %s and %s, time %0.1f, FOI:\n%s)' % (popkeys[pop1], popkeys[pop2], tvec[t], forceinffull[:,pop1,:,pop2])
-                for var in ['transinj', 'sharing[pop1,t]', 'wholeacts', 'fracacts', 'osteff[t]', 'effallprev[:,pop2]']:
-                    errormsg += '\n%20s = %f' % (var, eval(var)) # Print out extra debugging information
-                raise OptimaException(errormsg)
+                if debug and not((forceinffullsexinj[inj,:,pop1,:,pop2]>=0).all()):
+                    errormsg = label + 'Injecting force-of-infection is invalid between populations %s and %s, time %0.1f, FOI:\n%s)' % (popkeys[pop1], popkeys[pop2], tvec[t], forceinffull[:,pop1,:,pop2])
+                    for var in ['transinj', 'sharing[pop1,t]', 'wholeacts', 'fracacts', 'osteff[t]', 'effallprev[:,pop2]']:
+                        errormsg += '\n%20s = %f' % (var, eval(var)) # Print out extra debugging information
+                    raise OptimaException(errormsg)
 
-        forceinffull = forceinffullsexinj[homosexsex,:,:,:,:] * forceinffullsexinj[heterosexsex,:,:,:,:] * forceinffullsexinj[inj,:,:,:,:]
+            forceinffull = forceinffullsexinj[homosexsex,:,:,:,:] * forceinffullsexinj[heterosexsex,:,:,:,:] * forceinffullsexinj[inj,:,:,:,:]
+
+        else:
+            forceinffull = ones((len(sus), npops, nstates, npops))
+
+            # Loop over all acts (partnership pairs) -- probability of pop1 getting infected by pop2
+            for pop1,pop2,wholeacts,fracacts,cond,thistrans in sexactslist:
+
+                forceinffull[:,pop1,:,pop2] *= (1-fracacts[t]*thistrans*cond[t]*einsum('a,b',alleff[pop1,t,:],effallprev[:,pop2]))
+                if wholeacts[t]: forceinffull[:,pop1,:,pop2] *= npow((1-thistrans*cond[t]*einsum('a,b',alleff[pop1,t,:],effallprev[:,pop2])), int(wholeacts[t]))
+
+                if debug and not((forceinffull[:,pop1,:,pop2]>=0).all()):
+                    errormsg = label + 'Sexual force-of-infection is invalid between populations %s and %s, time %0.1f, FOI:\n%s)' % (popkeys[pop1], popkeys[pop2], tvec[t], forceinffull[:,pop1,:,pop2])
+                    for var in ['thistrans', 'circeff[pop1,t]', 'prepeff[pop1,t]', 'stieff[pop1,t]', 'cond', 'wholeacts', 'fracacts', 'effallprev[:,pop2]']:
+                        errormsg += '\n%20s = %f' % (var, eval(var)) # Print out extra debugging information
+                    raise OptimaException(errormsg)
+
+            # Injection-related infections -- probability of pop1 getting infected by pop2
+            for pop1,pop2,wholeacts,fracacts in injactslist:
+
+                thisforceinfinj = 1-transinj*sharing[pop1,t]*osteff[t]*prepeff[pop1,t]*fracacts[t]*effallprev[:,pop2]
+                if wholeacts[t]: thisforceinfinj *= npow((1-transinj*sharing[pop1,t]*osteff[t]*prepeff[pop1,t]*effallprev[:,pop2]), int(wholeacts[t]))
+
+                for index in sus: # Assign the same probability of getting infected by injection to both circs and uncircs, as it doesn't matter
+                    forceinffull[index,pop1,:,pop2] *= thisforceinfinj
+
+                if debug and not((forceinffull[:,pop1,:,pop2]>=0).all()):
+                    errormsg = label + 'Injecting force-of-infection is invalid between populations %s and %s, time %0.1f, FOI:\n%s)' % (popkeys[pop1], popkeys[pop2], tvec[t], forceinffull[:,pop1,:,pop2])
+                    for var in ['transinj', 'sharing[pop1,t]', 'wholeacts', 'fracacts', 'osteff[t]', 'effallprev[:,pop2]']:
+                        errormsg += '\n%20s = %f' % (var, eval(var)) # Print out extra debugging information
+                    raise OptimaException(errormsg)
+
 
         # Probability of getting infected is one minus forceinffull times any scaling factors !! copied below !!
         forceinffull  = einsum('ijkl,j,j,j->ijkl', 1.-forceinffull, force, inhomo,(1.-background[:,t]))
@@ -642,26 +673,27 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
         raw_inci[:,t]               = einsum('ij,ijkl->j', people[sus,:,t], forceinffull)/dt
         raw_incibypop[:,:,t]        = einsum('ij,ijkl->kl', people[sus,:,t], forceinffull)/dt
 
-        # Some people (although small) will have gotten infected from both sex and injections, we default these people to the higher probability (higher risk) method
-        forceinffullsexinj = 1 - forceinffullsexinj
-        probsexinjsortindices = argsort(forceinffullsexinj,axis=0)
-        probsmallestlocations  = expand_dims(probsexinjsortindices[0,:,:,:,:], axis=0)
-        probmiddlelocations = expand_dims(probsexinjsortindices[1, :, :, :, :], axis=0)
-        probbiggestlocations   = expand_dims(probsexinjsortindices[2,:,:,:,:], axis=0)
+        if advancedtracking:
+            # Some people (although small) will have gotten infected from both sex and injections, we assign these people to the higher probability (higher risk) method
+            forceinffullsexinj = 1 - forceinffullsexinj
+            probsexinjsortindices = argsort(forceinffullsexinj,axis=0)
+            probsmallestlocations  = expand_dims(probsexinjsortindices[0,:,:,:,:], axis=0)
+            probmiddlelocations = expand_dims(probsexinjsortindices[1, :, :, :, :], axis=0)
+            probbiggestlocations   = expand_dims(probsexinjsortindices[2,:,:,:,:], axis=0)
 
-        smallestprob = take_along_axis(forceinffullsexinj, probsmallestlocations, axis=0)
-        middleprob  = take_along_axis(forceinffullsexinj, probmiddlelocations, axis=0)
-        largestprob  = take_along_axis(forceinffullsexinj, probbiggestlocations, axis=0)
-        #inclusion exclusion but the intersections are distributed to the larger probabilities
-        put_along_axis(forceinffullsexinj, probsmallestlocations, smallestprob - smallestprob * largestprob - smallestprob * middleprob + smallestprob * middleprob * largestprob, axis=0) # The assumption that the two infection events are independent, same assumption as above
-        put_along_axis(forceinffullsexinj, probmiddlelocations, middleprob - middleprob * largestprob, axis=0) # The assumption that the two infection events are independent, same assumption as above
+            smallestprob = take_along_axis(forceinffullsexinj, probsmallestlocations, axis=0)
+            middleprob  = take_along_axis(forceinffullsexinj, probmiddlelocations, axis=0)
+            largestprob  = take_along_axis(forceinffullsexinj, probbiggestlocations, axis=0)
+            #inclusion exclusion but the intersections are distributed to the larger probabilities
+            put_along_axis(forceinffullsexinj, probsmallestlocations, smallestprob - smallestprob * largestprob - smallestprob * middleprob + smallestprob * middleprob * largestprob, axis=0) # The assumption that the two infection events are independent, same assumption as above
+            put_along_axis(forceinffullsexinj, probmiddlelocations, middleprob - middleprob * largestprob, axis=0) # The assumption that the two infection events are independent, same assumption as above
 
-        # Probability of getting infected by each method is probsexinjsortindices times any scaling factors, !! copied from above !!
-        forceinffullcauses = einsum('mijkl,j,j,j->mijkl', forceinffullsexinj, force, inhomo, (1. - background[:, t]))
+            # Probability of getting infected by each method is probsexinjsortindices times any scaling factors, !! copied from above !!
+            forceinffullcauses = einsum('mijkl,j,j,j->mijkl', forceinffullsexinj, force, inhomo, (1. - background[:, t]))
 
-        nonmtctmethods = [heterosexsex,homosexsex,inj]
-        raw_incionpopbypopmethods[nonmtctmethods,:,:,:,t] = einsum('ij,mijkl->mjkl', people[sus,:,t], forceinffullcauses[nonmtctmethods,:,:,:,:])/dt
-        # raw_incionpopbypop[:,:,:,t] = einsum('ij,ijkl->jkl', people[sus,:,t], forceinffull)/dt
+            nonmtctmethods = [heterosexsex,homosexsex,inj]
+            raw_incionpopbypopmethods[nonmtctmethods,:,:,:,t] = einsum('ij,mijkl->mjkl', people[sus,:,t], forceinffullcauses[nonmtctmethods,:,:,:,:])/dt
+            # raw_incionpopbypop[:,:,:,t] = einsum('ij,ijkl->jkl', people[sus,:,t], forceinffull)/dt
 
         ##############################################################################################################
         ### Calculate deaths
@@ -805,7 +837,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
 
         # Calculate actual births, MTCT, and PMTCT
         for p1,p2,birthrates,alleligbirthrate in birthslist:
-            thisbirthrate = birthrates[t]
+            thisbirthrate  = birthrates[t]
             popbirths      = thisbirthrate * fsums[p1]['all']
             mtctundx       = thisbirthrate * fsums[p1]['undx'] * effmtct[t] # Births to undiagnosed mothers
             mtcttx         = thisbirthrate * fsums[p1]['alltx'] * pmtcteff[t] # Births to mothers on treatment
@@ -824,13 +856,15 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
             state_distribution_plhiv_from = people[:,p1,t] * plhivmap
 
             raw_mtctfrom[:, p1, t] += (thispopmtct/dt) * state_distribution_plhiv_from/(state_distribution_plhiv_from.sum()+eps) #WARNING: not accurate based on differential diagnosis by state potentially, but the best that's feasible
-            raw_mtcttoandfrom[p2,:,p1,t] += (thispopmtct/dt) * state_distribution_plhiv_from/(state_distribution_plhiv_from.sum()+eps) #WARNING: same warning as above, but I'm not 100% sure this is correct
+            if advancedtracking:
+                raw_mtcttoandfrom[p2,:,p1,t] += (thispopmtct/dt) * state_distribution_plhiv_from/(state_distribution_plhiv_from.sum()+eps) #WARNING: same warning as above, but I'm not 100% sure this is correct
             raw_births[p2, t] += popbirths/dt
             raw_hivbirths[p1, t] += thisbirthrate * fsums[p1]['allplhiv'] / dt
 
         raw_inci[:,t] += raw_mtct[:,t] # Update infections acquired based on PMTCT calculation
         raw_incibypop[:,:,t] += raw_mtctfrom[:,:,t] # Update infections caused based on PMTCT
-        raw_incionpopbypopmethods[[mtct],:,:,:,t] += raw_mtcttoandfrom[:,:,:,t]
+        if advancedtracking:
+            raw_incionpopbypopmethods[[mtct],:,:,:,t] += raw_mtcttoandfrom[:,:,:,t]
 
 
 
@@ -1009,8 +1043,6 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
     raw['people']         = people
     raw['inci']           = raw_inci
     raw['incibypop']      = raw_incibypop
-    raw['incionpopbypop'] = raw_incionpopbypopmethods.sum(axis=0) # removes the method of transmission
-    raw['incimethods']    = raw_incionpopbypopmethods
     raw['mtct']           = raw_mtct
     raw['births']         = raw_births
     raw['hivbirths']      = raw_hivbirths
@@ -1020,6 +1052,9 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
     raw['newtreat']       = raw_newtreat
     raw['death']          = raw_death
     raw['otherdeath']     = raw_otherdeath
+    if advancedtracking:
+        raw['incionpopbypop'] = raw_incionpopbypopmethods.sum(axis=0) # removes the method of transmission
+        raw['incimethods']    = raw_incionpopbypopmethods
 
     checkfornegativepeople(people) # Check only once for negative people, right before finishing
 

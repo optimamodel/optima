@@ -1414,6 +1414,7 @@ def addsexinjmtctsettings(project=None, **kwargs):
         project.settings.mtct = base_settings.mtct
         project.settings.nmethods = base_settings.nmethods
         project.settings.methodnames = base_settings.methodnames
+        project.settings.advancedtracking = base_settings.advancedtracking
     return None
 
 
