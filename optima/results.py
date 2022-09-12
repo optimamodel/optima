@@ -7,7 +7,7 @@ Version: 2018nov19
 from optima import OptimaException, Link, Settings, odict, pchip, plotpchip, sigfig # Classes/functions
 from optima import uuid, today, makefilepath, getdate, printv, dcp, objrepr, defaultrepr, sanitizefilename, sanitize # Printing/file utilities
 from optima import quantile, findinds, findnearest, promotetolist, promotetoarray, checktype # Numeric utilities
-from numpy import array, nan, zeros, arange, shape, maximum, log
+from numpy import array, nan, zeros, arange, shape, maximum, log, swapaxes
 from numbers import Number
 from xlsxwriter import Workbook
 
@@ -43,7 +43,7 @@ class Result(object):
 
 class Resultset(object):
     ''' Structure to hold results '''
-    def __init__(self, raw=None, name=None, pars=None, simpars=None, project=None, settings=None, data=None, parsetname=None, progsetname=None, budget=None, coverage=None, budgetyears=None, domake=True, quantiles=None, keepraw=False, verbose=2, doround=False):
+    def __init__(self, raw=None, name=None, pars=None, simpars=None, project=None, settings=None, data=None, parsetname=None, progsetname=None, budget=None, coverage=None, budgetyears=None, domake=True, quantiles=None, keepraw=False, verbose=2, doround=False, advancedtracking=False):
         # Basic info
         self.uid = uuid()
         self.created = today()
@@ -53,7 +53,8 @@ class Resultset(object):
         self.keys = [0] # Used for comparison with multiresultsets -- 0 corresponds to e.g. self.main[<key>].tot[0]
         self.parsetname = parsetname
         self.progsetname = progsetname
-        
+        self.advancedtracking = advancedtracking
+
         # Turn inputs into lists if not already
         if raw is None: raise OptimaException('To generate results, you must feed in model output: none provided')
         simpars = promotetolist(simpars) # Force into being a list
@@ -84,49 +85,54 @@ class Resultset(object):
         self.settings = settings if settings is not None else Settings()
         
         # Main results -- time series, by population
-        self.main['numinci']        = Result('New HIV infections')
-        self.main['numdeath']       = Result('HIV-related deaths')
-        self.main['numincibypop']   = Result('New HIV infections caused')
+        self.main['numinci']            = Result('New HIV infections')
+        self.main['numdeath']           = Result('HIV-related deaths')
+        self.main['numincibypop']       = Result('New HIV infections caused')
         
-        self.main['numplhiv']       = Result('PLHIV')
-        self.main['numaids']        = Result('People with AIDS')
-        self.main['numdiag']        = Result('Diagnosed PLHIV')
-        self.main['numevercare']    = Result('PLHIV initially linked to care')
-        self.main['numincare']      = Result('PLHIV in care')
-        self.main['numtreat']       = Result('PLHIV on treatment')
-        self.main['numsuppressed']  = Result('Virally suppressed PLHIV')
+        self.main['numplhiv']           = Result('PLHIV')
+        self.main['numaids']            = Result('People with AIDS')
+        self.main['numdiag']            = Result('Diagnosed PLHIV')
+        self.main['numevercare']        = Result('PLHIV initially linked to care')
+        self.main['numincare']          = Result('PLHIV in care')
+        self.main['numtreat']           = Result('PLHIV on treatment')
+        self.main['numsuppressed']      = Result('Virally suppressed PLHIV')
         
-        self.main['propdiag']       = Result('Diagnosed PLHIV (%)',                      ispercentage=True, defaultplot='total')
-        self.main['propplhivtreat'] = Result('Treated PLHIV (%)',                        ispercentage=True, defaultplot='total')
-        self.main['propplhivsupp']  = Result('Virally suppressed PLHIV (%)',             ispercentage=True, defaultplot='total')
-        self.main['propevercare']   = Result('Diagnosed PLHIV linked to care (%)',       ispercentage=True, defaultplot='total')
-        self.main['propincare']     = Result('Diagnosed PLHIV retained in care (%)',     ispercentage=True, defaultplot='total')
-        self.main['proptreat']      = Result('Diagnosed PLHIV on treatment (%)',         ispercentage=True, defaultplot='total')
-        self.main['propsuppressed'] = Result('Treated PLHIV with viral suppression (%)', ispercentage=True, defaultplot='total')
+        self.main['propdiag']           = Result('Diagnosed PLHIV (%)',                      ispercentage=True, defaultplot='total')
+        self.main['propplhivtreat']     = Result('Treated PLHIV (%)',                        ispercentage=True, defaultplot='total')
+        self.main['propplhivsupp']      = Result('Virally suppressed PLHIV (%)',             ispercentage=True, defaultplot='total')
+        self.main['propevercare']       = Result('Diagnosed PLHIV linked to care (%)',       ispercentage=True, defaultplot='total')
+        self.main['propincare']         = Result('Diagnosed PLHIV retained in care (%)',     ispercentage=True, defaultplot='total')
+        self.main['proptreat']          = Result('Diagnosed PLHIV on treatment (%)',         ispercentage=True, defaultplot='total')
+        self.main['propsuppressed']     = Result('Treated PLHIV with viral suppression (%)', ispercentage=True, defaultplot='total')
         
-        self.main['prev']           = Result('HIV prevalence (%)',       ispercentage=True, defaultplot='population')
-        self.main['force']          = Result('HIV incidence (per 100 p.y.)', ispercentage=True, defaultplot='population')
-        self.main['numnewdiag']     = Result('New HIV diagnoses')
-        self.main['nummtct']        = Result('HIV+ births')
-        self.main['numhivbirths']   = Result('Births to HIV+ women')
-        self.main['numpmtct']       = Result('HIV+ women receiving PMTCT')
-        self.main['popsize']        = Result('Population size')
-        self.main['numdaly']        = Result('HIV-related DALYs')
+        self.main['prev']               = Result('HIV prevalence (%)',       ispercentage=True, defaultplot='population')
+        self.main['force']              = Result('HIV incidence (per 100 p.y.)', ispercentage=True, defaultplot='population')
+        self.main['numnewdiag']         = Result('New HIV diagnoses')
+        self.main['nummtct']            = Result('HIV+ births')
+        self.main['numhivbirths']       = Result('Births to HIV+ women')
+        self.main['numpmtct']           = Result('HIV+ women receiving PMTCT')
+        self.main['popsize']            = Result('Population size')
+        self.main['numdaly']            = Result('HIV-related DALYs')
         
-        self.other['numyll']        = Result('HIV-related YLL')
-        self.other['numyld']        = Result('HIV-related YLD')
+        self.other['numyll']            = Result('HIV-related YLL')
+        self.other['numyld']            = Result('HIV-related YLD')
 
-        self.other['adultprev']     = Result('Adult HIV prevalence (%)', ispercentage=True)
-        self.other['childprev']     = Result('Child HIV prevalence (%)', ispercentage=True)
-        self.other['numotherdeath'] = Result('Non-HIV-related deaths)')
-        self.other['numbirths']     = Result('Total births)')
-        self.other['numincionpopbypop'] = Result('New HIV infections acquired from pop', defaultplot='population+stacked')
+        self.other['adultprev']         = Result('Adult HIV prevalence (%)', ispercentage=True)
+        self.other['childprev']         = Result('Child HIV prevalence (%)', ispercentage=True)
+        self.other['numotherdeath']     = Result('Non-HIV-related deaths)')
+        self.other['numbirths']         = Result('Total births)')
+        self.other['numimmi']           = Result('New immigrants')
+        self.other['numimmiplhiv']      = Result('New PLHIV immigrants')
+        if advancedtracking:
+            self.other['numincionpopbypop']  = Result('New HIV infections acquired from pop', defaultplot='population+stacked')
+            self.other['numtransitpopbypop'] = Result('HIV infections transitioned from pop', defaultplot='population+stacked')
+            self.other['numincimethods']     = Result('New HIV infections by method of transmission', defaultplot='population+stacked')
 
         # Add all health states
         for healthkey,healthname in zip(self.settings.healthstates, self.settings.healthstatesfull): # Health keys: ['susreg', 'progcirc', 'undx', 'dx', 'care', 'lost', 'usvl', 'svl']
             self.other['only'+healthkey]   = Result(healthname) # Pick out only people in these health states
             
-        if domake: self.make(raw, verbose=verbose, quantiles=quantiles, doround=doround)
+        if domake: self.make(raw, verbose=verbose, quantiles=quantiles, doround=doround, advancedtracking=advancedtracking)
     
     
     def __repr__(self):
@@ -220,7 +226,7 @@ class Resultset(object):
         return R
             
         
-    def make(self, raw, quantiles=None, annual=True, verbose=2, doround=False, lifeexpectancy=None, discountrate=None, yllconstrained=None):
+    def make(self, raw, quantiles=None, annual=True, verbose=2, doround=False, lifeexpectancy=None, discountrate=None, yllconstrained=None, advancedtracking=False):
         """
         Gather standard results into a form suitable for plotting with uncertainties.
         Life expectancy is measured in years, and the discount rate is in absolute
@@ -302,7 +308,6 @@ class Resultset(object):
         allpeople    = assemble('people')
         allinci      = assemble('inci')
         allincibypop = assemble('incibypop')
-        allincionpopbypop = assemble('incionpopbypop')
         alldeaths    = assemble('death')
         otherdeaths  = assemble('otherdeath') 
         alldiag      = assemble('diag')
@@ -310,6 +315,7 @@ class Resultset(object):
         allhivbirths = assemble('hivbirths')
         allbirths    = assemble('births')
         allpmtct     = assemble('pmtct')
+        allimmi      = assemble('immi')
         allplhiv     = self.settings.allplhiv
         allsus       = self.settings.sus
         allaids      = self.settings.allaids
@@ -319,6 +325,10 @@ class Resultset(object):
         alltx        = self.settings.alltx
         svl          = self.settings.svl
         data         = self.data
+        if advancedtracking:
+            alltransitpopbypop = assemble('transitpopbypop')
+            allincionpopbypop  = assemble('incionpopbypop')
+            allincimethods     = assemble('incimethods')
 
         # Actually do calculations
         self.main['prev'].pops = process(allpeople[:,allplhiv,:,:][:,:,:,indices].sum(axis=1) / (eps+allpeople[:,:,:,indices].sum(axis=1)), percent=True) # Axis 1 is health state
@@ -494,12 +504,30 @@ class Resultset(object):
         self.other['numbirths'].pops = process(allbirths[:,:,indices])
         self.other['numbirths'].tot = process(allbirths[:,:,indices].sum(axis=1))
 
-        self.other['numincionpopbypop'].pops = process(allincionpopbypop[:, :, :, :, indices].sum(axis=2))  # Axis 2 is health state of causers
-        self.other['numincionpopbypop'].tot  = process(allincionpopbypop[:, :, :, :, indices].sum(axis=(2, 3)))  # Axis 3 is causer populations
-        # Uncomment the lines below to check that numincionpopbypop is being calculated properly compared with numinci - it will show as data on the plots
-        # self.other['numincionpopbypop'].datatot = process(array([allinci[:,:,indices],allinci[:,:,indices],allinci[:,:,indices]])) # summing over both causing state and population gives total per acquired population
-        # self.other['numincionpopbypop'].estimate = False  # Not an estimate because the model produced the "data" - should match up
-        
+        self.other['numimmi'].pops = process(allimmi[:,:,:,indices].sum(axis=1))  # Axis 1 is health state
+        self.other['numimmi'].tot  = process(allimmi[:,:,:,indices].sum(axis=(1,2)))  # Axis 2 is population
+
+        self.other['numimmiplhiv'].pops = process(allimmi[:,allplhiv,:,:][:,:,:,indices].sum(axis=1))  # Axis 1 is health state
+        self.other['numimmiplhiv'].tot  = process(allimmi[:,allplhiv,:,:][:,:,:,indices].sum(axis=(1, 2)))   # Axis 2 is population
+
+
+        if advancedtracking:
+            self.other['numincionpopbypop'].pops = process(allincionpopbypop[:, :, :, :, indices].sum(axis=2))  # Axis 2 is health state of causers
+            self.other['numincionpopbypop'].tot  = process(allincionpopbypop[:, :, :, :, indices].sum(axis=(2, 3)))  # Axis 3 is causer populations
+            # Uncomment the lines below to check that numincionpopbypop is being calculated properly compared with numinci - it will show as data on the plots
+            # self.other['numincionpopbypop'].datatot = process(array([allinci[:,:,indices],allinci[:,:,indices],allinci[:,:,indices]])) # summing over both causing state and population gives total per acquired population
+            # self.other['numincionpopbypop'].estimate = False  # Not an estimate because the model produced the "data" - should match up
+
+            self.other['numincimethods'].pops = swapaxes(process(allincimethods[:, :, :, :, :, indices].sum(axis=(3,4))), 1, 2)  # Axis 3 is health state of causers, axis 4 is causer population
+                                                                    # put population acquired into axis 1, method into axis 2
+            self.other['numincimethods'].tot  = process(allincimethods[:, :, :, :, :, indices].sum(axis=(1, 3, 4)))  # Axis 1 is method
+            # Uncomment the lines below to check that numincimethods is being calculated properly compared with numinci - it will show as data on the plots
+            # self.other['numincimethods'].datatot = process(array([allinci[:,:,indices],allinci[:,:,indices],allinci[:,:,indices]])) # summing over both causing state and population gives total per acquired population
+            # self.other['numincimethods'].estimate = False  # Not an estimate because the model produced the "data" - should match up
+
+            self.other['numtransitpopbypop'].pops = process(alltransitpopbypop[:,:,:,:,indices].sum(axis=2))  # Axis 2 is health state of causers
+            self.other['numtransitpopbypop'].tot  = process(alltransitpopbypop[:,:,:,:,indices].sum(axis=(2, 3)))  # Axis 3 is causer populations
+
         # Add in each health state
         for healthkey in self.settings.healthstates: # Health keys: ['susreg', 'progcirc', 'undx', 'dx', 'care', 'lost', 'usvl', 'svl']
             healthinds = getattr(self.settings, healthkey)

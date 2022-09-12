@@ -91,6 +91,7 @@ def setmigrations(which='migrations'):
         ('2.10.10',('2.10.11','2022-08-09',fixmanfitsettings,'Fix manual fit settings (which impact on FE display)')),
         ('2.10.11',('2.10.12','2022-08-31',popgrowthoptions, 'Change forcepopsize to be forcepopgrowth by population and impact differently on key pops without inflows')),
         ('2.10.12',('2.10.13','2022-09-01',migrationmigration,'Add migration parameters and modeling')),
+        ('2.10.13',('2.10.14','2022-09-06',addsexinjmtctsettings,'Add sex, inj, and mtct indices to settings')),
         ])
     
     
@@ -1395,6 +1396,25 @@ def migrationmigration(project=None, **kwargs):
                         par.t[pop] = array([ps.start])
                         par.y[pop] = array([0.])
             
+    return None
+
+
+def addsexinjmtctsettings(project=None, **kwargs):
+    '''
+    Migration between Optima 2.10.13 and 2.10.14
+
+    This migration adds settings: sex, inj and mtct which are the indices of these methods of transmission
+    in a causes matrix, as well as the names of and number of methods of transmission
+    '''
+    if project is not None and project.settings is not None:
+        base_settings = op.Settings()
+        project.settings.heterosexsex = base_settings.heterosexsex
+        project.settings.homosexsex = base_settings.homosexsex
+        project.settings.inj = base_settings.inj
+        project.settings.mtct = base_settings.mtct
+        project.settings.nmethods = base_settings.nmethods
+        project.settings.methodnames = base_settings.methodnames
+        project.settings.advancedtracking = base_settings.advancedtracking
     return None
 
 
