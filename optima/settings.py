@@ -67,6 +67,16 @@ class Settings(object):
         self.allaids        = cat([self.lt50, self.gt50]) # All people with AIDS
         self.allstates      = cat([self.sus, self.allplhiv]) # All states
         self.nstates        = len(self.allstates) # Total number of states
+
+        # Infection methods
+        self.inj = 0            # Injection, don't change number
+        self.heterosexsex = 1   # Homosexual sexual transmission, don't change number
+        self.homosexsex = 2     # Heterosexual sexual transmission, don't change number
+        self.mtct = 3           # MTCT
+        self.nmethods = 4       # 4 methods of transmission
+        self.methodnames = ['Injection','Heterosexual sex','Homosexual sex','MTCT']
+
+        self.advancedtracking = False # Try to always set to False to save time when running model
         
         # Set labels for each health state
         thesestates = dcp(self.healthstates)
