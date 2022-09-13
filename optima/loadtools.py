@@ -92,6 +92,7 @@ def setmigrations(which='migrations'):
         ('2.10.11',('2.10.12','2022-08-31',popgrowthoptions, 'Change forcepopsize to be forcepopgrowth by population and impact differently on key pops without inflows')),
         ('2.10.12',('2.10.13','2022-09-01',migrationmigration,'Add migration parameters and modeling')),
         ('2.10.13',('2.10.14','2022-09-06',addsexinjmtctsettings,'Add sex, inj, and mtct indices to settings')),
+        ('2.10.14',('2.10.15','2022-09-13',fixmoremanfitsettings,'Fix more manual fit settings (which impact on FE display)')),
         ])
     
     
@@ -1417,6 +1418,19 @@ def addsexinjmtctsettings(project=None, **kwargs):
         project.settings.advancedtracking = base_settings.advancedtracking
     return None
 
+def fixmoremanfitsettings(project=None, **kwargs):
+    '''
+    Migration between Optima 2.10.14 and 2.10.15 
+    
+    - Adjust manual calibration flags for added parameters
+    '''
+    if project is not None:            
+        for ps in project.parsets.values():
+            ps.pars['propemigrate'].manual = 'meta'
+            ps.pars['numimmigrate'].manual = 'meta'
+            ps.pars['immihivprev'].manual  = 'meta'
+            ps.pars['immipropdiag'].manual = 'meta'
+    return None
 
 ##########################################################################################
 ### CORE MIGRATION FUNCTIONS
