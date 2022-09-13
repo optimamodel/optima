@@ -255,14 +255,19 @@ def makeplots(results=None, toplot=None, die=False, verbose=2, plotstartyear=Non
         allplots.update(plots)
 
     ## Plot infections by method of transmission, and by population
-    if 'numincimethods' in toplot: #TODO add numincimethods-stacked, not just population+stacked
+    if 'numincimethods' in toplot:
         toplot.remove('numincimethods')  # Because everything else is passed to plotepi()
         plots = plotbymethod(results, toplot='numincimethods', die=die, fig=fig, **kwargs)
         allplots.update(plots)
     if 'numincimethods-population+stacked' in toplot:
         toplot.remove('numincimethods-population+stacked')  # Because everything else is passed to plotepi()
-        plots = plotbymethod(results, toplot='numincimethods', die=die, fig=fig, **kwargs)
+        plots = plotbymethod(results, toplot='numincimethods-population+stacked', die=die, fig=fig, **kwargs)
         allplots.update(plots)
+    if 'numincimethods-stacked' in toplot:
+        toplot.remove('numincimethods-stacked')  # Because everything else is passed to plotepi()
+        plots = plotbymethod(results, toplot='numincimethods-stacked', die=die, fig=fig, **kwargs)
+        allplots.update(plots)
+
 
 
     ## Add epi plots -- WARNING, I hope this preserves the order! ...It should...
@@ -1511,7 +1516,7 @@ def plotbymethod(results, toplot=None, uncertainty=True, die=True, showdata=True
 
         ## Validate plot keys
         valid_plotkeys = ['numincimethods']  # only allow selected things
-        valid_plottypes = ['population+stacked'] # only allow population+stacked
+        valid_plottypes = ['population+stacked','stacked'] # only allow population+stacked
         for pk, plotkeys in enumerate(toplot):
             epikey = None  # By default, don't make any assumptions
             plottype = 'population+stacked'  # Assume population+stacked by default
@@ -1572,10 +1577,10 @@ def plotbymethod(results, toplot=None, uncertainty=True, die=True, showdata=True
             datatype, plotformat = plotkey
 
             # store result.main[datatype] as resultsmaindatatype, in order to allow selected other variables from results.other to be plotted
-            if datatype == 'numincimethods':
-                resultsmaindatatype = results.other[datatype]
-            else:
+            if datatype in results.main.keys():
                 resultsmaindatatype = results.main[datatype]
+            else:
+                resultsmaindatatype = results.other[datatype]
 
             ispercentage = resultsmaindatatype.ispercentage  # Indicate whether result is a percentage
             isestimate = resultsmaindatatype.estimate  # Indicate whether data is an estimate
@@ -1591,7 +1596,7 @@ def plotbymethod(results, toplot=None, uncertainty=True, die=True, showdata=True
             ################################################################################################################
 
             # Decide which attribute in results to pull -- doesn't map cleanly onto plot types
-            if istotal or (isstacked and ismultisim):
+            if istotal or (isstacked):
                 attrtype = 'tot'  # Only plot total if it's a scenario and 'stacked' was requested
             else:
                 attrtype = 'pops'
@@ -1647,12 +1652,14 @@ def plotbymethod(results, toplot=None, uncertainty=True, die=True, showdata=True
                 setposition(ax, position, interactive)
                 allydata = []  # Keep track of the lowest value in the data
 
-                if isstacked or ismultisim or isperpopandstacked:
+                if ismultisim or isperpopandstacked:
                     # print('SHAPE',best.shape)
-                    nplots = len(best)     # first axis is population acquired
-                    nlinesperplot = len(best[0])  # second axis is causes
+                    # nplots = len(best)     # first axis is population acquired
+                    nlinesperplot = len(best[i])    # second axis is causes, if population+stacked
+                elif isstacked:
+                    nlinesperplot = len(best)       # First axis is causes if stacked
                 else:
-                    nlinesperplot = 1  # In all other cases, there's a single line per plot
+                    nlinesperplot = 1               # In all other cases, there's a single line per plot
                 if colorsarg is None: colors = gridcolors(nlinesperplot)  # This is needed because this loop gets run multiple times, so can't just set and forget
 
                 ################################################################################################################
@@ -1662,15 +1669,12 @@ def plotbymethod(results, toplot=None, uncertainty=True, die=True, showdata=True
                 xdata = results.tvec  # Pull this out here for clarity
 
                 # Make sure plots are in the correct order
-                origorder = arange(nplots)
-                plotorder = nplots - 1 - origorder
-                # if reorder: plotorder = [reorder[k] for k in plotorder]
-
-                labels = results.settings.methodnames
 
                 origordermethod = arange(nlinesperplot)
                 plotordermethod = nlinesperplot - 1 - origordermethod
                 # if reorder: plotordermethod = [reorder[k] for k in plotorder]
+
+                labels = results.settings.methodnames
 
                 # # e.g. single simulation, prev-tot: single line, single plot
                 # if not ismultisim and istotal:
