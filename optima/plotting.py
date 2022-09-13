@@ -41,8 +41,8 @@ interactiveposition = [0.15,0.1,0.55,0.75] # Use slightly larger margnis for int
 
 def getdefaultplots(ismulti='both'):
     ''' Since these can get overwritten otherwise '''
-    defaultplots = ['cascadebars', 'budgets', 'tvbudget', 'numplhiv-stacked', 'numinci-stacked', 'numdeath-stacked', 'numtreat-stacked', 'numnewdiag-stacked', 'prev-population', 'popsize-stacked'] # Default epidemiological plots
-    defaultmultiplots = ['budgets', 'tvbudget', 'numplhiv-total', 'numinci-total', 'numdeath-total', 'numtreat-total', 'numnewdiag-total', 'prev-population', 'popsize-stacked'] # Default epidemiological plots
+    defaultplots = ['cascadebars', 'budgets', 'tvbudget', 'numplhiv-stacked', 'numinci-stacked', 'numdeath-stacked', 'numtreat-stacked', 'numnewdiag-stacked', 'prev-population', 'popsize-stacked', 'propdiag-total','proptreat-total','propsuppressed-total'] # Default epidemiological plots
+    defaultmultiplots = ['budgets', 'tvbudget', 'numplhiv-total', 'numinci-total', 'numdeath-total', 'numtreat-total', 'numnewdiag-total', 'prev-population', 'popsize-stacked', 'propdiag-total','proptreat-total','propsuppressed-total'] # Default epidemiological plots
     if ismulti==False:  return defaultplots
     elif ismulti==True: return defaultmultiplots
     else:               return defaultplots,defaultmultiplots
@@ -1949,7 +1949,7 @@ def ploticers(results=None, figsize=globalfigsize, lw=2, dotsize=30, titlesize=g
 
 
 
-def plotcostcov(program=None, year=None, parset=None, results=None, plotoptions=None, existingFigure=None, plotbounds=True, npts=100, maxupperlim=1e8, interactive=False, **kwargs):
+def plotcostcov(program=None, year=None, parset=None, results=None, plotoptions=None, existingFigure=None, plotbounds=True, npts=100, maxupperlim=1e8, interactive=False, proportion=False, **kwargs):
     ''' Plot the cost-coverage curve for a single program'''
     
     # Put plotting imports here so fails at the last possible moment
@@ -1989,9 +1989,9 @@ def plotcostcov(program=None, year=None, parset=None, results=None, plotoptions=
 
     # Create x line data and y line data
     try:
-        y_l = program.getcoverage(x=xlinedata, t=year, parset=parset, results=results, total=True, proportion=False, toplot=True, sample='l')
-        y_m = program.getcoverage(x=xlinedata, t=year, parset=parset, results=results, total=True, proportion=False, toplot=True, sample='best')
-        y_u = program.getcoverage(x=xlinedata, t=year, parset=parset, results=results, total=True, proportion=False, toplot=True, sample='u')
+        y_l = program.getcoverage(x=xlinedata, t=year, parset=parset, results=results, total=True, proportion=proportion, toplot=True, sample='l')
+        y_m = program.getcoverage(x=xlinedata, t=year, parset=parset, results=results, total=True, proportion=proportion, toplot=True, sample='best')
+        y_u = program.getcoverage(x=xlinedata, t=year, parset=parset, results=results, total=True, proportion=proportion, toplot=True, sample='u')
     except Exception as E:
         y_l,y_m,y_u = None,None,None
         print('Warning, could not get program coverage: %s' % repr(E))

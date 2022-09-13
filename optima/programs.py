@@ -205,12 +205,27 @@ class Programset(object):
         for key,prog in self.optimizableprograms().items():
             printv('Checking %s program' % key, 4, verbose)
             unitcost = prog.costcovfn.ccopars.get('unitcost', None)
-            if not(unitcost) and unitcost!=0:
+            if not(unitcost) and unitcost!=0  or (isinstance(unitcost, list) and isnan(unitcost).all()):
                 printv('WARNING: %s unit cost is none' % key, 4, verbose)
                 details.append(prog.name)
                 result = False
             else:
                 printv('%s unit cost is %s' % (key, unitcost), 4, verbose)
+            saturation = prog.costcovfn.ccopars.get('saturation', None)
+            if not(saturation) and saturation!=0 or (isinstance(saturation, list) and isnan(saturation).all()):
+                printv('WARNING: %s saturation is none' % key, 4, verbose)
+                details.append(prog.name)
+                result = False
+            else:
+                printv('%s saturation is %s' % (key, saturation), 4, verbose)
+            popfactor = prog.costcovfn.ccopars.get('popfactor', None)
+            if not(popfactor) and popfactor!=0  or (isinstance(popfactor, list) and isnan(popfactor).all()):
+                printv('WARNING: %s popfactor is none' % key, 4, verbose)
+                details.append(prog.name)
+                result = False
+            else:
+                printv('%s popfactor is %s' % (key, popfactor), 4, verbose)
+                
             totalcost = prog.costcovdata.get('cost',None) 
             if totalcost is None or totalcost==[]:
                 printv('WARNING: %s total cost is none' % key, 4, verbose)
