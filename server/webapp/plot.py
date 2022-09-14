@@ -126,17 +126,14 @@ def make_mpld3_graph_dict(result=None, which=None, zoom=None, startYear=None, en
     graph_selectors = op.getplotselections(result, advanced=advanced)
     if advanced:
         # This changes the which keys without a type '-stacked' for example to follow that in getdefaultplots()
-        new_which = op.dcp(which)  # which should be a list
         for wi, which_key in enumerate(which):
             if which_key == 'advanced' or which_key == 'default':  # these should be removed already but just to be sure
                 continue
             if which_key.find('-') == -1:  # '-' not found
                 for i, key in enumerate(graph_selectors['keys']):
-                    if graph_selectors['defaults'][i] and key.startswith(which_key) and (key not in new_which):
-                        if which_key in new_which:
-                            new_which.remove(which_key)
-                        new_which.append(key)  # note that this can add multiple plots of the same first name ie 'numinci-stacked' and 'numinci-population' if they are both in the default plots list
-        which = new_which
+                    if graph_selectors['defaults'][i] and key.startswith(which_key) and (key not in which):
+                        which[wi] = key  # note that if both 'numinci-stacked' and 'numinci-population' for example are in getdefaultplots(), there may be some bugs
+
         # the rest of the which keys without a type default to '-stacked' in the below code, unless it is prev -> prev-population
 
         # rough and dirty defaults for missing defaults in advanced - convert 'numinci' to 'numinci-stacked', for example

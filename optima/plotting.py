@@ -42,6 +42,7 @@ interactiveposition = [0.15,0.1,0.55,0.75] # Use slightly larger margnis for int
 def getdefaultplots(ismulti='both'):
     ''' Since these can get overwritten otherwise '''
     ''' These should always include the plottype ie "-stacked" etc to avoid ambiguity if needed'''
+    ''' Note that if both 'numinci-stacked' and 'numinci-population' for example are included, there may be some bugs in the FE: make_mpld3_graph_dict()'''
     defaultplots = ['cascadebars', 'budgets', 'tvbudget', 'numplhiv-stacked', 'numinci-stacked', 'numdeath-stacked', 'numtreat-stacked', 'numnewdiag-stacked', 'prev-population', 'popsize-stacked', 'propdiag-total','proptreat-total','propsuppressed-total'] # Default epidemiological plots
     defaultmultiplots = ['budgets', 'tvbudget', 'numplhiv-total', 'numinci-total', 'numdeath-total', 'numtreat-total', 'numnewdiag-total', 'prev-population', 'popsize-stacked', 'propdiag-total','proptreat-total','propsuppressed-total'] # Default epidemiological plots
     if ismulti==False:  return defaultplots
