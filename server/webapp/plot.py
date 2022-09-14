@@ -125,21 +125,20 @@ def make_mpld3_graph_dict(result=None, which=None, zoom=None, startYear=None, en
 
     graph_selectors = op.getplotselections(result, advanced=advanced)
     if advanced:
-        normal_graph_selectors = op.getplotselections(result)
-        n = len(normal_graph_selectors['keys'])
-        normal_default_keys = []
-        for i in range(n):
-            if normal_graph_selectors["defaults"][i]:
-                normal_default_keys.append(normal_graph_selectors["keys"][i])
-        normal_default_keys = tuple(normal_default_keys)
-        # rough and dirty defaults for missing defaults in advanced - convert 'numinci' to 'numinci-stacked', for example
-        n = len(graph_selectors['keys'])
-        for i in range(n):
-            key = graph_selectors['keys'][i]
-            if key.startswith(normal_default_keys) and ('stacked' in key) and ('numincibypop' not in key):
-                graph_selectors['defaults'][i] = True
-            if (key.split("-")[0] in which) and (('stacked' in key) and ('prev' not in key)):
-                which[which.index(key.split("-")[0])] = key
+        # graph_selectors should be full names, and defaults too, so I removed the original block of code that was here
+        # except for the bit that changes the which keys to include the plottype
+
+        new_which = op.dcp(which)  # which should be a list
+        for wi, which_key in enumerate(which):
+            if which_key == 'advanced' or which_key == 'default':  #these should be removed already but just to be sure
+                continue
+            if which_key.find('-') == -1: # '-' not found
+                for i, key in enumerate(graph_selectors['keys']):
+                    if graph_selectors['defaults'][i] and key.startswith(which_key) and (key not in new_which):
+                        if which_key in new_which:
+                            new_which.remove(which_key)
+                        new_which.append(key) # note that this can add multiple plots of the same first name ie 'numinci-stacked' and 'numinci-population' if they are both in the default plots list
+        which = new_which
         if 'prev' in which:
             which[which.index('prev')] = 'prev-population'
     selectors = convert_to_selectors(graph_selectors)
