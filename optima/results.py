@@ -43,7 +43,7 @@ class Result(object):
 
 class Resultset(object):
     ''' Structure to hold results '''
-    def __init__(self, raw=None, name=None, pars=None, simpars=None, project=None, settings=None, data=None, parsetname=None, progsetname=None, budget=None, coverage=None, budgetyears=None, domake=True, quantiles=None, keepraw=False, verbose=2, doround=False, advancedtracking=False):
+    def __init__(self, raw=None, name=None, pars=None, simpars=None, project=None, settings=None, data=None, parsetname=None, parsetuid=None, progsetname=None, budget=None, coverage=None, budgetyears=None, domake=True, quantiles=None, keepraw=False, verbose=2, doround=False, advancedtracking=False):
         # Basic info
         self.uid = uuid()
         self.created = today()
@@ -52,6 +52,7 @@ class Resultset(object):
         self.other = odict() # For storing other results -- not available in the interface
         self.keys = [0] # Used for comparison with multiresultsets -- 0 corresponds to e.g. self.main[<key>].tot[0]
         self.parsetname = parsetname
+        self.parsetuid = parsetuid
         self.progsetname = progsetname
         self.advancedtracking = advancedtracking
 
