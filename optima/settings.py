@@ -21,9 +21,9 @@ class Settings(object):
     def __init__(self, verbose=2):
         self.dt = 0.2 # Timestep
         self.start = 2000.0 # Default start year
-        self.now = 2017.0 # Default current year
-        self.dataend = 2020.0 # Default end year for data entry
-        self.end = 2030.0 # Default end year for projections
+        self.now = 2022.0 # Default current year
+        self.dataend = 2030.0 # Default end year for data entry
+        self.end = 2040.0 # Default end year for projections
         self.hivstates = ['acute', 'gt500', 'gt350', 'gt200', 'gt50', 'lt50']
         self.healthstates = ['susreg', 'progcirc', 'undx', 'dx', 'care', 'lost', 'usvl', 'svl']
         self.ncd4 = len(self.hivstates)
