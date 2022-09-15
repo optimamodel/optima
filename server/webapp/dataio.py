@@ -1298,7 +1298,9 @@ def load_parset_graphs(project_id, parset_id, calculation_type, which=None, para
         if not hasattr(result,'advancedtracking'):
             needtorerun = True
 
-    if forcerunadvancedtracking is None:  # Let the which decide if we need to run with advancedtracking
+    if needtorerun:                                 # need to rerun so don't count current results
+        forcerunadvancedtracking = op.checkifneedtorerunwithadvancedtracking(results=None, which=which)
+    elif forcerunadvancedtracking is None:  # Let the which and current results decide if we need to run with advancedtracking
         if result is not None:
             whichprocessed, _s, _a, which = process_which(result=result, which=which,
                                                           includeadvancedtracking=includeadvancedtracking)
@@ -1307,7 +1309,7 @@ def load_parset_graphs(project_id, parset_id, calculation_type, which=None, para
         forcerunadvancedtracking = op.checkifneedtorerunwithadvancedtracking(results=result, which=whichprocessed)
         needtorerun = (needtorerun or forcerunadvancedtracking)  # Only overwrite needtorerun from false -> true
     elif forcerunadvancedtracking:
-        if result is not None and not result.advancedtracking:
+        if result is not None and not result.advancedtracking: #we've already checked if results has advancedtracking
             needtorerun = True  # Have results but they don't have advancedtracking so force rerun
 
     if parameters is not None:
