@@ -1295,6 +1295,8 @@ def load_parset_graphs(project_id, parset_id, calculation_type, which=None, para
                 which = result.which
         if not hasattr(result,'parsetuid'):
             needtorerun = True
+        if not hasattr(result,'advancedtracking'):
+            needtorerun = True
 
     if forcerunadvancedtracking is None:  # Let the which decide if we need to run with advancedtracking
         if result is not None:
