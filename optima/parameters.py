@@ -747,9 +747,9 @@ class Popsizepar(Par):
 
     def interp(self, tvec=None, dt=None, smoothness=None, asarray=True, sample=None, randseed=None, usemeta=True, popkeys=None): # WARNING: smoothness isn't used, but kept for consistency with other methods...
         """ Take population size parameter and turn it into a model parameters """
-        
+
         # Validate input
-        if tvec is None: 
+        if tvec is None: #Warning, may be able to send an empty list/array here instead?
             errormsg = 'Cannot interpolate parameter "%s" with no time vector specified' % self.name
             raise OptimaException(errormsg)
         tvec, dt = gettvecdt(tvec=tvec, dt=dt) # Method for getting these as best possible
