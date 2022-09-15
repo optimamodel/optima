@@ -32,7 +32,7 @@ def extract_graph_selector(graph_key):
 def convert_to_mpld3(figure, zoom=None, graph_pos=None):
     plugin = mpld3.plugins.MousePosition(fontsize=8, fmt='.4r')
     mpld3.plugins.connect(figure, plugin)
-    
+
     # Handle figure size
     if zoom is None: zoom = 0.8
     zoom = 1.8 - zoom
@@ -53,7 +53,7 @@ def convert_to_mpld3(figure, zoom=None, graph_pos=None):
 
     mpld3_dict = mpld3.fig_to_dict(figure)
     graph_dict = normalize_obj(mpld3_dict)
-    
+
     return graph_dict
 
 
@@ -66,35 +66,24 @@ def convert_to_selectors(graph_selectors):
          for (key, name, checked) in zip(keys, names, defaults)]
     return selectors
 
-
-def make_mpld3_graph_dict(result=None, which=None, zoom=None, startYear=None, endYear=None):
+def process_which(result=None, which=None, advanced=None, includeadvancedtracking=False):
     """
-    Converts an Optima sim Result into a dictionary containing
-    mpld3 graph dictionaries and associated keys for display,
-    which can be exported as JSON.
+    Takes in the which given by the frontend and processes 'default', 'advanced' etc
 
     Args:
-        result: the Optima simulation Result object
+        result: the Optima simulation Result object, must not be None
         which: a list of keys to determine which plots to generate
-        zoom: the relative size of the figure
 
     Returns:
-        A dictionary of the form:
-            { "graphs":
-                "mpld3_graphs": [<mpld3 graph dictioanry>...],
-                "graph_selectors": ["key of a selector",...],
-                "selectors": [<selector dictionary>]
-            }
-            - mpld3_graphs is the same length as graph_selectors
-            - selectors are shown on screen and graph_selectors refer to selectors
-            - selector: {
-                "key": "unique name",
-                "name": "Long description",
-                "checked": boolean
-              }
-        }
+        which: A list of graphs to be plotted without plot type if not advanced,
+            with plot type if advanced
+        selectors: All currently available graph selectors
+        advanced: boolean if advanced
+        originalwhich: the original list
     """
-    print(">> make_mpld3_graph_dict input which:", which)
+    origwhich = op.dcp(which)
+    if advanced is not None and advanced:
+        which.append('advanced')
 
     if which is None:
         advanced = False
@@ -102,7 +91,7 @@ def make_mpld3_graph_dict(result=None, which=None, zoom=None, startYear=None, en
             which = result.which
             if which is None:
                 which = {}
-            print(">> make_mpld3_graph_dict has cache:", which)
+            print(">> process_which has cache:", which)
             if 'advanced' in which:
                 advanced = True
                 which.remove("advanced")
@@ -121,13 +110,13 @@ def make_mpld3_graph_dict(result=None, which=None, zoom=None, startYear=None, en
             advanced = True
             which.remove('advanced')
 
-    print(">> make_mpld3_graph_dict advanced:", advanced)
+    print(">> process_which advanced:", advanced)
 
-    graph_selectors = op.getplotselections(result, advanced=advanced)
+    graph_selectors = op.getplotselections(result, advanced=advanced,includeadvancedtracking=includeadvancedtracking)
     if advanced:
         # This changes the which keys without a type '-stacked' for example to follow that in getdefaultplots()
         for wi, which_key in enumerate(which):
-            if which_key == 'advanced' or which_key == 'default':  # these should be removed already but just to be sure
+            if which_key == 'advanced' or which_key == 'default':  # advanced should be removed already but just to be sure
                 continue
             if which_key.find('-') == -1:  # '-' not found
                 for i, key in enumerate(graph_selectors['keys']):
@@ -158,6 +147,39 @@ def make_mpld3_graph_dict(result=None, which=None, zoom=None, startYear=None, en
         which = [w for w in which if w in graph_selectors["keys"]]
         for selector in selectors:
             selector['checked'] = selector['key'] in which
+
+    return which,selectors,advanced,origwhich
+
+
+def make_mpld3_graph_dict(result=None, which=None, zoom=None, startYear=None, endYear=None, includeadvancedtracking=False):
+    """
+    Converts an Optima sim Result into a dictionary containing
+    mpld3 graph dictionaries and associated keys for display,
+    which can be exported as JSON.
+
+    Args:
+        result: the Optima simulation Result object, must not be None
+        which: a list of keys to determine which plots to generate
+        zoom: the relative size of the figure
+
+    Returns:
+        A dictionary of the form:
+            { "graphs":
+                "mpld3_graphs": [<mpld3 graph dictioanry>...],
+                "graph_selectors": ["key of a selector",...],
+                "selectors": [<selector dictionary>]
+            }
+            - mpld3_graphs is the same length as graph_selectors
+            - selectors are shown on screen and graph_selectors refer to selectors
+            - selector: {
+                "key": "unique name",
+                "name": "Long description",
+                "checked": boolean
+              }
+        }
+    """
+
+    which, selectors, advanced,origwhich = process_which(result=result,which=which, includeadvancedtracking=includeadvancedtracking)
 
     print(">> make_mpld3_graph_dict which:", which)
 

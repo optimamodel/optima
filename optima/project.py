@@ -586,6 +586,7 @@ class Project(object):
             else:                parsetname = -1 # Set default name
             if pars is None:
                 pars = self.parsets[parsetname].pars
+                parsetuid = self.parsets[parsetname].uid
                 resultname = 'parset-'+self.parsets[parsetname].name
             else:
                 printv('Model was given a pardict and a parsetname, defaulting to use pardict input', 3, self.settings.verbose)
@@ -597,6 +598,7 @@ class Project(object):
             else:
                 if resultname is None: resultname = 'parset-'+self.parsets[parsetname].name
                 pars = self.parsets[parsetname].pars
+                parsetuid = self.parsets[parsetname].uid
         if label is None: # Define the label
             if name is None: label = '%s' % parsetname
             else:            label = name
@@ -626,7 +628,7 @@ class Project(object):
             rawlist.append(raw)
 
         # Store results if required
-        results = Resultset(name=resultname, pars=pars, parsetname=parsetname, progsetname=progsetname, raw=rawlist, simpars=simparslist, budget=budget, coverage=coverage, budgetyears=budgetyears, project=self, keepraw=keepraw, doround=doround, data=data, verbose=verbose, advancedtracking=advancedtracking) # Create structure for storing results
+        results = Resultset(name=resultname, pars=pars, parsetname=parsetname, parsetuid=parsetuid, progsetname=progsetname, raw=rawlist, simpars=simparslist, budget=budget, coverage=coverage, budgetyears=budgetyears, project=self, keepraw=keepraw, doround=doround, data=data, verbose=verbose, advancedtracking=advancedtracking) # Create structure for storing results
         if addresult:
             keyname = self.addresult(result=results, overwrite=overwrite)
             if parsetname is not None:
