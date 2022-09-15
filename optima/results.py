@@ -43,7 +43,7 @@ class Result(object):
 
 class Resultset(object):
     ''' Structure to hold results '''
-    def __init__(self, raw=None, name=None, pars=None, simpars=None, project=None, settings=None, data=None, parsetname=None, progsetname=None, budget=None, coverage=None, budgetyears=None, domake=True, quantiles=None, keepraw=False, verbose=2, doround=False, advancedtracking=False):
+    def __init__(self, raw=None, name=None, pars=None, simpars=None, project=None, settings=None, data=None, parsetname=None, parsetuid=None, progsetname=None, budget=None, coverage=None, budgetyears=None, domake=True, quantiles=None, keepraw=False, verbose=2, doround=False, advancedtracking=False):
         # Basic info
         self.uid = uuid()
         self.created = today()
@@ -52,6 +52,7 @@ class Resultset(object):
         self.other = odict() # For storing other results -- not available in the interface
         self.keys = [0] # Used for comparison with multiresultsets -- 0 corresponds to e.g. self.main[<key>].tot[0]
         self.parsetname = parsetname
+        self.parsetuid = parsetuid
         self.progsetname = progsetname
         self.advancedtracking = advancedtracking
 
@@ -520,7 +521,7 @@ class Resultset(object):
 
             self.other['numincimethods'].pops = swapaxes(process(allincimethods[:, :, :, :, :, indices].sum(axis=(3,4))), 1, 2)  # Axis 3 is health state of causers, axis 4 is causer population
                                                                     # put population acquired into axis 1, method into axis 2
-            self.other['numincimethods'].tot  = process(allincimethods[:, :, :, :, :, indices].sum(axis=(1, 3, 4)))  # Axis 1 is method
+            self.other['numincimethods'].tot  = process(allincimethods[:, :, :, :, :, indices].sum(axis=(2, 3, 4)))  # Sum over everything except, axis 0:scenario, axis 1:method, axis 5:time
             # Uncomment the lines below to check that numincimethods is being calculated properly compared with numinci - it will show as data on the plots
             # self.other['numincimethods'].datatot = process(array([allinci[:,:,indices],allinci[:,:,indices],allinci[:,:,indices]])) # summing over both causing state and population gives total per acquired population
             # self.other['numincimethods'].estimate = False  # Not an estimate because the model produced the "data" - should match up

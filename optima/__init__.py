@@ -172,7 +172,7 @@ from . import optimization as _optimization; del optimization
 
 # Plotting functions
 try:
-    from .plotting import getplotselections, makeplots, plotepi, plotcascade, plotbudget, plottvbudget, plotcoverage, plotallocations, plotcostcov, plotbycd4, ploticers, saveplots, reanimateplots, sanitizeresults
+    from .plotting import getplotselections, makeplots, plotepi, plotcascade, plotbudget, plottvbudget, plotcoverage, plotallocations, plotcostcov, plotbycd4, ploticers, saveplots, reanimateplots, sanitizeresults, checkifneedtorerunwithadvancedtracking
     from . import plotting as _plotting; del plotting
 except Exception as E: _failed.append('plotting: %s' % repr(E))
 
