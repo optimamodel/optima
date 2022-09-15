@@ -125,21 +125,24 @@ def make_mpld3_graph_dict(result=None, which=None, zoom=None, startYear=None, en
 
     graph_selectors = op.getplotselections(result, advanced=advanced)
     if advanced:
-        normal_graph_selectors = op.getplotselections(result)
-        n = len(normal_graph_selectors['keys'])
-        normal_default_keys = []
-        for i in range(n):
-            if normal_graph_selectors["defaults"][i]:
-                normal_default_keys.append(normal_graph_selectors["keys"][i])
-        normal_default_keys = tuple(normal_default_keys)
+        # This changes the which keys without a type '-stacked' for example to follow that in getdefaultplots()
+        for wi, which_key in enumerate(which):
+            if which_key == 'advanced' or which_key == 'default':  # these should be removed already but just to be sure
+                continue
+            if which_key.find('-') == -1:  # '-' not found
+                for i, key in enumerate(graph_selectors['keys']):
+                    if graph_selectors['defaults'][i] and key.startswith(which_key) and (key not in which):
+                        which[wi] = key  # note that if both 'numinci-stacked' and 'numinci-population' for example are in getdefaultplots(), there may be some bugs
+
+        # the rest of the which keys without a type default to '-stacked' in the below code, unless it is prev -> prev-population
+
         # rough and dirty defaults for missing defaults in advanced - convert 'numinci' to 'numinci-stacked', for example
         n = len(graph_selectors['keys'])
         for i in range(n):
             key = graph_selectors['keys'][i]
-            if key.startswith(normal_default_keys) and ('stacked' in key) and ('numincibypop' not in key):
-                graph_selectors['defaults'][i] = True
             if (key.split("-")[0] in which) and (('stacked' in key) and ('prev' not in key)):
-                which[which.index(key.split("-")[0])] = key
+                which[which.index(key.split("-")[0])] = key     # All plots default to stacked except prev
+
         if 'prev' in which:
             which[which.index('prev')] = 'prev-population'
     selectors = convert_to_selectors(graph_selectors)
