@@ -1407,6 +1407,8 @@ def addsexinjmtctsettings(project=None, **kwargs):
 
     This migration adds settings: sex, inj and mtct which are the indices of these methods of transmission
     in a causes matrix, as well as the names of and number of methods of transmission
+    
+    Warning: breaks saved results (fixed in 2.10.6 migration)
     '''
     if project is not None and project.settings is not None:
         base_settings = op.Settings()
@@ -1438,6 +1440,7 @@ def clearuntrackedresults(project=None, **kwargs):
     Migration between Optima 2.10.15 and 2.10.16 
     
     - If results were not updated a couple of migrations previously then remove them now and need to rerun
+    - This update also includes adding advanced tracking plots to the FE
     '''
     if project is not None:
         for res in project.results.values():
