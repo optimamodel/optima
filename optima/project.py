@@ -591,10 +591,12 @@ class Project(object):
             else:
                 printv('Model was given a pardict and a parsetname, defaulting to use pardict input', 3, self.settings.verbose)
                 if resultname is None: resultname = 'pardict'
+                parsetuid = None
         else:
             if pars is not None:
                 printv('Model was given a pardict and a parsetname, defaulting to use pardict input', 3, self.settings.verbose)
                 if resultname is None: resultname = 'pardict'
+                parsetuid = None
             else:
                 if resultname is None: resultname = 'parset-'+self.parsets[parsetname].name
                 pars = self.parsets[parsetname].pars
