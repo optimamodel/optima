@@ -773,7 +773,8 @@ class Project(object):
 
     def optimize(self, name=None, parsetname=None, progsetname=None, objectives=None, constraints=None, maxiters=None, maxtime=None, 
                  verbose=2, stoppingfunc=None, die=False, origbudget=None, randseed=None, mc=None, optim=None, optimname=None, multi=False, 
-                 nchains=None, nblocks=None, blockiters=None, batch=None, timevarying=None, tvsettings=None, tvconstrain=None, which=None, **kwargs):
+                 nchains=None, nblocks=None, blockiters=None, batch=None, timevarying=None, tvsettings=None, tvconstrain=None, which=None, 
+                 makescenarios=True, **kwargs):
         '''
         Function to minimize outcomes or money.
         
@@ -792,6 +793,9 @@ class Project(object):
             
             pygui(P) # To plot results
         '''
+        
+        if parsetname  is None or parsetname == -1:  parsetname  = self.parsets.keys()[-1]  #use the real name instead of -1
+        if progsetname is None or progsetname == -1: progsetname = self.progsets.keys()[-1] #use the real name instead of -1
 
         # Check inputs
         if name is None: name = 'default'
@@ -825,6 +829,15 @@ class Project(object):
         self.addoptim(optim=optim)
         self.addresult(result=multires)
         self.modified = today()
+        
+        if makescenarios: #Make a new budget scenario out of each optimized result
+            budgetscens = []            
+            for resname in multires.resultsetnames:
+                optscenname = multires.optim.name + '_' + resname
+                budgetscens.append(Budgetscen(name = optscenname, t=multires.budgetyears[resname], budget=multires.budgets[resname],
+                                              parsetname=parsetname, progsetname=progsetname))
+            self.addscens(budgetscens, overwrite=False)
+        
         return multires
     
     
