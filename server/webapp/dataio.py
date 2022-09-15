@@ -1117,9 +1117,9 @@ def load_result_mpld3_graphs(result_id=None, which=None, zoom=None, startYear=No
         print(">> load_result_mpld3_graphs needtorerun with advancedtracking")
 
         if not hasattr(result,'parsetuid'):
-            raise op.OptimaException("The current results need to be refreshed for these graphs (results does not have parsetuid). Please click Save & run.")
+            raise op.OptimaException("Please click Save & run. The current results need to be refreshed for these graphs (results does not have parsetuid).")
         if result.parsetuid is None:
-            raise op.OptimaException("The current results need to be refreshed for these graphs (results.parsetuid is None). Please click Save & run.")
+            raise op.OptimaException("Please click Save & run. The current results need to be refreshed for these graphs (results.parsetuid is None).")
 
         out = load_parset_graphs(result.projectinfo['uid'], result.parsetuid, 'calibration', which=which, parameters=None,
                                  advanced_pars=None, zoom=zoom,startYear=startYear, endYear=endYear,
