@@ -1287,33 +1287,36 @@ def load_parset_graphs(project_id, parset_id, calculation_type, which=None, para
     result_name = "parset-" + parset.name
     print(">> load_parset_graphs result-name '%s'" % result_name)
     result = load_result(project_id, name=result_name, which=which)
+    needtorerun = False
     if result:
         if not which:
             if hasattr(result, 'which'):
                 print(">> load_parset_graphs load stored which of parset '%s'" % parset.name)
                 which = result.which
+        if not hasattr(result,'parsetuid'):
+            needtorerun = True
 
-    needtorerun = False
     if forcerunadvancedtracking is None:  # Let the which decide if we need to run with advancedtracking
         if result is not None:
             whichprocessed, _s, _a, which = process_which(result=result, which=which,
                                                           includeadvancedtracking=includeadvancedtracking)
         else:
             whichprocessed = which  # Default to not processing which should still work fine - if it fails it should only be a false positive
-        needtorerun = op.checkifneedtorerunwithadvancedtracking(results=result, which=whichprocessed)
-        forcerunadvancedtracking = needtorerun  # The which has decided
+        forcerunadvancedtracking = op.checkifneedtorerunwithadvancedtracking(results=result, which=whichprocessed)
+        needtorerun = (needtorerun or forcerunadvancedtracking)  # Only overwrite needtorerun from false -> true
     elif forcerunadvancedtracking:
         if result is not None and not result.advancedtracking:
             needtorerun = True  # Have results but they don't have advancedtracking so force rerun
 
     if parameters is not None:
         print(">> load_parset_graphs updating parset '%s'" % parset.name)
+        needtorerun = True
         parset.modified = op.today()
         parset.start    = startYear
         parset.end      = endYear
         parse.set_parameters_on_parset(parameters, parset)
 
-    if parameters is not None or needtorerun:
+    if needtorerun:
         delete_result_by_parset_id(project_id, parset_id)
         save_project(project)
         result = None
