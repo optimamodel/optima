@@ -834,7 +834,12 @@ class Project(object):
             budgetscens = []            
             for resname in multires.resultsetnames:
                 optscenname = multires.optim.name + '_' + resname
-                budgetscens.append(Budgetscen(name = optscenname, t=multires.budgetyears[resname], budget=multires.budgets[resname],
+                optbudget = dcp(multires.budgets[resname])
+                for prog in optbudget.keys():
+                    optbudget[prog] = promotetolist(optbudget[prog])
+                optt = promotetolist(multires.budgetyears[resname])
+                
+                budgetscens.append(Budgetscen(name = optscenname, t=optt, budget=optbudget,
                                               parsetname=parsetname, progsetname=progsetname))
             self.addscens(budgetscens, overwrite=False)
         
