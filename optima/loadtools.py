@@ -93,6 +93,7 @@ def setmigrations(which='migrations'):
         ('2.10.12',('2.10.13','2022-09-01',migrationmigration,'Add migration parameters and modeling')),
         ('2.10.13',('2.10.14','2022-09-06',addsexinjmtctsettings,'Add sex, inj, and mtct indices to settings')),
         ('2.10.14',('2.10.15','2022-09-13',fixmoremanfitsettings,'Fix more manual fit settings (which impact on FE display)')),
+        ('2.10.15',('2.10.16','2022-09-15',clearuntrackedresults,'Clear results if they did not have tracking')),
         ])
     
     
@@ -1430,6 +1431,19 @@ def fixmoremanfitsettings(project=None, **kwargs):
             ps.pars['numimmigrate'].manual = 'meta'
             ps.pars['immihivprev'].manual  = 'meta'
             ps.pars['immipropdiag'].manual = 'meta'
+    return None
+
+def clearuntrackedresults(project=None, **kwargs):
+    '''
+    Migration between Optima 2.10.15 and 2.10.16 
+    
+    - If results were not updated a couple of migrations previously then remove them now and need to rerun
+    '''
+    if project is not None:
+        for res in project.results.values():
+            if not hasattr(res, 'advancedtracking'): #if anything wasn't migrated previously just clear the result and user will rerun, migration is complex otherwise
+                project.results = op.odict()
+                break
     return None
 
 ##########################################################################################
