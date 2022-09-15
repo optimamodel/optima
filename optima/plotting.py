@@ -185,8 +185,11 @@ def getadvancedtrackingplotselections(results=None,advanced=False):
 
 
 def checkifneedtorerunwithadvancedtracking(results=None, which=None):
-    if results is not None and results.advancedtracking:
-        return False
+    if results is not None:
+        if not hasattr(results, 'advancedtracking'): #might not really need it but the results need refreshing
+            return True
+        elif results.advancedtracking:
+            return False
 
     if which is None:
         return False  # Don't need any graphs so don't need advanced tracking on
