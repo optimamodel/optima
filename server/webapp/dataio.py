@@ -1123,7 +1123,7 @@ def load_result_mpld3_graphs(result_id=None, which=None, zoom=None, startYear=No
 
         out = load_parset_graphs(result.projectinfo['uid'], result.parsetuid, 'calibration', which=which, parameters=None,
                                  advanced_pars=None, zoom=zoom,startYear=startYear, endYear=endYear,
-                                 includeadvancedtracking=includeadvancedtracking, forcerunadvancedtracking=True)
+                                 includeadvancedtracking=includeadvancedtracking, runwithadvancedtracking=True)
         return {
             'graphs': out['graphs']
         }
