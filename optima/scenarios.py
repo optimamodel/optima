@@ -220,7 +220,7 @@ def makescenarios(project=None, scenlist=None, verbose=2, ccsample=False, randse
             except: results = None
 
             scen.t = promotetoarray(scen.t)
-            if not scen.t:
+            if scen.t==array([]):
                 raise OptimaException(f'Scenario "{scen.name}" does not have a first year specified - this is necessary to determine when programs start applying.')
             
             if isinstance(scen, Budgetscen):
