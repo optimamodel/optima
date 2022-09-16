@@ -116,28 +116,70 @@ define(
       addLineToLegendLabel($svgFigure, nLegend);
     });
 
+    function isNumeric(a) {
+      return !isNaN(a) && // use type coercion to parse the _entirety_ of the string (`parseFloat` alone does not do this)...
+             !isNaN(parseFloat(a)) // ...and ensure strings of whitespace fail
+    }
+
     // reformat y-ticks
     var $yaxis = $element.find('.mpld3-yaxis');
     var $labels = $yaxis.find('g.tick > text');
-    var i = 0
+    var i = 0;
     $labels.each(function () {
       var $label = $(this);
-      var text = ylabels[i].replace(/,/g, '');  // Very hacky replacement of the ylabels that got lost in the translation in the BE (see comments !~! in the BE)
-      var newText = reformatYTickStr(text);
-      $label.text(newText);
-      i = i + 1
+
+      console.log('!A');
+      //console.log($label.text());
+      //console.log(ylabels[i]);
+      var textorig = $label.text().replace(/,/g, '');
+
+      // We try to perform a hacky replacement of the ylabels that got lost in the translation in the BE (see comments !~! in the BE)
+      var usedBE = false;
+      if (i < ylabels.length) {
+        var textBE = ylabels[i].replace(/,/g, '');
+        if (!isNumeric(textBE)) {   // We don't include numbers because sometimes the FE has chosen different points
+            newTextBE = reformatYTickStr(textBE);
+            $label.text(newTextBE);
+            usedBE = true;
+        }
+      }
+
+      if (!usedBE) {
+        newTextorig = reformatYTickStr(textorig);
+        $label.text(newTextorig);
+      }
+
+      i = i + 1;
     });
 
     // reformat x-ticks
     var $xaxis = $element.find('.mpld3-xaxis');
     var $labels = $xaxis.find('g.tick > text');
-    var i = 0
+    var i = 0;
     $labels.each(function () {
       var $label = $(this);
-      var text = xlabels[i].replace(/,/g, ''); // Very hacky replacement of the xlabels that got lost in the translation in the BE (see comments !~! in the BE)
-      var newText = reformatXTickStr(text);
-      $label.text(newText);
-      i = i + 1
+      console.log('!B');
+      //console.log($label.text());
+      //console.log(xlabels[i]);
+      var textorig = $label.text().replace(/,/g, '');
+
+      // We try to perform a hacky replacement of the ylabels that got lost in the translation in the BE (see comments !~! in the BE)
+      var usedBE = false;
+      if (i < xlabels.length) {
+        var textBE = xlabels[i].replace(/,/g, '');
+        if (!isNumeric(textBE)) {   // We don't include numbers because sometimes the FE has chosen different points
+            newTextBE = reformatXTickStr(textBE);
+            $label.text(newTextBE);
+            usedBE = true;
+        }
+      }
+
+      if (!usedBE) {
+        newTextorig = reformatXTickStr(textorig);
+        $label.text(newTextorig);
+      }
+
+      i = i + 1;
     });
   }
 
