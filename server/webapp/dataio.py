@@ -1276,7 +1276,7 @@ def save_parameters(project_id, parset_id, parameters):
 
 
 def load_parset_graphs(project_id, parset_id, calculation_type, which=None, parameters=None, advanced_pars=None, zoom=None,
-                       startYear=None, endYear=None, includeadvancedtracking=True, forcerunadvancedtracking=None):
+                       startYear=None, endYear=None, includeadvancedtracking=True, forcerunadvancedtracking=None): # if you forcerunadvancedtracking=False it may throw some errors
 
     print(">> load_parset_graphs args project_id %s" % project_id)
     print(">> load_parset_graphs args parset_id %s" % parset_id)
@@ -1298,6 +1298,14 @@ def load_parset_graphs(project_id, parset_id, calculation_type, which=None, para
         if not hasattr(result,'advancedtracking'):
             needtorerun = True
 
+    if parameters is not None:
+        print(">> load_parset_graphs updating parset '%s'" % parset.name)
+        needtorerun = True
+        parset.modified = op.today()
+        parset.start    = startYear
+        parset.end      = endYear
+        parse.set_parameters_on_parset(parameters, parset)
+
     if needtorerun:                                 # need to rerun so don't count current results
         forcerunadvancedtracking = op.checkifneedtorerunwithadvancedtracking(results=None, which=which)
     elif forcerunadvancedtracking is None:  # Let the which and current results decide if we need to run with advancedtracking
@@ -1309,16 +1317,10 @@ def load_parset_graphs(project_id, parset_id, calculation_type, which=None, para
         forcerunadvancedtracking = op.checkifneedtorerunwithadvancedtracking(results=result, which=whichprocessed)
         needtorerun = (needtorerun or forcerunadvancedtracking)  # Only overwrite needtorerun from false -> true
     elif forcerunadvancedtracking:
-        if result is not None and not result.advancedtracking: #we've already checked if results has advancedtracking
+        if result is None:
+            needtorerun = True
+        elif not result.advancedtracking: # we've already checked if results has advancedtracking
             needtorerun = True  # Have results but they don't have advancedtracking so force rerun
-
-    if parameters is not None:
-        print(">> load_parset_graphs updating parset '%s'" % parset.name)
-        needtorerun = True
-        parset.modified = op.today()
-        parset.start    = startYear
-        parset.end      = endYear
-        parse.set_parameters_on_parset(parameters, parset)
 
     if needtorerun:
         delete_result_by_parset_id(project_id, parset_id)
