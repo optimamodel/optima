@@ -1276,7 +1276,7 @@ def save_parameters(project_id, parset_id, parameters):
 
 
 def load_parset_graphs(project_id, parset_id, calculation_type, which=None, parameters=None, advanced_pars=None, zoom=None,
-                       startYear=None, endYear=None, includeadvancedtracking=True, forcerunadvancedtracking=None): # if you forcerunadvancedtracking=False it may throw some errors
+                       startYear=None, endYear=None, includeadvancedtracking=True, runwithadvancedtracking=None):  #runwithadvancedtracking will get overwritten to True if it needs it
 
     print(">> load_parset_graphs args project_id %s" % project_id)
     print(">> load_parset_graphs args parset_id %s" % parset_id)
@@ -1288,6 +1288,8 @@ def load_parset_graphs(project_id, parset_id, calculation_type, which=None, para
     print(">> load_parset_graphs result-name '%s'" % result_name)
     result = load_result(project_id, name=result_name, which=which)
     needtorerun = False
+    if result is None:
+        needtorerun = True
     if result:
         if not which:
             if hasattr(result, 'which'):
@@ -1306,21 +1308,18 @@ def load_parset_graphs(project_id, parset_id, calculation_type, which=None, para
         parset.end      = endYear
         parse.set_parameters_on_parset(parameters, parset)
 
-    if needtorerun:                                 # need to rerun so don't count current results
-        forcerunadvancedtracking = op.checkifneedtorerunwithadvancedtracking(results=None, which=which)
-    elif forcerunadvancedtracking is None:  # Let the which and current results decide if we need to run with advancedtracking
+    if runwithadvancedtracking is None:
+        runwithadvancedtracking = False # can overwrite it here
+    if needtorerun:                                         # need to rerun so don't count current results
+        runwithadvancedtracking = runwithadvancedtracking or op.checkifneedtorerunwithadvancedtracking(results=None, which=which)
+    else:  # Let the which and current results decide if we need to run with advancedtracking
         if result is not None:
             whichprocessed, _s, _a, which = process_which(result=result, which=which,
                                                           includeadvancedtracking=includeadvancedtracking)
         else:
             whichprocessed = which  # Default to not processing which should still work fine - if it fails it should only be a false positive
-        forcerunadvancedtracking = op.checkifneedtorerunwithadvancedtracking(results=result, which=whichprocessed)
-        needtorerun = (needtorerun or forcerunadvancedtracking)  # Only overwrite needtorerun from false -> true
-    elif forcerunadvancedtracking:
-        if result is None:
-            needtorerun = True
-        elif not result.advancedtracking: # we've already checked if results has advancedtracking
-            needtorerun = True  # Have results but they don't have advancedtracking so force rerun
+        runwithadvancedtracking = runwithadvancedtracking or op.checkifneedtorerunwithadvancedtracking(results=result, which=whichprocessed)
+        needtorerun = (needtorerun or runwithadvancedtracking)  # Only overwrite needtorerun from false -> true
 
     if needtorerun:
         delete_result_by_parset_id(project_id, parset_id)
@@ -1328,9 +1327,9 @@ def load_parset_graphs(project_id, parset_id, calculation_type, which=None, para
         result = None
 
     if result is None or needtorerun:
-        print(f">> load_parset_graphs running model, with advancedtracking={forcerunadvancedtracking}")
+        print(f">> load_parset_graphs running model, with advancedtracking={runwithadvancedtracking}")
 
-        result = project.runsim(name=parset.name, end=endYear, advancedtracking=forcerunadvancedtracking) # When running, possibly modify the end year, but not the start
+        result = project.runsim(name=parset.name, end=endYear, advancedtracking=runwithadvancedtracking) # When running, possibly modify the end year, but not the start
         result.which = which
         record = update_or_create_result_record_by_id(
             result, project_id, parset_id, calculation_type, db_session=db.session)
