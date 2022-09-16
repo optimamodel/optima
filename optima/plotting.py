@@ -147,8 +147,16 @@ def getplotselections(results, advanced=False, includeadvancedtracking=False):
                         plotepinames.append(name+' - '+subname)
         if includeadvancedtracking:
             advtrackkeys,advtracknames = getadvancedtrackingplotselections(results=results, advanced=advanced)
-            plotepikeys.extend(advtrackkeys)
-            plotepinames.extend(advtracknames)
+            if not ismultisim:
+                plotepikeys.extend(advtrackkeys)
+                plotepinames.extend(advtracknames)
+            else: # if multisim don't include stacked or population+stacked plots
+                for ik, key in enumerate(advtrackkeys):
+                    if not key.endswith('stacked'):
+                        plotepikeys.append(key)
+                        plotepinames.append(advtracknames[ik])
+
+
     else:
         plotepikeys = dcp(epikeys)
         plotepinames = dcp(epinames)
