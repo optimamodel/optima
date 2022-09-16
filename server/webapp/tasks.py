@@ -119,6 +119,8 @@ def check_task(task_id):
 
     db_session = init_db_session()
     work_log_record = db_session.query(dbmodels.WorkLogDb).filter_by(task_id=task_id).first()
+    close_db_session(db_session)
+
     calc_state = parse_work_log_record(work_log_record)
 
     if calc_state is None:
