@@ -88,7 +88,7 @@ define(
     }
   }
 
-  function reformatMpld3FigsInElement($element, nLegend) {
+  function reformatMpld3FigsInElement($element, nLegend, xlabels, ylabels) {
 
     $element.find('svg.mpld3-figure').each(function () {
       // Match the size of the figure to the wrapping svg element
@@ -116,24 +116,61 @@ define(
       addLineToLegendLabel($svgFigure, nLegend);
     });
 
+    function isNumeric(a) {
+      return !isNaN(a) && // use type coercion to parse the _entirety_ of the string (`parseFloat` alone does not do this)...
+             !isNaN(parseFloat(a)) // ...and ensure strings of whitespace fail
+    }
+
     // reformat y-ticks
     var $yaxis = $element.find('.mpld3-yaxis');
     var $labels = $yaxis.find('g.tick > text');
+    var i = 0;
     $labels.each(function () {
       var $label = $(this);
-      var text = $label.text().replace(/,/g, '');
-      var newText = reformatYTickStr(text);
-      $label.text(newText);
+      var textorig = $label.text().replace(/,/g, '');
+
+      // We try to perform a hacky replacement of the ylabels that got lost in the translation in the BE (see comments !~! in the BE)
+      var usedBE = false;
+      if (i < ylabels.length) {
+        var textBE = ylabels[i].replace(/,/g, '');
+        if (!isNumeric(textBE)) {   // We don't include numbers because sometimes the FE has chosen different points
+            newTextBE = reformatYTickStr(textBE);
+            $label.text(newTextBE);
+            usedBE = true;
+        }
+      }
+      if (!usedBE) {
+        newTextorig = reformatYTickStr(textorig);
+        $label.text(newTextorig);
+      }
+
+      i = i + 1;
     });
 
     // reformat x-ticks
     var $xaxis = $element.find('.mpld3-xaxis');
     var $labels = $xaxis.find('g.tick > text');
+    var i = 0;
     $labels.each(function () {
       var $label = $(this);
-      var text = $label.text().replace(/,/g, '');
-      var newText = reformatXTickStr(text);
-      $label.text(newText);
+      var textorig = $label.text().replace(/,/g, '');
+
+      // We try to perform a hacky replacement of the ylabels that got lost in the translation in the BE (see comments !~! in the BE)
+      var usedBE = false;
+      if (i < xlabels.length) {
+        var textBE = xlabels[i].replace(/,/g, '');
+        if (!isNumeric(textBE)) {   // We don't include numbers because sometimes the FE has chosen different points
+            newTextBE = reformatXTickStr(textBE);
+            $label.text(newTextBE);
+            usedBE = true;
+        }
+      }
+      if (!usedBE) {
+        newTextorig = reformatXTickStr(textorig);
+        $label.text(newTextorig);
+      }
+
+      i = i + 1;
     });
   }
 
@@ -269,7 +306,7 @@ define(
             }
 
             mpld3.draw_figure(attrs.chartId, figure);
-            reformatMpld3FigsInElement($element, nLegend);
+            reformatMpld3FigsInElement($element, nLegend, figure.xlabels, figure.ylabels);  // Very hacky replacement of the ylabels that got lost in the translation in the BE (see comments !~! in the BE)
 
             if (!_.isUndefined(initWidth)) {
               changeWidthOfSvg($element.find('svg'), initWidth);

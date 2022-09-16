@@ -586,17 +586,21 @@ class Project(object):
             else:                parsetname = -1 # Set default name
             if pars is None:
                 pars = self.parsets[parsetname].pars
+                parsetuid = self.parsets[parsetname].uid
                 resultname = 'parset-'+self.parsets[parsetname].name
             else:
                 printv('Model was given a pardict and a parsetname, defaulting to use pardict input', 3, self.settings.verbose)
                 if resultname is None: resultname = 'pardict'
+                parsetuid = None
         else:
             if pars is not None:
                 printv('Model was given a pardict and a parsetname, defaulting to use pardict input', 3, self.settings.verbose)
                 if resultname is None: resultname = 'pardict'
+                parsetuid = None
             else:
                 if resultname is None: resultname = 'parset-'+self.parsets[parsetname].name
                 pars = self.parsets[parsetname].pars
+                parsetuid = self.parsets[parsetname].uid
         if label is None: # Define the label
             if name is None: label = '%s' % parsetname
             else:            label = name
@@ -626,7 +630,7 @@ class Project(object):
             rawlist.append(raw)
 
         # Store results if required
-        results = Resultset(name=resultname, pars=pars, parsetname=parsetname, progsetname=progsetname, raw=rawlist, simpars=simparslist, budget=budget, coverage=coverage, budgetyears=budgetyears, project=self, keepraw=keepraw, doround=doround, data=data, verbose=verbose, advancedtracking=advancedtracking) # Create structure for storing results
+        results = Resultset(name=resultname, pars=pars, parsetname=parsetname, parsetuid=parsetuid, progsetname=progsetname, raw=rawlist, simpars=simparslist, budget=budget, coverage=coverage, budgetyears=budgetyears, project=self, keepraw=keepraw, doround=doround, data=data, verbose=verbose, advancedtracking=advancedtracking) # Create structure for storing results
         if addresult:
             keyname = self.addresult(result=results, overwrite=overwrite)
             if parsetname is not None:
@@ -769,7 +773,8 @@ class Project(object):
 
     def optimize(self, name=None, parsetname=None, progsetname=None, objectives=None, constraints=None, maxiters=None, maxtime=None, 
                  verbose=2, stoppingfunc=None, die=False, origbudget=None, randseed=None, mc=None, optim=None, optimname=None, multi=False, 
-                 nchains=None, nblocks=None, blockiters=None, batch=None, timevarying=None, tvsettings=None, tvconstrain=None, which=None, **kwargs):
+                 nchains=None, nblocks=None, blockiters=None, batch=None, timevarying=None, tvsettings=None, tvconstrain=None, which=None, 
+                 makescenarios=True, **kwargs):
         '''
         Function to minimize outcomes or money.
         
@@ -788,6 +793,9 @@ class Project(object):
             
             pygui(P) # To plot results
         '''
+        
+        if parsetname  is None or parsetname == -1:  parsetname  = self.parsets.keys()[-1]  #use the real name instead of -1
+        if progsetname is None or progsetname == -1: progsetname = self.progsets.keys()[-1] #use the real name instead of -1
 
         # Check inputs
         if name is None: name = 'default'
@@ -821,6 +829,20 @@ class Project(object):
         self.addoptim(optim=optim)
         self.addresult(result=multires)
         self.modified = today()
+        
+        if makescenarios: #Make a new budget scenario out of each optimized result
+            budgetscens = []            
+            for resname in multires.resultsetnames:
+                optscenname = multires.optim.name + '_' + resname
+                optbudget = dcp(multires.budgets[resname])
+                for prog in optbudget.keys():
+                    optbudget[prog] = promotetolist(optbudget[prog])
+                optt = promotetolist(multires.budgetyears[resname])
+                
+                budgetscens.append(Budgetscen(name = optscenname, t=optt, budget=optbudget,
+                                              parsetname=parsetname, progsetname=progsetname))
+            self.addscens(budgetscens, overwrite=False)
+        
         return multires
     
     

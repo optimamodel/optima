@@ -129,10 +129,15 @@ def makescenarios(project=None, scenlist=None, verbose=2, ccsample=False, randse
     scenparsets = odict()
     for scenno, scen in enumerate(scenlist):
         
-        try: 
+        
+        try:
+            if scen.parsetname not in project.parsets.keys() and len(project.parsets)==1: #if there is only 1 parset, then just update the scenarios
+                scen.parsetname = project.parsets.keys()[0]
+            
             thisparset = dcp(project.parsets[scen.parsetname])
             thisparset.projectref = Link(project) # Replace copy of project with pointer -- TODO: improve logic
-        except: raise OptimaException('Failed to extract parset "%s" from this project:\n%s' % (scen.parsetname, project))
+        except: 
+            raise OptimaException('Failed to extract parset "%s" from this project:\n%s' % (scen.parsetname, project))
         npops = len(thisparset.popkeys)
 
         if isinstance(scen,Parscen):
@@ -215,6 +220,8 @@ def makescenarios(project=None, scenlist=None, verbose=2, ccsample=False, randse
             except: results = None
 
             scen.t = promotetoarray(scen.t)
+            if scen.t==array([]):
+                raise OptimaException(f'Scenario "{scen.name}" does not have a first year specified - this is necessary to determine when programs start applying.')
             
             if isinstance(scen, Budgetscen):
                 

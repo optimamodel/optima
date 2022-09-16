@@ -35,7 +35,7 @@ from . import parse
 from .exceptions import ProjectDoesNotExist, ParsetAlreadyExists, \
     UserAlreadyExists, UserDoesNotExist, InvalidCredentials
 from .dbmodels import UserDb, ProjectDb, ResultsDb, PyObjectDb, UndoStackDb
-from .plot import make_mpld3_graph_dict, convert_to_mpld3
+from .plot import make_mpld3_graph_dict, convert_to_mpld3, process_which
 
 import six
 if six.PY3: # Python 3
@@ -1105,9 +1105,31 @@ def load_result_by_optimization(project, optimization):
     return None
 
 
-def load_result_mpld3_graphs(result_id=None, which=None, zoom=None, startYear=None, endYear=None):
+def load_result_mpld3_graphs(result_id=None, which=None, zoom=None, startYear=None, endYear=None,includeadvancedtracking=True):
+    # This function gets called by the Calibration tab in the FE so includeadvancedtracking=True is fine
+    # includeadvancedtracking will override/ignore the options given in which
     result = load_result_by_id(result_id, which)
-    return make_mpld3_graph_dict(result=result, which=which, zoom=zoom, startYear=startYear, endYear=endYear)
+
+    whichprocessed, _s,_a,_o = process_which(result=result, which=which, includeadvancedtracking=includeadvancedtracking)
+    needtorerun = op.checkifneedtorerunwithadvancedtracking(results=result, which=whichprocessed)
+
+    if needtorerun:
+        print(">> load_result_mpld3_graphs needtorerun with advancedtracking")
+
+        if not hasattr(result,'parsetuid'):
+            raise op.OptimaException("Please click Save & run. The current results need to be refreshed for these graphs (results does not have parsetuid).")
+        if result.parsetuid is None:
+            raise op.OptimaException("Please click Save & run. The current results need to be refreshed for these graphs (results.parsetuid is None).")
+
+        out = load_parset_graphs(result.projectinfo['uid'], result.parsetuid, 'calibration', which=which, parameters=None,
+                                 advanced_pars=None, zoom=zoom,startYear=startYear, endYear=endYear,
+                                 includeadvancedtracking=includeadvancedtracking, runwithadvancedtracking=True)
+        return {
+            'graphs': out['graphs']
+        }
+
+    return make_mpld3_graph_dict(result=result, which=which, zoom=zoom, startYear=startYear, endYear=endYear,
+                                 includeadvancedtracking=includeadvancedtracking)
 
 
 def download_figures(result_id=None, which=None, filetype=None, index=None):
@@ -1253,7 +1275,8 @@ def save_parameters(project_id, parset_id, parameters):
 
 
 
-def load_parset_graphs(project_id, parset_id, calculation_type, which=None, parameters=None, advanced_pars=None, zoom=None, startYear=None, endYear=None):
+def load_parset_graphs(project_id, parset_id, calculation_type, which=None, parameters=None, advanced_pars=None, zoom=None,
+                       startYear=None, endYear=None, includeadvancedtracking=True, runwithadvancedtracking=None):  #runwithadvancedtracking will get overwritten to True if it needs it
 
     print(">> load_parset_graphs args project_id %s" % project_id)
     print(">> load_parset_graphs args parset_id %s" % parset_id)
@@ -1264,24 +1287,49 @@ def load_parset_graphs(project_id, parset_id, calculation_type, which=None, para
     result_name = "parset-" + parset.name
     print(">> load_parset_graphs result-name '%s'" % result_name)
     result = load_result(project_id, name=result_name, which=which)
+    needtorerun = False
+    if result is None:
+        needtorerun = True
     if result:
         if not which:
             if hasattr(result, 'which'):
                 print(">> load_parset_graphs load stored which of parset '%s'" % parset.name)
                 which = result.which
+        if not hasattr(result,'parsetuid'):
+            needtorerun = True
+        if not hasattr(result,'advancedtracking'):
+            needtorerun = True
 
     if parameters is not None:
         print(">> load_parset_graphs updating parset '%s'" % parset.name)
+        needtorerun = True
         parset.modified = op.today()
         parset.start    = startYear
         parset.end      = endYear
         parse.set_parameters_on_parset(parameters, parset)
+
+    if runwithadvancedtracking is None:
+        runwithadvancedtracking = False # can overwrite it here
+    if needtorerun:                                         # need to rerun so don't count current results
+        runwithadvancedtracking = runwithadvancedtracking or op.checkifneedtorerunwithadvancedtracking(results=None, which=which)
+    else:  # Let the which and current results decide if we need to run with advancedtracking
+        if result is not None:
+            whichprocessed, _s, _a, which = process_which(result=result, which=which,
+                                                          includeadvancedtracking=includeadvancedtracking)
+        else:
+            whichprocessed = which  # Default to not processing which should still work fine - if it fails it should only be a false positive
+        runwithadvancedtracking = runwithadvancedtracking or op.checkifneedtorerunwithadvancedtracking(results=result, which=whichprocessed)
+        needtorerun = (needtorerun or runwithadvancedtracking)  # Only overwrite needtorerun from false -> true
+
+    if needtorerun:
         delete_result_by_parset_id(project_id, parset_id)
         save_project(project)
         result = None
 
-    if result is None:
-        result = project.runsim(name=parset.name, end=endYear) # When running, possibly modify the end year, but not the start
+    if result is None or needtorerun:
+        print(f">> load_parset_graphs running model, with advancedtracking={runwithadvancedtracking}")
+
+        result = project.runsim(name=parset.name, end=endYear, advancedtracking=runwithadvancedtracking) # When running, possibly modify the end year, but not the start
         result.which = which
         record = update_or_create_result_record_by_id(
             result, project_id, parset_id, calculation_type, db_session=db.session)
@@ -1289,7 +1337,7 @@ def load_parset_graphs(project_id, parset_id, calculation_type, which=None, para
         print(">> load_parset_graphs calc result for parset '%s'" % parset.name)
         db.session.commit()
 
-    graph_dict = make_mpld3_graph_dict(result=result, which=which, zoom=zoom, startYear=startYear, endYear=endYear)
+    graph_dict = make_mpld3_graph_dict(result=result, which=which, zoom=zoom, startYear=startYear, endYear=endYear,includeadvancedtracking=includeadvancedtracking)
 
     return {
         "parameters": parse.get_parameters_from_parset(parset, advanced=advanced_pars),

@@ -32,7 +32,7 @@ def extract_graph_selector(graph_key):
 def convert_to_mpld3(figure, zoom=None, graph_pos=None):
     plugin = mpld3.plugins.MousePosition(fontsize=8, fmt='.4r')
     mpld3.plugins.connect(figure, plugin)
-    
+
     # Handle figure size
     if zoom is None: zoom = 0.8
     zoom = 1.8 - zoom
@@ -51,9 +51,9 @@ def convert_to_mpld3(figure, zoom=None, graph_pos=None):
         else:
             ax.set_position(Bbox(array(frontendpositionnolegend)))
 
-    mpld3_dict = mpld3.fig_to_dict(figure)
+    mpld3_dict = mpld3.fig_to_dict(figure) # !~! most likely the yticklabels are getting lost here, could be related to https://stackoverflow.com/a/37277515 perhaps
     graph_dict = normalize_obj(mpld3_dict)
-    
+
     return graph_dict
 
 
@@ -66,15 +66,99 @@ def convert_to_selectors(graph_selectors):
          for (key, name, checked) in zip(keys, names, defaults)]
     return selectors
 
+def process_which(result=None, which=None, advanced=None, includeadvancedtracking=False):
+    """
+    Takes in the which given by the frontend and processes 'default', 'advanced' etc
 
-def make_mpld3_graph_dict(result=None, which=None, zoom=None, startYear=None, endYear=None):
+    Args:
+        result: the Optima simulation Result object, must not be None
+        which: a list of keys to determine which plots to generate
+
+    Returns:
+        which: A list of graphs to be plotted without plot type if not advanced,
+            with plot type if advanced
+        selectors: All currently available graph selectors
+        advanced: boolean if advanced
+        originalwhich: the original list
+    """
+    origwhich = op.dcp(which)
+    if advanced is not None and advanced:
+        which.append('advanced')
+
+    if which is None:
+        advanced = False
+        if hasattr(result, 'which'):
+            which = result.which
+            if which is None:
+                which = {}
+            print(">> process_which has cache:", which)
+            if 'advanced' in which:
+                advanced = True
+                which.remove("advanced")
+        else:
+            which = ["default"]
+    else:
+        if 'advanced' not in which:
+            advanced = False
+            which = [w.split("-")[0] for w in which]
+            def remove_duplicates(seq):
+                seen = set()
+                seen_add = seen.add
+                return [x for x in seq if not (x in seen or seen_add(x))]
+            which = remove_duplicates(which)
+        else:
+            advanced = True
+            which.remove('advanced')
+
+    print(">> process_which advanced:", advanced)
+
+    graph_selectors = op.getplotselections(result, advanced=advanced,includeadvancedtracking=includeadvancedtracking)
+    if advanced:
+        # This changes the which keys without a type '-stacked' for example to follow that in getdefaultplots()
+        for wi, which_key in enumerate(which):
+            if which_key == 'advanced' or which_key == 'default':  # advanced should be removed already but just to be sure
+                continue
+            if which_key.find('-') == -1:  # '-' not found
+                for i, key in enumerate(graph_selectors['keys']):
+                    if graph_selectors['defaults'][i] and key.startswith(which_key) and (key not in which):
+                        which[wi] = key  # note that if both 'numinci-stacked' and 'numinci-population' for example are in getdefaultplots(), there may be some bugs
+
+        # the rest of the which keys without a type default to '-stacked' in the below code, unless it is prev -> prev-population
+
+        # rough and dirty defaults for missing defaults in advanced - convert 'numinci' to 'numinci-stacked', for example
+        n = len(graph_selectors['keys'])
+        for i in range(n):
+            key = graph_selectors['keys'][i]
+            if (key.split("-")[0] in which) and (('stacked' in key) and ('prev' not in key)):
+                which[which.index(key.split("-")[0])] = key     # All plots default to stacked except prev
+
+        if 'prev' in which:
+            which[which.index('prev')] = 'prev-population'
+    selectors = convert_to_selectors(graph_selectors)
+
+    default_which = []
+    for i in range(len(graph_selectors['defaults'])):
+        if graph_selectors['defaults'][i]:
+            default_which.append(graph_selectors['keys'][i])
+
+    if len(which) == 0 or 'default' in which:
+        which = default_which
+    else:
+        which = [w for w in which if w in graph_selectors["keys"]]
+        for selector in selectors:
+            selector['checked'] = selector['key'] in which
+
+    return which,selectors,advanced,origwhich
+
+
+def make_mpld3_graph_dict(result=None, which=None, zoom=None, startYear=None, endYear=None, includeadvancedtracking=False):
     """
     Converts an Optima sim Result into a dictionary containing
     mpld3 graph dictionaries and associated keys for display,
     which can be exported as JSON.
 
     Args:
-        result: the Optima simulation Result object
+        result: the Optima simulation Result object, must not be None
         which: a list of keys to determine which plots to generate
         zoom: the relative size of the figure
 
@@ -94,67 +178,8 @@ def make_mpld3_graph_dict(result=None, which=None, zoom=None, startYear=None, en
               }
         }
     """
-    print(">> make_mpld3_graph_dict input which:", which)
 
-    if which is None:
-        advanced = False
-        if hasattr(result, 'which'):
-            which = result.which
-            if which is None:
-                which = {}
-            print(">> make_mpld3_graph_dict has cache:", which)
-            if 'advanced' in which:
-                advanced = True
-                which.remove("advanced")
-        else:
-            which = ["default"]
-    else:
-        if 'advanced' not in which:
-            advanced = False
-            which = [w.split("-")[0] for w in which]
-            def remove_duplicates(seq):
-                seen = set()
-                seen_add = seen.add
-                return [x for x in seq if not (x in seen or seen_add(x))]
-            which = remove_duplicates(which)
-        else:
-            advanced = True
-            which.remove('advanced')
-
-    print(">> make_mpld3_graph_dict advanced:", advanced)
-
-    graph_selectors = op.getplotselections(result, advanced=advanced)
-    if advanced:
-        normal_graph_selectors = op.getplotselections(result)
-        n = len(normal_graph_selectors['keys'])
-        normal_default_keys = []
-        for i in range(n):
-            if normal_graph_selectors["defaults"][i]:
-                normal_default_keys.append(normal_graph_selectors["keys"][i])
-        normal_default_keys = tuple(normal_default_keys)
-        # rough and dirty defaults for missing defaults in advanced - convert 'numinci' to 'numinci-stacked', for example
-        n = len(graph_selectors['keys'])
-        for i in range(n):
-            key = graph_selectors['keys'][i]
-            if key.startswith(normal_default_keys) and ('stacked' in key) and ('numincibypop' not in key):
-                graph_selectors['defaults'][i] = True
-            if (key.split("-")[0] in which) and (('stacked' in key) and ('prev' not in key)):
-                which[which.index(key.split("-")[0])] = key
-        if 'prev' in which:
-            which[which.index('prev')] = 'prev-population'
-    selectors = convert_to_selectors(graph_selectors)
-
-    default_which = []
-    for i in range(len(graph_selectors['defaults'])):
-        if graph_selectors['defaults'][i]:
-            default_which.append(graph_selectors['keys'][i])
-
-    if len(which) == 0 or 'default' in which:
-        which = default_which
-    else:
-        which = [w for w in which if w in graph_selectors["keys"]]
-        for selector in selectors:
-            selector['checked'] = selector['key'] in which
+    which, selectors, advanced,origwhich = process_which(result=result,which=which, includeadvancedtracking=includeadvancedtracking)
 
     print(">> make_mpld3_graph_dict which:", which)
 
@@ -166,7 +191,7 @@ def make_mpld3_graph_dict(result=None, which=None, zoom=None, startYear=None, en
     for g,graph_key in enumerate(graphs):
         graph_selectors.append(extract_graph_selector(graph_key))
         graph_pos = None
-        graph_dict = convert_to_mpld3(graphs[graph_key], zoom=zoom, graph_pos=graph_pos)
+        graph_dict = convert_to_mpld3(graphs[graph_key], zoom=zoom, graph_pos=graph_pos) # !~! most likely the yticklabels are getting lost here
         graph = graphs[graph_key]
         while len(graph.axes)>1:
             print('Warning, too many axes, attempting removal')
