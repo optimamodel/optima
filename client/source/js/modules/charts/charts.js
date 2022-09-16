@@ -127,10 +127,6 @@ define(
     var i = 0;
     $labels.each(function () {
       var $label = $(this);
-
-      console.log('!A');
-      //console.log($label.text());
-      //console.log(ylabels[i]);
       var textorig = $label.text().replace(/,/g, '');
 
       // We try to perform a hacky replacement of the ylabels that got lost in the translation in the BE (see comments !~! in the BE)
@@ -143,7 +139,6 @@ define(
             usedBE = true;
         }
       }
-
       if (!usedBE) {
         newTextorig = reformatYTickStr(textorig);
         $label.text(newTextorig);
@@ -158,9 +153,6 @@ define(
     var i = 0;
     $labels.each(function () {
       var $label = $(this);
-      console.log('!B');
-      //console.log($label.text());
-      //console.log(xlabels[i]);
       var textorig = $label.text().replace(/,/g, '');
 
       // We try to perform a hacky replacement of the ylabels that got lost in the translation in the BE (see comments !~! in the BE)
@@ -173,7 +165,6 @@ define(
             usedBE = true;
         }
       }
-
       if (!usedBE) {
         newTextorig = reformatXTickStr(textorig);
         $label.text(newTextorig);
