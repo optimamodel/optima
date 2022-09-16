@@ -51,7 +51,7 @@ def convert_to_mpld3(figure, zoom=None, graph_pos=None):
         else:
             ax.set_position(Bbox(array(frontendpositionnolegend)))
 
-    mpld3_dict = mpld3.fig_to_dict(figure)
+    mpld3_dict = mpld3.fig_to_dict(figure) # !~! most likely the yticklabels are getting lost here, could be related to https://stackoverflow.com/a/37277515 perhaps
     graph_dict = normalize_obj(mpld3_dict)
 
     return graph_dict
@@ -191,7 +191,7 @@ def make_mpld3_graph_dict(result=None, which=None, zoom=None, startYear=None, en
     for g,graph_key in enumerate(graphs):
         graph_selectors.append(extract_graph_selector(graph_key))
         graph_pos = None
-        graph_dict = convert_to_mpld3(graphs[graph_key], zoom=zoom, graph_pos=graph_pos)
+        graph_dict = convert_to_mpld3(graphs[graph_key], zoom=zoom, graph_pos=graph_pos) # !~! most likely the yticklabels are getting lost here
         graph = graphs[graph_key]
         while len(graph.axes)>1:
             print('Warning, too many axes, attempting removal')

@@ -88,7 +88,7 @@ define(
     }
   }
 
-  function reformatMpld3FigsInElement($element, nLegend) {
+  function reformatMpld3FigsInElement($element, nLegend, xlabels, ylabels) {
 
     $element.find('svg.mpld3-figure').each(function () {
       // Match the size of the figure to the wrapping svg element
@@ -119,21 +119,25 @@ define(
     // reformat y-ticks
     var $yaxis = $element.find('.mpld3-yaxis');
     var $labels = $yaxis.find('g.tick > text');
+    var i = 0
     $labels.each(function () {
       var $label = $(this);
-      var text = $label.text().replace(/,/g, '');
+      var text = ylabels[i].replace(/,/g, '');  // Very hacky replacement of the ylabels that got lost in the translation in the BE (see comments !~! in the BE)
       var newText = reformatYTickStr(text);
       $label.text(newText);
+      i = i + 1
     });
 
     // reformat x-ticks
     var $xaxis = $element.find('.mpld3-xaxis');
     var $labels = $xaxis.find('g.tick > text');
+    var i = 0
     $labels.each(function () {
       var $label = $(this);
-      var text = $label.text().replace(/,/g, '');
+      var text = xlabels[i].replace(/,/g, ''); // Very hacky replacement of the xlabels that got lost in the translation in the BE (see comments !~! in the BE)
       var newText = reformatXTickStr(text);
       $label.text(newText);
+      i = i + 1
     });
   }
 
@@ -269,7 +273,7 @@ define(
             }
 
             mpld3.draw_figure(attrs.chartId, figure);
-            reformatMpld3FigsInElement($element, nLegend);
+            reformatMpld3FigsInElement($element, nLegend, figure.xlabels, figure.ylabels);  // Very hacky replacement of the ylabels that got lost in the translation in the BE (see comments !~! in the BE)
 
             if (!_.isUndefined(initWidth)) {
               changeWidthOfSvg($element.find('svg'), initWidth);
