@@ -150,7 +150,7 @@ define(
             $label.text(newTextBE);
         } else {
             console.log('WARNING: FE has length ' + ($labels.length) + ' ylabels but BE has length ' + (ylabels.length));
-            console.log({'FE':$labels,'BE':ylabels})
+            console.log({'FE':$labels,'BE':ylabels});
         }
       }
       else {
@@ -158,7 +158,7 @@ define(
         newTextorig = reformatYTickStr(textorig);
         $label.text(newTextorig);
       }
-      i = i + 1
+      i = i + 1;
     });
 
     // reformat x-ticks
@@ -174,7 +174,7 @@ define(
             $label.text(newTextBE);
         } else {
             console.log('WARNING: FE has length ' + ($labels.length) + ' xlabels but BE has length ' + (xlabels.length));
-            console.log({'FE':$labels,'BE':xlabels})
+            console.log({'FE':$labels,'BE':xlabels});
         }
       }
       else {
@@ -182,7 +182,7 @@ define(
         newTextorig = reformatXTickStr(textorig);
         $label.text(newTextorig);
       }
-      i = i + 1
+      i = i + 1;
     });
 
   function changeWidthOfSvg(svg, width) {
