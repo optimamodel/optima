@@ -184,6 +184,7 @@ define(
       }
       i = i + 1;
     });
+  }
 
   function changeWidthOfSvg(svg, width) {
     var $svg = $(svg);
