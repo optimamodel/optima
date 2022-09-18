@@ -176,7 +176,6 @@ define(
             console.log('WARNING: FE has length ' + ($labels.length) + ' xlabels but BE has length ' + (xlabels.length));
             console.log({'FE':$labels,'BE':xlabels})
         }
-        }
       }
       else {
         var textorig = $label.text().replace(/,/g, '');
