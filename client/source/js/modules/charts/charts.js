@@ -121,30 +121,44 @@ define(
              !isNaN(parseFloat(a)) // ...and ensure strings of whitespace fail
     }
 
+    var useBEylabels = false;
+    $.each(ylabels, function (i, ylabel) {
+        var textBE = ylabel.replace(/,/g, '');
+        if (!isNumeric(textBE)) {   // We choose the BE labels if any one of them is not a number
+            useBEylabels = true;
+        }
+    });
+    var useBExlabels = false;
+    $.each(xlabels, function (i, xlabel) {
+        var textBE = xlabel.replace(/,/g, '');
+        if (!isNumeric(textBE)) {   // We choose the BE labels if any one of them is not a number
+            useBExlabels = true;
+        }
+    });
+
     // reformat y-ticks
     var $yaxis = $element.find('.mpld3-yaxis');
     var $labels = $yaxis.find('g.tick > text');
+
     var i = 0;
     $labels.each(function () {
       var $label = $(this);
-      var textorig = $label.text().replace(/,/g, '');
-
-      // We try to perform a hacky replacement of the ylabels that got lost in the translation in the BE (see comments !~! in the BE)
-      var usedBE = false;
-      if (i < ylabels.length) {
-        var textBE = ylabels[i].replace(/,/g, '');
-        if (!isNumeric(textBE)) {   // We don't include numbers because sometimes the FE has chosen different points
+      if (useBEylabels) {
+        if (i < ylabels.length) {
+            var textBE = ylabels[i].replace(/,/g, '');
             newTextBE = reformatYTickStr(textBE);
             $label.text(newTextBE);
-            usedBE = true;
+        } else {
+            console.log(`WARNING: FE has ${$labels.length} ylabels but BE has ${ylabels.length}`);
+            console.log({'FE':$labels,'BE':ylabels})
         }
       }
-      if (!usedBE) {
+      else {
+        var textorig = $label.text().replace(/,/g, '');
         newTextorig = reformatYTickStr(textorig);
         $label.text(newTextorig);
       }
-
-      i = i + 1;
+      i = i + 1
     });
 
     // reformat x-ticks
@@ -153,26 +167,24 @@ define(
     var i = 0;
     $labels.each(function () {
       var $label = $(this);
-      var textorig = $label.text().replace(/,/g, '');
-
-      // We try to perform a hacky replacement of the ylabels that got lost in the translation in the BE (see comments !~! in the BE)
-      var usedBE = false;
-      if (i < xlabels.length) {
-        var textBE = xlabels[i].replace(/,/g, '');
-        if (!isNumeric(textBE)) {   // We don't include numbers because sometimes the FE has chosen different points
+      if (useBExlabels) {
+        if (i < xlabels.length) {
+            var textBE = xlabels[i].replace(/,/g, '');
             newTextBE = reformatXTickStr(textBE);
             $label.text(newTextBE);
-            usedBE = true;
+        } else {
+            console.log(`WARNING: FE has ${$labels.length} xlabels but BE has ${xlabels.length}`);
+            console.log({'FE':$labels,'BE':xlabels})
+        }
         }
       }
-      if (!usedBE) {
+      else {
+        var textorig = $label.text().replace(/,/g, '');
         newTextorig = reformatXTickStr(textorig);
         $label.text(newTextorig);
       }
-
-      i = i + 1;
+      i = i + 1
     });
-  }
 
   function changeWidthOfSvg(svg, width) {
     var $svg = $(svg);
