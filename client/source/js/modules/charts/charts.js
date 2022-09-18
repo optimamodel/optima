@@ -149,7 +149,7 @@ define(
             newTextBE = reformatYTickStr(textBE);
             $label.text(newTextBE);
         } else {
-            console.log(`WARNING: FE has ${$labels.length} ylabels but BE has ${ylabels.length}`);
+            console.log('WARNING: FE has length ' + ($labels.length) + ' ylabels but BE has length ' + (ylabels.length));
             console.log({'FE':$labels,'BE':ylabels})
         }
       }
@@ -173,7 +173,7 @@ define(
             newTextBE = reformatXTickStr(textBE);
             $label.text(newTextBE);
         } else {
-            console.log(`WARNING: FE has ${$labels.length} xlabels but BE has ${xlabels.length}`);
+            console.log('WARNING: FE has length ' + ($labels.length) + ' xlabels but BE has length ' + (xlabels.length));
             console.log({'FE':$labels,'BE':xlabels})
         }
         }
