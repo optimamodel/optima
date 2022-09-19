@@ -123,14 +123,14 @@ define(
 
     var useBEylabels = false;
     $.each(ylabels, function (i, ylabel) {
-        var textBE = ylabel.replace(/,/g, '');
+        var textBE = ylabel.replace(/k|m|b|,/g, '');
         if (!isNumeric(textBE)) {   // We choose the BE labels if any one of them is not a number
             useBEylabels = true;
         }
     });
     var useBExlabels = false;
     $.each(xlabels, function (i, xlabel) {
-        var textBE = xlabel.replace(/,/g, '');
+        var textBE = xlabel.replace(/k|m|b|,/g, '');
         if (!isNumeric(textBE)) {   // We choose the BE labels if any one of them is not a number
             useBExlabels = true;
         }
