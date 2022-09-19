@@ -149,11 +149,12 @@ define(
             newTextBE = reformatYTickStr(textBE);
             $label.text(newTextBE);
         } else {
+            useBEylabels = false
             console.log('WARNING: FE has length ' + ($labels.length) + ' ylabels but BE has length ' + (ylabels.length));
             console.log({'FE':$labels,'BE':ylabels});
         }
       }
-      else {
+      if (!useBEylabels) {
         var textorig = $label.text().replace(/,/g, '');
         newTextorig = reformatYTickStr(textorig);
         $label.text(newTextorig);
@@ -173,11 +174,12 @@ define(
             newTextBE = reformatXTickStr(textBE);
             $label.text(newTextBE);
         } else {
+            useBExlabels = false
             console.log('WARNING: FE has length ' + ($labels.length) + ' xlabels but BE has length ' + (xlabels.length));
             console.log({'FE':$labels,'BE':xlabels});
         }
       }
-      else {
+      if (!useBExlabels) {
         var textorig = $label.text().replace(/,/g, '');
         newTextorig = reformatXTickStr(textorig);
         $label.text(newTextorig);
