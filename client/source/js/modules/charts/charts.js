@@ -37,13 +37,13 @@ define(
       text = val2str(val, 1E9, 'b')
     } else if (val >= 1E6) {
       text = val2str(val, 1E6, 'm')
-    } else if (val >= 3E3) {
+    } else if (val >= 3E3) {  // 3000 so years like 2022 don't get turned into 2k
       text = val2str(val, 1E3, 'k')
     } else if (val <= -1E9) {
       text = val2str(val, 1E9, 'b')
     } else if (val <= -1E6) {
       text = val2str(val, 1E6, 'm')
-    } else if (val <= -3E3) {
+    } else if (val <= -1E3) {
       text = val2str(val, 1E3, 'k')
     }
     return text;
