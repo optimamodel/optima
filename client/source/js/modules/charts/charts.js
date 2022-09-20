@@ -37,7 +37,13 @@ define(
       text = val2str(val, 1E9, 'b')
     } else if (val >= 1E6) {
       text = val2str(val, 1E6, 'm')
-    } else if (val >= 3E3) {
+    } else if (val >= 3E3) {  // 3000 so years like 2022 don't get turned into 2k
+      text = val2str(val, 1E3, 'k')
+    } else if (val <= -1E9) {
+      text = val2str(val, 1E9, 'b')
+    } else if (val <= -1E6) {
+      text = val2str(val, 1E6, 'm')
+    } else if (val <= -1E3) {
       text = val2str(val, 1E3, 'k')
     }
     return text;
@@ -50,6 +56,12 @@ define(
     } else if (val >= 1E6) {
       text = val2str(val, 1E6, 'm')
     } else if (val >= 1E3) {
+      text = val2str(val, 1E3, 'k')
+    } else if (val <= -1E9) {
+      text = val2str(val, 1E9, 'b')
+    } else if (val <= -1E6) {
+      text = val2str(val, 1E6, 'm')
+    } else if (val <= -1E3) {
       text = val2str(val, 1E3, 'k')
     }
     return text;
@@ -121,29 +133,44 @@ define(
              !isNaN(parseFloat(a)) // ...and ensure strings of whitespace fail
     }
 
+    var useBEylabels = false;
+    $.each(ylabels, function (i, ylabel) {
+        var textBE = ylabel.replace(/k|m|b|,/g, '');
+        if (!isNumeric(textBE)) {   // We choose the BE labels if any one of them is not a number
+            useBEylabels = true;
+        }
+    });
+    var useBExlabels = false;
+    $.each(xlabels, function (i, xlabel) {
+        var textBE = xlabel.replace(/k|m|b|,/g, '');
+        if (!isNumeric(textBE)) {   // We choose the BE labels if any one of them is not a number
+            useBExlabels = true;
+        }
+    });
+
     // reformat y-ticks
     var $yaxis = $element.find('.mpld3-yaxis');
     var $labels = $yaxis.find('g.tick > text');
+
     var i = 0;
     $labels.each(function () {
       var $label = $(this);
-      var textorig = $label.text().replace(/,/g, '');
-
-      // We try to perform a hacky replacement of the ylabels that got lost in the translation in the BE (see comments !~! in the BE)
-      var usedBE = false;
-      if (i < ylabels.length) {
-        var textBE = ylabels[i].replace(/,/g, '');
-        if (!isNumeric(textBE)) {   // We don't include numbers because sometimes the FE has chosen different points
+      if (useBEylabels) {
+        if (i < ylabels.length) {
+            var textBE = ylabels[i].replace(/,/g, '');
             newTextBE = reformatYTickStr(textBE);
             $label.text(newTextBE);
-            usedBE = true;
+        } else {
+            useBEylabels = false
+            console.log('WARNING: FE has length ' + ($labels.length) + ' ylabels but BE has length ' + (ylabels.length));
+            console.log({'FE':$labels,'BE':ylabels});
         }
       }
-      if (!usedBE) {
+      if (!useBEylabels) {
+        var textorig = $label.text().replace(/,/g, '');
         newTextorig = reformatYTickStr(textorig);
         $label.text(newTextorig);
       }
-
       i = i + 1;
     });
 
@@ -153,23 +180,22 @@ define(
     var i = 0;
     $labels.each(function () {
       var $label = $(this);
-      var textorig = $label.text().replace(/,/g, '');
-
-      // We try to perform a hacky replacement of the ylabels that got lost in the translation in the BE (see comments !~! in the BE)
-      var usedBE = false;
-      if (i < xlabels.length) {
-        var textBE = xlabels[i].replace(/,/g, '');
-        if (!isNumeric(textBE)) {   // We don't include numbers because sometimes the FE has chosen different points
+      if (useBExlabels) {
+        if (i < xlabels.length) {
+            var textBE = xlabels[i].replace(/,/g, '');
             newTextBE = reformatXTickStr(textBE);
             $label.text(newTextBE);
-            usedBE = true;
+        } else {
+            useBExlabels = false
+            console.log('WARNING: FE has length ' + ($labels.length) + ' xlabels but BE has length ' + (xlabels.length));
+            console.log({'FE':$labels,'BE':xlabels});
         }
       }
-      if (!usedBE) {
+      if (!useBExlabels) {
+        var textorig = $label.text().replace(/,/g, '');
         newTextorig = reformatXTickStr(textorig);
         $label.text(newTextorig);
       }
-
       i = i + 1;
     });
   }

@@ -919,8 +919,8 @@ def plotcoverage(multires=None, die=True, figsize=globalfigsize, legendsize=glob
     
     for plt in range(nallocs):
         
-        fig,naxes = makefigure(figsize=figsize, interactive=interactive, fig=fig)
-        ax.append(fig.add_subplot(naxes, 1, naxes))
+        currfig, naxes = makefigure(figsize=figsize, interactive=interactive, fig=fig)
+        ax.append(currfig.add_subplot(naxes, 1, naxes))
         setposition(ax[-1], position, interactive)
         
         nprogs = nprogslist[plt]
@@ -950,7 +950,7 @@ def plotcoverage(multires=None, die=True, figsize=globalfigsize, legendsize=glob
         ax[-1].set_xticklabels('')
         ax[-1].set_xlim(0,nprogs+1)
         
-        ylabel = 'Coverage (%)'
+        ylabel = 'Coverage'
         ax[-1].set_ylabel(ylabel)
          
         if nallocs>1: thistitle = 'Coverage - %s' % alloclabels[plt]
@@ -966,7 +966,8 @@ def plotcoverage(multires=None, die=True, figsize=globalfigsize, legendsize=glob
         
         # Tidy up
         SIticks(ax=ax)
-        coverageplots[thistitle] = fig
+        coverageplots[thistitle] = currfig  # if fig=None, like it normally is (except gui),
+                                            # then coverageplots is an odict of figures, each with only one subplot
     
     for thisax in ax: thisax.set_ylim(ymin,ymax) # So they all have the same scale
     
@@ -2089,7 +2090,7 @@ def plotcostcov(program=None, year=None, parset=None, results=None, plotoptions=
         plotdata['xlinedata'] = linspace(0,xupperlim,npts)
     else:
         plotdata['xlinedata'] = xlinedata
-    
+
     fig,naxes = makefigure(figsize=None, interactive=interactive, fig=existingFigure)
     ax = fig.add_subplot(111)
     
