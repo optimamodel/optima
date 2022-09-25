@@ -1081,8 +1081,8 @@ def plotcascade(results=None, aspercentage=False, cascadecolors=None, figsize=gl
     for plt in range(nsims): # WARNING, copied from plotallocs()
     
         # Create the figure and axes
-        fig,naxes = makefigure(figsize=figsize, interactive=interactive, fig=fig, newfig=newfig)
-        ax = fig.add_subplot(naxes, 1, naxes)
+        currfig,naxes = makefigure(figsize=figsize, interactive=interactive, fig=fig, newfig=newfig)
+        ax = currfig.add_subplot(naxes, 1, naxes)
         setposition(ax, position, interactive)
             
         if asbars:
@@ -1169,7 +1169,7 @@ def plotcascade(results=None, aspercentage=False, cascadecolors=None, figsize=gl
         ax.legend(**legendsettings) # Multiple entries, all populations
             
         ax.set_title(thistitle)
-        cascadeplots[thistitle] = fig
+        cascadeplots[thistitle] = currfig
         
     return cascadeplots
 
