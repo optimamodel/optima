@@ -859,6 +859,8 @@ def minoutcomes(project=None, optim=None, tvec=None, verbose=None, maxtime=None,
                 origbudget=None, ccsample='best', randseed=None, mc=3, label=None, die=False, timevarying=None, keepraw=False, stoppingfunc=None, **kwargs):
     ''' Split out minimize outcomes '''
 
+    print(f'!! minoutcomes called with: optim:{optim}, optim:{optim.constraints},tvec:{tvec},origbudget:{origbudget},randseed:{randseed},mc:{mc},timevarying:{timevarying},stoppingfunc:{stoppingfunc}')
+
     ## Handle budget and remove fixed costs
     if project is None or optim is None: raise OptimaException('An optimization requires both a project and an optimization object to run')
     parset  = project.parsets[optim.parsetname] # Link to the original parameter set
@@ -889,7 +891,9 @@ def minoutcomes(project=None, optim=None, tvec=None, verbose=None, maxtime=None,
         raise op.CancelException
 
     # Calculate original things
+    print(f'!! constrainbudget called with: origbudget:{origbudget}, budgetvec:{budgetvec},totalbudget:{origtotalbudget},budgetlims:{optim.constraints},optiminds:{optiminds},outputtype:"full"')
     constrainedbudgetorig, constrainedbudgetvecorig, lowerlim, upperlim = constrainbudget(origbudget=origbudget, budgetvec=budgetvec, totalbudget=origtotalbudget, budgetlims=optim.constraints, optiminds=optiminds, outputtype='full')
+    print(f'!! constrainbudget returned: constrainedbudgetorig:{constrainedbudgetorig}, constrainedbudgetvecorig:{constrainedbudgetvecorig},lowerlim:{lowerlim},upperlim:{upperlim}')
 
     # Set up arguments which are shared between outcomecalc and asd
     args = {'which':      'outcomes', 
@@ -1019,9 +1023,16 @@ def minoutcomes(project=None, optim=None, tvec=None, verbose=None, maxtime=None,
                 else: thislabel = '"'+key+'"'
                 origoutcomes = outcomecalc(outputresults=True, **args) # Calculate the initial outcome and pass it back in
                 args['origoutcomes'] = origoutcomes
+                print(f'!! About to call asd with allbudgetvecs[key]:{allbudgetvecs[key]}, args:{args}, xmin:{xmin}, maxtime:{maxtime}, maxiters:{maxiters}, verbose:{verbose}, randseed:{allseeds[k]}, label:{thislabel}, stoppingfunc:{stoppingfunc}, **kwargs:{kwargs}')
                 res = asd(outcomecalc, allbudgetvecs[key], args=args, xmin=xmin, maxtime=maxtime, maxiters=maxiters, verbose=verbose, randseed=allseeds[k], label=thislabel, stoppingfunc=stoppingfunc, **kwargs)
+                print(f'!! asd returned res:{res}')
                 budgetvecnew, fvals = res.x, res.details.fvals
+                print(f'!! budgetvecnew:{budgetvecnew}, fvals:{fvals}')
+
+                print(f'!! constrainbudget called with: origbudget:{origbudget}, budgetvec:{budgetvec},totalbudget:{totalbudget},budgetlims:{optim.constraints},optiminds:{optiminds},outputtype:"full"')
                 constrainedbudgetnew, constrainedbudgetvecnew, lowerlim, upperlim = constrainbudget(origbudget=origbudget, budgetvec=budgetvecnew, totalbudget=totalbudget, budgetlims=optim.constraints, optiminds=optiminds, outputtype='full')
+                print(f'!! constrainbudget returned: constrainedbudgetorig:{constrainedbudgetnew}, constrainedbudgetvecorig:{constrainedbudgetvecnew},lowerlim:{lowerlim},upperlim:{upperlim}')
+
                 asdresults[key] = {'budget':constrainedbudgetnew, 'fvals':fvals}
                 if fvals[-1]<bestfval: 
                     bestkey = key # Reset key
