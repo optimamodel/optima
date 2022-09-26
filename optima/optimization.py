@@ -893,8 +893,8 @@ def minoutcomes(project=None, optim=None, tvec=None, verbose=None, maxtime=None,
     optimizable = array(progset.optimizable())
     optiminds = findinds(optimizable)
     nonoptiminds = findinds(optimizable==False)
-    optimkeys    = np.array([key for k,key in enumerate(origbudget.keys()) if optimizable[k]])
-    nonoptimkeys = np.array([key for k,key in enumerate(origbudget.keys()) if not optimizable[k]])
+    optimkeys    = array([key for k,key in enumerate(origbudget.keys()) if optimizable[k]])
+    nonoptimkeys = array([key for k,key in enumerate(origbudget.keys()) if not optimizable[k]])
     budgetvec = origbudget[optimkeys] # Get the original budget
     budgetvec2 = origbudget[:][optiminds]  # Get the original budget
     print('!?!!! budgetvec==budgetvec2',budgetvec==budgetvec2, budgetvec, budgetvec2)
