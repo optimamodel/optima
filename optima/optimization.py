@@ -311,7 +311,7 @@ def constrainbudget(origbudget=None, budgetvec=None, totalbudget=None, budgetlim
         return constrainedbudgetvec
     elif outputtype=='full':
         lowerlim = dcp(abslimits['min'][optiminds])
-        upperlim = dcp(abslimits['min'][optiminds])
+        upperlim = dcp(abslimits['max'][optiminds])
         return constrainedbudget, constrainedbudgetvec, lowerlim, upperlim
     else:
         raise OptimaException('Must specify an output type of "odict", "vec", or "full"; you specified "%s"' % outputtype)
@@ -866,7 +866,7 @@ def minoutcomes(project=None, optim=None, tvec=None, verbose=None, maxtime=None,
     parset  = project.parsets[optim.parsetname] # Link to the original parameter set
     progset = project.progsets[optim.progsetname] # Link to the original program set
     print(f"optim.constraints['name'].keys():{optim.constraints['name'].keys()}")
-    progset.reorderprograms(optim.constraints['name'].keys())
+    progset.reorderprograms(optim.constraints['name'].keys()) # I am not 100% sure that optim.constraints will have ALL the programs in it
     origtotalbudget = dcp(optim.objectives['budget']) # Should be a float, but dcp just in case
     if origbudget is not None:
         origbudget = dcp(origbudget)
