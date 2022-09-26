@@ -200,25 +200,26 @@ def defaulttvsettings(**kwargs):
     return tvsettings
 
 
-def calculateoptimindsoptimkeys(functionname, budgetodict=None, progset=None, optiminds = None, optimkeys=None, reorderprograms=True, verbose=2):
+def calcoptimindsoptimkeys(functionname, prognamelist=None, progset=None, optiminds = None, optimkeys=None, reorderprograms=True, verbose=2):
     """
+
     A helper function that calculates the optiminds and optimkeys from the progset if it is given.
-    It also copies the order of the programs from the keys of the budgetodict to the progset if reorderprograms=True.
+    It also copies the order of the programs from the keys of the prognamelist to the progset if reorderprograms=True.
 
     If no progset is given, it ensures the optimkeys and the optiminds are referring to the same programs from the
-    budgetodict, choosing to use the optimkeys if they are given.
+    prognamelist, choosing to use the optimkeys if they are given.
 
     Making sure the optiminds match up to the proper location in the dictionary as the optimkeys helps avoid tricky to
     diagnose errors.
     """
     if progset is not None:
-        if budgetodict is not None and reorderprograms:
-            progset.reorderprograms(budgetodict.keys())
+        if prognamelist is not None and reorderprograms:
+            progset.reorderprograms(prognamelist)
         optimizable = array(progset.optimizable())
         optiminds = findinds(optimizable)
         optimkeys = progset.programs[optiminds]
 
-    elif budgetodict is not None:
+    elif prognamelist is not None:
         if optimkeys is not None:
             optimkeys = array(optimkeys)
             if optiminds is not None:
@@ -226,22 +227,22 @@ def calculateoptimindsoptimkeys(functionname, budgetodict=None, progset=None, op
                 printv(f"Warning: {functionname}() was supplied with both optimkeys and optiminds. Using the optimkeys {optimkeys} not the optiminds as keys are more reliable.", 1, verbose)
         elif optiminds is not None:
             optiminds = array(optiminds)
-            progkeys = array(budgetodict.keys())  # Array of all allowable keys
+            progkeys = array(prognamelist)  # Array of all allowable keys
             optimkeys = progkeys[optiminds]
             printv(f"Warning: {functionname}() wasn't supplied with optimkeys and instead was given optiminds. From optiminds {optiminds}, the following optimkeys {optimkeys} have been assumed. For more reliable constraints, use optimkeys.", 1, verbose)
         else:
-            errmsg = f"Error: calculateoptimindsoptimkeys() called from {functionname} needs either optimkeys or optiminds if no programset is given."
+            errmsg = f"Error: calcoptimindsoptimkeys() called from {functionname} needs either optimkeys or optiminds if no programset is given."
             raise OptimaException(errmsg)
 
         if optiminds is None:
             optiminds = []
-            for i, key in enumerate(budgetodict.keys()):
+            for i, key in enumerate(prognamelist):
                 if key in optimkeys:
                     optiminds.append(i)
             optiminds = array(optiminds)
 
     else:
-        errmsg = f"Error: calculateoptimindsoptimkeys() called from {functionname} needs either a progset or an odict with the programs as the keys of the odict, but neither were given."
+        errmsg = f"Error: calcoptimindsoptimkeys() called from {functionname} needs either a progset or an odict with the programs as the keys of the odict, but neither were given."
         raise OptimaException(errmsg)
 
     return optiminds, optimkeys
@@ -272,8 +273,8 @@ def constrainbudget(origbudget=None, budgetvec=None, totalbudget=None, budgetlim
     rescaledminfixed = dcp(rescaledbudget) # This is the rescaled budget, but with the minimum fixed costs -- should be <= totalbudget
 
     # Get optiminds and optimkeys
-    optiminds, optimkeys = calculateoptimindsoptimkeys('constrainbudget', budgetodict=origbudget, progset=None,
-                                     optiminds=optiminds, optimkeys=optimkeys, reorderprograms=False, verbose=verbose)
+    optiminds, optimkeys = calcoptimindsoptimkeys('constrainbudget', prognamelist=origbudget.keys(), progset=None,
+                                                  optiminds=optiminds, optimkeys=optimkeys, reorderprograms=False, verbose=verbose)
 
     progkeys = array(origbudget.keys())  # Array of all allowable keys
     fixedkeys = array([p for p in progkeys if p not in optimkeys]) # Get the complement of progkeys
@@ -380,8 +381,8 @@ def tvfunction(budgetdict=None, years=None, pars=None, optiminds=None, optimkeys
     using the optimkeys (if they are available) it should not be an issue.
     '''
     # Get optiminds and optimkeys, even though optimkeys aren't used in this function,
-    optiminds, optimkeys = calculateoptimindsoptimkeys('tvfunction', budgetodict=budgetdict, progset=None,
-                                    optiminds=optiminds, optimkeys=optimkeys, reorderprograms=False)
+    optiminds, optimkeys = calcoptimindsoptimkeys('tvfunction', prognamelist=budgetdict.keys(), progset=None,
+                                                  optiminds=optiminds, optimkeys=optimkeys, reorderprograms=False)
 
     # Process x-axis
     years = promotetoarray(years) # Make sure it's an array
@@ -457,9 +458,9 @@ def outcomecalc(budgetvec=None, which=None, project=None, parsetname=None, progs
     progset = project.progsets[progsetname]
 
     # Reorder the programs to match the order of the constraints, and get optiminds and optimkeys
-    constraintskeys = constraints['name'] if (constraints is not None) else None
-    optiminds, optimkeys = calculateoptimindsoptimkeys('outcomecalc', budgetodict=constraintskeys, progset=progset,
-                                    optiminds=optiminds, optimkeys=optimkeys, reorderprograms=True, verbose=verbose)
+    constraintskeys = constraints['name'].keys() if (constraints is not None) else None
+    optiminds, optimkeys = calcoptimindsoptimkeys('outcomecalc', prognamelist=constraintskeys, progset=progset,
+                                                  optiminds=optiminds, optimkeys=optimkeys, reorderprograms=True, verbose=verbose)
 
     if objectives  is None: objectives  = defaultobjectives(project=project,  progsetname=progsetname, which=which)
     if constraints is None: constraints = defaultconstraints(project=project, progsetname=progsetname)  # Default constraints are in the same order as progset, so the order should be retained
@@ -831,8 +832,8 @@ def tvoptimize(project=None, optim=None, tvec=None, verbose=None, maxtime=None, 
     progset = project.progsets[optim.progsetname] # Link to the original program set
 
     # Reorder the programs to match the order of the constraints, and get optiminds and optimkeys
-    optiminds, optimkeys = calculateoptimindsoptimkeys('outcomecalc', budgetodict=optim.constraints, progset=progset,
-                                    optiminds=None, optimkeys=None, reorderprograms=True,verbose=verbose)
+    optiminds, optimkeys = calcoptimindsoptimkeys('tvoptimize', prognamelist=optim.constraints['name'].keys(), progset=progset,
+                                                  optiminds=None, optimkeys=None, reorderprograms=True, verbose=verbose)
 
     budgetvec = optimconstbudget[:][optiminds] # Get the original budget vector
     noptimprogs = len(budgetvec) # Number of optimizable programs
@@ -940,8 +941,8 @@ def minoutcomes(project=None, optim=None, tvec=None, verbose=None, maxtime=None,
     progset = project.progsets[optim.progsetname] # Link to the original program set
 
     # Reorder the programs to match the order of the constraints, and get optiminds and optimkeys
-    optiminds, optimkeys = calculateoptimindsoptimkeys('minoutcomes', budgetodict=optim.constraints, progset=progset,
-                                         optiminds=None, optimkeys=None, reorderprograms=True,verbose=verbose)
+    optiminds, optimkeys = calcoptimindsoptimkeys('minoutcomes', prognamelist=optim.constraints['name'].keys(), progset=progset,
+                                                  optiminds=None, optimkeys=None, reorderprograms=True, verbose=verbose)
 
     nonoptiminds = array([i   for i, key in enumerate(progset.programs) if not (i in optiminds)])
     nonoptimkeys = array([key for i, key in enumerate(progset.programs) if not (i in optiminds)])
@@ -1175,8 +1176,8 @@ def minmoney(project=None, optim=None, tvec=None, verbose=None, maxtime=None, ma
     progset = project.progsets[optim.progsetname] # Link to the original program set
 
     # Reorder the programs to match the order of the constraints, and get optiminds and optimkeys
-    optiminds, optimkeys = calculateoptimindsoptimkeys('minmoney', budgetodict=optim.constraints, progset=progset,
-                                         optiminds=None, optimkeys=None, reorderprograms=True, verbose=verbose)
+    optiminds, optimkeys = calcoptimindsoptimkeys('minmoney', prognamelist=optim.constraints['name'].keys(), progset=progset,
+                                                  optiminds=None, optimkeys=None, reorderprograms=True, verbose=verbose)
 
     totalbudget = dcp(optim.objectives['budget'])
     origtotalbudget = totalbudget
