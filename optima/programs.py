@@ -162,7 +162,10 @@ class Programset(object):
             raise OptimaException(errormsg)
 
         for i,program in enumerate(desiredorder):
-            if not type(program) == str: desiredorder[i] = program.short
+            if not type(program) == str: desiredorder[i] = program.short  # If not str, assume Program
+
+        if desiredorder == list(self.programs.keys()):  # Same order so don't need to continue
+            return
 
         if not (set(desiredorder) == set(self.programs.keys())):   # desiredorder is a list of str, self.programs is an odict
             errormsg = f'You have asked to reorder the programs {[thisprog for thisprog in self.programs]} of programset {self.name} into order {desiredorder}, but the desired order does not have all of the programs.'
