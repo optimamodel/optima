@@ -360,7 +360,11 @@ def constrainbudget(origbudget=None, budgetvec=None, totalbudget=None, budgetlim
 
     # Optionally return the calculated upper and lower limits as well as the original budget and vector
     constrainedbudgetvec = dcp(constrainedbudget[optimkeys])
+    #tmp
+    lowerlim = dcp(abslimits['min'][optimkeys])
+    upperlim = dcp(abslimits['max'][optimkeys])
     print(f'!?! constrainbudget returning \nconstrainedbudget: {constrainedbudget},\nconstrainedbudgetvec: {constrainedbudgetvec},\nlowerlim: {lowerlim},\nupperlim: {upperlim}')
+    #tmp
     if outputtype=='odict':
         return constrainedbudget
     elif outputtype=='vec':
