@@ -217,10 +217,8 @@ def calcoptimindsoptimkeys(functionname, prognamelist=None, progset=None, optimi
             progset.reorderprograms(prognamelist)
         optimizable = array(progset.optimizable())
         optiminds = findinds(optimizable)
-        print('!!!! optiminds',optiminds, type(optiminds))
-        a = progset.programs.keys()
-        print('!!!! a', a, type(a))
-        optimkeys = a[optiminds]
+        progkeys = array(progset.programs.keys())
+        optimkeys = progkeys[optiminds]
 
     elif prognamelist is not None:
         if optimkeys is not None:
