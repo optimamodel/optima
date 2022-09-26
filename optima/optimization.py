@@ -1413,6 +1413,7 @@ def minmoney(project=None, optim=None, tvec=None, verbose=None, maxtime=None, ma
             while r <= n_refine and still_choices:
                 r += 1
                 trial_vec = op.dcp(budgetvec)
+                trial_vec = trial_vec.astype('float')   # this should fix dividing by zero giving an error
                 choices = op.findinds(logical_and(refine_vec, trial_vec)) # It's not a choice if either is zero
                 if not len(choices):
                     still_choices = False
@@ -1423,7 +1424,7 @@ def minmoney(project=None, optim=None, tvec=None, verbose=None, maxtime=None, ma
                     trial_vec[ind] = 0 # Set to zero temporarily
                     new_prog = this_prog*refine_step
                     reallocate = this_prog*(1-refine_step)*refine_keep
-                    reallocate_vec = trial_vec / trial_vec.sum() * reallocate
+                    reallocate_vec = trial_vec / trial_vec.sum() * reallocate   # this line throws an error if the dtype of trial_vec is not float
                     reallocate_vec = op.sanitize(reallocate_vec, replacenans=0) # Ensure in the corner case that 0/0 is replaced with 0
                     trial_vec += reallocate_vec
                     trial_vec[ind] = new_prog
