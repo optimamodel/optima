@@ -865,6 +865,8 @@ def minoutcomes(project=None, optim=None, tvec=None, verbose=None, maxtime=None,
     if project is None or optim is None: raise OptimaException('An optimization requires both a project and an optimization object to run')
     parset  = project.parsets[optim.parsetname] # Link to the original parameter set
     progset = project.progsets[optim.progsetname] # Link to the original program set
+    print(f"optim.constraints['name'].keys():{optim.constraints['name'].keys()}")
+    progset.reorderprograms(optim.constraints['name'].keys())
     origtotalbudget = dcp(optim.objectives['budget']) # Should be a float, but dcp just in case
     if origbudget is not None:
         origbudget = dcp(origbudget)
