@@ -251,7 +251,7 @@ def calcoptimindsoptimkeys(functionname, prognamelist=None, progset=None, optimi
 
 def constrainbudget(origbudget=None, budgetvec=None, totalbudget=None, budgetlims=None, optiminds=None, optimkeys=None, tolerance=1e-2, overalltolerance=1.0, outputtype=None, verbose=2, tvsettings=None):
     """ Take an unnormalized/unconstrained budgetvec and normalize and constrain it """
-    
+    print(f'!?! constrainbudget called with \norigbudget: {origbudget},\nbudgetvec: {budgetvec},\nbudgetlims: {budgetlims},\noptiminds: {optiminds},\noptimkeys: {optimkeys},')
     # Prepare this budget for later scaling and the like
     constrainedbudget = dcp(origbudget)
     
@@ -356,7 +356,9 @@ def constrainbudget(origbudget=None, budgetvec=None, totalbudget=None, budgetlim
     if abs(sum(constrainedbudget[:])-totalbudget)>overalltolerance:
         errormsg = 'final budget amounts differ (%f != %f)' % (sum(constrainedbudget[:]), totalbudget)
         raise OptimaException(errormsg)
-    
+
+    print(f'!?! constrainbudget returning \nconstrainedbudget: {constrainedbudget},\nconstrainedbudgetvec: {constrainedbudgetvec},\nlowerlim: {lowerlim},\nupperlim: {upperlim}')
+
     # Optionally return the calculated upper and lower limits as well as the original budget and vector
     constrainedbudgetvec = dcp(constrainedbudget[optimkeys])
     if outputtype=='odict':
@@ -977,9 +979,9 @@ def minoutcomes(project=None, optim=None, tvec=None, verbose=None, maxtime=None,
     # Calculate original things
     # here: origbudget: #7: HTS, budgettvec[7]: HTS, BUT: optim.constraints: has HTS in 5th position
     # so origbudget = budgettvec, but diff from optim.constraints
-    print(f'!! constrainbudget called with: origbudget:{origbudget}, budgetvec:{budgetvec},totalbudget:{origtotalbudget},budgetlims:{optim.constraints},optimkeys:{optimkeys},outputtype:"full"')
+    # print(f'!! constrainbudget called with: origbudget:{origbudget}, budgetvec:{budgetvec},totalbudget:{origtotalbudget},budgetlims:{optim.constraints},optimkeys:{optimkeys},outputtype:"full"')
     constrainedbudgetorig, constrainedbudgetvecorig, lowerlim, upperlim = constrainbudget(origbudget=origbudget, budgetvec=budgetvec, totalbudget=origtotalbudget, budgetlims=optim.constraints, optimkeys=optimkeys, outputtype='full', verbose=verbose)
-    print(f'!! constrainbudget returned: constrainedbudgetorig:{constrainedbudgetorig}, constrainedbudgetvecorig:{constrainedbudgetvecorig},lowerlim:{lowerlim},upperlim:{upperlim}')
+    # print(f'!! constrainbudget returned: constrainedbudgetorig:{constrainedbudgetorig}, constrainedbudgetvecorig:{constrainedbudgetvecorig},lowerlim:{lowerlim},upperlim:{upperlim}')
 
     # Set up arguments which are shared between outcomecalc and asd
     args = {'which':      'outcomes', 
@@ -1115,9 +1117,9 @@ def minoutcomes(project=None, optim=None, tvec=None, verbose=None, maxtime=None,
                 budgetvecnew, fvals = res.x, res.details.fvals
                 print(f'!! budgetvecnew:{budgetvecnew}, fvals:{fvals}')
 
-                print(f'!! constrainbudget called with: origbudget:{origbudget}, budgetvec:{budgetvec},totalbudget:{totalbudget},budgetlims:{optim.constraints},optimkeys:{optimkeys},outputtype:"full"')
+                # print(f'!! constrainbudget called with: origbudget:{origbudget}, budgetvec:{budgetvec},totalbudget:{totalbudget},budgetlims:{optim.constraints},optimkeys:{optimkeys},outputtype:"full"')
                 constrainedbudgetnew, constrainedbudgetvecnew, lowerlim, upperlim = constrainbudget(origbudget=origbudget, budgetvec=budgetvecnew, totalbudget=totalbudget, budgetlims=optim.constraints, optimkeys=optimkeys, outputtype='full')
-                print(f'!! constrainbudget returned: constrainedbudgetorig:{constrainedbudgetnew}, constrainedbudgetvecorig:{constrainedbudgetvecnew},lowerlim:{lowerlim},upperlim:{upperlim}')
+                # print(f'!! constrainbudget returned: constrainedbudgetorig:{constrainedbudgetnew}, constrainedbudgetvecorig:{constrainedbudgetvecnew},lowerlim:{lowerlim},upperlim:{upperlim}')
 
                 asdresults[key] = {'budget':constrainedbudgetnew, 'fvals':fvals}
                 if fvals[-1]<bestfval: 
