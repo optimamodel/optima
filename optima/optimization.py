@@ -859,7 +859,7 @@ def minoutcomes(project=None, optim=None, tvec=None, verbose=None, maxtime=None,
                 origbudget=None, ccsample='best', randseed=None, mc=3, label=None, die=False, timevarying=None, keepraw=False, stoppingfunc=None, **kwargs):
     ''' Split out minimize outcomes '''
 
-    print(f'!! minoutcomes called with: optim:{optim}, optim:{optim.constraints},tvec:{tvec},origbudget:{origbudget},randseed:{randseed},mc:{mc},timevarying:{timevarying},stoppingfunc:{stoppingfunc}')
+    print(f'!! minoutcomes called with: optim:{optim}, optim.constraints:{optim.constraints}, optim.objectives:{optim.objectives},tvec:{tvec},origbudget:{origbudget},randseed:{randseed},mc:{mc},timevarying:{timevarying},stoppingfunc:{stoppingfunc}')
 
     ## Handle budget and remove fixed costs
     if project is None or optim is None: raise OptimaException('An optimization requires both a project and an optimization object to run')
@@ -871,7 +871,12 @@ def minoutcomes(project=None, optim=None, tvec=None, verbose=None, maxtime=None,
     else:
         try: origbudget = dcp(progset.getdefaultbudget())
         except: raise OptimaException('Could not get default budget for optimization')
-    
+
+    print(f'!! progset::{progset}')
+    print(f'!! origtotalbudget::{origtotalbudget}')
+    print(f'!! origbudget::{origbudget}')
+    print(f'!! optim.constraints:{optim.constraints}')
+
     optimizable = array(progset.optimizable())
     optiminds = findinds(optimizable)
     nonoptiminds = findinds(optimizable==False)
@@ -891,6 +896,8 @@ def minoutcomes(project=None, optim=None, tvec=None, verbose=None, maxtime=None,
         raise op.CancelException
 
     # Calculate original things
+    # here: origbudget: #7: HTS, budgettvec[7]: HTS, BUT: optim.constraints: has HTS in 5th position
+    # so origbudget = budgettvec, but diff from optim.constraints
     print(f'!! constrainbudget called with: origbudget:{origbudget}, budgetvec:{budgetvec},totalbudget:{origtotalbudget},budgetlims:{optim.constraints},optiminds:{optiminds},outputtype:"full"')
     constrainedbudgetorig, constrainedbudgetvecorig, lowerlim, upperlim = constrainbudget(origbudget=origbudget, budgetvec=budgetvec, totalbudget=origtotalbudget, budgetlims=optim.constraints, optiminds=optiminds, outputtype='full')
     print(f'!! constrainbudget returned: constrainedbudgetorig:{constrainedbudgetorig}, constrainedbudgetvecorig:{constrainedbudgetvecorig},lowerlim:{lowerlim},upperlim:{upperlim}')
