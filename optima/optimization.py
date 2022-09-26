@@ -357,10 +357,10 @@ def constrainbudget(origbudget=None, budgetvec=None, totalbudget=None, budgetlim
         errormsg = 'final budget amounts differ (%f != %f)' % (sum(constrainedbudget[:]), totalbudget)
         raise OptimaException(errormsg)
 
-    print(f'!?! constrainbudget returning \nconstrainedbudget: {constrainedbudget},\nconstrainedbudgetvec: {constrainedbudgetvec},\nlowerlim: {lowerlim},\nupperlim: {upperlim}')
 
     # Optionally return the calculated upper and lower limits as well as the original budget and vector
     constrainedbudgetvec = dcp(constrainedbudget[optimkeys])
+    print(f'!?! constrainbudget returning \nconstrainedbudget: {constrainedbudget},\nconstrainedbudgetvec: {constrainedbudgetvec},\nlowerlim: {lowerlim},\nupperlim: {upperlim}')
     if outputtype=='odict':
         return constrainedbudget
     elif outputtype=='vec':
