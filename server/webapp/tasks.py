@@ -103,14 +103,14 @@ def init_db_session():
     Create scoped_session, eventually bound to engine
     """
     out =  scoped_session(sessionmaker(db.engine))
-    print(f"!! init_db_session called from:{inspect.currentframe().f_back.f_code.co_name}. Returning:{out}, status of out.bind:{out.bind.status()}")
+    print(f"!! init_db_session called from:{inspect.currentframe().f_back.f_code.co_name}. Returning:{out}, status of out.bind.pool:{out.bind.pool.status()}")
     return out
 
 
 def close_db_session(db_session):
     # this line might be redundant (not 100% sure - not clearly described)
 
-    print(f"!! close_db_session called with db_session:{db_session}, from:{inspect.currentframe().f_back.f_code.co_name}, status of db_session.bind:{db_session.bind.status()}")
+    print(f"!! close_db_session called with db_session:{db_session}, from:{inspect.currentframe().f_back.f_code.co_name}, status of db_session.bind.pool:{db_session.bind.pool.status()}")
     db_session.connection().close() # pylint: disable=E1101
     db_session.remove()
     # black magic to actually close the connection by forcing the engine to dispose of garbage (I assume)
