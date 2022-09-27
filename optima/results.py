@@ -105,6 +105,7 @@ class Resultset(object):
         self.main['propincare']         = Result('Diagnosed PLHIV retained in care (%)',     ispercentage=True, defaultplot='total')
         self.main['proptreat']          = Result('Diagnosed PLHIV on treatment (%)',         ispercentage=True, defaultplot='total')
         self.main['propsuppressed']     = Result('Treated PLHIV with viral suppression (%)', ispercentage=True, defaultplot='total')
+        self.main['proppmtct']          = Result('HIV+ women receiving PMTCT (%)',           ispercentage=True, defaultplot='total')
         
         self.main['prev']               = Result('HIV prevalence (%)',       ispercentage=True, defaultplot='population')
         self.main['force']              = Result('HIV incidence (per 100 p.y.)', ispercentage=True, defaultplot='population')
@@ -426,6 +427,9 @@ class Resultset(object):
 
         self.main['propplhivsupp'].pops = process(allpeople[:,svl,:,:][:,:,:,indices].sum(axis=1)/maximum(allpeople[:,allplhiv,:,:][:,:,:,indices].sum(axis=1),eps), percent=True) 
         self.main['propplhivsupp'].tot = process(allpeople[:,svl,:,:][:,:,:,indices].sum(axis=(1,2))/maximum(allpeople[:,allplhiv,:,:][:,:,:,indices].sum(axis=(1,2)),eps), percent=True) # Axis 1 is populations
+
+        self.main['proppmtct'].pops = process(allpmtct[:,:,indices]/maximum(allhivbirths[:,:,indices],eps), percent=True)
+        self.main['proppmtct'].tot  = process(allpmtct[:,:,indices].sum(axis=1)/maximum(allhivbirths[:,:,indices].sum(axis=1),eps), percent=True) # Axis 1 is populations
 
         self.main['popsize'].pops = process(allpeople[:,:,:,indices].sum(axis=1))
         self.main['popsize'].tot = process(allpeople[:,:,:,indices].sum(axis=(1,2)))
