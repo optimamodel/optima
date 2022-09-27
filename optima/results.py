@@ -361,6 +361,9 @@ class Resultset(object):
 
         self.main['numpmtct'].pops = process(allpmtct[:,:,indices])
         self.main['numpmtct'].tot  = process(allpmtct[:,:,indices].sum(axis=1))
+        if data is not None:
+            self.main['numpmtct'].datatot = processdata(data['numpmtct'], uncertainty=False)
+            self.main['numpmtct'].estimate = False # It's real data, not just an estimate
 
         self.main['numnewdiag'].pops = process(alldiag[:,:,indices])
         self.main['numnewdiag'].tot  = process(alldiag[:,:,indices].sum(axis=1)) # Axis 1 is populations
