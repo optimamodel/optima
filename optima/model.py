@@ -846,22 +846,23 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
             mtcttx         = thisbirthrate * fsums[p1]['alltx'] * pmtcteff[t] # Births to mothers on treatment
             thiseligbirths = thisbirthrate * fsums[p1]['alldx'] # Births to diagnosed mothers eligible for PMTCT
 
-            mtctdx = (thiseligbirths * (1-calcproppmtct)) * effmtct[t] # MTCT from those diagnosed not receiving PMTCT
-            mtctpmtct = (thiseligbirths * calcproppmtct) * pmtcteff[t] # MTCT from those receiving PMTCT
-            thisreceivepmtct = thiseligbirths * calcproppmtct
+            thisreceivepmtct =  thiseligbirths * calcproppmtct
+            mtctpmtct        = (thiseligbirths * calcproppmtct)     * pmtcteff[t] # MTCT from those receiving PMTCT
+            mtctdx           = (thiseligbirths * (1-calcproppmtct)) * effmtct[t]  # MTCT from those diagnosed not receiving PMTCT
+
             thispopmtct = mtctundx + mtctdx + mtcttx + mtctpmtct # Total MTCT, adding up all components
 
             undxhivbirths[p2] += mtctundx                        # Births to add to undx
             dxhivbirths[p2]   += (mtctdx + mtcttx + mtctpmtct)   # Births add to dx
 
-            raw_receivepmtct[p1, t] += thisreceivepmtct
+            raw_receivepmtct[p1, t] += thisreceivepmtct/dt  # annualise
             raw_mtct[p2, t] += thispopmtct/dt
             state_distribution_plhiv_from = people[:,p1,t] * plhivmap
 
             raw_mtctfrom[:, p1, t] += (thispopmtct/dt) * state_distribution_plhiv_from/(state_distribution_plhiv_from.sum()+eps) #WARNING: not accurate based on differential diagnosis by state potentially, but the best that's feasible
             if advancedtracking:
                 raw_mtcttoandfrom[p2,:,p1,t] += (thispopmtct/dt) * state_distribution_plhiv_from/(state_distribution_plhiv_from.sum()+eps) #WARNING: same warning as above, but I'm not 100% sure this is correct
-            raw_births[p2, t] += popbirths/dt
+            raw_births[p2, t]    += popbirths/dt
             raw_hivbirths[p1, t] += thisbirthrate * fsums[p1]['allplhiv'] / dt
 
         raw_inci[:,t] += raw_mtct[:,t] # Update infections acquired based on PMTCT calculation
