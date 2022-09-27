@@ -251,7 +251,8 @@ def calcoptimindsoptimkeys(functionname, prognamelist=None, progset=None, optimi
 
 def constrainbudget(origbudget=None, budgetvec=None, totalbudget=None, budgetlims=None, optiminds=None, optimkeys=None, tolerance=1e-2, overalltolerance=1.0, outputtype=None, verbose=2, tvsettings=None):
     """ Take an unnormalized/unconstrained budgetvec and normalize and constrain it """
-    print(f'!?! constrainbudget called with \norigbudget: {origbudget},\nbudgetvec: {budgetvec},\nbudgetlims: {budgetlims},\noptiminds: {optiminds},\noptimkeys: {optimkeys},')
+    print(f'!?! constrainbudget called with \norigbudget={origbudget},\nbudgetvec={budgetvec},\ntotalbudget={totalbudget},\nbudgetlims={budgetlims},\noptiminds={optiminds},\noptimkeys={optimkeys},'
+                                                                                                  f'\ntolerance={tolerance},\noveralltolerance={overalltolerance},\noutputtype={outputtype},\nverbose={verbose},\ntvsettings={tvsettings}')
     # Prepare this budget for later scaling and the like
     constrainedbudget = dcp(origbudget)
     
