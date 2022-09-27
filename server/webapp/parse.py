@@ -489,9 +489,10 @@ def get_startval_for_parameter(project, parset_id, par_short, pop, year):
     return None
 
 def get_parameters_for_edit_program(project):
+    disallowed_parameters = get_disallowed_parameters_for_program()
     parameters = []
     added_par_keys = set()
-    default_par_keys = [par['short'] for par in op.loadpartable()]
+    default_par_keys = [par['short'] for par in op.loadpartable() if par['short'] not in disallowed_parameters]
     for parset in project.parsets.values():
         pars = parset.pars
         for par_key in default_par_keys:
@@ -507,6 +508,9 @@ def get_parameters_for_edit_program(project):
                     added_par_keys.add(par_key)
     return parameters
 
+def get_disallowed_parameters_for_program():
+    ''' Returns a list of short names of parameters that programs cannot affect (hardcoded here)'''
+    return ['agerate']
 
 def get_parameters_for_outcomes(project, progset_id, parset_id):
     progset = get_progset_from_project(project, progset_id)
