@@ -185,13 +185,15 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
     fixpropcare    = findfixind('fixpropcare')
     fixproptx      = findfixind('fixproptx')
     fixpropsupp    = findfixind('fixpropsupp')
+    fixproppmtct   = findfixind('fixproppmtct')
 
 #    # These all have the same format, so we put them in tuples of (proptype, data structure for storing output, state below, state in question, states above (including state in question), numerator, denominator, data structure for storing new movers)
-#    #                    name,       prop,    lower, to,    num,     denom,   raw_new,        fixyear
+#    #                    name,       prop,    lower, to,    num,     denom,    raw_new,        fixyear
     propstruct = odict([('propdx',   [propdx,   undx, dx,    alldx,   allplhiv, raw_diag,       fixpropdx]),
                         ('propcare', [propcare, dx,   care,  allcare, alldx,    raw_newcare,    fixpropcare]),
                         ('proptx',   [proptx,   care, alltx, alltx,   allcare,  raw_newtreat,   fixproptx]),
-                        ('propsupp', [propsupp, usvl, svl,   svl,     alltx,    raw_newsupp,    fixpropsupp])])
+                        ('propsupp', [propsupp, usvl, svl,   svl,     alltx,    raw_newsupp,    fixpropsupp]),
+                        ('proppmtct',[proppmtct,None, None,  None,    None,     None,           fixproppmtct])])  # Calculation of proppmtct is done in the "Calculate births" section and does not need to be repeated at the end of this file
 
     # Population sizes
     popsize = dcp(simpars['popsize'])
@@ -973,7 +975,10 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
             for name,proplist in propstruct.items():
                 prop, lowerstate, tostate, numer, denom, raw_new, fixyear = proplist
 
-                calcprop = people[numer,:,t].sum()/(eps+people[denom,:,t].sum()) # This is the value we fix it at
+                if not name == 'proppmtct':
+                    calcprop = people[numer,:,t].sum()/(eps+people[denom,:,t].sum()) # This is the value we fix it at
+                else:
+                    calcprop = calcproppmtct  # proppmtct is calculated earlier in the timestep so we don't need to recalc
                 if fixyear==t: # Fixing the proportion from this timepoint
                     naninds    = findinds(isnan(prop)) # Find the indices that are nan -- to be replaced by current values
                     infinds    = findinds(isinf(prop)) # Find indices that are infinite -- to be scaled up/down to a target value
@@ -984,6 +989,9 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                     ninterppts = len(infinds) # Number of points to interpolate over
                     if len(naninds): prop[naninds] = calcprop # Replace nans with current proportion
                     if len(infinds): prop[infinds] = interp(range(ninterppts), [0,ninterppts-1], [calcprop,prop[finiteind]]) # Replace infinities with scale-up/down
+
+                if name == 'proppmtct':
+                    continue  # There are no explicit states for pmtct, so no need to move people around, just fix the proportion if needed
 
                 # Figure out how many people we currently have...
                 actual    = people[numer,:,t+1].sum() # ... in the higher cascade state
@@ -1043,7 +1051,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                                 people[tostate,:,t+1]    -= newmovers # Shift people out of the more progressed state...
                                 people[lowerstate,:,t+1] += newmovers # ... and into the less progressed state
                             raw_new[:,t+1]               -= newmovers.sum(axis=0)/dt # Save new movers, inverting again
-            if debug: checkfornegativepeople(people, tind=t+1) # If ebugging, check for negative people on every timestep
+            if debug: checkfornegativepeople(people, tind=t+1) # If debugging, check for negative people on every timestep
 
     raw                   = odict()    # Sim output structure
     raw['tvec']           = tvec
