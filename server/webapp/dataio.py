@@ -1505,7 +1505,15 @@ def load_reconcile_summary(project_id, progset_id, parset_id, t):
 
     budgets = progset.getdefaultbudget()
     if progset.readytooptimize():
-        pars = progset.compareoutcomes(parset=parset, year=t)
+        errmsg = None
+        try:
+            pars = progset.compareoutcomes(parset=parset, year=t)
+        except KeyError as e:
+            errmsg = 'One of the partnerships has changed, please refresh the programs by opening each one in the Programs tab and clicking Save.'
+            errmsg = str(e) + '\n\n' +  errmsg + '\n'
+        finally:
+            if errmsg is not None:  # Raise the error here so that the error message isn't too long
+                raise op.OptimaException(errmsg)
     else:
         msg = progset.readytooptimize(detail=True)
         pars = [[msg, '', 0, 0]]
