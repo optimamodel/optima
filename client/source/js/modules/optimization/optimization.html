@@ -34,6 +34,7 @@
               ng-class="{highlighted: optimization.id === state.optimization.id}">
             <td>
               {{optimization.name}}
+              <icon ng-show="optimization.id === state.optimization.id" action="error" errormsg="<p>Custom error message</p><p>This will have which parameters and programs are conflicting...</p>" click="editOptimization(optimization)"/>
             </td>
             <td>
               <button

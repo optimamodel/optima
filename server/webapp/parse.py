@@ -522,7 +522,7 @@ def get_parameters_for_outcomes(project, progset_id, parset_id):
     progset.gettargetpars()
     progset.gettargetpartypes()
 
-    target_par_shorts = set([p['param'] for p in progset.targetpars])
+    target_par_shorts = set([p['param'] for p in progset.targetpars]) #!!HERE targetpars is the one we want to compare with
     pars = parset.pars
     parameters = [ # Note the loop!
         {
@@ -546,7 +546,7 @@ def get_parameters_for_outcomes(project, progset_id, parset_id):
         }
         for par_short in target_par_shorts
     ]
-
+    print(f'!!! parameters:{parameters}')
     return {'parameters': parameters}
 
 
@@ -1389,7 +1389,7 @@ def get_optimization_from_project(project, optim_id):
     raise ValueError(errormsg)
 
 
-def get_optimization_summaries(project):
+def get_optimization_summaries(project): #!!!HERE IS WHAT I WANT TO EDIT
     '''
     Returns a list of dictionaries:
         -
@@ -1457,6 +1457,8 @@ def get_optimization_summaries(project):
 
         optim_summary["parset_id"]   = parset_id
         optim_summary["progset_id"] = progset_id
+
+
 
         optim_summaries.append(optim_summary)
 
