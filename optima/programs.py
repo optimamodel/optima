@@ -890,7 +890,7 @@ def checkiffixedpropsconflictwithprogset(progset=None,parset=None, progendyear=2
                                                                progendyear=progendyear,
                                                                starttime=starttime)
     if formatfor == 'html':
-        warningmessages = ['<p>' + msg + '</p>' for msg in warningmessages]
+        warningmessages = ['<p>' + msg.replace('"','&quot;') + '</p>' for msg in warningmessages]
         combinedwarningmsg = '<br>'.join(warningmessages)  # Note that this defaults to '' if warningmessages is empty
     else:
         combinedwarningmsg = (sep+sep).join(warningmessages)  # Note that this defaults to '' if warningmessages is empty

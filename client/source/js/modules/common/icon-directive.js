@@ -113,7 +113,7 @@ define(['angular' ], function (angular) {
             var html =
               '<i'
               + ' class="fa ' + iconTypes[scope.action].iconName + '"'
-              + ' tp-text="' + scope.errormsg + '" '
+              + ' tp-text="{{errormsg}}" '
               + ' tooltip tp-class="tooltip errortooltip" '
               + ' tp-x="-50" tp-y="175" '
               + ' tp-anchor-x="0" tp-anchor-y="0"'
