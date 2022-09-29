@@ -989,7 +989,7 @@ def plotcoverage(multires=None, die=True, figsize=globalfigsize, legendsize=glob
 def plotcascade(results=None, aspercentage=False, cascadecolors=None, figsize=globalfigsize, lw=2, titlesize=globaltitlesize, 
                 labelsize=globallabelsize, ticksize=globalticksize, legendsize=globallegendsize, position=None, useSIticks=True, 
                 showdata=True, dotsize=50, plotstartyear=None, plotendyear=None, die=False, verbose=2, interactive=False, fig=None,
-                asbars=False, allbars=True, blhind=None, newfig=None, **kwargs):
+                asbars=False, allbars=True, blhind=None, newfig=None, targets=None, **kwargs):
 
     ''' 
     Plot the treatment cascade.
@@ -1001,7 +1001,8 @@ def plotcascade(results=None, aspercentage=False, cascadecolors=None, figsize=gl
         P = op.demo(0)
         op.plotresults(P, toplot='cascadebars', plotstartyear=2017, plotendyear=2020)
     
-    Version: 2017jun02 
+    Params:
+        targets = 90 or 95 or any other % or a list of 3 strings eg: ['90%','81%','73%']
     '''
     
     # Set defaults
@@ -1050,6 +1051,20 @@ def plotcascade(results=None, aspercentage=False, cascadecolors=None, figsize=gl
         if baselabel==endlabel: endlabel += ' ' # Small hack to avoid bug if both are the same
         labels = [baselabel, endlabel]
         casccolors = odict([(baselabel,[origbasecolor]), (endlabel, [origendcolor])])
+
+        if targets is None: pass
+        elif len(promotetoarray(targets)) == 3:
+            target_strs = [str(target)+'%' if not isinstance(target,str) else target for target in targets] # If its an array of numbers, add a %
+        elif len(promotetoarray(targets)) == 1:
+            try:
+                targets = float(promotetoarray(targets)[0])
+                targets = targets*100 if targets < 1 else targets
+                target_strs = [f'{int(targets**i/(100**i)*100)}%' for i in range(1,4)]
+            except: targets = None
+        else: targets = None
+
+        if targets == None: target_strs = ['95%', '90%', '86%']  # Default to 95-95-95
+        targets = [float(s[:-1]) if s.endswith('%') else float(s) for s in target_strs]
             
         for k in range(len(casckeys)-1):
             for label in casccolors.keys():
@@ -1100,20 +1115,20 @@ def plotcascade(results=None, aspercentage=False, cascadecolors=None, figsize=gl
                     ax.bar(basex[k]+i*dx, thisbar, width=1., color=casccolors[i][k], linewidth=0, label=label)
             
             targetxpos = 2.0 # Length of the horizontal bar
-            labelxpos  = 3.2 # Relative x position of the label
-            labelypos = -1  # Relative y position of the label
+            labelxpos  = 2.6 # Relative x position of the label
+            labelypos = -1.5  # Relative y position of the label
             lineargs = {'c':targetcolor, 'linewidth':2}
             txtargs = {'fontsize':legendsize, 'color':targetcolor, 'horizontalalignment':'center'}
             dxind  = casckeys.index('numdiag')
             txind  = casckeys.index('numtreat')
             supind = casckeys.index('numsuppressed')
-            ax.plot([basex[dxind], basex[dxind]+targetxpos], [90,90], **lineargs)
-            ax.plot([basex[txind], basex[txind]+targetxpos], [81,81], **lineargs)
-            ax.plot([basex[supind], basex[supind]+targetxpos], [73,73], **lineargs)
+            ax.plot([basex[dxind]-0.5, basex[dxind]+targetxpos-0.5],   [targets[0],targets[0]], **lineargs)
+            ax.plot([basex[txind]-0.5, basex[txind]+targetxpos-0.5],   [targets[1],targets[1]], **lineargs)
+            ax.plot([basex[supind]-0.5, basex[supind]+targetxpos-0.5], [targets[2],targets[2]], **lineargs)
 
-            ax.text(basex[dxind]+labelxpos,90+labelypos,'90%', **txtargs)
-            ax.text(basex[txind]+labelxpos,81+labelypos,'81%', **txtargs)
-            ax.text(basex[supind]+labelxpos,73+labelypos,'73%', **txtargs)
+            ax.text(basex[dxind]+labelxpos,targets[0]+labelypos,target_strs[0], **txtargs)
+            ax.text(basex[txind]+labelxpos,targets[1]+labelypos,target_strs[1], **txtargs)
+            ax.text(basex[supind]+labelxpos,targets[2]+labelypos,target_strs[2], **txtargs)
             
             ax.set_xticks(basex+1.0)
             ax.set_xticklabels(casclabels)
