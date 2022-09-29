@@ -1445,20 +1445,27 @@ def get_optimization_summaries(project): #!!!HERE IS WHAT I WANT TO EDIT
 
         try:
             parset_id = project.parsets[optim.parsetname].uid # Try to extract the
+            parset    = project.parsets[optim.parsetname]
         except:
             print('>> Warning, optimization parset "%s" not in project parsets: %s; reverting to default "%s"' % (optim.parsetname, project.parsets.keys(), project.parset().name))
             parset_id = project.parset().uid # Just get the default
+            parset    = project.parset()
 
         try:
             progset_id = project.progsets[optim.progsetname].uid # Try to extract the
+            progset    = project.progsets[optim.progsetname]
         except:
             print('>> Warning, optimization progset "%s" not in project progsets: %s; reverting to default "%s"' % (optim.progsetname, project.progsets.keys(), project.progset().name))
             progset_id = project.progset().uid # Just get the default
+            progset    = project.progset()
 
         optim_summary["parset_id"]   = parset_id
         optim_summary["progset_id"] = progset_id
 
-
+        warning, combinedwarningmsg, warningmessages = \
+            op.checkiffixedpropsconflictwithprogset(progset,parset,progendyear=optim.objectives.end,formatfor='html')
+        optim_summary["warning"] = warning
+        optim_summary["warningmessage"] = combinedwarningmsg
 
         optim_summaries.append(optim_summary)
 

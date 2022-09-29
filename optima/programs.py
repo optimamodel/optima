@@ -837,6 +837,9 @@ def checkiffixedpropsconflictwithprogset(progset=None,parset=None, progendyear=2
         formatfor: 'html' or 'console': html uses <p> ... </p> to format the warning message, console uses \n
 
     Returns:
+        warning:
+        combinedwarningmsg:
+        warningmessages:
 
     """
     if progset is None or parset is None or parset.pars is None:
@@ -888,9 +891,9 @@ def checkiffixedpropsconflictwithprogset(progset=None,parset=None, progendyear=2
                                                                starttime=starttime)
     if formatfor == 'html':
         warningmessages = ['<p>' + msg + '</p>' for msg in warningmessages]
-        combinedwarningmsg = '<br>'.join(warningmessages)
+        combinedwarningmsg = '<br>'.join(warningmessages)  # Note that this defaults to '' if warningmessages is empty
     else:
-        combinedwarningmsg = (sep+sep).join(warningmessages)
+        combinedwarningmsg = (sep+sep).join(warningmessages)  # Note that this defaults to '' if warningmessages is empty
 
     return warning, combinedwarningmsg, warningmessages
 
