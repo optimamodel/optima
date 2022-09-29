@@ -1463,7 +1463,7 @@ def get_optimization_summaries(project): #!!!HERE IS WHAT I WANT TO EDIT
         optim_summary["progset_id"] = progset_id
 
         warning, combinedwarningmsg, warningmessages = \
-            op.checkiffixedpropsconflictwithprogset(progset,parset,progendyear=optim.objectives.end,formatfor='html')
+            op.checkiffixedpropsconflictwithprogset(progset,parset,progendyear=optim.objectives['end'],formatfor='html')
         optim_summary["warning"] = warning
         optim_summary["warningmessage"] = combinedwarningmsg
 
