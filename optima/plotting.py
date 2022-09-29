@@ -114,11 +114,14 @@ def getplotselections(results, advanced=False, includeadvancedtracking=False):
     ## Cascade plot is always available, since epi is always available
     plotselections['keys'].append('cascade')
     plotselections['names'].append('Care cascade')
-    plotselections['keys'].append('cascadebars')
-    plotselections['names'].append('Care cascade (bars)')
     if advanced:
+        plotselections['keys'].append('cascadebars')
+        plotselections['names'].append('Care cascade (bars) 95-95-95 targets')
         plotselections['keys'].append('cascadebars90')
-        plotselections['names'].append('Care cascade (bars) - 90-90-90 targets')
+        plotselections['names'].append('Care cascade (bars) 90-90-90 targets')
+    else:
+        plotselections['keys'].append('cascadebars')
+        plotselections['names'].append('Care cascade (bars)')
     
 #    ## Deaths by CD4 -- broken because no results.raw
 #    if advanced:
@@ -273,18 +276,21 @@ def makeplots(results=None, toplot=None, die=False, verbose=2, plotstartyear=Non
         toplot.remove('cascade') # Because everything else is passed to plotepi()
         cascadeplots = plotcascade(results, die=die, plotstartyear=plotstartyear, plotendyear=plotendyear, fig=fig, newfig=newfig, **kwargs)
         allplots.update(cascadeplots)
-    
+
+    bothcascadebars = ('cascadebars' in toplot) and ('cascadebars90' in toplot)
     ## Add cascade plot(s) with bars
     if 'cascadebars' in toplot:
         toplot.remove('cascadebars') # Because everything else is passed to plotepi()
-        cascadebarplots = plotcascade(results, die=die, fig=fig, asbars=True, newfig=newfig, **kwargs)
+        titlesuffix = ' (95-95-95 targets)' if bothcascadebars else None
+        cascadebarplots = plotcascade(results, die=die, fig=fig, asbars=True, newfig=newfig,titlesuffix=titlesuffix, **kwargs)
         allplots.update(cascadebarplots)
 
     ## Add cascade plot(s) with bars
     if 'cascadebars90' in toplot:
         toplot.remove('cascadebars90')  # Because everything else is passed to plotepi()
-        cascadebarplots = plotcascade(results, targets=90, die=die, fig=fig, asbars=True, newfig=newfig, **kwargs)
-        allplots.update(cascadebarplots)
+        titlesuffix = ' (90-90-90 targets)' if bothcascadebars else None
+        cascadebarplots90 = plotcascade(results, targets=90, die=die, fig=fig, asbars=True, newfig=newfig,titlesuffix=titlesuffix, **kwargs)
+        allplots.update(cascadebarplots90)
     
     ## Add deaths by CD4 plot -- WARNING, only available if results includes raw
     if 'deathbycd4' in toplot:
@@ -998,7 +1004,7 @@ def plotcoverage(multires=None, die=True, figsize=globalfigsize, legendsize=glob
 def plotcascade(results=None, aspercentage=False, cascadecolors=None, figsize=globalfigsize, lw=2, titlesize=globaltitlesize, 
                 labelsize=globallabelsize, ticksize=globalticksize, legendsize=globallegendsize, position=None, useSIticks=True, 
                 showdata=True, dotsize=50, plotstartyear=None, plotendyear=None, die=False, verbose=2, interactive=False, fig=None,
-                asbars=False, allbars=True, blhind=None, newfig=None, targets=None, **kwargs):
+                asbars=False, allbars=True, blhind=None, newfig=None, targets=None, titlesuffix=None, **kwargs):
 
     ''' 
     Plot the treatment cascade.
@@ -1147,8 +1153,9 @@ def plotcascade(results=None, aspercentage=False, cascadecolors=None, figsize=gl
             ax.spines['right'].set_visible(False)
             ax.yaxis.set_ticks_position('left')
             ax.xaxis.set_ticks_position('bottom')
-            if ismultisim: thistitle = 'Care cascade - %s' % titles[plt]
-            else:          thistitle = 'Care cascade'
+            if titlesuffix is None: titlesuffix = ''
+            if ismultisim: thistitle = 'Care cascade - %s' % titles[plt] + titlesuffix
+            else:          thistitle = 'Care cascade' + titlesuffix
         
         else: # Not bars
             bottom = 0*results.tvec # Easy way of setting to 0...
