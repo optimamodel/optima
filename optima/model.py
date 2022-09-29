@@ -1,5 +1,5 @@
 ## Imports
-from numpy import zeros, exp, maximum, minimum, inf, array, isnan, einsum, floor, ones, power as npow, concatenate as cat, interp, nan, squeeze, isinf, isfinite, argsort, take_along_axis, put_along_axis, expand_dims, reshape
+from numpy import zeros, exp, maximum, minimum, inf, array, isnan, einsum, floor, ones, power as npow, concatenate as cat, interp, nan, squeeze, isinf, isfinite, argsort, take_along_axis, put_along_axis, expand_dims
 from optima import OptimaException, printv, dcp, odict, findinds
 
 def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False, debug=False, label=None, startind=None, advancedtracking=False):
@@ -733,7 +733,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                     raw_diag[:,t] += people[fromstate,:,t]*thistransit[fromstate,tostate,:]/dt
 
         # Diagnosed/lost to care
-        if userate(propcare,t):
+        if True: # userate(propcare,t): Put people onto care even if there is propcare set, propcare will adjust after the fact. Otherwise, propcare doesn't link people to care at the rate that people should be (because theres enough in care) and we get too many people diagnosed but not linked.
             careprob = [linktocare[:,t]]*ncd4
             returnprob = [returntocare[:,t]]*ncd4
             for cd4 in range(aidsind, ncd4):
@@ -759,7 +759,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
 
 
         # Care/USVL/SVL to lost
-        if userate(propcare,t):
+        if True: # userate(propcare,t): People get lost to care even if there is propcare set, propcare will adjust after the fact.
             lossprob = [leavecare[:,t]]*ncd4
             for cd4 in range(aidsind, ncd4): lossprob[cd4] = minimum(aidsleavecare[t],leavecare[:,t])
         else: lossprob = zeros(ncd4)
@@ -1054,7 +1054,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                                 people[care,:,t+1] += newmoversusvl+newmoverssvl # Add both groups of movers into care
                             else:
                                 people[tostate,:,t+1]    -= newmovers # Shift people out of the more progressed state...
-                                if name == 'propcare': lowerstate = lost  # Note the asymmetry, care moves people from dx and lost, but down into lost
+                                if name == 'propcare': lowerstate = lost  # Note the asymmetry, care moves people from dx and lost, but down into only lost
                                 people[lowerstate,:,t+1] += newmovers # ... and into the less progressed state
                             raw_new[:,t+1]               -= newmovers.sum(axis=0)/dt # Save new movers, inverting again
             if debug: checkfornegativepeople(people, tind=t+1) # If debugging, check for negative people on every timestep
