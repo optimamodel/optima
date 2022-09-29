@@ -116,6 +116,9 @@ def getplotselections(results, advanced=False, includeadvancedtracking=False):
     plotselections['names'].append('Care cascade')
     plotselections['keys'].append('cascadebars')
     plotselections['names'].append('Care cascade (bars)')
+    if advanced:
+        plotselections['keys'].append('cascadebars90')
+        plotselections['names'].append('Care cascade (bars) - 90-90-90 targets')
     
 #    ## Deaths by CD4 -- broken because no results.raw
 #    if advanced:
@@ -275,6 +278,12 @@ def makeplots(results=None, toplot=None, die=False, verbose=2, plotstartyear=Non
     if 'cascadebars' in toplot:
         toplot.remove('cascadebars') # Because everything else is passed to plotepi()
         cascadebarplots = plotcascade(results, die=die, fig=fig, asbars=True, newfig=newfig, **kwargs)
+        allplots.update(cascadebarplots)
+
+    ## Add cascade plot(s) with bars
+    if 'cascadebars90' in toplot:
+        toplot.remove('cascadebars90')  # Because everything else is passed to plotepi()
+        cascadebarplots = plotcascade(results, targets=90, die=die, fig=fig, asbars=True, newfig=newfig, **kwargs)
         allplots.update(cascadebarplots)
     
     ## Add deaths by CD4 plot -- WARNING, only available if results includes raw
