@@ -190,7 +190,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
 #    # These all have the same format, so we put them in tuples of (proptype, data structure for storing output, state below, state in question, states above (including state in question), numerator, denominator, data structure for storing new movers)
 #    #                    name,       prop,    lower,       to,    num,     denom,    raw_new,        fixyear
     propstruct = odict([('propdx',   [propdx,   undx,       dx,    alldx,   allplhiv, raw_diag,       fixpropdx]),
-                        ('propcare', [propcare, dxnotincare,care,  allcare, alldx,    raw_newcare,    fixpropcare]),    # Note that dxnotincare has twice as many states as care so we have to do some combining when putting people up, and put people down into lost
+                        ('propcare', [propcare, dxnotincare,care,  allcare, alldx,    raw_newcare,    fixpropcare]),    # Note that dxnotincare has twice as many states as care so we combine people when putting up into care BUT we only put people down into lost
                         ('proptx',   [proptx,   care,       alltx, alltx,   allcare,  raw_newtreat,   fixproptx]),
                         ('propsupp', [propsupp, usvl,       svl,   svl,     alltx,    raw_newsupp,    fixpropsupp]),
                         ('proppmtct',[proppmtct,None,       None,  None,    None,     None,           fixproppmtct])])  # Calculation of proppmtct is done in the "Calculate births" section and does not need to be repeated at the end of this file
@@ -1035,8 +1035,9 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                                 newmovers = diff*ppltomoveup/totalppltomoveup
                                 people[lowerstate,:,t+1] -= newmovers # Shift people out of the less progressed state...
                                 if name == 'propcare':
-                                    newmovers = reshape(newmovers, (2, int(len(newmovers)/2)) )  # since lowerstate = cat([self.dx,self.lost])
-                                    newmovers = newmovers.sum(axis=0)   # we sum people in corresponding cd4 states
+                                    newmoversfromdx = newmovers[:ncd4,:]    # First group of movers are from dx
+                                    newmoversfromlost = newmovers[ncd4:, :] # Second group of movers are from lost
+                                    newmovers = newmoversfromdx + newmoversfromlost  # we sum people in corresponding cd4 states
                                 people[tostate,:,t+1]    += newmovers # ... and into the more progressed state
                             raw_new[:,t+1]               += newmovers.sum(axis=0)/dt # Save new movers
                     elif diff<-eps: # We need to move people backwards along the cascade
