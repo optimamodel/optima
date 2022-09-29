@@ -1,5 +1,5 @@
 ## Imports
-from numpy import zeros, exp, maximum, minimum, inf, array, isnan, einsum, floor, ones, power as npow, concatenate as cat, interp, nan, squeeze, isinf, isfinite, argsort, take_along_axis, put_along_axis, expand_dims
+from numpy import zeros, exp, maximum, minimum, inf, array, isnan, einsum, floor, ones, power as npow, concatenate as cat, interp, nan, squeeze, isinf, isfinite, argsort, take_along_axis, put_along_axis, expand_dims, reshape
 from optima import OptimaException, printv, dcp, odict, findinds
 
 def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False, debug=False, label=None, startind=None, advancedtracking=False):
@@ -190,7 +190,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
 #    # These all have the same format, so we put them in tuples of (proptype, data structure for storing output, state below, state in question, states above (including state in question), numerator, denominator, data structure for storing new movers)
 #    #                    name,       prop,    lower,       to,    num,     denom,    raw_new,        fixyear
     propstruct = odict([('propdx',   [propdx,   undx,       dx,    alldx,   allplhiv, raw_diag,       fixpropdx]),
-                        ('propcare', [propcare, dxnotincare,care,  allcare, alldx,    raw_newcare,    fixpropcare]),
+                        ('propcare', [propcare, dxnotincare,care,  allcare, alldx,    raw_newcare,    fixpropcare]),    # Note that dxnotincare has twice as many states as care so we have to do some combining when putting people up, and put people down into lost
                         ('proptx',   [proptx,   care,       alltx, alltx,   allcare,  raw_newtreat,   fixproptx]),
                         ('propsupp', [propsupp, usvl,       svl,   svl,     alltx,    raw_newsupp,    fixpropsupp]),
                         ('proppmtct',[proppmtct,None,       None,  None,    None,     None,           fixproppmtct])])  # Calculation of proppmtct is done in the "Calculate births" section and does not need to be repeated at the end of this file
@@ -1034,6 +1034,9 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                             else: # For everything else, we use a distribution based on the distribution of people waiting to move up the cascade
                                 newmovers = diff*ppltomoveup/totalppltomoveup
                                 people[lowerstate,:,t+1] -= newmovers # Shift people out of the less progressed state...
+                                if name == 'propcare':
+                                    newmovers = reshape(newmovers, (2, int(len(newmovers)/2)) )  # since lowerstate = cat([self.dx,self.lost])
+                                    newmovers = newmovers.sum(axis=0)   # we sum people in corresponding cd4 states
                                 people[tostate,:,t+1]    += newmovers # ... and into the more progressed state
                             raw_new[:,t+1]               += newmovers.sum(axis=0)/dt # Save new movers
                     elif diff<-eps: # We need to move people backwards along the cascade
@@ -1050,6 +1053,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                                 people[care,:,t+1] += newmoversusvl+newmoverssvl # Add both groups of movers into care
                             else:
                                 people[tostate,:,t+1]    -= newmovers # Shift people out of the more progressed state...
+                                if name == 'propcare': lowerstate = lost  # Note the asymmetry, care moves people from dx and lost, but down into lost
                                 people[lowerstate,:,t+1] += newmovers # ... and into the less progressed state
                             raw_new[:,t+1]               -= newmovers.sum(axis=0)/dt # Save new movers, inverting again
             if debug: checkfornegativepeople(people, tind=t+1) # If debugging, check for negative people on every timestep
