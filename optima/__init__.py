@@ -155,7 +155,7 @@ from .loadspreadsheet import loadspreadsheet, loadprogramspreadsheet
 from .model import model
 
 # Define the programs and cost functions
-from .programs import Program, Programset
+from .programs import Program, Programset, checkiffixedpropsconflictwithprogset
 from . import programs as _programs; del programs
 
 # Automatic calibration and sensitivity
