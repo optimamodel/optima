@@ -188,12 +188,12 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
     fixproppmtct   = findfixind('fixproppmtct')
 
 #    # These all have the same format, so we put them in tuples of (proptype, data structure for storing output, state below, state in question, states above (including state in question), numerator, denominator, data structure for storing new movers)
-#    #                    name,       prop,    lower, to,    num,     denom,    raw_new,        fixyear
-    propstruct = odict([('propdx',   [propdx,   undx, dx,    alldx,   allplhiv, raw_diag,       fixpropdx]),
-                        ('propcare', [propcare, dx,   care,  allcare, alldx,    raw_newcare,    fixpropcare]),
-                        ('proptx',   [proptx,   care, alltx, alltx,   allcare,  raw_newtreat,   fixproptx]),
-                        ('propsupp', [propsupp, usvl, svl,   svl,     alltx,    raw_newsupp,    fixpropsupp]),
-                        ('proppmtct',[proppmtct,None, None,  None,    None,     None,           fixproppmtct])])  # Calculation of proppmtct is done in the "Calculate births" section and does not need to be repeated at the end of this file
+#    #                    name,       prop,    lower,       to,    num,     denom,    raw_new,        fixyear
+    propstruct = odict([('propdx',   [propdx,   undx,       dx,    alldx,   allplhiv, raw_diag,       fixpropdx]),
+                        ('propcare', [propcare, dxnotincare,care,  allcare, alldx,    raw_newcare,    fixpropcare]),
+                        ('proptx',   [proptx,   care,       alltx, alltx,   allcare,  raw_newtreat,   fixproptx]),
+                        ('propsupp', [propsupp, usvl,       svl,   svl,     alltx,    raw_newsupp,    fixpropsupp]),
+                        ('proppmtct',[proppmtct,None,       None,  None,    None,     None,           fixproppmtct])])  # Calculation of proppmtct is done in the "Calculate births" section and does not need to be repeated at the end of this file
 
     # Population sizes
     popsize = dcp(simpars['popsize'])
