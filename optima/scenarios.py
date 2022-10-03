@@ -391,18 +391,19 @@ def defaultscenarios(project=None, which=None, startyear=2020, endyear=2025, par
     return None # Can get it from project.scens
 
 
-def checkifparsetoverridesscenario(project, parset, scen, progendyear=None, formatfor='console', createmessages=True, die=False, verbose=2):
+def checkifparsetoverridesscenario(project, parset, scen, progset=None, progendyear=None, formatfor='console', createmessages=True, die=False, verbose=2):
     if isinstance(scen, Progscen):
-        progstartyear = scen.t
+        if progset is None:
+            try: progset = project.progsets[scen.progsetname]
+            except:
+                errmsg = f'Warning could not get progset with name "{scen.progsetname}" for scenario "{scen.name}" from project "{project.name}" to check if any parameters override it.'
+                if die: raise OptimaException(errmsg)
+                else:
+                    printv(errmsg, 2, verbose=verbose)
+                    # warning, parsoverridingparsdict, overridetimes, overridevals, combinedwarningmsg, warningmessages
+                    return False, odict(), odict(), odict(), '', []
 
-        try: progset = project.progsets[scen.progsetname]
-        except:
-            errmsg = f'Warning could not get progset with name "{scen.progsetname}" for scenario "{scen.name}" from project "{project.name}" to check if any parameters override it.'
-            if die: raise OptimaException(errmsg)
-            else:
-                printv(errmsg, 2, verbose=verbose)
-                # warning, parsoverridingparsdict, overridetimes, overridevals, combinedwarningmsg, warningmessages
-                return False, odict(), odict(), odict(), '', []
+        progstartyear = scen.t
 
         # warning, parsoverridingparsdict, overridetimes, overridevals, combinedwarningmsg, warningmessages = \
         return checkifparsetoverridesprogset(progset=progset, parset=parset, progendyear=progendyear, progstartyear=progstartyear, formatfor=formatfor, createmessages=createmessages)

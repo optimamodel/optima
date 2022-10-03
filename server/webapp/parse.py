@@ -1229,17 +1229,22 @@ def get_scenario_summary(project, scenario):
 
     try:
         parset_id = project.parsets[scenario.parsetname].uid
+        parset    = project.parsets[scenario.parsetname]
     except:
         print('>> Warning, scenario parset "%s" not in project parsets: %s; reverting to default "%s"' % (scenario.parsetname, project.parsets.keys(), project.parset().name))
         parset_id = project.parset().uid
+        parset    = project.parset()
     if hasattr(scenario, "progsetname") and not isinstance(scenario, op.Parscen):
         try:
             progset_id = project.progsets[scenario.progsetname].uid
+            progset    = project.progsets[scenario.progsetname]
         except:
             print('>> Warning, scenario progset "%s" not in project progset: %s; reverting to default "%s"' % (scenario.progsetname, project.progsets.keys(), project.progset().name))
             progset_id = project.progset().uid
+            progset    = project.progset()
     else:
         progset_id = None
+        progset = None
 
     if hasattr(scenario, "uid"):
         scenario_id = scenario.uid
@@ -1247,6 +1252,9 @@ def get_scenario_summary(project, scenario):
         scenario_id = scenario.uuid
     else:
         scenario_id = op.uuid()
+
+    warning, _,_,_, combinedwarningmsg, warningmessages = \
+        op.checkifparsetoverridesscenario(project=project, parset=parset,progset=progset, scen=scenario, formatfor='html', createmessages=True)
 
     result = {
         'id': scenario_id,
@@ -1256,6 +1264,8 @@ def get_scenario_summary(project, scenario):
         'name': scenario.name,
         'years': scenario.t,
         'parset_id': parset_id,
+        'warning': warning,
+        'warningmessage': combinedwarningmsg,
     }
     result.update(variant_data)
     return result
