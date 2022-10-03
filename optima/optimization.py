@@ -202,15 +202,20 @@ def defaulttvsettings(**kwargs):
 
 def calcoptimindsoptimkeys(functionname, prognamelist=None, progset=None, optiminds = None, optimkeys=None, reorderprograms=True, verbose=2):
     """
-
     A helper function that calculates the optiminds and optimkeys from the progset if it is given.
     It also copies the order of the programs from the keys of the prognamelist to the progset if reorderprograms=True.
 
     If no progset is given, it ensures the optimkeys and the optiminds are referring to the same programs from the
-    prognamelist, choosing to use the optimkeys if they are given.
+    prognamelist, preferring to use the optimkeys if they are given.
 
     Making sure the optiminds match up to the proper location in the dictionary as the optimkeys helps avoid tricky to
     diagnose errors.
+
+    Example usage: (constraints['name'] is an odict with short program names as the keys)
+    constraintskeys = constraints['name'].keys() if (constraints is not None) else None
+    optiminds, optimkeys = calcoptimindsoptimkeys('thisfunctionsname', prognamelist=constraintskeys, progset=progset,
+                                                  optiminds=optiminds, optimkeys=optimkeys, reorderprograms=True, verbose=verbose)
+    note in this example optimkeys and optiminds are overriden and progset is reordered to match the order of prognamelist
     """
     if progset is not None:
         if prognamelist is not None and reorderprograms:
@@ -963,11 +968,6 @@ def minoutcomes(project=None, optim=None, tvec=None, verbose=None, maxtime=None,
     else:
         try: origbudget = dcp(progset.getdefaultbudget())
         except: raise OptimaException('Could not get default budget for optimization')
-
-    # print(f'!! progset::{progset}')
-    # print(f'!! origtotalbudget::{origtotalbudget}')
-    # print(f'!! origbudget::{origbudget}')
-    # print(f'!! optim.constraints:{optim.constraints}')
 
     budgetvec = origbudget[optimkeys] # Get the original budget
     nprogs = len(origbudget[:]) # Number of programs total
