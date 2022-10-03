@@ -378,7 +378,6 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
             else:   printv(errormsg, 1, verbose)
             treatment = maximum(allinfected, treatment)
 
-        treatment = initnumtx * fractotal # Number of people on 1st-line treatment
         nevertreated = allinfected - treatment
 
         # Set initial distributions for cascade
