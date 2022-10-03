@@ -109,30 +109,29 @@ define(['angular' ], function (angular) {
         errormsg: '@'
       },
       link: function(scope, element){
+        var text;
+        var tpclass;
+        var tpy;
         if (scope.action == 'error') {
-            var html =
-              '<i'
-              + ' class="fa ' + iconTypes[scope.action].iconName + '"'
-              + ' tp-text="{{errormsg}}" '
-              + ' tooltip tp-class="tooltip errortooltip" '
-              + ' tp-x="-50" tp-y="175" '
-              + ' tp-anchor-x="0" tp-anchor-y="0"'
-              + ' style="margin-left: 0.5em; font-size: 14px; color: #cc0000;"'
-              + ' ng-click="click()"'
-              + '></i>';
+            text = '{{errormsg}}';
+            tpclass = 'tooltip errortooltip';
+            tpy = 175
         }
         else {
-            var html =
+            text = iconTypes[scope.action].helpText
+            tpclass = 'tooltip';
+            tpy = -150
+        }
+        var html =
               '<i'
               + ' class="fa ' + iconTypes[scope.action].iconName + '"'
-              + ' tp-text="' + iconTypes[scope.action].helpText + '" '
-              + ' tooltip tp-class="tooltip" '
-              + ' tp-x="-50" tp-y="-150" '
+              + ' tp-text="' + text + '" '
+              + ' tooltip tp-class="' + tpclass + '" '
+              + ' tp-x="-50" tp-y="' + tpy + '" '
               + ' tp-anchor-x="0" tp-anchor-y="0"'
               + ' style="margin-left: 0.5em; font-size: 14px"'
               + ' ng-click="click()"'
               + '></i>';
-        }
 
         var el = $compile(html)(scope);
         element.append(el);
