@@ -1233,9 +1233,9 @@ def get_scenario_summary(project, scenario):
         parset_id = project.parset().uid
     if hasattr(scenario, "progsetname"):
         try:
-            print('>> Warning, scenario progset "%s" not in project progset: %s; reverting to default "%s"' % (scenario.progsetname, project.progsets.keys(), project.progset().name))
             progset_id = project.progsets[scenario.progsetname].uid
         except:
+            print('>> Warning, scenario progset "%s" not in project progset: %s; reverting to default "%s"' % (scenario.progsetname, project.progsets.keys(), project.progset().name))
             progset_id = project.progset().uid
     else:
         progset_id = None
