@@ -141,7 +141,7 @@ from . import results as _results; del results
 
 # Define the model parameters -- import before makespreadsheet because makespreadsheet uses partable to make a pre-filled spreadsheet
 from .parameters import Par, Dist, Constant, Metapar, Timepar, Popsizepar, Yearpar, Parameterset # Parameter and Parameterset classes
-from .parameters import makepars, makesimpars, applylimits, comparepars, comparesimpars, sanitycheck
+from .parameters import makepars, makesimpars, applylimits, comparepars, comparesimpars, sanitycheck, checkifparsoverridepars, createwarningforoverride
 from . import parameters as _parameters; del parameters
 
 # Create a blank spreadsheet
@@ -155,7 +155,8 @@ from .loadspreadsheet import loadspreadsheet, loadprogramspreadsheet
 from .model import model
 
 # Define the programs and cost functions
-from .programs import Program, Programset, checkiffixedpropsconflictwithprogset
+from .programs import Program, Programset
+from .programs import checkifparsetoverridesprogset
 from . import programs as _programs; del programs
 
 # Automatic calibration and sensitivity
@@ -163,7 +164,7 @@ from .calibration import autofit
 from . import calibration as _calibration; del calibration
 
 # Scenario analyses
-from .scenarios import Parscen, Budgetscen, Coveragescen, Progscen, runscenarios, makescenarios, baselinescenario, setparscenvalues, defaultscenarios
+from .scenarios import Parscen, Budgetscen, Coveragescen, Progscen, runscenarios, makescenarios, baselinescenario, setparscenvalues, defaultscenarios, checkifparsetoverridesscenario
 from . import scenarios as _scenarios; del scenarios
 
 # Optimization and ICER analyses

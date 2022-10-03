@@ -1462,9 +1462,9 @@ def get_optimization_summaries(project):
 
         optim_summary["parset_id"]   = parset_id
         optim_summary["progset_id"] = progset_id
-
-        warning, combinedwarningmsg, warningmessages = \
-            op.checkiffixedpropsconflictwithprogset(progset,parset,progendyear=optim.objectives['end'],formatfor='html')
+        warning, _, _, _, combinedwarningmsg, warningmessages = \
+            checkifparsetoverridesprogset(progset=progset, parset=parset, progendyear=optim.objectives['end'],
+                                          progstartyear=optim.objectives['start'], formatfor='html', createmessages=True)
         optim_summary["warning"] = warning
         optim_summary["warningmessage"] = combinedwarningmsg
 
