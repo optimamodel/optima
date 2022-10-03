@@ -457,7 +457,7 @@ def get_parameters_for_scenarios(project):
         pars = []
         result[parset_id] = pars
         for par in parset.pars.values():
-            if isinstance(par, op.Timepar): # Targetable parameters are timepars
+            if isinstance(par, op.Timepar) and par.short not in get_disallowed_parameters_for_program(): # Targetable parameters are timepars
                 for pop in par.keys():
                     pars.append({
                         'name': par.name,
@@ -509,7 +509,8 @@ def get_parameters_for_edit_program(project):
     return parameters
 
 def get_disallowed_parameters_for_program():
-    ''' Returns a list of short names of parameters that programs cannot affect (hardcoded here)'''
+    ''' Returns a list of short names of parameters that programs and parameter scenarios cannot affect
+        WARNING used by the FE and hardcoded here.'''
     return ['agerate']
 
 def get_parameters_for_outcomes(project, progset_id, parset_id):
@@ -522,7 +523,7 @@ def get_parameters_for_outcomes(project, progset_id, parset_id):
     progset.gettargetpars()
     progset.gettargetpartypes()
 
-    target_par_shorts = set([p['param'] for p in progset.targetpars]) #!!HERE targetpars is the one we want to compare with
+    target_par_shorts = set([p['param'] for p in progset.targetpars])
     pars = parset.pars
     parameters = [ # Note the loop!
         {
@@ -1389,7 +1390,7 @@ def get_optimization_from_project(project, optim_id):
     raise ValueError(errormsg)
 
 
-def get_optimization_summaries(project): #!!!HERE IS WHAT I WANT TO EDIT
+def get_optimization_summaries(project):
     '''
     Returns a list of dictionaries:
         -
