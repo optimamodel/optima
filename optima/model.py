@@ -895,11 +895,9 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
             # numdxhivpospregwomen   = numpotmothers[:,_alldx]    * totalbirthrate
             # numundxhivpospregwomen = numpotmothers[:, _undx]    * totalbirthrate
 
-            # We make calcproppmtct = numpmtct / dxpregwomen, whereas proppmtct = numpmtct /  allhiv+pregwomen
-            if putinstantlyontopmtct:
-                calcproppmtct = thisnumpmtct / (eps+numdxhivpospregwomen.sum())
-                calcproppmtct = minimum(calcproppmtct,1)
-
+        # We make calcproppmtct = numpmtct / dxpregwomen, whereas proppmtct = numpmtct /  allhiv+pregwomen
+        calcproppmtct = thisnumpmtct / (eps+numdxhivpospregwomen.sum())
+        calcproppmtct = minimum(calcproppmtct,1)
         thisproppmtct = thisnumpmtct / (eps+numhivpospregwomen.sum())
 
         undxhivbirths = zeros(npops) # Store undiagnosed HIV+ births for this timestep
