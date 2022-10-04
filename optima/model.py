@@ -843,7 +843,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
         if isnan(proppmtct[t]): thisnumpmtct = numpmtct[t] / timestepsonpmtct            # Proportion on PMTCT is not specified: use number
         else:                   thisnumpmtct = proppmtct[t] * numhivpospregwomen.sum()  # Else, just use the proportion specified
 
-        calcproppmtct = thisnumpmtct / (eps+numdxhivpospregwomen.sum())
+        calcproppmtct = thisnumpmtct / (eps*dt+numdxhivpospregwomen.sum()) # eps*dt to make sure that backwards compatible
 
         putinstantlyontopmtct = True
         diagnosemothersforpmtct = True
@@ -896,7 +896,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
             # numundxhivpospregwomen = numpotmothers[:, _undx]    * totalbirthrate
 
         # We make calcproppmtct = numpmtct / dxpregwomen, whereas proppmtct = numpmtct /  allhiv+pregwomen
-        calcproppmtct = thisnumpmtct / (eps+numdxhivpospregwomen.sum())
+        calcproppmtct = thisnumpmtct / (eps*dt+numdxhivpospregwomen.sum()) # eps*dt to make sure that backwards compatible
         calcproppmtct = minimum(calcproppmtct,1)
         thisproppmtct = thisnumpmtct / (eps+numhivpospregwomen.sum())
 
