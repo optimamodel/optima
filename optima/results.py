@@ -115,7 +115,10 @@ class Resultset(object):
         self.main['numpmtct']           = Result('HIV+ women receiving PMTCT')
         self.main['popsize']            = Result('Population size')
         self.main['numdaly']            = Result('HIV-related DALYs')
-        
+
+        self.main['numdiagpmtct']       = Result('Number of diagnoses from ANC', defaultplot='stacked')
+        self.main['propdiagpmtct']      = Result('Proportion of diagnoses from ANC (%)', ispercentage=True, defaultplot='total')
+
         self.other['numyll']            = Result('HIV-related YLL')
         self.other['numyld']            = Result('HIV-related YLD')
 
@@ -313,6 +316,7 @@ class Resultset(object):
         alldeaths    = assemble('death')
         otherdeaths  = assemble('otherdeath') 
         alldiag      = assemble('diag')
+        alldiagpmtct = assemble('diagpmtct')
         allmtct      = assemble('mtct')
         allhivbirths = assemble('hivbirths')
         allbirths    = assemble('births')
@@ -437,7 +441,12 @@ class Resultset(object):
             self.main['popsize'].datatot  = processtotalpopsizedata(self, data['popsize'])
             self.main['popsize'].datapops = processdata(data['popsize'], uncertainty=True, bypop=True)
 
-        
+        self.main['numdiagpmtct'].pops = process(alldiagpmtct[:, :, indices])
+        self.main['numdiagpmtct'].tot  = process(alldiagpmtct[:, :, indices].sum(axis=1))  # Axis 1 is populations
+
+        self.main['propdiagpmtct'].pops = process(alldiagpmtct[:, :, indices]/maximum(alldiag[:, :, indices],eps))
+        self.main['propdiagpmtct'].tot  = process(alldiagpmtct[:, :, indices].sum(axis=1)/maximum(alldiag[:, :, indices].sum(axis=1),eps))  # Axis 1 is populations
+
         # Calculate DALYs
         
         ## Years of life lost

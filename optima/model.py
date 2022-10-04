@@ -61,6 +61,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
     raw_hivbirths       = zeros((npops, npts))                 # Number of births to HIV+ pregnant women
     raw_receivepmtct    = zeros((npops, npts))                 # Initialise a place to store the number of people in each population receiving PMTCT
     raw_diag            = zeros((npops, npts))                 # Number diagnosed per timestep
+    raw_dxforpmtct      = zeros((npops, npts))                 # Number diagnosed to go onto PMTCT per timestep
     raw_newcare         = zeros((npops, npts))                 # Number newly in care per timestep
     raw_newtreat        = zeros((npops, npts))                 # Number initiating ART per timestep
     raw_newsupp         = zeros((npops, npts))                 # Number newly suppressed per timestep
@@ -863,7 +864,9 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                     people[undx, p1, t+1] -= thispoptobedx
                     people[dx,   p1, t+1] += thispoptobedx
                 raw_diag[p1,t] += thispoptobedx.sum() /dt # annualise
-                numdxforpmtct  += thispoptobedx.sum()
+
+                raw_dxforpmtct[p1,t] += thispoptobedx.sum() /dt # annualise
+                numdxforpmtct     += thispoptobedx.sum()  # in this timestep aka not annualised
                 if putinstantlyontopmtct:
                     numpotmothers[p1, _undx]  -= thispoptobedx.sum() / totalbirthrate[p1] # Uncomment these lines to put people onto PMTCT instantly, rather than next time step
                     numpotmothers[p1, _alldx] += thispoptobedx.sum() / totalbirthrate[p1]
@@ -1132,6 +1135,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
     raw['immi']           = raw_immi
     raw['pmtct']          = raw_receivepmtct
     raw['diag']           = raw_diag
+    raw['diagpmtct']      = raw_dxforpmtct
     raw['newtreat']       = raw_newtreat
     raw['death']          = raw_death
     raw['otherdeath']     = raw_otherdeath
