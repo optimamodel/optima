@@ -878,24 +878,28 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                 if (people[undx,p1,t+1] < 0).any():
                     print(f"WARNING: Tried to diagnose {thispoptobedx} pregnant HIV+ women from population {popkeys[p1]} but this made the people negative:{people[undx,p1,t+1]}")
 
-
-            if proptobedx > 0.01: print(f'INFO: {tvec[t]}: Diagnosing {numdxforpmtct:.2f}={proptobedx * 100:.2f}% (wanted {numtobedx:.2f}) of pregnant undiagnosed HIV+ women.')
+            totalbirthrate = array(totalbirthrate)
+            avbirthrate = sum(totalbirthrate[totalbirthrate!=0]) / sum(totalbirthrate!=0)
+            propnexttime = avbirthrate * relhivbirth * timestepsonpmtct
+            if proptobedx > 0.01: print(f'INFO: {tvec[t]}: Diagnosing {numdxforpmtct:.2f}={proptobedx * 100:.2f}% (wanted {numtobedx:.2f}) of pregnant undiagnosed HIV+ women. Only approx {propnexttime*100:.2f}% of these will be pregnant next time step')
             propnewdiag = raw_diag[:,t].sum()/(initrawdiag+eps)-1
             if propnewdiag > 0.01: print(f'INFO: {tvec[t]}: Increasing number diagnosed this year from {initrawdiag:.3f} to {raw_diag[:,t].sum():.3f} (up {propnewdiag*100:.2f}%)')
             if abs(numwillbedx - numdxforpmtct) > eps:
                 print(f"WARNING: Tried to diagnose {numwillbedx} out of {numundxhivpospregwomen.sum()} undiagnosed pregnant women but instead diagnosed {numdxforpmtct} at time {tvec[t]}")
 
-        # assert (abs(numhivpospregwomen - numpotmothers[:,_allplhiv]*totalbirthrate) < eps*eps).all(), f'numhivpospregwomen:{numhivpospregwomen.sum()}, numpotmothers[:,_allplhiv]*totalbirthrate:{(numpotmothers[:,_allplhiv]*totalbirthrate).sum()}'
-        # assert (abs(numdxhivpospregwomen - numpotmothers[:, _alldx] * totalbirthrate) < eps*eps).all(), f'numdxhivpospregwomen:{numdxhivpospregwomen.sum()}, numpotmothers[:,_alldx]*totalbirthrate:{(numpotmothers[:,_alldx]*totalbirthrate).sum()}'
-        # assert (abs(numundxhivpospregwomen - numpotmothers[:, _undx] * totalbirthrate) < eps*eps).all(), f'numundxhivpospregwomen:{numundxhivpospregwomen.sum()}, numpotmothers[:,_undx]*totalbirthrate:{(numpotmothers[:,_undx]*totalbirthrate).sum()}'
+            # assert (abs(numhivpospregwomen - numpotmothers[:,_allplhiv]*totalbirthrate) < eps*eps).all(), f'numhivpospregwomen:{numhivpospregwomen.sum()}, numpotmothers[:,_allplhiv]*totalbirthrate:{(numpotmothers[:,_allplhiv]*totalbirthrate).sum()}'
+            # assert (abs(numdxhivpospregwomen - numpotmothers[:, _alldx] * totalbirthrate) < eps*eps).all(), f'numdxhivpospregwomen:{numdxhivpospregwomen.sum()}, numpotmothers[:,_alldx]*totalbirthrate:{(numpotmothers[:,_alldx]*totalbirthrate).sum()}'
+            # assert (abs(numundxhivpospregwomen - numpotmothers[:, _undx] * totalbirthrate) < eps*eps).all(), f'numundxhivpospregwomen:{numundxhivpospregwomen.sum()}, numpotmothers[:,_undx]*totalbirthrate:{(numpotmothers[:,_undx]*totalbirthrate).sum()}'
 
-        numhivpospregwomen     = numpotmothers[:,_allplhiv] * totalbirthrate
-        numdxhivpospregwomen   = numpotmothers[:,_alldx]    * totalbirthrate
-        numundxhivpospregwomen = numpotmothers[:, _undx]    * totalbirthrate
+            # numhivpospregwomen     = numpotmothers[:,_allplhiv] * totalbirthrate
+            # numdxhivpospregwomen   = numpotmothers[:,_alldx]    * totalbirthrate
+            # numundxhivpospregwomen = numpotmothers[:, _undx]    * totalbirthrate
 
-        # We make calcproppmtct = numpmtct / dxpregwomen, whereas proppmtct = numpmtct /  allhiv+pregwomen
-        calcproppmtct = thisnumpmtct / (eps+numdxhivpospregwomen.sum())
-        calcproppmtct = minimum(calcproppmtct,1)
+            # We make calcproppmtct = numpmtct / dxpregwomen, whereas proppmtct = numpmtct /  allhiv+pregwomen
+            if putinstantlyontopmtct:
+                calcproppmtct = thisnumpmtct / (eps+numdxhivpospregwomen.sum())
+                calcproppmtct = minimum(calcproppmtct,1)
+
         thisproppmtct = thisnumpmtct / (eps+numhivpospregwomen.sum())
 
         undxhivbirths = zeros(npops) # Store undiagnosed HIV+ births for this timestep
