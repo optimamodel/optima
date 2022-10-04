@@ -833,9 +833,9 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
             numpotmothers[p1, _undx]      = thispop[undx].sum()     * relhivbirth # ^ Should match below
             numpotmothers[p1, _alldx]     = thispop[alldx].sum()    * relhivbirth
             numpotmothers[p1, _alltx]     = thispop[alltx].sum()    * relhivbirth
-        for p1,p2,birthrates,alleligbirthrate in birthslist: # p1 is mothers, p2 is children
+        for p1,p2,birthrate,alleligbirthrate in birthslist: # p1 is mothers, p2 is children
             birthrates[p1, p2] += birthrate[t]
-            totalbirthrate[p1] += birthrates[t]
+            totalbirthrate[p1] += birthrate[t]
 
         numhivpospregwomen     = numpotmothers[:,_allplhiv] * totalbirthrate
         numdxhivpospregwomen   = numpotmothers[:,_alldx]    * totalbirthrate
