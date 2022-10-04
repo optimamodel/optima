@@ -813,8 +813,9 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
 
         ## Shift people as required
         if t<npts-1:
-            for fromstate,tostates in enumerate(fromto):
-                people[tostates,:,t+1] += people[fromstate,:,t]*thistransit[fromstate,tostates,:]
+            people[:,:,t+1] += einsum('ij,ikj->kj',people[:,:,t],thistransit[:,:,:])
+            # for fromstate,tostates in enumerate(fromto):
+            #     people[tostates,:,t+1] += people[fromstate,:,t]*thistransit[fromstate,tostates,:]
 
 
         ##############################################################################################################
