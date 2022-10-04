@@ -827,11 +827,11 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                                          # note that numpotmothers is dt times the number of women, since will be pregnant for timestepsonpmtct
         for p1 in motherpops: # Pull these out of the loop to speed computation
             thispop = people[:, p1, t]
-            numpotmothers[p1, _all]       = thispop[:].sum()                      * timestepsonpmtct
-            numpotmothers[p1, _allplhiv]  = thispop[allplhiv].sum() * relhivbirth * timestepsonpmtct
-            numpotmothers[p1, _undx]      = thispop[undx].sum()     * relhivbirth * timestepsonpmtct # ^ Should match below
-            numpotmothers[p1, _alldx]     = thispop[alldx].sum()    * relhivbirth * timestepsonpmtct
-            numpotmothers[p1, _alltx]     = thispop[alltx].sum()    * relhivbirth * timestepsonpmtct
+            numpotmothers[p1, _all]       = thispop[:].sum()
+            numpotmothers[p1, _allplhiv]  = thispop[allplhiv].sum() * relhivbirth
+            numpotmothers[p1, _undx]      = thispop[undx].sum()     * relhivbirth # ^ Should match below
+            numpotmothers[p1, _alldx]     = thispop[alldx].sum()    * relhivbirth
+            numpotmothers[p1, _alltx]     = thispop[alltx].sum()    * relhivbirth
         for p1,p2,birthrates,alleligbirthrate in birthslist: # p1 is mothers, p2 is children
             totalbirthrate[p1] += birthrates[t]
 
@@ -840,7 +840,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
         numundxhivpospregwomen = numpotmothers[:, _undx]    * totalbirthrate
 
         # We make calcproppmtct = numpmtct / dxpregwomen, whereas proppmtct = numpmtct /  allhiv+pregwomen
-        if isnan(proppmtct[t]): thisnumpmtct = numpmtct[t]              # Proportion on PMTCT is not specified: use number
+        if isnan(proppmtct[t]): thisnumpmtct = numpmtct[t] / timestepsonpmtct            # Proportion on PMTCT is not specified: use number
         else:                   thisnumpmtct = proppmtct[t] * numhivpospregwomen.sum()  # Else, just use the proportion specified
 
         calcproppmtct = thisnumpmtct / (eps+numdxhivpospregwomen.sum())
@@ -859,7 +859,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
             numdxforpmtct = 0
 
             for p1 in motherpops:
-                thispoptobedx = proptobedx * people[undx, p1, t] * relhivbirth * timestepsonpmtct * totalbirthrate[p1] # ^ Should match above without .sum() and with the totalbirthrate
+                thispoptobedx = proptobedx * people[undx, p1, t] * relhivbirth * totalbirthrate[p1] # ^ Should match above without .sum() and with the totalbirthrate
                 if t<npts-1:
                     people[undx, p1, t+1] -= thispoptobedx
                     people[dx,   p1, t+1] += thispoptobedx
@@ -874,9 +874,9 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                     numdxhivpospregwomen[p1]   += thispoptobedx.sum()
                     thisnumpmtct   += thispoptobedx.sum()
 
-
-                if (people[undx,p1,t+1] < 0).any():
-                    print(f"WARNING: Tried to diagnose {thispoptobedx} pregnant HIV+ women from population {popkeys[p1]} but this made the people negative:{people[undx,p1,t+1]}")
+                if t < npts - 1:
+                    if (people[undx,p1,t+1] < 0).any():
+                        print(f"WARNING: Tried to diagnose {thispoptobedx} pregnant HIV+ women from population {popkeys[p1]} but this made the people negative:{people[undx,p1,t+1]}")
 
             totalbirthrate = array(totalbirthrate)
             avbirthrate = sum(totalbirthrate[totalbirthrate!=0]) / sum(totalbirthrate!=0)
@@ -906,11 +906,11 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
         # Calculate actual births, MTCT, and PMTCT
         for p1,p2,birthrates,alleligbirthrate in birthslist:
             thisbirthrate  = birthrates[t]
-            popbirths      = thisbirthrate * numpotmothers[p1, _all] / timestepsonpmtct # numpregwomen = numpotmothers*totalbirthrate for that pop, then numbirths = numpregwomen / timestepsonpmtct
-            hivposbirths   = thisbirthrate * numpotmothers[p1, _allplhiv] / timestepsonpmtct
-            mtctundx       = thisbirthrate * numpotmothers[p1, _undx] * effmtct[t]  / timestepsonpmtct# Births to undiagnosed mothers
-            mtcttx         = thisbirthrate * numpotmothers[p1, _alltx] * pmtcteff[t]  / timestepsonpmtct# Births to mothers on treatment
-            thiseligbirths = thisbirthrate * numpotmothers[p1, _alldx]  / timestepsonpmtct # Births to diagnosed mothers eligible for PMTCT
+            popbirths      = thisbirthrate * numpotmothers[p1, _all]  # numpregwomen = numpotmothers*totalbirthrate for that pop, then numbirths = numpregwomen / timestepsonpmtct
+            hivposbirths   = thisbirthrate * numpotmothers[p1, _allplhiv]
+            mtctundx       = thisbirthrate * numpotmothers[p1, _undx] * effmtct[t]  # Births to undiagnosed mothers
+            mtcttx         = thisbirthrate * numpotmothers[p1, _alltx] * pmtcteff[t]  # Births to mothers on treatment
+            thiseligbirths = thisbirthrate * numpotmothers[p1, _alldx]   # Births to diagnosed mothers eligible for PMTCT
 
             thisreceivepmtct =  thiseligbirths * calcproppmtct
             mtctpmtct        = (thiseligbirths * calcproppmtct)     * pmtcteff[t] # MTCT from those receiving PMTCT
