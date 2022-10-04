@@ -825,6 +825,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
         _all,_allplhiv,_undx,_alldx,_alltx = range(5) # Start with underscore to not override other variables
         numpotmothers = zeros((npops,5)) # Number of potential mothers, numpregwomen = numpotmothers*totalbirthrate for that pop, then numbirths = numpregwomen / timestepsonpmtct
                                          # note that numpotmothers is dt times the number of women, since will be pregnant for timestepsonpmtct
+        birthrates = zeros((npops, npops))
         for p1 in motherpops: # Pull these out of the loop to speed computation
             thispop = people[:, p1, t]
             numpotmothers[p1, _all]       = thispop[:].sum()
@@ -833,6 +834,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
             numpotmothers[p1, _alldx]     = thispop[alldx].sum()    * relhivbirth
             numpotmothers[p1, _alltx]     = thispop[alltx].sum()    * relhivbirth
         for p1,p2,birthrates,alleligbirthrate in birthslist: # p1 is mothers, p2 is children
+            birthrates[p1, p2] += birthrate[t]
             totalbirthrate[p1] += birthrates[t]
 
         numhivpospregwomen     = numpotmothers[:,_allplhiv] * totalbirthrate
@@ -904,32 +906,30 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
         dxhivbirths = zeros(npops) # Store diagnosed HIV+ births for this timestep
 
         # Calculate actual births, MTCT, and PMTCT
-        for p1,p2,birthrates,alleligbirthrate in birthslist:
-            thisbirthrate  = birthrates[t]
-            popbirths      = thisbirthrate * numpotmothers[p1, _all]  # numpregwomen = numpotmothers*totalbirthrate for that pop, then numbirths = numpregwomen / timestepsonpmtct
-            hivposbirths   = thisbirthrate * numpotmothers[p1, _allplhiv]
-            mtctundx       = thisbirthrate * numpotmothers[p1, _undx] * effmtct[t]  # Births to undiagnosed mothers
-            mtcttx         = thisbirthrate * numpotmothers[p1, _alltx] * pmtcteff[t]  # Births to mothers on treatment
-            thiseligbirths = thisbirthrate * numpotmothers[p1, _alldx]   # Births to diagnosed mothers eligible for PMTCT
+        popbirths      = einsum('ij,i->ij', birthrates, numpotmothers[:, _all]) # numpregwomen = numpotmothers*totalbirthrate for that pop, then numbirths = numpregwomen / timestepsonpmtct
+        hivposbirths   = einsum('ij,i->ij', birthrates, numpotmothers[:, _allplhiv])
+        mtctundx       = einsum('ij,i->ij', birthrates, numpotmothers[:, _undx]) * effmtct[t] # Births to undiagnosed mothers
+        mtcttx         = einsum('ij,i->ij', birthrates, numpotmothers[:, _alltx]) * pmtcteff[t] # Births to mothers on treatment
+        thiseligbirths = einsum('ij,i->ij', birthrates, numpotmothers[:, _alldx]) # Births to diagnosed mothers eligible for PMTCT
 
-            thisreceivepmtct =  thiseligbirths * calcproppmtct
-            mtctpmtct        = (thiseligbirths * calcproppmtct)     * pmtcteff[t] # MTCT from those receiving PMTCT
-            mtctdx           = (thiseligbirths * (1-calcproppmtct)) * effmtct[t]  # MTCT from those diagnosed not receiving PMTCT
+        thisreceivepmtct =  thiseligbirths * calcproppmtct
+        mtctpmtct        = (thiseligbirths * calcproppmtct)     * pmtcteff[t] # MTCT from those receiving PMTCT
+        mtctdx           = (thiseligbirths * (1-calcproppmtct)) * effmtct[t]  # MTCT from those diagnosed not receiving PMTCT
 
-            thispopmtct = mtctundx + mtctdx + mtcttx + mtctpmtct # Total MTCT, adding up all components
+        thispopmtct = mtctundx + mtctdx + mtcttx + mtctpmtct  # Total MTCT, adding up all components
+        undxhivbirths += mtctundx.sum(axis=0)  # Births to add to undx
+        dxhivbirths   += (mtctdx + mtcttx + mtctpmtct).sum(axis=0)  # Births add to dx
 
-            undxhivbirths[p2] += mtctundx                        # Births to add to undx
-            dxhivbirths[p2]   += (mtctdx + mtcttx + mtctpmtct)   # Births add to dx
+        raw_receivepmtct[:, t] += (thisreceivepmtct * timestepsonpmtct).sum(axis=1)  # annualise / convert from births to preg women
+        raw_mtct[:, t] += thispopmtct.sum(axis=0)/dt
+        # state_distribution_plhiv_from = people[:,p1,t] * plhivmap
+        state_distribution_plhiv_from = einsum('ij,i->ij', people[:,:,t], plhivmap)
 
-            raw_receivepmtct[p1, t] += thisreceivepmtct * timestepsonpmtct  # annualise / convert from births to preg women
-            raw_mtct[p2, t] += thispopmtct/dt
-            state_distribution_plhiv_from = people[:,p1,t] * plhivmap
-
-            raw_mtctfrom[:, p1, t] += (thispopmtct/dt) * state_distribution_plhiv_from/(state_distribution_plhiv_from.sum()+eps) #WARNING: not accurate based on differential diagnosis by state potentially, but the best that's feasible
-            if advancedtracking:
-                raw_mtcttoandfrom[p2,:,p1,t] += (thispopmtct/dt) * state_distribution_plhiv_from/(state_distribution_plhiv_from.sum()+eps) #WARNING: same warning as above, but I'm not 100% sure this is correct
-            raw_births[p2, t]    += popbirths    /dt
-            raw_hivbirths[p1, t] += hivposbirths /dt
+        raw_mtctfrom[:, :, t] += einsum('j,ij,j->ij', thispopmtct.sum(axis=1)/dt, state_distribution_plhiv_from, 1/(state_distribution_plhiv_from.sum(axis=0)+eps) ) #WARNING: not accurate based on differential diagnosis by state potentially, but the best that's feasible
+        if advancedtracking:
+            raw_mtcttoandfrom[:,:,:,t] += einsum('ij,ki,i->jki',thispopmtct/dt, state_distribution_plhiv_from, 1/(state_distribution_plhiv_from.sum(axis=0)+eps)) #WARNING: same warning as above, but I'm not 100% sure this is correct
+        raw_births[:, t]    += popbirths.sum(axis=0)    /dt
+        raw_hivbirths[:, t] += hivposbirths.sum(axis=1) /dt
 
         raw_inci[:,t] += raw_mtct[:,t] # Update infections acquired based on PMTCT calculation
         raw_incibypop[:,:,t] += raw_mtctfrom[:,:,t] # Update infections caused based on PMTCT
