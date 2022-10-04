@@ -848,7 +848,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
         calcproppmtct = thisnumpmtct / (eps*dt+numdxhivpospregwomen.sum()) # eps*dt to make sure that backwards compatible
 
         putinstantlyontopmtct = True
-        diagnosemothersforpmtct = True
+        diagnosemothersforpmtct = False
         if calcproppmtct > 1 and diagnosemothersforpmtct: # Need more on PMTCT than we have available diagnosed
             calcproppmtct = 1
             numtobedx = thisnumpmtct - calcproppmtct * numdxhivpospregwomen.sum()
