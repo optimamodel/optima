@@ -494,7 +494,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
 
     ## Births precalculation
     birthslist = []
-    birthratesarr = array((npops,npops,npts))
+    birthratesarr = zeros((npops,npops,npts))
     for p1 in range(npops):
         alleligbirthrate = einsum('i,j->j',birthtransit[p1, :],birth[p1, :])
         for p2 in range(npops):
