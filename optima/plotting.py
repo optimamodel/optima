@@ -13,7 +13,7 @@ Version: 2017jun03
 
 from optima import OptimaException, Resultset, Multiresultset, Parameterset, Settings, ICER, odict, printv, gridcolors, vectocolor, alpinecolormap, makefilepath, sigfig, dcp, findinds, findnearest, promotetolist, saveobj, promotetoodict, promotetoarray, boxoff, getvalidinds
 from optima import setylim, commaticks, SIticks
-from numpy import array, ndim, maximum, arange, zeros, mean, shape, isnan, linspace, minimum, concatenate,invert, swapaxes, flip, abs,cumsum # Numeric functions
+from numpy import array, ndim, maximum, arange, zeros, mean, shape, isnan, linspace, minimum, concatenate,invert, swapaxes, flip, abs,cumsum, logical_and # Numeric functions
 from pylab import gcf, get_fignums, close, ion, ioff, isinteractive, figure # Plotting functions
 from matplotlib.backends.backend_agg import new_figure_manager_given_figure as nfmgf # Warning -- assumes user has agg on their system, but should be ok. Use agg since doesn't require an X server
 from matplotlib.figure import Figure # This is the non-interactive version
@@ -305,7 +305,21 @@ def makeplots(results=None, toplot=None, die=False, verbose=2, plotstartyear=Non
     ## Plot new infections, transitions, deaths and other death, giving total change in PLHIV
     if 'changeinplhivallsources' in toplot:
         toplot.remove('changeinplhivallsources')
-        plots = plotchangeinplhivallsources(results, die=die, fig=fig, **kwargs)
+        try:
+            plots = plotchangeinplhivallsources(results,which='changeinplhivallsources', die=die, fig=fig, **kwargs)
+        except:
+            import traceback
+            traceback.print_exc()
+        allplots.update(plots)
+
+    ## Plot new infections, transitions, deaths and other death, giving total change in PLHIV
+    if 'plhivallsources' in toplot:
+        toplot.remove('plhivallsources')
+        try:
+            plots = plotchangeinplhivallsources(results,which='plhivallsources-population+stacked', die=die, fig=fig, **kwargs)
+        except:
+            import traceback
+            traceback.print_exc()
         allplots.update(plots)
 
     ## Plot new infections, transitions, deaths and other death, giving total change in PLHIV
@@ -336,32 +350,96 @@ def makeplots(results=None, toplot=None, die=False, verbose=2, plotstartyear=Non
     
     return allplots
 
-def plotchangeinplhivallsources(results,die=None,fig=None,**kwargs):
-    scen = 0  # 0th is best
-    numincionpopbypop = results.other['numincionpopbypop'].pops[scen]
-    numtransitpopbypop = results.other['numtransitpopbypop'].pops[scen]
-    numdeath = results.main['numdeath'].pops[scen]
-    numimmiplhiv = results.other['numimmiplhiv'].pops[scen]
+def plotchangeinplhivallsources(results,which='change',die=None,fig=None,eps=0.1,verbose=2,**kwargs):
+    changekeys = ['change', 'changeinplhivallsources', 'changeinplhivallsources-population+stacked', 'changeinplhivallsources-stacked']
+    plhivkeys = ['plhiv', 'plhivallsources', 'plhivallsources-population+stacked', 'plhivallsources-stacked']
+    validplottypes = ['population+stacked', 'stacked']
+    defaultplottype = {'changeinplhivallsources': 'population+stacked', 'plhivallsources': 'stacked'}
+    if which is None: return {}
+    which = promotetolist(which)
+    plots = odict()
+    for thiswhich in which:
+        splitkey = thiswhich.split('-')
+        plottype = None
+        if len(splitkey) == 2:
+            plottype = splitkey[-1]
+            plotname = splitkey[0]
+        if (thiswhich not in changekeys and thiswhich not in plhivkeys) or \
+                (plottype is not None and plottype not in validplottypes):
+            errmsg = f"Unexpected plot type '{thiswhich}'. Was expecting one of {changekeys} or {plhivkeys}."
+            if die: raise OptimaException(errmsg)
+            printv(errmsg, 2, verbose)
+            continue
+        if plottype is None:
+            if thiswhich in changekeys:
+                plotname = 'changeinplhivallsources'
+            elif thiswhich in plhivkeys:
+                plotname = 'plhivallsources'
+            plottype = defaultplottype[plotname]
 
-    propdeath = results.other['numotherdeath'].pops[scen] / results.main['popsize'].pops[scen]
-    numotherhivdeath = propdeath * results.main['numplhiv'].pops[scen]
+        if plotname == 'changeinplhivallsources':
+            scen = 0  # 0th is best
+            numincionpopbypop = results.other['numincionpopbypop'].pops[scen]
+            numtransitpopbypop = results.other['numtransitpopbypop'].pops[scen]
+            numdeath = results.main['numdeath'].pops[scen]
+            numimmiplhiv = results.other['numimmiplhiv'].pops[scen]
 
-    stackedabove = [[numimmiplhiv, numincionpopbypop, numtransitpopbypop]]
-    stackedbelow = [[-swapaxes(numtransitpopbypop, axis1=0, axis2=1), -numdeath, -numotherhivdeath]]
+            propdeath = results.other['numotherdeath'].pops[scen] / results.main['popsize'].pops[scen]
+            numotherhivdeath = propdeath * results.main['numplhiv'].pops[scen]
 
-    stackedabovelabels = [
-        [['Immigrant HIV+ in: ' + pk for pk in results.popkeys], ['Infection from: ' + pk for pk in results.popkeys],
-         ['Transition in: ' + pk for pk in results.popkeys]]]
-    stackedbelowlabels = [
-        [['Transition out: ' + pk for pk in results.popkeys], ['HIV-related death: ' + pk for pk in results.popkeys],
-         ['Other death + emigration: ' + pk for pk in results.popkeys]]]
+            stackedabove = [[numimmiplhiv, numincionpopbypop, numtransitpopbypop]]
+            stackedbelow = [[-swapaxes(numtransitpopbypop, axis1=0, axis2=1), -numdeath, -numotherhivdeath]]
 
-    plotname = 'Change in PLHIV'
+            stackedabovelabels = [
+                [['Immigrant HIV+ in: ' + pk for pk in results.popkeys],
+                 ['Infection from: ' + pk for pk in results.popkeys],
+                 ['Transition in: ' + pk for pk in results.popkeys]]]
+            stackedbelowlabels = [
+                [['Transition out: ' + pk for pk in results.popkeys],
+                 ['HIV-related death: ' + pk for pk in results.popkeys],
+                 ['Other death + emigration: ' + pk for pk in results.popkeys]]]
 
-    plots = plotstackedabovestackedbelow(results, toplot=[('changeinplhivallsources', 'population+stacked')],
-                                         stackedabove=stackedabove, stackedbelow=stackedbelow, showoverall=True,
-                                         stackedabovelabels=stackedabovelabels, stackedbelowlabels=stackedbelowlabels,
-                                         plotnames=[plotname], die=die, fig=fig, **kwargs)
+            plottitle = 'Change in PLHIV'
+            showoverall = True
+        elif plotname == 'plhivallsources':
+            scen = 0  # 0th is best
+            numincionpopbypop = results.other['numincionpopbypop'].pops[scen]
+            numtransitpopbypop = results.other['numtransitpopbypop'].pops[scen]
+            numdeath = results.main['numdeath'].pops[scen]
+            numimmiplhiv = results.other['numimmiplhiv'].pops[scen]
+
+            numplhiv = results.main['numplhiv'].pops[scen]
+            numplhivdata = results.main['numplhiv'].datatot
+            newplhiv = numimmiplhiv + numincionpopbypop.sum(axis=1) + numtransitpopbypop.sum(axis=1)
+            existingplhiv = numplhiv - newplhiv
+
+
+            negexistingindices = logical_and(existingplhiv < 0, existingplhiv > -eps) # Negative existing often happen near the start of the simulation: due to plhiv being the cumulative effect and the others are annualised rates
+            existingplhiv[negexistingindices] = 0
+
+            propdeath = results.other['numotherdeath'].pops[scen] / results.main['popsize'].pops[scen]
+            numotherhivdeath = propdeath * results.main['numplhiv'].pops[scen]
+
+            stackedabove = [[numimmiplhiv, numincionpopbypop, existingplhiv, numtransitpopbypop]]
+            stackedbelow = [[-swapaxes(numtransitpopbypop, axis1=0, axis2=1), -numdeath, -numotherhivdeath]]
+
+            data = results.main['numplhiv'].pops[scen]
+            data = [data for i in range(3)]
+            stackedabovelabels = [
+                [['Immigrant HIV+ in: ' + pk for pk in results.popkeys], ['Infection from: ' + pk for pk in results.popkeys],
+                 ['PLHIV retained: ' + pk for pk in results.popkeys], ['Transition in: ' + pk for pk in results.popkeys] ]]
+            stackedbelowlabels = [
+                [['Transition out: ' + pk for pk in results.popkeys], ['HIV-related death: ' + pk for pk in results.popkeys],
+                 ['Other death + emigration: ' + pk for pk in results.popkeys]]]
+
+            plottitle = 'Number of PLHIV'
+            showoverall = False
+
+        thisplots = plotstackedabovestackedbelow(results, toplot=[(plotname, plottype)],
+                                                 stackedabove=stackedabove, stackedbelow=stackedbelow, showoverall=showoverall, showdata=False,
+                                                 stackedabovelabels=stackedabovelabels, stackedbelowlabels=stackedbelowlabels,
+                                                 plottitles=[plottitle], die=die, fig=fig, **kwargs)
+        plots.update(thisplots)
 
     return plots
 
@@ -1269,19 +1347,19 @@ def plotallocations(project=None, budgets=None, colors=None, factor=1e6, compare
 ############################################################################################################
 ## Plot infections from each population and transitions of PLHIV to and from each population
 ############################################################################################################
-def plotstackedabovestackedbelow(results, toplot=None,stackedabove=None,stackedbelow=None,showoverall=None,
-                stackedabovelabels=None, stackedbelowlabels=None,plotnames=None,
-                uncertainty=True, die=True, showdata=True, verbose=2, figsize=globalfigsize,
-                alpha=0.2, lw=2, dotsize=30, titlesize=globaltitlesize, labelsize=globallabelsize,
-                ticksize=globalticksize,
-                legendsize=globallegendsize, position=None, useSIticks=True, colors=None, reorder=None,
-                plotstartyear=None,
-                plotendyear=None, interactive=None, fig=None, forreport=False, forceintegerxaxis=False, **kwargs):
+def plotstackedabovestackedbelow(results, toplot=None, stackedabove=None, stackedbelow=None, showoverall=None,
+                                 stackedabovelabels=None, stackedbelowlabels=None, plottitles=None, data=None, dataisestimate=True,
+                                 uncertainty=True, die=True, showdata=True, verbose=2, figsize=globalfigsize,
+                                 alpha=0.2, lw=2, dotsize=30, titlesize=globaltitlesize, labelsize=globallabelsize,
+                                 ticksize=globalticksize,
+                                 legendsize=globallegendsize, position=None, useSIticks=True, colors=None, reorder=None,
+                                 plotstartyear=None,
+                                 plotendyear=None, interactive=None, fig=None, forreport=False, forceintegerxaxis=False, **kwargs):
         '''
         Used for plots which have multiple things stacked above and below the x-axis. The overall height of the
         positive stack and the height of the negative stack can be subtracted and plotted through the showoverall.
 
-        At the moment it is designed for 'fullnewtransinfdeaths' with 'population+stacked' plottype.
+        At the moment it is designed for 'changeinplhivallcauses' with 'population+stacked' plottype.
 
         Could theoretically plot a single plot not split by population ie 'stacked' but I haven't tested -
         it may need to be modified / fixed.
@@ -1294,6 +1372,9 @@ def plotstackedabovestackedbelow(results, toplot=None,stackedabove=None,stackedb
 
         :param: toplot: list of tuples of the form (plotname, plottype), the length defines the number of main plots.
         :param: stackedabove: follow the shape given by the implementation in makeplots but should have length=len(toplot)
+
+        population+stacked: data: (k,3,npops,npts)  For the 3: 0 best, 1 low, 2 high
+        stacked:            data: (k,3,npts)        For the 3: 0 best, 1 low, 2 high
         '''
 
         # Figure out what kind of result it is
@@ -1362,11 +1443,12 @@ def plotstackedabovestackedbelow(results, toplot=None,stackedabove=None,stackedb
             # print('stackedabove', stackedabove)
             # Unpack tuple
             datatype, plotformat = plotkey
+            print(plotkey)
 
             ispercentage = False  # Indicate whether result is a percentage
-            isestimate = False  # Indicate whether data is an estimate
+            dataisestimate = False  # Indicate whether data is an estimate
             factor = 100.0 if ispercentage else 1.0  # Swap between number and percent
-            datacolor = estimatecolor if isestimate else realdatacolor  # Light grey for
+            datacolor = estimatecolor if dataisestimate else realdatacolor  # Light grey for
             # istotal = (plotformat == 'total') # only stacked or population+stacked implemented
             isstacked = (plotformat == 'stacked')
             # isperpop = (plotformat == 'population') # only stacked or population+stacked implemented
@@ -1440,7 +1522,7 @@ def plotstackedabovestackedbelow(results, toplot=None,stackedabove=None,stackedb
                                 print('Flipping them all to be negative')
                                 currentstackedbelow[ir] = - row
                             else:
-                                print(f'WARNING with plot {plotkey} in plotstackedabovestackedbelow(): row in stackedbelow aren\'t all <>>=0. This shouldn\'t happen - check your inputs.')
+                                print(f'WARNING with plot {plotkey} in plotstackedabovestackedbelow(): row in stackedbelow aren\'t all <=0. This shouldn\'t happen - check your inputs.')
 
                 ################################################################################################################
                 # Plot model estimates with uncertainty -- different for each of the different possibilities
@@ -1524,8 +1606,23 @@ def plotstackedabovestackedbelow(results, toplot=None,stackedabove=None,stackedb
                 ################################################################################################################
                 # Plot data points with uncertainty
                 ################################################################################################################
+                databest = None
+                if data is not None:
+                    databest = data[mainplotindex][0]
+                    datalow  = data[mainplotindex][1]
+                    datahigh = data[mainplotindex][2]
+                ## Plot data points with uncertainty -- for total or perpop plots, but not if multisim
+                if not ismultisim and databest is not None and showdata:
+                    for y in range(len(results.datayears)):
+                        ydata = factor*array([datalow[i][y], datahigh[i][y]])
+                        allydata.append(ydata)
+                        ax.plot(results.datayears[y]*array([1,1]), ydata, c=datacolor, lw=1)
+                    ax.scatter(results.datayears, factor*databest[i], color=realdatacolor, s=dotsize, lw=0, zorder=datazorder) # Without zorder, renders behind the graph
+                    if dataisestimate: # This is stupid, but since IE can't handle linewidths sensibly, plot a new point smaller than the other one
+                        ydata = factor*databest[i]
+                        allydata.append(ydata)
+                        ax.scatter(results.datayears, ydata, color=estimatecolor, s=dotsize*0.6, lw=0, zorder=datazorder+1)
 
-                #removed - not implemented in this function
 
                 ################################################################################################################
                 # Configure axes -- from http://www.randalolson.com/2014/06/28/how-to-make-beautiful-data-visualizations-in-python-with-matplotlib/
@@ -1540,7 +1637,7 @@ def plotstackedabovestackedbelow(results, toplot=None,stackedabove=None,stackedb
                 legendsettings = {'loc': 'upper left', 'bbox_to_anchor': (1, 1), 'fontsize': legendsize, 'title': '',
                                   'frameon': False, 'borderaxespad': 2}
 
-                plottitle = plotnames[mainplotindex]
+                plottitle = plottitles[mainplotindex]
                 if isperpopandstacked:
                     plotylabel = plottitle
                     ax.set_ylabel(plotylabel)
