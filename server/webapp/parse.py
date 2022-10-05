@@ -547,7 +547,7 @@ def get_parameters_for_outcomes(project, progset_id, parset_id):
         }
         for par_short in target_par_shorts
     ]
-    print(f'!!! parameters:{parameters}')
+
     return {'parameters': parameters}
 
 

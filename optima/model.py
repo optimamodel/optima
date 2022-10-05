@@ -814,8 +814,6 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
         ## Shift people as required
         if t<npts-1:
             people[:,:,t+1] += einsum('ij,ikj->kj',people[:,:,t],thistransit[:,:,:])  # Assuming that there are no illegal tranfers in thistransit
-            # for fromstate,tostates in enumerate(fromto):
-            #     people[tostates,:,t+1] += people[fromstate,:,t]*thistransit[fromstate,tostates,:]
 
 
         ##############################################################################################################
@@ -932,7 +930,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
             if advancedtracking:
                 childpopsblankmotherpopst = ix_(childpops,range(nstates),motherpops,[t])
                 raw_mtcttoandfrom[childpopsblankmotherpopst][...,0] += einsum('ij,ki,i->jki',thispopmtct/dt, state_distribution_plhiv_from, 1/(state_distribution_plhiv_from.sum(axis=0)+eps)) #WARNING: same warning as above, but I'm not 100% sure this is correct
-            raw_births[childpops, t]    += popbirths.sum(axis=0)    /dt
+            raw_births[childpops, t]     += popbirths.sum(axis=0)    /dt
             raw_hivbirths[motherpops, t] += hivposbirths.sum(axis=1) /dt
 
             raw_inci[:,t] += raw_mtct[:,t] # Update infections acquired based on PMTCT calculation

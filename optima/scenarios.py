@@ -392,6 +392,22 @@ def defaultscenarios(project=None, which=None, startyear=2020, endyear=2025, par
 
 
 def checkifparsetoverridesscenario(project, parset, scen, progset=None, progendyear=None, formatfor='console', createmessages=True, die=False, verbose=2):
+    """
+        A function that sets up the inputs to see if the current parset contains any parameters that
+        override the parameters that a (parameter or program) scenario is trying to target.
+        If any conflicts are found, the warning message(s) can
+        be created with createmessages=True, otherwise combinedwarningmsg, warningmessages will both be None
+        Args:
+            project: the project (to get the parset from if it is not provided)
+            parset: the associated parset to the scen
+            scen: a single Scen object (any type is fine)
+            progendyear: year the progset is starting
+            formatfor: 'console' with \n linebreaks, or 'html' with <p> and <br> elements.
+            createmessages: True to get combinedwarningmsg, warningmessages from createwarningforoverride()
+        Returns:
+            warning, parsoverridingparsdict, overridetimes, overridevals, combinedwarningmsg, warningmessages
+            See checkifparsoverridepars and createwarningforoverride for information about the outputs
+        """
     if isinstance(scen, Progscen):
         if progset is None:
             try: progset = project.progsets[scen.progsetname]

@@ -1555,19 +1555,23 @@ def sanitycheck(simpars=None, showdiff=True, threshold=0.1, eps=1e-6):
 def checkifparsoverridepars(origpars, targetpars, progstartyear=None, progendyear=None):
     '''
     Checks if the original parset has parameters that override parameters that
-    are being targeted.
+    are being targeted (by programs or by a parameter scenario).
     Args:
         origpars: odict of Par objects from the parset being used
         targetpars: list of short names of pars that are being changed or targeted (by a progset)
-        progendyear: list that the programs or optimization finishes (ignores origpars at or after this year)
+        progstartyear: time that the programs or optimization starts
+        progendyear: time that the programs or optimization finishes (note orig pars can still affect the program even
+                     if orig pars is only set after the program finishes because makesimpars extends it earlier).
+                     Defaults to 2100
     Returns:
         An odict with keys that are the overriding parameters in origpars,
         and the values are the list of targetpars that each par overrides.
         eg: origpars['fixpropcare'] = 2022, targetpars = ['linktocare','returntocare','numpmtct'], progendyear = 2030
-        returns: warning=True, outdict = {'fixpropdx':['linktocare','returntocare']}, times = {'fixpropdx':2022.}
+        returns: warning=True, outdict = {'fixpropdx':['linktocare','returntocare']},
+                 times = {'fixpropdx':2022.}, vals = {'fixpropdx': 'fixed'}
     '''
     if progendyear is None: progendyear = 2100
-    if progstartyear is None: progstartyear = progendyear # the function should still work with this set.
+    if progstartyear is None: progstartyear = progendyear # the function should still work with the start year = end year
     warning = False
     outdict, times, vals = odict(), odict(), odict()
     targetparsset = set(targetpars)
@@ -1602,24 +1606,30 @@ def checkifparsoverridepars(origpars, targetpars, progstartyear=None, progendyea
     return warning, outdict, times, vals
 
 
-def createwarningforoverride(origpars, warning, parsoverridingparsdict, overridetimes, overridevals, fortype='Progscen',
+def createwarningforoverride(origpars, warning, parsoverridingparsdict, overridetimes, overridevals, fortype='Progscen', formatfor='console'
                              progsetname=None, parsetname=None, progsbytargetpartype=None, progendyear=2100,
-                             formatfor='console', warningmessage=None, warningmessageplural=None,
+                             warningmessage=None, warningmessageplural=None,
                              recommendmessagefixed=None,recommendmessageprop=None):
     """
-    A helper function that checks whether there are any parameters in the parset that would make a program in
-    the progset not have an effect. This can be run for optimizations and scenarios, as long as the progset is
-    provided.
+    A helper function that will take the output from checkifparsoverridepars(), plus the original pars, and create
+    a warning message(s) for any parameters that are getting overriden.
+    Can be used both for an Optimization (fortype='Progscen'), Budget Scenario (fortype='Progscen'), Coverage Scenario
+    (fortype='Progscen'), or Parameter Scenario (fortype='Parscen').
     Args:
-        progset:
-        parset:
-        progendyear:
-        formatfor: 'html' or 'console': html uses <p> ... </p> to format the warning message, console uses \n
-
+        origpars: odict of Par objects from the original parset being used:
+        warning, parsoverridingparsdict, overridetimes, overridevals: the outputs from checkifparsoverridepars
+        fortype: type of scenario this will be used for see above. (changes the default messages)
+        formatfor: 'html' or 'console': html uses <p> ... </p><br><p>... to format the warning message, console uses \n
+        progsetname: name of the progset that wants to target parameters that could be getting overridden.
+        parsetname: name of the parset that may be overriding the progset.
+        progsbytargetpartype: the output of Programset.progs_by_targetpartype(), make sure to call progset.gettargetpars()
+                              and progset.gettargetpartypes(), before progset.progs_by_targetpartype()
+        progendyear: the year the scenario / optimization ends.
     Returns:
-        warning:
-        combinedwarningmsg:
-        warningmessages:
+        warning: whether or not there is a warning (same as the input warning)
+        combinedwarningmsg: a string message of all the combined messages
+        warningmessages: a warning message for each parameter that is overriden, made up of warningmessage + recommendmessage.
+                         See the default formats below.
 
     """
     if not warning: return warning, '', []

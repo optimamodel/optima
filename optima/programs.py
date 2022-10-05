@@ -818,6 +818,21 @@ def costfuncobjectivecalc(parmeans=None, pardict=None, progset=None, parset=None
 
 
 def checkifparsetoverridesprogset(progset=None, parset=None, progendyear=None, progstartyear=None, formatfor='console', createmessages=True):
+    """
+    A function that sets up the inputs to call checkifparsoverridepars() to see if the parset contains any parameters that
+    override the parameters that a progset is trying to target. If any conflicts are found, the warning message(s) can
+    be created with createmessages=True, otherwise combinedwarningmsg, warningmessages will both be None
+    Args:
+        progset: a Programset object
+        parset: a Parameterset object that may override the progset's target parameters
+        progendyear: year the progset is starting
+        progstartyear: year the progset is ending
+        formatfor: 'console' with \n linebreaks, or 'html' with <p> and <br> elements.
+        createmessages: True to get combinedwarningmsg, warningmessages from createwarningforoverride()
+    Returns:
+        warning, parsoverridingparsdict, overridetimes, overridevals, combinedwarningmsg, warningmessages
+        See checkifparsoverridepars and createwarningforoverride for information about the outputs
+    """
     if progset is None or parset is None or parset.pars is None:
         raise OptimaException('checkifparsetoverridesprogset() must be provided with both a progset and a parset, but at least one of them was none.')
     if progendyear is None: progendyear = 2100
