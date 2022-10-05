@@ -308,9 +308,10 @@ def constrainbudget(origbudget=None, budgetvec=None, totalbudget=None, budgetlim
         if abslimits['min'][pkey] is None: abslimits['min'][pkey] = 0
         if abslimits['max'][pkey] is None: abslimits['max'][pkey] = inf
     for oi,okey in enumerate(optimkeys): # Don't worry about non-optimizable programs at this point -- oi = 0,1,2,3; oind = e.g. 0, 1, 4, 8
-        # Fully-relative limits (i.e. scale according to total spend).
-        if isfinite(abslimits['min'][okey]): abslimits['min'][okey] *= rescaledbudget[okey]
-        if isfinite(abslimits['max'][okey]): abslimits['max'][okey] *= rescaledbudget[okey]
+        # Now limits are relative to original budget (which is often scaled but we know how much and take that into account with constraints).
+        # Was previously fully-relative limits (i.e. scale according to total spend - which changes as the minmoney runs).
+        if isfinite(abslimits['min'][okey]): abslimits['min'][okey] *= origbudget[okey] # rescaledbudget[okey]
+        if isfinite(abslimits['max'][okey]): abslimits['max'][okey] *= origbudget[okey] # rescaledbudget[okey]
         
     # Apply constraints on optimizable parameters
     noptimprogs = len(optimkeys) # Number of optimizable programs
