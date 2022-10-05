@@ -813,7 +813,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
 
         ## Shift people as required
         if t<npts-1:
-            people[:,:,t+1] += einsum('ij,ikj->kj',people[:,:,t],thistransit[:,:,:])
+            people[:,:,t+1] += einsum('ij,ikj->kj',people[:,:,t],thistransit[:,:,:])  # Assuming that there are no illegal tranfers in thistransit
             # for fromstate,tostates in enumerate(fromto):
             #     people[tostates,:,t+1] += people[fromstate,:,t]*thistransit[fromstate,tostates,:]
 
@@ -1046,11 +1046,11 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
             for name,proplist in propstruct.items():
                 prop, lowerstate, tostate, numer, denom, raw_new, fixyear = proplist
 
-                if not name == 'proppmtct':
-                    calcprop = people[numer,:,t].sum()/(eps+people[denom,:,t].sum()) # This is the value we fix it at
-                else:
-                    calcprop = thisproppmtct  # proppmtct is calculated earlier in the timestep so we don't need to recalc
                 if fixyear==t: # Fixing the proportion from this timepoint
+                    if not name == 'proppmtct':
+                        calcprop = people[numer,:,t].sum()/(eps+people[denom,:,t].sum()) # This is the value we fix it at
+                    else:
+                        calcprop = thisproppmtct  # proppmtct is calculated earlier in the timestep so we don't need to recalc
                     naninds    = findinds(isnan(prop)) # Find the indices that are nan -- to be replaced by current values
                     infinds    = findinds(isinf(prop)) # Find indices that are infinite -- to be scaled up/down to a target value
                     finiteinds = findinds(isfinite(prop)) # Find indices that are defined
