@@ -30,3 +30,4 @@ tests/geo/*.xlsx
 dump.rdb
 config.py
 client/package-lock.json
+.venv/
