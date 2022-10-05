@@ -849,7 +849,8 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
         calcproppmtct = thisnumpmtct / (eps*dt+numdxhivpospregwomen.sum()) # eps*dt to make sure that backwards compatible
 
         putinstantlyontopmtct = True
-        diagnosemothersforpmtct = False
+        diagnosemothersforpmtct = True
+        printinformation = False
         if calcproppmtct > 1 and diagnosemothersforpmtct: # Need more on PMTCT than we have available diagnosed
             calcproppmtct = 1
             numtobedx = thisnumpmtct - calcproppmtct * numdxhivpospregwomen.sum()
@@ -859,36 +860,35 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
             numwillbedx = proptobedx*numundxhivpospregwomen.sum()
             initrawdiag = raw_diag[:, t].sum()
 
-            numdxforpmtct = 0
+            numdxforpmtct = 0 #total
+            thispoptobedx = einsum('ij,j->ij',people[undx, :, t],totalbirthrate) * relhivbirth * proptobedx # ^ Should match above without .sum() and with the totalbirthrate
+            if t<npts-1:
+                    people[undx, :, t+1] -= thispoptobedx
+                    people[dx,   :, t+1] += thispoptobedx
+            thispoptobedx = thispoptobedx.sum(axis=0) #from here on, only split by population, not state
+            raw_diag[:,t]       += thispoptobedx /dt # annualise
+            raw_dxforpmtct[:,t] += thispoptobedx /dt # annualise
+            numdxforpmtct       += thispoptobedx.sum(axis=0)  # in this timestep aka not annualised
+            if putinstantlyontopmtct:
+                numpotmothers[:, _undx]   -= thispoptobedx / (totalbirthrate + eps*eps) # eps not small enough
+                numpotmothers[:, _alldx]  += thispoptobedx / (totalbirthrate + eps*eps)
+                numundxhivpospregwomen[:] -= thispoptobedx
+                numdxhivpospregwomen[:]   += thispoptobedx
+                thisnumpmtct              += thispoptobedx.sum(axis=0)
+            
+            if t < npts-1:
+                if (people[undx,:,t+1] < 0).any():
+                    print(f"WARNING: Tried to diagnose {thispoptobedx} pregnant HIV+ women from population {popkeys[p1]} but this made the people negative:{people[undx,p1,t+1]}")
 
-            for p1 in motherpops:
-                thispoptobedx = proptobedx * people[undx, p1, t] * relhivbirth * totalbirthrate[p1] # ^ Should match above without .sum() and with the totalbirthrate
-                if t<npts-1:
-                    people[undx, p1, t+1] -= thispoptobedx
-                    people[dx,   p1, t+1] += thispoptobedx
-                raw_diag[p1,t] += thispoptobedx.sum() /dt # annualise
-
-                raw_dxforpmtct[p1,t] += thispoptobedx.sum() /dt # annualise
-                numdxforpmtct     += thispoptobedx.sum()  # in this timestep aka not annualised
-                if putinstantlyontopmtct:
-                    numpotmothers[p1, _undx]   -= thispoptobedx.sum() / totalbirthrate[p1] # Uncomment these lines to put people onto PMTCT instantly, rather than next time step
-                    numpotmothers[p1, _alldx]  += thispoptobedx.sum() / totalbirthrate[p1]
-                    numundxhivpospregwomen[p1] -= thispoptobedx.sum()
-                    numdxhivpospregwomen[p1]   += thispoptobedx.sum()
-                    thisnumpmtct   += thispoptobedx.sum()
-
-                if t < npts - 1:
-                    if (people[undx,p1,t+1] < 0).any():
-                        print(f"WARNING: Tried to diagnose {thispoptobedx} pregnant HIV+ women from population {popkeys[p1]} but this made the people negative:{people[undx,p1,t+1]}")
-
-            totalbirthrate = array(totalbirthrate)
-            avbirthrate = sum(totalbirthrate[totalbirthrate!=0]) / sum(totalbirthrate!=0)
-            propnexttime = avbirthrate * relhivbirth * timestepsonpmtct
-            if proptobedx > 0.01: print(f'INFO: {tvec[t]}: Diagnosing {numdxforpmtct:.2f}={proptobedx * 100:.2f}% (wanted {numtobedx:.2f}) of pregnant undiagnosed HIV+ women. Only approx {propnexttime*100:.2f}% of these will be pregnant next time step')
-            propnewdiag = raw_diag[:,t].sum()/(initrawdiag+eps)-1
-            if propnewdiag > 0.01: print(f'INFO: {tvec[t]}: Increasing number diagnosed this year from {initrawdiag:.3f} to {raw_diag[:,t].sum():.3f} (up {propnewdiag*100:.2f}%)')
-            if abs(numwillbedx - numdxforpmtct) > eps:
-                print(f"WARNING: Tried to diagnose {numwillbedx} out of {numundxhivpospregwomen.sum()} undiagnosed pregnant women but instead diagnosed {numdxforpmtct} at time {tvec[t]}")
+            if printinformation:
+                totalbirthrate = array(totalbirthrate)
+                avbirthrate = sum(totalbirthrate[totalbirthrate!=0]) / sum(totalbirthrate!=0)
+                propnexttime = avbirthrate * relhivbirth * timestepsonpmtct
+                if proptobedx > 0.01: print(f'INFO: {tvec[t]}: Diagnosing {numdxforpmtct:.2f}={proptobedx * 100:.2f}% (wanted {numtobedx:.2f}) of pregnant undiagnosed HIV+ women. Only approx {propnexttime*100:.2f}% of these will be pregnant next time step')
+                propnewdiag = raw_diag[:,t].sum()/(initrawdiag+eps)-1
+                if propnewdiag > 0.01: print(f'INFO: {tvec[t]}: Increasing number diagnosed this year from {initrawdiag:.3f} to {raw_diag[:,t].sum():.3f} (up {propnewdiag*100:.2f}%)')
+                if abs(numwillbedx - numdxforpmtct) > eps:
+                    print(f"WARNING: Tried to diagnose {numwillbedx} out of {numundxhivpospregwomen.sum()} undiagnosed pregnant women but instead diagnosed {numdxforpmtct} at time {tvec[t]}")
 
             # assert (abs(numhivpospregwomen - numpotmothers[:,_allplhiv]*totalbirthrate) < eps*eps).all(), f'numhivpospregwomen:{numhivpospregwomen.sum()}, numpotmothers[:,_allplhiv]*totalbirthrate:{(numpotmothers[:,_allplhiv]*totalbirthrate).sum()}'
             # assert (abs(numdxhivpospregwomen - numpotmothers[:, _alldx] * totalbirthrate) < eps*eps).all(), f'numdxhivpospregwomen:{numdxhivpospregwomen.sum()}, numpotmothers[:,_alldx]*totalbirthrate:{(numpotmothers[:,_alldx]*totalbirthrate).sum()}'
