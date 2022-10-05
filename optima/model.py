@@ -929,7 +929,8 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
             raw_mtctfrom[:, motherpops, t] += einsum('j,ij,j->ij', thispopmtct.sum(axis=1)/dt, state_distribution_plhiv_from, 1/(state_distribution_plhiv_from.sum(axis=0)+eps) ) #WARNING: not accurate based on differential diagnosis by state potentially, but the best that's feasible
             if advancedtracking:
                 childpopsblankmotherpopst = ix_(childpops,range(nstates),motherpops,[t])
-                raw_mtcttoandfrom[childpopsblankmotherpopst][...,0] += einsum('ij,ki,i->jki',thispopmtct/dt, state_distribution_plhiv_from, 1/(state_distribution_plhiv_from.sum(axis=0)+eps)) #WARNING: same warning as above, but I'm not 100% sure this is correct
+                raw_mtcttoandfrom[childpopsblankmotherpopst] += \
+                    expand_dims(einsum('ij,ki,i->jki',thispopmtct/dt, state_distribution_plhiv_from, 1/(state_distribution_plhiv_from.sum(axis=0)+eps)), axis=-1) #WARNING: same warning as above, but I'm not 100% sure this is correct
             raw_births[childpops, t]     += popbirths.sum(axis=0)    /dt
             raw_hivbirths[motherpops, t] += hivposbirths.sum(axis=1) /dt
 
