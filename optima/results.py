@@ -105,7 +105,7 @@ class Resultset(object):
         self.main['propincare']         = Result('Diagnosed PLHIV retained in care (%)',     ispercentage=True, defaultplot='total')
         self.main['proptreat']          = Result('Diagnosed PLHIV on treatment (%)',         ispercentage=True, defaultplot='total')
         self.main['propsuppressed']     = Result('Treated PLHIV with viral suppression (%)', ispercentage=True, defaultplot='total')
-        self.main['proppmtct']          = Result('HIV+ women receiving PMTCT (%)',           ispercentage=True, defaultplot='total')
+        self.main['proppmtct']          = Result('HIV+ pregnant women receiving PMTCT (%)',           ispercentage=True, defaultplot='total')
         
         self.main['prev']               = Result('HIV prevalence (%)',       ispercentage=True, defaultplot='population')
         self.main['force']              = Result('HIV incidence (per 100 p.y.)', ispercentage=True, defaultplot='population')
