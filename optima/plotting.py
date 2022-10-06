@@ -1434,11 +1434,8 @@ def plotstackedabovestackedbelow(results, toplot=None, stackedabove=None, stacke
         ## Loop over each plot
         ################################################################################################################
         for mainplotindex, plotkey in enumerate(toplot): # probably only works if toplot contains one item
-            # print('mainplotindex',mainplotindex)
-            # print('stackedabove', stackedabove)
             # Unpack tuple
             datatype, plotformat = plotkey
-            print(plotkey)
 
             ispercentage = False  # Indicate whether result is a percentage
             dataisestimate = False  # Indicate whether data is an estimate
