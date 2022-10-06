@@ -94,7 +94,8 @@ def setmigrations(which='migrations'):
         ('2.10.13',('2.10.14','2022-09-06',addsexinjmtctsettings,'Add sex, inj, and mtct indices to settings')),
         ('2.10.14',('2.10.15','2022-09-13',fixmoremanfitsettings,'Fix more manual fit settings (which impact on FE display)')),
         ('2.10.15',('2.10.16','2022-09-15',clearuntrackedresults,'Clear results if they did not have tracking')),
-        ('2.10.16',('2.11.0', '2022-09-17', None,             'Version update for updated GUI launch')),
+        ('2.10.16',('2.11.0', '2022-09-17', None,            'Version update for updated GUI launch')),
+        ('2.11.0', ('2.11.1', '2022-10-06', None,            'Major bug fixes, FE updates, fixproppmtct now fixes proportion of diagnosed women on PMTCT and propcare brings people from dx and lost')),
         ])
     
     
