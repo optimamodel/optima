@@ -1025,17 +1025,24 @@ def update_or_create_result_record_by_id(
 
 
 def delete_result_by_parset_id(
-        project_id, parset_id, calculation_type=None, db_session=None):
+        project_id, parset_id=None, calculation_type=None, db_session=None):
+    ''' Deletes the results filtering by parset_id, calculation_type, or both.
+        At least one of parset_id or calculation_type should not be None.     '''
     if db_session is None:
         db_session = db.session
     if calculation_type is None:
         records = db_session.query(ResultsDb).filter_by(
             project_id=project_id, parset_id=parset_id)
+    elif parset_id is None:
+        records = db_session.query(ResultsDb).filter_by(
+            project_id=project_id, calculation_type=calculation_type)
     else:
         records = db_session.query(ResultsDb).filter_by(
             project_id=project_id, parset_id=parset_id,
             calculation_type=calculation_type)
     for record in records:
+        print(f'>> delete_result_by_parset_id deleting results record '
+              f'project_id: {record.project_id}, parset_id: {record.parset_id}, calculation_type: {record.calculation_type}')
         record.cleanup()
     records.delete()
     db_session.commit()
@@ -1505,7 +1512,15 @@ def load_reconcile_summary(project_id, progset_id, parset_id, t):
 
     budgets = progset.getdefaultbudget()
     if progset.readytooptimize():
-        pars = progset.compareoutcomes(parset=parset, year=t)
+        errmsg = None
+        try:
+            pars = progset.compareoutcomes(parset=parset, year=t)
+        except KeyError as e:
+            errmsg = 'One of the partnerships has changed, please refresh the programs by opening each one in the Programs tab and clicking Save.'
+            errmsg = str(e) + '\n\n' +  errmsg + '\n'
+        finally:
+            if errmsg is not None:  # Raise the error here so that the error message isn't too long
+                raise op.OptimaException(errmsg)
     else:
         msg = progset.readytooptimize(detail=True)
         pars = [[msg, '', 0, 0]]
@@ -1542,18 +1557,19 @@ def make_scenarios_graphs(project_id, which=None, is_run=False, zoom=None, start
             which = result.which
     if is_run:
         project = load_project(project_id)
+        if result is not None:
+            delete_result_by_parset_id(project_id, parset_id=None, calculation_type='scenarios')
+            save_project(project)
         if len(project.scens) == 0:
             print(">> make_scenarios_graphs no scenarios")
             return {}
-        print(">> make_scenarios_graphs project '%s' from %s to %s" % (
-            project_id, startYear, endYear))
+        print(">> make_scenarios_graphs project '%s' from %s to %s" % (project_id, startYear, endYear))
         # start=None, end=None -> does nothing
         project.runscenarios(end=endYear) # Only change end year from default
         result = project.results[-1]
         if which:
             result.which = which
-        record = update_or_create_result_record_by_id(
-            result, project.uid, None, 'scenarios')
+        record = update_or_create_result_record_by_id(result, project.uid, None, 'scenarios')
         db.session.add(record)
         db.session.commit()
     return make_mpld3_graph_dict(result=result, which=which, zoom=zoom, startYear=startYear, endYear=endYear)

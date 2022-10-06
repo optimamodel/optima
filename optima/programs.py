@@ -6,7 +6,7 @@ set of programs, respectively.
 Version: 2019jan09
 """
 
-from optima import OptimaException, Link, printv, uuid, today, sigfig, getdate, dcp, smoothinterp, findinds, odict, Settings, sanitize, defaultrepr, isnumber, promotetoarray, vec2obj, asd, convertlimits
+from optima import OptimaException, Link, printv, uuid, today, sigfig, getdate, dcp, smoothinterp, findinds, odict, Settings, sanitize, defaultrepr, isnumber, promotetoarray, vec2obj, asd, convertlimits, Timepar, Yearpar, checkifparsoverridepars, createwarningforoverride
 from numpy import ones, prod, array, zeros, exp, log, append, nan, isnan, maximum, minimum, sort, concatenate as cat, transpose, mean, argsort
 from random import uniform
 import six
@@ -637,7 +637,7 @@ class Programset(object):
             last_y = thispar.interp(tvec=last_t, dt=settings.dt, asarray=False, usemeta=False) # Find what the model would get for this value
             
             for pop in outcomes[outcome].keys(): # WARNING, 'pop' should be renamed 'key' or something for e.g. partnerships
-                
+
                 # Validate outcome
                 thisoutcome = outcomes[outcome][pop] # Shorten
                 lower = float(thispar.limits[0]) # Lower limit, cast to float just to be sure (is probably int)
@@ -813,6 +813,43 @@ def costfuncobjectivecalc(parmeans=None, pardict=None, progset=None, parset=None
         mismatch += thismismatch
         printv('%45s | %30s | par: %s | budget: %s | mismatch: %s' % ((budgetparpair[0],budgetparpair[1])+sigfig([parval,budgetval,thismismatch],4)), 3, verbose)
     return mismatch
+
+
+
+
+def checkifparsetoverridesprogset(progset=None, parset=None, progendyear=None, progstartyear=None, formatfor='console', createmessages=True):
+    """
+    A function that sets up the inputs to call checkifparsoverridepars() to see if the parset contains any parameters that
+    override the parameters that a progset is trying to target. If any conflicts are found, the warning message(s) can
+    be created with createmessages=True, otherwise combinedwarningmsg, warningmessages will both be None
+    Args:
+        progset: a Programset object
+        parset: a Parameterset object that may override the progset's target parameters
+        progendyear: year the progset is starting
+        progstartyear: year the progset is ending
+        formatfor: 'console' with \n linebreaks, or 'html' with <p> and <br> elements.
+        createmessages: True to get combinedwarningmsg, warningmessages from createwarningforoverride()
+    Returns:
+        warning, parsoverridingparsdict, overridetimes, overridevals, combinedwarningmsg, warningmessages
+        See checkifparsoverridepars and createwarningforoverride for information about the outputs
+    """
+    if progset is None or parset is None or parset.pars is None:
+        raise OptimaException('checkifparsetoverridesprogset() must be provided with both a progset and a parset, but at least one of them was none.')
+    if progendyear is None: progendyear = 2100
+    progset.gettargetpars()
+    progset.gettargetpartypes()
+    progtargetpartypes = progset.targetpartypes
+    origpars = parset.pars
+    # Returns
+    warning, parsoverridingparsdict, overridetimes, overridevals = checkifparsoverridepars(origpars=origpars, targetpars=progtargetpartypes, progstartyear=progstartyear, progendyear=progendyear)
+
+    combinedwarningmsg, warningmessages = None, None
+    if createmessages:
+        progsbytargetpartype = progset.progs_by_targetpartype()
+        warning, combinedwarningmsg, warningmessages = createwarningforoverride(origpars, warning, parsoverridingparsdict, overridetimes, overridevals, fortype='Progscen',
+                                 progsetname=progset.name, parsetname=parset.name, progsbytargetpartype=progsbytargetpartype, progendyear=progendyear,
+                                 formatfor=formatfor)
+    return warning, parsoverridingparsdict, overridetimes, overridevals, combinedwarningmsg, warningmessages
 
 
 

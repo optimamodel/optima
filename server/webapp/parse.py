@@ -457,7 +457,7 @@ def get_parameters_for_scenarios(project):
         pars = []
         result[parset_id] = pars
         for par in parset.pars.values():
-            if isinstance(par, op.Timepar): # Targetable parameters are timepars
+            if isinstance(par, op.Timepar) and par.short not in get_disallowed_parameters_for_program(): # Targetable parameters are timepars
                 for pop in par.keys():
                     pars.append({
                         'name': par.name,
@@ -489,9 +489,10 @@ def get_startval_for_parameter(project, parset_id, par_short, pop, year):
     return None
 
 def get_parameters_for_edit_program(project):
+    disallowed_parameters = get_disallowed_parameters_for_program()
     parameters = []
     added_par_keys = set()
-    default_par_keys = [par['short'] for par in op.loadpartable()]
+    default_par_keys = [par['short'] for par in op.loadpartable() if par['short'] not in disallowed_parameters]
     for parset in project.parsets.values():
         pars = parset.pars
         for par_key in default_par_keys:
@@ -507,6 +508,10 @@ def get_parameters_for_edit_program(project):
                     added_par_keys.add(par_key)
     return parameters
 
+def get_disallowed_parameters_for_program():
+    ''' Returns a list of short names of parameters that programs and parameter scenarios cannot affect
+        WARNING used by the FE and hardcoded here.'''
+    return ['agerate']
 
 def get_parameters_for_outcomes(project, progset_id, parset_id):
     progset = get_progset_from_project(project, progset_id)
@@ -1224,17 +1229,22 @@ def get_scenario_summary(project, scenario):
 
     try:
         parset_id = project.parsets[scenario.parsetname].uid
+        parset    = project.parsets[scenario.parsetname]
     except:
         print('>> Warning, scenario parset "%s" not in project parsets: %s; reverting to default "%s"' % (scenario.parsetname, project.parsets.keys(), project.parset().name))
         parset_id = project.parset().uid
-    if hasattr(scenario, "progsetname"):
+        parset    = project.parset()
+    if hasattr(scenario, "progsetname") and not isinstance(scenario, op.Parscen):
         try:
-            print('>> Warning, scenario progset "%s" not in project progset: %s; reverting to default "%s"' % (scenario.progsetname, project.progsets.keys(), project.progset().name))
             progset_id = project.progsets[scenario.progsetname].uid
+            progset    = project.progsets[scenario.progsetname]
         except:
+            print('>> Warning, scenario progset "%s" not in project progset: %s; reverting to default "%s"' % (scenario.progsetname, project.progsets.keys(), project.progset().name))
             progset_id = project.progset().uid
+            progset    = project.progset()
     else:
         progset_id = None
+        progset = None
 
     if hasattr(scenario, "uid"):
         scenario_id = scenario.uid
@@ -1242,6 +1252,9 @@ def get_scenario_summary(project, scenario):
         scenario_id = scenario.uuid
     else:
         scenario_id = op.uuid()
+
+    warning, _,_,_, combinedwarningmsg, warningmessages = \
+        op.checkifparsetoverridesscenario(project=project, parset=parset,progset=progset, scen=scenario, formatfor='html', createmessages=True)
 
     result = {
         'id': scenario_id,
@@ -1251,6 +1264,8 @@ def get_scenario_summary(project, scenario):
         'name': scenario.name,
         'years': scenario.t,
         'parset_id': parset_id,
+        'warning': warning,
+        'warningmessage': combinedwarningmsg,
     }
     result.update(variant_data)
     return result
@@ -1441,18 +1456,27 @@ def get_optimization_summaries(project):
 
         try:
             parset_id = project.parsets[optim.parsetname].uid # Try to extract the
+            parset    = project.parsets[optim.parsetname]
         except:
             print('>> Warning, optimization parset "%s" not in project parsets: %s; reverting to default "%s"' % (optim.parsetname, project.parsets.keys(), project.parset().name))
             parset_id = project.parset().uid # Just get the default
+            parset    = project.parset()
 
         try:
             progset_id = project.progsets[optim.progsetname].uid # Try to extract the
+            progset    = project.progsets[optim.progsetname]
         except:
             print('>> Warning, optimization progset "%s" not in project progsets: %s; reverting to default "%s"' % (optim.progsetname, project.progsets.keys(), project.progset().name))
             progset_id = project.progset().uid # Just get the default
+            progset    = project.progset()
 
         optim_summary["parset_id"]   = parset_id
         optim_summary["progset_id"] = progset_id
+        warning, _, _, _, combinedwarningmsg, warningmessages = \
+            op.checkifparsetoverridesprogset(progset=progset, parset=parset, progendyear=optim.objectives['end'],
+                                          progstartyear=optim.objectives['start'], formatfor='html', createmessages=True)
+        optim_summary["warning"] = warning
+        optim_summary["warningmessage"] = combinedwarningmsg
 
         optim_summaries.append(optim_summary)
 

@@ -97,26 +97,45 @@ define(['angular' ], function (angular) {
       'download': { iconName: 'fa-download', helpText: 'Download'},
       'undo': { iconName: 'fa-undo', helpText: 'Undo'},
       'redo': { iconName: 'fa-repeat', helpText: 'Redo'},
-      'refresh': { iconName: 'fa-refresh', helpText: 'Refresh'}
+      'refresh': { iconName: 'fa-refresh', helpText: 'Refresh'},
+      'error': { iconName: 'fa-exclamation-triangle', helpText: 'Warning'}
     };
 
     return {
       restrict: 'E',
       scope: {
         click: '&',
-        action: '@'
+        action: '@',
+        errormsg: '@'
       },
       link: function(scope, element){
+        var text;
+        var tpclass;
+        var tpy;
+        var colorattr;
+        if (scope.action == 'error') {
+            text = '{{errormsg}}';
+            tpclass = 'tooltip errortooltip';
+            tpy = 175;
+            colorattr = 'color: #cc0000;';
+        }
+        else {
+            text = iconTypes[scope.action].helpText
+            tpclass = 'tooltip';
+            tpy = -150;
+            colorattr = '';
+        }
         var html =
-          '<i'
-          + ' class="fa ' + iconTypes[scope.action].iconName + '"'
-          + ' tp-text="' + iconTypes[scope.action].helpText + '" '
-          + ' tooltip tp-class="tooltip" '
-          + ' tp-x="-50" tp-y="-150" '
-          + ' tp-anchor-x="0" tp-anchor-y="0"'
-          + ' style="margin-left: 0.5em; font-size: 14px"'
-          + ' ng-click="click()"'
-          + '></i>';
+              '<i'
+              + ' class="fa ' + iconTypes[scope.action].iconName + '"'
+              + ' tp-text="' + text + '" '
+              + ' tooltip tp-class="' + tpclass + '" '
+              + ' tp-x="-50" tp-y="' + tpy + '" '
+              + ' tp-anchor-x="0" tp-anchor-y="0"'
+              + ' style="margin-left: 0.5em; font-size: 14px; '+colorattr+' "'
+              + ' ng-click="click()"'
+              + '></i>';
+
         var el = $compile(html)(scope);
         element.append(el);
       }

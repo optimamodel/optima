@@ -6,7 +6,7 @@ parameters, the Parameterset class.
 Version: 2.1 (2017apr04)
 """
 
-from numpy import array, nan, isnan, isfinite, zeros, ones, argmax, mean, log, polyfit, exp, maximum, minimum, Inf, linspace, median, shape, append
+from numpy import array, nan, isnan, isfinite, zeros, ones, argmax, mean, log, polyfit, exp, maximum, minimum, Inf, linspace, median, shape, append, logical_and
 from numpy.random import uniform, normal, seed
 from optima import OptimaException, Link, odict, dataframe, printv, sanitize, uuid, today, getdate, makefilepath, smoothinterp, dcp, defaultrepr, isnumber, findinds, findnearest, getvaliddata, promotetoarray, promotetolist, inclusiverange # Utilities 
 from optima import Settings, getresults, convertlimits, gettvecdt, loadpartable, loadtranstable # Heftier functions
@@ -15,6 +15,19 @@ import optima as op
 defaultsmoothness = 1.0 # The number of years of smoothing to do by default
 generalkeys = ['male', 'female', 'popkeys', 'injects', 'fromto', 'transmatrix'] # General parameter keys that are just copied
 staticmatrixkeys = ['birthtransit','agetransit','risktransit'] # Static keys that are also copied, but differently :)
+
+# WARNING: the parameters that override one another are hardcoded here.
+# If more parameters are added that override others or if model.py is changed, they should be added here
+overridingpars = odict([('propdx',['hivtest','aidstest']),
+                        ('propcare',['linktocare','aidslinktocare','leavecare','aidsleavecare','returntocare','aidstest']),
+                        ('proptx',['numtx']),
+                        ('propsupp',['treatfail','regainvs','numvlmon']),
+                        ('proppmtct',['numpmtct']),
+                        ('fixpropdx',['hivtest','aidstest']),
+                        ('fixpropcare',['linktocare','aidslinktocare','leavecare','aidsleavecare','returntocare','aidstest']),
+                        ('fixproptx',['numtx']),
+                        ('fixpropsupp',['treatfail','regainvs','numvlmon']),
+                        ('fixproppmtct',['numpmtct']) ])
 
 
 #################################################################################################################################
@@ -1539,14 +1552,133 @@ def sanitycheck(simpars=None, showdiff=True, threshold=0.1, eps=1e-6):
     print(outstr)
     return outstr
 
+def checkifparsoverridepars(origpars, targetpars, progstartyear=None, progendyear=None):
+    '''
+    Checks if the original parset has parameters that override parameters that
+    are being targeted (by programs or by a parameter scenario).
+    Args:
+        origpars: odict of Par objects from the parset being used
+        targetpars: list of short names of pars that are being changed or targeted (by a progset)
+        progstartyear: time that the programs or optimization starts
+        progendyear: time that the programs or optimization finishes (note orig pars can still affect the program even
+                     if orig pars is only set after the program finishes because makesimpars extends it earlier).
+                     Defaults to 2100
+    Returns:
+        An odict with keys that are the overriding parameters in origpars,
+        and the values are the list of targetpars that each par overrides.
+        eg: origpars['fixpropcare'] = 2022, targetpars = ['linktocare','returntocare','numpmtct'], progendyear = 2030
+        returns: warning=True, outdict = {'fixpropdx':['linktocare','returntocare']},
+                 times = {'fixpropdx':2022.}, vals = {'fixpropdx': 'fixed'}
+    '''
+    if progendyear is None: progendyear = 2100
+    if progstartyear is None: progstartyear = progendyear # the function should still work with the start year = end year
+    warning = False
+    outdict, times, vals = odict(), odict(), odict()
+    targetparsset = set(targetpars)
+    for overriding, affectedpars in overridingpars.items():
+        overridingpar = origpars[overriding]  # (overriding)pars, progendyear, (overriden)targetpartypes
+        willoverride = False
+        if isinstance(overridingpar, Timepar):
+            tvals = array(overridingpar.t['tot'])
+            yvals = array(overridingpar.y['tot'])
+            timesset = tvals[~isnan(yvals)]
+            timesnan = tvals[isnan(yvals)]
+            if len(timesset) == 0: continue
+            maxtimesetbefore = max(append(timesset[timesset<progstartyear], -1))
+            mintimesetafter  = min(append(timesset[timesset>=progendyear], Inf))
+            if logical_and(timesset>=progstartyear, timesset<progendyear).any(): # proportion is set during the programs
+                willoverride = True
+            elif maxtimesetbefore>=0 or isfinite(mintimesetafter): # the prop is set either before or after programs
+                if not logical_and(maxtimesetbefore < timesnan, timesnan < mintimesetafter).any(): # need a nan after prop set before, or nan before prop set after
+                    willoverride = True
+        elif isinstance(overridingpar, Yearpar):
+            tvals = overridingpar.t
+            yvals = '"Fixed"' ### WARNING not really a value
+            willoverride = overridingpar.t < progendyear
+
+        if willoverride:  # the proportion is actually set so now we check if the programset targets any of the overriden parameters
+            targetparsaffected = list(filter(lambda par: par in targetparsset, affectedpars))
+            if len(targetparsaffected) > 0:
+                warning = True
+                outdict[overriding] = targetparsaffected
+                times[overriding] = tvals
+                vals[overriding] = yvals
+    return warning, outdict, times, vals
 
 
+def createwarningforoverride(origpars, warning, parsoverridingparsdict, overridetimes, overridevals, fortype='Progscen', formatfor='console',
+                             progsetname=None, parsetname=None, progsbytargetpartype=None, progendyear=2100,
+                             warningmessage=None, warningmessageplural=None,
+                             recommendmessagefixed=None,recommendmessageprop=None):
+    """
+    A helper function that will take the output from checkifparsoverridepars(), plus the original pars, and create
+    a warning message(s) for any parameters that are getting overriden.
+    Can be used both for an Optimization (fortype='Progscen'), Budget Scenario (fortype='Progscen'), Coverage Scenario
+    (fortype='Progscen'), or Parameter Scenario (fortype='Parscen').
+    Args:
+        origpars: odict of Par objects from the original parset being used:
+        warning, parsoverridingparsdict, overridetimes, overridevals: the outputs from checkifparsoverridepars
+        fortype: type of scenario this will be used for see above. (changes the default messages)
+        formatfor: 'html' or 'console': html uses <p> ... </p><br><p>... to format the warning message, console uses \n
+        progsetname: name of the progset that wants to target parameters that could be getting overridden.
+        parsetname: name of the parset that may be overriding the progset.
+        progsbytargetpartype: the output of Programset.progs_by_targetpartype(), make sure to call progset.gettargetpars()
+                              and progset.gettargetpartypes(), before progset.progs_by_targetpartype()
+        progendyear: the year the scenario / optimization ends.
+    Returns:
+        warning: whether or not there is a warning (same as the input warning)
+        combinedwarningmsg: a string message of all the combined messages
+        warningmessages: a warning message for each parameter that is overriden, made up of warningmessage + recommendmessage.
+                         See the default formats below.
 
+    """
+    if not warning: return warning, '', []
 
+    if formatfor == 'html': sep = '</p><p>'
+    else: sep = '\n'
 
+    warningmessages = []
+    if warningmessage is None:
+        if fortype == 'Parscen': warningmessage = 'Warning: This scenario trying to set "{affectedparname}" but the parameter set "{parsetname}" has "{overridingparname}" set to {valstr}'
+        else:                    warningmessage = 'Warning: The program \'{programsnames}\' in program set "{progsetname}" targets the "{affectedparname}" but the parameter set "{parsetname}" has "{overridingparname}" set to {valstr} which is before the program ends in {progendyear} so this program will likely have no affect.'
 
+    if warningmessageplural is None:  warningmessageplural  = 'Warning: The programs {programsnames} in program set "{progsetname}" target the "{affectedparname}" but the parameter set "{parsetname}" has "{overridingparname}" set to {valstr} which is before the programs end in {progendyear} so these programs will likely have no effect.'
+    if recommendmessagefixed is None: recommendmessagefixed = 'It is recommended to make another parameter set that has "{overridingparname}" set to 2100.'
+    if recommendmessageprop is None:  recommendmessageprop  = 'It is recommended to make another parameter set that doesn\'t have "{overridingparname}" set.'
 
+    for overriding, affectedpars in parsoverridingparsdict.items():
+        overridingpar = origpars[overriding]
+        if isinstance(overridingpar, Yearpar):
+            valstr = f"{overridetimes[overriding]}"
+            recommendmessage = recommendmessagefixed
+        elif isinstance(overridingpar, Timepar):
+            tvals = overridingpar.t['tot']
+            yvals = array(overridingpar.y['tot'])
+            valstr = f"{yvals} in {tvals}"
+            recommendmessage = recommendmessageprop
+        for affected in affectedpars:
+            if fortype == 'Parscen':
+                warningmessages.append(warningmessage)
+                progsaffectednames = ['Not a program'] # Kludgy, so that later doesn't produce an error, but this won't be used anyway
+            else:
+                progsaffectednames = [prog.short for prog in progsbytargetpartype[affected]]
+                warningmessages.append(warningmessage if len(progsaffectednames) == 1 else warningmessageplural)
+            warningmessages[-1] = warningmessages[-1] + sep + recommendmessage
+            warningmessages[-1] = warningmessages[-1].format(programsnames=progsaffectednames if len(progsaffectednames)>1 else progsaffectednames[0],
+                                                       progsetname=progsetname,
+                                                       affectedparname=origpars[affected].name,
+                                                       parsetname=parsetname,
+                                                       overridingparname=overridingpar.name,
+                                                       valstr=valstr,
+                                                       progendyear=progendyear)
 
+    if formatfor == 'html':
+        warningmessages = ['<p>' + msg.replace('"','&quot;') + '</p>' for msg in warningmessages]
+        combinedwarningmsg = '<br>'.join(warningmessages)  # Note that this defaults to '' if warningmessages is empty
+    else:
+        combinedwarningmsg = (sep+sep).join(warningmessages)  # Note that this defaults to '' if warningmessages is empty
+
+    return warning, combinedwarningmsg, warningmessages
 
 
 

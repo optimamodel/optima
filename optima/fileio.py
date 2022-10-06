@@ -140,9 +140,10 @@ def loadpartable(filename=None, folder=None):
         rawpars.append({})
         for colnum in range(sheet.ncols):
             attr = sheet.cell_value(0,colnum)
-            rawpars[rownum][attr] = sheet.cell_value(rownum+1,colnum) if sheet.cell_value(rownum+1,colnum)!='None' else None
+            cellval = sheet.cell_value(rownum+1,colnum)
+            rawpars[rownum][attr] = cellval if cellval!='None' else None
             if sheet.cell_value(0,colnum) in ['limits']:
-                rawpars[rownum][attr] = eval(sheet.cell_value(rownum+1,colnum)) # Turn into actual values
+                rawpars[rownum][attr] = eval(cellval) # Turn into actual values
     return rawpars
 
 

@@ -1666,7 +1666,7 @@ class odict(OrderedDict):
         except:
             output = items # If that fails, just give up and return the list
         return output
-        
+
 
 
     def __getitem__(self, key):
@@ -1676,9 +1676,12 @@ class odict(OrderedDict):
                 output = OrderedDict.__getitem__(self, key)
                 return output
             except Exception as E: # WARNING, should be KeyError, but this can't print newlines!!!
+                class KeyErrorMessage(str): # This str version makes KeyError able to print new lines
+                    def __repr__(self): return str(self)
+
                 if len(list(self.keys())): errormsg = '%s\nodict key "%s" not found; available keys are:\n%s' % (repr(E), flexstr(key), '\n'.join([flexstr(k) for k in self.keys()]))
                 else:                errormsg = 'Key "%s" not found since odict is empty'% key
-                raise Exception(errormsg)
+                raise KeyError(KeyErrorMessage(errormsg))
         elif isinstance(key, Number): # Convert automatically from float...dangerous?
             thiskey = list(self.keys())[int(key)]
             return OrderedDict.__getitem__(self,thiskey)
