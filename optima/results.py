@@ -116,8 +116,9 @@ class Resultset(object):
         self.main['popsize']            = Result('Population size')
         self.main['numdaly']            = Result('HIV-related DALYs')
 
-        self.main['numdiagpmtct']       = Result('Number of diagnoses from ANC', defaultplot='stacked')
-        self.main['propdiagpmtct']      = Result('Proportion of diagnoses from ANC (%)', ispercentage=True, defaultplot='total')
+        # numdiagpmtct and propdiagpmtct will only be non-zero for Optima version 2.12.0 and up
+        self.other['numdiagpmtct']       = Result('Number of diagnoses from ANC', defaultplot='stacked')
+        self.other['propdiagpmtct']      = Result('Proportion of diagnoses from ANC (%)', ispercentage=True, defaultplot='total')
 
         self.other['numyll']            = Result('HIV-related YLL')
         self.other['numyld']            = Result('HIV-related YLD')
@@ -441,11 +442,11 @@ class Resultset(object):
             self.main['popsize'].datatot  = processtotalpopsizedata(self, data['popsize'])
             self.main['popsize'].datapops = processdata(data['popsize'], uncertainty=True, bypop=True)
 
-        self.main['numdiagpmtct'].pops = process(alldiagpmtct[:, :, indices])
-        self.main['numdiagpmtct'].tot  = process(alldiagpmtct[:, :, indices].sum(axis=1))  # Axis 1 is populations
+        self.other['numdiagpmtct'].pops = process(alldiagpmtct[:, :, indices])
+        self.other['numdiagpmtct'].tot  = process(alldiagpmtct[:, :, indices].sum(axis=1))  # Axis 1 is populations
 
-        self.main['propdiagpmtct'].pops = process(alldiagpmtct[:, :, indices]/maximum(alldiag[:, :, indices],eps))
-        self.main['propdiagpmtct'].tot  = process(alldiagpmtct[:, :, indices].sum(axis=1)/maximum(alldiag[:, :, indices].sum(axis=1),eps))  # Axis 1 is populations
+        self.other['propdiagpmtct'].pops = process(alldiagpmtct[:, :, indices]/maximum(alldiag[:, :, indices],eps))
+        self.other['propdiagpmtct'].tot  = process(alldiagpmtct[:, :, indices].sum(axis=1)/maximum(alldiag[:, :, indices].sum(axis=1),eps))  # Axis 1 is populations
 
         # Calculate DALYs
         
