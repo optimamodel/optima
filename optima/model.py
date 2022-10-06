@@ -1,6 +1,6 @@
 ## Imports
 from numpy import zeros, exp, maximum, minimum, inf, array, isnan, einsum, floor, ones, power as npow, concatenate as cat, interp, nan, squeeze, isinf, isfinite, argsort, take_along_axis, put_along_axis, expand_dims, ix_
-from optima import OptimaException, printv, dcp, odict, findinds
+from optima import OptimaException, printv, dcp, odict, findinds, compareversions
 
 def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False, debug=False, label=None, startind=None, advancedtracking=False):
     """
@@ -25,6 +25,13 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
 
     if initpeople is not None:
         print('WARNING, due to parameter interpolation, results are unreliable if initpeople is not None!')
+
+    # PMTCT behaviour
+    useoldpmtct = compareversions(version,"2.12.0") < 0 # Remove new pmtct behaviour from 2.11.x versions and before
+    if useoldpmtct: diagnosemothersforpmtct = False  # Don't diagnose mothers
+    else:           diagnosemothersforpmtct = True
+    putinstantlyontopmtct = True
+    printinformation = False
 
     # Extract key items
     popkeys         = simpars['popkeys']
@@ -827,7 +834,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
         _all,_allplhiv,_undx,_alldx,_alltx = range(5) # Start with underscore to not override other variables
         numpotmothers = zeros((npops,5)) # Number of potential mothers, numpregwomen = numpotmothers*totalbirthrate for that pop, then numbirths = numpregwomen / timestepsonpmtct
                                          # note that numpotmothers is dt times the number of women, since will be pregnant for timestepsonpmtct
-        
+
         for p1 in motherpops: # Pull these out of the loop to speed computation
             thispop = people[:, p1, t]
             numpotmothers[p1, _all]       = thispop[:].sum()
@@ -840,15 +847,17 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
         numdxhivpospregwomen   = numpotmothers[:,_alldx]    * totalbirthrate
         numundxhivpospregwomen = numpotmothers[:, _undx]    * totalbirthrate
 
-        # We make calcproppmtct = numpmtct / dxpregwomen, whereas proppmtct = numpmtct /  allhiv+pregwomen
-        if isnan(proppmtct[t]): thisnumpmtct = numpmtct[t] / timestepsonpmtct            # Proportion on PMTCT is not specified: use number
-        else:                   thisnumpmtct = proppmtct[t] * numhivpospregwomen.sum()  # Else, just use the proportion specified
+        if useoldpmtct:
+            # old behaviour is calcproppmtct = numpmtct / dxpregwomen, and proppmtct = numpmtct / dxpregwomen
+            if isnan(proppmtct[t]): thisnumpmtct = numpmtct[t] / timestepsonpmtct
+            else:                   thisnumpmtct = proppmtct[t]*(eps*dt+numdxhivpospregwomen.sum())
+        else:
+            # New behaviour calcproppmtct = numpmtct / dxpregwomen, whereas proppmtct = numpmtct /  allhiv+pregwomen
+            if isnan(proppmtct[t]): thisnumpmtct = numpmtct[t] / timestepsonpmtct            # Proportion on PMTCT is not specified: use number
+            else:                   thisnumpmtct = proppmtct[t] * numhivpospregwomen.sum()  # Else, just use the proportion specified
 
         calcproppmtct = thisnumpmtct / (eps*dt+numdxhivpospregwomen.sum()) # eps*dt to make sure that backwards compatible
 
-        putinstantlyontopmtct = True
-        diagnosemothersforpmtct = True
-        printinformation = False
         if calcproppmtct > 1 and diagnosemothersforpmtct: # Need more on PMTCT than we have available diagnosed
             calcproppmtct = 1
             numtobedx = thisnumpmtct - calcproppmtct * numdxhivpospregwomen.sum()
@@ -888,18 +897,11 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                 if abs(numwillbedx - numdxforpmtct) > eps:
                     print(f"WARNING: Tried to diagnose {numwillbedx} out of {numundxhivpospregwomen.sum()} undiagnosed pregnant women but instead diagnosed {numdxforpmtct} at time {tvec[t]}")
 
-            # assert (abs(numhivpospregwomen - numpotmothers[:,_allplhiv]*totalbirthrate) < eps*eps).all(), f'numhivpospregwomen:{numhivpospregwomen.sum()}, numpotmothers[:,_allplhiv]*totalbirthrate:{(numpotmothers[:,_allplhiv]*totalbirthrate).sum()}'
-            # assert (abs(numdxhivpospregwomen - numpotmothers[:, _alldx] * totalbirthrate) < eps*eps).all(), f'numdxhivpospregwomen:{numdxhivpospregwomen.sum()}, numpotmothers[:,_alldx]*totalbirthrate:{(numpotmothers[:,_alldx]*totalbirthrate).sum()}'
-            # assert (abs(numundxhivpospregwomen - numpotmothers[:, _undx] * totalbirthrate) < eps*eps).all(), f'numundxhivpospregwomen:{numundxhivpospregwomen.sum()}, numpotmothers[:,_undx]*totalbirthrate:{(numpotmothers[:,_undx]*totalbirthrate).sum()}'
-
-            # numhivpospregwomen     = numpotmothers[:,_allplhiv] * totalbirthrate
-            # numdxhivpospregwomen   = numpotmothers[:,_alldx]    * totalbirthrate
-            # numundxhivpospregwomen = numpotmothers[:, _undx]    * totalbirthrate
-
-        # We make calcproppmtct = numpmtct / dxpregwomen, whereas proppmtct = numpmtct /  allhiv+pregwomen
+        # New behaviour calcproppmtct = numpmtct / dxpregwomen, whereas proppmtct = numpmtct /  allhiv+pregwomen
         calcproppmtct = thisnumpmtct / (eps*dt+numdxhivpospregwomen.sum()) # eps*dt to make sure that backwards compatible
         calcproppmtct = minimum(calcproppmtct,1)
-        thisproppmtct = thisnumpmtct / (eps+numhivpospregwomen.sum())
+        if useoldpmtct: thisproppmtct = calcproppmtct  # old behaviour is calcproppmtct = numpmtct / dxpregwomen, and proppmtct = numpmtct / dxpregwomen
+        else:           thisproppmtct = thisnumpmtct / (eps+numhivpospregwomen.sum())
 
         undxhivbirths = zeros(npops) # Store undiagnosed HIV+ births for this timestep
         dxhivbirths = zeros(npops) # Store diagnosed HIV+ births for this timestep
