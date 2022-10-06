@@ -154,6 +154,28 @@ class Programset(object):
             self.updateprogset()
             printv('\nRemoved program "%s" from programset "%s". \nPrograms in this programset are: %s' % (program, self.name, [thisprog.short for thisprog in self.programs.values()]), 4, verbose)
 
+    def reorderprograms(self,desiredorder,verbose=2):
+        ''' Reorder the odict of programs. Expects desiredorder to be a list of Program or list of str'''
+        if not (len(desiredorder) == len(self.programs)):
+            raise OptimaException(f'You have asked to reorder the programs {[thisprog for thisprog in self.programs]} of programset {self.name} into order {desiredorder}, but the desired order only has {len(desiredorder)} programs not {len(self.programs)}.')
+
+        for i,program in enumerate(desiredorder):
+            if not type(program) == str: desiredorder[i] = program.short  # If not str, assume Program and get it's short name
+
+        if desiredorder == list(self.programs.keys()): return # Same order so don't need to continue
+        if not (set(desiredorder) == set(self.programs.keys())):   # desiredorder is a list of str, self.programs is an odict
+            raise OptimaException(f'You have asked to reorder the programs {[thisprog for thisprog in self.programs]} of programset {self.name} into order {desiredorder}, but the desired order does not have all of the programs.')
+
+        originalprograms = dcp(self.programs)
+        self.programs = odict()
+        for i,program in enumerate(desiredorder):
+            if program not in originalprograms:
+                raise OptimaException(f'You have asked to reorder the program "{program}" to position {i} in programset {self.name}, but there is no program by this name. Available programs are {[thisprog for thisprog in self.programs]}')
+            else:
+                self.programs[program] = originalprograms[program]  # ordering an odict is done by the order of insertion
+        self.updateprogset()
+        printv(f'\nReordered the programs in programset: {self.name}.\nThe old order was: {[key for key in originalprograms.keys()]} and the new order is {[key for key in self.programs.keys()]}.')
+
     def optimizable(self):
         return [True if prog.optimizable() else False for prog in self.programs.values()]
 
