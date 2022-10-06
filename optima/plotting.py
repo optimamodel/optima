@@ -305,27 +305,22 @@ def makeplots(results=None, toplot=None, die=False, verbose=2, plotstartyear=Non
     ## Plot new infections, transitions, deaths and other death, giving total change in PLHIV
     if 'changeinplhivallsources' in toplot:
         toplot.remove('changeinplhivallsources')
-        try:
-            plots = plotchangeinplhivallsources(results,which='changeinplhivallsources', die=die, fig=fig, **kwargs)
-        except:
-            import traceback
-            traceback.print_exc()
+        plots = plotchangeinplhivallsources(results,which='changeinplhivallsources-population+stacked', die=die, fig=fig, **kwargs)
         allplots.update(plots)
-
-    ## Plot new infections, transitions, deaths and other death, giving total change in PLHIV
-    if 'plhivallsources' in toplot:
-        toplot.remove('plhivallsources')
-        try:
-            plots = plotchangeinplhivallsources(results,which='plhivallsources-population+stacked', die=die, fig=fig, **kwargs)
-        except:
-            import traceback
-            traceback.print_exc()
-        allplots.update(plots)
-
     ## Plot new infections, transitions, deaths and other death, giving total change in PLHIV
     if 'changeinplhivallsources-population+stacked' in toplot:
         toplot.remove('changeinplhivallsources-population+stacked')
-        plots = plotchangeinplhivallsources(results, die=die, fig=fig, **kwargs)
+        plots = plotchangeinplhivallsources(results,which='changeinplhivallsources-population+stacked', die=die, fig=fig, **kwargs)
+        allplots.update(plots)
+    ## Plot new infections, transitions, deaths and other death, giving total change in PLHIV
+    if 'plhivallsources' in toplot:
+        toplot.remove('plhivallsources')
+        plots = plotchangeinplhivallsources(results, which='plhivallsources-population+stacked', die=die, fig=fig,**kwargs)
+        allplots.update(plots)
+    ## Plot new infections, transitions, deaths and other death, giving total change in PLHIV
+    if 'plhivallsources-population+stacked' in toplot:
+        toplot.remove('plhivallsources-population+stacked')
+        plots = plotchangeinplhivallsources(results, which='plhivallsources-population+stacked', die=die, fig=fig,**kwargs)
         allplots.update(plots)
 
     ## Plot infections by method of transmission, and by population
