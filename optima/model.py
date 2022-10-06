@@ -867,7 +867,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
         if calcproppmtct > 1 and diagnosemothersforpmtct: # Need more on PMTCT than we have available diagnosed
             calcproppmtct = 1
             numtobedx = thisnumpmtct - calcproppmtct * numdxhivpospregwomen.sum()
-            thisnumpmtct = calcproppmtct * (eps + numdxhivpospregwomen.sum()) # put all dx people onto pmtct
+            thisnumpmtct = calcproppmtct * (eps*dt + numdxhivpospregwomen.sum()) # put all dx people onto pmtct
 
             proptobedx = min(numtobedx / (eps+numundxhivpospregwomen.sum()), 1-eps)  # Can only diagnose 99.9% of preg women (not 100% to avoid roundoff errors giving negative people)
             numwillbedx = proptobedx*numundxhivpospregwomen.sum()
@@ -903,12 +903,16 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                 if propnewdiag > 0.01: print(f'INFO: {tvec[t]}: Increasing number diagnosed this year from {initrawdiag:.3f} to {raw_diag[:,t].sum():.3f} (up {propnewdiag*100:.2f}%)')
                 if abs(numwillbedx - numdxforpmtct) > eps:
                     print(f"WARNING: Tried to diagnose {numwillbedx} out of {numundxhivpospregwomen.sum()} undiagnosed pregnant women but instead diagnosed {numdxforpmtct} at time {tvec[t]}")
+        elif calcproppmtct > 1:
+            calcproppmtct = 1
+            thisnumpmtct = calcproppmtct * (eps*dt+numdxhivpospregwomen.sum())  # put all dx people onto pmtct
 
         # New behaviour calcproppmtct = numpmtct / dxpregwomen, whereas thisproppmtct = numpmtct /  allhiv+pregwomen
         calcproppmtct = thisnumpmtct / (eps*dt+numdxhivpospregwomen.sum()) # eps*dt to make sure that backwards compatible
         calcproppmtct = minimum(calcproppmtct,1)
         if useoldpmtct: thisproppmtct = calcproppmtct  # old behaviour is calcproppmtct = numpmtct / dxpregwomen, and thisproppmtct = numpmtct / dxpregwomen
         else:           thisproppmtct = thisnumpmtct / (eps+numhivpospregwomen.sum())
+        thisproppmtct = minimum(calcproppmtct, 1)
 
         undxhivbirths = zeros(npops) # Store undiagnosed HIV+ births for this timestep
         dxhivbirths = zeros(npops) # Store diagnosed HIV+ births for this timestep
