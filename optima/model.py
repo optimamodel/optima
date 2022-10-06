@@ -31,7 +31,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
     if useoldpmtct: diagnosemothersforpmtct = False  # Don't diagnose mothers
     else:           diagnosemothersforpmtct = True
     putinstantlyontopmtct = True  # Should be True, since we are only considering mothers to be preg when they are giving birth - otherwise we get too many diagnosed by ANC
-    printinformation = False
+    printpmtctinformation = False
 
     # Extract key items
     popkeys         = simpars['popkeys']
@@ -894,7 +894,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
             if t < npts-1:
                 if (people[undx,:,t+1] < 0).any():
                     print(f"WARNING: Tried to diagnose {thispoptobedx} pregnant HIV+ women from population {popkeys[p1]} but this made the people negative:{people[undx,p1,t+1]}")
-            if printinformation:
+            if printpmtctinformation:
                 totalbirthrate = array(totalbirthrate)
                 avbirthrate = sum(totalbirthrate[totalbirthrate!=0]) / sum(totalbirthrate!=0)
                 propnexttime = avbirthrate * relhivbirth * timestepsonpmtct
