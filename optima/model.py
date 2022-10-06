@@ -30,7 +30,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
     useoldpmtct = compareversions(version,"2.12.0") < 0 # Remove new pmtct behaviour from 2.11.x versions and before
     if useoldpmtct: diagnosemothersforpmtct = False  # Don't diagnose mothers
     else:           diagnosemothersforpmtct = True
-    putinstantlyontopmtct = True
+    putinstantlyontopmtct = True  # Should be True, since we are only considering mothers to be preg when they are giving birth - otherwise we get too many diagnosed by ANC
     printinformation = False
 
     # Extract key items
@@ -828,18 +828,24 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
         ##############################################################################################################
 
         # Precalculate proportion on PMTCT, whether numpmtct or proppmtct is used
-        timestepsonpmtct = 1./dt # Specify the number of timesteps on which mothers are on PMTCT -- # WARNING: remove hard-coding
+        # Now:
+        # numpotmothers = numinpop * relhivbirth (ie the number of women who may get pregnant)
+        # numhivpospregwomen = numpotmothers * totalbirthrate (ie the num of women giving birth in this time step) !! we only consider people pregnant if they are giving birth in this time step
+        # thisnumpmtct  = numpmtct / timestepsonpmtct (ie the number of people giving birth who are on pmtct)
+        # calcproppmtct = thisnumpmtct / numdxhivpospregwomen (the proportion of diagnosed women giving birth who are on pmtct)
+        # thisproppmtct = (old behaviour) calcproppmtct           (the proportion of diagnosed women giving birth who are on pmtct)
+        #               = (new) thisnumpmtct / numhivpospregwomen (the proportion of total women giving birth who are on pmtct)
+        # thisproppmtct is what simpars['proppmtct'] and 'fixproppmtct' control
 
+        timestepsonpmtct = 1./dt # Specify the number of timesteps on which mothers are on PMTCT -- # WARNING: remove hard-coding
         totalbirthrate = birthratesarr[:,:,t].sum(axis=1)
         _all,_allplhiv,_undx,_alldx,_alltx = range(5) # Start with underscore to not override other variables
-        numpotmothers = zeros((npops,5)) # Number of potential mothers, numpregwomen = numpotmothers*totalbirthrate for that pop, then numbirths = numpregwomen / timestepsonpmtct
-                                         # note that numpotmothers is dt times the number of women, since will be pregnant for timestepsonpmtct
-
+        numpotmothers = zeros((npops,5))
         for p1 in motherpops: # Pull these out of the loop to speed computation
             thispop = people[:, p1, t]
             numpotmothers[p1, _all]       = thispop[:].sum()
             numpotmothers[p1, _allplhiv]  = thispop[allplhiv].sum() * relhivbirth
-            numpotmothers[p1, _undx]      = thispop[undx].sum()     * relhivbirth # ^ Should match below
+            numpotmothers[p1, _undx]      = thispop[undx].sum()     * relhivbirth
             numpotmothers[p1, _alldx]     = thispop[alldx].sum()    * relhivbirth
             numpotmothers[p1, _alltx]     = thispop[alltx].sum()    * relhivbirth
 
@@ -868,25 +874,26 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
             initrawdiag = raw_diag[:, t].sum()
 
             numdxforpmtct = 0 #total
-            thispoptobedx = einsum('ij,j->ij',people[undx, :, t],totalbirthrate) * relhivbirth * proptobedx # ^ Should match above without .sum() and with the totalbirthrate
+            thispoptobedx = einsum('ij,j->ij',people[undx, :, t],totalbirthrate) * relhivbirth * proptobedx # this is split by cd4 state
             if t<npts-1:
                     people[undx, :, t+1] -= thispoptobedx
                     people[dx,   :, t+1] += thispoptobedx
-            thispoptobedx = thispoptobedx.sum(axis=0) #from here on, only split by population, not state
-            raw_diag[:,t]       += thispoptobedx /dt # annualise
-            raw_dxforpmtct[:,t] += thispoptobedx /dt # annualise
+            thispoptobedx = thispoptobedx.sum(axis=0)  # from here on, only split by population, not state
+            raw_diag[:,t]       += thispoptobedx /dt  # annualise
+            raw_dxforpmtct[:,t] += thispoptobedx /dt  # annualise
             numdxforpmtct       += thispoptobedx.sum(axis=0)  # in this timestep aka not annualised
             if putinstantlyontopmtct:
-                numpotmothers[:, _undx]   -= thispoptobedx / (totalbirthrate + eps*eps) # eps not small enough
-                numpotmothers[:, _alldx]  += thispoptobedx / (totalbirthrate + eps*eps)
                 numundxhivpospregwomen[:] -= thispoptobedx
                 numdxhivpospregwomen[:]   += thispoptobedx
+                # The below code looks weird but is right - in order to match the changes to the num giving birth (numundxhivpospregwomen) this is saying that we diagnose more mothers than we actually did.
+                # However, this does give the right number of people on PMTCT - otherwise only a small percentage of them will actually go onto PMTCT. And we don't actually put them into the diagnosed class
+                numpotmothers[:, _undx]   -= thispoptobedx / (totalbirthrate + eps*eps) # assuming all diagnosed by ANC will go onto PMTCT
+                numpotmothers[:, _alldx]  += thispoptobedx / (totalbirthrate + eps*eps) # eps not small enough
                 thisnumpmtct              += thispoptobedx.sum(axis=0)
             
             if t < npts-1:
                 if (people[undx,:,t+1] < 0).any():
                     print(f"WARNING: Tried to diagnose {thispoptobedx} pregnant HIV+ women from population {popkeys[p1]} but this made the people negative:{people[undx,p1,t+1]}")
-
             if printinformation:
                 totalbirthrate = array(totalbirthrate)
                 avbirthrate = sum(totalbirthrate[totalbirthrate!=0]) / sum(totalbirthrate!=0)
@@ -897,10 +904,10 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                 if abs(numwillbedx - numdxforpmtct) > eps:
                     print(f"WARNING: Tried to diagnose {numwillbedx} out of {numundxhivpospregwomen.sum()} undiagnosed pregnant women but instead diagnosed {numdxforpmtct} at time {tvec[t]}")
 
-        # New behaviour calcproppmtct = numpmtct / dxpregwomen, whereas proppmtct = numpmtct /  allhiv+pregwomen
+        # New behaviour calcproppmtct = numpmtct / dxpregwomen, whereas thisproppmtct = numpmtct /  allhiv+pregwomen
         calcproppmtct = thisnumpmtct / (eps*dt+numdxhivpospregwomen.sum()) # eps*dt to make sure that backwards compatible
         calcproppmtct = minimum(calcproppmtct,1)
-        if useoldpmtct: thisproppmtct = calcproppmtct  # old behaviour is calcproppmtct = numpmtct / dxpregwomen, and proppmtct = numpmtct / dxpregwomen
+        if useoldpmtct: thisproppmtct = calcproppmtct  # old behaviour is calcproppmtct = numpmtct / dxpregwomen, and thisproppmtct = numpmtct / dxpregwomen
         else:           thisproppmtct = thisnumpmtct / (eps+numhivpospregwomen.sum())
 
         undxhivbirths = zeros(npops) # Store undiagnosed HIV+ births for this timestep
@@ -909,7 +916,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
         # Calculate actual births, MTCT, and PMTCT
         if len(motherpops) and len(childpops):
             thisbirthrates = birthratesarr[:,:,t][ix_(motherpops,childpops)]
-            popbirths      = einsum('ij,i->ij', thisbirthrates, numpotmothers[motherpops, _all]) # numpregwomen = numpotmothers*totalbirthrate for that pop, then numbirths = numpregwomen / timestepsonpmtct
+            popbirths      = einsum('ij,i->ij', thisbirthrates, numpotmothers[motherpops, _all])
             hivposbirths   = einsum('ij,i->ij', thisbirthrates, numpotmothers[motherpops, _allplhiv])
             mtctundx       = einsum('ij,i->ij', thisbirthrates, numpotmothers[motherpops, _undx]) * effmtct[t] # Births to undiagnosed mothers
             mtcttx         = einsum('ij,i->ij', thisbirthrates, numpotmothers[motherpops, _alltx]) * pmtcteff[t] # Births to mothers on treatment
@@ -925,7 +932,6 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
 
             raw_receivepmtct[motherpops, t] += (thisreceivepmtct * timestepsonpmtct).sum(axis=1)  # annualise / convert from births to preg women
             raw_mtct[childpops, t] += thispopmtct.sum(axis=0)/dt
-            # state_distribution_plhiv_from = people[:,p1,t] * plhivmap
             state_distribution_plhiv_from = einsum('ij,i->ij', people[:,motherpops,t], plhivmap)
 
             raw_mtctfrom[:, motherpops, t] += einsum('j,ij,j->ij', thispopmtct.sum(axis=1)/dt, state_distribution_plhiv_from, 1/(state_distribution_plhiv_from.sum(axis=0)+eps) ) #WARNING: not accurate based on differential diagnosis by state potentially, but the best that's feasible
