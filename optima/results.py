@@ -105,6 +105,7 @@ class Resultset(object):
         self.main['propincare']         = Result('Diagnosed PLHIV retained in care (%)',     ispercentage=True, defaultplot='total')
         self.main['proptreat']          = Result('Diagnosed PLHIV on treatment (%)',         ispercentage=True, defaultplot='total')
         self.main['propsuppressed']     = Result('Treated PLHIV with viral suppression (%)', ispercentage=True, defaultplot='total')
+        self.main['proppmtct']          = Result('HIV+ pregnant women receiving PMTCT (%)',           ispercentage=True, defaultplot='total')
         
         self.main['prev']               = Result('HIV prevalence (%)',       ispercentage=True, defaultplot='population')
         self.main['force']              = Result('HIV incidence (per 100 p.y.)', ispercentage=True, defaultplot='population')
@@ -114,7 +115,11 @@ class Resultset(object):
         self.main['numpmtct']           = Result('HIV+ women receiving PMTCT')
         self.main['popsize']            = Result('Population size')
         self.main['numdaly']            = Result('HIV-related DALYs')
-        
+
+        # numdiagpmtct and propdiagpmtct will only be non-zero for Optima version 2.12.0 and up
+        self.other['numdiagpmtct']       = Result('Number of diagnoses from ANC', defaultplot='stacked')
+        self.other['propdiagpmtct']      = Result('Proportion of diagnoses from ANC (%)', ispercentage=True, defaultplot='total')
+
         self.other['numyll']            = Result('HIV-related YLL')
         self.other['numyld']            = Result('HIV-related YLD')
 
@@ -312,6 +317,7 @@ class Resultset(object):
         alldeaths    = assemble('death')
         otherdeaths  = assemble('otherdeath') 
         alldiag      = assemble('diag')
+        alldiagpmtct = assemble('diagpmtct')
         allmtct      = assemble('mtct')
         allhivbirths = assemble('hivbirths')
         allbirths    = assemble('births')
@@ -361,6 +367,9 @@ class Resultset(object):
 
         self.main['numpmtct'].pops = process(allpmtct[:,:,indices])
         self.main['numpmtct'].tot  = process(allpmtct[:,:,indices].sum(axis=1))
+        if data is not None:
+            self.main['numpmtct'].datatot = processdata(data['numpmtct'], uncertainty=False)
+            self.main['numpmtct'].estimate = False # It's real data, not just an estimate
 
         self.main['numnewdiag'].pops = process(alldiag[:,:,indices])
         self.main['numnewdiag'].tot  = process(alldiag[:,:,indices].sum(axis=1)) # Axis 1 is populations
@@ -424,13 +433,21 @@ class Resultset(object):
         self.main['propplhivsupp'].pops = process(allpeople[:,svl,:,:][:,:,:,indices].sum(axis=1)/maximum(allpeople[:,allplhiv,:,:][:,:,:,indices].sum(axis=1),eps), percent=True) 
         self.main['propplhivsupp'].tot = process(allpeople[:,svl,:,:][:,:,:,indices].sum(axis=(1,2))/maximum(allpeople[:,allplhiv,:,:][:,:,:,indices].sum(axis=(1,2)),eps), percent=True) # Axis 1 is populations
 
+        self.main['proppmtct'].pops = process(allpmtct[:,:,indices]/maximum(allhivbirths[:,:,indices],eps), percent=True)
+        self.main['proppmtct'].tot  = process(allpmtct[:,:,indices].sum(axis=1)/maximum(allhivbirths[:,:,indices].sum(axis=1),eps), percent=True) # Axis 1 is populations
+
         self.main['popsize'].pops = process(allpeople[:,:,:,indices].sum(axis=1))
         self.main['popsize'].tot = process(allpeople[:,:,:,indices].sum(axis=(1,2)))
         if data is not None: 
             self.main['popsize'].datatot  = processtotalpopsizedata(self, data['popsize'])
             self.main['popsize'].datapops = processdata(data['popsize'], uncertainty=True, bypop=True)
 
-        
+        self.other['numdiagpmtct'].pops = process(alldiagpmtct[:, :, indices])
+        self.other['numdiagpmtct'].tot  = process(alldiagpmtct[:, :, indices].sum(axis=1))  # Axis 1 is populations
+
+        self.other['propdiagpmtct'].pops = process(alldiagpmtct[:, :, indices]/maximum(alldiag[:, :, indices],eps))
+        self.other['propdiagpmtct'].tot  = process(alldiagpmtct[:, :, indices].sum(axis=1)/maximum(alldiag[:, :, indices].sum(axis=1),eps))  # Axis 1 is populations
+
         # Calculate DALYs
         
         ## Years of life lost

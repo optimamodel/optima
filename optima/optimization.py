@@ -200,9 +200,66 @@ def defaulttvsettings(**kwargs):
     return tvsettings
 
 
-def constrainbudget(origbudget=None, budgetvec=None, totalbudget=None, budgetlims=None, optiminds=None, tolerance=1e-2, overalltolerance=1.0, outputtype=None, tvsettings=None):
+def calcoptimindsoptimkeys(functionname, prognamelist=None, progset=None, optiminds = None, optimkeys=None, reorderprograms=True, verbose=2):
+    """
+    A helper function that calculates the optiminds and optimkeys from the progset if it is given.
+    It also copies the order of the programs from the keys of the prognamelist to the progset if reorderprograms=True.
+
+    If no progset is given, it ensures the optimkeys and the optiminds are referring to the same programs from the
+    prognamelist, preferring to use the optimkeys if they are given.
+
+    Making sure the optiminds match up to the proper location in the dictionary as the optimkeys helps avoid tricky to
+    diagnose errors.
+
+    Example usage: (constraints['name'] is an odict with short program names as the keys)
+    constraintskeys = constraints['name'].keys() if (constraints is not None) else None
+    optiminds, optimkeys = calcoptimindsoptimkeys('thisfunctionsname', prognamelist=constraintskeys, progset=progset,
+                                                  optiminds=optiminds, optimkeys=optimkeys, reorderprograms=True, verbose=verbose)
+    note in this example optimkeys and optiminds are overriden and progset is reordered to match the order of prognamelist
+    """
+    if progset is not None:
+        if prognamelist is not None and reorderprograms:
+            progset.reorderprograms(prognamelist)
+        optimizable = array(progset.optimizable())
+        optiminds = findinds(optimizable)
+        progkeys = array(progset.programs.keys())
+        optimkeys = progkeys[optiminds]
+
+    elif prognamelist is not None:
+        if optimkeys is not None:
+            optimkeys = array(optimkeys)
+            if optiminds is not None:
+                optiminds = None
+                printv(f"Warning: {functionname}() was supplied with both optimkeys and optiminds. Using the optimkeys {optimkeys} not the optiminds as keys are more reliable.", 1, verbose)
+        elif optiminds is not None:
+            optiminds = array(optiminds)
+            progkeys = array(prognamelist)  # Array of all allowable keys
+            optimkeys = progkeys[optiminds]
+            printv(f"Warning: {functionname}() wasn't supplied with optimkeys and instead was given optiminds. From optiminds {optiminds}, the following optimkeys {optimkeys} have been assumed. For more reliable constraints, use optimkeys.", 1, verbose)
+        else:
+            errmsg = f"Error: calcoptimindsoptimkeys() called from {functionname} needs either optimkeys or optiminds if no programset is given."
+            raise OptimaException(errmsg)
+
+        if optiminds is None:
+            optiminds = []
+            for i, key in enumerate(prognamelist):
+                if key in optimkeys:
+                    optiminds.append(i)
+            optiminds = array(optiminds)
+
+    else:
+        errmsg = f"Error: calcoptimindsoptimkeys() called from {functionname} needs either a progset or an odict with the programs as the keys of the odict, but neither were given."
+        raise OptimaException(errmsg)
+
+    return optiminds, optimkeys
+
+
+def constrainbudget(origbudget=None, budgetvec=None, totalbudget=None, budgetlims=None, optiminds=None, optimkeys=None, tolerance=1e-2, overalltolerance=1.0, outputtype=None, verbose=2, tvsettings=None):
     """ Take an unnormalized/unconstrained budgetvec and normalize and constrain it """
-    
+    # Optional printing for debugging
+    # print(f'!?! constrainbudget called with \norigbudget={origbudget},\nbudgetvec={budgetvec},\ntotalbudget={totalbudget},\nbudgetlims={budgetlims},\noptiminds={optiminds},\noptimkeys={optimkeys},'
+    #                                                                                               f'\ntolerance={tolerance},\noveralltolerance={overalltolerance},\noutputtype={outputtype},\nverbose={verbose},\ntvsettings={tvsettings}')
+
     # Prepare this budget for later scaling and the like
     constrainedbudget = dcp(origbudget)
     
@@ -223,12 +280,17 @@ def constrainbudget(origbudget=None, budgetvec=None, totalbudget=None, budgetlim
 
     # Calculate the minimum amount that can be spent on the fixed costs
     rescaledminfixed = dcp(rescaledbudget) # This is the rescaled budget, but with the minimum fixed costs -- should be <= totalbudget
-    proginds = arange(len(origbudget)) # Array of all allowable indices
-    fixedinds = array([p for p in proginds if p not in optiminds]) # Get the complement of optiminds
+
+    # Get optiminds and optimkeys
+    optiminds, optimkeys = calcoptimindsoptimkeys('constrainbudget', prognamelist=origbudget.keys(), progset=None,
+                                                  optiminds=optiminds, optimkeys=optimkeys, reorderprograms=False, verbose=verbose)
+
+    progkeys = array(origbudget.keys())  # Array of all allowable keys
+    fixedkeys = array([p for p in progkeys if p not in optimkeys]) # Get the complement of optimkeys
     minfixed = 0.0
-    for ind in fixedinds:
-        rescaledminfixed[ind] = rescaledbudget[ind]*budgetlims['min'][ind]
-        minfixed += rescaledminfixed[ind]
+    for key in fixedkeys:
+        rescaledminfixed[key] = rescaledbudget[key]*budgetlims['min'][key]
+        minfixed += rescaledminfixed[key]
 
     # Calculate the total amount available for the optimizable programs
     optimbudget = totalbudget - minfixed
@@ -242,24 +304,24 @@ def constrainbudget(origbudget=None, budgetvec=None, totalbudget=None, budgetlim
 
     # Calculate absolute limits from relative limits
     abslimits = dcp(budgetlims)
-    for pind in proginds:
-        if abslimits['min'][pind] is None: abslimits['min'][pind] = 0
-        if abslimits['max'][pind] is None: abslimits['max'][pind] = inf
-    for oi,oind in enumerate(optiminds): # Don't worry about non-optimizable programs at this point -- oi = 0,1,2,3; oind = e.g. 0, 1, 4, 8
-        # Fully-relative limits (i.e. scale according to total spend).
-        if isfinite(abslimits['min'][oind]): abslimits['min'][oind] *= rescaledbudget[oind]
-        if isfinite(abslimits['max'][oind]): abslimits['max'][oind] *= rescaledbudget[oind]
+    for pkey in progkeys:
+        if abslimits['min'][pkey] is None: abslimits['min'][pkey] = 0
+        if abslimits['max'][pkey] is None: abslimits['max'][pkey] = inf
+    for oi,okey in enumerate(optimkeys): # Don't worry about non-optimizable programs at this point -- oi = 0,1,2,3; oind = e.g. 0, 1, 4, 8
+        # Fully-relative limits (i.e. scale according to total spend). - consider making relative to origbudget - needs more thought
+        if isfinite(abslimits['min'][okey]): abslimits['min'][okey] *= rescaledbudget[okey] # origbudget[okey]
+        if isfinite(abslimits['max'][okey]): abslimits['max'][okey] *= rescaledbudget[okey] # origbudget[okey]
         
     # Apply constraints on optimizable parameters
-    noptimprogs = len(optiminds) # Number of optimizable programs
+    noptimprogs = len(optimkeys) # Number of optimizable programs
     limlow = zeros(noptimprogs, dtype=bool)
     limhigh = zeros(noptimprogs, dtype=bool)
-    for oi,oind in enumerate(optiminds):
-        if scaledbudgetvec[oi] <= abslimits['min'][oind]:
-            scaledbudgetvec[oi] = abslimits['min'][oind]
+    for oi,okey in enumerate(optimkeys):
+        if scaledbudgetvec[oi] <= abslimits['min'][okey]:
+            scaledbudgetvec[oi] = abslimits['min'][okey]
             limlow[oi] = True
-        if scaledbudgetvec[oi] >= abslimits['max'][oind]:
-            scaledbudgetvec[oi] = abslimits['max'][oind]
+        if scaledbudgetvec[oi] >= abslimits['max'][okey]:
+            scaledbudgetvec[oi] = abslimits['max'][okey]
             limhigh[oi] = True
 
     # Too high
@@ -273,11 +335,11 @@ def constrainbudget(origbudget=None, budgetvec=None, totalbudget=None, budgetlim
                 
         toomuch = sum(scaledbudgetvec[~limlow]) / float((sum(scaledbudgetvec[~limlow]) - overshoot)+tolerance)
         
-        for oi,oind in enumerate(optiminds):
+        for oi,okey in enumerate(optimkeys):
             if not(limlow[oi]):
                 proposed = scaledbudgetvec[oi] / float(toomuch)
-                if proposed <= abslimits['min'][oind]:
-                    proposed = abslimits['min'][oind]
+                if proposed <= abslimits['min'][okey]:
+                    proposed = abslimits['min'][okey]
                     limlow[oi] = True
                 scaledbudgetvec[oi] = proposed
 
@@ -287,44 +349,57 @@ def constrainbudget(origbudget=None, budgetvec=None, totalbudget=None, budgetlim
         if count>countmax: raise OptimaException('Tried %i times to fix budget and failed! (wanted: %g; actual: %g' % (count, optimbudget, sum(scaledbudgetvec)))
         undershoot = optimbudget - sum(scaledbudgetvec)
         toolittle = (sum(scaledbudgetvec[~limhigh]) + undershoot) / float(sum(scaledbudgetvec[~limhigh])+tolerance)
-        for oi,oind in enumerate(optiminds):
+        for oi,okey in enumerate(optimkeys):
             if not(limhigh[oi]):
                 proposed = scaledbudgetvec[oi] * toolittle
-                if proposed >= abslimits['max'][oind]:
-                    proposed = abslimits['max'][oind]
+                if proposed >= abslimits['max'][okey]:
+                    proposed = abslimits['max'][okey]
                     limhigh[oi] = True
                 scaledbudgetvec[oi] = proposed
 
     # Reconstruct the budget odict using the rescaled budgetvec and the rescaled original amount
     constrainedbudget = dcp(rescaledminfixed) # This budget has the right fixed costs
-    for oi,oind in enumerate(optiminds):
-        constrainedbudget[oind] = scaledbudgetvec[oi]
+    for oi,okey in enumerate(optimkeys):
+        constrainedbudget[okey] = scaledbudgetvec[oi]
     if abs(sum(constrainedbudget[:])-totalbudget)>overalltolerance:
         errormsg = 'final budget amounts differ (%f != %f)' % (sum(constrainedbudget[:]), totalbudget)
         raise OptimaException(errormsg)
-    
+
+
     # Optionally return the calculated upper and lower limits as well as the original budget and vector
-    constrainedbudgetvec = dcp(constrainedbudget[optiminds])
+    constrainedbudgetvec = dcp(constrainedbudget[optimkeys])
+
+    # Optional printing for debugging
+    # lowerlim = dcp(abslimits['min'][optimkeys])
+    # upperlim = dcp(abslimits['max'][optimkeys])
+    # print(f'!?! constrainbudget returning \nconstrainedbudget: {constrainedbudget},\nconstrainedbudgetvec: {constrainedbudgetvec},\nlowerlim: {lowerlim},\nupperlim: {upperlim}')
+
     if outputtype=='odict':
         return constrainedbudget
     elif outputtype=='vec':
         return constrainedbudgetvec
     elif outputtype=='full':
-        lowerlim = dcp(abslimits['min'][optiminds])
-        upperlim = dcp(abslimits['min'][optiminds])
+        lowerlim = dcp(abslimits['min'][optimkeys])
+        upperlim = dcp(abslimits['max'][optimkeys])
         return constrainedbudget, constrainedbudgetvec, lowerlim, upperlim
     else:
         raise OptimaException('Must specify an output type of "odict", "vec", or "full"; you specified "%s"' % outputtype)
 
 
 
-def tvfunction(budgetdict=None, years=None, pars=None, optiminds=None, tvsettings=None):
+def tvfunction(budgetdict=None, years=None, pars=None, optiminds=None, optimkeys=None, tvsettings=None):
     '''
-    Convert a budget, vector of years, and a vector of parameters (of same
+    Convert a odict budget, vector of years, and a vector of parameters (of same
     length as the budget) into a corresponding normalized dictionary of
     arrays.
+
+    This function has not been fully converted to using optimkeys, but since it recalculates the optiminds
+    using the optimkeys (if they are available) it should not be an issue.
     '''
-    
+    # Get optiminds and optimkeys, even though optimkeys aren't used in this function,
+    optiminds, optimkeys = calcoptimindsoptimkeys('tvfunction', prognamelist=budgetdict.keys(), progset=None,
+                                                  optiminds=optiminds, optimkeys=optimkeys, reorderprograms=False)
+
     # Process x-axis
     years = promotetoarray(years) # Make sure it's an array
     x = years-years[0] # Start at zero
@@ -354,9 +429,14 @@ def tvfunction(budgetdict=None, years=None, pars=None, optiminds=None, tvsetting
     return output
 
 
-def separatetv(inputvec=None, optiminds=None):
+def separatetv(inputvec=None, optiminds=None, optimkeys=None):
     ''' Decide if the budget vector includes time-varying information '''
-    noptimprogs = len(optiminds) # Number of optimized programs
+    if   optimkeys is not None: noptimprogs = len(optimkeys)
+    elif optiminds is not None: noptimprogs = len(optiminds)
+    else:
+        errmsg = f"separatetv() wasn't supplied with optimkeys or optiminds. Please supply one of these."
+        raise OptimaException(errmsg)
+
     ndims = 2 # Semi-hard-code the number of dimensions of the time-varying optimization
     if len(inputvec)==noptimprogs:
         budgetvec = inputvec
@@ -377,8 +457,8 @@ def separatetv(inputvec=None, optiminds=None):
 ################################################################################################################################################
 
 def outcomecalc(budgetvec=None, which=None, project=None, parsetname=None, progsetname=None, 
-                objectives=None, constraints=None, totalbudget=None, optiminds=None, origbudget=None, tvec=None, 
-                initpeople=None, outputresults=False, verbose=2, ccsample='best', doconstrainbudget=True, 
+                objectives=None, constraints=None, totalbudget=None, optiminds=None, optimkeys=None, origbudget=None,
+                tvec=None, initpeople=None, outputresults=False, verbose=2, ccsample='best', doconstrainbudget=True,
                 tvsettings=None, tvcontrolvec=None, origoutcomes=None, penalty=1e9, **kwargs):
     ''' Function to evaluate the objective for a given budget vector (note, not time-varying) '''
 
@@ -390,20 +470,25 @@ def outcomecalc(budgetvec=None, which=None, project=None, parsetname=None, progs
     if progsetname is None: progsetname = -1
     parset  = project.parsets[parsetname] 
     progset = project.progsets[progsetname]
+
+    # Reorder the programs to match the order of the constraints, and get optiminds and optimkeys
+    constraintskeys = constraints['name'].keys() if (constraints is not None) else None
+    optiminds, optimkeys = calcoptimindsoptimkeys('outcomecalc', prognamelist=constraintskeys, progset=progset,
+                                                  optiminds=optiminds, optimkeys=optimkeys, reorderprograms=True, verbose=verbose)
+
     if objectives  is None: objectives  = defaultobjectives(project=project,  progsetname=progsetname, which=which)
-    if constraints is None: constraints = defaultconstraints(project=project, progsetname=progsetname)
+    if constraints is None: constraints = defaultconstraints(project=project, progsetname=progsetname)  # Default constraints are in the same order as progset, so the order should be retained
     if totalbudget is None:
         if budgetvec is None: totalbudget = objectives['budget']
         else:                 totalbudget = budgetvec[:].sum() # If a budget vector is supplied
     if origbudget  is None: origbudget  = progset.getdefaultbudget()
-    if optiminds   is None: optiminds   = findinds(progset.optimizable())
     if budgetvec   is None: budgetvec   = dcp(origbudget[:][optiminds])
     if isinstance(budgetvec, dict): budgetvec = dcp(budgetvec[:][optiminds]) # Assuming odict
        
     # Validate input    
-    arglist = [budgetvec, which, parset, progset, objectives, totalbudget, constraints, optiminds, origbudget]
+    arglist = [budgetvec, which, parset, progset, objectives, totalbudget, constraints, optimkeys, origbudget]
     if any([arg is None for arg in arglist]):  # WARNING, this kind of obscures which of these is None -- is that ok? Also a little too hard-coded...
-        raise OptimaException('outcomecalc() requires which, budgetvec, parset, progset, objectives, totalbudget, constraints, optiminds, origbudget, tvec as inputs at minimum; argument %i is None' % arglist.index(None))
+        raise OptimaException('outcomecalc() requires which, budgetvec, parset, progset, objectives, totalbudget, constraints, optimkeys, origbudget, tvec as inputs at minimum; argument %i is None' % arglist.index(None))
     if which=='outcome': which='outcomes' # I never remember which it's supposed to be, so let's fix it here
     if which not in ['outcomes','money']:
         errormsg = 'optimize(): "which" must be "outcomes" or "money"; you entered "%s"' % which
@@ -411,14 +496,14 @@ def outcomecalc(budgetvec=None, which=None, project=None, parsetname=None, progs
     
     # Handle time-varying optimization -- try pulling out of the budget vector, if required
     if tvcontrolvec is None:
-        budgetvec, tvcontrolvec = separatetv(inputvec=budgetvec, optiminds=optiminds)
+        budgetvec, tvcontrolvec = separatetv(inputvec=budgetvec, optimkeys=optimkeys)
     
     # Normalize budgetvec and convert to budget -- WARNING, is there a better way of doing this?
     if doconstrainbudget:
-        constrainedbudget = constrainbudget(origbudget=origbudget, budgetvec=budgetvec, totalbudget=totalbudget, budgetlims=constraints, optiminds=optiminds, outputtype='odict')
+        constrainedbudget = constrainbudget(origbudget=origbudget, budgetvec=budgetvec, totalbudget=totalbudget, budgetlims=constraints, optimkeys=optimkeys, outputtype='odict')
     else:
         constrainedbudget = dcp(origbudget)
-        if len(budgetvec)==len(optiminds): constrainedbudget[optiminds] = budgetvec # Assume it's just the optimizable programs
+        if len(budgetvec)==len(optimkeys): constrainedbudget[optimkeys] = budgetvec # Assume it's just the optimizable programs
         else:                              constrainedbudget[:]         = budgetvec # Assume it's all programs
         
     # Get the budget array to run
@@ -432,7 +517,7 @@ def outcomecalc(budgetvec=None, which=None, project=None, parsetname=None, progs
         if doconstrainbudget and tvsettings['tvconstrain']: # Do additional constraints
             for y in range(nyears):
                 budgetvec = budgetarray.fromeach(ind=y, asdict=False)
-                constrainedbudget = constrainbudget(origbudget=origbudget, budgetvec=budgetvec, totalbudget=totalbudget, budgetlims=constraints, optiminds=optiminds, outputtype='odict')
+                constrainedbudget = constrainbudget(origbudget=origbudget, budgetvec=budgetvec, totalbudget=totalbudget, budgetlims=constraints, optimkeys=optimkeys, outputtype='odict')
                 budgetarray.toeach(ind=y, val=constrainedbudget[:])
     
     # Get coverage and actual dictionary, in preparation for running
@@ -592,6 +677,9 @@ def optimize(optim=None, maxiters=None, maxtime=None, verbose=2, stoppingfunc=No
         optim.objectives = defaultobjectives(project=project, progsetname=optim.progsetname, which=which, verbose=verbose)
     if not(hasattr(optim, 'constraints')) or optim.constraints is None:
         optim.constraints = defaultconstraints(project=project, progsetname=optim.progsetname, verbose=verbose)
+
+    # Reorder the programs to match the order of the constraints
+    progset.reorderprograms(optim.constraints['name'].keys())
 
     # Process inputs
     if not optim.objectives['budget']: # Handle 0 or None 
@@ -756,8 +844,11 @@ def tvoptimize(project=None, optim=None, tvec=None, verbose=None, maxtime=None, 
 
     ## Handle budget and remove fixed costs
     progset = project.progsets[optim.progsetname] # Link to the original program set
-    optimizable = array(progset.optimizable())
-    optiminds = findinds(optimizable)
+
+    # Reorder the programs to match the order of the constraints, and get optiminds and optimkeys
+    optiminds, optimkeys = calcoptimindsoptimkeys('tvoptimize', prognamelist=optim.constraints['name'].keys(), progset=progset,
+                                                  optiminds=None, optimkeys=None, reorderprograms=True, verbose=verbose)
+
     budgetvec = optimconstbudget[:][optiminds] # Get the original budget vector
     noptimprogs = len(budgetvec) # Number of optimizable programs
     if label is None: label = ''
@@ -771,7 +862,8 @@ def tvoptimize(project=None, optim=None, tvec=None, verbose=None, maxtime=None, 
             'objectives':optim.objectives, 
             'constraints':optim.constraints, 
             'totalbudget':origtotalbudget, # Complicated, see below
-            'optiminds':optiminds, 
+            'optiminds':optiminds, # Redundant, could probably be removed because optimkeys is given
+            'optimkeys':optimkeys,
             'origbudget':origbudget, 
             'tvec':tvec, 
             'ccsample':ccsample, 
@@ -821,7 +913,7 @@ def tvoptimize(project=None, optim=None, tvec=None, verbose=None, maxtime=None, 
     args['origoutcomes'] = origoutcomes
     res = asd(outcomecalc, tvvec, args=args, xmin=xmin, xmax=xmax, sinitial=sinitial, maxtime=maxtime, maxiters=maxiters, verbose=verbose, randseed=randseed, label=thislabel, **kwargs)
     tvvecnew, fvals = res.x, res.details.fvals
-    budgetvec, tvcontrolvec = separatetv(inputvec=tvvecnew, optiminds=optiminds)
+    budgetvec, tvcontrolvec = separatetv(inputvec=tvvecnew, optimkeys=optimkeys)
     constrainedbudgetnew, constrainedbudgetvecnew, lowerlim, upperlim = constrainbudget(origbudget=origbudget, budgetvec=budgetvec, totalbudget=totalbudget, budgetlims=optim.constraints, optiminds=optiminds, outputtype='full', tvsettings=optim.tvsettings)
     asdresults[key] = {'budget':constrainedbudgetnew, 'fvals':fvals, 'tvcontrolvec':tvcontrolvec}
     if fvals[-1]<bestfval: 
@@ -851,30 +943,33 @@ def tvoptimize(project=None, optim=None, tvec=None, verbose=None, maxtime=None, 
 
 
 
-
-
-
-
 def minoutcomes(project=None, optim=None, tvec=None, verbose=None, maxtime=None, maxiters=1000, 
                 origbudget=None, ccsample='best', randseed=None, mc=3, label=None, die=False, timevarying=None, keepraw=False, stoppingfunc=None, **kwargs):
     ''' Split out minimize outcomes '''
+
+    # Optional printing for debugging
+    # print(f'!! minoutcomes called with: optim:{optim}, optim.constraints:{optim.constraints}, optim.objectives:{optim.objectives},tvec:{tvec},origbudget:{origbudget},randseed:{randseed},mc:{mc},timevarying:{timevarying},stoppingfunc:{stoppingfunc}')
 
     ## Handle budget and remove fixed costs
     if project is None or optim is None: raise OptimaException('An optimization requires both a project and an optimization object to run')
     parset  = project.parsets[optim.parsetname] # Link to the original parameter set
     progset = project.progsets[optim.progsetname] # Link to the original program set
+
+    # Reorder the programs to match the order of the constraints, and get optiminds and optimkeys
+    optiminds, optimkeys = calcoptimindsoptimkeys('minoutcomes', prognamelist=optim.constraints['name'].keys(), progset=progset,
+                                                  optiminds=None, optimkeys=None, reorderprograms=True, verbose=verbose)
+
+    nonoptiminds = array([i   for i, key in enumerate(progset.programs) if not (i in optiminds)])
+    nonoptimkeys = array([key for i, key in enumerate(progset.programs) if not (i in optiminds)])
+
     origtotalbudget = dcp(optim.objectives['budget']) # Should be a float, but dcp just in case
     if origbudget is not None:
         origbudget = dcp(origbudget)
     else:
         try: origbudget = dcp(progset.getdefaultbudget())
         except: raise OptimaException('Could not get default budget for optimization')
-    
-    optimizable = array(progset.optimizable())
-    optiminds = findinds(optimizable)
-    nonoptiminds = findinds(optimizable==False)
-    optimkeys = [key for k,key in enumerate(origbudget.keys()) if optimizable[k]]
-    budgetvec = origbudget[:][optiminds] # Get the original budget vector
+
+    budgetvec = origbudget[optimkeys] # Get the original budget
     nprogs = len(origbudget[:]) # Number of programs total
     noptimprogs = len(budgetvec) # Number of optimizable programs
     xmin = zeros(noptimprogs)
@@ -889,7 +984,7 @@ def minoutcomes(project=None, optim=None, tvec=None, verbose=None, maxtime=None,
         raise op.CancelException
 
     # Calculate original things
-    constrainedbudgetorig, constrainedbudgetvecorig, lowerlim, upperlim = constrainbudget(origbudget=origbudget, budgetvec=budgetvec, totalbudget=origtotalbudget, budgetlims=optim.constraints, optiminds=optiminds, outputtype='full')
+    constrainedbudgetorig, constrainedbudgetvecorig, lowerlim, upperlim = constrainbudget(origbudget=origbudget, budgetvec=budgetvec, totalbudget=origtotalbudget, budgetlims=optim.constraints, optimkeys=optimkeys, outputtype='full', verbose=verbose)
 
     # Set up arguments which are shared between outcomecalc and asd
     args = {'which':      'outcomes', 
@@ -899,7 +994,7 @@ def minoutcomes(project=None, optim=None, tvec=None, verbose=None, maxtime=None,
             'objectives': optim.objectives, 
             'constraints':optim.constraints, 
             'totalbudget':origtotalbudget, # Complicated, see below
-            'optiminds':  optiminds, 
+            'optimkeys':  optimkeys,
             'origbudget': origbudget, 
             'tvec':       tvec, 
             'ccsample':   ccsample, 
@@ -978,7 +1073,7 @@ def minoutcomes(project=None, optim=None, tvec=None, verbose=None, maxtime=None,
 
         # Get the total budget & constrain it 
         totalbudget = origtotalbudget*scalefactor
-        constrainedbudget, constrainedbudgetvec, lowerlim, upperlim = constrainbudget(origbudget=origbudget, budgetvec=budgetvec, totalbudget=totalbudget, budgetlims=optim.constraints, optiminds=optiminds, outputtype='full')
+        constrainedbudget, constrainedbudgetvec, lowerlim, upperlim = constrainbudget(origbudget=origbudget, budgetvec=budgetvec, totalbudget=totalbudget, budgetlims=optim.constraints, optimkeys=optimkeys, outputtype='full')
         args['totalbudget'] = totalbudget
         args['initpeople'] = initpeople # Reset initpeople
         
@@ -1021,7 +1116,7 @@ def minoutcomes(project=None, optim=None, tvec=None, verbose=None, maxtime=None,
                 args['origoutcomes'] = origoutcomes
                 res = asd(outcomecalc, allbudgetvecs[key], args=args, xmin=xmin, maxtime=maxtime, maxiters=maxiters, verbose=verbose, randseed=allseeds[k], label=thislabel, stoppingfunc=stoppingfunc, **kwargs)
                 budgetvecnew, fvals = res.x, res.details.fvals
-                constrainedbudgetnew, constrainedbudgetvecnew, lowerlim, upperlim = constrainbudget(origbudget=origbudget, budgetvec=budgetvecnew, totalbudget=totalbudget, budgetlims=optim.constraints, optiminds=optiminds, outputtype='full')
+                constrainedbudgetnew, constrainedbudgetvecnew, lowerlim, upperlim = constrainbudget(origbudget=origbudget, budgetvec=budgetvecnew, totalbudget=totalbudget, budgetlims=optim.constraints, optimkeys=optimkeys, outputtype='full')
                 asdresults[key] = {'budget':constrainedbudgetnew, 'fvals':fvals}
                 if fvals[-1]<bestfval: 
                     bestkey = key # Reset key
@@ -1078,11 +1173,15 @@ def minmoney(project=None, optim=None, tvec=None, verbose=None, maxtime=None, ma
     parset = project.parsets[optim.parsetname] # Original parameter set
     parset.fixprops(False) # It doesn't really make sense to minimize money with these fixed
     progset = project.progsets[optim.progsetname] # Link to the original program set
+
+    # Reorder the programs to match the order of the constraints, and get optiminds and optimkeys
+    optiminds, optimkeys = calcoptimindsoptimkeys('minmoney', prognamelist=optim.constraints['name'].keys(), progset=progset,
+                                                  optiminds=None, optimkeys=None, reorderprograms=True, verbose=verbose)
+
     totalbudget = dcp(optim.objectives['budget'])
     origtotalbudget = totalbudget
     try: origbudget = dcp(progset.getdefaultbudget())
     except: raise OptimaException('Could not get default budget for optimization')
-    optiminds = findinds(progset.optimizable())
     budgetvec = origbudget[:][optiminds] # Get the original budget vector
     origbudgetvec = dcp(budgetvec)
     nprogs = len(budgetvec)
@@ -1093,9 +1192,9 @@ def minmoney(project=None, optim=None, tvec=None, verbose=None, maxtime=None, ma
             'parsetname': optim.parsetname, 
             'progsetname':optim.progsetname, 
             'objectives': optim.objectives, 
-            'constraints':optim.constraints, 
-            'optiminds':  optiminds, 
-            'origbudget': origbudget, 
+            'constraints':optim.constraints,
+            'optimkeys':  optimkeys,
+            'origbudget': origbudget,
             'tvec':       tvec, 
             'ccsample':   ccsample, 
             'verbose':    verbose,
@@ -1413,6 +1512,7 @@ def minmoney(project=None, optim=None, tvec=None, verbose=None, maxtime=None, ma
             while r <= n_refine and still_choices:
                 r += 1
                 trial_vec = op.dcp(budgetvec)
+                trial_vec = trial_vec.astype('float')   # this should fix dividing by zero giving an error
                 choices = op.findinds(logical_and(refine_vec, trial_vec)) # It's not a choice if either is zero
                 if not len(choices):
                     still_choices = False
@@ -1423,7 +1523,7 @@ def minmoney(project=None, optim=None, tvec=None, verbose=None, maxtime=None, ma
                     trial_vec[ind] = 0 # Set to zero temporarily
                     new_prog = this_prog*refine_step
                     reallocate = this_prog*(1-refine_step)*refine_keep
-                    reallocate_vec = trial_vec / trial_vec.sum() * reallocate
+                    reallocate_vec = trial_vec / trial_vec.sum() * reallocate   # this line throws an error if the dtype of trial_vec is not float
                     reallocate_vec = op.sanitize(reallocate_vec, replacenans=0) # Ensure in the corner case that 0/0 is replaced with 0
                     trial_vec += reallocate_vec
                     trial_vec[ind] = new_prog

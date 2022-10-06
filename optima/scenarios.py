@@ -8,6 +8,7 @@ Version: 2017jun03
 from numpy import append, array, inf
 from optima import OptimaException, Link, Multiresultset # Core classes/functions
 from optima import dcp, today, odict, printv, findinds, defaultrepr, getresults, vec2obj, isnumber, uuid, promotetoarray # Utilities
+from optima import checkifparsetoverridesprogset, checkifparsoverridepars, createwarningforoverride # From programs.py and parameters.py for warning
 
 class Scen(object):
     ''' The scenario base class -- not to be used directly, instead use Parscen or Progscen '''
@@ -388,3 +389,64 @@ def defaultscenarios(project=None, which=None, startyear=2020, endyear=2025, par
         from optima import pygui
         pygui(project)
     return None # Can get it from project.scens
+
+
+def checkifparsetoverridesscenario(project, parset, scen, progset=None, progendyear=None, formatfor='console', createmessages=True, die=False, verbose=2):
+    """
+        A function that sets up the inputs to see if the current parset contains any parameters that
+        override the parameters that a (parameter or program) scenario is trying to target.
+        If any conflicts are found, the warning message(s) can
+        be created with createmessages=True, otherwise combinedwarningmsg, warningmessages will both be None
+        Args:
+            project: the project (to get the parset from if it is not provided)
+            parset: the associated parset to the scen
+            scen: a single Scen object (any type is fine)
+            progendyear: year the progset is starting
+            formatfor: 'console' with \n linebreaks, or 'html' with <p> and <br> elements.
+            createmessages: True to get combinedwarningmsg, warningmessages from createwarningforoverride()
+        Returns:
+            warning, parsoverridingparsdict, overridetimes, overridevals, combinedwarningmsg, warningmessages
+            See checkifparsoverridepars and createwarningforoverride for information about the outputs
+        """
+    if isinstance(scen, Progscen):
+        if progset is None:
+            try: progset = project.progsets[scen.progsetname]
+            except:
+                errmsg = f'Warning could not get progset with name "{scen.progsetname}" for scenario "{scen.name}" from project "{project.name}" to check if any parameters override it.'
+                if die: raise OptimaException(errmsg)
+                else:
+                    printv(errmsg, 2, verbose=verbose)
+                    # warning, parsoverridingparsdict, overridetimes, overridevals, combinedwarningmsg, warningmessages
+                    return False, odict(), odict(), odict(), '', []
+
+        progstartyear = scen.t
+
+        # warning, parsoverridingparsdict, overridetimes, overridevals, combinedwarningmsg, warningmessages = \
+        return checkifparsetoverridesprogset(progset=progset, parset=parset, progendyear=progendyear, progstartyear=progstartyear, formatfor=formatfor, createmessages=createmessages)
+    elif isinstance(scen, Parscen):
+        origpars = parset.pars
+        targetpars = scen.pars
+        if len(targetpars) == 0: return False, odict(), odict(), odict(), '', []
+
+        targetparsnames = [par['name'] for par in targetpars]
+        targetparsstart = [par['startyear'] for par in targetpars]
+        targetparsend = [par['endyear'] for par in targetpars]
+
+        warning, parsoverridingparsdict, overridetimes, overridevals = \
+            checkifparsoverridepars(origpars,
+                                    targetparsnames,
+                                    progstartyear=min(targetparsstart),
+                                    progendyear=max(targetparsend)) # note that assumes that all Pars are set starting in the same year, and ending in the same year but this is good enough? for a warning
+
+        combinedwarningmsg, warningmessages = None, None
+        if createmessages:
+            warning, combinedwarningmsg, warningmessages = createwarningforoverride(origpars, warning,
+                                                                                    parsoverridingparsdict,
+                                                                                    overridetimes, overridevals,
+                                                                                    fortype='Parscen',
+                                                                                    parsetname=parset.name,
+                                                                                    progendyear=progendyear,
+                                                                                    formatfor=formatfor)
+        # warning, parsoverridingparsdict, overridetimes, overridevals, combinedwarningmsg, warningmessages
+        return warning, parsoverridingparsdict, overridetimes, overridevals, combinedwarningmsg, warningmessages
+

@@ -41,7 +41,10 @@
                     ng-model="scenario.active"
                     ng-change="saveScenarios(scenarios, 'Saved changes')">
               </td>
-              <td>{{ scenario.name }}</td>
+              <td>
+                {{ scenario.name }}
+                <icon ng-show="scenario.warning" action="error" errormsg="{{scenario.warningmessage}}" click=""/>
+              </td>
               <td>{{ getParsetName(scenario) }}</td>
               <td>{{ getProgramSetName(scenario) }}</td>
               <td>{{ scenario.scenario_type }}</td>

@@ -6,7 +6,7 @@ set of programs, respectively.
 Version: 2019jan09
 """
 
-from optima import OptimaException, Link, printv, uuid, today, sigfig, getdate, dcp, smoothinterp, findinds, odict, Settings, sanitize, defaultrepr, isnumber, promotetoarray, vec2obj, asd, convertlimits
+from optima import OptimaException, Link, printv, uuid, today, sigfig, getdate, dcp, smoothinterp, findinds, odict, Settings, sanitize, defaultrepr, isnumber, promotetoarray, vec2obj, asd, convertlimits, Timepar, Yearpar, checkifparsoverridepars, createwarningforoverride
 from numpy import ones, prod, array, zeros, exp, log, append, nan, isnan, maximum, minimum, sort, concatenate as cat, transpose, mean, argsort
 from random import uniform
 import six
@@ -153,6 +153,28 @@ class Programset(object):
             self.programs.pop(program)
             self.updateprogset()
             printv('\nRemoved program "%s" from programset "%s". \nPrograms in this programset are: %s' % (program, self.name, [thisprog.short for thisprog in self.programs.values()]), 4, verbose)
+
+    def reorderprograms(self,desiredorder,verbose=2):
+        ''' Reorder the odict of programs. Expects desiredorder to be a list of Program or list of str'''
+        if not (len(desiredorder) == len(self.programs)):
+            raise OptimaException(f'You have asked to reorder the programs {[thisprog for thisprog in self.programs]} of programset {self.name} into order {desiredorder}, but the desired order only has {len(desiredorder)} programs not {len(self.programs)}.')
+
+        for i,program in enumerate(desiredorder):
+            if not type(program) == str: desiredorder[i] = program.short  # If not str, assume Program and get it's short name
+
+        if desiredorder == list(self.programs.keys()): return # Same order so don't need to continue
+        if not (set(desiredorder) == set(self.programs.keys())):   # desiredorder is a list of str, self.programs is an odict
+            raise OptimaException(f'You have asked to reorder the programs {[thisprog for thisprog in self.programs]} of programset {self.name} into order {desiredorder}, but the desired order does not have all of the programs.')
+
+        originalprograms = dcp(self.programs)
+        self.programs = odict()
+        for i,program in enumerate(desiredorder):
+            if program not in originalprograms:
+                raise OptimaException(f'You have asked to reorder the program "{program}" to position {i} in programset {self.name}, but there is no program by this name. Available programs are {[thisprog for thisprog in self.programs]}')
+            else:
+                self.programs[program] = originalprograms[program]  # ordering an odict is done by the order of insertion
+        self.updateprogset()
+        printv(f'\nReordered the programs in programset: {self.name}.\nThe old order was: {[key for key in originalprograms.keys()]} and the new order is {[key for key in self.programs.keys()]}.')
 
     def optimizable(self):
         return [True if prog.optimizable() else False for prog in self.programs.values()]
@@ -615,7 +637,7 @@ class Programset(object):
             last_y = thispar.interp(tvec=last_t, dt=settings.dt, asarray=False, usemeta=False) # Find what the model would get for this value
             
             for pop in outcomes[outcome].keys(): # WARNING, 'pop' should be renamed 'key' or something for e.g. partnerships
-                
+
                 # Validate outcome
                 thisoutcome = outcomes[outcome][pop] # Shorten
                 lower = float(thispar.limits[0]) # Lower limit, cast to float just to be sure (is probably int)
@@ -791,6 +813,43 @@ def costfuncobjectivecalc(parmeans=None, pardict=None, progset=None, parset=None
         mismatch += thismismatch
         printv('%45s | %30s | par: %s | budget: %s | mismatch: %s' % ((budgetparpair[0],budgetparpair[1])+sigfig([parval,budgetval,thismismatch],4)), 3, verbose)
     return mismatch
+
+
+
+
+def checkifparsetoverridesprogset(progset=None, parset=None, progendyear=None, progstartyear=None, formatfor='console', createmessages=True):
+    """
+    A function that sets up the inputs to call checkifparsoverridepars() to see if the parset contains any parameters that
+    override the parameters that a progset is trying to target. If any conflicts are found, the warning message(s) can
+    be created with createmessages=True, otherwise combinedwarningmsg, warningmessages will both be None
+    Args:
+        progset: a Programset object
+        parset: a Parameterset object that may override the progset's target parameters
+        progendyear: year the progset is starting
+        progstartyear: year the progset is ending
+        formatfor: 'console' with \n linebreaks, or 'html' with <p> and <br> elements.
+        createmessages: True to get combinedwarningmsg, warningmessages from createwarningforoverride()
+    Returns:
+        warning, parsoverridingparsdict, overridetimes, overridevals, combinedwarningmsg, warningmessages
+        See checkifparsoverridepars and createwarningforoverride for information about the outputs
+    """
+    if progset is None or parset is None or parset.pars is None:
+        raise OptimaException('checkifparsetoverridesprogset() must be provided with both a progset and a parset, but at least one of them was none.')
+    if progendyear is None: progendyear = 2100
+    progset.gettargetpars()
+    progset.gettargetpartypes()
+    progtargetpartypes = progset.targetpartypes
+    origpars = parset.pars
+    # Returns
+    warning, parsoverridingparsdict, overridetimes, overridevals = checkifparsoverridepars(origpars=origpars, targetpars=progtargetpartypes, progstartyear=progstartyear, progendyear=progendyear)
+
+    combinedwarningmsg, warningmessages = None, None
+    if createmessages:
+        progsbytargetpartype = progset.progs_by_targetpartype()
+        warning, combinedwarningmsg, warningmessages = createwarningforoverride(origpars, warning, parsoverridingparsdict, overridetimes, overridevals, fortype='Progscen',
+                                 progsetname=progset.name, parsetname=parset.name, progsbytargetpartype=progsbytargetpartype, progendyear=progendyear,
+                                 formatfor=formatfor)
+    return warning, parsoverridingparsdict, overridetimes, overridevals, combinedwarningmsg, warningmessages
 
 
 
