@@ -116,14 +116,14 @@ define(['angular' ], function (angular) {
         if (scope.action == 'error') {
             text = '{{errormsg}}';
             tpclass = 'tooltip errortooltip';
-            tpy = 175
-            colorattr = 'color: #cc0000;'
+            tpy = 175;
+            colorattr = 'color: #cc0000;';
         }
         else {
             text = iconTypes[scope.action].helpText
             tpclass = 'tooltip';
-            tpy = -150
-            colorattr = ''
+            tpy = -150;
+            colorattr = '';
         }
         var html =
               '<i'
@@ -132,7 +132,7 @@ define(['angular' ], function (angular) {
               + ' tooltip tp-class="' + tpclass + '" '
               + ' tp-x="-50" tp-y="' + tpy + '" '
               + ' tp-anchor-x="0" tp-anchor-y="0"'
-              + ' style="margin-left: 0.5em; font-size: 14px '+colorattr+' "'
+              + ' style="margin-left: 0.5em; font-size: 14px; '+colorattr+' "'
               + ' ng-click="click()"'
               + '></i>';
 
