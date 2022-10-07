@@ -65,7 +65,7 @@ class Resultset(object):
         if project is not None:
             if data is None: data = project.data # Copy data if not supplied -- DO worry if data don't exist!
             if settings is None: settings = project.settings
-        
+
         # Fundamental quantities -- populated by project.runsim()
         if keepraw: self.raw = raw # Keep raw, but only if asked
         if keepraw: self.simpars = simpars # ...likewise sim parameters
@@ -105,7 +105,7 @@ class Resultset(object):
         self.main['propincare']         = Result('Diagnosed PLHIV retained in care (%)',     ispercentage=True, defaultplot='total')
         self.main['proptreat']          = Result('Diagnosed PLHIV on treatment (%)',         ispercentage=True, defaultplot='total')
         self.main['propsuppressed']     = Result('Treated PLHIV with viral suppression (%)', ispercentage=True, defaultplot='total')
-        self.main['proppmtct']          = Result('HIV+ pregnant women receiving PMTCT (%)',           ispercentage=True, defaultplot='total')
+        self.main['proppmtct']          = Result('HIV+ pregnant women receiving PMTCT (%)',  ispercentage=True, defaultplot='total')
         
         self.main['prev']               = Result('HIV prevalence (%)',       ispercentage=True, defaultplot='population')
         self.main['force']              = Result('HIV incidence (per 100 p.y.)', ispercentage=True, defaultplot='population')
@@ -130,6 +130,9 @@ class Resultset(object):
         self.other['numimmi']           = Result('New immigrants')
         self.other['numimmiplhiv']      = Result('New PLHIV immigrants')
         if advancedtracking:
+            self.other['numnewdiagcd4']      = Result('New HIV diagnoses by CD4 count', defaultplot='stacked')
+            self.other['proplatediag']       = Result('Proportion of new HIV diagnoses with CD4<200 (%)', ispercentage=True, defaultplot='total')
+            self.other['propundxcd4lt200']   = Result('Proportion of undiagnosed PLHIV with CD4<200 (%)', ispercentage=True, defaultplot='total')
             self.other['numincionpopbypop']  = Result('New HIV infections acquired from pop', defaultplot='population+stacked')
             self.other['numtransitpopbypop'] = Result('HIV infections transitioned from pop', defaultplot='population+stacked')
             self.other['numincimethods']     = Result('New HIV infections by method of transmission', defaultplot='population+stacked')
@@ -317,6 +320,7 @@ class Resultset(object):
         alldeaths    = assemble('death')
         otherdeaths  = assemble('otherdeath') 
         alldiag      = assemble('diag')
+        alldiagcd4   = assemble('diagcd4')
         alldiagpmtct = assemble('diagpmtct')
         allmtct      = assemble('mtct')
         allhivbirths = assemble('hivbirths')
@@ -327,10 +331,12 @@ class Resultset(object):
         allsus       = self.settings.sus
         allaids      = self.settings.allaids
         alldx        = self.settings.alldx
+        undx         = self.settings.undx
         allevercare  = self.settings.allevercare
         allcare      = self.settings.allcare
         alltx        = self.settings.alltx
         svl          = self.settings.svl
+        cd4lt200inds = self.settings.cd4lt200inds
         data         = self.data
         if advancedtracking:
             alltransitpopbypop = assemble('transitpopbypop')
@@ -442,11 +448,7 @@ class Resultset(object):
             self.main['popsize'].datatot  = processtotalpopsizedata(self, data['popsize'])
             self.main['popsize'].datapops = processdata(data['popsize'], uncertainty=True, bypop=True)
 
-        self.other['numdiagpmtct'].pops = process(alldiagpmtct[:, :, indices])
-        self.other['numdiagpmtct'].tot  = process(alldiagpmtct[:, :, indices].sum(axis=1))  # Axis 1 is populations
 
-        self.other['propdiagpmtct'].pops = process(alldiagpmtct[:, :, indices]/maximum(alldiag[:, :, indices],eps))
-        self.other['propdiagpmtct'].tot  = process(alldiagpmtct[:, :, indices].sum(axis=1)/maximum(alldiag[:, :, indices].sum(axis=1),eps))  # Axis 1 is populations
 
         # Calculate DALYs
         
@@ -528,8 +530,26 @@ class Resultset(object):
         self.other['numimmiplhiv'].pops = process(allimmi[:,allplhiv,:,:][:,:,:,indices].sum(axis=1))  # Axis 1 is health state
         self.other['numimmiplhiv'].tot  = process(allimmi[:,allplhiv,:,:][:,:,:,indices].sum(axis=(1, 2)))   # Axis 2 is population
 
+        self.other['numdiagpmtct'].pops = process(alldiagpmtct[:,:,indices])
+        self.other['numdiagpmtct'].tot  = process(alldiagpmtct[:,:,indices].sum(axis=1))  # Axis 1 is populations
+
+        self.other['propdiagpmtct'].pops = process(alldiagpmtct[:,:,indices]/maximum(alldiag[:,:,indices],eps))
+        self.other['propdiagpmtct'].tot  = process(alldiagpmtct[:,:,indices].sum(axis=1)/maximum(alldiag[:,:,indices].sum(axis=1),eps))  # Axis 1 is populations
 
         if advancedtracking:
+            self.other['numnewdiagcd4'].pops = process(swapaxes(alldiagcd4[:,:,:,indices],1,2)) # In alldiagcd4, axis 1 is CD4 count, so we make axis 1 population, axis 2 CD4 count
+            self.other['numnewdiagcd4'].tot  = process(alldiagcd4[:,:,:,indices].sum(axis=2)) # Sum over populations
+            if data is not None:
+                self.other['numnewdiagcd4'].datatot = processdata(data['optnumdiag'], uncertainty=True)
+                self.other['numnewdiagcd4'].estimate = False  # It's real data, not just an estimate
+
+            self.other['proplatediag'].pops = process(alldiagcd4[:,cd4lt200inds,:,:][:,:,:,indices].sum(axis=1)/maximum(alldiag[:,:,indices],eps))
+            self.other['proplatediag'].tot  = process(alldiagcd4[:,cd4lt200inds,:,:][:,:,:,indices].sum(axis=(1,2))/maximum(alldiag[:,:,indices].sum(axis=1),eps))  # Axis 1 is populations
+
+            undxcd4lt200 = array(undx)[cd4lt200inds]
+            self.other['propundxcd4lt200'].pops = process(allpeople[:,undxcd4lt200,:,:][:,:,:,indices].sum(axis=1)/maximum(allpeople[:,undx,:,:][:,:,:,indices].sum(axis=1),eps))
+            self.other['propundxcd4lt200'].tot  = process(allpeople[:,undxcd4lt200,:,:][:,:,:,indices].sum(axis=(1,2))/maximum(allpeople[:,undx,:,:][:,:,:,indices].sum(axis=(1,2)),eps))
+
             self.other['numincionpopbypop'].pops = process(allincionpopbypop[:, :, :, :, indices].sum(axis=2))  # Axis 2 is health state of causers
             self.other['numincionpopbypop'].tot  = process(allincionpopbypop[:, :, :, :, indices].sum(axis=(2, 3)))  # Axis 3 is causer populations
             # Uncomment the lines below to check that numincionpopbypop is being calculated properly compared with numinci - it will show as data on the plots

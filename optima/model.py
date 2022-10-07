@@ -67,7 +67,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
     raw_mtcttoandfrom   = zeros((npops, nstates, npops, npts)) # Number of mother-to-child transmissions to each population and from each population and each state, similar to raw_incionpopbypop
     raw_hivbirths       = zeros((npops, npts))                 # Number of births to HIV+ pregnant women
     raw_receivepmtct    = zeros((npops, npts))                 # Initialise a place to store the number of people in each population receiving PMTCT
-    raw_diag            = zeros((npops, npts))                 # Number diagnosed per timestep
+    raw_diagcd4         = zeros((ncd4, npops, npts))           # Number diagnosed by CD4 per timestep
     raw_dxforpmtct      = zeros((npops, npts))                 # Number diagnosed to go onto PMTCT per timestep
     raw_newcare         = zeros((npops, npts))                 # Number newly in care per timestep
     raw_newtreat        = zeros((npops, npts))                 # Number initiating ART per timestep
@@ -205,7 +205,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
 
 #    # These all have the same format, so we put them in tuples of (proptype, data structure for storing output, state below, state in question, states above (including state in question), numerator, denominator, data structure for storing new movers)
 #    #                    name,       prop,    lower,       to,    num,     denom,    raw_new,        fixyear
-    propstruct = odict([('propdx',   [propdx,   undx,       dx,    alldx,   allplhiv, raw_diag,       fixpropdx]),
+    propstruct = odict([('propdx',   [propdx,   undx,       dx,    alldx,   allplhiv, raw_diagcd4,    fixpropdx]),
                         ('propcare', [propcare, dxnotincare,care,  allcare, alldx,    raw_newcare,    fixpropcare]),    # Note that dxnotincare has twice as many states as care so we combine people when putting up into care BUT we only put people down into lost
                         ('proptx',   [proptx,   care,       alltx, alltx,   allcare,  raw_newtreat,   fixproptx]),
                         ('propsupp', [propsupp, usvl,       svl,   svl,     alltx,    raw_newsupp,    fixpropsupp]),
@@ -755,7 +755,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
         thistransit[ix_(undx, undx, arange(npops))]  *= einsum('ik,ij->ijk', (1.-dxprobarr[undx - undx[0],:]), fromtoarr[ix_(undx,undx)])
         # undx -> dx: thistransit[fromstate,tostate,:] *=  dxprob[cd4], cd4 state of fromstate
         thistransit[ix_(undx, alldx, arange(npops))] *= einsum('ik,ij->ijk', dxprobarr[undx - undx[0],:], fromtoarr[ix_(undx,alldx)])
-        raw_diag[:,t] += einsum('ij,ij->j', people[undx,:,t], thistransit[ix_(undx, alldx, arange(npops))].sum(axis=1) ) /dt
+        raw_diagcd4[:,:,t] += einsum('ij,ij->ij', people[undx,:,t], thistransit[ix_(undx, alldx, arange(npops))].sum(axis=1) ) /dt
 
 
         # Diagnosed/lost to care
@@ -869,15 +869,15 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
 
             proptobedx = min(numtobedx / (eps+numundxhivpospregwomen.sum()), 1-eps)  # Can only diagnose 99.9% of preg women (not 100% to avoid roundoff errors giving negative people)
             numwillbedx = proptobedx*numundxhivpospregwomen.sum()
-            initrawdiag = raw_diag[:, t].sum()
+            initrawdiag = raw_diagcd4[:,:,t].sum(axis=(0,1))
 
             numdxforpmtct = 0 #total
             thispoptobedx = einsum('ij,j->ij',people[undx, :, t],totalbirthrate) * relhivbirth * proptobedx # this is split by cd4 state
             if t<npts-1:
                     people[undx, :, t+1] -= thispoptobedx
                     people[dx,   :, t+1] += thispoptobedx
-            thispoptobedx = thispoptobedx.sum(axis=0)  # from here on, only split by population, not state
-            raw_diag[:,t]       += thispoptobedx /dt  # annualise
+            raw_diagcd4[:,:,t]  += thispoptobedx /dt  # annualise
+            thispoptobedx        = thispoptobedx.sum(axis=0)  # from here on, only split by population, not state
             raw_dxforpmtct[:,t] += thispoptobedx /dt  # annualise
             numdxforpmtct       += thispoptobedx.sum(axis=0)  # in this timestep aka not annualised
             if putinstantlyontopmtct:
@@ -897,7 +897,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                 avbirthrate = sum(totalbirthrate[totalbirthrate!=0]) / sum(totalbirthrate!=0)
                 propnexttime = avbirthrate * relhivbirth * timestepsonpmtct
                 if proptobedx > 0.01: print(f'INFO: {tvec[t]}: Diagnosing {numdxforpmtct:.2f}={proptobedx * 100:.2f}% (wanted {numtobedx:.2f}) of pregnant undiagnosed HIV+ women. Only approx {propnexttime*100:.2f}% of these will be pregnant next time step')
-                propnewdiag = raw_diag[:,t].sum()/(initrawdiag+eps)-1
+                propnewdiag = raw_diagcd4[:,:,t].sum(axis=(0,1))/(initrawdiag+eps)-1
                 if propnewdiag > 0.01: print(f'INFO: {tvec[t]}: Increasing number diagnosed this year from {initrawdiag:.3f} to {raw_diag[:,t].sum():.3f} (up {propnewdiag*100:.2f}%)')
                 if abs(numwillbedx - numdxforpmtct) > eps:
                     print(f"WARNING: Tried to diagnose {numwillbedx} out of {numundxhivpospregwomen.sum()} undiagnosed pregnant women but instead diagnosed {numdxforpmtct} at time {tvec[t]}")
@@ -1149,7 +1149,9 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                                     newmoversfromlost = newmovers[ncd4:, :] # Second group of movers are from lost
                                     newmovers = newmoversfromdx + newmoversfromlost  # we sum people in corresponding cd4 states
                                 people[tostate,:,t+1]    += newmovers # ... and into the more progressed state
-                            raw_new[:,t+1]               += newmovers.sum(axis=0)/dt # Save new movers
+
+                            if name == 'propdx':  raw_new[:,:,t+1] += newmovers/dt # propdx is split by cd4 into raw_diagcd4
+                            else:                 raw_new[:,t+1] += newmovers.sum(axis=0)/dt # Save new movers
                     elif diff<-eps: # We need to move people backwards along the cascade
                         ppltomovedown = people[tostate,:,t+1]
                         totalppltomovedown = ppltomovedown.sum()
@@ -1166,7 +1168,8 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                                 people[tostate,:,t+1]    -= newmovers # Shift people out of the more progressed state...
                                 if name == 'propcare': lowerstate = lost  # Note the asymmetry, care moves people from dx and lost, but down into only lost
                                 people[lowerstate,:,t+1] += newmovers # ... and into the less progressed state
-                            raw_new[:,t+1]               -= newmovers.sum(axis=0)/dt # Save new movers, inverting again
+                            if name == 'propdx': raw_new[:,:,t+1] -= newmovers / dt  # propdx is split by cd4 into raw_diagcd4
+                            else:                raw_new[:,t+1]   -= newmovers.sum(axis=0) / dt  # Save new movers, inverting again
             if debug: checkfornegativepeople(people, tind=t+1) # If debugging, check for negative people on every timestep
 
     raw                   = odict()    # Sim output structure
@@ -1180,7 +1183,8 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
     raw['hivbirths']      = raw_hivbirths
     raw['immi']           = raw_immi
     raw['pmtct']          = raw_receivepmtct
-    raw['diag']           = raw_diag
+    raw['diag']           = raw_diagcd4.sum(axis=0) # sum over cd4 count
+    raw['diagcd4']        = raw_diagcd4
     raw['diagpmtct']      = raw_dxforpmtct
     raw['newtreat']       = raw_newtreat
     raw['death']          = raw_death
