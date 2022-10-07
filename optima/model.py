@@ -764,16 +764,15 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
 
         # Care/USVL/SVL to lost
         if True: # userate(propcare,t): People get lost to care even if there is propcare set, propcare will adjust after the fact.
+            lossprobarr = tile(leavecare[:,t], (ncd4, 1))
+            lossprobarr[aidsind:, :] = minimum(aidsleavecare[t], lossprobarr[aidsind:, :])
             lossprob = [leavecare[:,t]]*ncd4
             for cd4 in range(aidsind, ncd4): lossprob[cd4] = minimum(aidsleavecare[t],leavecare[:,t])
-        else: lossprob = zeros(ncd4)
-        for cd4ind, fromstate in enumerate(allcare): # 3 categories x 6 states per category = 18 states
-            cd4 = cd4ind%ncd4 # Convert from state index to actual CD4 index
-            for tostate in fromto[fromstate]:
-                if tostate in allcare: # Probability of not being lost and remaining in care
-                    thistransit[fromstate,tostate,:] *= (1.-lossprob[cd4])
-                else: # Probability of being lost
-                    thistransit[fromstate,tostate,:] *= lossprob[cd4]
+        else: lossprobarr = zeros((ncd4,npops))
+        # allcare -> allcare: thistransit[fromstate,tostate,:] *=  (1.-lossprob[cd4]), cd4 state of fromstate
+        thistransit[ix_(allcare, allcare, arange(npops))]  *= einsum('ik,ij->ijk', (1.-lossprobarr[(allcare-allcare[0])%ncd4,:]), fromtoarr[ix_(allcare,allcare)])
+        # allincare -> lost: thistransit[fromstate,tostate,:] *=  lossprob[cd4], cd4 state of fromstate
+        thistransit[ix_(allcare, lost, arange(npops))]  *= einsum('ik,ij->ijk', lossprobarr[(allcare-allcare[0])%ncd4,:], fromtoarr[ix_(allcare,lost)])
 
         # SVL to USVL
         usvlprob = treatfail[t] if userate(propsupp,t) else 0.
