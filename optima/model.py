@@ -1,6 +1,6 @@
 ## Imports
-from numpy import zeros, exp, maximum, minimum, inf, array, isnan, einsum, floor, ones, power as npow, concatenate as cat, interp, nan, squeeze, isinf, isfinite, argsort, take_along_axis, put_along_axis, expand_dims, ix_, tile, arange
-from optima import OptimaException, printv, dcp, odict, findinds, compareversions, version
+from numpy import zeros, exp, maximum, minimum, inf, array, isnan, einsum, floor, ones, power as npow, concatenate as cat, interp, nan, squeeze, isinf, isfinite, argsort, take_along_axis, put_along_axis, expand_dims, ix_, tile, arange, swapaxes, errstate
+from optima import OptimaException, printv, dcp, odict, findinds, compareversions, version, sanitize
 
 def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False, debug=False, label=None, startind=None, advancedtracking=False):
     """
@@ -147,12 +147,12 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
     immipropdiag    = simpars['immipropdiag']       #Proportion of immigrants with HIV who are already diagnosed (will be assumed linked to care but not on treatment)
 
     # Shorten to lists of key tuples so don't have to iterate over every population twice for every timestep
-    risktransitlist,agetransitlist = [],[]
-    for p1 in range(npops):
-        for p2 in range(npops):
-            if agetransit[p1,p2]:
-                agetransitlist.append((p1,p2, (1.-exp(-dt/agetransit[p1,p2]))))
-            if risktransit[p1,p2]:  risktransitlist.append((p1,p2, (1.-exp(-dt/risktransit[p1,p2]))))
+    with errstate(divide='ignore'): # If risktransit[p1,p2] = 0 then -dt/risktransit[:,:] is inf, but it is ok
+        risktransit = array(risktransit, dtype=float)
+        risktransitarr = 1.-exp(-dt/risktransit[:,:])
+        risktransitarr[isnan(risktransitarr)] = 0
+        risktransitarr[isinf(risktransitarr)] = 0
+        risktransitarr = risktransitarr * (risktransit[:,:] != 0) # If risktransit[p1,p2] = 0 then 1.-exp(-dt/risktransit[:,:]) is 1, but we want 0
 
     # Figure out which populations have age inflows -- don't force population
     ageinflows   = agetransit.sum(axis=0)               # Find populations with age inflows
@@ -527,13 +527,8 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
     ### Age precalculation
     ##############################################################################################################
 
-    agelist = dict()
-    for p1 in range(npops):
-        agelist[p1] = dict()
-        # allagerate = einsum('i,j->j',agetransit[p1, :],agerate[p1, :])
-        for p2 in range(npops):
-            agerates = agetransit[p1, p2] * agerate[p1, :]
-            agelist[p1][p2] = agerates
+    agearr = zeros((npops, npops, npts))
+    agearr = einsum('ij,ik->ijk', agetransit[:, :], agerate[:, :])
 
     ##################################################################################################################
     ### Define error checking
@@ -968,37 +963,26 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
             people[susreg,:,t+1]   -= circppl
             people[progcirc,:,t+1] += circppl
 
-
             ## Age-related transitions
-            for p1,p2,thisagetransprob in agetransitlist:
-                thisagerate = agelist[p1][p2][t]
-                peopleleaving = people[:, p1, t+1] * thisagerate #thisagetransprob
-                if debug and (peopleleaving > people[:, p1, t+1]).any():
-                    errormsg = label + 'Age transitions between pops %s and %s at time %i are too high: the age transitions you specified say that %f%% of the population should age in a single time-step.' % (popkeys[p1], popkeys[p2], t+1, agetransit[p1, p2]*100.)
-                    if die: raise OptimaException(errormsg)
-                    else:   printv(errormsg, 1, verbose)
-                    peopleleaving = minimum(peopleleaving, people[:, p1, t]) # Ensure positive
+            peoplefromto = einsum('ki,ij->kij', people[:,:,t+1], agearr[:,:,t])
+            people[:,:,t+1] -= peoplefromto.sum(axis=2)  # sum over popto    # Ageing from a population
+            people[:,:,t+1] += peoplefromto.sum(axis=1)  # sum over popfrom  # Ageing to a population
+            if advancedtracking:
+                raw_transitpopbypop[:,allplhiv,:,t+1] += swapaxes(peoplefromto[allplhiv,:,:],1,2) / dt  # annualize
 
 
-                people[:, p1, t+1] -= peopleleaving # Take away from pop1...
-                people[:, p2, t+1] += peopleleaving # ... then add to pop2
 
-                if advancedtracking:
-                    raw_transitpopbypop[p2,allplhiv,p1, t+1] += peopleleaving[allplhiv]/dt #annualize
-
-
-            ## Risk-related transitions
-            for p1,p2,thisrisktransprob in risktransitlist:
-                peoplemoving1 = people[:, p1, t+1] * thisrisktransprob  # Number of other people who are moving pop1 -> pop2
-                peoplemoving2 = people[:, p2, t+1] * thisrisktransprob * (sum(people[:, p1, t+1])/sum(people[:, p2, t+1])) # Number of people who moving pop2 -> pop1, correcting for population size
-                # Symmetric flow in totality, but the state distribution will ideally change.
-                people[:, p1, t+1] += peoplemoving2 - peoplemoving1 # NOTE: this should not cause negative people; peoplemoving1 is guaranteed to be strictly greater than 0 and strictly less that people[:, p1, t+1]
-                people[:, p2, t+1] += peoplemoving1 - peoplemoving2 # NOTE: this should not cause negative people; peoplemoving2 is guaranteed to be strictly greater than 0 and strictly less that people[:, p2, t+1]
-
-                if advancedtracking:
-                    raw_transitpopbypop[p2,allplhiv,p1, t+1] += peoplemoving1[allplhiv]/dt #annualize
-                    raw_transitpopbypop[p1,allplhiv,p2, t+1] += peoplemoving2[allplhiv]/dt #annualize
-
+            # ## Risk-related transitions
+            # peoplefromto1: statetofrom, popfrom, popto
+            peoplefromto1 = einsum('ki,ij->kij', people[:,:,t+1], risktransitarr[:,:]) # Number of other people who are moving pop1 -> pop2
+            peoplefromto2 = einsum('kj,ij,i,j->kij', people[:,:,t+1], risktransitarr[:,:], people[:,:,t+1].sum(axis=0), 1/people[:,:,t+1].sum(axis=0)) # Number of people who moving pop2 -> pop1, correcting for population size
+            people[:,:,t+1] -= peoplefromto1.sum(axis=2)
+            people[:,:,t+1] += peoplefromto1.sum(axis=1) # Symmetric flow in totality, but the state distribution will ideally change.
+            people[:,:,t+1] -= swapaxes(peoplefromto2,1,2).sum(axis=2)
+            people[:,:,t+1] += swapaxes(peoplefromto2,1,2).sum(axis=1)
+            if advancedtracking:
+                raw_transitpopbypop[:,allplhiv,:,t+1] += swapaxes(peoplefromto1[allplhiv,:,:],1,2)/dt #annualize
+                raw_transitpopbypop[:,allplhiv,:,t+1] += swapaxes(peoplefromto2[allplhiv,:,:],1,2)/dt #annualize
 
             ###############################################################################
             ## Reconcile population sizes
