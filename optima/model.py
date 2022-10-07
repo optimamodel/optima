@@ -733,40 +733,33 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
 
         # Undiagnosed to diagnosed
         if userate(propdx,t): # Need to project forward one year to avoid mismatch
-            dxprobarr = tile(hivtest[:,t],(6,1))
+            dxprobarr = tile(hivtest[:,t], (ncd4,1))
             dxprobarr[aidsind:,:] =  maximum(aidstest[t],dxprobarr[aidsind:,:])
         else: dxprobarr = zeros((ncd4,npops))
-
         # undx -> undx: thistransit[fromstate,tostate,:] *= (1.-dxprob[cd4]), cd4 state of fromstate
-        thistransit[ix_(undx, undx, arange(npops))]  *= einsum('ik,ij->ijk', (1.-dxprobarr[undx - undx[0],:]), fromtoarr[ix_(undx,undx)])  # if fromstate in undx  and  tostate in undx,   need cd4 which is pos in undx
+        thistransit[ix_(undx, undx, arange(npops))]  *= einsum('ik,ij->ijk', (1.-dxprobarr[undx - undx[0],:]), fromtoarr[ix_(undx,undx)])
         # undx -> dx: thistransit[fromstate,tostate,:] *=  dxprob[cd4], cd4 state of fromstate
-        thistransit[ix_(undx, alldx, arange(npops))] *= einsum('ik,ij->ijk', dxprobarr[undx - undx[0],:], fromtoarr[ix_(undx,alldx)])  # if fromstate in undx  and  tostate in undx,   need cd4 which is pos in undx
+        thistransit[ix_(undx, alldx, arange(npops))] *= einsum('ik,ij->ijk', dxprobarr[undx - undx[0],:], fromtoarr[ix_(undx,alldx)])
         raw_diag[:,t] += einsum('ij,ij->j', people[undx,:,t], thistransit[ix_(undx, alldx, arange(npops))].sum(axis=1) ) /dt
+
 
         # Diagnosed/lost to care
         if True: # userate(propcare,t): Put people onto care even if there is propcare set, propcare will adjust after the fact. Otherwise, propcare doesn't link people to care at the rate that people should be (because theres enough in care) and we get too many people diagnosed but not linked.
-            careprob = [linktocare[:,t]]*ncd4
-            returnprob = [returntocare[:,t]]*ncd4
-            for cd4 in range(aidsind, ncd4):
-                careprob[cd4]   = maximum(aidslinktocare[t],linktocare[:,t]) #people with AIDS potentially linked to care faster than people with high CD4 counts (at least historically)
-                returnprob[cd4] = 1. - (1. - aidstest[t])*(1. - returntocare[:,t]) ##people with AIDS who are lost to follow-up may be returned to care based on re-testing or return to care adherence, independently
+            careprobarr = tile(linktocare[:,t], (ncd4,1))
+            returnprobarr = tile(returntocare[:,t], (ncd4,1))
+            careprobarr[aidsind:,:] = maximum(aidslinktocare[t], careprobarr[aidsind:,:])  #people with AIDS potentially linked to care faster than people with high CD4 counts (at least historically)
+            returnprobarr[aidsind:,:] = 1. - (1.-aidstest[t])*(1.-returntocare[:,t])  #people with AIDS who are lost to follow-up may be returned to care based on re-testing or return to care adherence, independently
         else:
-            careprob   = zeros(ncd4)
-            returnprob = zeros(ncd4)
-        for cd4ind, fromstate in enumerate(dx):  # 1 categories x 6 states per category = 6 states
-            cd4 = cd4ind%ncd4 # Convert from state index to actual CD4 index
-            for tostate in fromto[fromstate]:
-                if tostate in dx: # Probability of not moving into care for diagnosed but not yet in care
-                    thistransit[fromstate,tostate,:] *= (1.-careprob[cd4])
-                else: # Probability of moving into care
-                    thistransit[fromstate,tostate,:] *= careprob[cd4]
-        for cd4ind, fromstate in enumerate(lost):  # 1 categories x 6 states per category = 6 states
-            cd4 = cd4ind%ncd4 # Convert from state index to actual CD4 index
-            for tostate in fromto[fromstate]:
-                if tostate in lost: # Probability of not returning to care for diagnosed and lost to follow-up
-                    thistransit[fromstate,tostate,:] *= (1.-returnprob[cd4])
-                else: # Probability of returning to care
-                    thistransit[fromstate,tostate,:] *= returnprob[cd4]
+            careprobarr   = zeros((ncd4,npops))
+            returnprobarr = zeros((ncd4,npops))
+        # dx -> dx: thistransit[fromstate,tostate,:] *= (1.-careprob[cd4]), cd4 state of fromstate
+        thistransit[ix_(dx, dx, arange(npops))]  *= einsum('ik,ij->ijk', (1.-careprobarr[(dx-dx[0])%ncd4,:]), fromtoarr[ix_(dx,dx)])
+        # dx -> allincare: thistransit[fromstate,tostate,:] *=  careprob[cd4], cd4 state of fromstate
+        thistransit[ix_(dx, allcare, arange(npops))] *= einsum('ik,ij->ijk', careprobarr[(dx-dx[0])%ncd4,:], fromtoarr[ix_(dx,allcare)])
+        # lost -> lost: thistransit[fromstate,tostate,:] *=  (1.-returnprob[cd4]), cd4 state of fromstate
+        thistransit[ix_(lost, lost, arange(npops))]  *= einsum('ik,ij->ijk', (1.-returnprobarr[(lost-lost[0])%ncd4,:]), fromtoarr[ix_(lost,lost)])
+        # lost -> allincare: thistransit[fromstate,tostate,:] *=  returnprob[cd4], cd4 state of fromstate
+        thistransit[ix_(lost, allcare, arange(npops))] *= einsum('ik,ij->ijk', returnprobarr[(lost-lost[0])%ncd4,:], fromtoarr[ix_(lost,allcare)])
 
 
         # Care/USVL/SVL to lost
