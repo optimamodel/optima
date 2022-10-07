@@ -783,12 +783,10 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
 
         # USVL to SVL
         svlprob = min(regainvs[t]*numvlmon[t]*dt/(eps+people[alltx,:,t].sum()),1) if userate(propsupp,t) else 0.
-        for fromstate in usvl:
-            for tostate in fromto[fromstate]:
-                if tostate in usvl: # Probability of not receiving a VL test & thus remaining failed
-                    thistransit[fromstate,tostate,:] *= (1.-svlprob)
-                elif tostate in svl: # Probability of receiving a VL test, switching to a new regime & becoming suppressed
-                    thistransit[fromstate,tostate,:] *= svlprob
+        # usvl -> usvl: thistransit[fromstate,tostate,:] *=  (1.-svlprob)
+        thistransit[ix_(usvl, usvl, arange(npops))]  *= einsum(',k,ij->ijk', (1.-svlprob), ones(npops), fromtoarr[ix_(usvl,usvl)])
+        # usvl -> svl: thistransit[fromstate,tostate,:] *=  svlprob
+        thistransit[ix_(usvl, svl, arange(npops))]  *= einsum(',k,ij->ijk', svlprob, ones(npops), fromtoarr[ix_(usvl,svl)])
 
         # Check that probabilities all sum to 1
         if debug:
