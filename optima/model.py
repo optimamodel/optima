@@ -658,8 +658,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                 thisforceinfinj = 1-transinj*sharing[pop1,t]*osteff[t]*prepeff[pop1,t]*fracacts[t]*effallprev[:,pop2]
                 if wholeacts[t]: thisforceinfinj *= npow((1-transinj*sharing[pop1,t]*osteff[t]*prepeff[pop1,t]*effallprev[:,pop2]), int(wholeacts[t]))
 
-                for index in sus: # Assign the same probability of getting infected by injection to both circs and uncircs, as it doesn't matter
-                    forceinffull[index,pop1,:,pop2] *= thisforceinfinj
+                forceinffull[sus,pop1,:,pop2] *= thisforceinfinj  # Assign the same probability of getting infected by injection to both circs and uncircs, as it doesn't matter
 
             if debug and not((forceinffull[:,:,:,:]>=0).all()):
                 for pop1,pop2,wholeacts,fracacts in injactslist:
