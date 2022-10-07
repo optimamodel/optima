@@ -776,12 +776,10 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
 
         # SVL to USVL
         usvlprob = treatfail[t] if userate(propsupp,t) else 0.
-        for fromstate in svl:
-            for tostate in fromto[fromstate]:
-                if tostate in svl: # Probability of remaining suppressed
-                    thistransit[fromstate,tostate,:] *= (1.-usvlprob)
-                elif tostate in usvl: # Probability of becoming unsuppressed
-                    thistransit[fromstate,tostate,:] *= usvlprob
+        # svl -> svl: thistransit[fromstate,tostate,:] *=  (1.-usvlprob)
+        thistransit[ix_(svl, svl, arange(npops))]  *= einsum(',k,ij->ijk', (1.-usvlprob), ones(npops), fromtoarr[ix_(svl,svl)])
+        # svl -> usvl: thistransit[fromstate,tostate,:] *=  usvlprob
+        thistransit[ix_(svl, usvl, arange(npops))]  *= einsum(',k,ij->ijk', usvlprob, ones(npops), fromtoarr[ix_(svl,usvl)])
 
         # USVL to SVL
         svlprob = min(regainvs[t]*numvlmon[t]*dt/(eps+people[alltx,:,t].sum()),1) if userate(propsupp,t) else 0.
