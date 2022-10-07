@@ -1,5 +1,5 @@
 ## Imports
-from numpy import zeros, exp, maximum, minimum, inf, array, isnan, einsum, floor, ones, power as npow, concatenate as cat, interp, nan, squeeze, isinf, isfinite, argsort, take_along_axis, put_along_axis, expand_dims, ix_
+from numpy import zeros, exp, maximum, minimum, inf, array, isnan, einsum, floor, ones, power as npow, concatenate as cat, interp, nan, squeeze, isinf, isfinite, argsort, take_along_axis, put_along_axis, expand_dims, ix_, tile, arange
 from optima import OptimaException, printv, dcp, odict, findinds, compareversions, version
 
 def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False, debug=False, label=None, startind=None, advancedtracking=False):
@@ -350,7 +350,9 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
             transmatrix[fromstate,tostate,:] *= 1.-deathhiv[fromhealthstate]*relhivdeath*deathusvl*dt
             deathprob[fromstate,:] = deathhiv[fromhealthstate]*relhivdeath*deathusvl*dt
 
-
+    fromtoarr = zeros((nstates,nstates))
+    for fromstate, tostates in enumerate(fromto):
+        fromtoarr[fromstate,tostates] = 1
 
     #################################################################################################################
     ### Set initial epidemic conditions
@@ -731,17 +733,15 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
 
         # Undiagnosed to diagnosed
         if userate(propdx,t): # Need to project forward one year to avoid mismatch
-            dxprob = [hivtest[:,t]]*ncd4
-            for cd4 in range(aidsind, ncd4): dxprob[cd4] = maximum(aidstest[t],hivtest[:,t])
-        else: dxprob = zeros(ncd4)
+            dxprobarr = tile(hivtest[:,t],(6,1))
+            dxprobarr[aidsind:,:] =  maximum(aidstest[t],dxprobarr[aidsind:,:])
+        else: dxprobarr = zeros((ncd4,npops))
 
-        for cd4, fromstate in enumerate(undx):
-            for tostate in fromto[fromstate]:
-                if tostate in undx: # Probability of not being tested
-                    thistransit[fromstate,tostate,:] *= (1.-dxprob[cd4])
-                else: # Probability of being tested
-                    thistransit[fromstate,tostate,:] *= dxprob[cd4]
-                    raw_diag[:,t] += people[fromstate,:,t]*thistransit[fromstate,tostate,:]/dt
+        # undx -> undx: thistransit[fromstate,tostate,:] *= (1.-dxprob[cd4]), cd4 state of fromstate
+        thistransit[ix_(undx, undx, arange(npops))]  *= einsum('ik,ij->ijk', (1.-dxprobarr[undx - undx[0],:]), fromtoarr[ix_(undx,undx)])  # if fromstate in undx  and  tostate in undx,   need cd4 which is pos in undx
+        # undx -> dx: thistransit[fromstate,tostate,:] *=  dxprob[cd4], cd4 state of fromstate
+        thistransit[ix_(undx, alldx, arange(npops))] *= einsum('ik,ij->ijk', dxprobarr[undx - undx[0],:], fromtoarr[ix_(undx,alldx)])  # if fromstate in undx  and  tostate in undx,   need cd4 which is pos in undx
+        raw_diag[:,t] += einsum('ij,ij->j', people[undx,:,t], thistransit[ix_(undx, alldx, arange(npops))].sum(axis=1) ) /dt
 
         # Diagnosed/lost to care
         if True: # userate(propcare,t): Put people onto care even if there is propcare set, propcare will adjust after the fact. Otherwise, propcare doesn't link people to care at the rate that people should be (because theres enough in care) and we get too many people diagnosed but not linked.
