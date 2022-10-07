@@ -644,11 +644,13 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                 forceinffull[:,pop1,:,pop2] *= (1-fracacts[t]*thistrans*cond[t]*einsum('a,b',alleff[pop1,t,:],effallprev[:,pop2]))
                 if wholeacts[t]: forceinffull[:,pop1,:,pop2] *= npow((1-thistrans*cond[t]*einsum('a,b',alleff[pop1,t,:],effallprev[:,pop2])), int(wholeacts[t]))
 
-                if debug and not((forceinffull[:,pop1,:,pop2]>=0).all()):
-                    errormsg = label + 'Sexual force-of-infection is invalid between populations %s and %s, time %0.1f, FOI:\n%s)' % (popkeys[pop1], popkeys[pop2], tvec[t], forceinffull[:,pop1,:,pop2])
-                    for var in ['thistrans', 'circeff[pop1,t]', 'prepeff[pop1,t]', 'stieff[pop1,t]', 'cond', 'wholeacts', 'fracacts', 'effallprev[:,pop2]']:
-                        errormsg += '\n%20s = %f' % (var, eval(var)) # Print out extra debugging information
-                    raise OptimaException(errormsg)
+            if debug and not((forceinffull[:,:,:,:]>=0).all()):
+                for pop1, pop2, wholeacts, fracacts, cond, thistrans in sexactslist:
+                    if not ((forceinffull[:,pop1,:,pop2] >= 0).all()):
+                        errormsg = label + 'Sexual force-of-infection is invalid between populations %s and %s, time %0.1f, FOI:\n%s)' % (popkeys[pop1], popkeys[pop2], tvec[t], forceinffull[:,pop1,:,pop2])
+                        for var in ['thistrans', 'circeff[pop1,t]', 'prepeff[pop1,t]', 'stieff[pop1,t]', 'cond', 'wholeacts', 'fracacts', 'effallprev[:,pop2]']:
+                            errormsg += '\n%20s = %f' % (var, eval(var)) # Print out extra debugging information
+                        raise OptimaException(errormsg)
 
             # Injection-related infections -- probability of pop1 getting infected by pop2
             for pop1,pop2,wholeacts,fracacts in injactslist:
@@ -659,11 +661,13 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                 for index in sus: # Assign the same probability of getting infected by injection to both circs and uncircs, as it doesn't matter
                     forceinffull[index,pop1,:,pop2] *= thisforceinfinj
 
-                if debug and not((forceinffull[:,pop1,:,pop2]>=0).all()):
-                    errormsg = label + 'Injecting force-of-infection is invalid between populations %s and %s, time %0.1f, FOI:\n%s)' % (popkeys[pop1], popkeys[pop2], tvec[t], forceinffull[:,pop1,:,pop2])
-                    for var in ['transinj', 'sharing[pop1,t]', 'wholeacts', 'fracacts', 'osteff[t]', 'effallprev[:,pop2]']:
-                        errormsg += '\n%20s = %f' % (var, eval(var)) # Print out extra debugging information
-                    raise OptimaException(errormsg)
+            if debug and not((forceinffull[:,:,:,:]>=0).all()):
+                for pop1,pop2,wholeacts,fracacts in injactslist:
+                    if not ((forceinffull[:,pop1,:,pop2] >= 0).all()):
+                        errormsg = label + 'Injecting force-of-infection is invalid between populations %s and %s, time %0.1f, FOI:\n%s)' % (popkeys[pop1], popkeys[pop2], tvec[t], forceinffull[:,pop1,:,pop2])
+                        for var in ['transinj', 'sharing[pop1,t]', 'wholeacts', 'fracacts', 'osteff[t]', 'effallprev[:,pop2]']:
+                            errormsg += '\n%20s = %f' % (var, eval(var)) # Print out extra debugging information
+                        raise OptimaException(errormsg)
 
 
         # Probability of getting infected is one minus forceinffull times any scaling factors !! copied below !!
