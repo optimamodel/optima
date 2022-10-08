@@ -447,14 +447,32 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
     ##################################################################################################################
     sexactslist = []
     injactslist = []
+    nsexacts = [0,0,0]
+    ninjacts = 0
+    for actind,act in enumerate(['reg','cas','com']):
+        for key in simpars['acts'+act]:
+            nsexacts[actind] += 1
+    for key in simpars['actsinj']:
+        ninjacts += 1
+
+    transsexarr     = [zeros(nsexacts[i])         for i in range(3)]
+    condarr         = [zeros((nsexacts[i], npts)) for i in range(3)]
+    popsactssexarr  = [zeros((nsexacts[i], 2), dtype=int)    for i in range(3)]
+    fracactssexarr  = [zeros((nsexacts[i], npts)) for i in range(3)]
+    wholeactssexarr = [zeros((nsexacts[i], npts)) for i in range(3)]
+    popsactsinjarr  = zeros((ninjacts, 2), dtype=int)
+    fracactsinjarr  = zeros((ninjacts, npts))
+    wholeactsinjarr = zeros((ninjacts, npts))
 
     # Sex
-    for act in ['reg','cas','com']:
-        for key in simpars['acts'+act]:
-            this = odict()
-            this['wholeacts'] = floor(dt*simpars['acts'+act][key])
-            this['fracacts'] = dt*simpars['acts'+act][key] - this['wholeacts'] # Probability of an additional act
 
+    for actind, act in enumerate(['reg','cas','com']):
+        for i,key in enumerate(simpars['acts'+act]):
+            this = odict()
+            this['wholeacts']    = floor(dt*simpars['acts'+act][key])
+            this['fracacts']     = dt*simpars['acts'+act][key] - this['wholeacts'] # Probability of an additional act
+            wholeactssexarr[actind][i,:] = floor(dt*simpars['acts'+act][key])
+            fracactssexarr[actind][i,:]  = dt*simpars['acts'+act][key] - wholeactssexarr[actind][i,:] # Probability of an additional act
             if simpars['cond'+act].get(key) is not None:
                 condkey = simpars['cond'+act][key]
             elif simpars['cond'+act].get((key[1],key[0])) is not None:
@@ -466,8 +484,12 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                 condkey = 0.0
 
             this['cond'] = 1.0 - condkey*effcondom
+            condarr[actind][i,:] = 1.0 - condkey*effcondom
             this['pop1'] = popkeys.index(key[0])
             this['pop2'] = popkeys.index(key[1])
+            popsactssexarr[actind][i,:] = [popkeys.index(key[0]),popkeys.index(key[1])]
+            # print(i,popsactssexarr[i,0],popsactssexarr[i,1])
+            # popsactssexarrbool[i,popsactssexarr[i,0],popsactssexarr[i,1]] = 1
             if     male[this['pop1']] and   male[this['pop2']]: this['trans'] = (simpars['transmmi'] + simpars['transmmr'])/2.0
             elif   male[this['pop1']] and female[this['pop2']]: this['trans'] = simpars['transmfi']
             elif female[this['pop1']] and   male[this['pop2']]: this['trans'] = simpars['transmfr']
@@ -476,7 +498,9 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                 printv(errormsg, 3, verbose)
                 this['trans'] = (simpars['transmmi'] + simpars['transmmr'] + simpars['transmfi'] + simpars['transmfr'])/4.0 # May as well just assume all transmissions apply equally - will undersestimate if pop is predominantly biologically male and oversestimate if pop is predominantly biologically female
 
+            transsexarr[actind][i] = this['trans']
             sexactslist.append(this)
+            # sexactsarr[p1,p2] = 1
 
             # Error checking
             for key in ['wholeacts', 'fracacts', 'cond']:
@@ -487,14 +511,19 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                     this[key][this[key]<0] = 0.0 # Reset values
 
     # Injection
+    i = 0
     for key in simpars['actsinj']:
         this = odict()
-        this['wholeacts'] = floor(dt*simpars['actsinj'][key])
-        this['fracacts'] = dt*simpars['actsinj'][key] - this['wholeacts']
+        this['wholeacts']    = floor(dt*simpars['actsinj'][key])
+        wholeactsinjarr[i,:] = floor(dt*simpars['actsinj'][key])
+        this['fracacts']    = dt*simpars['actsinj'][key] - this['wholeacts']
+        fracactsinjarr[i,:] = dt*simpars['actsinj'][key] - this['wholeacts']
 
         this['pop1'] = popkeys.index(key[0])
         this['pop2'] = popkeys.index(key[1])
+        popsactsinjarr[i,:] = [popkeys.index(key[0]), popkeys.index(key[1])]
         injactslist.append(this)
+        i += 1
 
     # Convert from dicts to tuples to be faster
     for i,this in enumerate(sexactslist): sexactslist[i] = tuple([this['pop1'],this['pop2'],this['wholeacts'],this['fracacts'],this['cond'],this['trans']])
@@ -597,7 +626,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
         # Probability of getting infected. In the first stage of construction, we actually store this as the probability of NOT getting infected
         # First dimension: infection acquired by (circumcision status). Second dimension:  infection acquired by (pop). Third dimension: infection caused by (pop). Fourth dimension: infection caused by (health/treatment state)
 
-        if advancedtracking: # need the if statement outside the for loop for speed
+        if False: # need the if statement outside the for loop for speed
             forceinffullsexinj = ones((3, len(sus), npops, nstates, npops))  # First dimension is now method of transmission, everything else moves over one dimension.
             # Loop over all acts (partnership pairs) -- probability of pop1 getting infected by pop2
             for pop1,pop2,wholeacts,fracacts,cond,thistrans in sexactslist:
@@ -636,38 +665,33 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
             forceinffull = forceinffullsexinj[homosexsex,:,:,:,:] * forceinffullsexinj[heterosexsex,:,:,:,:] * forceinffullsexinj[inj,:,:,:,:]
 
         else:
-            forceinffull = ones((len(sus), npops, nstates, npops))
+            forceinffull  = ones((len(sus), npops, nstates, npops))
+            for i in range(3):  # reg, cas, com
+                pop1 = popsactssexarr[i][:,0]
+                pop2 = popsactssexarr[i][:,1]
+                forceinffullsex = ones((len(sus), nstates, len(pop1)))
+                # only effallprev[:,:] is time dependent
+                forceinffullsex[:,:,:] *= 1 - einsum('m,m,m,mi,km->ikm', fracactssexarr[i][:, t], transsexarr[i][:],
+                                                    condarr[i][:, t], alleff[:,t,:][pop1, :], effallprev[:, pop2])
 
-            # Loop over all acts (partnership pairs) -- probability of pop1 getting infected by pop2
-            for pop1,pop2,wholeacts,fracacts,cond,thistrans in sexactslist:
+                forceinffullsex[:,:,:] *= npow(1 - einsum('m,m,mi,km,m->ikm', transsexarr[i], condarr[i][:,t],
+                                                alleff[pop1,t,:], effallprev[:,pop2],
+                                                (wholeactssexarr[i][:,t].astype(int) != 0) ),
+                                                wholeactssexarr[i][:,t].astype(int))
+                forceinffull[:,pop1,:,pop2] *= swapaxes(swapaxes(forceinffullsex[:,:,:],1,2),0,1)  # Slicing a more than 2d array puts the pop1,pop2 in the first dimension
 
-                forceinffull[:,pop1,:,pop2] *= (1-fracacts[t]*thistrans*cond[t]*einsum('a,b',alleff[pop1,t,:],effallprev[:,pop2]))
-                if wholeacts[t]: forceinffull[:,pop1,:,pop2] *= npow((1-thistrans*cond[t]*einsum('a,b',alleff[pop1,t,:],effallprev[:,pop2])), int(wholeacts[t]))
+            pop1 = popsactsinjarr[:, 0]
+            pop2 = popsactsinjarr[:, 1]
+            forceinffullinj = ones((len(sus), nstates, len(pop1)))
 
-            if debug and not((forceinffull[:,:,:,:]>=0).all()):
-                for pop1, pop2, wholeacts, fracacts, cond, thistrans in sexactslist:
-                    if not ((forceinffull[:,pop1,:,pop2] >= 0).all()):
-                        errormsg = label + 'Sexual force-of-infection is invalid between populations %s and %s, time %0.1f, FOI:\n%s)' % (popkeys[pop1], popkeys[pop2], tvec[t], forceinffull[:,pop1,:,pop2])
-                        for var in ['thistrans', 'circeff[pop1,t]', 'prepeff[pop1,t]', 'stieff[pop1,t]', 'cond', 'wholeacts', 'fracacts', 'effallprev[:,pop2]']:
-                            errormsg += '\n%20s = %f' % (var, eval(var)) # Print out extra debugging information
-                        raise OptimaException(errormsg)
+            forceinffullinj[:,:,:] *= 1 - einsum(',,m,m,m,km,i->ikm',transinj, osteff[t], sharing[pop1,t], prepeff[pop1,t],
+                                                  fracactsinjarr[:,t], effallprev[:,pop2], [1,1]) # The [1,1] applies the same risk to both circs and uncircs
 
-            # Injection-related infections -- probability of pop1 getting infected by pop2
-            for pop1,pop2,wholeacts,fracacts in injactslist:
+            forceinffullinj[:,:,:] *= npow(1 - einsum(',,m,m,km,i,m->ikm',transinj, osteff[t], sharing[pop1,t], prepeff[pop1,t],
+                                                          effallprev[:,pop2], [1,1], (wholeactsinjarr[:,t].astype(int) != 0) ),
+                                            wholeactsinjarr[:,t].astype(int))   # If wholeacts[t] == 0, then this will equal one so will not change forceinffull
 
-                thisforceinfinj = 1-transinj*sharing[pop1,t]*osteff[t]*prepeff[pop1,t]*fracacts[t]*effallprev[:,pop2]
-                if wholeacts[t]: thisforceinfinj *= npow((1-transinj*sharing[pop1,t]*osteff[t]*prepeff[pop1,t]*effallprev[:,pop2]), int(wholeacts[t]))
-
-                forceinffull[sus,pop1,:,pop2] *= thisforceinfinj  # Assign the same probability of getting infected by injection to both circs and uncircs, as it doesn't matter
-
-            if debug and not((forceinffull[:,:,:,:]>=0).all()):
-                for pop1,pop2,wholeacts,fracacts in injactslist:
-                    if not ((forceinffull[:,pop1,:,pop2] >= 0).all()):
-                        errormsg = label + 'Injecting force-of-infection is invalid between populations %s and %s, time %0.1f, FOI:\n%s)' % (popkeys[pop1], popkeys[pop2], tvec[t], forceinffull[:,pop1,:,pop2])
-                        for var in ['transinj', 'sharing[pop1,t]', 'wholeacts', 'fracacts', 'osteff[t]', 'effallprev[:,pop2]']:
-                            errormsg += '\n%20s = %f' % (var, eval(var)) # Print out extra debugging information
-                        raise OptimaException(errormsg)
-
+            forceinffull[:,pop1,:,pop2] *= swapaxes(swapaxes(forceinffullinj[:,:,:],1,2),0,1)
 
         # Probability of getting infected is one minus forceinffull times any scaling factors !! copied below !!
         forceinffull  = einsum('ijkl,j,j,j->ijkl', 1.-forceinffull, force, inhomo,(1.-background[:,t]))
@@ -687,7 +711,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
         raw_inci[:,t]               = einsum('ij,ijkl->j', people[sus,:,t], forceinffull)/dt
         raw_incibypop[:,:,t]        = einsum('ij,ijkl->kl', people[sus,:,t], forceinffull)/dt
 
-        if advancedtracking:
+        if False:
             # Some people (although small) will have gotten infected from both sex and injections, we assign these people to the higher probability (higher risk) method. Because the probabilities are all small, it probably would still be a good approximation without this correction
             forceinffullsexinj = 1 - forceinffullsexinj
             probsexinjsortindices = argsort(forceinffullsexinj,axis=0)
@@ -876,7 +900,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                 numpotmothers[:, _undx]   -= thispoptobedx / (totalbirthrate + eps*eps) # assuming all diagnosed by ANC will go onto PMTCT
                 numpotmothers[:, _alldx]  += thispoptobedx / (totalbirthrate + eps*eps) # eps not small enough
                 thisnumpmtct              += thispoptobedx.sum(axis=0)
-            
+
             if t < npts-1:
                 if (people[undx,:,t+1] < 0).any():
                     print(f"WARNING: Tried to diagnose {thispoptobedx} pregnant HIV+ women from population {popkeys[p1]} but this made the people negative:{people[undx,p1,t+1]}")
