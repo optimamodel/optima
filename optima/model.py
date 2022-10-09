@@ -688,17 +688,18 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
         if advancedtracking:
             # Some people (although small) will have gotten infected from both sex and injections, we assign these people to the higher probability (higher risk) method. Because the probabilities are all small, it probably would still be a good approximation without this correction
             forceinffullsexinj = 1 - forceinffullsexinj
-            probsexinjsortindices = argsort(forceinffullsexinj,axis=0)
-            probsmallestlocations  = expand_dims(probsexinjsortindices[0,:,:,:,:], axis=0)
-            probmiddlelocations = expand_dims(probsexinjsortindices[1, :, :, :, :], axis=0)
-            probbiggestlocations   = expand_dims(probsexinjsortindices[2,:,:,:,:], axis=0)
+            if (forceinffullsexinj > 0.02).any(): # If any force is over 0.02 in a timestep, then force(sex)*force(inj) could be more than 0.001 therefore our probabilities are no longer a <0.1% error estimate
+                probsexinjsortindices = argsort(forceinffullsexinj,axis=0)
+                probsmallestlocations  = expand_dims(probsexinjsortindices[0,:,:,:,:], axis=0)
+                probmiddlelocations = expand_dims(probsexinjsortindices[1, :, :, :, :], axis=0)
+                probbiggestlocations   = expand_dims(probsexinjsortindices[2,:,:,:,:], axis=0)
 
-            smallestprob = take_along_axis(forceinffullsexinj, probsmallestlocations, axis=0)
-            middleprob  = take_along_axis(forceinffullsexinj, probmiddlelocations, axis=0)
-            largestprob  = take_along_axis(forceinffullsexinj, probbiggestlocations, axis=0)
-            #inclusion exclusion but the intersections are distributed to the larger probabilities
-            put_along_axis(forceinffullsexinj, probsmallestlocations, smallestprob - smallestprob * largestprob - smallestprob * middleprob + smallestprob * middleprob * largestprob, axis=0) # The assumption that the two infection events are independent, same assumption as above
-            put_along_axis(forceinffullsexinj, probmiddlelocations, middleprob - middleprob * largestprob, axis=0) # The assumption that the two infection events are independent, same assumption as above
+                smallestprob = take_along_axis(forceinffullsexinj, probsmallestlocations, axis=0)
+                middleprob  = take_along_axis(forceinffullsexinj, probmiddlelocations, axis=0)
+                largestprob  = take_along_axis(forceinffullsexinj, probbiggestlocations, axis=0)
+                #inclusion exclusion but the intersections are distributed to the larger probabilities
+                put_along_axis(forceinffullsexinj, probsmallestlocations, smallestprob - smallestprob * largestprob - smallestprob * middleprob + smallestprob * middleprob * largestprob, axis=0) # The assumption that the two infection events are independent, same assumption as above
+                put_along_axis(forceinffullsexinj, probmiddlelocations, middleprob - middleprob * largestprob, axis=0) # The assumption that the two infection events are independent, same assumption as above
 
             # Probability of getting infected by each method is probsexinjsortindices times any scaling factors, !! copied from above !!
             forceinffullcauses = einsum('mijkl,j,j,j->mijkl', forceinffullsexinj, force, inhomo, (1.-background[:,t]))
@@ -920,16 +921,14 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
 
             raw_mtctfrom[:, motherpops, t] += einsum('j,ij,j->ij', thispopmtct.sum(axis=1)/dt, state_distribution_plhiv_from, 1/(state_distribution_plhiv_from.sum(axis=0)+eps) ) #WARNING: not accurate based on differential diagnosis by state potentially, but the best that's feasible
             if advancedtracking:
-                childpopsblankmotherpopst = ix_(childpops,range(nstates),motherpops,[t])
-                raw_mtcttoandfrom[childpopsblankmotherpopst] += \
-                    expand_dims(einsum('ij,ki,i->jki',thispopmtct/dt, state_distribution_plhiv_from, 1/(state_distribution_plhiv_from.sum(axis=0)+eps)), axis=-1) #WARNING: same warning as above, but I'm not 100% sure this is correct
+                childpopsblankmotherpopst = ix_([mtct],childpops,arange(nstates),motherpops,[t])
+                raw_incionpopbypopmethods[childpopsblankmotherpopst] += \
+                    expand_dims(einsum('ij,ki,i->jki',thispopmtct/dt, state_distribution_plhiv_from, 1/(state_distribution_plhiv_from.sum(axis=0)+eps)), axis=(0,-1)) #WARNING: same warning as above, but I'm not 100% sure this is correct
             raw_births[childpops, t]     += popbirths.sum(axis=0)    /dt
             raw_hivbirths[motherpops, t] += hivposbirths.sum(axis=1) /dt
 
             raw_inci[:,t] += raw_mtct[:,t] # Update infections acquired based on PMTCT calculation
             raw_incibypop[:,:,t] += raw_mtctfrom[:,:,t] # Update infections caused based on PMTCT
-            if advancedtracking:
-                raw_incionpopbypopmethods[[mtct],:,:,:,t] += raw_mtcttoandfrom[:,:,:,t]
 
 
 
