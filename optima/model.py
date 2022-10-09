@@ -28,8 +28,8 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
 
     # PMTCT behaviour
     oldbehaviour = compareversions(version,"2.12.0") < 0 # Remove new pmtct behaviour from 2.11.x versions and before
-    if oldbehaviour: diagnosemothersforpmtct = False  # Don't diagnose mothers
-    else:            diagnosemothersforpmtct = False
+    if oldbehaviour: diagnosemothersforpmtct = False  # Diagnosing mothers breaks calibrations somewhat depending on MTCT levels
+    else:            diagnosemothersforpmtct = True
     putinstantlyontopmtct = True  # Should be True, since we are only considering mothers to be preg when they are giving birth - otherwise we get too many diagnosed by ANC
     printpmtctinformation = False
 
@@ -842,7 +842,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
         totalbirthrate = birthratesarr[:,:,t].sum(axis=1)
         _all,_allplhiv,_undx,_alldx,_alltx = range(5) # Start with underscore to not override other variables
         numpotmothers = zeros((npops,5))
-        numpotmothers[:,_all]      = people[:,:,t].sum(axis=0)       * relhivbirth
+        numpotmothers[:,_all]      = people[:,:,t].sum(axis=0)
         numpotmothers[:,_allplhiv] = people[allplhiv,:,t].sum(axis=0)* relhivbirth
         numpotmothers[:,_undx]     = people[undx,:,t].sum(axis=0)    * relhivbirth
         numpotmothers[:,_alldx]    = people[alldx,:,t].sum(axis=0)   * relhivbirth
