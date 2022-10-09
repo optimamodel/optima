@@ -987,7 +987,6 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                         else:   printv(errormsg, 1, verbose)
                         peopleleaving = minimum(peopleleaving, people[:, p1, t]) # Ensure positive
 
-
                     people[:, p1, t+1] -= peopleleaving # Take away from pop1...
                     people[:, p2, t+1] += peopleleaving # ... then add to pop2
 
@@ -1009,6 +1008,13 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
             else: # This version below is quicker and more accurate but produces results that are 0.5% different
                 ## Age-related transitions
                 peoplefromto = einsum('ki,ij->kij', people[:,:,t+1], agearr[:,:,t])
+
+                if debug and (peoplefromto.sum(axis=2) > people[:,:,t+1]).any():
+                    errormsg = label + f'Age transitions at time {t+1} are too high: the age transitions you specified say that {agearr[:,:,t]*100}% of the population should age in a single time-step.'
+                    if die: raise OptimaException(errormsg)
+                    else:   printv(errormsg, 1, verbose)
+                    peoplefromto = einsum('ki,ij->kij', people[:,:,t+1], minimum(agearr[:,:,t],1) ) # Only shift 100%
+
                 people[:,:,t+1] -= peoplefromto.sum(axis=2)  # sum over popto    # Ageing from a population
                 people[:,:,t+1] += peoplefromto.sum(axis=1)  # sum over popfrom  # Ageing to a population
                 if advancedtracking:
@@ -1018,6 +1024,14 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                 # peoplefromto1: statetofrom, popfrom, popto
                 peoplefromto1 = einsum('ki,ij->kij', people[:,:,t+1], risktransitarr[:,:]) # Number of other people who are moving pop1 -> pop2
                 peoplefromto2 = einsum('kj,ij,i,j->kij', people[:,:,t+1], risktransitarr[:,:], people[:,:,t+1].sum(axis=0), 1/people[:,:,t+1].sum(axis=0)) # Number of people who moving pop2 -> pop1, correcting for population size
+
+                if debug and ( (peoplefromto1.sum(axis=2) > people[:,:,t+1]).any() or (swapaxes(peoplefromto2,1,2).sum(axis=2) > people[:,:,t+1]).any() ):
+                    errormsg = label + f'Risk transitions at time {t+1} are too high: the age transitions you specified say that {risktransitarr*100}% of the population should transfer in a single time-step.'
+                    if die: raise OptimaException(errormsg)
+                    else:   printv(errormsg, 1, verbose)
+                    peoplefromto1 = einsum('ki,ij->kij', people[:,:,t+1], minimum(risktransitarr[:,:], 1)) # Only shift 100%
+                    peoplefromto2 = einsum('kj,ij,i,j->kij', people[:,:,t+1], minimum(risktransitarr[:,:], 1), people[:,:,t+1].sum(axis=0), 1/people[:,:,t+1].sum(axis=0)) # Only shift 100%
+
                 people[:,:,t+1] -= peoplefromto1.sum(axis=2)
                 people[:,:,t+1] += peoplefromto1.sum(axis=1) # Symmetric flow in totality, but the state distribution will ideally change.
                 people[:,:,t+1] -= swapaxes(peoplefromto2,1,2).sum(axis=2)
