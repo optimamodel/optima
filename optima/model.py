@@ -1023,7 +1023,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                 people[:,:,t+1] += swapaxes(peoplefromto2,1,2).sum(axis=1)
                 if advancedtracking:
                     raw_transitpopbypop[:,allplhiv,:,t+1] += swapaxes(peoplefromto1[allplhiv,:,:],1,2)/dt #annualize
-                    raw_transitpopbypop[:,allplhiv,:,t+1] += swapaxes(peoplefromto2[allplhiv,:,:],1,2)/dt #annualize
+                    raw_transitpopbypop[:,allplhiv,:,t+1] += peoplefromto2[allplhiv,:,:]/dt #annualize
 
 
             ###############################################################################
