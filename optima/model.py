@@ -456,8 +456,8 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
     transsexarr     = [zeros(nsexacts[i])         for i in range(3)]
     condarr         = [zeros((nsexacts[i], npts)) for i in range(3)]
     sexpartnerarr   = [zeros((nsexacts[i], 2), dtype=int) for i in range(3)]
-    homoindsarr     = [[], [], []]
-    heteroindsarr   = [[], [], []]
+    homopartnerarr  = set()
+    heteropartnerarr = set()
     fracactssexarr  = [zeros((nsexacts[i], npts)) for i in range(3)]
     wholeactssexarr = [zeros((nsexacts[i], npts)) for i in range(3)]
     injpartnerarr   = zeros((ninjacts, 2), dtype=int)
@@ -494,8 +494,8 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
 
             transsexarr[actind][i] = trans
 
-            if male[pop1] and male[pop2]: homoindsarr[actind].append(i)
-            else: heteroindsarr[actind].append(i)
+            if male[pop1] and male[pop2]: homopartnerarr.add((pop1, pop2))
+            else: heteropartnerarr.add((pop1, pop2))  # If a population is both male and female default to heterosexual
 
             if debug:
                 for k,arr in {'wholeacts':wholeactssexarr[actind][i,:],'fracacts':fracactssexarr[actind][i,:],'cond':condarr[actind][i,:]}.items():
@@ -504,6 +504,9 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                         if die: raise OptimaException(errormsg)
                         else:   printv(errormsg, 1, verbose)
                         arr[arr<0] = 0.0 # Reset values
+
+    homopartnerarr = array(list(homopartnerarr))
+    heteropartnerarr = array(list(heteropartnerarr))
 
     # Injection
     for i,key in enumerate(simpars['actsinj']):
@@ -607,103 +610,62 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
         # Probability of getting infected. In the first stage of construction, we actually store this as the probability of NOT getting infected
         # First dimension: infection acquired by (circumcision status). Second dimension:  infection acquired by (pop). Third dimension: infection caused by (pop). Fourth dimension: infection caused by (health/treatment state)
 
-        if False: # need the if statement outside the for loop for speed
-            forceinffullsexinj = ones((3, len(sus), npops, nstates, npops))  # First dimension is now method of transmission, everything else moves over one dimension.
-            # Loop over all acts (partnership pairs) -- probability of pop1 getting infected by pop2
-            for pop1,pop2,wholeacts,fracacts,cond,thistrans in sexactslist:
+        forceinffull  = ones((len(sus), npops, nstates, npops))
+        if advancedtracking:
+            forceinffullsexinj = ones((3, len(sus), npops, nstates, npops)) #!! remove hardcoding # First dimension is method of transmission, everything else moves over one dimension.
 
-                thisforceinfsex = (1-fracacts[t]*thistrans*cond[t]*einsum('a,b',alleff[pop1,t,:],effallprev[:,pop2]))
-                if wholeacts[t]: thisforceinfsex  *= npow((1-thistrans*cond[t]*einsum('a,b',alleff[pop1,t,:],effallprev[:,pop2])), int(wholeacts[t]))
+        ## Sexual infections
+        for i in range(3):  # reg, cas, com #!! remove hardcoding
+            pop1 = sexpartnerarr[i][:,0]
+            pop2 = sexpartnerarr[i][:,1]
+            forceinffullsex = ones((len(sus), nstates, len(pop1)))
+            # only effallprev[:,:] is time dependent
+            forceinffullsex[:,:,:] *= 1 - einsum('m,m,m,mi,km->ikm', fracactssexarr[i][:,t], transsexarr[i][:],
+                                                condarr[i][:,t], alleff[:,t,:][pop1,:], effallprev[:,pop2])
 
-                if male[pop1] and male[pop2]:
-                    forceinffullsexinj[homosexsex, :, pop1, :, pop2] *= thisforceinfsex
-                else:
-                    forceinffullsexinj[heterosexsex, :, pop1, :, pop2] *= thisforceinfsex
-                # forceinffull[:,pop1,:,pop2] *= thisforceinfsex # don't need to do as doing the same for forceinffullsexinj
+            forceinffullsex[:,:,:] *= npow(1 - einsum('m,m,mi,km,m->ikm', transsexarr[i], condarr[i][:,t], alleff[pop1,t,:], effallprev[:,pop2],
+                                (wholeactssexarr[i][:,t].astype(int) != 0) ), wholeactssexarr[i][:,t].astype(int))  # If wholeacts[t] == 0, then this will equal one so will not change forceinffull
+            forceinffull[:,pop1,:,pop2] *= swapaxes(swapaxes(forceinffullsex[:,:,:],1,2),0,1)  # Slicing a more than 2d array puts the pop1,pop2 in the first dimension
 
-                if debug and (not((forceinffullsexinj[heterosexsex,:,pop1,:,pop2]>=0).all()) or not((forceinffullsexinj[homosexsex,:,pop1,:,pop2]>=0).all())):
-                    errormsg = label + 'Sexual force-of-infection is invalid between populations %s and %s, time %0.1f, FOI:\n%s)' % (popkeys[pop1], popkeys[pop2], tvec[t], forceinffull[:,pop1,:,pop2])
-                    for var in ['thistrans', 'circeff[pop1,t]', 'prepeff[pop1,t]', 'stieff[pop1,t]', 'cond', 'wholeacts', 'fracacts', 'effallprev[:,pop2]']:
-                        errormsg += '\n%20s = %f' % (var, eval(var)) # Print out extra debugging information
-                    raise OptimaException(errormsg)
+        if advancedtracking:
+            forceinffullsexinj[homosexsex,:,homopartnerarr[:,0],:,homopartnerarr[:,1]] = forceinffull[:,homopartnerarr[:,0],:,homopartnerarr[:,1]]
+            forceinffullsexinj[heterosexsex,:,heteropartnerarr[:,0],:,heteropartnerarr[:,1]] = forceinffull[:,heteropartnerarr[:,0],:,heteropartnerarr[:,1]]
 
-            # Injection-related infections -- probability of pop1 getting infected by pop2
-            for pop1,pop2,wholeacts,fracacts in injactslist:
-
-                thisforceinfinj = 1-transinj*sharing[pop1,t]*osteff[t]*prepeff[pop1,t]*fracacts[t]*effallprev[:,pop2]
-                if wholeacts[t]: thisforceinfinj *= npow((1-transinj*sharing[pop1,t]*osteff[t]*prepeff[pop1,t]*effallprev[:,pop2]), int(wholeacts[t]))
-
-                for index in sus: # Assign the same probability of getting infected by injection to both circs and uncircs, as it doesn't matter
-                    # forceinffull[index,pop1,:,pop2] *= thisforceinfinj # don't need to do as doing the same for forceinffullsexinj
-                    forceinffullsexinj[inj,index,pop1,:,pop2] *= thisforceinfinj # note that inj and sex should be 0 and 1
-
-                if debug and not((forceinffullsexinj[inj,:,pop1,:,pop2]>=0).all()):
-                    errormsg = label + 'Injecting force-of-infection is invalid between populations %s and %s, time %0.1f, FOI:\n%s)' % (popkeys[pop1], popkeys[pop2], tvec[t], forceinffull[:,pop1,:,pop2])
-                    for var in ['transinj', 'sharing[pop1,t]', 'wholeacts', 'fracacts', 'osteff[t]', 'effallprev[:,pop2]']:
-                        errormsg += '\n%20s = %f' % (var, eval(var)) # Print out extra debugging information
-                    raise OptimaException(errormsg)
-
-            forceinffull = forceinffullsexinj[homosexsex,:,:,:,:] * forceinffullsexinj[heterosexsex,:,:,:,:] * forceinffullsexinj[inj,:,:,:,:]
-
-        else:
-            forceinffull  = ones((len(sus), npops, nstates, npops))
-            if advancedtracking:
-                forceinffullsexinj = ones((3, len(sus), npops, nstates, npops)) #!! remove hardcoding # First dimension is method of transmission, everything else moves over one dimension.
-
-            ## Sexual infections
-            for i in range(3):  # reg, cas, com
-                pop1 = sexpartnerarr[i][:,0]
-                pop2 = sexpartnerarr[i][:,1]
-                forceinffullsex = ones((len(sus), nstates, len(pop1)))
-                # only effallprev[:,:] is time dependent
-                forceinffullsex[:,:,:] *= 1 - einsum('m,m,m,mi,km->ikm', fracactssexarr[i][:,t], transsexarr[i][:],
-                                                    condarr[i][:,t], alleff[:,t,:][pop1,:], effallprev[:,pop2])
-
-                forceinffullsex[:,:,:] *= npow(1 - einsum('m,m,mi,km,m->ikm', transsexarr[i], condarr[i][:,t], alleff[pop1,t,:], effallprev[:,pop2],
-                                    (wholeactssexarr[i][:,t].astype(int) != 0) ), wholeactssexarr[i][:,t].astype(int))  # If wholeacts[t] == 0, then this will equal one so will not change forceinffull
-                forceinffull[:,pop1,:,pop2] *= swapaxes(swapaxes(forceinffullsex[:,:,:],1,2),0,1)  # Slicing a more than 2d array puts the pop1,pop2 in the first dimension
-
-                if advancedtracking:
-                    homosex = homoindsarr[i]
-                    heterosex = heteroindsarr[i]
-                    forceinffullsexinj[homosexsex,:,pop1[homosex],:,pop2[homosex]] *= swapaxes(swapaxes(forceinffullsex[:,:,homosex],1,2),0,1)
-                    forceinffullsexinj[heterosexsex,:,pop1[heterosex],:,pop2[heterosex]] *= swapaxes(swapaxes(forceinffullsex[:,:,heterosex],1,2),0,1)
-
-            if debug and ( not((forceinffull[:,:,:,:]>=0).all()) or not((forceinffull[:,:,:,:]<=1).all()) ):
-                for i,arr in enumerate(sexpartnerarr):
-                    for m,(pop1, pop2) in enumerate(arr):
-                        if not ( not((forceinffull[:,pop1,:,pop2]>=0).all()) or not((forceinffull[:,pop1,:,pop2]<=1).all()) ):
-                            errormsg = label + 'Sexual force-of-infection is invalid between populations %s and %s, time %0.1f, FOI:\n%s)' % (
-                                popkeys[pop1], popkeys[pop2], tvec[t], forceinffull[:,pop1,:,pop2])
-                            for var in ['i','m','transsexarr[i][m]','condarr[i][m,t]','alleff[pop1,t,:]','effallprev[:,pop2]','fracactssexarr[i][m,t]','wholeactssexarr[i][m,t]']:
-                                errormsg += '\n%20s = %f' % (var, eval(var))  # Print out extra debugging information
-                            raise OptimaException(errormsg)
-
-            ## Injection-related infections
-            pop1 = injpartnerarr[:, 0]
-            pop2 = injpartnerarr[:, 1]
-            forceinffullinj = ones((len(sus), nstates, len(pop1)))
-
-            forceinffullinj[:,:,:] *= 1 - einsum(',,m,m,m,km,i->ikm',transinj, osteff[t], sharing[pop1,t], prepeff[pop1,t],
-                                                  fracactsinjarr[:,t], effallprev[:,pop2], [1,1]) # The [1,1] applies the same risk to both circs and uncircs, as it does not matter
-
-            forceinffullinj[:,:,:] *= npow(1 - einsum(',,m,m,km,i,m->ikm',transinj, osteff[t], sharing[pop1,t], prepeff[pop1,t],
-                                                          effallprev[:,pop2], [1,1], (wholeactsinjarr[:,t].astype(int) != 0) ),
-                                            wholeactsinjarr[:,t].astype(int))   # If wholeacts[t] == 0, then this will equal one so will not change forceinffull
-
-            forceinffull[:,pop1,:,pop2] *= swapaxes(swapaxes(forceinffullinj[:,:,:],1,2),0,1)  # Slicing a more than 2d array puts the pop1,pop2 in the first dimension
-
-            if advancedtracking:
-                forceinffullsexinj[inj,:,:,:,:][:,pop1,:,pop2] *= swapaxes(swapaxes(forceinffullinj[:,:,:],1,2),0,1)
-
-            if debug and ( not((forceinffull[:,:,:,:]>=0).all()) or not((forceinffull[:,:,:,:]<=1).all()) ):
-                for m,(pop1, pop2) in enumerate(injpartnerarr):
+        if debug and ( not((forceinffull[:,:,:,:]>=0).all()) or not((forceinffull[:,:,:,:]<=1).all()) ):
+            for i,arr in enumerate(sexpartnerarr):
+                for m,(pop1, pop2) in enumerate(arr):
                     if not ( not((forceinffull[:,pop1,:,pop2]>=0).all()) or not((forceinffull[:,pop1,:,pop2]<=1).all()) ):
-                        errormsg = label + 'Injection force-of-infection is invalid between populations %s and %s, time %0.1f, FOI:\n%s)' % (
+                        errormsg = label + 'Sexual force-of-infection is invalid between populations %s and %s, time %0.1f, FOI:\n%s)' % (
                             popkeys[pop1], popkeys[pop2], tvec[t], forceinffull[:,pop1,:,pop2])
-                        for var in ['m','transinj','osteff[t]','sharing[pop1,t]','prepeff[pop1,t]','effallprev[:,pop2]','fracactsinjarr[m,t]','wholeactsinjarr[m,t]']:
+                        for var in ['i','m','transsexarr[i][m]','condarr[i][m,t]','alleff[pop1,t,:]','effallprev[:,pop2]','fracactssexarr[i][m,t]','wholeactssexarr[i][m,t]']:
                             errormsg += '\n%20s = %f' % (var, eval(var))  # Print out extra debugging information
                         raise OptimaException(errormsg)
+
+        ## Injection-related infections
+        pop1 = injpartnerarr[:, 0]
+        pop2 = injpartnerarr[:, 1]
+        forceinffullinj = ones((len(sus), nstates, len(pop1)))
+
+        forceinffullinj[:,:,:] *= 1 - einsum(',,m,m,m,km,i->ikm',transinj, osteff[t], sharing[pop1,t], prepeff[pop1,t],
+                                              fracactsinjarr[:,t], effallprev[:,pop2], [1,1]) # The [1,1] applies the same risk to both circs and uncircs, as it does not matter
+
+        forceinffullinj[:,:,:] *= npow(1 - einsum(',,m,m,km,i,m->ikm',transinj, osteff[t], sharing[pop1,t], prepeff[pop1,t],
+                                                      effallprev[:,pop2], [1,1], (wholeactsinjarr[:,t].astype(int) != 0) ),
+                                        wholeactsinjarr[:,t].astype(int))   # If wholeacts[t] == 0, then this will equal one so will not change forceinffull
+
+        forceinffull[:,pop1,:,pop2] *= swapaxes(swapaxes(forceinffullinj[:,:,:],1,2),0,1)  # Slicing a more than 2d array puts the pop1,pop2 in the first dimension
+
+        if advancedtracking:
+            forceinffullsexinj[inj,:,:,:,:][:,pop1,:,pop2] = swapaxes(swapaxes(forceinffullinj[:,:,:],1,2),0,1)
+
+        if debug and ( not((forceinffull[:,:,:,:]>=0).all()) or not((forceinffull[:,:,:,:]<=1).all()) ):
+            for m,(pop1, pop2) in enumerate(injpartnerarr):
+                if not ( not((forceinffull[:,pop1,:,pop2]>=0).all()) or not((forceinffull[:,pop1,:,pop2]<=1).all()) ):
+                    errormsg = label + 'Injection force-of-infection is invalid between populations %s and %s, time %0.1f, FOI:\n%s)' % (
+                        popkeys[pop1], popkeys[pop2], tvec[t], forceinffull[:,pop1,:,pop2])
+                    for var in ['m','transinj','osteff[t]','sharing[pop1,t]','prepeff[pop1,t]','effallprev[:,pop2]','fracactsinjarr[m,t]','wholeactsinjarr[m,t]']:
+                        errormsg += '\n%20s = %f' % (var, eval(var))  # Print out extra debugging information
+                    raise OptimaException(errormsg)
 
         # Probability of getting infected is one minus forceinffull times any scaling factors !! copied below !!
         forceinffull  = einsum('ijkl,j,j,j->ijkl', 1.-forceinffull, force, inhomo,(1.-background[:,t]))
