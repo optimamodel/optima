@@ -534,6 +534,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
     birthratesarr = einsum('ij,ik->ijk',birthtransit,birth) # shape: (motherpop, childpop, time)
     motherpops = where(birthratesarr.any(axis=(1,2)))[0]  # Check over all child populations and time
     childpops  = where(birthratesarr.any(axis=(0,2)))[0]  # Check over all mother populations and time
+    notmotherpops = [pop for pop in range(npops) if pop not in motherpops]
 
     ##############################################################################################################
     ## Immigration precalculation (can do this in advance as it doesn't depend on epidemic state)
@@ -841,13 +842,12 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
         totalbirthrate = birthratesarr[:,:,t].sum(axis=1)
         _all,_allplhiv,_undx,_alldx,_alltx = range(5) # Start with underscore to not override other variables
         numpotmothers = zeros((npops,5))
-        for p1 in motherpops: # Pull these out of the loop to speed computation
-            thispop = people[:, p1, t]
-            numpotmothers[p1, _all]       = thispop[:].sum()
-            numpotmothers[p1, _allplhiv]  = thispop[allplhiv].sum() * relhivbirth
-            numpotmothers[p1, _undx]      = thispop[undx].sum()     * relhivbirth
-            numpotmothers[p1, _alldx]     = thispop[alldx].sum()    * relhivbirth
-            numpotmothers[p1, _alltx]     = thispop[alltx].sum()    * relhivbirth
+        numpotmothers[:,_all]      = people[:,:,t].sum(axis=0)       * relhivbirth
+        numpotmothers[:,_allplhiv] = people[allplhiv,:,t].sum(axis=0)* relhivbirth
+        numpotmothers[:,_undx]     = people[undx,:,t].sum(axis=0)    * relhivbirth
+        numpotmothers[:,_alldx]    = people[alldx,:,t].sum(axis=0)   * relhivbirth
+        numpotmothers[:,_alltx]    = people[alltx,:,t].sum(axis=0)   * relhivbirth
+        numpotmothers[notmotherpops,:] = 0
 
         numhivpospregwomen     = numpotmothers[:,_allplhiv] * totalbirthrate
         numdxhivpospregwomen   = numpotmothers[:,_alldx]    * totalbirthrate
