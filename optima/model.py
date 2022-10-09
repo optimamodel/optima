@@ -1,5 +1,5 @@
 ## Imports
-from numpy import zeros, exp, maximum, minimum, inf, array, isnan, einsum, floor, ones, power as npow, concatenate as cat, interp, nan, squeeze, isinf, isfinite, argsort, take_along_axis, put_along_axis, expand_dims, ix_, tile, arange, swapaxes, errstate
+from numpy import zeros, exp, maximum, minimum, inf, array, isnan, einsum, floor, ones, power as npow, concatenate as cat, interp, nan, squeeze, isinf, isfinite, argsort, take_along_axis, put_along_axis, expand_dims, ix_, tile, arange, swapaxes, errstate, where
 from optima import OptimaException, printv, dcp, odict, findinds, compareversions, version, sanitize
 
 def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False, debug=False, label=None, startind=None, advancedtracking=False):
@@ -147,7 +147,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
     immipropdiag    = simpars['immipropdiag']       #Proportion of immigrants with HIV who are already diagnosed (will be assumed linked to care but not on treatment)
 
     # Shorten to lists of key tuples so don't have to iterate over every population twice for every timestep
-    with errstate(divide='ignore'): # If risktransit[p1,p2] = 0 then -dt/risktransit[:,:] is inf, but it is ok
+    with errstate(divide='ignore'): # If risktransit[p1,p2] = 0 then -dt/risktransit[:,:] is inf, but it is ok, we sanitize
         risktransit = array(risktransit, dtype=float)
         risktransitarr = 1.-exp(-dt/risktransit[:,:])
         risktransitarr[isnan(risktransitarr)] = 0
@@ -166,10 +166,10 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
     efftxsupp = (1.-simpars['efftxsupp'])*dxfactor      # Reduction in transmission probability for sVL
     alltrans = zeros(nstates)
     alltrans[undx] = cd4trans
-    alltrans[dx] = cd4trans*dxfactor
+    alltrans[dx]   = cd4trans*dxfactor
     alltrans[care] = cd4trans*dxfactor
     alltrans[usvl] = cd4trans*dxfactor*efftxunsupp
-    alltrans[svl] = cd4trans*dxfactor*efftxsupp
+    alltrans[svl]  = cd4trans*dxfactor*efftxsupp
     alltrans[lost] = cd4trans*dxfactor
 
     # Proportion aware and treated (for 90/90/90) -- these are the only arrays that get used directly, so have to be dcp'd
@@ -445,8 +445,6 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
     ##################################################################################################################
     ### Compute the effective numbers of acts outside the time loop
     ##################################################################################################################
-    sexactslist = []
-    injactslist = []
     nsexacts = [0,0,0]
     ninjacts = 0
     for actind,act in enumerate(['reg','cas','com']):
@@ -457,7 +455,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
 
     transsexarr     = [zeros(nsexacts[i])         for i in range(3)]
     condarr         = [zeros((nsexacts[i], npts)) for i in range(3)]
-    popsactssexarr  = [zeros((nsexacts[i], 2), dtype=int)    for i in range(3)]
+    popsactssexarr  = [zeros((nsexacts[i], 2), dtype=int) for i in range(3)]
     fracactssexarr  = [zeros((nsexacts[i], npts)) for i in range(3)]
     wholeactssexarr = [zeros((nsexacts[i], npts)) for i in range(3)]
     popsactsinjarr  = zeros((ninjacts, 2), dtype=int)
@@ -465,14 +463,11 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
     wholeactsinjarr = zeros((ninjacts, npts))
 
     # Sex
-
     for actind, act in enumerate(['reg','cas','com']):
         for i,key in enumerate(simpars['acts'+act]):
-            this = odict()
-            this['wholeacts']    = floor(dt*simpars['acts'+act][key])
-            this['fracacts']     = dt*simpars['acts'+act][key] - this['wholeacts'] # Probability of an additional act
             wholeactssexarr[actind][i,:] = floor(dt*simpars['acts'+act][key])
             fracactssexarr[actind][i,:]  = dt*simpars['acts'+act][key] - wholeactssexarr[actind][i,:] # Probability of an additional act
+
             if simpars['cond'+act].get(key) is not None:
                 condkey = simpars['cond'+act][key]
             elif simpars['cond'+act].get((key[1],key[0])) is not None:
@@ -482,66 +477,47 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                 if die: raise OptimaException(errormsg)
                 else:   printv(errormsg, 1, verbose)
                 condkey = 0.0
-
-            this['cond'] = 1.0 - condkey*effcondom
             condarr[actind][i,:] = 1.0 - condkey*effcondom
-            this['pop1'] = popkeys.index(key[0])
-            this['pop2'] = popkeys.index(key[1])
-            popsactssexarr[actind][i,:] = [popkeys.index(key[0]),popkeys.index(key[1])]
-            # print(i,popsactssexarr[i,0],popsactssexarr[i,1])
-            # popsactssexarrbool[i,popsactssexarr[i,0],popsactssexarr[i,1]] = 1
-            if     male[this['pop1']] and   male[this['pop2']]: this['trans'] = (simpars['transmmi'] + simpars['transmmr'])/2.0
-            elif   male[this['pop1']] and female[this['pop2']]: this['trans'] = simpars['transmfi']
-            elif female[this['pop1']] and   male[this['pop2']]: this['trans'] = simpars['transmfr']
+
+            pop1 = popkeys.index(key[0])
+            pop2 = popkeys.index(key[1])
+            popsactssexarr[actind][i,:] = [pop1, pop2]
+            if     male[pop1] and   male[pop2]: trans = (simpars['transmmi'] + simpars['transmmr'])/2.0
+            elif   male[pop1] and female[pop2]: trans = simpars['transmfi']
+            elif female[pop1] and   male[pop2]: trans = simpars['transmfr']
             else:
                 errormsg = label + 'Not able to figure out the sex of "%s" and "%s"' % (key[0], key[1])
                 printv(errormsg, 3, verbose)
-                this['trans'] = (simpars['transmmi'] + simpars['transmmr'] + simpars['transmfi'] + simpars['transmfr'])/4.0 # May as well just assume all transmissions apply equally - will undersestimate if pop is predominantly biologically male and oversestimate if pop is predominantly biologically female
+                trans = (simpars['transmmi'] + simpars['transmmr'] + simpars['transmfi'] + simpars['transmfr'])/4.0 # May as well just assume all transmissions apply equally - will undersestimate if pop is predominantly biologically male and oversestimate if pop is predominantly biologically female
 
-            transsexarr[actind][i] = this['trans']
-            sexactslist.append(this)
-            # sexactsarr[p1,p2] = 1
+            transsexarr[actind][i] = trans
 
-            # Error checking
-            for key in ['wholeacts', 'fracacts', 'cond']:
-                if debug and not(all(this[key]>=0)):
-                    errormsg = label + 'Invalid sexual behavior parameter "%s": values are:\n%s' % (key, this[key])
-                    if die: raise OptimaException(errormsg)
-                    else:   printv(errormsg, 1, verbose)
-                    this[key][this[key]<0] = 0.0 # Reset values
+            if debug:
+                for k,arr in {'wholeacts':wholeactssexarr[actind][i,:],'fracacts':fracactssexarr[actind][i,:],'cond':condarr[actind][i,:]}.items():
+                    if not(all(arr>=0)):
+                        errormsg = label + f'Invalid sexual behavior parameter "{k}" for "{act}" acts for populations {key}: values are:\n{arr}'
+                        if die: raise OptimaException(errormsg)
+                        else:   printv(errormsg, 1, verbose)
+                        arr[arr<0] = 0.0 # Reset values
 
     # Injection
-    i = 0
-    for key in simpars['actsinj']:
-        this = odict()
-        this['wholeacts']    = floor(dt*simpars['actsinj'][key])
+    for i,key in enumerate(simpars['actsinj']):
         wholeactsinjarr[i,:] = floor(dt*simpars['actsinj'][key])
-        this['fracacts']    = dt*simpars['actsinj'][key] - this['wholeacts']
-        fracactsinjarr[i,:] = dt*simpars['actsinj'][key] - this['wholeacts']
-
-        this['pop1'] = popkeys.index(key[0])
-        this['pop2'] = popkeys.index(key[1])
+        fracactsinjarr[i,:] = dt*simpars['actsinj'][key] - wholeactsinjarr[i,:]
         popsactsinjarr[i,:] = [popkeys.index(key[0]), popkeys.index(key[1])]
-        injactslist.append(this)
-        i += 1
 
-    # Convert from dicts to tuples to be faster
-    for i,this in enumerate(sexactslist): sexactslist[i] = tuple([this['pop1'],this['pop2'],this['wholeacts'],this['fracacts'],this['cond'],this['trans']])
-    for i,this in enumerate(injactslist): injactslist[i] = tuple([this['pop1'],this['pop2'],this['wholeacts'],this['fracacts']])
-
+        if debug:
+            for k,arr in {'wholeacts':wholeactsinjarr[i,:],'fracacts':fracactsinjarr[i,:]}.items():
+                if not(all(arr>=0)):
+                    errormsg = label + f'Invalid sexual behavior parameter "{k}" for "{act}" acts for populations {key}: values are:\n{arr}'
+                    if die: raise OptimaException(errormsg)
+                    else:   printv(errormsg, 1, verbose)
+                    arr[arr<0] = 0.0 # Reset values
 
     ## Births precalculation
-    birthslist = []
-    birthratesarr = zeros((npops,npops,npts))
-    for p1 in range(npops):
-        alleligbirthrate = einsum('i,j->j',birthtransit[p1, :],birth[p1, :])
-        for p2 in range(npops):
-            birthrates = birthtransit[p1, p2] * birth[p1, :]
-            if birthrates.any():
-                birthratesarr[p1,p2,:] = birthrates
-                birthslist.append(tuple([p1,p2,birthrates,alleligbirthrate]))
-    motherpops = list(set([thisbirth[0] for thisbirth in birthslist])) # Get the list of all populations who are mothers
-    childpops  = list(set([thisbirth[1] for thisbirth in birthslist]))
+    birthratesarr = einsum('ij,ik->ijk',birthtransit,birth) # shape: (motherpop, childpop, time)
+    motherpops = where(birthratesarr.any(axis=(1,2)))[0]  # Check over all child populations and time
+    childpops  = where(birthratesarr.any(axis=(0,2)))[0]  # Check over all mother populations and time
 
     ##############################################################################################################
     ## Immigration precalculation (can do this in advance as it doesn't depend on epidemic state)
@@ -557,7 +533,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
     ##############################################################################################################
 
     agearr = zeros((npops, npops, npts))
-    agearr = einsum('ij,ik->ijk', agetransit[:, :], agerate[:, :])
+    agearr = einsum('ij,ik->ijk', agetransit, agerate) # shape: (frompop, topop, time)
 
     ##################################################################################################################
     ### Define error checking
@@ -666,20 +642,31 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
 
         else:
             forceinffull  = ones((len(sus), npops, nstates, npops))
+
+            ## Sexual infections
             for i in range(3):  # reg, cas, com
                 pop1 = popsactssexarr[i][:,0]
                 pop2 = popsactssexarr[i][:,1]
                 forceinffullsex = ones((len(sus), nstates, len(pop1)))
                 # only effallprev[:,:] is time dependent
-                forceinffullsex[:,:,:] *= 1 - einsum('m,m,m,mi,km->ikm', fracactssexarr[i][:, t], transsexarr[i][:],
-                                                    condarr[i][:, t], alleff[:,t,:][pop1, :], effallprev[:, pop2])
+                forceinffullsex[:,:,:] *= 1 - einsum('m,m,m,mi,km->ikm', fracactssexarr[i][:,t], transsexarr[i][:],
+                                                    condarr[i][:,t], alleff[:,t,:][pop1,:], effallprev[:,pop2])
 
-                forceinffullsex[:,:,:] *= npow(1 - einsum('m,m,mi,km,m->ikm', transsexarr[i], condarr[i][:,t],
-                                                alleff[pop1,t,:], effallprev[:,pop2],
-                                                (wholeactssexarr[i][:,t].astype(int) != 0) ),
-                                                wholeactssexarr[i][:,t].astype(int))
+                forceinffullsex[:,:,:] *= npow(1 - einsum('m,m,mi,km,m->ikm', transsexarr[i], condarr[i][:,t], alleff[pop1,t,:], effallprev[:,pop2],
+                                    (wholeactssexarr[i][:,t].astype(int) != 0) ), wholeactssexarr[i][:,t].astype(int))  # If wholeacts[t] == 0, then this will equal one so will not change forceinffull
                 forceinffull[:,pop1,:,pop2] *= swapaxes(swapaxes(forceinffullsex[:,:,:],1,2),0,1)  # Slicing a more than 2d array puts the pop1,pop2 in the first dimension
 
+            if debug and ( not((forceinffull[:,:,:,:]>=0).all()) or not((forceinffull[:,:,:,:]<=1).all()) ):
+                for i,arr in enumerate(popsactssexarr):
+                    for m,(pop1, pop2) in enumerate(arr):
+                        if not ( not((forceinffull[:,pop1,:,pop2]>=0).all()) or not((forceinffull[:,pop1,:,pop2]<=1).all()) ):
+                            errormsg = label + 'Sexual force-of-infection is invalid between populations %s and %s, time %0.1f, FOI:\n%s)' % (
+                                popkeys[pop1], popkeys[pop2], tvec[t], forceinffull[:,pop1,:,pop2])
+                            for var in ['i','m','transsexarr[i][m]','condarr[i][m,t]','alleff[pop1,t,:]','effallprev[:,pop2]','fracactssexarr[i][m,t]','wholeactssexarr[i][m,t]']:
+                                errormsg += '\n%20s = %f' % (var, eval(var))  # Print out extra debugging information
+                            raise OptimaException(errormsg)
+
+            ## Injection-related infections
             pop1 = popsactsinjarr[:, 0]
             pop2 = popsactsinjarr[:, 1]
             forceinffullinj = ones((len(sus), nstates, len(pop1)))
@@ -691,7 +678,16 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                                                           effallprev[:,pop2], [1,1], (wholeactsinjarr[:,t].astype(int) != 0) ),
                                             wholeactsinjarr[:,t].astype(int))   # If wholeacts[t] == 0, then this will equal one so will not change forceinffull
 
-            forceinffull[:,pop1,:,pop2] *= swapaxes(swapaxes(forceinffullinj[:,:,:],1,2),0,1)
+            forceinffull[:,pop1,:,pop2] *= swapaxes(swapaxes(forceinffullinj[:,:,:],1,2),0,1)  # Slicing a more than 2d array puts the pop1,pop2 in the first dimension
+
+            if debug and ( not((forceinffull[:,:,:,:]>=0).all()) or not((forceinffull[:,:,:,:]<=1).all()) ):
+                for m,(pop1, pop2) in enumerate(popsactsinjarr):
+                    if not ( not((forceinffull[:,pop1,:,pop2]>=0).all()) or not((forceinffull[:,pop1,:,pop2]<=1).all()) ):
+                        errormsg = label + 'Injection force-of-infection is invalid between populations %s and %s, time %0.1f, FOI:\n%s)' % (
+                            popkeys[pop1], popkeys[pop2], tvec[t], forceinffull[:,pop1,:,pop2])
+                        for var in ['m','transinj','osteff[t]','sharing[pop1,t]','prepeff[pop1,t]','effallprev[:,pop2]','fracactsinjarr[m,t]','wholeactsinjarr[m,t]']:
+                            errormsg += '\n%20s = %f' % (var, eval(var))  # Print out extra debugging information
+                        raise OptimaException(errormsg)
 
         # Probability of getting infected is one minus forceinffull times any scaling factors !! copied below !!
         forceinffull  = einsum('ijkl,j,j,j->ijkl', 1.-forceinffull, force, inhomo,(1.-background[:,t]))
@@ -727,7 +723,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
             put_along_axis(forceinffullsexinj, probmiddlelocations, middleprob - middleprob * largestprob, axis=0) # The assumption that the two infection events are independent, same assumption as above
 
             # Probability of getting infected by each method is probsexinjsortindices times any scaling factors, !! copied from above !!
-            forceinffullcauses = einsum('mijkl,j,j,j->mijkl', forceinffullsexinj, force, inhomo, (1. - background[:, t]))
+            forceinffullcauses = einsum('mijkl,j,j,j->mijkl', forceinffullsexinj, force, inhomo, (1.-background[:,t]))
 
             nonmtctmethods = [heterosexsex,homosexsex,inj]
             raw_incionpopbypopmethods[nonmtctmethods,:,:,:,t] = einsum('ij,mijkl->mjkl', people[sus,:,t], forceinffullcauses[nonmtctmethods,:,:,:,:])/dt
@@ -767,7 +763,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
 
         # Diagnosed/lost to care
         if True: # userate(propcare,t): Put people onto care even if there is propcare set, propcare will adjust after the fact. Otherwise, propcare doesn't link people to care at the rate that people should be (because theres enough in care) and we get too many people diagnosed but not linked.
-            careprobarr = tile(linktocare[:,t], (ncd4,1))
+            careprobarr   = tile(linktocare[:,t],   (ncd4,1))
             returnprobarr = tile(returntocare[:,t], (ncd4,1))
             careprobarr[aidsind:,:] = maximum(aidslinktocare[t], careprobarr[aidsind:,:])  #people with AIDS potentially linked to care faster than people with high CD4 counts (at least historically)
             returnprobarr[aidsind:,:] = 1. - (1.-aidstest[t])*(1.-returntocare[:,t])  #people with AIDS who are lost to follow-up may be returned to care based on re-testing or return to care adherence, independently
@@ -788,8 +784,6 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
         if True: # userate(propcare,t): People get lost to care even if there is propcare set, propcare will adjust after the fact.
             lossprobarr = tile(leavecare[:,t], (ncd4, 1))
             lossprobarr[aidsind:, :] = minimum(aidsleavecare[t], lossprobarr[aidsind:, :])
-            lossprob = [leavecare[:,t]]*ncd4
-            for cd4 in range(aidsind, ncd4): lossprob[cd4] = minimum(aidsleavecare[t],leavecare[:,t])
         else: lossprobarr = zeros((ncd4,npops))
         # allcare -> allcare: thistransit[fromstate,tostate,:] *=  (1.-lossprob[cd4]), cd4 state of fromstate
         thistransit[ix_(allcare, allcare, arange(npops))]  *= einsum('ik,ij->ijk', (1.-lossprobarr[(allcare-allcare[0])%ncd4,:]), fromtoarr[ix_(allcare,allcare)])
@@ -863,12 +857,10 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
         numdxhivpospregwomen   = numpotmothers[:,_alldx]    * totalbirthrate
         numundxhivpospregwomen = numpotmothers[:, _undx]    * totalbirthrate
 
-        if useoldpmtct:
-            # old behaviour is calcproppmtct = numpmtct / dxpregwomen, and proppmtct = numpmtct / dxpregwomen
+        if useoldpmtct:  # old behaviour is calcproppmtct = numpmtct / dxpregwomen, and proppmtct = numpmtct / dxpregwomen
             if isnan(proppmtct[t]): thisnumpmtct = numpmtct[t] / timestepsonpmtct
             else:                   thisnumpmtct = proppmtct[t]*(eps*dt+numdxhivpospregwomen.sum())
-        else:
-            # New behaviour calcproppmtct = numpmtct / dxpregwomen, whereas proppmtct = numpmtct /  allhiv+pregwomen
+        else:            # New behaviour calcproppmtct = numpmtct / dxpregwomen, whereas proppmtct = numpmtct / allhiv+pregwomen
             if isnan(proppmtct[t]): thisnumpmtct = numpmtct[t] / timestepsonpmtct            # Proportion on PMTCT is not specified: use number
             else:                   thisnumpmtct = proppmtct[t] * numhivpospregwomen.sum()  # Else, just use the proportion specified
 
@@ -976,14 +968,13 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
         ## Shift numbers of people (circs, treatment, age transitions, risk transitions, prop scenarios)
         ###############################################################################
         if t<npts-1:
-
             ## Births
             people[susreg, :, t+1] += raw_births[:,t]*dt - undxhivbirths - dxhivbirths # HIV- babies assigned to uncircumcised compartment
-            people[undx[0], :, t+1] += undxhivbirths # HIV+ babies born to undiagnosed mothers assigned to undiagnosed compartment
-            people[dx[0], :, t+1]   += dxhivbirths   # HIV+ babies born to diagnosed mothers assigned to diagnosed
+            people[undx[0],:, t+1] += undxhivbirths # HIV+ babies born to undiagnosed mothers assigned to undiagnosed compartment
+            people[dx[0],  :, t+1] += dxhivbirths   # HIV+ babies born to diagnosed mothers assigned to diagnosed
 
             ## Immigration
-            people[:, :, t+1]   += raw_immi[:,:,t]*dt #unannualise
+            people[:,:,t+1] += raw_immi[:,:,t]*dt #unannualise
 
             ## Circumcision
             circppl = minimum(numcirc[:,t+1], people[susreg,:,t+1])
@@ -996,8 +987,6 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
             people[:,:,t+1] += peoplefromto.sum(axis=1)  # sum over popfrom  # Ageing to a population
             if advancedtracking:
                 raw_transitpopbypop[:,allplhiv,:,t+1] += swapaxes(peoplefromto[allplhiv,:,:],1,2) / dt  # annualize
-
-
 
             # ## Risk-related transitions
             # peoplefromto1: statetofrom, popfrom, popto
