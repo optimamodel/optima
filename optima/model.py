@@ -975,7 +975,8 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
             people[susreg,:,t+1]   -= circppl
             people[progcirc,:,t+1] += circppl
 
-            if oldbehaviour:
+            # The old model here had a small bug: people are moved into the next class, and then some of those will move into the next class, skipping an age group
+            if oldbehaviour:  # This code is kept in to not change the calibrations for versions 2.11.x and below
                 ## Age-related transitions
                 for p1,p2,thisagetransprob in agetransitlist:
                     thisagerate = agelist[p1][p2][t]
@@ -1005,7 +1006,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                     if advancedtracking:
                         raw_transitpopbypop[p2,allplhiv,p1, t+1] += peoplemoving1[allplhiv]/dt #annualize
                         raw_transitpopbypop[p1,allplhiv,p2, t+1] += peoplemoving2[allplhiv]/dt #annualize
-            else:
+            else: # This version below is quicker and more accurate but produces results that are 0.5% different
                 ## Age-related transitions
                 peoplefromto = einsum('ki,ij->kij', people[:,:,t+1], agearr[:,:,t])
                 people[:,:,t+1] -= peoplefromto.sum(axis=2)  # sum over popto    # Ageing from a population
