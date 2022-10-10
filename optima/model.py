@@ -1183,14 +1183,14 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
     raw['hivbirths']      = raw_hivbirths
     raw['immi']           = raw_immi
     raw['pmtct']          = raw_receivepmtct
-    raw['diag']           = raw_diagcd4.sum(axis=0) # sum over cd4 count
-    raw['diagcd4']        = raw_diagcd4
+    raw['diag']           = raw_diagcd4.sum(axis=0) # Sum over cd4 count
     raw['diagpmtct']      = raw_dxforpmtct
     raw['newtreat']       = raw_newtreat
     raw['death']          = raw_death
     raw['otherdeath']     = raw_otherdeath
     if advancedtracking:
-        raw['incionpopbypop'] = raw_incionpopbypopmethods.sum(axis=0) # removes the method of transmission
+        raw['diagcd4']        = raw_diagcd4
+        raw['incionpopbypop'] = raw_incionpopbypopmethods.sum(axis=0) # Removes the method of transmission
         raw['incimethods']    = raw_incionpopbypopmethods
         raw['transitpopbypop']= raw_transitpopbypop
 

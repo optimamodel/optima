@@ -95,7 +95,8 @@ def setmigrations(which='migrations'):
         ('2.10.14',('2.10.15','2022-09-13',fixmoremanfitsettings,'Fix more manual fit settings (which impact on FE display)')),
         ('2.10.15',('2.10.16','2022-09-15',clearuntrackedresults,'Clear results if they did not have tracking')),
         ('2.10.16',('2.11.0', '2022-09-17', None,            'Version update for updated GUI launch')),
-        ('2.11.0', ('2.11.1', '2022-10-06',addcd4lt200indssetting,'Add cd4lt200inds to settings. Lots of other changes in this update that do not need a migration')),
+        ('2.11.0', ('2.11.1', '2022-10-06', None,            'Major bug fixes, FE updates, fixproppmtct now fixes proportion of diagnosed women on PMTCT and propcare brings people from dx and lost')),
+        ('2.11.1', ('2.11.2', '2022-10-10', None,            'Big model speed ups (about 25%) and split diagnoses by CD4 count')),
         ])
     
     
@@ -1449,22 +1450,6 @@ def clearuntrackedresults(project=None, **kwargs):
             if not hasattr(res, 'advancedtracking'): #if anything wasn't migrated previously just clear the result and user will rerun, migration is complex otherwise
                 project.results = op.odict()
                 break
-    return None
-
-def addcd4lt200indssetting(project=None, **kwargs):
-    '''
-    Migration between Optima 2.11.0 and 2.11.1
-    - Adds cd4lt200inds (the indices of the cd4 states <200) to settings
-    '''
-    if project is not None:
-        if project.settings is not None:
-            if not hasattr(project.settings, 'cd4lt200inds'):
-                base_settings = op.Settings()
-                project.settings.cd4lt200inds = base_settings.cd4lt200inds
-        for res in project.results.values():
-            if not hasattr(res.settings, 'cd4lt200inds'):
-                settings = project.settings if project.settings is not None else op.Settings()
-                res.settings.cd4lt200inds = settings.cd4lt200inds
     return None
 
 ##########################################################################################

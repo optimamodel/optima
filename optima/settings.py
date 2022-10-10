@@ -24,8 +24,7 @@ class Settings(object):
         self.now = 2022.0 # Default current year
         self.dataend = 2030.0 # Default end year for data entry
         self.end = 2040.0 # Default end year for projections
-        self.hivstates = ['acute', 'gt500', 'gt350', 'gt200', 'gt50', 'lt50']   # Be careful changing this, check settings.cd4lt200inds too
-        self.cd4lt200inds = [4,5]   # 'gt50', 'lt50' are CD4<200
+        self.hivstates = ['acute', 'gt500', 'gt350', 'gt200', 'gt50', 'lt50']   # Be careful changing this, check settings.aidsind and where aidsind is used too
         self.healthstates = ['susreg', 'progcirc', 'undx', 'dx', 'care', 'lost', 'usvl', 'svl']
         self.ncd4 = len(self.hivstates)
         self.nhealth = len(self.healthstates)
