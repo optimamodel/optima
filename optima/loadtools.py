@@ -96,6 +96,7 @@ def setmigrations(which='migrations'):
         ('2.10.15',('2.10.16','2022-09-15',clearuntrackedresults,'Clear results if they did not have tracking')),
         ('2.10.16',('2.11.0', '2022-09-17', None,            'Version update for updated GUI launch')),
         ('2.11.0', ('2.11.1', '2022-10-06', None,            'Major bug fixes, FE updates, fixproppmtct now fixes proportion of diagnosed women on PMTCT and propcare brings people from dx and lost')),
+        ('2.11.1', ('2.11.2', '2022-10-10', None,            'Big model speed ups (about 25%) and split diagnoses by CD4 count')),
         ])
     
     

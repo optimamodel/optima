@@ -345,7 +345,7 @@ def makeplots(results=None, toplot=None, die=False, verbose=2, plotstartyear=Non
     
     return allplots
 
-def plotchangeinplhivallsources(results,which='change',die=None,fig=None,eps=0.1,verbose=2,**kwargs):
+def plotchangeinplhivallsources(results,which='change',showdata=False,die=None,fig=None,eps=0.1,verbose=2,**kwargs):
     changekeys = ['change', 'changeinplhivallsources', 'changeinplhivallsources-population+stacked', 'changeinplhivallsources-stacked']
     plhivkeys = ['plhiv', 'plhivallsources', 'plhivallsources-population+stacked', 'plhivallsources-stacked']
     validplottypes = ['population+stacked', 'stacked']
@@ -396,6 +396,10 @@ def plotchangeinplhivallsources(results,which='change',die=None,fig=None,eps=0.1
 
             plottitle = 'Change in PLHIV'
             showoverall = True
+            numplhiv = results.main['numplhiv'].pops[scen]
+            diff = numplhiv[:,1:]-numplhiv[:,:-1]
+            data = concatenate((zeros((numplhiv.shape[0],1)), diff), axis=1)
+            data = [data for i in range(3)]
         elif plotname == 'plhivallsources':
             scen = 0  # 0th is best
             numincionpopbypop = results.other['numincionpopbypop'].pops[scen]
@@ -430,8 +434,8 @@ def plotchangeinplhivallsources(results,which='change',die=None,fig=None,eps=0.1
             plottitle = 'Number of PLHIV'
             showoverall = False
 
-        thisplots = plotstackedabovestackedbelow(results, toplot=[(plotname, plottype)],
-                                                 stackedabove=stackedabove, stackedbelow=stackedbelow, showoverall=showoverall, showdata=False,
+        thisplots = plotstackedabovestackedbelow(results, toplot=[(plotname, plottype)], data=[data], showdata=showdata,
+                                                 stackedabove=stackedabove, stackedbelow=stackedbelow, showoverall=showoverall,
                                                  stackedabovelabels=stackedabovelabels, stackedbelowlabels=stackedbelowlabels,
                                                  plottitles=[plottitle], die=die, fig=fig, **kwargs)
         plots.update(thisplots)
