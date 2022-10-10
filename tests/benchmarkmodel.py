@@ -17,12 +17,12 @@ Version: 2018apr24
 """
 
 dobenchmark = True
-doprofile = False
+doprofile = True
 
 n_benchmark = 10  # Number of times to run the cpu benchmark
 n_runsim = 1     # Number of times to run the model
 
-# If running profiling, choose which function to line profile. 
+# If running profiling, choose which function to line profile.
 functiontoprofile = 'model' # Choices are: model, runsim, makesimpars, interp
 tobenchmark = 'runsim' # Choices are 'runsim' or 'runbudget'
 
@@ -66,14 +66,14 @@ if dobenchmark:
     performance = sum([performance1, performance2])/2. # Find average of before and after
     benchmarktxt = "for %s (benchmark:%0.2fm iterations/second)" % (tobenchmark, performance)
     print(benchmarktxt)
-    
+
     # Gather the output data
     elapsedstr = '%0.3f' % elapsed
     todaystr = getdate(today()).replace(' ','_')
     gitbranch, gitversion = gitinfo()
     gitversion = gitversion[:hashlen]
     thisout = ' '.join([elapsedstr, todaystr, gitversion, gitbranch, benchmarktxt])
-    
+
     # Save, but only if hash not already in file
     if dosave:
         output = loadtext(filename, splitlines=True)
@@ -99,7 +99,7 @@ if doprofile:
     P = Project(spreadsheet='generalized.xlsx', dorun=False)
     runsim = P.runsim # analysis:ignore
     interp = P.pars()['hivtest'].interp
-    
+
     def profile():
         print('Profiling...')
 
@@ -117,16 +117,16 @@ if doprofile:
                       profiler.print_stats()
               return profiled_func
           return inner
-        
-        
-        
+
+
+
         @do_profile(follow=[eval(functiontoprofile)]) # Add decorator to runmodel function
-        def runsimwrapper(): 
+        def runsimwrapper():
             P.runsim()
         runsimwrapper()
-        
+
         print('Done.')
-    
+
     profile()
 
 if 'elapsedstr' in locals():
