@@ -215,9 +215,10 @@ def loadspreadsheet(filename=None, folder=None, verbose=2):
                 elif sheettype=='time': 
                     startcol = 2
                     thesedata = blank2nan(sheetdata.row_values(row, start_colx=startcol, end_colx=lastdatacol-1)) # Data starts in 3rd column, and ends lastdatacol-1
+                    dataallnan = isnan(thesedata).all()
                     assumptiondata = sheetdata.cell_value(row, assumptioncol-1)
-                    if assumptiondata != '': # There's an assumption entered
-                        thesedata = [assumptiondata] # Replace the (presumably blank) data if a non-blank assumption has been entered
+                    if assumptiondata != '' and dataallnan: # There's an assumption entered and no yearly data - Defaults to using yearly data if it is there
+                        thesedata = [assumptiondata] # Replace the blank data if a non-blank assumption has been entered
                     data[thispar].append(thesedata) # Store data
                     checkblank = False if sheetname in skipblanksheets or thispar in skipblankpars else True # Don't check optional indicators, check everything else
                     validatedata(thesedata, sheetname, thispar, row, checkblank=checkblank, checkupper=checkupper[thispar], startcol=startcol)
