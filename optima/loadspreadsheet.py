@@ -205,8 +205,11 @@ def loadspreadsheet(filename=None, folder=None, verbose=2):
                     if len(data[thispar])==0: 
                         data[thispar] = [[] for z in range(3)] # Create new variable for best, low, high
                     thesedata = blank2nan(sheetdata.row_values(row, start_colx=startcol, end_colx=lastdatacol)) # Data starts in 4th column -- need room for high/best/low
+                    validatedata(thesedata, sheetname, thispar, row, checkblank=False, checkupper=checkupper[thispar], startcol=startcol) # Don't check for blank yet, do that after trying the assumption
+                    dataallnan = isnan(thesedata).all() # the above line makes sure the data is all numbers and throws an error if not - so this line shouldn't throw a hard to diagnose error
                     assumptiondata = sheetdata.cell_value(row, assumptioncol)
-                    if assumptiondata != '': thesedata = [assumptiondata] # Replace the (presumably blank) data if a non-blank assumption has been entered
+                    if assumptiondata != '' and dataallnan: # There's an assumption entered and no yearly data - Defaults to using yearly data if it is there
+                        thesedata = [assumptiondata] # Replace the blank data if a non-blank assumption has been entered
                     blh = sheetdata.cell_value(row, 2) # Read in whether indicator is best, low, or high
                     data[thispar][blhindices[blh]].append(thesedata) # Actually append the data
                     validatedata(thesedata, sheetname, thispar, row, checkblank=(blh=='best'), checkupper=checkupper[thispar], startcol=startcol)  # Make sure at least the best estimate isn't blank
@@ -215,7 +218,8 @@ def loadspreadsheet(filename=None, folder=None, verbose=2):
                 elif sheettype=='time': 
                     startcol = 2
                     thesedata = blank2nan(sheetdata.row_values(row, start_colx=startcol, end_colx=lastdatacol-1)) # Data starts in 3rd column, and ends lastdatacol-1
-                    dataallnan = isnan(thesedata).all()
+                    validatedata(thesedata, sheetname, thispar, row, checkblank=False, checkupper=checkupper[thispar], startcol=startcol) # Don't check for blank yet, do that after trying the assumption
+                    dataallnan = isnan(thesedata).all() # the above line makes sure the data is all numbers and throws an error if not - so this line shouldn't throw a hard to diagnose error
                     assumptiondata = sheetdata.cell_value(row, assumptioncol-1)
                     if assumptiondata != '' and dataallnan: # There's an assumption entered and no yearly data - Defaults to using yearly data if it is there
                         thesedata = [assumptiondata] # Replace the blank data if a non-blank assumption has been entered
@@ -352,9 +356,11 @@ def loadprogramspreadsheet(filename='testprogramdata.xlsx', verbose=2):
 
         elif progname != '': # The first column is blank: it's time for the data
             thesedata = blank2nan(sheetdata.row_values(row, start_colx=3, end_colx=lastdatacol)) # Data starts in 3rd column, and ends lastdatacol-1
+            validatedata(thesedata, sheetname, thisvar, row, checkblank=False) # Don't check for blank yet, do that after trying the assumption
+            dataallnan = isnan(thesedata).all() # the above line makes sure the data is all numbers and throws an error if not - so this line shouldn't throw a hard to diagnose error
             assumptiondata = sheetdata.cell_value(row, assumptioncol)
-            if assumptiondata != '': # There's an assumption entered
-                thesedata = [assumptiondata] # Replace the (presumably blank) data if a non-blank assumption has been entered
+            if assumptiondata != '' and dataallnan: # There's an assumption entered and no yearly data entered - Default to using yearly data over assumption
+                thesedata = [assumptiondata] # Replace blank data if a non-blank assumption has been entered
             if sheetdata.cell_value(row, 2) in namemap.keys(): # It's a regular variable without ranges
                 thisvar = namemap[sheetdata.cell_value(row, 2)]  # Get the name of the indicator
                 printv('Program: %s, indicator %s' % (progname, thisvar), 4, verbose)
