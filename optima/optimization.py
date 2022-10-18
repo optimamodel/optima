@@ -679,7 +679,7 @@ def optimize(optim=None, maxiters=None, maxtime=None, verbose=2, stoppingfunc=No
         optim.constraints = defaultconstraints(project=project, progsetname=optim.progsetname, verbose=verbose)
 
     # Reorder the programs to match the order of the constraints
-    progset.reorderprograms(optim.constraints['name'].keys())
+    if optim.constraints is not None: progset.reorderprograms(optim.constraints['name'].keys())
 
     # Process inputs
     if not optim.objectives['budget']: # Handle 0 or None 
