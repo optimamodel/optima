@@ -1080,7 +1080,7 @@ def plotcoverage(multires=None, die=True, figsize=globalfigsize, legendsize=glob
                         try: progdata[i] = x[-1] # If not enough data points, just use last 
                         except: progdata[i] = 0. 
                 else:                     progdata[i] = x
-            progdata *= 100 
+            # progdata *= 100   # I think this line was a remnant from coverage % but this function now plots number covered not % coverage
             xbardata = arange(nprogs)+.75+barwidth*y
             for p in range(nprogs):
                 if nbudgetyears>1: barcolor = colors[y] # More than one year? Color by year
@@ -1096,7 +1096,7 @@ def plotcoverage(multires=None, die=True, figsize=globalfigsize, legendsize=glob
         ylabel = 'Coverage'
         ax[-1].set_ylabel(ylabel)
          
-        if nallocs>1: thistitle = 'Coverage - %s' % alloclabels[plt]
+        if nallocs>1: thistitle = 'Coverage' % alloclabels[plt]
         else:         thistitle = 'Program coverage'
         ax[-1].set_title(thistitle)
         ymin = min(ymin, ax[-1].get_ylim()[0])
