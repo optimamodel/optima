@@ -331,16 +331,19 @@ def defaultscenarios(project=None, which=None, startyear=2023, endyear=2025, par
     if which is None: which = 'budgets'
     
     if which=='budgets':
-        parsetname = 'default-scenarios'
+        parsetname = 'default-scens'
+        parsetnamefixed = 'default-scens-fixed-tx-supp-pmtct'
         project.copyparset(orig=parset, new=parsetname)
-        project.parsets['default-scenarios'].fixprops(False) # Ensure they're not fixed
+        project.copyparset(orig=parset, new=parsetnamefixed)
+        project.parsets[parsetname].fixprops(False, which='all')  # For budget scenarios, want unfixed proportions
+        project.parsets[parsetnamefixed].fixprops(True)           # For baseline, fix proptx, propsupp, and proppmtct
         defaultbudget = project.progsets[progset].getdefaultbudget()
         maxbudget = dcp(defaultbudget)
         nobudget = dcp(defaultbudget)
         for key in maxbudget: maxbudget[key] += project.settings.infmoney
         for key in nobudget: nobudget[key] *= 1e-6
         scenlist = [
-            Parscen(   name='Baseline',         parsetname=parsetname, pars=[]),
+            Parscen(   name='Baseline',         parsetname=parsetnamefixed, pars=[]),
             Budgetscen(name='Zero budget',      parsetname=parsetname, progsetname=0, t=[startyear], budget=nobudget),
             Budgetscen(name='Baseline budget',  parsetname=parsetname, progsetname=0, t=[startyear], budget=defaultbudget),
             Budgetscen(name='Unlimited budget', parsetname=parsetname, progsetname=0, t=[startyear], budget=maxbudget),
