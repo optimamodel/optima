@@ -447,7 +447,7 @@ class Project(object):
                 if hasattr(scen,'pars'):   del scen.pars  # pars of a Progscen get re-generated when run, only needed in a Parscen
             if hasattr(scen,'scenparset'): del scen.scenparset  # scenparset always gets re-generated
     
-    def save(self, filename=None, folder=None, saveresults=False, verbose=2, advancedtracking=False, cleanparsfromscens=False):
+    def save(self, filename=None, folder=None, saveresults=False, verbose=2, advancedtracking=False, cleanparsfromscens=True):
         ''' Save the current project, by default using its name, and without results '''
         origadvancedtracking = self.settings.advancedtracking
         self.settings.advancedtracking = advancedtracking # Default to turning advancedtracking off
