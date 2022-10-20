@@ -124,13 +124,15 @@ def runscenarios(project=None, verbose=2, name=None, defaultparset=-1, debug=Fal
 
 
 
-def makescenarios(project=None, scenlist=None, verbose=2, ccsample=False, randseed=None):
+def makescenarios(project=None, scenlist=None, verbose=2, ccsample=None, randseed=None):
     """ Convert dictionary of scenario parameters into parset to model parameters """
+    if ccsample is None: ccsample = 'best'
+
+    if scenlist is None and project is not None and hasattr(project,'scens'):
+        scenlist = [scen for scen in project.scens.values()]  # Default to making all the scenarios in the project if none are given
 
     scenparsets = odict()
     for scenno, scen in enumerate(scenlist):
-        
-        
         try:
             if scen.parsetname not in project.parsets.keys() and len(project.parsets)==1: #if there is only 1 parset, then just update the scenarios
                 scen.parsetname = project.parsets.keys()[0]
