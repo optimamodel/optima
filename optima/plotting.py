@@ -81,8 +81,8 @@ def getplotselections(results, advanced=False, includeadvancedtracking=False):
     
     # Figure out what kind of result it is -- WARNING, copied from below
     if type(results)==Resultset: ismultisim = False
-    elif type(results)==Multiresultset and results.nresultset > 1:  ismultisim = True
-    elif type(results)==Multiresultset and results.nresultset == 1: ismultisim = False # A Multiresultset with only one Resultset can have stacked plots
+    elif type(results)==Multiresultset and results.nresultsets > 1:  ismultisim = True
+    elif type(results)==Multiresultset and results.nresultsets == 1: ismultisim = False # A Multiresultset with only one Resultset can have stacked plots
     else: 
         errormsg = 'Results input to plotepi() must be either Resultset or Multiresultset, not "%s".' % type(results)
         raise OptimaException(errormsg)
@@ -512,7 +512,7 @@ def plotepi(results, toplot=None, uncertainty=True, die=True, showdata=True, ver
         
         # Figure out what kind of result it is
         if type(results)==Resultset: ismultisim = False
-        elif type(results)==Multiresultset and results.nresultset == 1: ismultisim = False # A Multiresultset with only one Resultset can have stacked plots
+        elif type(results)==Multiresultset and results.nresultsets == 1: ismultisim = False # A Multiresultset with only one Resultset can have stacked plots
         elif type(results)==Multiresultset:
             ismultisim = True
             labels = results.keys # Figure out the labels for the different lines
@@ -1432,7 +1432,7 @@ def plotstackedabovestackedbelow(results, toplot=None, stackedabove=None, stacke
         # Figure out what kind of result it is
         if type(results) == Resultset:
             ismultisim = False
-        elif type(results)==Multiresultset and results.nresultset == 1: ismultisim = False # A Multiresultset with only one Resultset can have stacked plots
+        elif type(results)==Multiresultset and results.nresultsets == 1: ismultisim = False # A Multiresultset with only one Resultset can have stacked plots
         elif type(results) == Multiresultset:  # not implemented at the moment
             errormsg = 'Results input to plotfulltransandinfections() must be Resultset, not "%s".' % type(results)
             raise OptimaException(errormsg)
@@ -1758,7 +1758,7 @@ def plotbymethod(results, toplot=None, uncertainty=True, die=True, showdata=True
         # Figure out what kind of result it is
         if type(results) == Resultset:
             ismultisim = False
-        elif type(results) == Multiresultset and results.nresultset == 1: ismultisim = False # A Multiresultset with only one Resultset can have stacked plots
+        elif type(results) == Multiresultset and results.nresultsets == 1: ismultisim = False # A Multiresultset with only one Resultset can have stacked plots
         elif type(results) == Multiresultset: # not implemented at the moment
             errormsg = 'Results input to plotbymethod() must be Resultset, not "%s".' % type(results)
             raise OptimaException(errormsg)
@@ -2086,7 +2086,7 @@ def plotbycd4(results=None, whattoplot='people', figsize=globalfigsize, lw=2, ti
     if type(results)==Resultset: 
         ismultisim = False
         nsims = 1
-    elif type(results)==Multiresultset and results.nresultset == 1:
+    elif type(results)==Multiresultset and results.nresultsets == 1:
         ismultisim = False # A Multiresultset with only one Resultset can have stacked plots
         nsims = 1
     elif type(results)==Multiresultset:
