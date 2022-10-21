@@ -1558,8 +1558,7 @@ def make_scenarios_graphs(project_id, which=None, is_run=False, zoom=None, start
         if hasattr(result, 'which'):
             print(">> make_scenarios_graphs load which")
             which = result.which
-    whichprocessed, _s, _a, _o = process_which(result=result, which=which,includeadvancedtracking=includeadvancedtracking)
-    needtorerun = op.checkifneedtorerunwithadvancedtracking(results=result, which=whichprocessed)
+    needtorerun = op.checkifneedtorerunwithadvancedtracking(results=result, which=which)
     if is_run or needtorerun:
         project = load_project(project_id)
         if result is not None:
@@ -1568,7 +1567,7 @@ def make_scenarios_graphs(project_id, which=None, is_run=False, zoom=None, start
         if len(project.scens) == 0:
             print(">> make_scenarios_graphs no scenarios")
             return {}
-        advancedtracking = op.checkifneedtorerunwithadvancedtracking(results=None, which=whichprocessed)
+        advancedtracking = op.checkifneedtorerunwithadvancedtracking(results=None, which=which)
         print(f">> make_scenarios_graphs project '{project_id}' from {startYear} to {endYear}, advancedtracking: {advancedtracking}")       # start=None, end=None -> does nothing
         project.runscenarios(end=endYear, advancedtracking=advancedtracking) # Only change end year from default
         result = project.results[-1]
