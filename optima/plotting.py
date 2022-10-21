@@ -621,13 +621,15 @@ def plotepi(results, toplot=None, uncertainty=True, die=True, showdata=True, ver
             if istotal or isstacked or isperpopandstacked: datattrtype = 'tot' # For pulling out total data
             else: datattrtype = 'pops'
             
-            if ismultisim or type(results)==Multiresultset:  # e.g. scenario, no uncertainty
+            if ismultisim:  # e.g. scenario, no uncertainty
                 best = list() # Initialize as empty list for storing results sets
                 for s in range(nsims): best.append(getattr(resultsmaindatatype, attrtype)[s])
                 lower = None
                 upper = None
                 databest = None
                 uncertainty = False
+            elif type(results)==Multiresultset:  # Multiresultset but only 1 Resultset
+                best = getattr(resultsmaindatatype, attrtype)[0]
             else: # Single results thing: plot with uncertainties and data
                 best = getattr(resultsmaindatatype, attrtype)[0] # poptype = either 'tot' or 'pops'
                 try: # If results were calculated with quantiles, these should exist
