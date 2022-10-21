@@ -517,7 +517,9 @@ def plotepi(results, toplot=None, uncertainty=True, die=True, showdata=True, ver
         
         # Figure out what kind of result it is
         if type(results)==Resultset: ismultisim = False
-        elif type(results)==Multiresultset and results.nresultsets == 1: ismultisim = False # A Multiresultset with only one Resultset can have stacked plots
+        elif type(results)==Multiresultset and results.nresultsets == 1:
+            ismultisim = False # A Multiresultset with only one Resultset can have stacked plots
+            nsims = 1
         elif type(results)==Multiresultset:
             ismultisim = True
             labels = results.keys # Figure out the labels for the different lines
