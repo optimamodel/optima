@@ -1124,7 +1124,7 @@ def load_result_mpld3_graphs(result_id=None, which=None, zoom=None, startYear=No
         print(">> load_result_mpld3_graphs needtorerun with advancedtracking")
 
         if isinstance(result,op.Multiresultset):
-            return make_scenarios_graphs(project_id, which=which, is_run=True, zoom=zoom, startYear=startYear, endYear=endYear, includeadvancedtracking=includeadvancedtracking)
+            return make_scenarios_graphs(result.projectinfo['uid'], which=which, is_run=True, zoom=zoom, startYear=startYear, endYear=endYear, includeadvancedtracking=includeadvancedtracking)
 
         if not hasattr(result,'parsetuid'):
             raise op.OptimaException("Please click Save & run. The current results need to be refreshed for these graphs (results does not have parsetuid).")
