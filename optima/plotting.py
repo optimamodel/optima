@@ -533,7 +533,7 @@ def plotepi(results, toplot=None, uncertainty=True, die=True, showdata=True, ver
         
         # Initialize
         if toplot is None: # If toplot is None...
-            toplot = getdefaultplots(ismulti=ismultisim) # ...get defaults...
+            toplot = getdefaultplots(ismulti=type(results)==Multiresultset) # ...get defaults...
             toremove = []
             for key in toplot: # ...then loop over them...
                 if key.find('-')<0: 
@@ -557,7 +557,9 @@ def plotepi(results, toplot=None, uncertainty=True, die=True, showdata=True, ver
                 epikey = plotkeys[0] # This must always exist, e.g. numplhiv
                 if len(plotkeys)==2: plottype = plotkeys[1] # Use the one specified
                 elif len(plotkeys)==1: # Otherwise, try to use the default
-                    try: plottype = results.main[epikey].defaultplot # If it's just e.g. numplhiv, then use the default plotting type
+                    try:
+                        plottype = results.main[epikey].defaultplot # If it's just e.g. numplhiv, then use the default plotting type
+                        if type(results)==Multiresultset and plottype == 'stacked': plottype = 'total' # WARNING! manual override of Multiresultset default from stacked to total
                     except:
                         try: plottype = results.other[epikey].defaultplot
                         except:
@@ -630,9 +632,7 @@ def plotepi(results, toplot=None, uncertainty=True, die=True, showdata=True, ver
                 uncertainty = False
             elif type(results)==Multiresultset:  # Multiresultset but only 1 Resultset
                 best = getattr(resultsmaindatatype, attrtype)[0]
-                lower = None
-                upper = None
-                databest = None
+                lower, upper, databest = None, None, None
                 uncertainty = False
             else: # Single results thing: plot with uncertainties and data
                 best = getattr(resultsmaindatatype, attrtype)[0] # poptype = either 'tot' or 'pops'
