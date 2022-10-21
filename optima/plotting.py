@@ -630,6 +630,10 @@ def plotepi(results, toplot=None, uncertainty=True, die=True, showdata=True, ver
                 uncertainty = False
             elif type(results)==Multiresultset:  # Multiresultset but only 1 Resultset
                 best = getattr(resultsmaindatatype, attrtype)[0]
+                lower = None
+                upper = None
+                databest = None
+                uncertainty = False
             else: # Single results thing: plot with uncertainties and data
                 best = getattr(resultsmaindatatype, attrtype)[0] # poptype = either 'tot' or 'pops'
                 try: # If results were calculated with quantiles, these should exist
