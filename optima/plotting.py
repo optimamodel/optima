@@ -168,7 +168,7 @@ def getplotselections(results, advanced=False, includeadvancedtracking=False):
         plotepikeys = dcp(epikeys)
         plotepinames = dcp(epinames)
     
-    defaultplots = getdefaultplots(ismulti=ismultisim)
+    defaultplots = getdefaultplots(ismulti=type(results)==Multiresultset)
     if not advanced:
         for i in range(len(defaultplots)): defaultplots[i] = defaultplots[i].split('-')[0] # Discard second half of plot name
     plotselections['keys'] += plotepikeys
@@ -619,7 +619,7 @@ def plotepi(results, toplot=None, uncertainty=True, die=True, showdata=True, ver
             if istotal or isstacked or isperpopandstacked: datattrtype = 'tot' # For pulling out total data
             else: datattrtype = 'pops'
             
-            if ismultisim:  # e.g. scenario, no uncertainty
+            if ismultisim or type(results)==Multiresultset:  # e.g. scenario, no uncertainty
                 best = list() # Initialize as empty list for storing results sets
                 for s in range(nsims): best.append(getattr(resultsmaindatatype, attrtype)[s])
                 lower = None
