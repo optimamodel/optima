@@ -207,12 +207,11 @@ def checkifneedtorerunwithadvancedtracking(results=None, which=None):
         if not hasattr(results, 'advancedtracking'): #might not really need it but the results need refreshing
             return True
         elif isinstance(results.advancedtracking, odict):
-            print('!! odict')
             alladvancedtracking = True
             for advancedtracking in results.advancedtracking.values():
                 if not advancedtracking: alladvancedtracking = False
-            return alladvancedtracking
-        elif results.advancedtracking:
+            if alladvancedtracking:  return False  # Already run with advancedtracking so don't need to rerun
+        elif results.advancedtracking:  # Already run with advancedtracking so don't need to rerun
             return False
 
     if which is None:
