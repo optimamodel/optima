@@ -200,7 +200,6 @@ def getadvancedtrackingplotselections(results=None,advanced=False):
 
 
 def checkifneedtorerunwithadvancedtracking(results=None, which=None):
-    print(f' >> checkifneedtorerunwithadvancedtracking {type(results)=} {type(results.advancedtracking)=} {isinstance(results.advancedtracking, odict)=} {results.advancedtracking=}, {which=}')
     if results is not None:
         if not hasattr(results, 'parsetuid'):  # need it later, so results need refreshing
             return True
