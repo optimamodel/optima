@@ -96,8 +96,9 @@ class Portfolio(object):
         
         
     
-    def save(self, filename=None, folder=None, saveresults=True, verbose=2, cleanparsfromscens=True):
+    def save(self, filename=None, folder=None, saveresults=True, verbose=2, cleanparsfromscens=None):
         ''' Save the current portfolio, by default using its name, and without results '''
+        if cleanparsfromscens is None: cleanparsfromscens = not saveresults  # Default to cleaning if we are not saving results
         fullpath = makefilepath(filename=filename, folder=folder, default=[self.filename, self.name], ext='prt', sanitize=True)
         self.filename = fullpath # Store file path
         printv('Saving portfolio to %s...' % self.filename, 2, verbose)
