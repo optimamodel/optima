@@ -433,10 +433,9 @@ def plotchangeinplhivallsources(results,which='change',showdata=False,die=None,f
 
                 plottitle = 'Change in PLHIV'
                 showoverall = True
-                numplhiv = results.main['numplhiv'].tot[scen]
-                diff = numplhiv[1:] - numplhiv[:-1]
-                data = concatenate(([0], diff), axis=0)
-                data = [data for i in range(3)]
+                showdata = True
+                data = array(results.data['optnuminfect'])[[1,0,2],:]  # Order in data is low,best,high, order for plotting is best,low,high
+
         elif plotname == 'plhivallsources':
             scen = 0  # 0th is best
             numincionpopbypop = results.other['numincionpopbypop'].pops[scen]
