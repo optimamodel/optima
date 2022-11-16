@@ -1123,6 +1123,9 @@ def load_result_mpld3_graphs(result_id=None, which=None, zoom=None, startYear=No
     if needtorerun:
         print(">> load_result_mpld3_graphs needtorerun with advancedtracking")
 
+        if isinstance(result,op.Multiresultset):
+            return make_scenarios_graphs(result.projectinfo['uid'], which=which, is_run=True, zoom=zoom, startYear=startYear, endYear=endYear, includeadvancedtracking=includeadvancedtracking)
+
         if not hasattr(result,'parsetuid'):
             raise op.OptimaException("Please click Save & run. The current results need to be refreshed for these graphs (results does not have parsetuid).")
         if result.parsetuid is None:
@@ -1544,7 +1547,7 @@ def launch_reconcile_calc(project_id, progset_id, parset_id, year, maxtime):
 #############################################################################################
 
 
-def make_scenarios_graphs(project_id, which=None, is_run=False, zoom=None, startYear=None, endYear=None):
+def make_scenarios_graphs(project_id, which=None, is_run=False, zoom=None, startYear=None, endYear=None,includeadvancedtracking=True):
     result = load_result(project_id, name="scenarios", which=which)
 
     if result is None:
@@ -1555,7 +1558,8 @@ def make_scenarios_graphs(project_id, which=None, is_run=False, zoom=None, start
         if hasattr(result, 'which'):
             print(">> make_scenarios_graphs load which")
             which = result.which
-    if is_run:
+    needtorerun = op.checkifneedtorerunwithadvancedtracking(results=result, which=which)
+    if is_run or needtorerun:
         project = load_project(project_id)
         if result is not None:
             delete_result_by_parset_id(project_id, parset_id=None, calculation_type='scenarios')
@@ -1563,16 +1567,17 @@ def make_scenarios_graphs(project_id, which=None, is_run=False, zoom=None, start
         if len(project.scens) == 0:
             print(">> make_scenarios_graphs no scenarios")
             return {}
-        print(">> make_scenarios_graphs project '%s' from %s to %s" % (project_id, startYear, endYear))
-        # start=None, end=None -> does nothing
-        project.runscenarios(end=endYear) # Only change end year from default
+        advancedtracking = op.checkifneedtorerunwithadvancedtracking(results=None, which=which)
+        print(f">> make_scenarios_graphs project '{project_id}' from {startYear} to {endYear}, advancedtracking: {advancedtracking}")       # start=None, end=None -> does nothing
+        project.runscenarios(end=endYear, advancedtracking=advancedtracking) # Only change end year from default
         result = project.results[-1]
         if which:
             result.which = which
         record = update_or_create_result_record_by_id(result, project.uid, None, 'scenarios')
         db.session.add(record)
         db.session.commit()
-    return make_mpld3_graph_dict(result=result, which=which, zoom=zoom, startYear=startYear, endYear=endYear)
+    return make_mpld3_graph_dict(result=result, which=which, zoom=zoom, startYear=startYear, endYear=endYear,
+                                 includeadvancedtracking=includeadvancedtracking)
 
 
 def save_scenario_summaries(project_id, scenario_summaries):

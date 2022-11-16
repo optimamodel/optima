@@ -437,19 +437,30 @@ class Project(object):
         for key,result in self.results.items():
             if type(result)!=BOC: self.results.pop(key)
         return None
+
+    def cleanparsfromscens(self):
+        ''' Remove the scenparset from Scen objects and pars too if it is a Progscen.
+            These are not needed to re-run the Scenarios and take up space if saving to .prj.
+        '''
+        for scen in self.scens.values():
+            if isinstance(scen,Progscen):
+                if hasattr(scen,'pars'):   del scen.pars  # pars of a Progscen get re-generated when run, only needed in a Parscen
+            if hasattr(scen,'scenparset'): scen.scenparset = None  # scenparset always gets re-generated
     
-    def save(self, filename=None, folder=None, saveresults=False, verbose=2, advancedtracking=False):
+    def save(self, filename=None, folder=None, saveresults=False, verbose=2, advancedtracking=False, cleanparsfromscens=None):
         ''' Save the current project, by default using its name, and without results '''
+        if cleanparsfromscens is None: cleanparsfromscens = not saveresults  # Default to cleaning if we are not saving results
         origadvancedtracking = self.settings.advancedtracking
         self.settings.advancedtracking = advancedtracking # Default to turning advancedtracking off
         fullpath = makefilepath(filename=filename, folder=folder, default=[self.filename, self.name], ext='prj', sanitize=True)
         self.filename = fullpath # Store file path
-        if saveresults:
+        if saveresults and not cleanparsfromscens:
             saveobj(fullpath, self, verbose=verbose)
         else:
             tmpproject = dcp(self) # Need to do this so we don't clobber the existing results
             tmpproject.restorelinks() # Make sure links are restored
-            tmpproject.cleanresults() # Get rid of all results
+            if not saveresults:    tmpproject.cleanresults()       # Get rid of all results
+            if cleanparsfromscens: tmpproject.cleanparsfromscens() # Get rid of (unnecessary) parameters from scenarios
             saveobj(fullpath, tmpproject, verbose=verbose) # Save it to file
             del tmpproject # Don't need it hanging around any more
         self.settings.advancedtracking = origadvancedtracking
