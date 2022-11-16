@@ -139,21 +139,23 @@ class Parameterset(object):
         To unfix: P.parset().fixprops(False)
         
         You can also specify a start year. "which" can be a string
-        or a list of strings, to specify which of ['dx', 'tx', 'supp']
+        or a list of strings, to specify which of ['dx','tx','supp','pmtct','care']
         you want to fix.
         '''
         if fix is None:
             fix = True # By default, do fix
         self.isfixed = fix # Store fixed status
-        if   which is None:  which = ['tx','supp']
-        elif which == 'all': which = ['dx','tx','supp']
+        if   which is None:  which = ['tx','supp','pmtct']
+        elif which == 'all': which = ['dx','tx','supp','pmtct','care']
         else:                which = promotetolist(which)
         if startyear is None:
             if fix:  startyear = self.pars['numtx'].t['tot'][-1]
             else:    startyear = 2100
-        if 'dx'   in which: self.pars['fixpropdx'].t   = startyear
-        if 'tx'   in which: self.pars['fixproptx'].t   = startyear
-        if 'supp' in which: self.pars['fixpropsupp'].t = startyear # Doesn't make sense to assume proportion on treatment without assuming proportion suppressed....also, crashes otherwise :)
+        if 'dx'    in which: self.pars['fixpropdx'].t    = startyear
+        if 'tx'    in which: self.pars['fixproptx'].t    = startyear
+        if 'supp'  in which: self.pars['fixpropsupp'].t  = startyear # Doesn't make sense to assume proportion on treatment without assuming proportion suppressed....also, crashes otherwise :)
+        if 'pmtct' in which: self.pars['fixproppmtct'].t = startyear
+        if 'care'  in which: self.pars['fixpropcare'].t  = startyear
         return None
         
     

@@ -96,22 +96,24 @@ class Portfolio(object):
         
         
     
-    def save(self, filename=None, folder=None, saveresults=True, verbose=2):
+    def save(self, filename=None, folder=None, saveresults=True, verbose=2, cleanparsfromscens=None):
         ''' Save the current portfolio, by default using its name, and without results '''
+        if cleanparsfromscens is None: cleanparsfromscens = not saveresults  # Default to cleaning if we are not saving results
         fullpath = makefilepath(filename=filename, folder=folder, default=[self.filename, self.name], ext='prt', sanitize=True)
         self.filename = fullpath # Store file path
         printv('Saving portfolio to %s...' % self.filename, 2, verbose)
         
         # Easy -- just save the whole thing
-        if saveresults:
+        if saveresults and not cleanparsfromscens:
             saveobj(fullpath, self, verbose=verbose)
         
         # Hard -- have to make a copy, remove results, and restore links
         else:
             tmpportfolio = dcp(self) # Need to do this so we don't clobber the existing results
             for P in self.projects.values():
-                P.cleanresults() # Get rid of all results
-                P.restorelinks() # Restore links in projects
+                if not saveresults:    P.cleanresults()       # Get rid of all results
+                if cleanparsfromscens: P.cleanparsfromscens() # Get rid of pars and scenparsets from scenarios which are not needed
+                P.restorelinks()  # Restore links in projects
             if tmpportfolio.results: # Restore project links in results, but only iterate over it if it's populated
                 for key,resultpair in tmpportfolio.results.items():
                     for result in resultpair.values():

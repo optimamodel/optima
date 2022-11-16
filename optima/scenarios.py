@@ -124,13 +124,15 @@ def runscenarios(project=None, verbose=2, name=None, defaultparset=-1, debug=Fal
 
 
 
-def makescenarios(project=None, scenlist=None, verbose=2, ccsample=False, randseed=None):
+def makescenarios(project=None, scenlist=None, verbose=2, ccsample=None, randseed=None):
     """ Convert dictionary of scenario parameters into parset to model parameters """
+    if ccsample is None: ccsample = 'best'
+
+    if scenlist is None and project is not None and hasattr(project,'scens'):
+        scenlist = [scen for scen in project.scens.values()]  # Default to making all the scenarios in the project if none are given
 
     scenparsets = odict()
     for scenno, scen in enumerate(scenlist):
-        
-        
         try:
             if scen.parsetname not in project.parsets.keys() and len(project.parsets)==1: #if there is only 1 parset, then just update the scenarios
                 scen.parsetname = project.parsets.keys()[0]
@@ -321,7 +323,7 @@ def setparscenvalues(parset=None, parname=None, forwhom=None, startyear=None, ve
 
 
 
-def defaultscenarios(project=None, which=None, startyear=2020, endyear=2025, parset=-1, progset=-1, dorun=True, doplot=True, **kwargs):
+def defaultscenarios(project=None, which=None, startyear=2023, endyear=2025, parset=-1, progset=-1, dorun=True, doplot=True, **kwargs):
     '''
     Add default scenarios to a project...examples include min-max budgets and 90-90-90.
     Keyword arguments are passed to runscenarios().
@@ -331,16 +333,19 @@ def defaultscenarios(project=None, which=None, startyear=2020, endyear=2025, par
     if which is None: which = 'budgets'
     
     if which=='budgets':
-        parsetname = 'default-scenarios'
+        parsetname = 'default-scens'
+        parsetnamefixed = 'default-scens-fixed-tx-supp-pmtct'
         project.copyparset(orig=parset, new=parsetname)
-        project.parsets['default-scenarios'].fixprops(False) # Ensure they're not fixed
+        project.copyparset(orig=parset, new=parsetnamefixed)
+        project.parsets[parsetname].fixprops(False, which='all')  # For budget scenarios, want unfixed proportions
+        project.parsets[parsetnamefixed].fixprops(True)           # For baseline, fix proptx, propsupp, and proppmtct
         defaultbudget = project.progsets[progset].getdefaultbudget()
         maxbudget = dcp(defaultbudget)
         nobudget = dcp(defaultbudget)
         for key in maxbudget: maxbudget[key] += project.settings.infmoney
         for key in nobudget: nobudget[key] *= 1e-6
         scenlist = [
-            Parscen(   name='Baseline',         parsetname=parsetname, pars=[]),
+            Parscen(   name='Baseline',         parsetname=parsetnamefixed, pars=[]),
             Budgetscen(name='Zero budget',      parsetname=parsetname, progsetname=0, t=[startyear], budget=nobudget),
             Budgetscen(name='Baseline budget',  parsetname=parsetname, progsetname=0, t=[startyear], budget=defaultbudget),
             Budgetscen(name='Unlimited budget', parsetname=parsetname, progsetname=0, t=[startyear], budget=maxbudget),
