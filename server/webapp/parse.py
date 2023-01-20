@@ -578,6 +578,7 @@ def get_coverages_for_scenarios(project, year=None):
     start = project.settings.start
     end = project.settings.end
     years = range(int(start), int(end) + 1)
+    i=0
     for parset in project.parsets.values():
         parset_id = str(parset.uid)
         result[parset_id] = {}
@@ -585,7 +586,9 @@ def get_coverages_for_scenarios(project, year=None):
             progset_id = str(progset.uid)
             result[parset_id][progset_id] = {}
             for year in years:
+                i += 1
                 try:
+                    print(f'>> > {i} getting coverage for {project.name},{parset.name},{progset.name},{year}')
                     coverage = progset.getdefaultcoverage(t=year, parset=parset)
                     coverage = normalize_obj(coverage)
                 except:
