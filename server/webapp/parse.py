@@ -586,10 +586,11 @@ def get_coverages_for_scenarios(project, year=None):
             result[parset_id][progset_id] = {}
             try:
                 coverage = progset.getdefaultcoverage(t=list(years), parset=parset)
+                # Now we swap from an odict of arrays, with a key per program, to an odict of odicts, with a key per year
                 prog_list = coverage.keys()
                 coverage = np.column_stack(coverage.values())
                 for yrno,year in enumerate(years):
-                    result[parset_id][progset_id][year] = odict(zip(prog_list,coverage[yrno,:]))
+                    result[parset_id][progset_id][year] = op.odict(zip(prog_list,coverage[yrno,:]))
                 print('~~~',result[parset_id][progset_id])
 
             except:
