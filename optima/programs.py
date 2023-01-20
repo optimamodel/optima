@@ -1073,52 +1073,37 @@ class Program(object):
 
     def getcoverage(self, x, t, parset=None, results=None, total=True, proportion=False, toplot=False, sample='best'):
         '''Returns coverage for a time/spending vector'''
-
-        times = zeros(100)
-        i=0
-        times[i] = perf_counter()
-        i+=1
-        times[i] = perf_counter()
-        i += 1
+        start_time = perf_counter()
         # Validate inputs
         x = promotetoarray(x)
-        times[i] = perf_counter()
-        i += 1
         t = promotetoarray(t)
-        times[i] = perf_counter()
-        i += 1
 
+        # This line is slow ~6ms
+        a = perf_counter()
         poptargeted = self.gettargetpopsize(t=t, parset=parset, results=results, total=False)
-        times[i] = perf_counter()
-        i += 1
+        b = perf_counter()
 
         totaltargeted = sum(list(poptargeted.values()))
-        times[i] = perf_counter()
-        i += 1
+        # This line is slow ~1ms
+        c = perf_counter()
         totalreached = self.costcovfn.evaluate(x=x, popsize=totaltargeted, t=t, toplot=toplot, sample=sample)
-        times[i] = perf_counter()
-        i += 1
+        d = perf_counter()
 
         if total: 
             if proportion: output = totalreached/totaltargeted
             else:          output = totalreached
-            times[i] = perf_counter()
-            i += 1
         else:
             popreached = odict()
             targetcomposition = self.targetcomposition if self.targetcomposition else self.gettargetcomposition(t=t,parset=parset)
-            times[i] = perf_counter()
-            i += 1
             for targetpop in self.targetpops:
                 popreached[targetpop] = totalreached*targetcomposition[targetpop]
                 if proportion: popreached[targetpop] /= poptargeted[targetpop]
-                times[i] = perf_counter()
-                i += 1
             output = popreached
 
-        times[i] = perf_counter()
-        i += 1
-        print(total,times,np.diff(times))
+        end = perf_counter()
+        total = end - start_time
+        lines = [b-a,d-c]
+        print(total,lines,(lines[0]+lines[1])/total)
         return output
             
 
