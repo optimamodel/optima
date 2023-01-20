@@ -591,8 +591,8 @@ def get_coverages_for_scenarios(project, year=None):
             for year in years:
                 i += 1
                 try:
-                    print(f'>>{perf_counter()-start_time} > {i} getting coverage for {project.name},{parset.name},{progset.name},{year}')
-                    coverage = progset.getdefaultcoverage(t=year, parset=parset)
+                    # print(f'>>{perf_counter()-start_time} > {i} getting coverage for {project.name},{parset.name},{progset.name},{year}')
+                    coverage = progset.getdefaultcoverage(t=year, parset=parset) # This is the slow line, takes ~0.130s
                     coverage = normalize_obj(coverage)
                 except:
                     coverage = None
