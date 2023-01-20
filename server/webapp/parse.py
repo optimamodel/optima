@@ -578,7 +578,10 @@ def get_coverages_for_scenarios(project, year=None):
     start = project.settings.start
     end = project.settings.end
     years = range(int(start), int(end) + 1)
+
+    from time import perf_counter
     i=0
+    start_time = perf_counter()
     for parset in project.parsets.values():
         parset_id = str(parset.uid)
         result[parset_id] = {}
@@ -588,7 +591,7 @@ def get_coverages_for_scenarios(project, year=None):
             for year in years:
                 i += 1
                 try:
-                    print(f'>> > {i} getting coverage for {project.name},{parset.name},{progset.name},{year}')
+                    print(f'>>{perf_counter()-start_time} > {i} getting coverage for {project.name},{parset.name},{progset.name},{year}')
                     coverage = progset.getdefaultcoverage(t=year, parset=parset)
                     coverage = normalize_obj(coverage)
                 except:
