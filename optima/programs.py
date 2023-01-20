@@ -136,7 +136,7 @@ class Programset(object):
         ''' Add new programs'''
         if type(newprograms)==Program: newprograms = [newprograms]
         if type(newprograms)==list:
-            for newprogram in newprograms: 
+            for newprogram in newprograms:
                 if newprogram not in self.programs.values():
                     self.programs[newprogram.short] = newprogram
                     printv('\nAdded program "%s" to programset "%s". \nPrograms in this programset are: %s' % (newprogram.short, self.name, [thisprog.short for thisprog in self.programs.values()]), 3, verbose)
@@ -382,7 +382,7 @@ class Programset(object):
 
     def getdefaultbudget(self, t=None, verbose=2, optimizable=None):
         ''' Extract the budget if cost data has been provided; if optimizable is True, then only return optimizable programs '''
-        
+
         # Initialise outputs
         totalbudget, lastbudget, selectbudget = odict(), odict(), odict()
 
@@ -392,9 +392,9 @@ class Programset(object):
 
         # Set up internal variables
         settings = self.getsettings()
-        tvec = settings.maketvec() 
+        tvec = settings.maketvec()
         emptyarray = array([nan]*len(tvec))
-        
+
         # Get cost data for each program in each year that it exists
         for program in self.programs:
             totalbudget[program] = dcp(emptyarray)
@@ -406,15 +406,15 @@ class Programset(object):
                 lastbudget[program] = sanitize(totalbudget[program])[-1]
             except:
                 lastbudget[program] = nan # Initialize, to overwrite if there's data
-            if isnan(lastbudget[program]): 
+            if isnan(lastbudget[program]):
                 printv('WARNING: no cost data defined for program "%s"...' % program, 1, verbose)
-                
-            # Extract cost data for particular years, if requested 
+
+            # Extract cost data for particular years, if requested
             if t is not None:
                 for yr in t:
                     yrindex = findinds(tvec,yr)
                     selectbudget[program].append(totalbudget[program][yrindex][0])
-                    
+
         # Store default budget as an attribute
         self.defaultbudget = lastbudget
         if t is None:   thisbudget = dcp(lastbudget)
@@ -429,7 +429,7 @@ class Programset(object):
         # The next line is the slow one
         defaultcoverage = self.getprogcoverage(budget=defaultbudget, t=t, parset=parset, results=results, proportion=proportion, sample=sample)
         for progno in range(len(defaultcoverage)):
-            defaultcoverage[progno] = defaultcoverage[progno][0] if defaultcoverage[progno] else nan    
+            defaultcoverage[progno] = defaultcoverage[progno][0] if defaultcoverage[progno] else nan
         return defaultcoverage
 
 
@@ -443,7 +443,7 @@ class Programset(object):
 
     def getprogcoverage(self, budget, t, parset=None, results=None, proportion=False, sample='best', verbose=2):
         '''Budget is currently assumed to be a DICTIONARY OF ARRAYS'''
-        start_t = perf_counter()
+
         # Initialise output
         coverage = odict()
 
@@ -454,23 +454,18 @@ class Programset(object):
         if type(budget)==dict: budget = odict(budget) # Convert to odict
         budget.sort([p.short for p in self.programs.values()])
 
-        a = perf_counter() - start_t
-        b = zeros(len(self.programs.keys()))
-        aft = zeros(len(self.programs.keys()))
         # Get program-level coverage for each program
-        for i, thisprog in enumerate(self.programs.keys()):
+        for thisprog in self.programs.keys():
             if self.programs[thisprog].optimizable():
                 if not self.programs[thisprog].costcovfn.ccopars:
                     printv('WARNING: no cost-coverage function defined for optimizable program, setting coverage to None...', 1, verbose)
                     coverage[thisprog] = None
                 else:
                     spending = budget[thisprog] # Get the amount of money spent on this program
-                    b[i] = perf_counter() - start_t - a
+                    # NEXT LINE IS THE SLOW ONE
                     coverage[thisprog] = self.programs[thisprog].getcoverage(x=spending, t=t, parset=parset, results=results, proportion=proportion, sample=sample)
-                    aft[i] = perf_counter() - start_t - a - b[i]
             else: coverage[thisprog] = None
-        total = perf_counter() - start_t
-        print(f'>>>>> {a}, {b}, {aft},{aft.sum()}, {total}')
+
         return coverage
 
 
@@ -1077,6 +1072,7 @@ class Program(object):
 
     def getcoverage(self, x, t, parset=None, results=None, total=True, proportion=False, toplot=False, sample='best'):
         '''Returns coverage for a time/spending vector'''
+
 
         # Validate inputs
         x = promotetoarray(x)
