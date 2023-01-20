@@ -585,7 +585,9 @@ def get_coverages_for_scenarios(project, year=None):
             progset_id = str(progset.uid)
             result[parset_id][progset_id] = {}
             try:
-                result[parset_id][progset_id] = progset.getdefaultcoverage(t=list(years), parset=parset)
+                coverage = progset.getdefaultcoverage(t=list(years), parset=parset)
+                print('~~~',coverage)
+                result[parset_id][progset_id] = coverage
             except:
                 print('!?!?!')
                 import traceback
