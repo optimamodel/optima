@@ -578,26 +578,20 @@ def get_coverages_for_scenarios(project, year=None):
     start = project.settings.start
     end = project.settings.end
     years = range(int(start), int(end) + 1)
-
-    from time import perf_counter
-    i=0
-    start_time = perf_counter()
     for parset in project.parsets.values():
         parset_id = str(parset.uid)
         result[parset_id] = {}
         for progset in project.progsets.values():
             progset_id = str(progset.uid)
             result[parset_id][progset_id] = {}
-            for year in years:
-                i += 1
-                try:
-                    # print(f'>>{perf_counter()-start_time} > {i} getting coverage for {project.name},{parset.name},{progset.name},{year}')
-                    coverage = progset.getdefaultcoverage(t=year, parset=parset) # This is the slow line, takes ~0.130s
-                    coverage = normalize_obj(coverage)
-                except:
-                    coverage = None
-                result[parset_id][progset_id][year] = coverage
-    print('>> finished get_coverages_for_scenarios')
+            try:
+                result[parset_id][progset_id] = progset.getdefaultcoverage(t=years, parset=parset)
+            except:
+                print('!?!?!')
+                import traceback
+                traceback.print_exc()
+                for year in years:
+                    result[parset_id][progset_id][year] = None
     return result
 
 
