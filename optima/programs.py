@@ -9,8 +9,6 @@ Version: 2019jan09
 from optima import OptimaException, Link, printv, uuid, today, sigfig, getdate, dcp, smoothinterp, findinds, odict, Settings, sanitize, defaultrepr, isnumber, promotetoarray, vec2obj, asd, convertlimits, Timepar, Yearpar, checkifparsoverridepars, createwarningforoverride
 from numpy import ones, prod, array, zeros, exp, log, append, nan, isnan, maximum, minimum, sort, concatenate as cat, transpose, mean, argsort
 from random import uniform
-from time import perf_counter
-
 import six
 if six.PY3:
 	basestring = str
@@ -426,16 +424,10 @@ class Programset(object):
 
     def getdefaultcoverage(self, t=None, parset=None, results=None, verbose=2, sample='best', proportion=False):
         ''' Extract the coverage levels corresponding to the default budget'''
-        start_t = perf_counter()
         defaultbudget = self.getdefaultbudget() # WARNING: should be passing t here, but this causes interpolation issues
-        a = perf_counter() - start_t
         defaultcoverage = self.getprogcoverage(budget=defaultbudget, t=t, parset=parset, results=results, proportion=proportion, sample=sample)
-        b = perf_counter() - start_t - a
-        c = zeros(len(defaultcoverage))
         for progno in range(len(defaultcoverage)):
-            defaultcoverage[progno] = defaultcoverage[progno][0] if defaultcoverage[progno] else nan
-            c[progno] = perf_counter() - start_t - a - b
-        print(f'>>>> {a}, {b}, {c}, {defaultcoverage}')
+            defaultcoverage[progno] = defaultcoverage[progno][0] if defaultcoverage[progno] else nan    
         return defaultcoverage
 
 
