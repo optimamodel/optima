@@ -426,10 +426,12 @@ class Programset(object):
 
     def getdefaultcoverage(self, t=None, parset=None, results=None, verbose=2, sample='best', proportion=False):
         ''' Extract the coverage levels corresponding to the default budget'''
-        defaultbudget = self.getdefaultbudget() # WARNING: should be passing t here, but this causes interpolation issues
+        defaultbudget = self.getdefaultbudget(t) # WARNING: should be passing t here, but this causes interpolation issues
         # The next line is the slow one
         defaultcoverage = self.getprogcoverage(budget=defaultbudget, t=t, parset=parset, results=results, proportion=proportion, sample=sample)
+        #if t is not None and len(list(t)) > 1:
         for progno in range(len(defaultcoverage)):
+            # This does two this, selects the 0th entry from the list, turning it from a odict of lists, into odict of nums, and turns Nones into nans
             defaultcoverage[progno] = defaultcoverage[progno][0] if defaultcoverage[progno] else nan
         return defaultcoverage
 
@@ -1073,21 +1075,17 @@ class Program(object):
 
     def getcoverage(self, x, t, parset=None, results=None, total=True, proportion=False, toplot=False, sample='best'):
         '''Returns coverage for a time/spending vector'''
-        start_time = perf_counter()
+
         # Validate inputs
         x = promotetoarray(x)
         t = promotetoarray(t)
 
         # This line is slow ~6ms
-        a = perf_counter()
         poptargeted = self.gettargetpopsize(t=t, parset=parset, results=results, total=False)
-        b = perf_counter()
 
         totaltargeted = sum(list(poptargeted.values()))
         # This line is slow ~1ms
-        c = perf_counter()
         totalreached = self.costcovfn.evaluate(x=x, popsize=totaltargeted, t=t, toplot=toplot, sample=sample)
-        d = perf_counter()
 
         if total: 
             if proportion: output = totalreached/totaltargeted
@@ -1099,11 +1097,6 @@ class Program(object):
                 popreached[targetpop] = totalreached*targetcomposition[targetpop]
                 if proportion: popreached[targetpop] /= poptargeted[targetpop]
             output = popreached
-
-        end = perf_counter()
-        total = end - start_time
-        lines = [b-a,d-c]
-        print(total,lines,(lines[0]+lines[1])/total)
         return output
             
 
