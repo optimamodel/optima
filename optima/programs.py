@@ -427,14 +427,17 @@ class Programset(object):
 
     def getdefaultcoverage(self, t=None, parset=None, results=None, verbose=2, sample='best', proportion=False):
         ''' Extract the coverage levels corresponding to the default budget'''
-        defaultbudget = self.getdefaultbudget(t) # WARNING: should be passing t here, but this causes interpolation issues
-        print('!!!!',t,defaultbudget,self.getdefaultbudget())
+        if t is not None: t = promotetoarray(t)
+        defaultbudget = self.getdefaultbudget() # WARNING: should be passing t here, but this causes interpolation issues
+        if t is not None:
+            for prog,budget in defaultbudget.items():
+                defaultbudget[prog] = budget*ones(len(t))
         # The next line is the slow one
         defaultcoverage = self.getprogcoverage(budget=defaultbudget, t=t, parset=parset, results=results, proportion=proportion, sample=sample)
-        #if t is not None and len(list(t)) > 1:
-        for progno in range(len(defaultcoverage)):
-            # This does two this, selects the 0th entry from the list, turning it from a odict of lists, into odict of nums, and turns Nones into nans
-            defaultcoverage[progno] = defaultcoverage[progno][0] if defaultcoverage[progno] else nan
+        if t is None or len(list(t)) <= 1:
+            for progno in range(len(defaultcoverage)):
+                # This does two this, selects the 0th entry from the list, turning it from a odict of lists, into odict of nums, and turns Nones into nans
+                defaultcoverage[progno] = defaultcoverage[progno][0] if defaultcoverage[progno] else nan
         return defaultcoverage
 
 
