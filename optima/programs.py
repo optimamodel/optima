@@ -467,10 +467,7 @@ class Programset(object):
                     spending = budget[thisprog] # Get the amount of money spent on this program
                     b[i] = perf_counter() - start_t - a
                     coverage[thisprog] = self.programs[thisprog].getcoverage(x=spending, t=t, parset=parset, results=results, proportion=proportion, sample=sample)
-                    aft[i] = perf_counter() - start_t - a
-                    if i > 0:
-                        b[i] = b[i] - b[i-1]
-                        aft[i] = aft[i] - aft[i-1]
+                    aft[i] = perf_counter() - start_t - a - b[i]
             else: coverage[thisprog] = None
         total = perf_counter() - start_t
         print(f'>>>>> {a}, {b}, {aft}, {total}')
