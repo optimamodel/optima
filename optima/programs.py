@@ -470,7 +470,7 @@ class Programset(object):
                     aft[i] = perf_counter() - start_t - a - b[i]
             else: coverage[thisprog] = None
         total = perf_counter() - start_t
-        print(f'>>>>> {a}, {b}, {aft}, {total}')
+        print(f'>>>>> {a}, {b}, {aft},{aft.sum()}, {total}')
         return coverage
 
 
