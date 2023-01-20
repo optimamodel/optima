@@ -9,6 +9,7 @@ Version: 2019jan09
 from optima import OptimaException, Link, printv, uuid, today, sigfig, getdate, dcp, smoothinterp, findinds, odict, Settings, sanitize, defaultrepr, isnumber, promotetoarray, vec2obj, asd, convertlimits, Timepar, Yearpar, checkifparsoverridepars, createwarningforoverride
 from numpy import ones, prod, array, zeros, exp, log, append, nan, isnan, maximum, minimum, sort, concatenate as cat, transpose, mean, argsort
 from random import uniform
+from time import perf_counter
 import six
 if six.PY3:
 	basestring = str
@@ -425,6 +426,7 @@ class Programset(object):
     def getdefaultcoverage(self, t=None, parset=None, results=None, verbose=2, sample='best', proportion=False):
         ''' Extract the coverage levels corresponding to the default budget'''
         defaultbudget = self.getdefaultbudget() # WARNING: should be passing t here, but this causes interpolation issues
+        # The next line is the slow one
         defaultcoverage = self.getprogcoverage(budget=defaultbudget, t=t, parset=parset, results=results, proportion=proportion, sample=sample)
         for progno in range(len(defaultcoverage)):
             defaultcoverage[progno] = defaultcoverage[progno][0] if defaultcoverage[progno] else nan    
@@ -441,7 +443,7 @@ class Programset(object):
 
     def getprogcoverage(self, budget, t, parset=None, results=None, proportion=False, sample='best', verbose=2):
         '''Budget is currently assumed to be a DICTIONARY OF ARRAYS'''
-
+        start_t = perf_counter()
         # Initialise output
         coverage = odict()
 
@@ -452,17 +454,26 @@ class Programset(object):
         if type(budget)==dict: budget = odict(budget) # Convert to odict
         budget.sort([p.short for p in self.programs.values()])
 
+        a = perf_counter() - start_t
+        b = zeros(len(self.programs.keys()))
+        aft = zeros(len(self.programs.keys()))
         # Get program-level coverage for each program
-        for thisprog in self.programs.keys():
+        for i, thisprog in enumerate(self.programs.keys()):
             if self.programs[thisprog].optimizable():
                 if not self.programs[thisprog].costcovfn.ccopars:
                     printv('WARNING: no cost-coverage function defined for optimizable program, setting coverage to None...', 1, verbose)
                     coverage[thisprog] = None
                 else:
                     spending = budget[thisprog] # Get the amount of money spent on this program
+                    b[i] = perf_counter() - start_t - a
                     coverage[thisprog] = self.programs[thisprog].getcoverage(x=spending, t=t, parset=parset, results=results, proportion=proportion, sample=sample)
+                    aft[i] = perf_counter() - start_t - a
+                    if i > 0:
+                        b[i] = b[i] - b[i-1]
+                        aft[i] = aft[i] - aft[i-1]
             else: coverage[thisprog] = None
-
+        total = perf_counter() - start_t
+        print(f'>>>>> {a}, {b}, {aft}, {total}')
         return coverage
 
 
