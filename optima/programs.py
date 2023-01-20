@@ -426,8 +426,8 @@ class Programset(object):
 
     def getdefaultcoverage(self, t=None, parset=None, results=None, verbose=2, sample='best', proportion=False):
         ''' Extract the coverage levels corresponding to the default budget'''
-        defaultbudget = self.getdefaultbudget() # WARNING: should be passing t here, but this causes interpolation issues
-        print('!!!!',defaultbudget)
+        defaultbudget = self.getdefaultbudget(t) # WARNING: should be passing t here, but this causes interpolation issues
+        print('!!!!',t,defaultbudget,self.getdefaultbudget())
         # The next line is the slow one
         defaultcoverage = self.getprogcoverage(budget=defaultbudget, t=t, parset=parset, results=results, proportion=proportion, sample=sample)
         #if t is not None and len(list(t)) > 1:
