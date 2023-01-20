@@ -590,7 +590,7 @@ def get_coverages_for_scenarios(project, year=None):
                 prog_list = coverage.keys()
                 coverage = np.column_stack(coverage.values())
                 for yrno,year in enumerate(years):
-                    result[parset_id][progset_id][year] = op.odict(zip(prog_list,coverage[yrno,:]))
+                    result[parset_id][progset_id][year] = normalize_obj(op.odict(zip(prog_list,coverage[yrno,:])))
                 print('~~~',result[parset_id][progset_id])
 
             except:
