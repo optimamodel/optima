@@ -591,6 +591,7 @@ def get_coverages_for_scenarios(project, year=None):
                 except:
                     coverage = None
                 result[parset_id][progset_id][year] = coverage
+    print('>> finished get_coverages_for_scenarios')
     return result
 
 
