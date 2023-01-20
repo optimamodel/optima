@@ -415,6 +415,7 @@ class Programset(object):
                 for yr in t:
                     yrindex = findinds(tvec,yr)
                     selectbudget[program].append(totalbudget[program][yrindex][0])
+                    print('??',program,totalbudget[program],yr,tvec,yrindex,totalbudget[program][yrindex],selectbudget[program])
 
         # Store default budget as an attribute
         self.defaultbudget = lastbudget
