@@ -10,6 +10,7 @@ from optima import OptimaException, Link, printv, uuid, today, sigfig, getdate, 
 from numpy import ones, prod, array, zeros, exp, log, append, nan, isnan, maximum, minimum, sort, concatenate as cat, transpose, mean, argsort
 from random import uniform
 from time import perf_counter
+import numpy as np
 import six
 if six.PY3:
 	basestring = str
@@ -1073,26 +1074,51 @@ class Program(object):
     def getcoverage(self, x, t, parset=None, results=None, total=True, proportion=False, toplot=False, sample='best'):
         '''Returns coverage for a time/spending vector'''
 
-
+        times = zeros(100)
+        i=0
+        times[i] = perf_counter()
+        i+=1
+        times[i] = perf_counter()
+        i += 1
         # Validate inputs
         x = promotetoarray(x)
+        times[i] = perf_counter()
+        i += 1
         t = promotetoarray(t)
+        times[i] = perf_counter()
+        i += 1
 
         poptargeted = self.gettargetpopsize(t=t, parset=parset, results=results, total=False)
+        times[i] = perf_counter()
+        i += 1
 
         totaltargeted = sum(list(poptargeted.values()))
+        times[i] = perf_counter()
+        i += 1
         totalreached = self.costcovfn.evaluate(x=x, popsize=totaltargeted, t=t, toplot=toplot, sample=sample)
+        times[i] = perf_counter()
+        i += 1
 
         if total: 
             if proportion: output = totalreached/totaltargeted
             else:          output = totalreached
+            times[i] = perf_counter()
+            i += 1
         else:
             popreached = odict()
-            targetcomposition = self.targetcomposition if self.targetcomposition else self.gettargetcomposition(t=t,parset=parset) 
+            targetcomposition = self.targetcomposition if self.targetcomposition else self.gettargetcomposition(t=t,parset=parset)
+            times[i] = perf_counter()
+            i += 1
             for targetpop in self.targetpops:
                 popreached[targetpop] = totalreached*targetcomposition[targetpop]
                 if proportion: popreached[targetpop] /= poptargeted[targetpop]
+                times[i] = perf_counter()
+                i += 1
             output = popreached
+
+        times[i] = perf_counter()
+        i += 1
+        print(total,times,np.diff(times))
         return output
             
 
