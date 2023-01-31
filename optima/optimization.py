@@ -462,16 +462,6 @@ def outcomecalc(budgetvec=None, which=None, project=None, parsetname=None, progs
                 tvsettings=None, tvcontrolvec=None, origoutcomes=None, penalty=1e9, **kwargs):
     ''' Function to evaluate the objective for a given budget vector (note, not time-varying) '''
 
-    infmoney = op.Settings().infmoney
-    if totalbudget is not None and totalbudget>=infmoney:
-        budgetvec = dcp(budgetvec)
-        origbudget = dcp(origbudget)
-        for i, v in enumerate(budgetvec):
-            budgetvec[i] += infmoney
-        for k, v in origbudget.items():
-            origbudget[k] += infmoney
-
-
     # Set up defaults
     if which is None: 
         if objectives is not None: which = objectives['which']
