@@ -254,7 +254,8 @@ def calcoptimindsoptimkeys(functionname, prognamelist=None, progset=None, optimi
     return optiminds, optimkeys
 
 
-def constrainbudget(origbudget=None, budgetvec=None, totalbudget=None, budgetlims=None, optiminds=None, optimkeys=None, tolerance=1e-2, overalltolerance=1.0, outputtype=None, verbose=2, tvsettings=None):
+def constrainbudget(origbudget=None, budgetvec=None, totalbudget=None, budgetlims=None, scaleupmethod='multiply',optiminds=None, optimkeys=None,
+                    tolerance=1e-2, overalltolerance=1.0, outputtype=None, verbose=2, tvsettings=None):
     """ Take an unnormalized/unconstrained budgetvec and normalize and constrain it """
     # Optional printing for debugging
     # print(f'!?! constrainbudget called with \norigbudget={origbudget},\nbudgetvec={budgetvec},\ntotalbudget={totalbudget},\nbudgetlims={budgetlims},\noptiminds={optiminds},\noptimkeys={optimkeys},'
@@ -297,7 +298,15 @@ def constrainbudget(origbudget=None, budgetvec=None, totalbudget=None, budgetlim
     optimscaleratio = optimbudget/float(sum(budgetvec)) # If totalbudget=sum(origbudget) and fixed cost lower limits are 1, then optimscaleratio=1
 
     # Scale the supplied budgetvec to meet this available amount
-    scaledbudgetvec = dcp(budgetvec*optimscaleratio)
+    if scaleupmethod == 'multiply' or optimscaleratio <= 1:
+        scaledbudgetvec = dcp(budgetvec*optimscaleratio)
+        # print(f'Rescaling budget with multiply method, scaleupmethod: {scaleupmethod}, optimscaleratio {optimscaleratio}, budgetvec {budgetvec}, scaledbudgetvec {scaledbudgetvec} with sum {sum(scaledbudgetvec)}, optimbudget {optimbudget}')
+    else: # scaleupmethod == 'add'
+        difference = optimbudget - float(sum(budgetvec))
+        scaledbudgetvec = dcp(budgetvec)
+        for i,v in enumerate(scaledbudgetvec): scaledbudgetvec[i] += difference/len(budgetvec) # This is the original budget scaled to the total budget
+        # print(f'Rescaling budget with addition method, scaleupmethod: {scaleupmethod}, optimscaleratio {optimscaleratio}, budgetvec {budgetvec}, scaledbudgetvec {scaledbudgetvec} with sum {sum(scaledbudgetvec)}, optimbudget {optimbudget}')
+    # scaledbudgetvec = dcp(budgetvec*optimscaleratio)
     if abs(sum(scaledbudgetvec)-optimbudget)>overalltolerance:
         errormsg = 'Rescaling budget failed (%f != %f)' % (sum(scaledbudgetvec), optimbudget)
         raise OptimaException(errormsg)
@@ -456,7 +465,7 @@ def separatetv(inputvec=None, optiminds=None, optimkeys=None):
 ### The main meat of the matter
 ################################################################################################################################################
 
-def outcomecalc(budgetvec=None, which=None, project=None, parsetname=None, progsetname=None, 
+def outcomecalc(budgetvec=None, which=None, project=None, parsetname=None, progsetname=None, scaleupmethod='multiply',
                 objectives=None, constraints=None, totalbudget=None, optiminds=None, optimkeys=None, origbudget=None,
                 tvec=None, initpeople=None, outputresults=False, verbose=2, ccsample='best', doconstrainbudget=True,
                 tvsettings=None, tvcontrolvec=None, origoutcomes=None, penalty=1e9, **kwargs):
@@ -500,7 +509,7 @@ def outcomecalc(budgetvec=None, which=None, project=None, parsetname=None, progs
     
     # Normalize budgetvec and convert to budget -- WARNING, is there a better way of doing this?
     if doconstrainbudget:
-        constrainedbudget = constrainbudget(origbudget=origbudget, budgetvec=budgetvec, totalbudget=totalbudget, budgetlims=constraints, optimkeys=optimkeys, outputtype='odict')
+        constrainedbudget = constrainbudget(origbudget=origbudget, budgetvec=budgetvec, totalbudget=totalbudget, budgetlims=constraints, optimkeys=optimkeys, outputtype='odict', scaleupmethod=scaleupmethod)
     else:
         constrainedbudget = dcp(origbudget)
         if len(budgetvec)==len(optimkeys): constrainedbudget[optimkeys] = budgetvec # Assume it's just the optimizable programs
@@ -517,7 +526,7 @@ def outcomecalc(budgetvec=None, which=None, project=None, parsetname=None, progs
         if doconstrainbudget and tvsettings['tvconstrain']: # Do additional constraints
             for y in range(nyears):
                 budgetvec = budgetarray.fromeach(ind=y, asdict=False)
-                constrainedbudget = constrainbudget(origbudget=origbudget, budgetvec=budgetvec, totalbudget=totalbudget, budgetlims=constraints, optimkeys=optimkeys, outputtype='odict')
+                constrainedbudget = constrainbudget(origbudget=origbudget, budgetvec=budgetvec, totalbudget=totalbudget, budgetlims=constraints, optimkeys=optimkeys, outputtype='odict', scaleupmethod=scaleupmethod)
                 budgetarray.toeach(ind=y, val=constrainedbudget[:])
     
     # Get coverage and actual dictionary, in preparation for running
@@ -1239,9 +1248,9 @@ def minmoney(project=None, optim=None, tvec=None, verbose=None, maxtime=None, ma
         elif dist == 0: return True
         else:           raise Exception('Distance should never be negative, but it is %s' % dist)
     
-    def outcome_met(budgetvec=None, totalbudget=None, args=None, target=None):
+    def outcome_met(budgetvec=None, totalbudget=None, args=None, target=None, scaleupmethod='multiply'):
         ''' Run an outcome calculation and determine if it meets the targets '''
-        res = op.outcomecalc(budgetvec, totalbudget=totalbudget, outputresults=True, **args)
+        res = op.outcomecalc(budgetvec, totalbudget=totalbudget, outputresults=True,scaleupmethod=scaleupmethod, **args)
         res_final = res.outcomes['final']
         dist = distance(target, res_final)
         is_met = met(dist)
@@ -1263,7 +1272,7 @@ def minmoney(project=None, optim=None, tvec=None, verbose=None, maxtime=None, ma
     printv('  Current distance: %s' % dists['curr'], 2, verbose)
     
     totalbudget = project.settings.infmoney
-    results_inf = op.outcomecalc(budgetvec, totalbudget=totalbudget, outputresults=True, **args)
+    results_inf = op.outcomecalc(budgetvec, totalbudget=totalbudget, outputresults=True, scaleupmethod='add', **args)
     res_inf = results_inf.outcomes['final']
     dists['inf'] = distance(res_targ, res_inf)
     if not met(dists['inf']):
@@ -1329,16 +1338,16 @@ def minmoney(project=None, optim=None, tvec=None, verbose=None, maxtime=None, ma
             result_list = []
             while upper_lim is None:
                 totalbudget *= step
-                printv('  Scaling up budget to find upper lim: %s...' % (totalbudget/factor), 2, verbose)
-                is_met,res = outcome_met(budgetvec=budgetvec, totalbudget=totalbudget, args=args, target=target)
+                is_met,res = outcome_met(budgetvec=budgetvec, totalbudget=totalbudget, args=args, target=target, scaleupmethod='add')
+                printv(f'  Scaling up budget to find upper lim: %s... Success: {is_met}' % (totalbudget/factor), 2, verbose)
                 budget_list.append(totalbudget)
                 result_list.append(res)        
                 if is_met:
                     upper_lim = totalbudget
             while lower_lim is None:
                 totalbudget /= step
-                printv('  Scaling down budget to find upper limit: %s...' % (totalbudget/factor), 2, verbose)
-                is_met,res = outcome_met(budgetvec=budgetvec, totalbudget=totalbudget, args=args, target=target)
+                is_met,res = outcome_met(budgetvec=budgetvec, totalbudget=totalbudget, args=args, target=target, scaleupmethod='add')
+                printv(f'  Scaling down budget to find upper limit: %s... Success: {is_met}' % (totalbudget/factor), 2, verbose)
                 budget_list.append(totalbudget)
                 result_list.append(res)
                 if not is_met:
@@ -1347,8 +1356,8 @@ def minmoney(project=None, optim=None, tvec=None, verbose=None, maxtime=None, ma
             # Do the binary search
             while (upper_lim/lower_lim) > (1+tol):
                 trial = (upper_lim+lower_lim)/2.0
-                printv('  Binary search: %s (%s, %s)...' % (trial/factor, lower_lim/factor, upper_lim/factor), 2, verbose)
-                is_met,res = outcome_met(budgetvec=budgetvec, totalbudget=trial, args=args, target=target)
+                is_met,res = outcome_met(budgetvec=budgetvec, totalbudget=trial, args=args, target=target, scaleupmethod='add')
+                printv(f'  Binary search: %s (%s, %s)... Success: {is_met}' % (trial/factor, lower_lim/factor, upper_lim/factor), 2, verbose)
                 budget_list.append(totalbudget)
                 result_list.append(res)
                 if is_met:
@@ -1379,17 +1388,18 @@ def minmoney(project=None, optim=None, tvec=None, verbose=None, maxtime=None, ma
                 still_met = []
                 for m,mt in enumerate(meet_targets):
                     budgetvec = budgets[mt]
-                    printv('    Running %s of %s...' % (m+1, len(meet_targets)), 2, verbose)
-                    is_met,res = outcome_met(budgetvec=budgetvec, totalbudget=totalbudget, args=args, target=target)
+                    is_met,res = outcome_met(budgetvec=budgetvec, totalbudget=totalbudget, args=args, target=target, scaleupmethod='add')
+                    printv(f'    Running %s of %s... Success: {is_met}' % (m+1, len(meet_targets)), 2, verbose)
                     budget_list.append(totalbudget)
                     result_list.append(res)
                     if is_met: still_met.append(mt)
                 if len(still_met):
                     meet_targets = still_met # Some are still met, so only check these
                     upper_lim = totalbudget
+                    print(f'    Found new upper_lim: {upper_lim/factor}')
                 else:
                     lower_lim = totalbudget # None are met, this is the lower limit
-            
+                    print(f'    Found new lower_lim: {lower_lim/factor}')
             # Do the binary search
             while (upper_lim/lower_lim) > (1+tol):
                 trial = (upper_lim+lower_lim)/2.0
@@ -1397,16 +1407,18 @@ def minmoney(project=None, optim=None, tvec=None, verbose=None, maxtime=None, ma
                 still_met = []
                 for m,mt in enumerate(meet_targets):
                     budgetvec = budgets[mt]
-                    printv('    Running %s of %s...' % (m+1, len(meet_targets)), 2, verbose)
-                    is_met,res = outcome_met(budgetvec=budgetvec, totalbudget=trial, args=args, target=target)
+                    is_met,res = outcome_met(budgetvec=budgetvec, totalbudget=trial, args=args, target=target, scaleupmethod='add')
+                    printv(f'    Running %s of %s... Success: {is_met}' % (m+1, len(meet_targets)), 2, verbose)
                     budget_list.append(totalbudget)
                     result_list.append(res)
                     if is_met: still_met.append(mt)
                 if len(still_met):
                     meet_targets = still_met # Some are still met, so only check these
                     upper_lim = trial
+                    print(f'    Found new upper_lim: {upper_lim/factor}')
                 else:
                     lower_lim = trial
+                    print(f'    Found new lower_lim: {lower_lim/factor}')
             
             # Tidy up
             if len(meet_targets)>1:
@@ -1530,7 +1542,7 @@ def minmoney(project=None, optim=None, tvec=None, verbose=None, maxtime=None, ma
                     trial_budget = trial_vec.sum()
                     
                     # Try it out
-                    is_met,res = outcome_met(budgetvec=trial_vec, totalbudget=trial_budget, args=args, target=res_targ)
+                    is_met,res = outcome_met(budgetvec=trial_vec, totalbudget=trial_budget, args=args, target=res_targ, scaleupmethod='add')
                     movie.append(res)
                     
                     printv('', 2, verbose)
