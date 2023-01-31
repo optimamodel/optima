@@ -1230,7 +1230,7 @@ def minmoney(project=None, optim=None, tvec=None, verbose=None, maxtime=None, ma
     
     if multi: printv('Performing parallel money optimization with %s chains...' % nchains, 2, verbose)
     else:     printv('Performing serial money optimization...', 2, verbose)
-
+    seed(randseed)
     
     #%% Definitions
     def distance(target, this):
