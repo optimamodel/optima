@@ -258,29 +258,29 @@ def constrainbudget(origbudget=None, budgetvec=None, totalbudget=None, budgetlim
                     tolerance=1e-2, overalltolerance=1.0, outputtype=None, verbose=2, tvsettings=None):
     """ Take an unnormalized/unconstrained budgetvec and normalize and constrain it """
     # Optional printing for debugging
-    # print(f'!?! constrainbudget called with \norigbudget={origbudget},\nbudgetvec={budgetvec},\ntotalbudget={totalbudget},\nbudgetlims={budgetlims},\noptiminds={optiminds},\noptimkeys={optimkeys},'
-    #                                                                                               f'\ntolerance={tolerance},\noveralltolerance={overalltolerance},\noutputtype={outputtype},\nverbose={verbose},\ntvsettings={tvsettings}')
+    print(f'\n\n!?! constrainbudget called with \norigbudget={origbudget},\nbudgetvec={budgetvec},\nscaleupmethod={scaleupmethod},\ntotalbudget={totalbudget},\nbudgetlims={budgetlims},\noptiminds={optiminds},\noptimkeys={optimkeys},'
+                                                                                                  f'\ntolerance={tolerance},\noveralltolerance={overalltolerance},\noutputtype={outputtype},\nverbose={verbose},\ntvsettings={tvsettings}')
 
     # Prepare this budget for later scaling and the like
-    constrainedbudget = dcp(origbudget)
+    origbudgetcopy = dcp(origbudget)
     
     # Handle zeros
-    if sum(constrainedbudget[:])==0: constrainedbudget[:] += tolerance
+    if sum(origbudgetcopy[:])==0: origbudgetcopy[:] += tolerance
     if sum(budgetvec)==0:            budgetvec[:] += tolerance
 
     # Calculate the current total budget
-    currenttotal = sum(constrainedbudget[:]) # WARNING, assumes it's an odict
+    currenttotal = sum(origbudgetcopy[:]) # WARNING, assumes it's an odict
     scaleratio = totalbudget/float(currenttotal) # Calculate the ratio between the original budget and the supplied budget
 
     # Calculate a uniformly scaled budget
-    rescaledbudget = dcp(constrainedbudget)
-    for key in rescaledbudget.keys(): rescaledbudget[key] *= scaleratio # This is the original budget scaled to the total budget
-    if abs(sum(rescaledbudget[:])-totalbudget)>overalltolerance:
-        errormsg = 'Rescaling budget failed (%f != %f)' % (sum(rescaledbudget[:]), totalbudget)
+    rescaledorigbudget = dcp(origbudgetcopy)
+    for key in rescaledorigbudget.keys(): rescaledorigbudget[key] *= scaleratio # This is the original budget scaled to the total budget
+    if abs(sum(rescaledorigbudget[:])-totalbudget)>overalltolerance:
+        errormsg = 'Rescaling budget failed (%f != %f)' % (sum(rescaledorigbudget[:]), totalbudget)
         raise OptimaException(errormsg)
 
     # Calculate the minimum amount that can be spent on the fixed costs
-    rescaledminfixed = dcp(rescaledbudget) # This is the rescaled budget, but with the minimum fixed costs -- should be <= totalbudget
+    rescaledminfixed = dcp(rescaledorigbudget) # This is the rescaled budget, but with the minimum fixed costs -- should be <= totalbudget
 
     # Get optiminds and optimkeys
     optiminds, optimkeys = calcoptimindsoptimkeys('constrainbudget', prognamelist=origbudget.keys(), progset=None,
@@ -290,7 +290,7 @@ def constrainbudget(origbudget=None, budgetvec=None, totalbudget=None, budgetlim
     fixedkeys = array([p for p in progkeys if p not in optimkeys]) # Get the complement of optimkeys
     minfixed = 0.0
     for key in fixedkeys:
-        rescaledminfixed[key] = rescaledbudget[key]*budgetlims['min'][key]
+        rescaledminfixed[key] = rescaledorigbudget[key]*budgetlims['min'][key]
         minfixed += rescaledminfixed[key]
 
     # Calculate the total amount available for the optimizable programs
@@ -300,12 +300,12 @@ def constrainbudget(origbudget=None, budgetvec=None, totalbudget=None, budgetlim
     # Scale the supplied budgetvec to meet this available amount
     if scaleupmethod == 'multiply' or optimscaleratio <= 1:
         scaledbudgetvec = dcp(budgetvec*optimscaleratio)
-        # print(f'Rescaling budget with multiply method, scaleupmethod: {scaleupmethod}, optimscaleratio {optimscaleratio}, budgetvec {budgetvec}, scaledbudgetvec {scaledbudgetvec} with sum {sum(scaledbudgetvec)}, optimbudget {optimbudget}')
+        print(f'Rescaling budget with multiply method, scaleupmethod: {scaleupmethod}, optimscaleratio {optimscaleratio}, budgetvec {budgetvec}, scaledbudgetvec {scaledbudgetvec} with sum {sum(scaledbudgetvec)}, optimbudget {optimbudget}')
     else: # scaleupmethod == 'add'
         difference = optimbudget - float(sum(budgetvec))
         scaledbudgetvec = dcp(budgetvec)
         for i,v in enumerate(scaledbudgetvec): scaledbudgetvec[i] += difference/len(budgetvec) # This is the original budget scaled to the total budget
-        # print(f'Rescaling budget with addition method, scaleupmethod: {scaleupmethod}, optimscaleratio {optimscaleratio}, budgetvec {budgetvec}, scaledbudgetvec {scaledbudgetvec} with sum {sum(scaledbudgetvec)}, optimbudget {optimbudget}')
+        print(f'Rescaling budget with addition method, scaleupmethod: {scaleupmethod}, optimscaleratio {optimscaleratio}, budgetvec {budgetvec}, scaledbudgetvec {scaledbudgetvec} with sum {sum(scaledbudgetvec)}, optimbudget {optimbudget}')
     # scaledbudgetvec = dcp(budgetvec*optimscaleratio)
     if abs(sum(scaledbudgetvec)-optimbudget)>overalltolerance:
         errormsg = 'Rescaling budget failed (%f != %f)' % (sum(scaledbudgetvec), optimbudget)
@@ -318,8 +318,8 @@ def constrainbudget(origbudget=None, budgetvec=None, totalbudget=None, budgetlim
         if abslimits['max'][pkey] is None: abslimits['max'][pkey] = inf
     for oi,okey in enumerate(optimkeys): # Don't worry about non-optimizable programs at this point -- oi = 0,1,2,3; oind = e.g. 0, 1, 4, 8
         # Fully-relative limits (i.e. scale according to total spend). - consider making relative to origbudget - needs more thought
-        if isfinite(abslimits['min'][okey]): abslimits['min'][okey] *= rescaledbudget[okey] # origbudget[okey]
-        if isfinite(abslimits['max'][okey]): abslimits['max'][okey] *= rescaledbudget[okey] # origbudget[okey]
+        if isfinite(abslimits['min'][okey]): abslimits['min'][okey] *= rescaledorigbudget[okey] # origbudget[okey]
+        if isfinite(abslimits['max'][okey]): abslimits['max'][okey] *= rescaledorigbudget[okey] # origbudget[okey]
         
     # Apply constraints on optimizable parameters
     noptimprogs = len(optimkeys) # Number of optimizable programs
@@ -379,9 +379,9 @@ def constrainbudget(origbudget=None, budgetvec=None, totalbudget=None, budgetlim
     constrainedbudgetvec = dcp(constrainedbudget[optimkeys])
 
     # Optional printing for debugging
-    # lowerlim = dcp(abslimits['min'][optimkeys])
-    # upperlim = dcp(abslimits['max'][optimkeys])
-    # print(f'!?! constrainbudget returning \nconstrainedbudget: {constrainedbudget},\nconstrainedbudgetvec: {constrainedbudgetvec},\nlowerlim: {lowerlim},\nupperlim: {upperlim}')
+    lowerlim = dcp(abslimits['min'][optimkeys])
+    upperlim = dcp(abslimits['max'][optimkeys])
+    print(f'\n\n!?! constrainbudget returning \nconstrainedbudget: {constrainedbudget},\nconstrainedbudgetvec: {constrainedbudgetvec},\nlowerlim: {lowerlim},\nupperlim: {upperlim}')
 
     if outputtype=='odict':
         return constrainedbudget
@@ -509,6 +509,7 @@ def outcomecalc(budgetvec=None, which=None, project=None, parsetname=None, progs
     
     # Normalize budgetvec and convert to budget -- WARNING, is there a better way of doing this?
     if doconstrainbudget:
+        print('constraining budget from outcomecalc')
         constrainedbudget = constrainbudget(origbudget=origbudget, budgetvec=budgetvec, totalbudget=totalbudget, budgetlims=constraints, optimkeys=optimkeys, outputtype='odict', scaleupmethod=scaleupmethod)
     else:
         constrainedbudget = dcp(origbudget)
@@ -961,6 +962,9 @@ def minoutcomes(project=None, optim=None, tvec=None, verbose=None, maxtime=None,
 
     ## Handle budget and remove fixed costs
     if project is None or optim is None: raise OptimaException('An optimization requires both a project and an optimization object to run')
+
+    print(f'optim:\n{optim}\n{optim.__dict__}')
+
     parset  = project.parsets[optim.parsetname] # Link to the original parameter set
     progset = project.progsets[optim.progsetname] # Link to the original program set
 
@@ -993,6 +997,7 @@ def minoutcomes(project=None, optim=None, tvec=None, verbose=None, maxtime=None,
         raise op.CancelException
 
     # Calculate original things
+    print('constraining budget 1st minoutcomes',*(origbudget,sum(origbudget[:]),budgetvec,sum(budgetvec),origtotalbudget))
     constrainedbudgetorig, constrainedbudgetvecorig, lowerlim, upperlim = constrainbudget(origbudget=origbudget, budgetvec=budgetvec, totalbudget=origtotalbudget, budgetlims=optim.constraints, optimkeys=optimkeys, outputtype='full', verbose=verbose)
 
     # Set up arguments which are shared between outcomecalc and asd
@@ -1082,6 +1087,7 @@ def minoutcomes(project=None, optim=None, tvec=None, verbose=None, maxtime=None,
 
         # Get the total budget & constrain it 
         totalbudget = origtotalbudget*scalefactor
+        print('constraining budget from minoutcomes scalefactors')
         constrainedbudget, constrainedbudgetvec, lowerlim, upperlim = constrainbudget(origbudget=origbudget, budgetvec=budgetvec, totalbudget=totalbudget, budgetlims=optim.constraints, optimkeys=optimkeys, outputtype='full')
         args['totalbudget'] = totalbudget
         args['initpeople'] = initpeople # Reset initpeople
@@ -1121,10 +1127,13 @@ def minoutcomes(project=None, optim=None, tvec=None, verbose=None, maxtime=None,
                 printv('Running optimization "%s" (%i/%i) with maxtime=%s, maxiters=%s' % (key, k+1, len(allbudgetvecs), maxtime, maxiters), 2, verbose)
                 if label: thislabel = '"'+label+'-'+key+'"'
                 else: thislabel = '"'+key+'"'
+                print('constraining to outcomecalc from minoutcomes scalefactors if totalbudget 1')
                 origoutcomes = outcomecalc(outputresults=True, **args) # Calculate the initial outcome and pass it back in
                 args['origoutcomes'] = origoutcomes
+                print('Passing over to asd')
                 res = asd(outcomecalc, allbudgetvecs[key], args=args, xmin=xmin, maxtime=maxtime, maxiters=maxiters, verbose=verbose, randseed=allseeds[k], label=thislabel, stoppingfunc=stoppingfunc, **kwargs)
                 budgetvecnew, fvals = res.x, res.details.fvals
+                print('constraining budget from minoutcomes scalefactors if totalbudget 2')
                 constrainedbudgetnew, constrainedbudgetvecnew, lowerlim, upperlim = constrainbudget(origbudget=origbudget, budgetvec=budgetvecnew, totalbudget=totalbudget, budgetlims=optim.constraints, optimkeys=optimkeys, outputtype='full')
                 asdresults[key] = {'budget':constrainedbudgetnew, 'fvals':fvals}
                 if fvals[-1]<bestfval: 
@@ -1396,10 +1405,8 @@ def minmoney(project=None, optim=None, tvec=None, verbose=None, maxtime=None, ma
                 if len(still_met):
                     meet_targets = still_met # Some are still met, so only check these
                     upper_lim = totalbudget
-                    print(f'    Found new upper_lim: {upper_lim/factor}')
                 else:
                     lower_lim = totalbudget # None are met, this is the lower limit
-                    print(f'    Found new lower_lim: {lower_lim/factor}')
             # Do the binary search
             while (upper_lim/lower_lim) > (1+tol):
                 trial = (upper_lim+lower_lim)/2.0
@@ -1415,11 +1422,9 @@ def minmoney(project=None, optim=None, tvec=None, verbose=None, maxtime=None, ma
                 if len(still_met):
                     meet_targets = still_met # Some are still met, so only check these
                     upper_lim = trial
-                    print(f'    Found new upper_lim: {upper_lim/factor}')
                 else:
                     lower_lim = trial
-                    print(f'    Found new lower_lim: {lower_lim/factor}')
-            
+
             # Tidy up
             if len(meet_targets)>1:
                 printv('Warning, %s budgets still meet targets (expecting 1, but not strictly so)' % len(meet_targets), 2, verbose)
