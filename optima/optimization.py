@@ -179,6 +179,61 @@ def defaultconstraints(project=None, progsetname=None, verbose=2):
 
     return constraints
 
+def defaultabsconstraints(project=None, progsetname=None, proporigconstraints=None, constraints=None, totalbudget=None, verbose=2,eps=0.01):
+    """
+    Helper function to get the default absolute constraints for an optimization from the default budget, using the
+    defaultconstraints() function above which are relative to the default budget, then getting
+    absolute spending values from those.
+    Also converts
+    Args:
+        project: project
+        progsetname: progsetname
+        proporigconstraints: (optional) constraints proportional to the original budget to convert into absolute constraints
+        constraints: (optional) constraints proportional to the rescaled budget to convert into absolute constraints. You must provide a totalbudget.
+        totalbudget: (optional) the total rescaled budget which is to be optimized
+        verbose: verbosity
+
+    Returns:
+
+    """
+    printv('Defining default absolute constraints...', 3, verbose=verbose)
+
+    if proporigconstraints is not None and constraints is not None:
+        error = f"defaultabsconstraints() can take either proporigconstraints or constraints to convert into absolute constraints, not both."
+        raise OptimaException(error)
+
+    if progsetname is None:
+        progsetname = -1
+        printv('defaultabsconstraints() did not get a progsetname input, so using default', 3, verbose)
+    try:    progset = project.progsets[progsetname]
+    except: raise OptimaException('To define constraints, you must supply a program set as an input')
+
+    defconstraints = defaultconstraints(project,progsetname,verbose)
+    if defconstraints is None: return None
+    defbudget = progset.getdefaultbudget()
+
+    # Update defconstraints with proporigconstraints
+    if proporigconstraints is not None:
+        defconstraints['min'] = op.dcp(proporigconstraints['min'])
+        defconstraints['max'] = op.dcp(proporigconstraints['max'])
+
+    # Update defconstraints with constraints, rescaled to be proportional to the default budget
+    if constraints is not None:
+        if totalbudget is None:
+            error = f"If you provide defaultabsconstraints() with constraints (relative to the rescaled budget) to turn into absolute constraints, " \
+                    f"you must also provide a totalbudget that is being optimized. If the constraints are relative to the default budget, use proporigconstraints."
+            raise OptimaException(error)
+        for progname in progset.programs.keys():
+            if constraints['min'][progname] is None: defconstraints['min'][progname] = None
+            else: defconstraints['min'][progname] = constraints['min'][progname] * totalbudget / (sum(defbudget[:])+eps)
+            if constraints['max'][progname] is None: defconstraints['max'][progname] = None
+            else: defconstraints['max'][progname] = constraints['max'][progname] * totalbudget / (sum(defbudget[:])+eps)
+
+    # Calculate the absolute constraints from the default budget
+    for progname in progset.programs.keys():
+        if defconstraints['min'][progname] is not None: defconstraints['min'][progname] *= defbudget[progname]
+        if defconstraints['max'][progname] is not None: defconstraints['max'][progname] *= defbudget[progname]
+    return defconstraints
 
 def defaulttvsettings(**kwargs):
     '''
