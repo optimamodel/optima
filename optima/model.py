@@ -14,6 +14,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
     ##################################################################################################################
 
     # Initialize basic quantities
+    die = False
 
     if label is None:    label = ''
     else:                label += ': '# An optional label to add to error messages
@@ -380,6 +381,16 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
             else:   printv(errormsg, 1, verbose)
             initpeople = None
 
+    # This would be in the next section but it's needed
+    # Set initial distributions within treated & untreated
+    # Weight the initial distribution according to model settings to get an "earlier" or "later" stage epidemic to better match trends in years after initialization
+    # Note that the multiplier is quite heavily weighting toward acute infections - note less multiplier for CD4<50 given diagnosis/death
+    cd4weightings = maximum(minimum(array([initcd4weight**3., initcd4weight**2, initcd4weight, 1./initcd4weight, initcd4weight**-2, initcd4weight**-3]), 10.), 0.1)
+    initprog = prog * cd4weightings
+    untxdist    = (1./initprog) / sum(1./initprog) # Normalize progression rates to get initial distribution
+    txdist      = cat([[1.,1.], svlrecov[2:]]) # Use 1s for the first two entries so that the proportion of people on tx with acute infection is v small
+    txdist      = (1./txdist)  / sum(1./txdist) # Normalize
+
     # If it wasn't specified, or if there's something wrong with it, determine what it should be here
     if initpeople is None:
 
@@ -413,15 +424,6 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
         dxdist = dxfrac*(1.-linktocarefrac)
         incaredist = dxfrac*linktocarefrac*(1.-lostfrac)
         lostdist = dxfrac*linktocarefrac*lostfrac
-
-        # Set initial distributions within treated & untreated
-        # Weight the initial distribution according to model settings to get an "earlier" or "later" stage epidemic to better match trends in years after initialization
-        # Note that the multiplier is quite heavily weighting toward acute infections - note less multiplier for CD4<50 given diagnosis/death
-        cd4weightings = maximum(minimum(array([initcd4weight**3., initcd4weight**2, initcd4weight, 1./initcd4weight, initcd4weight**-2, initcd4weight**-3]), 10.), 0.1)
-        initprog = prog * cd4weightings
-        untxdist    = (1./initprog) / sum(1./initprog) # Normalize progression rates to get initial distribution
-        txdist      = cat([[1.,1.], svlrecov[2:]]) # Use 1s for the first two entries so that the proportion of people on tx with acute infection is v small
-        txdist      = (1./txdist)  / sum(1./txdist) # Normalize
 
         # Set initial distribution of PLHIV
         initundx    = einsum('ij,j,i->ij',undxdist,nevertreated,untxdist)
@@ -1103,6 +1105,9 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
 
                 if name == 'proppmtct':
                     continue  # There are no explicit states for pmtct, so no need to move people around, just fix the proportion if needed
+
+                if name == 'propsupp':
+                    print(f'propsupp: {t}, {tvec[t]}, {fixyear},{tvec[fixyear]}, {prop}')
 
                 # Figure out how many people we currently have...
                 actual    = people[numer,:,t+1].sum() # ... in the higher cascade state
