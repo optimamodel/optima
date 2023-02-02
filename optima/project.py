@@ -721,7 +721,7 @@ class Project(object):
     
     
     def outcomecalc(self, name=None, budget=None, optim=None, optimname=None, parsetname=None, progsetname=None, 
-                objectives=None, constraints=None, origbudget=None, verbose=2, doconstrainbudget=False):
+                objectives=None, absconstraints=None, origbudget=None, verbose=2, doconstrainbudget=False):
         '''
         Calculate the outcome for a given budget -- a substep of optimize(); similar to runbudget().
         
@@ -747,16 +747,16 @@ class Project(object):
         # Check inputs
         if name is None: name = 'outcomecalc'
         if optim is None:
-            if len(self.optims) and all([arg is None for arg in [objectives, constraints, parsetname, progsetname, optimname]]):
+            if len(self.optims) and all([arg is None for arg in [objectives, absconstraints, parsetname, progsetname, optimname]]):
                 optimname = -1 # No arguments supplied but optims exist, use most recent optim to run
             if optimname is not None: # Get the optimization by name if supplied
                 optim = self.optims[optimname] 
             else: # If neither an optim nor an optimname is supplied, create one
-                optim = Optim(project=self, name=name, objectives=objectives, constraints=constraints, parsetname=parsetname, progsetname=progsetname)
+                optim = Optim(project=self, name=name, objectives=objectives, absconstraints=absconstraints, parsetname=parsetname, progsetname=progsetname)
 
         # Run outcome calculation        
         results = outcomecalc(budgetvec=budget, which='outcomes', project=self, parsetname=optim.parsetname, 
-                              progsetname=optim.progsetname, objectives=optim.objectives, constraints=optim.constraints, 
+                              progsetname=optim.progsetname, objectives=optim.objectives, absconstraints=optim.absconstraints,
                               origbudget=origbudget, outputresults=True, verbose=verbose, doconstrainbudget=doconstrainbudget)
         # Add results
         results.name = name
@@ -782,7 +782,7 @@ class Project(object):
         return results
 
 
-    def optimize(self, name=None, parsetname=None, progsetname=None, objectives=None, constraints=None, maxiters=None, maxtime=None, 
+    def optimize(self, name=None, parsetname=None, progsetname=None, objectives=None, constraints=None, absconstraints=None, proporigconstraints=None, maxiters=None, maxtime=None,
                  verbose=2, stoppingfunc=None, die=False, origbudget=None, randseed=None, mc=None, optim=None, optimname=None, multi=False, 
                  nchains=None, nblocks=None, blockiters=None, batch=None, timevarying=None, tvsettings=None, tvconstrain=None, which=None, 
                  makescenarios=True, **kwargs):
@@ -811,14 +811,15 @@ class Project(object):
         # Check inputs
         if name is None: name = 'default'
         if optim is None:
-            if len(self.optims) and all([arg is None for arg in [objectives, constraints, parsetname, progsetname, optimname, which]]):
+            if len(self.optims) and all([arg is None for arg in [objectives, parsetname, progsetname, optimname, which]]):
                 optimname = -1 # No arguments supplied but optims exist, use most recent optim to run
             if optimname is not None: # Get the optimization by name if supplied
                 optim = self.optims[optimname] 
             else: # If neither an optim nor an optimname is supplied, create one
-                optim = Optim(project=self, name=name, objectives=objectives, constraints=constraints, parsetname=parsetname, progsetname=progsetname, timevarying=timevarying, tvsettings=tvsettings, which=which)
+                optim = Optim(project=self, name=name, objectives=objectives, constraints=constraints, absconstraints=absconstraints, proporigconstraints=proporigconstraints,
+                              parsetname=parsetname, progsetname=progsetname, timevarying=timevarying, tvsettings=tvsettings, which=which)
         if objectives  is not None: optim.objectives  = objectives # Update optim structure with inputs
-        if constraints is not None: optim.constraints = constraints
+        if absconstraints is not None: optim.absconstraints = absconstraints
         if tvsettings  is not None: optim.tvsettings  = tvsettings
         if timevarying is not None: optim.tvsettings['timevarying'] = timevarying # Set time-varying optimization
         if tvconstrain is not None: optim.tvsettings['tvconstrain'] = tvconstrain # Set whether programs should be constrained to their time-varying values

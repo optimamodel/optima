@@ -168,7 +168,7 @@ from .scenarios import Parscen, Budgetscen, Coveragescen, Progscen, runscenarios
 from . import scenarios as _scenarios; del scenarios
 
 # Optimization and ICER analyses
-from .optimization import Optim, defaultobjectives, defaultconstraints, defaulttvsettings, optimize, multioptimize, tvoptimize, outcomecalc, icers, tvfunction
+from .optimization import Optim, defaultobjectives, defaultconstraints, defaultabsconstraints, defaulttvsettings, optimize, multioptimize, tvoptimize, outcomecalc, icers, tvfunction
 from . import optimization as _optimization; del optimization
 
 # Plotting functions
