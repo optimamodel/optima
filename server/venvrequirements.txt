@@ -20,7 +20,7 @@ sqlalchemy-migrate==0.10.0
 sqlparse==0.2.1
 
 # Other web stuff
-Werkzeug==0.14.1
+Werkzeug==0.15.5
 celery==4.2.0
 redis==2.10.6
 Twisted==18.7.0
