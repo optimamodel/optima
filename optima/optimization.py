@@ -528,8 +528,8 @@ def separatetv(inputvec=None, optiminds=None, optimkeys=None):
 
 def outcomecalc(budgetvec=None, which=None, project=None, parsetname=None, progsetname=None, scaleupmethod='multiply',
                 objectives=None, absconstraints=None, totalbudget=None, optiminds=None, optimkeys=None, origbudget=None,
-                tvec=None, initpeople=None, outputresults=False, verbose=2, ccsample='best', doconstrainbudget=True,
-                tvsettings=None, tvcontrolvec=None, origoutcomes=None, penalty=1e9, **kwargs):
+                tvec=None, initpeople=None, initprops=None, startind=None, outputresults=False, verbose=2, ccsample='best',
+                doconstrainbudget=True, tvsettings=None, tvcontrolvec=None, origoutcomes=None, penalty=1e9, **kwargs):
     ''' Function to evaluate the objective for a given budget vector (note, not time-varying) '''
 
     # Set up defaults
@@ -597,10 +597,11 @@ def outcomecalc(budgetvec=None, which=None, project=None, parsetname=None, progs
     
     # Figure out which indices to run for and actually run the model
     tvec       = project.settings.maketvec(end=objectives['end'])
-    initpeople = None # WARNING, unfortunately initpeople is still causing mismatches -- turning off for now despite the large (2.5x) performance penalty
+    # initpeople = None # Not anymore! # WARNING, unfortunately initpeople is still causing mismatches -- turning off for now despite the large (2.5x) performance penalty
     if initpeople is None: startind = None
-    else:                  startind = findnearest(tvec, objectives['start']) # Only start running the simulation from the starting point
-    results = project.runsim(pars=thisparsdict, parsetname=parsetname, progsetname=progsetname, coverage=thiscoverage, budget=budgetarray, budgetyears=paryears, tvec=tvec, initpeople=initpeople, startind=startind, verbose=0, label=project.name+'-optim-outcomecalc', doround=False, addresult=False, advancedtracking=False, **kwargs)
+    elif startind is None: startind = findnearest(tvec, objectives['start']) # Assume initpeople is from the start of the optimization
+    else: pass      # Assume initpeople and startind are corresponding to the same time
+    results = project.runsim(pars=thisparsdict, parsetname=parsetname, progsetname=progsetname, coverage=thiscoverage, budget=budgetarray, budgetyears=paryears, tvec=tvec, initpeople=initpeople, initprops=initprops, startind=startind, verbose=0, label=project.name+'-optim-outcomecalc', doround=False, addresult=False, advancedtracking=False, **kwargs)
 
     # Figure out which indices to use
     initialind = findnearest(results.tvec, objectives['start'])
@@ -1050,9 +1051,10 @@ def minoutcomes(project=None, optim=None, tvec=None, verbose=None, maxtime=None,
     if label is None: label = ''
 
     # Calculate the initial people distribution
-    results = project.runsim(pars=parset.pars, parsetname=optim.parsetname, progsetname=optim.progsetname, tvec=tvec, keepraw=True, verbose=0, label=project.name+'-minoutcomes', addresult=False, advancedtracking=False)
-    initialind = findnearest(results.raw[0]['tvec'], optim.objectives['start'])
-    initpeople = results.raw[0]['people'][:,:,initialind] # Pull out the people array corresponding to the start of the optimization -- there shouldn't be multiple raw arrays here
+    results = project.runsim(pars=parset.pars, parsetname=optim.parsetname, progsetname=optim.progsetname, tvec=tvec, keepraw=True, verbose=0, label=project.name+'-minoutcomes', addresult=False, advancedtracking=True)
+    startind = findnearest(results.raw[0]['tvec'], optim.objectives['start'])
+    initpeople = results.raw[0]['people'][:,:,startind] # Pull out the people array corresponding to the start of the optimization -- there shouldn't be multiple raw arrays here
+    initprops  = results.raw[0]['props'][:,startind,:]  # Need initprops if running with initpeople
 
     if stoppingfunc and stoppingfunc():
         raise op.CancelException
@@ -1073,8 +1075,10 @@ def minoutcomes(project=None, optim=None, tvec=None, verbose=None, maxtime=None,
             'origbudget': origbudget, 
             'tvec':       tvec, 
             'ccsample':   ccsample, 
-            'verbose':    verbose, 
+            'verbose':    verbose,
+            'startind':   startind,
             'initpeople': initpeople, # Complicated; see below
+            'initprops':  initprops,
             'keepraw':    keepraw,
             }
     
@@ -1102,11 +1106,15 @@ def minoutcomes(project=None, optim=None, tvec=None, verbose=None, maxtime=None,
             raise op.CancelException
 
         doconstrainbudget = False # Budget is specified fully, don't constrain
-        if key=='Baseline': 
+        if key=='Baseline':
+            args['startind']   = None
             args['initpeople'] = None # Do this so it runs for the full time series, and is comparable to the optimization result
+            args['initprops']  = None # Do this so it runs for the full time series, and is comparable to the optimization result
             args['totalbudget'] = origbudget[:].sum() # Need to reset this since constraining the budget
         else:
+            args['startind']   = startind
             args['initpeople'] = initpeople # Do this so saves a lot of time (runs twice as fast for all the budget scenarios)
+            args['initprops'] = initprops   # Need initprops if running with initpeople
             args['totalbudget'] = origtotalbudget
         extremeresults[key] = outcomecalc(exbudget[optiminds], outputresults=True, doconstrainbudget=doconstrainbudget, **args)
         extremeresults[key].name = key
@@ -1151,8 +1159,10 @@ def minoutcomes(project=None, optim=None, tvec=None, verbose=None, maxtime=None,
         # print('constraining budget from minoutcomes scalefactors')
         constrainedbudget, constrainedbudgetvec, lowerlim, upperlim = constrainbudget(origbudget=origbudget, budgetvec=budgetvec, totalbudget=totalbudget, absconstraints=optim.absconstraints, optimkeys=optimkeys, outputtype='full')
         args['totalbudget'] = totalbudget
-        args['initpeople'] = initpeople # Reset initpeople
-        
+        args['initpeople']  = initpeople # Reset initpeople
+        args['initprops']   = initprops  # Reset initprops
+        args['startind']    = startind   # Reset initpeople
+
         # Set up budgets to run
         if totalbudget: # Budget is nonzero, run
             allbudgetvecs = odict()
@@ -1203,6 +1213,8 @@ def minoutcomes(project=None, optim=None, tvec=None, verbose=None, maxtime=None,
             
             ## Calculate final outcomes for the full time vector
             args['initpeople'] = None # Set to None to get full results, not just from start year
+            args['initprops']  = None
+            args['startind']   = None
             new = outcomecalc(asdresults[bestkey]['budget'], outputresults=True, **args)
             
             ## Name and store outputs
@@ -1334,6 +1346,14 @@ def minmoney(project=None, optim=None, tvec=None, verbose=None, maxtime=None, ma
     printv('Preliminary investigations...', 2, verbose)
     dists = op.odict()
     movie = []
+
+    # Calculate initial people distribution
+    results = project.runsim(pars=parset.pars, parsetname=optim.parsetname, progsetname=optim.progsetname, tvec=tvec, keepraw=True, verbose=0, label=project.name+'-minoutcomes', addresult=False, advancedtracking=True)
+    startind = findnearest(results.raw[0]['tvec'], optim.objectives['start'])
+    initpeople = results.raw[0]['people'][:,:,startind] # Pull out the people array corresponding to the start of the optimization -- there shouldn't be multiple raw arrays here
+    initprops  = results.raw[0]['props'][:,startind,:]  # Need initprops if running with initpeople
+    args.update({'startind':startind, 'initpeople':initpeople, 'initprops':initprops})
+
     results_curr = op.outcomecalc(budgetvec, outputresults=True, **args)
     res_targ = results_curr.outcomes['target']
     res_curr = results_curr.outcomes['final']
@@ -1708,6 +1728,9 @@ def minmoney(project=None, optim=None, tvec=None, verbose=None, maxtime=None, ma
     
     ## Tidy up -- WARNING, need to think of a way to process multiple inds
     args['doconstrainbudget'] = True
+    args['initpeople'] = None  # Set to None to get full results, not just from start year
+    args['initprops']  = None
+    args['startind']   = None
     orig = outcomecalc(origbudgetvec, totalbudget=origtotalbudget,    outputresults=True, **args)
     new  = outcomecalc(newbudget,     totalbudget=newbudget[:].sum(), outputresults=True, **args)
     
