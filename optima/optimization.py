@@ -1052,7 +1052,7 @@ def minoutcomes(project=None, optim=None, tvec=None, verbose=None, maxtime=None,
 
     # Calculate the initial people distribution
     results = project.runsim(pars=parset.pars, parsetname=optim.parsetname, progsetname=optim.progsetname, tvec=tvec, keepraw=True, verbose=0, label=project.name+'-minoutcomes', addresult=False, advancedtracking=True)
-    startind = findnearest(results.raw[0]['tvec'], optim.objectives['start'])
+    startind = findnearest(results.raw[0]['tvec'], optim.objectives['start']-1) ## !!! -1 is because of parameter interpolation / smoothing from the current parameters to the budget parameters, we have to start a year before the budget starts
     initpeople = results.raw[0]['people'][:,:,startind] # Pull out the people array corresponding to the start of the optimization -- there shouldn't be multiple raw arrays here
     initprops  = results.raw[0]['props'][:,startind,:]  # Need initprops if running with initpeople
 
@@ -1349,7 +1349,7 @@ def minmoney(project=None, optim=None, tvec=None, verbose=None, maxtime=None, ma
 
     # Calculate initial people distribution
     results = project.runsim(pars=parset.pars, parsetname=optim.parsetname, progsetname=optim.progsetname, tvec=tvec, keepraw=True, verbose=0, label=project.name+'-minoutcomes', addresult=False, advancedtracking=True)
-    startind = findnearest(results.raw[0]['tvec'], optim.objectives['start'])
+    startind = findnearest(results.raw[0]['tvec'], optim.objectives['start']-1) ## !!! -1 is because of parameter interpolation / smoothing from the current parameters to the budget parameters, we have to start a year before the budget starts
     initpeople = results.raw[0]['people'][:,:,startind] # Pull out the people array corresponding to the start of the optimization -- there shouldn't be multiple raw arrays here
     initprops  = results.raw[0]['props'][:,startind,:]  # Need initprops if running with initpeople
     args.update({'startind':startind, 'initpeople':initpeople, 'initprops':initprops})
