@@ -215,7 +215,7 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
             break
 
     # Return
-    if verbose >= 2: print('=== %s %s (%i steps, orig: %s | best: %s | ratio: %s) ===' % ((label, exitreason, count) + op.sigfig([fvals[0], fvals[-1], fvals[-1] / fvals[0]])))
+    if verbose >= 2: print('=== %s %s (%i steps, orig: %s | best: %s | ratio: %s) ===' % ((label, exitreason, count) + op.sigfig([fvals[0], fvals[count], fvals[count] / fvals[0]])))
     output = objdict()
     output['x'] = np.reshape(x, origshape) # Parameters
     output['fval'] = fvals[count]
