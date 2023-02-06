@@ -1448,7 +1448,7 @@ def get_optimization_summaries(project):
             "id": str(optim.uid),
             "name": str(optim.name),
             "objectives": normalize_obj(optim.objectives),
-            "proporigconstraints": parse_constraints(optim.proporigconstraints, project=project, progsetname=optim.progsetname),
+            "proporigconstraints": parse_constraints(optim.getproporigconstraints(), project=project, progsetname=optim.progsetname),
             "tvsettings": normalize_obj(optim.tvsettings),
         }
 

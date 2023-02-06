@@ -89,6 +89,25 @@ class Optim(object):
                                          proporigconstraints=self.proporigconstraints, totalbudget=self.objectives['budget'])
         return self.absconstraints
 
+    def getproporigconstraints(self):
+        """ Gets the proporigconstraints from the optim if it has it, !! overriding any other constraints that may be set,
+            or it calculates the proporigconstraints from the absconstraints or constraints using the default budget.
+        """
+        if (not hasattr(self, 'proporigconstraints')) or self.proporigconstraints is None:
+            absconstraints = defaultabsconstraints(project=self.projectref(), progsetname=self.progsetname, constraints=self.constraints,
+                                         proporigconstraints=self.proporigconstraints, totalbudget=self.objectives['budget'])
+            defbudget = self.projectref().progsets[self.progsetname].getdefaultbudget()
+            for progname in progset.programs.keys():
+                if defbudget[progname] == 0:
+                    absconstraints['min'][progname] = 0.0
+                    absconstraints['max'][progname] = None
+                    continue
+                if absconstraints['min'][progname] is not None:
+                    absconstraints['min'][progname] /= defbudget[progname]
+                if absconstraints['max'][progname] is not None:
+                    absconstraints['max'][progname] /= defbudget[progname]
+            return absconstraints
+        return self.proporigconstraints
 
 ################################################################################################################################################
 ### Helper functions
