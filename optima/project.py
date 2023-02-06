@@ -819,11 +819,13 @@ class Project(object):
                 optim = Optim(project=self, name=name, objectives=objectives, constraints=constraints, absconstraints=absconstraints, proporigconstraints=proporigconstraints,
                               parsetname=parsetname, progsetname=progsetname, timevarying=timevarying, tvsettings=tvsettings, which=which)
         if objectives  is not None: optim.objectives  = objectives # Update optim structure with inputs
-        if absconstraints is not None: optim.absconstraints = absconstraints
         if tvsettings  is not None: optim.tvsettings  = tvsettings
         if timevarying is not None: optim.tvsettings['timevarying'] = timevarying # Set time-varying optimization
         if tvconstrain is not None: optim.tvsettings['tvconstrain'] = tvconstrain # Set whether programs should be constrained to their time-varying values
-        
+        if absconstraints is not None:      optim.absconstraints = absconstraints
+        if constraints is not None:         optim.constraints = constraints
+        if proporigconstraints is not None: optim.proporigconstraints = proporigconstraints
+
         # Run the optimization
         if optim.tvsettings['timevarying']: # Call time-varying optimization
             multires = tvoptimize(optim=optim, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, 
