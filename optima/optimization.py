@@ -99,7 +99,8 @@ class Optim(object):
                                              proporigconstraints=None, totalbudget=self.objectives['budget'])
             else:
                 absconstraints = self.absconstraints  # Prioritise absconstraints over constraints
-            defbudget = self.projectref().progsets[self.progsetname].getdefaultbudget()
+            progset = self.projectref().progsets[self.progsetname]
+            defbudget = progset.getdefaultbudget()
             for progname in progset.programs.keys():
                 if defbudget[progname] == 0:
                     absconstraints['min'][progname] = 0.0
