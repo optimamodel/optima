@@ -237,8 +237,9 @@ def defaultabsconstraints(project=None, progsetname=None, proporigconstraints=No
     printv('Defining default absolute constraints...', 3, verbose=verbose)
 
     if proporigconstraints is not None and constraints is not None:
-        error = f"defaultabsconstraints() can take either proporigconstraints or constraints to convert into absolute constraints, not both."
-        raise OptimaException(error)
+        warning = f"WARNING: defaultabsconstraints() got both proporigconstraints or constraints to convert into absolute constraints.\nUsing the proporigconstraints instead of the constraints."
+        printv(warning,1,verbose)
+        constraints = None
 
     if progsetname is None:
         progsetname = -1
