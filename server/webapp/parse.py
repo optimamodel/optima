@@ -1446,6 +1446,7 @@ def get_optimization_summaries(project):
         # FE only uses proporigconstraints, so get them and save them for future use
         if (not hasattr(optim, 'proporigconstraints')) or optim.proporigconstraints is None:
             optim.proporigconstraints = optim.getproporigconstraints()
+            optim.constraints = None ### No constraints in FE only proporigconstraints
         optim_summary = {
             "id": str(optim.uid),
             "name": str(optim.name),
