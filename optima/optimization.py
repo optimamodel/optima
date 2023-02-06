@@ -94,8 +94,11 @@ class Optim(object):
             or it calculates the proporigconstraints from the absconstraints or constraints using the default budget.
         """
         if (not hasattr(self, 'proporigconstraints')) or self.proporigconstraints is None:
-            absconstraints = defaultabsconstraints(project=self.projectref(), progsetname=self.progsetname, constraints=self.constraints,
-                                         proporigconstraints=self.proporigconstraints, totalbudget=self.objectives['budget'])
+            if (not hasattr(self, 'absconstraints')) or self.absconstraints is None:
+                absconstraints = defaultabsconstraints(project=self.projectref(), progsetname=self.progsetname, constraints=self.constraints,
+                                             proporigconstraints=None, totalbudget=self.objectives['budget'])
+            else:
+                absconstraints = self.absconstraints  # Prioritise absconstraints over constraints
             defbudget = self.projectref().progsets[self.progsetname].getdefaultbudget()
             for progname in progset.programs.keys():
                 if defbudget[progname] == 0:

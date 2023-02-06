@@ -1443,12 +1443,14 @@ def get_optimization_summaries(project):
     optim_summaries = []
 
     for optim in project.optims.values():
-
+        # FE only uses proporigconstraints, so get them and save them for future use
+        if (not hasattr(optim, 'proporigconstraints')) or optim.proporigconstraints is None:
+            optim.proporigconstraints = optim.getproporigconstraints()
         optim_summary = {
             "id": str(optim.uid),
             "name": str(optim.name),
             "objectives": normalize_obj(optim.objectives),
-            "proporigconstraints": parse_constraints(optim.getproporigconstraints(), project=project, progsetname=optim.progsetname),
+            "proporigconstraints": parse_constraints(optim.proporigconstraints, project=project, progsetname=optim.progsetname),
             "tvsettings": normalize_obj(optim.tvsettings),
         }
 
