@@ -1516,6 +1516,7 @@ def set_optimization_summaries_on_project(project, optimization_summaries):
 
         if "proporigconstraints" in summary:
             optim.proporigconstraints = revert_constraints(summary['proporigconstraints'], project=project, progsetname=optim.progsetname)
+            optim.constraints = None
 
         for tvkey in optim.tvsettings.keys():
             optim.tvsettings[tvkey] = summary["tvsettings"][tvkey]
