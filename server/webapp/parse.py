@@ -1377,7 +1377,7 @@ def get_default_optimization_summaries(project):
     for progsetkey,progset in project.progsets.items():
         progset_id = progset.uid
         default = {
-            'constraints': parse_constraints(op.defaultconstraints(project=project, progsetname=progsetkey)),
+            'proporigconstraints': parse_constraints(op.defaultconstraints(project=project, progsetname=progsetkey)),
             'objectives': {},
             'tvsettings': normalize_obj(op.defaulttvsettings())
         }
@@ -1448,7 +1448,7 @@ def get_optimization_summaries(project):
             "id": str(optim.uid),
             "name": str(optim.name),
             "objectives": normalize_obj(optim.objectives),
-            "constraints": parse_constraints(optim.constraints, project=project, progsetname=optim.progsetname),
+            "proporigconstraints": parse_constraints(optim.proporigconstraints, project=project, progsetname=optim.progsetname),
             "tvsettings": normalize_obj(optim.tvsettings),
         }
 
@@ -1511,8 +1511,8 @@ def set_optimization_summaries_on_project(project, optimization_summaries):
                 optim.objectives[objkey] = summary["objectives"][objkey]
         optim.objectives["which"] = summary["which"]
 
-        if "constraints" in summary:
-            optim.constraints = revert_constraints(summary['constraints'], project=project, progsetname=optim.progsetname)
+        if "proporigconstraints" in summary:
+            optim.proporigconstraints = revert_constraints(summary['proporigconstraints'], project=project, progsetname=optim.progsetname)
 
         for tvkey in optim.tvsettings.keys():
             optim.tvsettings[tvkey] = summary["tvsettings"][tvkey]

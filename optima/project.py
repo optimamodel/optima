@@ -947,7 +947,7 @@ class Project(object):
         for on,o in self.optims.items():
             parsetname = "'"+o.parsetname+"'" if isinstance(o.parsetname,str) else str(o.parsetname)
             progsetname = "'"+o.progsetname+"'" if isinstance(o.progsetname,str) else str(o.progsetname)
-            constraints = promotetoodict(o.constraints).export(doprint=False) if o.constraints is not None else 'None'
+            constraints = promotetoodict(o.proporigconstraints).export(doprint=False) if o.proporigconstraints is not None else 'None'
             output += "    P.addoptim(name='"+on+"',\n               optim=Optim(project=P,\n                           parsetname="+parsetname+",\n                           progsetname="+progsetname+",\n                           objectives="+promotetoodict(o.objectives).export(doprint=False)+",\n                           constraints="+constraints+"))\n\n"
 
         output += "    if dorun: P.optimize() # Run the most recent optimization\n\n\n"
