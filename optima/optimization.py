@@ -105,7 +105,7 @@ class Optim(object):
     def getproporigconstraints(self):
         """ Does the same thing as getabsconstraints, but then converts the absconstraints into proporigconstraints
         """
-        return absconstraintstoprogorigconstraints(project=project, progsetname=progsetname, absconstraints=self.getabsconstraints())
+        return absconstraintstoprogorigconstraints(project=self.projectref(), progsetname=self.progsetname, absconstraints=self.getabsconstraints())
 
 ################################################################################################################################################
 ### Helper functions
