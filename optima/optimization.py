@@ -446,13 +446,23 @@ def constrainbudget(origbudget=None, budgetvec=None, totalbudget=None, absconstr
     noptimprogs = len(optimkeys) # Number of optimizable programs
     limlow = zeros(noptimprogs, dtype=bool)
     limhigh = zeros(noptimprogs, dtype=bool)
+    minoptimbudget = 0
+    maxoptimbudget = 0
     for oi,okey in enumerate(optimkeys):
+        minoptimbudget += abslimits['min'][okey]
+        maxoptimbudget += abslimits['max'][okey]
         if scaledbudgetvec[oi] <= abslimits['min'][okey]:
             scaledbudgetvec[oi] = abslimits['min'][okey]
             limlow[oi] = True
         if scaledbudgetvec[oi] >= abslimits['max'][okey]:
             scaledbudgetvec[oi] = abslimits['max'][okey]
             limhigh[oi] = True
+
+    # Check to see if we will be able to reach the optimbudget
+    if minoptimbudget > optimbudget+tolerance:
+        raise OptimaException(f'Won\'t be able to reach the optimbudget of {optimbudget} since the minimum of the optimizable budget is {minoptimbudget}: {[abslimits["min"][okey] for oi,okey in enumerate(optimkeys)]}')
+    if maxoptimbudget < optimbudget-tolerance:
+        raise OptimaException(f'Won\'t be able to reach the optimbudget of {optimbudget} since the maximum of the optimizable budget is {maxoptimbudget}: {[abslimits["max"][okey] for oi,okey in enumerate(optimkeys)]}')
 
     # Too high
     count = 0
