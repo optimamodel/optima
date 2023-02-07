@@ -462,6 +462,7 @@ def constrainbudget(origbudget=None, budgetvec=None, totalbudget=None, absconstr
         if count>countmax: raise OptimaException('Tried %i times to fix budget and failed! (wanted: %g; actual: %g' % (count, optimbudget, sum(scaledbudgetvec)))
         overshoot = sum(scaledbudgetvec) - optimbudget
         toomuch = sum(scaledbudgetvec[~limlow]) / float((sum(scaledbudgetvec[~limlow]) - overshoot)+tolerance)
+        print(f'\n!! count {count} overshoot: {overshoot}, toomuch: {toomuch}, scaledbudgetvec {sum(scaledbudgetvec)}:{scaledbudgetvec}, optimbudget {optimbudget}, abslimits:\n{abslimits}')
         for oi,okey in enumerate(optimkeys):
             if not(limlow[oi]):
                 proposed = scaledbudgetvec[oi] / float(toomuch)
@@ -476,6 +477,7 @@ def constrainbudget(origbudget=None, budgetvec=None, totalbudget=None, absconstr
         if count>countmax: raise OptimaException('Tried %i times to fix budget and failed! (wanted: %g; actual: %g' % (count, optimbudget, sum(scaledbudgetvec)))
         undershoot = optimbudget - sum(scaledbudgetvec)
         toolittle = (sum(scaledbudgetvec[~limhigh]) + undershoot) / float(sum(scaledbudgetvec[~limhigh])+tolerance)
+        print(f'\n!! count {count} undershoot: {undershoot}, toolittle: {toolittle}, scaledbudgetvec {sum(scaledbudgetvec)}:{scaledbudgetvec}, optimbudget {optimbudget}, abslimits:\n{abslimits}')
         for oi,okey in enumerate(optimkeys):
             if not(limhigh[oi]):
                 proposed = scaledbudgetvec[oi] * toolittle
@@ -483,6 +485,8 @@ def constrainbudget(origbudget=None, budgetvec=None, totalbudget=None, absconstr
                     proposed = abslimits['max'][okey]
                     limhigh[oi] = True
                 scaledbudgetvec[oi] = proposed
+
+    print(f'\n!!gooood!! count {count} scaledbudgetvec {sum(scaledbudgetvec)}:{scaledbudgetvec}, optimbudget {optimbudget}, abslimits:\n{abslimits}')
 
     # Reconstruct the budget odict using the rescaled budgetvec and the rescaled original amount
     constrainedbudget = dcp(origbudget) # This budget has the right fixed costs, TODO check???
