@@ -90,8 +90,8 @@ class Optim(object):
 
         # Convert constraints, absconstraints and proporigconstraints into absconstraints for this totalbudget
         absconstraints = self.absconstraints
-        constraints = constraintstoabsconstraints(project=project, progsetname=progsetname,constraints=self.constraints,totalbudget=self.objectives['budget'])
-        proporigconstraints = proporigconstraintstoabsconstraints(project=project, progsetname=progsetname,proporigconstraints=self.proporigconstraints)
+        constraints = constraintstoabsconstraints(project=self.projectref(), progsetname=self.progsetname,constraints=self.constraints,totalbudget=self.objectives['budget'])
+        proporigconstraints = proporigconstraintstoabsconstraints(project=self.projectref(), progsetname=self.progsetname,proporigconstraints=self.proporigconstraints)
 
         # Remove Nones
         constrslist = [constr for constr in [absconstraints,constraints,proporigconstraints] if constr is not None]
