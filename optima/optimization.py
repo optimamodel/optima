@@ -462,7 +462,7 @@ def constrainbudget(origbudget=None, budgetvec=None, totalbudget=None, absconstr
         if count>countmax: raise OptimaException('Tried %i times to fix budget and failed! (wanted: %g; actual: %g' % (count, optimbudget, sum(scaledbudgetvec)))
         overshoot = sum(scaledbudgetvec) - optimbudget
         toomuch = sum(scaledbudgetvec[~limlow]) / float((sum(scaledbudgetvec[~limlow]) - overshoot)+tolerance)
-        print(f'\n!! count {count} overshoot: {overshoot}, toomuch: {toomuch}, scaledbudgetvec {sum(scaledbudgetvec)}:{scaledbudgetvec}, optimbudget {optimbudget}, abslimits:\n{abslimits}')
+        print(f'\n!! count {count} overshoot: {overshoot}, toomuch: {toomuch} == 0 {toomuch ==0},sum(scaledbudgetvec[~limlow]): {sum(scaledbudgetvec[~limlow])} {sum(scaledbudgetvec[~limlow]) < tolerance}, scaledbudgetvec {sum(scaledbudgetvec)}:{scaledbudgetvec}, optimbudget {optimbudget}, abslimits:\n{abslimits}')
         for oi,okey in enumerate(optimkeys):
             if not(limlow[oi]):
                 proposed = scaledbudgetvec[oi] / float(toomuch)
