@@ -263,7 +263,7 @@ define(['angular', 'ui.router'], function (angular) {
     $scope.startOptimization = function() {
       $scope.state.isRunnable = false;
       $scope.state.isRunning = true;
-      console.log('startOptimization');
+      console.log('startOptimization',$scope.state.optimization);
       rpcService
         .rpcAsyncRun(
           'launch_task', [
@@ -523,6 +523,10 @@ define(['angular', 'ui.router'], function (angular) {
         })
         .result
         .then(function(optimization) {
+          // Here is where we delete constraints and absconstraints from the optimization object in the FE
+          console.log('deleting absconstraints and contraints from optimization', optimization);
+          delete optimization.constraints;
+          delete optimization.absconstraints;
           console.log('save optimization', optimization);
           saveOptimization(optimization);
           $scope.state.optimization = optimization;

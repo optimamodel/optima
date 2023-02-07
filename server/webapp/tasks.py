@@ -372,6 +372,7 @@ def optimize(project_id, optimization_id, maxtime, stoppingfunc=None):
     maxtime = float(maxtime)
     if maxtime>3600: mc = 9 # Arbitrary threshold for "unlimited" run: run with uncertainty
     else:            mc = 0
+    # Notice, we have not modified the optim, so if the optim is from the BE, it will maintain its constraints, absconstraints and proporigconstraints
     result = project.optimize(optim=optim, maxtime=maxtime, mc=mc, stoppingfunc=stoppingfunc)  # Set this to zero for now while we decide how to handle uncertainties etc.
 
     print(">> optimize budgets %s" % result.budgets)

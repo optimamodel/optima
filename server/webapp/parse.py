@@ -1443,10 +1443,12 @@ def get_optimization_summaries(project):
     optim_summaries = []
 
     for optim in project.optims.values():
-        # FE only uses proporigconstraints, so get them and save them for future use
-        if (not hasattr(optim, 'proporigconstraints')) or optim.proporigconstraints is None:
-            optim.proporigconstraints = optim.getproporigconstraints()
-            optim.constraints = None ### No constraints in FE only proporigconstraints
+        # FE only uses proporigconstraints, so get them for the FE to display
+        # However, this version of the optim doesn't get saved unless "Save" is clicked in the FE, so the optim doesn't get modified until then.
+        # Once we click "Save", that will remove the absconstraints and the constraints
+        # So, we call this every time since there may be absconstraints that are overriding the proporigconstraints
+        optim.proporigconstraints = optim.getproporigconstraints()
+
         optim_summary = {
             "id": str(optim.uid),
             "name": str(optim.name),
@@ -1454,6 +1456,11 @@ def get_optimization_summaries(project):
             "proporigconstraints": parse_constraints(optim.proporigconstraints, project=project, progsetname=optim.progsetname),
             "tvsettings": normalize_obj(optim.tvsettings),
         }
+
+        if optim.constraints is not None:
+            optim_summary["constraints"]    = parse_constraints(optim.constraints, project=project, progsetname=optim.progsetname)
+        if optim.absconstraints is not None:
+            optim_summary["absconstraints"] = parse_constraints(optim.absconstraints, project=project, progsetname=optim.progsetname)
 
         optim_summary["which"] = str(optim.objectives["which"])
 
@@ -1514,9 +1521,15 @@ def set_optimization_summaries_on_project(project, optimization_summaries):
                 optim.objectives[objkey] = summary["objectives"][objkey]
         optim.objectives["which"] = summary["which"]
 
-        if "proporigconstraints" in summary:
+        if "proporigconstraints" in summary and "absconstraints" not in summary and "constraints" not in summary:
+            print(f'>> set_optimization_summaries_on_project optim "{optim.name}" does not have absconstraints or constraints so updating the proporigconstraints')
             optim.proporigconstraints = revert_constraints(summary['proporigconstraints'], project=project, progsetname=optim.progsetname)
-            optim.constraints = None
+            optim.absconstraints = None  # Make sure if the FE deleted the absconstraints, then we will here too
+            optim.constraints    = None  # Make sure if the FE deleted the constraints, then we will here too
+        else:
+            # The summary still has absconstraints or constraints so we mustn't have saved this optim,
+            # so keep the constraints and absconstraints as is
+            pass
 
         for tvkey in optim.tvsettings.keys():
             optim.tvsettings[tvkey] = summary["tvsettings"][tvkey]

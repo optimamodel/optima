@@ -1454,7 +1454,6 @@ def clearuntrackedresults(project=None, **kwargs):
                 break
     return None
 
-
 def addallconstraintsoptim(project=None, **kwargs):
     '''
     Migration between Optima 2.11.3 and 2.11.4
