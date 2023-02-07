@@ -1119,8 +1119,7 @@ def minoutcomes(project=None, optim=None, tvec=None, absconstraints=None, verbos
     nonoptimkeys = array([key for i, key in enumerate(progset.programs) if not (i in optiminds)])
 
     origtotalbudget = dcp(optim.objectives['budget']) # Should be a float, but dcp just in case
-    if origbudget is not None:
-        origbudget = dcp(origbudget)
+    if origbudget is not None: origbudget = dcp(origbudget)
     else:
         try: origbudget = dcp(progset.getdefaultbudget())
         except: raise OptimaException('Could not get default budget for optimization')
@@ -1343,7 +1342,7 @@ def minmoney(project=None, optim=None, tvec=None, verbose=None, maxtime=None, ma
     ## Handle budget and remove fixed costs
     if project is None or optim is None: raise OptimaException('An optimization requires both a project and an optimization object to run')
     parset = project.parsets[optim.parsetname] # Original parameter set
-    parset.fixprops(False) # It doesn't really make sense to minimize money with these fixed
+    parset.fixprops(False) # It doesn't really make sense to minimize money with these fixed ... This shouldn't be handled here
     progset = project.progsets[optim.progsetname] # Link to the original program set
     if absconstraints is None: absconstraints = optim.getabsconstraints()
 
@@ -1436,38 +1435,41 @@ def minmoney(project=None, optim=None, tvec=None, verbose=None, maxtime=None, ma
     initprops  = results.raw[0]['props'][:,startind,:]  # Need initprops if running with initpeople
     args.update({'startind':startind, 'initpeople':initpeople, 'initprops':initprops})
 
+    # Run current budget (constrained)
     results_curr = op.outcomecalc(budgetvec, outputresults=True, **args)
     res_targ = results_curr.outcomes['target']
     res_curr = results_curr.outcomes['final']
     dists['curr'] = distance(res_targ, res_curr)
     curr_met = met(dists['curr'])
     printv('  Current distance: %s' % dists['curr'], 2, verbose)
-    
+
+    # Run inf budget (constrained)
     totalbudget = project.settings.infmoney
     results_inf = op.outcomecalc(budgetvec, totalbudget=totalbudget, outputresults=True, scaleupmethod='add', **args)
     res_inf = results_inf.outcomes['final']
     dists['inf'] = distance(res_targ, res_inf)
     if not met(dists['inf']):
         infinitefailed = True
-        errormsg = "Not proceeding with money minimization since even infinite funding can't meet targets:\n%s" % dists['inf']
+        errormsg = "Not proceeding with money minimization since even maximum (constrained) funding can't meet targets:\n%s" % dists['inf']
         if die: raise OptimaException(errormsg)
         else:   printv(errormsg, 1, verbose)
     else:
         infinitefailed = False
-        printv('Infinite money check passes (distance 0)', 2, verbose)
-    
+        printv('Infinite (constrained) money check passes (distance 0)', 2, verbose)
+
+    # Run zero budget (constrained)
     totalbudget = 1e-3
     results_zero = op.outcomecalc(budgetvec, totalbudget=totalbudget, outputresults=True, **args)
     res_zero = results_zero.outcomes['final']
     dists['zero'] = distance(res_targ, res_zero)
     if met(dists['zero']):
         zerofailed = True
-        errormsg = "Not proceeding with money minimization since even zero funding meets targets:\n%s" % dists['zero']
+        errormsg = "Not proceeding with money minimization since even zero (constrained) funding meets targets:\n%s" % dists['zero']
         if die: raise OptimaException(errormsg)
         else:   printv(errormsg, 1, verbose)
     else:
         zerofailed = False
-        printv('Zero money check passes (distance: %s)' % dists['zero'], 2, verbose)
+        printv('Zero (constrained) money check passes (distance: %s)' % dists['zero'], 2, verbose)
     
     # Plot current, infinite, and zero spending
     movie.append('Preliminaries')
