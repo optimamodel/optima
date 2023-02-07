@@ -81,41 +81,107 @@ class Optim(object):
             return None
 
     def getabsconstraints(self):
-        """ Gets the absconstraints from the optim if it has it, !! overriding any other constraints that may be set,
-            or it calculates the absconstraints from the constraints or proporigconstraints using the default budget.
+        """ Gets the appropriate absolute constraints from the Optim, taking all the constraints, absconstraints and
+            proporigconstraints into consideration and choosing the most strict of them for each program at the totalbudget.
         """
-        if (not hasattr(self, 'absconstraints')) or self.absconstraints is None:
-            return defaultabsconstraints(project=self.projectref(), progsetname=self.progsetname, constraints=self.constraints,
-                                         proporigconstraints=self.proporigconstraints, totalbudget=self.objectives['budget'])
-        return self.absconstraints
+        defabsconstraints = defaultabsconstraints(project=self.projectref(),progsetname=self.progsetname)
+        if self.absconstraints is None and self.constraints is None and self.proporigconstraints is None:
+            return defabsconstraints
+
+        # Convert constraints, absconstraints and proporigconstraints into absconstraints for this totalbudget
+        absconstraints = self.absconstraints
+        constraints = constraintstoabsconstraints(project=project, progsetname=progsetname,constraints=self.constraints,totalbudget=self.objectives['budget'])
+        proporigconstraints = proporigconstraintstoabsconstraints(project=project, progsetname=progsetname,proporigconstraints=self.proporigconstraints)
+
+        # Remove Nones
+        constrslist = [constr for constr in [absconstraints,constraints,proporigconstraints] if constr is not None]
+        # Now get the most strict constraints from all three
+        for progname in defabsconstraints['min'].keys():
+            defabsconstraints['min'][progname] = max((0,)   + tuple(constrs['min'][progname] for constrs in constrslist if constrs['min'][progname] is not None))
+            defabsconstraints['max'][progname] = min((inf,) + tuple(constrs['max'][progname] for constrs in constrslist if constrs['max'][progname] is not None))
+            if defabsconstraints['max'][progname] == inf: defabsconstraints['max'][progname] = None
+        return defabsconstraints
 
     def getproporigconstraints(self):
-        """ Gets the proporigconstraints from the optim if it has it, !! overriding any other constraints that may be set,
-            or it calculates the proporigconstraints from the absconstraints or constraints using the default budget.
+        """ Does the same thing as getabsconstraints, but then converts the absconstraints into proporigconstraints
         """
-        if (not hasattr(self, 'proporigconstraints')) or self.proporigconstraints is None:
-            if (not hasattr(self, 'absconstraints')) or self.absconstraints is None:
-                absconstraints = defaultabsconstraints(project=self.projectref(), progsetname=self.progsetname, constraints=self.constraints,
-                                             proporigconstraints=None, totalbudget=self.objectives['budget'])
-            else:
-                absconstraints = self.absconstraints  # Prioritise absconstraints over constraints
-            progset = self.projectref().progsets[self.progsetname]
-            defbudget = progset.getdefaultbudget()
-            for progname in progset.programs.keys():
-                if defbudget[progname] == 0:
-                    absconstraints['min'][progname] = 0.0
-                    absconstraints['max'][progname] = None
-                    continue
-                if absconstraints['min'][progname] is not None:
-                    absconstraints['min'][progname] /= defbudget[progname]
-                if absconstraints['max'][progname] is not None:
-                    absconstraints['max'][progname] /= defbudget[progname]
-            return absconstraints
-        return self.proporigconstraints
+        return absconstraintstoprogorigconstraints(project=project, progsetname=progsetname, absconstraints=self.getabsconstraints())
 
 ################################################################################################################################################
 ### Helper functions
 ################################################################################################################################################
+
+def getprogsetfromproject(project=None, progsetname=None, function='', verbose=2):
+    if project is None: raise OptimaException(f'getprogsetfromproject() called from "{function}" must be supplied with a project to get the progset')
+    if progsetname is None:
+        progsetname = -1
+        printv('getprogsetfromproject() did not get a progsetname input, so using default', 3, verbose)
+    try:    progset = project.progsets[progsetname]
+    except: raise OptimaException('To define constraints, you must supply a program set name as an input')
+    return progset
+
+def constraintstoabsconstraints(project=None, progsetname=None,constraints=None,totalbudget=None, verbose=2,eps=0.001):
+    if constraints is None: return None
+    if totalbudget is None: raise OptimaException('constraintstoabsconstraints() needs the total budget being optimized.')
+
+    progset = getprogsetfromproject(project=project,progsetname=progsetname,function='constraintstoabsconstraints')
+    defbudget = progset.getdefaultbudget()
+    absconstraints = dcp(constraints)
+
+    for progname in progset.programs.keys():
+        if constraints['min'][progname] is not None:
+            absconstraints['min'][progname] = constraints['min'][progname] * totalbudget / (sum(defbudget[:])+eps) * defbudget[progname]
+        if constraints['max'][progname] is not None:
+            absconstraints['max'][progname] = constraints['max'][progname] * totalbudget / (sum(defbudget[:])+eps) * defbudget[progname]
+    return absconstraints
+
+def proporigconstraintstoabsconstraints(project=None, progsetname=None,proporigconstraints=None, verbose=2):
+    if proporigconstraints is None: return None
+
+    progset = getprogsetfromproject(project=project,progsetname=progsetname,function='proporigconstraintstoabsconstraints')
+    defbudget = progset.getdefaultbudget()
+    absconstraints = dcp(proporigconstraints)
+
+    for progname in progset.programs.keys():
+        if proporigconstraints['min'][progname] is not None:
+            absconstraints['min'][progname] = proporigconstraints['min'][progname] * defbudget[progname]
+        if proporigconstraints['max'][progname] is not None:
+            absconstraints['max'][progname] = proporigconstraints['max'][progname] * defbudget[progname]
+    return absconstraints
+
+
+def constraintstoprogorigconstraints(project=None, progsetname=None,constraints=None,totalbudget=None, verbose=2,eps=0.001):
+    if constraints is None: return None
+    if totalbudget is None: raise OptimaException('constraintstoprogorigconstraints() needs the total budget being optimized.')
+
+    progset = getprogsetfromproject(project=project,progsetname=progsetname,function='constraintstoprogorigconstraints')
+    defbudget = progset.getdefaultbudget()
+    proporigconstraints = dcp(constraints)
+
+    for progname in progset.programs.keys():
+        if constraints['min'][progname] is not None:
+            proporigconstraints['min'][progname] = constraints['min'][progname] * totalbudget / (sum(defbudget[:])+eps)
+        if constraints['max'][progname] is not None:
+            proporigconstraints['max'][progname] = constraints['max'][progname] * totalbudget / (sum(defbudget[:])+eps)
+    return proporigconstraints
+
+def absconstraintstoprogorigconstraints(project=None, progsetname=None,absconstraints=None, verbose=2):
+    if absconstraints is None: return None
+
+    progset = getprogsetfromproject(project=project,progsetname=progsetname,function='absconstraintstoprogorigconstraints')
+    defbudget = progset.getdefaultbudget()
+    proporigconstraints = dcp(absconstraints)
+
+    for progname in progset.programs.keys():
+        if defbudget[progname] == 0:  # absolute constraints cannot be turned into proporigconstraints if the origbudget is 0
+            proporigconstraints['min'][progname] = 0.0
+            proporigconstraints['max'][progname] = None
+            continue
+        if absconstraints['min'][progname] is not None:
+            proporigconstraints['min'][progname] = absconstraints['min'][progname] / defbudget[progname]
+        if absconstraints['max'][progname] is not None:
+            proporigconstraints['max'][progname] = absconstraints['max'][progname] / defbudget[progname]
+    return proporigconstraints
 
 def defaultobjectives(project=None, progsetname=None, which=None, verbose=2):
     """
@@ -188,11 +254,7 @@ def defaultconstraints(project=None, progsetname=None, verbose=2):
 
     printv('Defining default constraints...', 3, verbose=verbose)
 
-    if progsetname is None: 
-        progsetname = -1
-        printv('defaultconstraints() did not get a progsetname input, so using default', 3, verbose)
-    try:    progset = project.progsets[progsetname]
-    except: raise OptimaException('To define constraints, you must supply a program set as an input')
+    progset = getprogsetfromproject(project=project,progsetname=progsetname,function='defaultconstraints')
 
     # If no programs in the progset, return None        
     if not(len(progset.programs)): return None
@@ -217,7 +279,7 @@ def defaultconstraints(project=None, progsetname=None, verbose=2):
 
     return constraints
 
-def defaultabsconstraints(project=None, progsetname=None, proporigconstraints=None, constraints=None, totalbudget=None, verbose=2,eps=0.01):
+def defaultabsconstraints(project=None, progsetname=None, verbose=2):
     """
     Helper function to get the default absolute constraints for an optimization from the default budget, using the
     defaultconstraints() function above which are relative to the default budget, then getting
@@ -226,9 +288,6 @@ def defaultabsconstraints(project=None, progsetname=None, proporigconstraints=No
     Args:
         project: project
         progsetname: progsetname
-        proporigconstraints: (optional) constraints proportional to the original budget to convert into absolute constraints
-        constraints: (optional) constraints proportional to the rescaled budget to convert into absolute constraints. You must provide a totalbudget.
-        totalbudget: (optional) the total rescaled budget which is to be optimized
         verbose: verbosity
 
     Returns:
@@ -236,43 +295,9 @@ def defaultabsconstraints(project=None, progsetname=None, proporigconstraints=No
     """
     printv('Defining default absolute constraints...', 3, verbose=verbose)
 
-    if proporigconstraints is not None and constraints is not None:
-        warning = f"WARNING: defaultabsconstraints() got both proporigconstraints or constraints to convert into absolute constraints.\nUsing the proporigconstraints instead of the constraints."
-        printv(warning,1,verbose)
-        constraints = None
-
-    if progsetname is None:
-        progsetname = -1
-        printv('defaultabsconstraints() did not get a progsetname input, so using default', 3, verbose)
-    try:    progset = project.progsets[progsetname]
-    except: raise OptimaException('To define constraints, you must supply a program set as an input')
-
+    progset = getprogsetfromproject(project=project,progsetname=progsetname,function='defaultabsconstraints')
     defconstraints = defaultconstraints(project,progsetname,verbose)
-    if defconstraints is None: return None
-    defbudget = progset.getdefaultbudget()
-
-    # Update defconstraints with proporigconstraints
-    if proporigconstraints is not None:
-        defconstraints['min'] = op.dcp(proporigconstraints['min'])
-        defconstraints['max'] = op.dcp(proporigconstraints['max'])
-
-    # Update defconstraints with constraints, rescaled to be proportional to the default budget
-    if constraints is not None:
-        if totalbudget is None:
-            error = f"If you provide defaultabsconstraints() with constraints (relative to the rescaled budget) to turn into absolute constraints, " \
-                    f"you must also provide a totalbudget that is being optimized. If the constraints are relative to the default budget, use proporigconstraints."
-            raise OptimaException(error)
-        for progname in progset.programs.keys():
-            if constraints['min'][progname] is None: defconstraints['min'][progname] = None
-            else: defconstraints['min'][progname] = constraints['min'][progname] * totalbudget / (sum(defbudget[:])+eps)
-            if constraints['max'][progname] is None: defconstraints['max'][progname] = None
-            else: defconstraints['max'][progname] = constraints['max'][progname] * totalbudget / (sum(defbudget[:])+eps)
-
-    # Calculate the absolute constraints from the default budget
-    for progname in progset.programs.keys():
-        if defconstraints['min'][progname] is not None: defconstraints['min'][progname] *= defbudget[progname]
-        if defconstraints['max'][progname] is not None: defconstraints['max'][progname] *= defbudget[progname]
-    return defconstraints
+    return proporigconstraintstoabsconstraints(project=project,progsetname=progsetname,proporigconstraints=defconstraints,verbose=verbose)
 
 def defaulttvsettings(**kwargs):
     '''
