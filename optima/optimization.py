@@ -374,7 +374,7 @@ def calcoptimindsoptimkeys(functionname, prognamelist=None, progset=None, optimi
 
 
 def constrainbudget(origbudget=None, budgetvec=None, totalbudget=None, absconstraints=None, scaleupmethod='multiply', optiminds=None, optimkeys=None,
-                    tolerance=1e-2, overalltolerance=1.0, outputtype=None, verbose=2, tvsettings=None):
+                    tolerance=1e-2, overalltolerance=1.0, outputtype=None, verbose=2, tvsettings=None, dieifcannotreach=False, warn=True):
     """ Take an unnormalized/unconstrained budgetvec and normalize and constrain it """
     # Optional printing for debugging
     # print(f'\n\n!?! constrainbudget called with \norigbudget={origbudget},\nbudgetvec={budgetvec},\nscaleupmethod={scaleupmethod},\ntotalbudget={totalbudget},\nabsconstraints={absconstraints},\noptiminds={optiminds},\noptimkeys={optimkeys},'
@@ -459,51 +459,64 @@ def constrainbudget(origbudget=None, budgetvec=None, totalbudget=None, absconstr
             limhigh[oi] = True
 
     # Check to see if we will be able to reach the optimbudget
+    canreachtotalbudget = True
     if minoptimbudget > optimbudget+tolerance:
-        raise OptimaException(f'Won\'t be able to reach the optimbudget of {optimbudget} since the minimum of the optimizable budget is {minoptimbudget}: {[abslimits["min"][okey] for oi,okey in enumerate(optimkeys)]}')
+        canreachtotalbudget = False
+        warning = f'WARNING: Not able to reach the total budget of {optimbudget} since the minimum of the optimizable budget is {minoptimbudget}: {list(zip(optimkeys, [abslimits["min"][okey] for oi,okey in enumerate(optimkeys)]))}'
+        if dieifcannotreach: raise OptimaException(warning)
+        else: printv(warning,2 if warn else 3,verbose)
+        for oi, okey in enumerate(optimkeys):
+            scaledbudgetvec[oi] = abslimits['min'][okey]
+
     if maxoptimbudget < optimbudget-tolerance:
-        raise OptimaException(f'Won\'t be able to reach the optimbudget of {optimbudget} since the maximum of the optimizable budget is {maxoptimbudget}: {[abslimits["max"][okey] for oi,okey in enumerate(optimkeys)]}')
+        canreachtotalbudget = False
+        warning = f'WARNING: Not able to reach the total budget of {optimbudget} since the maximum of the optimizable budget is {maxoptimbudget}: {list(zip(optimkeys, [abslimits["max"][okey] for oi,okey in enumerate(optimkeys)]))}'
+        if dieifcannotreach: raise OptimaException(warning)
+        else: printv(warning,2 if warn else 3,verbose)
+        for oi, okey in enumerate(optimkeys):
+            scaledbudgetvec[oi] = abslimits['max'][okey]
 
-    # Too high
-    count = 0
-    countmax = 1e4
-    while sum(scaledbudgetvec) > optimbudget+tolerance:
-        count += 1
-        if count>countmax: raise OptimaException('Tried %i times to fix budget and failed! (wanted: %g; actual: %g' % (count, optimbudget, sum(scaledbudgetvec)))
-        overshoot = sum(scaledbudgetvec) - optimbudget
-        toomuch = sum(scaledbudgetvec[~limlow]) / float((sum(scaledbudgetvec[~limlow]) - overshoot)+tolerance)
-        print(f'\n!! count {count} overshoot: {overshoot}, toomuch: {toomuch} == 0 {toomuch ==0},sum(scaledbudgetvec[~limlow]): {sum(scaledbudgetvec[~limlow])} {sum(scaledbudgetvec[~limlow]) < tolerance}, scaledbudgetvec {sum(scaledbudgetvec)}:{scaledbudgetvec}, optimbudget {optimbudget}, abslimits:\n{abslimits}')
-        for oi,okey in enumerate(optimkeys):
-            if not(limlow[oi]):
-                proposed = scaledbudgetvec[oi] / float(toomuch)
-                if proposed <= abslimits['min'][okey]:
-                    proposed = abslimits['min'][okey]
-                    limlow[oi] = True
-                scaledbudgetvec[oi] = proposed
+    if canreachtotalbudget: # Not hitting the min or max limits, do the constraining
+        # Too high
+        count = 0
+        countmax = 1e4
+        while sum(scaledbudgetvec) > optimbudget+tolerance:
+            count += 1
+            if count>countmax: raise OptimaException('Tried %i times to fix budget and failed! (wanted: %g; actual: %g' % (count, optimbudget, sum(scaledbudgetvec)))
+            overshoot = sum(scaledbudgetvec) - optimbudget
+            toomuch = sum(scaledbudgetvec[~limlow]) / float((sum(scaledbudgetvec[~limlow]) - overshoot)+tolerance)
+            # print(f'\n!! count {count} overshoot: {overshoot}, toomuch: {toomuch} == 0 {toomuch ==0},sum(scaledbudgetvec[~limlow]): {sum(scaledbudgetvec[~limlow])} {sum(scaledbudgetvec[~limlow]) < tolerance}, scaledbudgetvec {sum(scaledbudgetvec)}:{scaledbudgetvec}, optimbudget {optimbudget}, abslimits:\n{abslimits}')
+            for oi,okey in enumerate(optimkeys):
+                if not(limlow[oi]):
+                    proposed = scaledbudgetvec[oi] / float(toomuch)
+                    if proposed <= abslimits['min'][okey]:
+                        proposed = abslimits['min'][okey]
+                        limlow[oi] = True
+                    scaledbudgetvec[oi] = proposed
 
-    # Too low
-    while sum(scaledbudgetvec) < optimbudget-tolerance:
-        count += 1
-        if count>countmax: raise OptimaException('Tried %i times to fix budget and failed! (wanted: %g; actual: %g' % (count, optimbudget, sum(scaledbudgetvec)))
-        undershoot = optimbudget - sum(scaledbudgetvec)
-        toolittle = (sum(scaledbudgetvec[~limhigh]) + undershoot) / float(sum(scaledbudgetvec[~limhigh])+tolerance)
-        print(f'\n!! count {count} undershoot: {undershoot}, toolittle: {toolittle}, scaledbudgetvec {sum(scaledbudgetvec)}:{scaledbudgetvec}, optimbudget {optimbudget}, abslimits:\n{abslimits}')
-        for oi,okey in enumerate(optimkeys):
-            if not(limhigh[oi]):
-                proposed = scaledbudgetvec[oi] * toolittle
-                if proposed >= abslimits['max'][okey]:
-                    proposed = abslimits['max'][okey]
-                    limhigh[oi] = True
-                scaledbudgetvec[oi] = proposed
+        # Too low
+        while sum(scaledbudgetvec) < optimbudget-tolerance:
+            count += 1
+            if count>countmax: raise OptimaException('Tried %i times to fix budget and failed! (wanted: %g; actual: %g' % (count, optimbudget, sum(scaledbudgetvec)))
+            undershoot = optimbudget - sum(scaledbudgetvec)
+            toolittle = (sum(scaledbudgetvec[~limhigh]) + undershoot) / float(sum(scaledbudgetvec[~limhigh])+tolerance)
+            # print(f'\n!! count {count} undershoot: {undershoot}, toolittle: {toolittle}, scaledbudgetvec {sum(scaledbudgetvec)}:{scaledbudgetvec}, optimbudget {optimbudget}, abslimits:\n{abslimits}')
+            for oi,okey in enumerate(optimkeys):
+                if not(limhigh[oi]):
+                    proposed = scaledbudgetvec[oi] * toolittle
+                    if proposed >= abslimits['max'][okey]:
+                        proposed = abslimits['max'][okey]
+                        limhigh[oi] = True
+                    scaledbudgetvec[oi] = proposed
 
-    print(f'\n!!gooood!! count {count} scaledbudgetvec {sum(scaledbudgetvec)}:{scaledbudgetvec}, optimbudget {optimbudget}, abslimits:\n{abslimits}')
+    # print(f'\n!!gooood!! count {count} scaledbudgetvec {sum(scaledbudgetvec)}:{scaledbudgetvec}, optimbudget {optimbudget}, abslimits:\n{abslimits}')
 
     # Reconstruct the budget odict using the rescaled budgetvec and the rescaled original amount
     constrainedbudget = dcp(origbudget) # This budget has the right fixed costs, TODO check???
     # constrainedbudget = dcp(rescaledminfixed) # This budget has the right fixed costs
     for oi,okey in enumerate(optimkeys):
         constrainedbudget[okey] = scaledbudgetvec[oi]
-    if abs(sum(constrainedbudget[:])-totalbudget)>overalltolerance:
+    if abs(sum(constrainedbudget[:])-totalbudget)>overalltolerance and canreachtotalbudget: # We should've been able to constrain so check
         errormsg = 'final budget amounts differ (%f != %f)' % (sum(constrainedbudget[:]), totalbudget)
         raise OptimaException(errormsg)
 
