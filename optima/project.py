@@ -843,7 +843,12 @@ class Project(object):
         self.addoptim(optim=optim)
         self.addresult(result=multires)
         self.modified = today()
-        
+
+        try:
+            optbudget = multires.budgets['Optimized']
+            printv(f'\nOptimization "{name}" finished with outcomes: Original: {multires.improvement[0][0]}, Best: {multires.improvement[0][-1]}!\n',2,verbose)
+        except: printv(f'\nOptimization "{name}" unsuccessful!\n',2,verbose)
+
         if makescenarios: #Make a new budget scenario out of each optimized result
             budgetscens = []            
             for resname in multires.resultsetnames:
