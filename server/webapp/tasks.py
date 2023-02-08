@@ -387,7 +387,7 @@ def optimize(project_id, optimization_id, maxtime, stoppingfunc=None):
     print(f"\n\n>> project_new, results: {project_new.results.keys()}, optims: {project_new.optims.keys()}, scenarios: {project_new.scens.keys()},")
 
     project_new.addoptim(optim=optim)
-    project_new.addresult(result=multires)
+    project_new.addresult(result=result)
     project_new.modified = today()
 
     print(f"\n\n>> project_new, results: {project_new.results.keys()}, optims: {project_new.optims.keys()}, scenarios: {project_new.scens.keys()},")
