@@ -67,7 +67,8 @@ define(['angular', 'ui.router',], function(angular) {
             .rpcRun('reset_password', [user.id])
             .then(function(response) {
               console.log('reset passsword response:',response)
-              toastr.success('Password reset to "optima"!');
+              text = 'Password reset to "';
+              toastr.success(text1.concat(response.data,'"!'));
             });
         },
         undefined,
