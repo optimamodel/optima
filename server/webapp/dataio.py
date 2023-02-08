@@ -160,6 +160,7 @@ def hashed_password(password_str):
 
 
 def parse_user_args(args):
+    print('@#$%#$%', args.get('password'), type(args.get('password')))
     return {
         'email': nullable_email(args.get('email', None)),
         'name': args.get('displayName', ''),
@@ -293,6 +294,7 @@ def reset_password(user_id):
     ''' Reset the user's password to "optima" '''
     defaultpassword = 'optima'
     hashed_password = sha224()
+    print(defaultpassword, type(defaultpassword))
     hashed_password.update(defaultpassword)
     password = hashed_password.hexdigest()
     args = {'password':password}
