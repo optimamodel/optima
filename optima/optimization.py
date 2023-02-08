@@ -957,7 +957,9 @@ def multioptimize(optim=None, nchains=None, nblocks=None, blockiters=None,
     results.multiimprovement = fvalarray # Store full fval array
     try:    results.budgets['Baseline'] = origresults.budgets['Baseline'] # Assume it's called baseline
     except: results.budgets[0]          = origresults.budgets[0] # If that fails, just use the first entry
-    
+    try:    results.budgets['Optimization baseline'] = origresults.budgets['Optimization baseline']
+    except: pass # Sometimes Optimization baseline is baseline
+
     return results
 
 
@@ -1029,7 +1031,7 @@ def tvoptimize(project=None, optim=None, tvec=None, verbose=None, maxtime=None, 
     tmpfullruninfo = odict()
     
     # This generates the baseline results
-    tmpresults['Baseline']  = outcomecalc(prelim.budgets['Baseline'],  outputresults=True, doconstrainbudget=False, **args)
+    tmpresults['Baseline']  = outcomecalc(prelim.budgets['Baseline'],  outputresults=True, doconstrainbudget=False, **args) ## !! I think 'Baseline' is supposed to be rescaled and constrained, but it's not now, not sure if this will break the tvoptimization
     tmpresults['Optimized'] = outcomecalc(prelim.budgets['Optimized'], outputresults=True, doconstrainbudget=False, **args)
     for key,result in tmpresults.items(): 
         result.name = key # Update names
@@ -1118,8 +1120,9 @@ def minoutcomes(project=None, optim=None, tvec=None, absconstraints=None, verbos
     nonoptiminds = array([i   for i, key in enumerate(progset.programs) if not (i in optiminds)])
     nonoptimkeys = array([key for i, key in enumerate(progset.programs) if not (i in optiminds)])
 
-    origtotalbudget = dcp(optim.objectives['budget']) # Should be a float, but dcp just in case
-    if origbudget is not None: origbudget = dcp(origbudget)
+    origtotalbudget = dcp(optim.objectives['budget']) # The rescaled budget # Should be a float, but dcp just in case
+    if origbudget is not None:
+        origbudget = dcp(origbudget)
     else:
         try: origbudget = dcp(progset.getdefaultbudget())
         except: raise OptimaException('Could not get default budget for optimization')
@@ -1164,12 +1167,10 @@ def minoutcomes(project=None, optim=None, tvec=None, absconstraints=None, verbos
     
     # Set up extremes
     extremebudgets = odict()
-    extremebudgets['Baseline'] = zeros(nprogs)
-    for i,p in enumerate(optiminds): extremebudgets['Baseline'][p] = constrainedbudgetvecorig[i] # Must be a better way of doing this :(
-    for i in nonoptiminds:           extremebudgets['Baseline'][i] = origbudget[i] # Copy the original budget
-    extremebudgets['Zero']     = zeros(nprogs)
-    extremebudgets['Infinite'] = origbudget[:]+project.settings.infmoney
-    firstkeys = ['Baseline', 'Zero', 'Infinite'] # These are special, store them
+    extremebudgets['Optimization baseline'] = dcp(constrainedbudgetorig[:])  # 'Optimization baseline' = constrained rescaled origbudget
+    extremebudgets['Zero']     = zeros(nprogs)   # 'Zero' = minimum constrained budget
+    extremebudgets['Infinite'] = origbudget[:]+project.settings.infmoney  # 'Infinite' = maximum constrained budget
+    firstkeys = ['Optimization baseline', 'Zero', 'Infinite'] # These are special, store them
     if mc: # Only run these if MC is being run
         for p,prog in zip(optiminds,optimkeys):
             extremebudgets[prog] = zeros(nprogs)
@@ -1185,17 +1186,19 @@ def minoutcomes(project=None, optim=None, tvec=None, absconstraints=None, verbos
         if stoppingfunc and stoppingfunc():
             raise op.CancelException
 
-        doconstrainbudget = False # Budget is specified fully, don't constrain
-        if key=='Baseline':
+        doconstrainbudget = True # To make all of these equivalent
+        if key in ['Zero','Infinite']:
+            args['totalbudget'] = sum(exbudget[:])  # These can scale up/down until max/min constraints
+        else:
+            args['totalbudget'] = origtotalbudget  # The rescaled budget
+        if key in firstkeys:
             args['startind']   = None
             args['initpeople'] = None # Do this so it runs for the full time series, and is comparable to the optimization result
             args['initprops']  = None # Do this so it runs for the full time series, and is comparable to the optimization result
-            args['totalbudget'] = origbudget[:].sum() # Need to reset this since constraining the budget
         else:
             args['startind']   = startind
             args['initpeople'] = initpeople # Do this so saves a lot of time (runs twice as fast for all the budget scenarios)
             args['initprops'] = initprops   # Need initprops if running with initpeople
-            args['totalbudget'] = origtotalbudget
         extremeresults[key] = outcomecalc(exbudget[optiminds], outputresults=True, doconstrainbudget=doconstrainbudget, **args)
         extremeresults[key].name = key
         extremeoutcomes[key] = extremeresults[key].outcome
@@ -1212,7 +1215,7 @@ def minoutcomes(project=None, optim=None, tvec=None, absconstraints=None, verbos
         for key in firstkeys+besttoworstkeys:
             printv(('Outcome for %'+str(longestkey)+'s: %0.0f') % (key,extremeoutcomes[key]), 2, verbose)
     else:
-        printv('Outcome for baseline budget (starting point): %0.0f' % extremeoutcomes['Baseline'], 2, verbose)
+        printv('Outcome for baseline budget (starting point): %0.0f' % extremeoutcomes['Optimization baseline'], 2, verbose)
         printv('Outcome for infinite budget (best possible): %0.0f' % extremeoutcomes['Infinite'], 2, verbose)
         printv('Outcome for zero budget (worst possible):    %0.0f' % extremeoutcomes['Zero'], 2, verbose)
     
@@ -1230,13 +1233,15 @@ def minoutcomes(project=None, optim=None, tvec=None, absconstraints=None, verbos
     tmpresults = odict()
     tmpimprovements = odict()
     tmpfullruninfo = odict()
-    tmpresults['Baseline'] = extremeresults['Baseline'] # Include un-optimized original
+    tmpresults['Optimization baseline'] = extremeresults['Optimization baseline'] # Include un-optimized original
     scalefactors = promotetoarray(optim.objectives['budgetscale']) # Ensure it's a list
+    if len(scalefactors) > 1 or scalefactors[0] != 1:
+        if die: raise OptimaException('WARNING: I am not sure that the absolute constraints work with multiple scalefactors in optim.objectives[\'budgetscale\']. It is safer to run multiple optimizations, each with objectives["budgetscale"]=1 and objectives["budgetscale"]=X. Proceed at your own risk!')
+        else: printv('WARNING: I am not sure that the absolute constraints work with multiple scalefactors in optim.objectives[\'budgetscale\']. It is safer to run multiple optimizations, each with objectives["budgetscale"]=1 and objectives["budgetscale"]=X. Proceed at your own risk!', 1, verbose)
     for scalefactor in scalefactors:
 
         # Get the total budget & constrain it 
         totalbudget = origtotalbudget*scalefactor
-        # print('constraining budget from minoutcomes scalefactors')
         constrainedbudget, constrainedbudgetvec, lowerlim, upperlim = constrainbudget(origbudget=origbudget, budgetvec=budgetvec, totalbudget=totalbudget, absconstraints=absconstraints, optimkeys=optimkeys, outputtype='full')
         args['totalbudget'] = totalbudget
         args['initpeople']  = initpeople # Reset initpeople
@@ -1246,11 +1251,11 @@ def minoutcomes(project=None, optim=None, tvec=None, absconstraints=None, verbos
         # Set up budgets to run
         if totalbudget: # Budget is nonzero, run
             allbudgetvecs = odict()
-            allbudgetvecs['Baseline'] = dcp(constrainedbudgetvec)
+            allbudgetvecs['Optimization baseline'] = dcp(constrainedbudgetvec)
             if randseed is None: randseed = int((time()-floor(time()))*1e4) # Make sure a seed is used
             allseeds = [randseed] # Start with current random seed
             if mc: # If MC, run multiple
-                if extremeoutcomes[bestprogram] < extremeoutcomes['Baseline']:
+                if extremeoutcomes[bestprogram] < extremeoutcomes['Optimization baseline']:
                     allbudgetvecs['Program (%s)' % extremebudgets.keys()[bestprogram]] = array([extremebudgets[bestprogram][i] for i in optiminds])  # Include all money going to one program, but only if it's better than the current allocation
                     allseeds.append(randseed+1) # Append a new seed if we're running a program extreme as well
                 for i in range(abs(mc)): # For the remainder, do randomizations
@@ -1265,7 +1270,7 @@ def minoutcomes(project=None, optim=None, tvec=None, absconstraints=None, verbos
                         allbudgetvecs['Random %s' % (i+1)] = randbudget
                     else:
                         current = dcp(constrainedbudgetvec)
-                        allbudgetvecs['Baseline %s' % (i+1)] = current
+                        allbudgetvecs['Optimization baseline %s' % (i+1)] = current
                     
             # Actually run the optimizations
             bestfval = inf # Value of outcome
@@ -1278,13 +1283,10 @@ def minoutcomes(project=None, optim=None, tvec=None, absconstraints=None, verbos
                 printv('Running optimization "%s" (%i/%i) with maxtime=%s, maxiters=%s' % (key, k+1, len(allbudgetvecs), maxtime, maxiters), 2, verbose)
                 if label: thislabel = '"'+label+'-'+key+'"'
                 else: thislabel = '"'+key+'"'
-                # print('constraining to outcomecalc from minoutcomes scalefactors if totalbudget 1')
-                origoutcomes = outcomecalc(outputresults=True, **args) # Calculate the initial outcome and pass it back in
+                origoutcomes = outcomecalc(outputresults=True, **args) # Calculate the initial (rescaled and constrained) outcome and pass it back in
                 args['origoutcomes'] = origoutcomes
-                # print('Passing over to asd')
                 res = asd(outcomecalc, allbudgetvecs[key], args=args, xmin=xmin, maxtime=maxtime, maxiters=maxiters, verbose=verbose, randseed=allseeds[k], label=thislabel, stoppingfunc=stoppingfunc, **kwargs)
                 budgetvecnew, fvals = res.x, res.details.fvals
-                # print('constraining budget from minoutcomes scalefactors if totalbudget 2')
                 constrainedbudgetnew, constrainedbudgetvecnew, lowerlim, upperlim = constrainbudget(origbudget=origbudget, budgetvec=budgetvecnew, totalbudget=totalbudget, absconstraints=absconstraints, optimkeys=optimkeys, outputtype='full')
                 asdresults[key] = {'budget':constrainedbudgetnew, 'fvals':fvals}
                 if fvals[-1]<bestfval: 
@@ -1304,9 +1306,23 @@ def minoutcomes(project=None, optim=None, tvec=None, absconstraints=None, verbos
             tmpimprovements[new.name] = asdresults[bestkey]['fvals']
             tmpfullruninfo[new.name] = asdresults # Store everything
         else:
-            tmpresults['Optimized'] = dcp(tmpresults['Baseline']) # If zero budget, just copy current and rename
+            tmpresults['Optimized'] = dcp(tmpresults['Optimization baseline']) # If zero budget, just copy current and rename
             tmpresults['Optimized'].name = 'Optimized' # Rename name to named name
             tmpresults['Optimized'].projectref = Link(project) # Restore link
+
+    ## Add default budget as "Baseline" to the outputs if it is not the same as the "Optimization budget"
+    optimbaselinebudget = tmpresults['Optimization baseline'].budget # odict
+    baselinebudget = progset.getdefaultbudget()
+    tol = 0.001
+    if any(abs(array(optimbaselinebudget[:]) - array(baselinebudget[:])) > tol ):
+        args['startind']   = None
+        args['initpeople'] = None # Do this so it runs for the full time series, and is comparable to the optimization result
+        args['initprops']  = None # Do this so it runs for the full time series, and is comparable to the optimization result
+        tmpresults['Baseline'] = outcomecalc(baselinebudget[optiminds], outputresults=True, doconstrainbudget=False, **args)
+        tmpresults['Baseline'].name = 'Baseline'
+    else:
+        tmpresults['Baseline'] = tmpresults['Optimization baseline']
+        tmpresults.pop('Optimization baseline')
 
     ## Output
     multires = Multiresultset(resultsetlist=tmpresults.values(), name='optim-%s' % optim.name)
@@ -1318,7 +1334,6 @@ def minoutcomes(project=None, optim=None, tvec=None, absconstraints=None, verbos
     multires.outcomes = dcp(multires.outcome) # Initialize
     multires.outcome = multires.outcomes[-1] # Store these defaults in a convenient place
     multires.optim = optim # Store the optimization object as well
-    
     
     # Store optimization settings
     multires.optimsettings = odict([('maxiters',maxiters),('maxtime',maxtime),('mc',mc),('randseed',randseed)])
