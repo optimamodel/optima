@@ -377,16 +377,24 @@ def optimize(project_id, optimization_id, maxtime, stoppingfunc=None):
 
     print(">> optimize budgets %s" % result.budgets)
 
+    print(f"\n\n>> project, results: {project.results.keys()}, optims: {project.optims.keys()}, scenarios: {project.scens.keys()},")
+
+
     # Load current project (might have changed since start of optim) and update with optim, result, scenarios and modified
     db_session = init_db_session()
     project_new = dataio.load_project(project_id, db_session=db_session, authenticate=False)
 
-    print(f">> project, results: {project.results[-1].name} {project.results.keys()}, optims: {project.optims.keys()}, scenarios: {project.scens.keys()},")
-    print(f">> project_new, results: {project_new.results.keys()}, optims: {project_new.optims.keys()}, scenarios: {project_new.scens.keys()},")
+    print(f"\n\n>> project_new, results: {project_new.results.keys()}, optims: {project_new.optims.keys()}, scenarios: {project_new.scens.keys()},")
+
+    project_new.addoptim(optim=optim)
+    project_new.addresult(result=multires)
+    project_new.modified = today()
+
+    print(f"\n\n>> project_new, results: {project_new.results.keys()}, optims: {project_new.optims.keys()}, scenarios: {project_new.scens.keys()},")
 
     # Save
     project_record = dataio.load_project_record(project_id, db_session=db_session)
-    project_record.save_obj(project)
+    project_record.save_obj(project_new)
     db_session.add(project_record)
 
     # save result
