@@ -68,7 +68,7 @@ define(['angular', 'ui.router',], function(angular) {
             .then(function(response) {
               console.log('reset passsword response:',response)
               text = 'Password reset to "';
-              toastr.success(text1.concat(response.data,'"!'));
+              toastr.success(text.concat(response.data,'"!'));
             });
         },
         undefined,
