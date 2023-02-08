@@ -846,8 +846,10 @@ class Project(object):
 
         try:
             optbudget = multires.budgets['Optimized']
-            printv(f'\nOptimization "{name}" finished with outcomes: Original: {multires.improvement[0][0]}, Best: {multires.improvement[0][-1]}!\n',2,verbose)
-        except: printv(f'\nOptimization "{name}" unsuccessful!\n',2,verbose)
+            if hasattr(multires,'improvement'):
+                  printv(f'\nOptimization "{name}" finished with outcomes: Original: {multires.improvement[0][0]}, Best: {multires.improvement[0][-1]}!\n',2,verbose)
+            else: printv(f'\nOptimization "{name}" finished successfully!')
+        except:   printv(f'\nOptimization "{name}" unsuccessful!\n',2,verbose)
 
         if makescenarios: #Make a new budget scenario out of each optimized result
             budgetscens = []            

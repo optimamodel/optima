@@ -1780,12 +1780,21 @@ def minmoney(project=None, optim=None, tvec=None, verbose=None, maxtime=None, ma
     args['startind']   = None
     orig = outcomecalc(origbudgetvec, totalbudget=origtotalbudget,    outputresults=True, **args)
     new  = outcomecalc(newbudget,     totalbudget=newbudget[:].sum(), outputresults=True, **args)
-    
-    orig.name = 'Baseline' # WARNING, is this really the best way of doing it?
+    args['doconstrainbudget'] = False
+    baseline = outcomecalc(origbudgetvec, totalbudget=sum(origbudget[:]), outputresults=True, **args)
+
+    orig.name = 'Optimization baseline' # WARNING, is this really the best way of doing it?
+    baseline.name = 'Baseline'
     if   zerofailed:     new.name = 'Zero budget'
     elif infinitefailed: new.name = 'Infinite budget'
     else:                new.name = 'Optimized'
-    tmpresults = [orig, new]
+
+    tol = 0.001
+    if any(abs(array(orig.budget[:]) - array(baseline.budget[:])) > tol ):
+        tmpresults = [orig, baseline, new]
+    else:
+        orig.name = 'Baseline'
+        tmpresults = [orig, new]
     multires = Multiresultset(resultsetlist=tmpresults, name='optim-%s' % optim.name)
     optim.resultsref = multires.name # Store the reference for this result
     for k,key in enumerate(multires.keys): multires.budgetyears[key] = tmpresults[k].budgetyears 
