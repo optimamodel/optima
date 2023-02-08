@@ -381,7 +381,7 @@ def optimize(project_id, optimization_id, maxtime, stoppingfunc=None):
     db_session = init_db_session()
     project_new = dataio.load_project(project_id, db_session=db_session, authenticate=False)
 
-    print(f">> project, results: {project.results.keys()}, optims: {project.optims.keys()}, scenarios: {project.scens.keys()},")
+    print(f">> project, results: {project.results[-1].name} {project.results.keys()}, optims: {project.optims.keys()}, scenarios: {project.scens.keys()},")
     print(f">> project_new, results: {project_new.results.keys()}, optims: {project_new.optims.keys()}, scenarios: {project_new.scens.keys()},")
 
     # Save
