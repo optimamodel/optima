@@ -848,7 +848,7 @@ class Project(object):
             optbudget = multires.budgets['Optimized']
             if hasattr(multires,'improvement'):
                   printv(f'\nOptimization "{name}" finished with outcomes: Original: {multires.improvement[0][0]}, Best: {multires.improvement[0][-1]}!\n',2,verbose)
-            else: printv(f'\nOptimization "{name}" finished successfully!')
+            else: printv(f'\nOptimization "{name}" finished with budgets: Original: {sum(multires.budgets["Baseline"])}, Best: {sum(optbudget)}!\n')
         except:   printv(f'\nOptimization "{name}" unsuccessful!\n',2,verbose)
 
         if makescenarios: #Make a new budget scenario out of each optimized result

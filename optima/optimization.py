@@ -1785,16 +1785,16 @@ def minmoney(project=None, optim=None, tvec=None, verbose=None, maxtime=None, ma
 
     orig.name = 'Optimization baseline' # WARNING, is this really the best way of doing it?
     baseline.name = 'Baseline'
-    if   zerofailed:     new.name = 'Zero budget'
-    elif infinitefailed: new.name = 'Infinite budget'
+    if   zerofailed:     new.name = 'Minimum budget'
+    elif infinitefailed: new.name = 'Maximum budget'
     else:                new.name = 'Optimized'
 
     tol = 0.001
     if any(abs(array(orig.budget[:]) - array(baseline.budget[:])) > tol ):
-        tmpresults = [orig, baseline, new]
+        tmpresults = [new, baseline, orig]
     else:
         orig.name = 'Baseline'
-        tmpresults = [orig, new]
+        tmpresults = [new, orig]
     multires = Multiresultset(resultsetlist=tmpresults, name='optim-%s' % optim.name)
     optim.resultsref = multires.name # Store the reference for this result
     for k,key in enumerate(multires.keys): multires.budgetyears[key] = tmpresults[k].budgetyears 
