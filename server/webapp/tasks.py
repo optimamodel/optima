@@ -376,7 +376,9 @@ def optimize(project_id, optimization_id, maxtime, stoppingfunc=None):
     result = project.optimize(optim=optim, maxtime=maxtime, mc=mc, stoppingfunc=stoppingfunc)  # Set this to zero for now while we decide how to handle uncertainties etc.
 
     print(">> optimize budgets %s" % result.budgets)
-    
+    print(f">> project, {project.results.keys()}")
+    print(f">> project, {project.optims.keys()}")
+
     # save project
     db_session = init_db_session()
     project_record = dataio.load_project_record(project_id, db_session=db_session)
