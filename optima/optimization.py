@@ -1117,8 +1117,8 @@ def minoutcomes(project=None, optim=None, tvec=None, absconstraints=None, verbos
     optiminds, optimkeys = calcoptimindsoptimkeys('minoutcomes', prognamelist=absconstraints['name'].keys(), progset=progset,
                                                   optiminds=None, optimkeys=None, reorderprograms=True, verbose=verbose)
 
-    nonoptiminds = array([i   for i, key in enumerate(progset.programs) if not (i in optiminds)])
-    nonoptimkeys = array([key for i, key in enumerate(progset.programs) if not (i in optiminds)])
+    nonoptiminds = array([i   for i, key in enumerate(progset.programs) if not (i in optiminds)], dtype=int)
+    nonoptimkeys = array([key for i, key in enumerate(progset.programs) if not (i in optiminds)], dtype=int)
 
     origtotalbudget = dcp(optim.objectives['budget']) # The rescaled budget # Should be a float, but dcp just in case
     if origbudget is not None:
