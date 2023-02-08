@@ -1169,6 +1169,7 @@ def minoutcomes(project=None, optim=None, tvec=None, absconstraints=None, verbos
     extremebudgets = odict()
     extremebudgets['Optimization baseline'] = dcp(constrainedbudgetorig[:])  # 'Optimization baseline' = constrained rescaled origbudget
     extremebudgets['Zero']     = zeros(nprogs)   # 'Zero' = minimum constrained budget
+    extremebudgets['Zero'][nonoptiminds] = constrainedbudgetorig[nonoptimkeys]
     extremebudgets['Infinite'] = origbudget[:]+project.settings.infmoney  # 'Infinite' = maximum constrained budget
     firstkeys = ['Optimization baseline', 'Zero', 'Infinite'] # These are special, store them
     if mc: # Only run these if MC is being run
