@@ -160,7 +160,6 @@ def hashed_password(password_str):
 
 
 def parse_user_args(args):
-    print('@#$%#$%', args.get('password'), type(args.get('password')))
     return {
         'email': nullable_email(args.get('email', None)),
         'name': args.get('displayName', ''),
@@ -300,7 +299,7 @@ def reset_password(user_id):
     args = {'password':password}
     update_user(user_id, args)
     print('Password for user %s reset to "%s"' % (user_id,defaultpassword))
-    return None
+    return defaultpassword
 
 
 def do_logout_current_user():
