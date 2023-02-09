@@ -564,7 +564,7 @@ def separatetv(inputvec=None, optiminds=None, optimkeys=None):
 def outcomecalc(budgetvec=None, which=None, project=None, parsetname=None, progsetname=None, scaleupmethod='multiply',
                 objectives=None, absconstraints=None, totalbudget=None, optiminds=None, optimkeys=None, origbudget=None,
                 tvec=None, initpeople=None, initprops=None, startind=None, outputresults=False, verbose=2, ccsample='best',
-                doconstrainbudget=True, tvsettings=None, tvcontrolvec=None, origoutcomes=None, penalty=1e9, **kwargs):
+                doconstrainbudget=True, tvsettings=None, tvcontrolvec=None, origoutcomes=None, penalty=1e9, warn=True,**kwargs):
     ''' Function to evaluate the objective for a given budget vector (note, not time-varying) '''
 
     # Set up defaults
@@ -605,7 +605,7 @@ def outcomecalc(budgetvec=None, which=None, project=None, parsetname=None, progs
     
     # Normalize budgetvec and convert to budget -- WARNING, is there a better way of doing this?
     if doconstrainbudget:
-        constrainedbudget = constrainbudget(origbudget=origbudget, budgetvec=budgetvec, totalbudget=totalbudget, absconstraints=absconstraints, optimkeys=optimkeys, outputtype='odict', scaleupmethod=scaleupmethod)
+        constrainedbudget = constrainbudget(origbudget=origbudget, budgetvec=budgetvec, totalbudget=totalbudget, absconstraints=absconstraints, optimkeys=optimkeys, outputtype='odict', scaleupmethod=scaleupmethod, warn=warn)
     else:
         constrainedbudget = dcp(origbudget)
         if len(budgetvec)==len(optimkeys): constrainedbudget[optimkeys] = budgetvec # Assume it's just the optimizable programs
@@ -622,7 +622,7 @@ def outcomecalc(budgetvec=None, which=None, project=None, parsetname=None, progs
         if doconstrainbudget and tvsettings['tvconstrain']: # Do additional constraints
             for y in range(nyears):
                 budgetvec = budgetarray.fromeach(ind=y, asdict=False)
-                constrainedbudget = constrainbudget(origbudget=origbudget, budgetvec=budgetvec, totalbudget=totalbudget, absconstraints=absconstraints, optimkeys=optimkeys, outputtype='odict', scaleupmethod=scaleupmethod)
+                constrainedbudget = constrainbudget(origbudget=origbudget, budgetvec=budgetvec, totalbudget=totalbudget, absconstraints=absconstraints, optimkeys=optimkeys, outputtype='odict', scaleupmethod=scaleupmethod, warn=warn)
                 budgetarray.toeach(ind=y, val=constrainedbudget[:])
     
     # Get coverage and actual dictionary, in preparation for running
@@ -1130,15 +1130,16 @@ def minoutcomes(project=None, optim=None, tvec=None, absconstraints=None, verbos
     extremeoutcomes = odict()
 
     for key,exbudget in extremebudgets.items():
-
         if stoppingfunc and stoppingfunc():
             raise op.CancelException
 
         doconstrainbudget = True # To make all of these equivalent
         if key in ['Zero','Infinite']:
             args['totalbudget'] = sum(exbudget[:])  # These can scale up/down until max/min constraints
+            warn = False  # Won't always be able to reach 0 or inf budget with constraints and that is fine, we are just going for a min and max with constraints
         else:
             args['totalbudget'] = origtotalbudget  # The rescaled budget
+            warn = True
         if key in firstkeys:
             args['startind']   = None
             args['initpeople'] = None # Do this so it runs for the full time series, and is comparable to the optimization result
@@ -1147,7 +1148,7 @@ def minoutcomes(project=None, optim=None, tvec=None, absconstraints=None, verbos
             args['startind']   = startind
             args['initpeople'] = initpeople # Do this so saves a lot of time (runs twice as fast for all the budget scenarios)
             args['initprops']  = initprops   # Need initprops if running with initpeople
-        extremeresults[key] = outcomecalc(exbudget[optiminds], outputresults=True, doconstrainbudget=doconstrainbudget, **args)
+        extremeresults[key] = outcomecalc(exbudget[optiminds], outputresults=True, doconstrainbudget=doconstrainbudget,warn=warn,**args)
         extremeresults[key].name = key
         extremeoutcomes[key] = extremeresults[key].outcome
     if mc: bestprogram = argmin(extremeoutcomes[:][len(firstkeys):])+len(firstkeys) # Don't include no funding or infinite funding examples
@@ -1270,6 +1271,7 @@ def minoutcomes(project=None, optim=None, tvec=None, absconstraints=None, verbos
         tmpresults['Baseline'].name = 'Baseline'
     else:
         tmpresults['Baseline'] = tmpresults['Optimization baseline']
+        tmpresults['Baseline'].name = 'Baseline'
         tmpresults.pop('Optimization baseline')
 
     ## Output
