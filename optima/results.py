@@ -1028,7 +1028,7 @@ class Multiresultset(Resultset):
 class BOC(object):
     ''' Structure to hold a budget and outcome array for geospatial analysis'''
     
-    def __init__(self, name='boc', x=None, y=None, budgets=None, defaultbudget=None, objectives=None, constraints=None, parsetname=None, progsetname=None):
+    def __init__(self, name='boc', x=None, y=None, budgets=None, defaultbudget=None, objectives=None, constraints=None, absconstraints=None, proporigconstraints=None, parsetname=None, progsetname=None):
         self.uid = uuid()
         self.created = today()
         self.x = x if x else [] # A list of budget totals
@@ -1044,7 +1044,9 @@ class BOC(object):
         self.regionoptimbudget = None # The region-optimized budget, pre-GA
         self.gaoptimbudget = None # The optimized budget, assigned by GA
         self.objectives = objectives # Specification for what outcome y represents (objectives['budget'] excluded)
-        self.constraints = constraints # Likewise...
+        self.constraints = constraints # We don't need to give default constraints since we just pass them to the optim anyway
+        self.absconstraints = absconstraints
+        self.proporigconstraints = proporigconstraints
         self.name = name # Required by rmresult in Project.
 
     def __repr__(self):

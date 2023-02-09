@@ -974,17 +974,15 @@ class Project(object):
     ## Methods to handle tasks for geospatial analysis
     #######################################################################################################
         
-    def genBOC(self, budgetratios=None, name=None, parsetname=None, progsetname=None, objectives=None, constraints=None, maxiters=1000, 
-               maxtime=None, verbose=2, stoppingfunc=None, mc=3, die=False, randseed=None, origbudget=None, **kwargs):
+    def genBOC(self, budgetratios=None, name=None, parsetname=None, progsetname=None, objectives=None, constraints=None, absconstraints=None, proporigconstraints=None,
+               maxiters=1000, maxtime=None, verbose=2, stoppingfunc=None, mc=3, die=False, randseed=None, origbudget=None, **kwargs):
         ''' Function to generate project-specific budget-outcome curve for geospatial analysis '''
         if name is None:
             name = 'BOC ' + self.name
-        boc = BOC(name=name)
         if objectives is None:
             printv('Warning, genBOC "%s" did not get objectives, using defaults...' % (self.name), 2, verbose)
             objectives = defaultobjectives(project=self, progsetname=progsetname)
-        boc.objectives = objectives
-        boc.constraints = constraints
+        boc = BOC(name=name,objectives=objectives,constraints=constraints,absconstraints=absconstraints,proporigconstraints=proporigconstraints)
         
         if parsetname is None:
             printv('Warning, using default parset', 3, verbose)
@@ -1031,7 +1029,8 @@ class Project(object):
             totalcount = len(budgetdict)+sum(counts[:])-1
             printv('Running budget %i/%i ($%0.0f)' % (thiscount, totalcount, budget), 2, verbose)
             objectives['budget'] = budget
-            optim = Optim(project=self, name=name, objectives=objectives, constraints=constraints, parsetname=parsetname, progsetname=progsetname)
+            optim = Optim(project=self, name=name, constraints=constraints,absconstraints=absconstraints,proporigconstraints=proporigconstraints,
+                          objectives=objectives, parsetname=parsetname, progsetname=progsetname)
             
             # All subsequent genBOC steps use the allocation of the previous step as its initial budget, scaled up internally within optimization.py of course.
             if len(tmptotals):
@@ -1047,7 +1046,7 @@ class Project(object):
             tmpy[key] = results.outcome
             boc.budgets[key] = tmpallocs[-1]
             if ratio==1.0: # Check if ratio is 1, and if so, store the baseline
-                ybaseline = results.extremeoutcomes.findbykey('Base') # Store baseline result, but also not part of the BOC
+                ybaseline = results.outcomes.findbykey('Base') # Store baseline result, but also not part of the BOC
                 yregionoptim = results.outcome
                 regionoptimbudget = budget
             
