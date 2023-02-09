@@ -1872,13 +1872,15 @@ def icers(name=None, project=None, parsetname=None, progsetname=None, objective=
     nkeys = len(keys)
     
     # Calculate the initial people distribution
-    initresults = project.runsim(parsetname=parsetname, progsetname=progsetname, keepraw=True, verbose=0, label=project.name+'-minoutcomes', addresult=False, advancedtracking=False)
-    initialind  = findnearest(initresults.raw[0]['tvec'], objectives['start'])
-    initpeople  = initresults.raw[0]['people'][:,:,initialind] # Pull out the people array corresponding to the start of the optimization -- there shouldn't be multiple raw arrays here
+    initresults = project.runsim(parsetname=parsetname, progsetname=progsetname, keepraw=True, verbose=0, label=project.name+'-minoutcomes', addresult=False, advancedtracking=True, end=objectives['end'])
+    startind = findnearest(initresults.raw[0]['tvec'], objectives['start']-1) ## !!! -1 is because of parameter interpolation / smoothing from the current parameters to the budget parameters, we have to start a year before the budget starts
+    initpeople = initresults.raw[0]['people'][:,:,startind] # Pull out the people array corresponding to the start of the optimization -- there shouldn't be multiple raw arrays here
+    initprops  = initresults.raw[0]['props'][:,startind,:]  # Need initprops if running with initpeople
 
     # Define arguments that don't change in the loop
     defaultargs = {'which':'outcomes', 'project':project, 'parsetname':parsetname, 'progsetname':progsetname, 'objectives':objectives, 
-                   'origbudget':origbudget, 'outputresults':False, 'verbose':verbose, 'doconstrainbudget':False, 'initpeople':initpeople}
+                   'origbudget':origbudget, 'outputresults':False, 'verbose':verbose, 'doconstrainbudget':False,
+                   'startind':startind, 'initpeople':initpeople, 'initprops':initprops}
     
     # Calculate baseline
     baseliney = outcomecalc(budgetvec=defaultbudget[:], **defaultargs)
