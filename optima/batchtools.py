@@ -170,7 +170,7 @@ def autofit_task(project, ind, outputqueue, name, fitwhat, fitto, maxtime, maxit
 
 
 def batchBOC(folder=None, projects=None, portfolio=None, budgetratios=None, name=None, parsetname=None, progsetname=None, objectives=None, 
-             constraints=None,  maxiters=200, maxtime=None, verbose=2, stoppingfunc=None, 
+             constraints=None, absconstraints=None, proporigconstraints=None,  maxiters=200, maxtime=None, verbose=2, stoppingfunc=None,
              maxload=0.5, interval=None, prerun=True, batch=True, mc=3, die=False, recalculate=True, strict=True, randseed=None):
     """
     Perform batch BOC calculation.
@@ -234,9 +234,11 @@ def batchBOC(folder=None, projects=None, portfolio=None, budgetratios=None, name
     # Loop over the projects
     for i,project in enumerate(projects.values()):
         prjobjectives = project.optims[-1].objectives if objectives == 'latest' else objectives
-        prjconstraints = project.optims[-1].constraints if constraints == 'latest' else constraints
+        prjconstraints         = project.optims[-1].constraints         if constraints == 'latest'         else constraints
+        prjabsconstraints      = project.optims[-1].absconstraints      if absconstraints == 'latest'      else absconstraints
+        prjproporigconstraints = project.optims[-1].proporigconstraints if proporigconstraints == 'latest' else proporigconstraints
         args = (project, i, outputqueue, budgetratios, name, parsetname, progsetname, prjobjectives, 
-                prjconstraints, maxiters, maxtime, verbose, stoppingfunc, maxload, interval, 
+                prjconstraints,prjabsconstraints,prjproporigconstraints, maxiters, maxtime, verbose, stoppingfunc, maxload, interval,
                 prerun, batch, mc, die, recalculate, strict, randseed)
         if batch:
             prc = Process(target=boc_task, args=args)
@@ -252,7 +254,7 @@ def batchBOC(folder=None, projects=None, portfolio=None, budgetratios=None, name
     return projects
 
 
-def boc_task(project, ind, outputqueue, budgetratios, name, parsetname, progsetname, objectives, constraints, maxiters, 
+def boc_task(project, ind, outputqueue, budgetratios, name, parsetname, progsetname, objectives, constraints,absconstraints,proporigconstraints, maxiters,
              maxtime, verbose, stoppingfunc, maxload, interval, prerun, batch, mc, die, recalculate, strict, randseed):
     
     # Custom opening
@@ -279,7 +281,8 @@ def boc_task(project, ind, outputqueue, budgetratios, name, parsetname, progsetn
         try:
             project.genBOC(budgetratios=budgetratios, name=name, parsetname=parsetname,
                            progsetname=progsetname, objectives=objectives, 
-                           constraints=constraints, maxiters=maxiters, maxtime=maxtime,
+                           constraints=constraints, absconstraints=absconstraints, proporigconstraints=proporigconstraints,
+                           maxiters=maxiters, maxtime=maxtime,
                            verbose=verbose, stoppingfunc=stoppingfunc, mc=mc, die=die, randseed=randseed)
         except Exception as E:
             project.addwarning('Exception: batchBOC() failed for %s: %s' % (project.name, repr(E)))
