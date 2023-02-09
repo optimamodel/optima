@@ -9,8 +9,6 @@ Version: 2019jan09
 from optima import OptimaException, Link, printv, uuid, today, sigfig, getdate, dcp, smoothinterp, findinds, odict, Settings, sanitize, defaultrepr, isnumber, promotetoarray, vec2obj, asd, convertlimits, Timepar, Yearpar, checkifparsoverridepars, createwarningforoverride
 from numpy import ones, prod, array, zeros, exp, log, append, nan, isnan, maximum, minimum, sort, concatenate as cat, transpose, mean, argsort
 from random import uniform
-from time import perf_counter
-import numpy as np
 import six
 if six.PY3:
 	basestring = str
@@ -415,7 +413,6 @@ class Programset(object):
                 for yr in t:
                     yrindex = findinds(tvec,yr)
                     selectbudget[program].append(totalbudget[program][yrindex][0])
-                    print('??',program,totalbudget[program],yr,tvec,yrindex,totalbudget[program][yrindex],selectbudget[program])
 
         # Store default budget as an attribute
         self.defaultbudget = lastbudget
@@ -432,7 +429,6 @@ class Programset(object):
         if t is not None:
             for prog,budget in defaultbudget.items():
                 defaultbudget[prog] = budget*ones(len(t))
-        # The next line is the slow one
         defaultcoverage = self.getprogcoverage(budget=defaultbudget, t=t, parset=parset, results=results, proportion=proportion, sample=sample)
         if t is None or len(list(t)) <= 1:
             for progno in range(len(defaultcoverage)):
@@ -470,7 +466,6 @@ class Programset(object):
                     coverage[thisprog] = None
                 else:
                     spending = budget[thisprog] # Get the amount of money spent on this program
-                    # NEXT LINE IS THE SLOW ONE
                     coverage[thisprog] = self.programs[thisprog].getcoverage(x=spending, t=t, parset=parset, results=results, proportion=proportion, sample=sample)
             else: coverage[thisprog] = None
 
@@ -1085,11 +1080,9 @@ class Program(object):
         x = promotetoarray(x)
         t = promotetoarray(t)
 
-        # This line is slow ~6ms
         poptargeted = self.gettargetpopsize(t=t, parset=parset, results=results, total=False)
 
         totaltargeted = sum(list(poptargeted.values()))
-        # This line is slow ~1ms
         totalreached = self.costcovfn.evaluate(x=x, popsize=totaltargeted, t=t, toplot=toplot, sample=sample)
 
         if total: 
