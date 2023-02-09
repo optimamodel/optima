@@ -1231,7 +1231,7 @@ class CCOF(object):
         # Calculate interpolated parameters
         for j,param in enumerate(ccopars_sample.keys()): 
             knownparam = array([ccopartuple[j+1] for ccopartuple in ccopartuples])
-            allparams = smoothinterp(t, knownt, knownparam, smoothness=1)
+            allparams = smoothinterp(t, knownt, knownparam, smoothness=0)
             ccopar[param] = zeros(nyrs)
             for yr in range(nyrs):
                 ccopar[param][yr] = allparams[yr]
