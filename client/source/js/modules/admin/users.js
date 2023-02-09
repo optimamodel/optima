@@ -66,9 +66,7 @@ define(['angular', 'ui.router',], function(angular) {
           rpcService
             .rpcRun('reset_password', [user.id])
             .then(function(response) {
-              console.log('reset passsword response:',response)
-              text = 'Password reset to "';
-              toastr.success(text.concat(response.data,'"!'));
+              toastr.success('Password reset!');
             });
         },
         undefined,

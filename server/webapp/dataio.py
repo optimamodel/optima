@@ -292,14 +292,13 @@ def revoke_admin(user_id):
 def reset_password(user_id):
     ''' Reset the user's password to "optima" '''
     defaultpassword = 'optima'
-    defaultpasswordbytes = defaultpassword.encode(encoding='UTF-8', errors='strict')
     hashed_password = sha224()
-    hashed_password.update(defaultpasswordbytes)
+    hashed_password.update(defaultpassword)
     password = hashed_password.hexdigest()
     args = {'password':password}
     update_user(user_id, args)
     print('Password for user %s reset to "%s"' % (user_id,defaultpassword))
-    return defaultpassword
+    return None
 
 
 def do_logout_current_user():
