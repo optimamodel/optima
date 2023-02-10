@@ -564,7 +564,7 @@ def separatetv(inputvec=None, optiminds=None, optimkeys=None):
 def outcomecalc(budgetvec=None, which=None, project=None, parsetname=None, progsetname=None, scaleupmethod='multiply',
                 objectives=None, absconstraints=None, totalbudget=None, optiminds=None, optimkeys=None, origbudget=None,
                 tvec=None, initpeople=None, initprops=None, startind=None, outputresults=False, verbose=2, ccsample='best',
-                doconstrainbudget=True, tvsettings=None, tvcontrolvec=None, origoutcomes=None, penalty=1e9, warn=True,**kwargs):
+                doconstrainbudget=True, tvsettings=None, tvcontrolvec=None, origoutcomes=None, penalty=0, warn=True,**kwargs):
     ''' Function to evaluate the objective for a given budget vector (note, not time-varying) '''
 
     # Set up defaults
