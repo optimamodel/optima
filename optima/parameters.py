@@ -6,7 +6,7 @@ parameters, the Parameterset class.
 Version: 2.1 (2017apr04)
 """
 
-from numpy import array, nan, isnan, isfinite, zeros, ones, argmax, mean, log, polyfit, exp, maximum, minimum, Inf, linspace, median, shape, append, logical_and
+from numpy import array, nan, isnan, isfinite, zeros, ones, argmax, mean, log, polyfit, exp, maximum, minimum, Inf, linspace, median, shape, append, logical_and, isin
 from numpy.random import uniform, normal, seed
 from optima import OptimaException, Link, odict, dataframe, printv, sanitize, uuid, today, getdate, makefilepath, smoothinterp, dcp, defaultrepr, isnumber, findinds, findnearest, getvaliddata, promotetoarray, promotetolist, inclusiverange # Utilities 
 from optima import Settings, getresults, convertlimits, gettvecdt, loadpartable, loadtranstable # Heftier functions
@@ -806,7 +806,7 @@ class Popsizepar(Par):
             else:
                 yinterp = zeros(len(tvec))
 
-            yinterpreturn = array([yval for tind, yval in enumerate(yinterp) if localtvec[tind] in tvec]) #TODO likely this is slow
+            yinterpreturn = yinterp[isin(localtvec,tvec)]
             
             if asarray: output[pop,:] = yinterpreturn
             else:       output[key] = yinterpreturn
@@ -1385,7 +1385,7 @@ def applylimits(y, par=None, limits=None, dt=None, warn=True, verbose=2):
         newy[newy<limits[0]] = limits[0]
         newy[newy>limits[1]] = limits[1]
         newy[infiniteinds] = infinitevals # And stick them back in
-        if warn and any(newy!=array(y)):
+        if warn and any(newy!=array(y)) and verbose >= 3:
             printv('Note, parameter "%s" value reset from:\n%s\nto:\n%s' % (parname, y, newy), 3, verbose)
     else:
         if warn: raise OptimaException('Data type "%s" not understood for applying limits for parameter "%s"' % (type(y), parname))

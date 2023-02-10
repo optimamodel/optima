@@ -855,6 +855,7 @@ def dataindex(dataarray, index):
     
     return output
 
+from numpy import array, interp, convolve, linspace, concatenate, ones, exp, nan, inf, isnan, isfinite, argsort, ceil, arange
 
 def smoothinterp(newx=None, origx=None, origy=None, smoothness=None, growth=None, ensurefinite=False, keepends=True, method='linear'):
     '''
@@ -872,8 +873,7 @@ def smoothinterp(newx=None, origx=None, origy=None, smoothness=None, growth=None
     
     Version: 2018jan24
     '''
-    from numpy import array, interp, convolve, linspace, concatenate, ones, exp, nan, inf, isnan, isfinite, argsort, ceil, arange
-    
+
     # Ensure arrays and remove NaNs
     if isnumber(newx):  newx = [newx] # Make sure it has dimension
     if isnumber(origx): origx = [origx] # Make sure it has dimension
