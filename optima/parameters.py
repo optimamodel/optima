@@ -8,7 +8,7 @@ Version: 2.1 (2017apr04)
 
 from numpy import array, nan, isnan, isfinite, zeros, ones, argmax, mean, log, polyfit, exp, maximum, minimum, Inf, linspace, median, shape, append, logical_and, isin
 from numpy.random import uniform, normal, seed
-from optima import OptimaException, Link, odict, dataframe, printv, sanitize, uuid, today, getdate, makefilepath, smoothinterp, dcp, defaultrepr, isnumber, findinds, findnearest, getvaliddata, promotetoarray, promotetolist, inclusiverange # Utilities 
+from optima import OptimaException, version, compareversions, Link, odict, dataframe, printv, sanitize, uuid, today, getdate, makefilepath, smoothinterp, dcp, defaultrepr, isnumber, findinds, findnearest, getvaliddata, promotetoarray, promotetolist, inclusiverange # Utilities
 from optima import Settings, getresults, convertlimits, gettvecdt, loadpartable, loadtranstable # Heftier functions
 import optima as op
 
@@ -799,8 +799,11 @@ class Popsizepar(Par):
                 yinterp = meta * smoothinterp(localtvec, self.t[key], self.y[key], smoothness=0) # Use interpolation without smoothness so that it aligns exactly with a starting point for 
                 #2. Replace linear interpolation after self.start
                 expstartind = findnearest(localtvec, self.start[key])
-                if abs(localtvec[expstartind] - self.start[key]) < dt: # Check localtvec[expstartind] is close enough to self.start[key], otherwise self.start[key] is not in localtvec
+                if compareversions(version,"2.12.0") < 0:  # old behaviour, the exponential is applied unnecessarily if only one t value is given
                     yinterp[expstartind:] = yinterp[expstartind] * grow(self.e[key], array(localtvec[expstartind:])-self.start[key]) #don't apply meta again (it's already factored into the linear part)
+                else:  # New behaviour, exponential applied at the proper timestep
+                    if abs(localtvec[expstartind] - self.start[key]) < dt: # Check localtvec[expstartind] is close enough to self.start[key], otherwise self.start[key] is not in localtvec
+                        yinterp[expstartind:] = yinterp[expstartind] * grow(self.e[key], array(localtvec[expstartind:])-self.start[key]) #don't apply meta again (it's already factored into the linear part)
                 #3. Apply limits
                 yinterp = applylimits(par=self, y=yinterp, limits=self.limits, dt=dt)
             else:
