@@ -1200,6 +1200,11 @@ def minoutcomes(project=None, optim=None, tvec=None, absconstraints=None, verbos
         args['initprops']   = initprops  # Reset initprops
         args['startind']    = startind   # Reset initpeople
 
+        # Calculate the baseline (always default budget) (rescaled and constrained) outcome and pass it back in
+        args['origbudget'] = None  # origoutcomes gets progset.defaultbudget()
+        origoutcomes  = outcomecalc(outputresults=True, **args)
+        args.update({'origoutcomes':origoutcomes, 'origbudget':origbudget})
+
         # Set up budgets to run
         if totalbudget: # Budget is nonzero, run
             allbudgetvecs = odict()
@@ -1235,8 +1240,6 @@ def minoutcomes(project=None, optim=None, tvec=None, absconstraints=None, verbos
                 printv('Running optimization "%s" (%i/%i) with maxtime=%s, maxiters=%s' % (key, k+1, len(allbudgetvecs), maxtime, maxiters), 2, verbose)
                 if label: thislabel = '"'+label+'-'+key+'"'
                 else: thislabel = '"'+key+'"'
-                origoutcomes = outcomecalc(budgetvec=allbudgetvecs[key], outputresults=True, **args) # Calculate the initial (rescaled and constrained) outcome and pass it back in
-                args['origoutcomes'] = origoutcomes
                 res = asd(outcomecalc, allbudgetvecs[key], args=args, xmin=xmin, maxtime=maxtime, maxiters=maxiters, verbose=verbose, randseed=allseeds[k], label=thislabel, stoppingfunc=stoppingfunc, **kwargs)
                 budgetvecnew, fvals = res.x, res.details.fvals
                 constrainedbudgetnew, constrainedbudgetvecnew, lowerlim, upperlim = constrainbudget(origbudget=origbudget, budgetvec=budgetvecnew, totalbudget=totalbudget, absconstraints=absconstraints, optimkeys=optimkeys, outputtype='full')
