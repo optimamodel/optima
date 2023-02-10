@@ -440,17 +440,9 @@ class Programset(object):
 
     def gettargetpopsizes(self, t=None, parset=None, results=None, verbose=2):
         ''' Extract a disctionary of target pop sizes'''
-        # Validate inputs
-        if isnumber(t): t = array([t])
-        elif isinstance(t, (range, list)): t = array(t)
-        if parset is None:
-            if results and results.parset: parset = results.parset
-            else: raise OptimaException('Please provide either a parset or a resultset that contains a parset')
-        defaultinitpopsizes = parset.pars['popsize'].interp(tvec=t)
-
         targetpopsizes = odict()
         for pn,prog in self.programs.items():
-            targetpopsizes[prog.short] = self.programs[pn].gettargetpopsize(t=t, parset=parset, defaultinitpopsizes=defaultinitpopsizes)
+            targetpopsizes[prog.short] = self.programs[pn].gettargetpopsize(t=t, parset=parset)
         return targetpopsizes
 
 
@@ -466,10 +458,6 @@ class Programset(object):
             budget = vec2obj(orig=self.getdefaultbudget(), newvec=budget) # It seems to be a vector: convert to odict
         if type(budget)==dict: budget = odict(budget) # Convert to odict
         budget.sort([p.short for p in self.programs.values()])
-        if parset is None:
-            if results and results.parset: parset = results.parset
-            else: raise OptimaException('Please provide either a parset or a resultset that contains a parset')
-        defaultinitpopsizes = parset.pars['popsize'].interp(tvec=t)
 
         # Get program-level coverage for each program
         for thisprog in self.programs.keys():
@@ -479,7 +467,7 @@ class Programset(object):
                     coverage[thisprog] = None
                 else:
                     spending = budget[thisprog] # Get the amount of money spent on this program
-                    coverage[thisprog] = self.programs[thisprog].getcoverage(x=spending, t=t, parset=parset, results=results, proportion=proportion, sample=sample, defaultinitpopsizes=defaultinitpopsizes)
+                    coverage[thisprog] = self.programs[thisprog].getcoverage(x=spending, t=t, parset=parset, results=results, proportion=proportion, sample=sample)
             else: coverage[thisprog] = None
 
         return coverage
