@@ -799,8 +799,7 @@ class Popsizepar(Par):
                 yinterp = meta * smoothinterp(localtvec, self.t[key], self.y[key], smoothness=0) # Use interpolation without smoothness so that it aligns exactly with a starting point for 
                 #2. Replace linear interpolation after self.start
                 expstartind = findnearest(localtvec, self.start[key])
-                if abs(localtvec[expstartind] - self.start[key]) < dt: # Check localtvec[expstartind] is close enough to self.start[key], otherwise self.start[key] is not in localtvec
-                    yinterp[expstartind:] = yinterp[expstartind] * grow(self.e[key], array(localtvec[expstartind:])-self.start[key]) #don't apply meta again (it's already factored into the linear part)
+                yinterp[expstartind:] = yinterp[expstartind] * grow(self.e[key], array(localtvec[expstartind:])-self.start[key]) #don't apply meta again (it's already factored into the linear part)
                 #3. Apply limits
                 yinterp = applylimits(par=self, y=yinterp, limits=self.limits, dt=dt)
             else:
