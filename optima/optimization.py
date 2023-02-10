@@ -5,7 +5,7 @@ Version: 2019dec02
 """
 
 from optima import OptimaException, Link, Multiresultset, ICER, asd, getresults # Main functions
-from optima import printv, dcp, odict, findinds, today, getdate, uuid, objrepr, promotetoarray, findnearest, sanitize, inclusiverange # Utilities
+from optima import printv, dcp, odict, findinds, today, getdate, uuid, objrepr, promotetoarray, findnearest, sanitize, inclusiverange, sigfig # Utilities
 
 from numpy import zeros, ones, empty, arange, array, inf, isfinite, argmin, argsort, nan, floor, concatenate, exp, sqrt, logical_and
 from numpy.random import random, seed, randint
@@ -856,7 +856,8 @@ def multioptimize(optim=None, nchains=None, nblocks=None, blockiters=None,
     
     # Loop over the optimization blocks
     for block in range(nblocks):
-        
+        printv(f'\nStarting block {block+1}/{nblocks}\n', 2, verbose)
+
         # Set up the parallel process
         outputqueue = Queue()
         outputlist = empty(nchains, dtype=object)
@@ -898,7 +899,9 @@ def multioptimize(optim=None, nchains=None, nblocks=None, blockiters=None,
                 bestfvalval = thisbestval
                 bestfvalind = i
         
-        origbudget = outputlist[bestfvalind].budgets[-1] # Update the budget and use it as the input for the next block -- this is key!
+        origbudget = outputlist[bestfvalind].budgets['Optimized'] # Update the budget and use it as the input for the next block -- this is key!
+        printv(f'\nFinised block {block+1}/{nblocks}. Outcome improved from {sigfig(outputlist[0].improvement[0][0])} to {sigfig(bestfvalval)}. Ratio: {sigfig(bestfvalval) / sigfig(outputlist[0].improvement[0][0])}.\n', 2, verbose)
+
     
     # Assemble final results object from the initial and final run
     results = dcp(outputlist[bestfvalind]) # Use best results as the basis for the output
@@ -1232,7 +1235,7 @@ def minoutcomes(project=None, optim=None, tvec=None, absconstraints=None, verbos
                 printv('Running optimization "%s" (%i/%i) with maxtime=%s, maxiters=%s' % (key, k+1, len(allbudgetvecs), maxtime, maxiters), 2, verbose)
                 if label: thislabel = '"'+label+'-'+key+'"'
                 else: thislabel = '"'+key+'"'
-                origoutcomes = outcomecalc(outputresults=True, **args) # Calculate the initial (rescaled and constrained) outcome and pass it back in
+                origoutcomes = outcomecalc(budgetvec=allbudgetvecs[key], outputresults=True, **args) # Calculate the initial (rescaled and constrained) outcome and pass it back in
                 args['origoutcomes'] = origoutcomes
                 res = asd(outcomecalc, allbudgetvecs[key], args=args, xmin=xmin, maxtime=maxtime, maxiters=maxiters, verbose=verbose, randseed=allseeds[k], label=thislabel, stoppingfunc=stoppingfunc, **kwargs)
                 budgetvecnew, fvals = res.x, res.details.fvals
@@ -1282,7 +1285,7 @@ def minoutcomes(project=None, optim=None, tvec=None, absconstraints=None, verbos
     multires.extremeoutcomes = extremeoutcomes # Store all of these
     multires.fullruninfo = tmpfullruninfo # And the budgets/outcomes for every different run
     multires.outcomes = dcp(multires.outcome) # Initialize
-    multires.outcome = multires.outcomes[-1] # Store these defaults in a convenient place
+    multires.outcome = multires.outcomes['Optimized'] # Store these defaults in a convenient place
     multires.optim = optim # Store the optimization object as well
     
     # Store optimization settings
