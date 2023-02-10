@@ -133,8 +133,7 @@ if doprofile:
                       profiler.enable_by_count()
                       return func(*args, **kwargs)
                   finally:
-                      pass
-                      # profiler.print_stats()
+                      profiler.print_stats()
               return profiled_func
           return inner
 
