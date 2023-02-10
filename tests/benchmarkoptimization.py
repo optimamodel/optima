@@ -23,10 +23,10 @@ n_benchmark = 10  # Number of times to run the cpu benchmark
 n_runsim = 1     # Number of times to run the model
 
 # If running profiling, choose which function to line profile.
-functiontoprofile = 'outcomecalc' # Choices are: P_optimize, optimize, minoutcomes, outcomecalc,
+functiontoprofile = 'outcomecalc' # Choices are: P_optimize, optimize, minoutcomes, outcomecalc, runsim, makesimpars, getpars, getouctomes, progs_by_targetpar
 tobenchmark = 'runsim' # Choices are 'runsim' or 'runbudget'
 
-args = {'multi':False,'nchains':2, 'nblocks':None, 'blockiters':30,'maxtime':1,'randseed':5}
+args = {'multi':False,'nchains':2, 'nblocks':None, 'blockiters':20,'maxiters':20,'maxtime':100,'randseed':5,'mc':0}
 
 
 ############################################################################################################################
@@ -52,7 +52,7 @@ if dobenchmark:
 
     # Prelminaries
     from hiv_utils import *
-    P = get_latest_project('Kyrgyzstan')
+    P = get_latest_project('Sri Lanka')
     performance1 = cpubenchmark()
 
     elapsed = 0
@@ -101,15 +101,20 @@ except:
 if doprofile:
     from line_profiler import LineProfiler
     from optima.optimization import minoutcomes
-    from optima import Project, Optim, optimize,model,makesimpars, applylimits,asd,outcomecalc,Programset,Program # analysis:ignore -- called by eval() function
+    from optima import Project, Optim, optimize,model,makesimpars, applylimits,asd,outcomecalc,Programset,Program,convertlimits, smoothinterp# analysis:ignore -- called by eval() function
     # P = Project(spreadsheet='generalized.xlsx', dorun=False)
 
     from hiv_utils import *
-    P = get_latest_project('Kyrgyzstan')
+    P = get_latest_project('Sri Lanka')
 
     getpars = Programset.getpars
     getoutcomes = Programset.getoutcomes
     gettargetpopsize = Program.gettargetpopsize
+    progs_by_targetpar = Programset.progs_by_targetpar
+    progs_by_targetpartype = Programset.progs_by_targetpartype
+    gettargetpopsizes = Programset.gettargetpopsizes
+    getprogcoverage = Programset.getprogcoverage
+    getcoverage = Program.getcoverage
     P_optimize = P.optimize
     runsim = P.runsim # analysis:ignore
     interp = P.pars()['hivtest'].interp
@@ -128,7 +133,8 @@ if doprofile:
                       profiler.enable_by_count()
                       return func(*args, **kwargs)
                   finally:
-                      profiler.print_stats()
+                      pass
+                      # profiler.print_stats()
               return profiled_func
           return inner
 
