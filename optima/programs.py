@@ -993,6 +993,7 @@ class Program(object):
         popsizes = odict()
         targetpopsize = odict()
         if defaultinitpopsizes is None: defaultinitpopsizes = parset.pars['popsize'].interp(tvec=t)
+        else: defaultinitpopsizes = dcp(defaultinitpopsizes)
         
         # If we are ignoring eligibility, just sum the popsizes...
         if not useelig:
