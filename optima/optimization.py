@@ -900,7 +900,7 @@ def multioptimize(optim=None, nchains=None, nblocks=None, blockiters=None,
                 bestfvalind = i
         
         origbudget = outputlist[bestfvalind].budgets['Optimized'] # Update the budget and use it as the input for the next block -- this is key!
-        printv(f'\nFinised block {block+1}/{nblocks}. Outcome improved from {sigfig(outputlist[0].improvement[0][0])} to {sigfig(bestfvalval)}. Ratio: {sigfig(bestfvalval) / sigfig(outputlist[0].improvement[0][0])}.\n', 2, verbose)
+        printv(f'\nFinised block {block+1}/{nblocks}. Outcome improved from {sigfig(outputlist[0].improvement[0][0])} to {sigfig(bestfvalval)}. Ratio: {sigfig(bestfvalval / outputlist[0].improvement[0][0])}.\n', 2, verbose)
 
     
     # Assemble final results object from the initial and final run
