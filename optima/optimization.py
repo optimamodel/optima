@@ -772,7 +772,7 @@ def optimize(optim=None, maxiters=None, maxtime=None, verbose=2, stoppingfunc=No
     if maxiters is None: maxiters = 1000
     if maxtime is None: maxtime = 3600
     if mc is None: mc = 3
-    
+
     # Optim structure validation
     progset = project.progsets[optim.progsetname] # Link to the original parameter set
     if not(hasattr(optim, 'objectives')) or optim.objectives is None:
@@ -900,7 +900,7 @@ def multioptimize(optim=None, nchains=None, nblocks=None, blockiters=None,
                 bestfvalind = i
         
         origbudget = outputlist[bestfvalind].budgets['Optimized'] # Update the budget and use it as the input for the next block -- this is key!
-        printv(f'\nFinised block {block+1}/{nblocks}. Outcome improved from {sigfig(outputlist[0].improvement[0][0])} to {sigfig(bestfvalval)}. Ratio: {sigfig(bestfvalval / outputlist[0].improvement[0][0])}.\n', 2, verbose)
+        printv(f'\nFinised block {block+1}/{nblocks}. Outcome improved from {outputlist[0].improvement[0][0]} to {bestfvalval}. Ratio: {bestfvalval / outputlist[0].improvement[0][0]}.\n', 2, verbose)
 
     
     # Assemble final results object from the initial and final run
