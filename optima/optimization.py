@@ -823,7 +823,7 @@ def optimize(optim=None, maxiters=None, maxtime=None, verbose=2, stoppingfunc=No
 
 def multioptimize(optim=None, nchains=None, nblocks=None, blockiters=None, 
                   batch=None, mc=None, randseed=None, maxiters=None, maxtime=None, verbose=2, 
-                  stoppingfunc=None, die=False, origbudget=None, label=None, **kwargs):
+                  stoppingfunc=None, die=False, origbudget=None, label=None, tol=1e-3, **kwargs):
     '''
     Run a multi-chain optimization. See project.optimize() for usage examples, and optimize()
     for kwarg explanation.
@@ -851,9 +851,9 @@ def multioptimize(optim=None, nchains=None, nblocks=None, blockiters=None,
         raise OptimaException(errormsg)
     totaliters = blockiters*nblocks
     fvalarray = zeros((nchains,totaliters+1)) + nan
-    
+    bestfvalval = inf
+
     printv('Starting a parallel optimization with %i threads for %i iterations each for %i blocks' % (nchains, blockiters, nblocks), 2, verbose)
-    
     # Loop over the optimization blocks
     for block in range(nblocks):
         printv(f'\nStarting block {block+1}/{nblocks}\n', 2, verbose)
@@ -886,6 +886,8 @@ def multioptimize(optim=None, nchains=None, nblocks=None, blockiters=None,
             prc.join() # Wait for them to finish
         
         # Figure out which one did best
+        lastfvalval = bestfvalval if bestfvalval < inf else outputlist[0].improvement[0][0]
+        lastbestbudget = origbudget
         bestfvalval = inf
         bestfvalind = None
         for i in range(nchains):
@@ -898,11 +900,15 @@ def multioptimize(optim=None, nchains=None, nblocks=None, blockiters=None,
             if thisbestval<bestfvalval:
                 bestfvalval = thisbestval
                 bestfvalind = i
-        
-        origbudget = outputlist[bestfvalind].budgets['Optimized'] # Update the budget and use it as the input for the next block -- this is key!
-        printv(f'\nFinised block {block+1}/{nblocks}. Outcome improved from {outputlist[0].improvement[0][0]} to {bestfvalval}. Ratio: {bestfvalval / outputlist[0].improvement[0][0]}.\n', 2, verbose)
 
-    
+        origbudget = outputlist[bestfvalind].budgets['Optimized'] # Update the budget and use it as the input for the next block -- this is key!
+
+        printv(f'\nFinised block {block+1}/{nblocks}. Outcome improved from {lastfvalval} to {bestfvalval}. Ratio: {bestfvalval / lastfvalval}.\n', 2, verbose)
+        # Check if we should skip the rest of the blocks, because this block gave the same budget and outcomes back
+        if bestfvalval / lastfvalval >= 1 and sum(abs(newbestbudget[:] - origbudget[:])) < tol:
+            printv(f'\nSkipping the last {nblocks-(block+1)}/{nblocks} blocks as we got the same budget and outcomes back from this block as the last!\n',2, verbose)
+            break
+
     # Assemble final results object from the initial and final run
     results = dcp(outputlist[bestfvalind]) # Use best results as the basis for the output
     results.improvement[0] = sanitize(fvalarray[bestfvalind,:]) # Store fval vector in normal format
