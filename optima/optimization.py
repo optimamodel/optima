@@ -903,7 +903,7 @@ def multioptimize(optim=None, nchains=None, nblocks=None, blockiters=None,
 
         origbudget = outputlist[bestfvalind].budgets['Optimized'] # Update the budget and use it as the input for the next block -- this is key!
 
-        printv(f'\nFinised block {block+1}/{nblocks}. Outcome improved from {lastfvalval} to {bestfvalval}. Ratio: {bestfvalval / lastfvalval}.\n', 2, verbose)
+        printv(f'\nFinished block {block+1}/{nblocks}. Outcome improved from {lastfvalval} to {bestfvalval}. Ratio: {bestfvalval / lastfvalval}.\n', 2, verbose)
         # Check if we should skip the rest of the blocks, because this block gave the same budget and outcomes back
         if bestfvalval / lastfvalval >= 1 and sum(abs(lastbestbudget[:] - origbudget[:])) < tol:
             printv(f'\nSkipping the last {nblocks-(block+1)}/{nblocks} blocks as we got the same budget and outcomes back from this block as the last!\n',2, verbose)
