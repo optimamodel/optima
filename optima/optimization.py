@@ -1088,6 +1088,10 @@ def minoutcomes(project=None, optim=None, tvec=None, absconstraints=None, verbos
     nprogs = len(origbudget[:]) # Number of programs total
     noptimprogs = len(budgetvec) # Number of optimizable programs
     xmin = zeros(noptimprogs)
+    xmax = ones(noptimprogs) * inf
+    for i,key in enumerate(optimkeys):
+        xmin[i] = 0 if absconstraints['min'][key] is None else absconstraints['min'][key]
+        xmax[i] = inf if absconstraints['max'][key] is None else absconstraints['max'][key]
     if label is None: label = ''
 
     # Calculate the initial people distribution
@@ -1246,7 +1250,7 @@ def minoutcomes(project=None, optim=None, tvec=None, absconstraints=None, verbos
                 printv('Running optimization "%s" (%i/%i) with maxtime=%s, maxiters=%s' % (key, k+1, len(allbudgetvecs), maxtime, maxiters), 2, verbose)
                 if label: thislabel = '"'+label+'-'+key+'"'
                 else: thislabel = '"'+key+'"'
-                res = asd(outcomecalc, allbudgetvecs[key], args=args, xmin=xmin, maxtime=maxtime, maxiters=maxiters, verbose=verbose, randseed=allseeds[k], label=thislabel, stoppingfunc=stoppingfunc, **kwargs)
+                res = asd(outcomecalc, allbudgetvecs[key], args=args, xmin=xmin, xmax=xmax, maxtime=maxtime, maxiters=maxiters, verbose=verbose, randseed=allseeds[k], label=thislabel, stoppingfunc=stoppingfunc, **kwargs)
                 budgetvecnew, fvals = res.x, res.details.fvals
                 constrainedbudgetnew, constrainedbudgetvecnew, lowerlim, upperlim = constrainbudget(origbudget=origbudget, budgetvec=budgetvecnew, totalbudget=totalbudget, absconstraints=absconstraints, optimkeys=optimkeys, outputtype='full')
                 asdresults[key] = {'budget':constrainedbudgetnew, 'fvals':fvals}

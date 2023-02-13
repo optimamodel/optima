@@ -162,6 +162,7 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
             if inrange: # Proceed as long as they're not equal
                 break
         if not inrange: # Treat it as a failure if a value in range can't be found
+            print(offset*2 + f'Couldn\'t find a parameter to change within bounds in {maxrangeiters} iterations.')
             probabilities[choice] = probabilities[choice] / pdec
             stepsizes[choice] = stepsizes[choice] / sdec
 
