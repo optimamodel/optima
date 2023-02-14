@@ -1199,7 +1199,8 @@ def exporttoexcel(filename=None, outdict=None):
             sheetname = sheetname[:maxlength-1] + '~'
         if sheetname in sheetnames:
             collisions += 1
-            sheetname = sheetname[:-3] + '~%0.2i' % collisions
+            collisionchars = 4 if collisions >= 100 else 3
+            sheetname = sheetname[:-collisionchars] + '~%0.2i' % collisions
         sheetnames.append(sheetname) # Store final sheetname
 
         worksheet = workbook.add_worksheet(sheetname)  # A valid filename should also be a valid Excel key
