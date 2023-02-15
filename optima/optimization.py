@@ -827,7 +827,7 @@ def multioptimize(optim=None, nchains=None, nblocks=None, blockiters=None, mc=No
     '''
     Run a multi-chain optimization. See project.optimize() for usage examples, and optimize()
     for kwarg explanation.
-    
+
     Small usage example:
         import optima as op
         import pylab as pl
@@ -835,11 +835,11 @@ def multioptimize(optim=None, nchains=None, nblocks=None, blockiters=None, mc=No
         results = P.optimize(multi=True, nchains=4, blockiters=10, nblocks=2, randseed=1)
         op.pygui(P, toplot=['improvement', 'budgets', 'numinci'])
         pl.figure(); pl.plot(results.multiimprovement.transpose())
-    
+
     You can see how after 10 iterations, the blocks talk to each other, and the optimization
     for each thread restarts from the best solution found for each.
     '''
-    
+
     # Set defaults
     if nchains is None:    nchains = 4
     if nblocks is None:    nblocks = 10
@@ -862,20 +862,20 @@ def multioptimize(optim=None, nchains=None, nblocks=None, blockiters=None, mc=No
         outputqueue = Queue()
         outputlist = empty(nchains, dtype=object)
         processes = []
-            
+
         # Loop over the threads, starting the processes
         for thread in range(nchains):
             blockrand = (block+1)*(2**6-1) # Pseudorandom seeds
-            threadrand = (thread+1)*(2**10-1) 
+            threadrand = (thread+1)*(2**10-1)
             randtime = int((time()-floor(time()))*1e4)
             if randseed is None: thisseed = (blockrand+threadrand)*randtime # Get a random number based on both the time and the thread
             else:                thisseed = randseed + blockrand+threadrand
-            optim._threadindex = thread # Store the thread index 
+            optim._threadindex = thread # Store the thread index
             optimargs = (optim, blockiters, maxtime, verbose, stoppingfunc, die, origbudget, thisseed, mc, label, outputqueue, kwargs)
             prc = Process(target=optimize, args=optimargs)
             prc.start()
             processes.append(prc)
-        
+
         # Tidy up: close the threads and gather the results
         for i in range(nchains):
             result = outputqueue.get() # This is needed or else the process never finishes
@@ -884,7 +884,7 @@ def multioptimize(optim=None, nchains=None, nblocks=None, blockiters=None, mc=No
             if block==0 and threadindex==0: origresults = dcp(result) # Copy the original results from the first optimization
         for prc in processes:
             prc.join() # Wait for them to finish
-        
+
         # Figure out which one did best
         lastfvalval = bestfvalval if bestfvalval < inf else outputlist[0].improvement[0][0]
         lastbestbudget = origbudget
@@ -924,29 +924,29 @@ def multioptimize(optim=None, nchains=None, nblocks=None, blockiters=None, mc=No
 
 
 
-def tvoptimize(project=None, optim=None, tvec=None, verbose=None, maxtime=None, maxiters=1000, origbudget=None, 
+def tvoptimize(project=None, optim=None, tvec=None, verbose=None, maxtime=None, maxiters=1000, origbudget=None,
                ccsample='best', randseed=None, mc=3, label=None, die=False, **kwargs):
     '''
     Run a time-varying optimization. See project.optimize() for usage examples, and optimize()
     for kwarg explanation.
-    
+
     Simple example:
         import optima as op
         P = op.demo(0, which='simple'); P.parset().fixprops(False) # Create the project, and allow ART to be optimized
         P.optimize(timevarying=1, mc=0, maxiters=30, randseed=1, tvconstrain=False)
         op.pygui(P)
-    
+
     Version: 2017oct30
     '''
 
     printv('Preparing to run a time-varying optimization...', 1, verbose)
-    
+
     # Do a preliminary non-time-varying optimization
     optim.tvsettings['timevarying'] = False # Turn off for the first run
     prelim = optimize(optim=optim, maxtime=maxtime, maxiters=maxiters, verbose=verbose, origbudget=origbudget,
                 ccsample=ccsample, randseed=randseed, mc=mc, label=label, die=die, keepraw=True, **kwargs)
     rawresults = prelim.raw['Baseline'][0] # Store the raw results; "Baseline" vs. "Optimized" shouldn't matter, and [0] is the first/best run -- not sure if there is a more robut way
-    
+
     # Add in the time-varying component
     origtotalbudget = dcp(optim.objectives['budget']) # Should be a float, but dcp just in case
     totalbudget = origtotalbudget
@@ -965,43 +965,43 @@ def tvoptimize(project=None, optim=None, tvec=None, verbose=None, maxtime=None, 
     budgetvec = optimconstbudget[:][optiminds] # Get the original budget vector
     noptimprogs = len(budgetvec) # Number of optimizable programs
     if label is None: label = ''
-    
+
     # Set up arguments which are shared between outcomecalc and asd
     optim.tvsettings['timevarying'] = True # Turn it back on for everything else
-    args = {'which':'outcomes', 
-            'project':project, 
-            'parsetname':optim.parsetname, 
-            'progsetname':optim.progsetname, 
-            'objectives':optim.objectives, 
+    args = {'which':'outcomes',
+            'project':project,
+            'parsetname':optim.parsetname,
+            'progsetname':optim.progsetname,
+            'objectives':optim.objectives,
             'absconstraints':absconstraints,
             'totalbudget':origtotalbudget, # Complicated, see below
             'optiminds':optiminds, # Redundant, could probably be removed because optimkeys is given
             'optimkeys':optimkeys,
-            'origbudget':origbudget, 
-            'tvec':tvec, 
-            'ccsample':ccsample, 
-            'verbose':verbose, 
+            'origbudget':origbudget,
+            'tvec':tvec,
+            'ccsample':ccsample,
+            'verbose':verbose,
             'initpeople':None, # For now, run full time series
             'tvsettings':optim.tvsettings} # Complicated; see below
-    
+
     tmpresults = odict()
     tmpimprovements = odict()
     tmpfullruninfo = odict()
-    
+
     # This generates the baseline results
     tmpresults['Baseline']  = outcomecalc(prelim.budgets['Baseline'],  outputresults=True, doconstrainbudget=False, **args) ## !! I think 'Baseline' is supposed to be rescaled and constrained, but it's not now, not sure if this will break the tvoptimization
     tmpresults['Optimized'] = outcomecalc(prelim.budgets['Optimized'], outputresults=True, doconstrainbudget=False, **args)
-    for key,result in tmpresults.items(): 
+    for key,result in tmpresults.items():
         result.name = key # Update names
         tmpimprovements[key] = [tmpresults[key].outcome] # Hacky, since expects a list
-    
+
     # Set up budgets to run
     tvbudgetvec = dcp(budgetvec)
     tvcontrolvec = zeros(noptimprogs) # Generate vector of zeros for correct length
     tvvec = concatenate([tvbudgetvec, tvcontrolvec])
     if randseed is None: randseed = int((time()-floor(time()))*1e4) # Make sure a seed is used
     args['totalbudget'] = totalbudget
-            
+
     # Set up the optimizations to run
     bestfval = inf # Value of outcome
     asdresults = odict()
@@ -1015,12 +1015,12 @@ def tvoptimize(project=None, optim=None, tvec=None, verbose=None, maxtime=None, 
     steptvcontrol = optim.tvsettings['asdstep']+dcp(tvcontrolvec) # Step size for TV parameter
     sinitial = concatenate([stepbudget]*2+[steptvcontrol]*2) # Set the step size -- duplicate for +/-
     args['origbudget'] = optimconstbudget
-    
+
     # Set the initial people
     initialind = findinds(rawresults['tvec'], optim.objectives['start'])
     initpeople = rawresults['people'][:,:,initialind] # Pull out the people array corresponding to the start of the optimization -- there shouldn't be multiple raw arrays here
     args['initpeople'] = initpeople
-    
+
     # Now run the optimization
     origoutcomes = outcomecalc(outputresults=True, **args) # Calculate the initial outcome and pass it back in
     args['origoutcomes'] = origoutcomes
@@ -1029,10 +1029,10 @@ def tvoptimize(project=None, optim=None, tvec=None, verbose=None, maxtime=None, 
     budgetvec, tvcontrolvec = separatetv(inputvec=tvvecnew, optimkeys=optimkeys)
     constrainedbudgetnew, constrainedbudgetvecnew, lowerlim, upperlim = constrainbudget(origbudget=origbudget, budgetvec=budgetvec, totalbudget=totalbudget, absconstraints=absconstraints, optiminds=optiminds, outputtype='full', tvsettings=optim.tvsettings)
     asdresults[key] = {'budget':constrainedbudgetnew, 'fvals':fvals, 'tvcontrolvec':tvcontrolvec}
-    if fvals[-1]<bestfval: 
+    if fvals[-1]<bestfval:
         bestkey = key # Reset key
         bestfval = fvals[-1] # Reset fval
-    
+
     ## Calculate outcomes
     args['initpeople'] = None # Turn off again to get full results
     new = outcomecalc(asdresults[bestkey]['budget'], tvcontrolvec=tvcontrolvec, outputresults=True, **args)
@@ -1040,7 +1040,7 @@ def tvoptimize(project=None, optim=None, tvec=None, verbose=None, maxtime=None, 
     tmpresults[new.name] = new
     tmpimprovements[new.name] = asdresults[bestkey]['fvals']
     tmpfullruninfo[new.name] = asdresults # Store everything
-    
+
     ## Output
     multires = Multiresultset(resultsetlist=tmpresults.values(), name='optim-%s' % optim.name)
     for k,key in enumerate(multires.keys): multires.budgetyears[key] = tmpresults[k].budgetyears # Copy budget years
@@ -1048,7 +1048,7 @@ def tvoptimize(project=None, optim=None, tvec=None, verbose=None, maxtime=None, 
     multires.fullruninfo = tmpfullruninfo # And the budgets/outcomes for every different run
     multires.outcomes = dcp(multires.outcome) # Copy to more robust place, and...
     optim.resultsref = multires.name # Store the reference for this result
-    
+
     # Store optimization settings
     multires.optimsettings = odict([('maxiters',maxiters),('maxtime',maxtime),('mc',mc),('randseed',randseed),('tvsettings',optim.tvsettings)])
 
@@ -1057,7 +1057,7 @@ def tvoptimize(project=None, optim=None, tvec=None, verbose=None, maxtime=None, 
 
 
 def minoutcomes(project=None, optim=None, tvec=None, absconstraints=None, verbose=None, maxtime=None, maxiters=1000, ncpus=None,
-                origbudget=None, ccsample='best', randseed=None, mc=3, label=None, die=False, timevarying=None, keepraw=False, stoppingfunc=None, **kwargs):
+                origbudget=None, ccsample='best', randseed=None, mc=None, label=None, die=False, timevarying=None, keepraw=False, stoppingfunc=None, **kwargs):
     ''' Split out minimize outcomes.
         mc: (baselines, randoms, progbaselines) counts the number of optimizations to start with each of:
              baselines start from the origbudget (rescaled and constrained)
@@ -1068,7 +1068,9 @@ def minoutcomes(project=None, optim=None, tvec=None, absconstraints=None, verbos
     ## Handle budget and remove fixed costs
     if project is None or optim is None: raise OptimaException('An optimization requires both a project and an optimization object to run')
     if absconstraints is None: absconstraints = optim.getabsconstraints()
-    if ncpus is None: ncpus = int(ceil(sc.cpu_count()/2))
+    if mc is None: mc = (1,0,0)
+    elif sc.isnumber(mc): mc = (1,0,mc)
+    print(f'Running minoutcomes with mc: {mc}')
 
     parset  = project.parsets[optim.parsetname] # Link to the original parameter set
     progset = project.progsets[optim.progsetname] # Link to the original program set
@@ -1106,24 +1108,24 @@ def minoutcomes(project=None, optim=None, tvec=None, absconstraints=None, verbos
     constrainedbudgetorig, constrainedbudgetvecorig, lowerlim, upperlim = constrainbudget(origbudget=origbudget, budgetvec=budgetvec, totalbudget=origtotalbudget, absconstraints=absconstraints, optimkeys=optimkeys, outputtype='full', verbose=verbose)
 
     # Set up arguments which are shared between outcomecalc and asd
-    args = {'which':      'outcomes', 
-            'project':    project, 
-            'parsetname': optim.parsetname, 
-            'progsetname':optim.progsetname, 
-            'objectives': optim.objectives, 
+    args = {'which':      'outcomes',
+            'project':    project,
+            'parsetname': optim.parsetname,
+            'progsetname':optim.progsetname,
+            'objectives': optim.objectives,
             'absconstraints':absconstraints,
             'totalbudget':origtotalbudget, # Complicated, see below
             'optimkeys':  optimkeys,
-            'origbudget': origbudget, 
-            'tvec':       tvec, 
-            'ccsample':   ccsample, 
+            'origbudget': origbudget,
+            'tvec':       tvec,
+            'ccsample':   ccsample,
             'verbose':    verbose,
             'startind':   startind,
             'initpeople': initpeople, # Complicated; see below
             'initprops':  initprops,
             'keepraw':    keepraw,
             }
-    
+
     # Set up extremes
     extremebudgets = odict()
     extremebudgets['Optimization baseline'] = dcp(constrainedbudgetorig[:])  # 'Optimization baseline' = constrained rescaled origbudget
@@ -1131,12 +1133,12 @@ def minoutcomes(project=None, optim=None, tvec=None, absconstraints=None, verbos
     extremebudgets['Zero'][nonoptiminds] = constrainedbudgetorig[nonoptimkeys]
     extremebudgets['Infinite'] = origbudget[:]+project.settings.infmoney  # 'Infinite' = maximum constrained budget
     firstkeys = ['Optimization baseline', 'Zero', 'Infinite'] # These are special, store them
-    if mc: # Only run these if MC is being run
+    if mc[2]: # Only run these if we need progbaselines for mc
         for p,prog in zip(optiminds,optimkeys):
             extremebudgets[prog] = zeros(nprogs)
             extremebudgets[prog][p] = sum(constrainedbudgetvecorig)
             for i in nonoptiminds: extremebudgets[prog][p] = origbudget[p] # Copy the original budget
-    
+
     # Set up storage for extreme budgets
     extremeresults  = odict()
     extremeoutcomes = odict()
@@ -1163,10 +1165,10 @@ def minoutcomes(project=None, optim=None, tvec=None, absconstraints=None, verbos
         extremeresults[key] = outcomecalc(exbudget[optiminds], outputresults=True, doconstrainbudget=doconstrainbudget,warn=warn,**args)
         extremeresults[key].name = key
         extremeoutcomes[key] = extremeresults[key].outcome
-    if mc: bestprogram = argmin(extremeoutcomes[:][len(firstkeys):])+len(firstkeys) # Don't include no funding or infinite funding examples
-    
+    if mc[2]: bestprogram = argmin(extremeoutcomes[:][len(firstkeys):])+len(firstkeys) # Don't include no funding or infinite funding examples
+
     # Print out results of the run
-    if mc:
+    if mc[2]:
         printv('Budget scenario outcomes:', 2, verbose)
         besttoworst = argsort(extremeoutcomes[:])
         besttoworstkeys = [extremeoutcomes.keys()[i] for i in besttoworst]
@@ -1179,7 +1181,7 @@ def minoutcomes(project=None, optim=None, tvec=None, absconstraints=None, verbos
         printv('Outcome for baseline budget (starting point): %0.0f' % extremeoutcomes['Optimization baseline'], 2, verbose)
         printv('Outcome for infinite budget (best possible): %0.0f' % extremeoutcomes['Infinite'], 2, verbose)
         printv('Outcome for zero budget (worst possible):    %0.0f' % extremeoutcomes['Zero'], 2, verbose)
-    
+
     # Check extremes -- not quite fair since not constrained but oh well
     if extremeoutcomes['Infinite'] >= extremeoutcomes['Zero']:
         errormsg = 'Infinite funding has a worse or identical outcome to no funding: %s vs. %s' % (extremeoutcomes['Infinite'], extremeoutcomes['Zero'])
@@ -1189,7 +1191,7 @@ def minoutcomes(project=None, optim=None, tvec=None, absconstraints=None, verbos
             errormsg = 'WARNING, funding for %s has a worse outcome than no funding: %s vs. %s' % (key, extremeoutcomes[key], extremeoutcomes['Zero'])
             if die: raise OptimaException(errormsg)
             else:   print(errormsg)
-            
+
     ## Loop over budget scale factors
     tmpresults = odict()
     tmpimprovements = odict()
@@ -1201,7 +1203,7 @@ def minoutcomes(project=None, optim=None, tvec=None, absconstraints=None, verbos
         else: printv('WARNING: I am not sure that the absolute constraints work with multiple scalefactors in optim.objectives[\'budgetscale\']. It is safer to run multiple optimizations, each with objectives["budgetscale"]=1 and objectives["budgetscale"]=X. Proceed at your own risk!', 1, verbose)
     for scalefactor in scalefactors:
 
-        # Get the total budget & constrain it 
+        # Get the total budget & constrain it
         totalbudget = origtotalbudget*scalefactor
         constrainedbudget, constrainedbudgetvec, lowerlim, upperlim = constrainbudget(origbudget=origbudget, budgetvec=budgetvec, totalbudget=totalbudget, absconstraints=absconstraints, optimkeys=optimkeys, outputtype='full')
         args['totalbudget'] = totalbudget
@@ -1220,24 +1222,27 @@ def minoutcomes(project=None, optim=None, tvec=None, absconstraints=None, verbos
             allbudgetvecs['Optimization baseline'] = dcp(constrainedbudgetvec)
             if randseed is None: randseed = int((time()-floor(time()))*1e4) # Make sure a seed is used
             allseeds = [randseed] # Start with current random seed
-            if mc: # If MC, run multiple
-                if extremeoutcomes[bestprogram] < extremeoutcomes['Optimization baseline']:
-                    allbudgetvecs['Program (%s)' % extremebudgets.keys()[bestprogram]] = array([extremebudgets[bestprogram][i] for i in optiminds])  # Include all money going to one program, but only if it's better than the current allocation
+            # Add progbaselines
+            for i in range(min(mc[2], len(besttoworstkeys))):
+                if extremeoutcomes[besttoworstkeys[i]] < extremeoutcomes['Optimization baseline'] * 2: # !! TODO consider the bound here
+                    allbudgetvecs[f'Program {besttoworstkeys[i]}'] = array([extremebudgets[besttoworstkeys[i]][j] for j in optiminds])  # Include all money going to one program, but only if it's better than the current allocation
                     allseeds.append(randseed+1) # Append a new seed if we're running a program extreme as well
-                for i in range(abs(mc)): # For the remainder, do randomizations
-                    scalefactorrand = scalefactor*(2**10-1) # Pseudorandomize the seeds
-                    mcrand = i*(2**6-1)
-                    thisseed = int(randseed + scalefactorrand + mcrand)
-                    seed(thisseed)
-                    allseeds.append(thisseed)
-                    if mc<0: 
-                        randbudget = random(noptimprogs)
-                        randbudget = randbudget/randbudget.sum()*constrainedbudgetvec.sum()
-                        allbudgetvecs['Random %s' % (i+1)] = randbudget
-                    else:
-                        current = dcp(constrainedbudgetvec)
-                        allbudgetvecs['Optimization baseline %s' % (i+1)] = current
-                    
+            numrand = 0  # number of random starting budgets
+            for i in range(max(sum(mc)-len(allbudgetvecs.keys()),0)):
+                scalefactorrand = scalefactor*(2**10-1) # Pseudorandomize the seeds
+                mcrand = i*(2**6-1)
+                thisseed = int(randseed + scalefactorrand + mcrand)
+                seed(thisseed)
+                allseeds.append(thisseed)
+                if numrand < mc[1]:  # First add the correct number of random budgets
+                    numrand += 1
+                    randbudget = random(noptimprogs)
+                    randbudget = randbudget/randbudget.sum()*constrainedbudgetvec.sum()
+                    allbudgetvecs['Random %s' % (i+1)] = randbudget
+                else:  # Then fill out with the baseline budget
+                    current = dcp(constrainedbudgetvec)
+                    allbudgetvecs['Optimization baseline %s' % (i+1-numrand)] = current
+
             # Actually run the optimizations
             bestfval = inf # Value of outcome
             asdresults = odict()
@@ -1254,6 +1259,7 @@ def minoutcomes(project=None, optim=None, tvec=None, absconstraints=None, verbos
             # Run the optimizations in parallel
             print(f'minoutcomes running {len(allargs)} optimizations in parallel with ncpus {ncpus}: {[arg["label"] for arg in allargs]}')
             asdrawresults = sc.parallelize(asd,iterkwargs=allargs,ncpus=int(ncpus))
+            print(f'\n\nasd returned best outcomes {list(zip(allbudgetvecs.keys(),[res["fval"] for res in asdrawresults]))}\n')
             for k, key in enumerate(allbudgetvecs.keys()):
                 res = asdrawresults[k]
                 # res = asd(outcomecalc, allbudgetvecs[key], args=args, xmin=xmin, maxtime=maxtime, maxiters=maxiters, verbose=verbose, randseed=allseeds[k], label=thislabel, stoppingfunc=stoppingfunc, **kwargs)
