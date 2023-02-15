@@ -7,14 +7,14 @@ Version: 2019dec02
 from optima import OptimaException, Link, Multiresultset, ICER, asd, getresults # Main functions
 from optima import printv, dcp, odict, findinds, today, getdate, uuid, objrepr, promotetoarray, findnearest, sanitize, inclusiverange, sigfig # Utilities
 
-from numpy import zeros, ones, empty, arange, array, inf, isfinite, argmin, argsort, nan, floor, concatenate, exp, sqrt, logical_and
+from numpy import zeros, ones, empty, arange, array, inf, isfinite, argmin, argsort, nan, floor, concatenate, exp, sqrt, logical_and, ceil
 from numpy.random import random, seed, randint
 from time import time
 import optima as op # Used by minmoney, at some point should make syntax consistent
+import sciris as sc
 
 # Import dependencies here so no biggie if they fail
-try:    from multiprocessing import Process, Queue
-except: Process, Queue = None, None # OK to skip these if batch is False
+from multiprocessing import Process, Queue
 
 import six
 if six.PY3:
@@ -821,8 +821,8 @@ def optimize(optim=None, maxiters=None, maxtime=None, verbose=2, stoppingfunc=No
 
 
 
-def multioptimize(optim=None, nchains=None, nblocks=None, blockiters=None, 
-                  batch=None, mc=None, randseed=None, maxiters=None, maxtime=None, verbose=2, 
+def multioptimize(optim=None, nchains=None, nblocks=None, blockiters=None, mc=None,
+                  randseed=None, maxiters=None, maxtime=None, verbose=2,
                   stoppingfunc=None, die=False, origbudget=None, label=None, tol=1e-3, **kwargs):
     '''
     Run a multi-chain optimization. See project.optimize() for usage examples, and optimize()
@@ -1056,16 +1056,19 @@ def tvoptimize(project=None, optim=None, tvec=None, verbose=None, maxtime=None, 
 
 
 
-def minoutcomes(project=None, optim=None, tvec=None, absconstraints=None, verbose=None, maxtime=None, maxiters=1000,
+def minoutcomes(project=None, optim=None, tvec=None, absconstraints=None, verbose=None, maxtime=None, maxiters=1000, ncpus=None,
                 origbudget=None, ccsample='best', randseed=None, mc=3, label=None, die=False, timevarying=None, keepraw=False, stoppingfunc=None, **kwargs):
-    ''' Split out minimize outcomes '''
-
-    # Optional printing for debugging
-    # print(f'!! minoutcomes called with: optim:{optim}, optim.constraints:{optim.constraints}, optim.objectives:{optim.objectives},tvec:{tvec},origbudget:{origbudget},randseed:{randseed},mc:{mc},timevarying:{timevarying},stoppingfunc:{stoppingfunc}')
+    ''' Split out minimize outcomes.
+        mc: (baselines, randoms, progbaselines) counts the number of optimizations to start with each of:
+             baselines start from the origbudget (rescaled and constrained)
+             randoms start from a randomized (constrained) budget
+             progbaselines start with all money in a single program
+    '''
 
     ## Handle budget and remove fixed costs
     if project is None or optim is None: raise OptimaException('An optimization requires both a project and an optimization object to run')
     if absconstraints is None: absconstraints = optim.getabsconstraints()
+    if ncpus is None: ncpus = int(ceil(sc.cpu_count()/2))
 
     parset  = project.parsets[optim.parsetname] # Link to the original parameter set
     progset = project.progsets[optim.progsetname] # Link to the original program set
@@ -1238,6 +1241,7 @@ def minoutcomes(project=None, optim=None, tvec=None, absconstraints=None, verbos
             # Actually run the optimizations
             bestfval = inf # Value of outcome
             asdresults = odict()
+            allargs = [None] * len(allbudgetvecs.keys())
             for k,key in enumerate(allbudgetvecs.keys()):
 
                 if stoppingfunc and stoppingfunc():
@@ -1246,7 +1250,13 @@ def minoutcomes(project=None, optim=None, tvec=None, absconstraints=None, verbos
                 printv('Running optimization "%s" (%i/%i) with maxtime=%s, maxiters=%s' % (key, k+1, len(allbudgetvecs), maxtime, maxiters), 2, verbose)
                 if label: thislabel = '"'+label+'-'+key+'"'
                 else: thislabel = '"'+key+'"'
-                res = asd(outcomecalc, allbudgetvecs[key], args=args, xmin=xmin, maxtime=maxtime, maxiters=maxiters, verbose=verbose, randseed=allseeds[k], label=thislabel, stoppingfunc=stoppingfunc, **kwargs)
+                allargs[k] = {'function':outcomecalc, 'x':allbudgetvecs[key], 'args':args, 'xmin':xmin, 'maxtime':maxtime, 'maxiters':maxiters, 'verbose':verbose, 'randseed':allseeds[k], 'label':thislabel, 'stoppingfunc':stoppingfunc, **kwargs }
+            # Run the optimizations in parallel
+            print(f'minoutcomes running {len(allargs)} optimizations in parallel with ncpus {ncpus}: {[arg["label"] for arg in allargs]}')
+            asdrawresults = sc.parallelize(asd,iterkwargs=allargs,ncpus=int(ncpus))
+            for k, key in enumerate(allbudgetvecs.keys()):
+                res = asdrawresults[k]
+                # res = asd(outcomecalc, allbudgetvecs[key], args=args, xmin=xmin, maxtime=maxtime, maxiters=maxiters, verbose=verbose, randseed=allseeds[k], label=thislabel, stoppingfunc=stoppingfunc, **kwargs)
                 budgetvecnew, fvals = res.x, res.details.fvals
                 constrainedbudgetnew, constrainedbudgetvecnew, lowerlim, upperlim = constrainbudget(origbudget=origbudget, budgetvec=budgetvecnew, totalbudget=totalbudget, absconstraints=absconstraints, optimkeys=optimkeys, outputtype='full')
                 asdresults[key] = {'budget':constrainedbudgetnew, 'fvals':fvals}
@@ -1617,7 +1627,6 @@ def minmoney(project=None, optim=None, tvec=None, verbose=None, maxtime=None, ma
                         break
             
             else:
-                import sciris as sc # Optional dependency
                 allkeys = []
                 allvecs = []
                 allbudgets = []
@@ -1633,7 +1642,7 @@ def minmoney(project=None, optim=None, tvec=None, verbose=None, maxtime=None, ma
                     allbudgets.append(this_budget)
                 parallelargs = sc.dcp(args)
                 parallelargs.update({'totalbudget':totalbudget, 'outputresults':True})
-                all_results_throws = sc.parallelize(op.outcomecalc, iterarg=allbudgets, kwargs=parallelargs, ncpus=nchains)
+                all_results_throws = sc.parallelize(op.outcomecalc, iterarg=allbudgets, kwargs=parallelargs, ncpus=ncpus)
                 for t,throw in enumerate(range(n_throws-1)): # -1 since include current budget
                     res_throw = all_results_throws[t].outcomes['final']
                     dists[allkeys[t]] = distance(res_targ, res_throw)

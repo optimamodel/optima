@@ -3,8 +3,15 @@ from optima import odict, getdate, today, uuid, dcp, makefilepath, objrepr, prin
 from optima import loadspreadsheet, model, gitinfo, defaultscenarios, makesimpars, makespreadsheet
 from optima import defaultobjectives, autofit, runscenarios, optimize, multioptimize, tvoptimize, outcomecalc, icers # Import functions
 from optima import version # Get current version
-from numpy import argmin, argsort, nan
+from numpy import argmin, argsort, nan, ceil
 from numpy.random import seed, randint
+
+try: from sciris import cpu_count  # Introduced in sciris 1.2.0 (2021-07-05)
+except:
+    import sciris
+    from multiprocessing import cpu_count
+    print(f'!! WARNING: you are using an old version of sciris: version {sciris.__version__} from {sciris.__versiondate__}.\nPlease update to the latest version using "pip install sciris --upgrade"')
+
 import os
 
 #######################################################################################################
@@ -784,7 +791,7 @@ class Project(object):
 
     def optimize(self, name=None, parsetname=None, progsetname=None, objectives=None, constraints=None, absconstraints=None, proporigconstraints=None, maxiters=None, maxtime=None,
                  verbose=2, stoppingfunc=None, die=False, origbudget=None, randseed=None, mc=None, optim=None, optimname=None, multi=False, 
-                 nchains=None, nblocks=None, blockiters=None, batch=None, timevarying=None, tvsettings=None, tvconstrain=None, which=None, 
+                 nchains=None, nblocks=None, blockiters=None, ncpus=None, parallel=True, timevarying=None, tvsettings=None, tvconstrain=None, which=None,
                  makescenarios=True, **kwargs):
         '''
         Function to minimize outcomes or money.
@@ -826,15 +833,27 @@ class Project(object):
         if constraints is not None:         optim.constraints = constraints
         if proporigconstraints is not None: optim.proporigconstraints = proporigconstraints
 
+        if maxiters is None: maxiters = blockiters  # blockiters and maxiters are the same and will be called maxiters from here on out
+        settings = {'maxtime':maxtime, 'maxiters':maxiters, 'multi':multi, 'parallel':parallel, 'ncpus': ncpus,
+                    'nchains':nchains, 'nblocks':nblocks, 'mc':mc}
+        if maxtime is None:  # Unlimited time so run the most thorough optimization
+            defaultsettings = {'maxiters':None, 'multi':True,  'parallel':True, 'nchains':1, 'nblocks':10, 'mc':(24,24,24), 'ncpus':ceil(cpu_count()/2)}
+        elif maxtime <= 60:  # 1 min or less, so run a test optimization
+            defaultsettings = {'maxiters':None, 'multi':False, 'parallel':True, 'nchains':1, 'nblocks':1,  'mc':( 2, 0, 0), 'ncpus':ceil(cpu_count()/2)}
+        else:                # Longer than 1 minute, but not unlimited so run the most "efficient" optimization
+            defaultsettings = {'maxiters':None, 'multi':False, 'parallel':True, 'nchains':1, 'nblocks':1,  'mc':(24,24,24), 'ncpus':ceil(cpu_count()/2)}
+        for key, setting in settings.items():
+            if setting is None: settings[key] = defaultsettings[key]  # Only overwrite Nones with the default
+        multi = settings['nchains'] > 1 or settings['nblocks'] > 1    # Need to run with multioptimize if you have nchains or nblocks
+
         # Run the optimization
         if optim.tvsettings['timevarying']: # Call time-varying optimization
             multires = tvoptimize(optim=optim, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, 
                                      die=die, origbudget=origbudget, randseed=randseed, mc=mc, **kwargs)
         elif multi and not optim.objectives['which']=='money': # It's a multi-run objectives optimization
             multires = multioptimize(optim=optim, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, 
-                                     die=die, origbudget=origbudget, randseed=randseed, mc=mc, nchains=nchains, nblocks=nblocks, 
-                                     blockiters=blockiters, batch=batch, **kwargs)      
-        else: # Neither special case
+                                     die=die, origbudget=origbudget, randseed=randseed, mc=mc, nchains=nchains, nblocks=nblocks, **kwargs)
+        else: # Neither special case, so minoutcomes or minmoney
             multires = optimize(optim=optim, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, 
                                 die=die, origbudget=origbudget, randseed=randseed, mc=mc, multi=multi, nchains=nchains, **kwargs)
         
