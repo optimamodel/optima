@@ -1067,8 +1067,8 @@ def tvoptimize(project=None, optim=None, tvec=None, verbose=None, maxtime=None, 
 
 
 
-def minoutcomes(project=None, optim=None, tvec=None, absconstraints=None, verbose=None, maxtime=None, maxiters=None,
-                ncpus=None, parallel=True, origbudget=None, ccsample='best', randseed=None, mc=None, label=None,
+def minoutcomes(project=None, optim=None, tvec=None, absconstraints=None, verbose=None, maxtime=None, finishtime=None,
+                maxiters=None, ncpus=None, parallel=True, origbudget=None, ccsample='best', randseed=None, mc=None, label=None,
                 die=False, timevarying=None, keepraw=False, stoppingfunc=None, rejectfactor=None, **kwargs):
     ''' Split out minimize outcomes.
         mc: (baselines, randoms, progbaselines) counts the number of optimizations to start with each of:
