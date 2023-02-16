@@ -7,8 +7,8 @@ __all__ = ['asd']
 
 def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
     pinitial=None, sinitial=None, xmin=None, xmax=None, maxiters=None, maxtime=None, 
-    abstol=1e-6, reltol=1e-3, stalliters=None, stoppingfunc=None, randseed=None, 
-    label=None, verbose=2, **kwargs):
+    finishtime=None, abstol=1e-6, reltol=1e-3, stalliters=None, stoppingfunc=None,
+    randseed=None, label=None, verbose=2, **kwargs):
     """
     Optimization using adaptive stochastic descent (ASD).
     
@@ -30,6 +30,7 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
       xmax           None    Max value allowed for each parameter 
       maxiters       1000    Maximum number of iterations (1 iteration = 1 function evaluation)
       maxtime        3600    Maximum time allowed, in seconds
+      finishtime     None    Time (given by time() in seconds) after which the calculation will halt
       abstol         1e-6    Minimum absolute change in objective function
       reltol         1e-3    Minimum relative change in objective function
       stalliters     10*n    Number of iterations over which to calculate TolFun (n = number of parameters)
@@ -137,8 +138,9 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
     allsteps[0, :] = xorig # Store initial input vector
 
     # Loop
-    count = 0 # Keep track of how many iterations have occurred
     start = time() # Keep track of when we begin looping
+    if finishtime is None: finishtime = start + maxtime*2 # If no finish time given, just make a time after the maxtime will be up.
+    count = 0 # Keep track of how many iterations have occurred
     offset = ' ' * 4 # Offset the print statements
     exitreason = 'Unknown exit reason' # Catch everything else
     while True:
@@ -203,6 +205,9 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
             break
         if (time() - start) > maxtime:
             exitreason = 'Time limit reached (%s > %s)' % op.sigfig([(time()-start), maxtime])
+            break
+        if time() > finishtime:
+            exitreason = f'Finish time reached. Ran for {op.sigfig(time() - start)} seconds'
             break
         if (count > stalliters) and (abs(np.mean(abserrorhistory)) < abstol): # Stop if improvement is too small
             exitreason = 'Absolute improvement too small (%s < %s)' % op.sigfig([np.mean(abserrorhistory), abstol])
