@@ -5,6 +5,7 @@ from optima import defaultobjectives, autofit, runscenarios, optimize, multiopti
 from optima import version # Get current version
 from numpy import argmin, argsort, nan, ceil
 from numpy.random import seed, randint
+from time import time
 
 try: from sciris import cpu_count  # Introduced in sciris 1.2.0 (2021-07-05)
 except:
