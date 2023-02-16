@@ -1273,7 +1273,13 @@ def minoutcomes(project=None, optim=None, tvec=None, absconstraints=None, verbos
 
             # Run the optimizations in parallel
             printv(f'\nRunning {len(allargs)} optimizations in parallel using {int(min(ncpus,len(allargs)))} cpu threads',2,verbose)
-            asdrawresults = sc.parallelize(asd, iterkwargs=allargs, ncpus=int(ncpus), parallelizer='serial-nocopy' if not parallel else None)
+
+            try: asdrawresults = sc.parallelize(asd, iterkwargs=allargs, ncpus=int(ncpus), parallelizer='serial-nocopy' if not parallel else None)
+            except AssertionError as e:
+                parallel = False
+                printv('\nWARNING: Could not run in parallel because this process is already running in parallel. Trying in serial...',1,verbose)
+                asdrawresults = sc.parallelize(asd, iterkwargs=allargs, ncpus=int(ncpus), parallelizer='serial-nocopy')
+
             printv(f'\nasd returned best outcomes {list(zip(allbudgetvecs.keys(),[res["fval"] for res in asdrawresults]))}\n',2,verbose)
 
             for k, key in enumerate(allbudgetvecs.keys()):
@@ -1664,7 +1670,11 @@ def minmoney(project=None, optim=None, tvec=None, verbose=None, maxtime=None, ma
                     allbudgets.append(this_budget)
                 parallelargs = sc.dcp(args)
                 parallelargs.update({'totalbudget':totalbudget, 'outputresults':True})
-                all_results_throws = sc.parallelize(op.outcomecalc, iterarg=allbudgets, kwargs=parallelargs, ncpus=int(ncpus))
+                try: all_results_throws = sc.parallelize(op.outcomecalc, iterarg=allbudgets, kwargs=parallelargs, ncpus=int(ncpus))
+                except AssertionError as e:
+                    parallel = False
+                    printv('\nWARNING: Could not run in parallel because this process is already running in parallel. Trying in serial...',1,verbose)
+                    all_results_throws = sc.parallelize(op.outcomecalc, iterarg=allbudgets, kwargs=parallelargs, ncpus=int(ncpus), parallelizer='serial-nocopy')
                 for t,throw in enumerate(range(n_throws-1)): # -1 since include current budget
                     res_throw = all_results_throws[t].outcomes['final']
                     dists[allkeys[t]] = distance(res_targ, res_throw)
