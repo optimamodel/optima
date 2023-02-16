@@ -1075,7 +1075,7 @@ def minoutcomes(project=None, optim=None, tvec=None, absconstraints=None, verbos
              baselines start from the origbudget (rescaled and constrained)
              randoms start from a randomized (constrained) budget
              progbaselines start with all money in a single program (note that these get rejected and replaced with
-                baseline budgets if their outcome is worse than rejectfactor*optimizationbaselineoutcome)
+                random budgets if their outcome is worse than rejectfactor*optimizationbaselineoutcome)
     '''
 
     ## Handle budget and remove fixed costs
@@ -1235,30 +1235,35 @@ def minoutcomes(project=None, optim=None, tvec=None, absconstraints=None, verbos
         # Set up budgets to run
         if totalbudget: # Budget is nonzero, run
             allbudgetvecs = odict()
-            if mc[0] > 0: allbudgetvecs['Optimization baseline'] = dcp(constrainedbudgetvec)
-            if randseed is None: randseed = int((time()-floor(time()))*1e4) # Make sure a seed is used
-            allseeds = [randseed] # Start with current random seed
-            # Add progbaselines
+
+            # Add baseline budgets, then random budgets, then progbaselines
+            for i in range(mc[0]):
+                if i == 0: allbudgetvecs[f'Optimization baseline']            = dcp(constrainedbudgetvec)
+                else:      allbudgetvecs[f'Optimization baseline {int(i+1)}'] = dcp(constrainedbudgetvec)
+
+            randbudgets = 0
+            for i in range(mc[1]):
+                randbudget = random(noptimprogs)
+                randbudget = randbudget / randbudget.sum() * constrainedbudgetvec.sum()
+                allbudgetvecs['Random %s' % (i+1)] = randbudget
+                randbudgets += 1
+
             for i in range(min(mc[2], len(besttoworstkeys))):
-                # If we have a rejectfactor, check it doesn't get rejected
+                # If we have a rejectfactor, check that this extremeoutcome is close enough to the Optimization baseline outcome
                 if rejectfactor is None or extremeoutcomes[besttoworstkeys[i]] < extremeoutcomes['Optimization baseline'] * rejectfactor:
-                    allbudgetvecs[f'Program {besttoworstkeys[i]}'] = array([extremebudgets[besttoworstkeys[i]][j] for j in optiminds])  # Include all money going to one program, but only if it's better than the current allocation
-                    allseeds.append(randseed+1) # Append a new seed if we're running a program extreme as well
-            numrand = 0  # number of random starting budgets
-            for i in range(max(sum(mc)-len(allbudgetvecs.keys()),0)):
-                scalefactorrand = scalefactor*(2**10-1) # Pseudorandomize the seeds
-                mcrand = i*(2**6-1)
-                thisseed = int(randseed + scalefactorrand + mcrand)
-                seed(thisseed)
-                allseeds.append(thisseed)
-                if numrand < mc[1]:  # First add the correct number of random budgets
-                    numrand += 1
-                    randbudget = random(noptimprogs)
-                    randbudget = randbudget/randbudget.sum()*constrainedbudgetvec.sum()
-                    allbudgetvecs['Random %s' % (i+1)] = randbudget
-                else:                # Then fill out with the baseline budget
-                    current = dcp(constrainedbudgetvec)
-                    allbudgetvecs['Optimization baseline %s' % (i+1-numrand)] = current
+                    allbudgetvecs[f'Program {besttoworstkeys[i]}'] = array([extremebudgets[besttoworstkeys[i]][j] for j in optiminds])
+
+            # Fill out the rest with extra random budgets if needed
+            for i in range( sum(mc) - len(allbudgetvecs.keys()) ):
+                randbudget = random(noptimprogs)
+                randbudget = randbudget / randbudget.sum() * constrainedbudgetvec.sum()
+                allbudgetvecs['Random %s' % (randbudgets+i+1)] = randbudget
+
+            scalefactorrand = scalefactor * (2**10-1)  # Pseudorandomize the seeds
+            maxseed = 2**32
+            def pseudorandomseed(hashed):  # Gets a pseudorandom seed based on the hash of the string name
+                return int(randseed + scalefactorrand + hashed) % maxseed
+            allseeds = [pseudorandomseed(hash(key)) for key in allbudgetvecs.keys()]
 
             # Actually run the optimizations
             bestfval = inf # Value of outcome
