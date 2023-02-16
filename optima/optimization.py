@@ -84,6 +84,7 @@ class Optim(object):
         """ Gets the appropriate absolute constraints from the Optim, taking all the constraints, absconstraints and
             proporigconstraints into consideration and choosing the most strict of them for each program at the totalbudget.
         """
+        self.certifyconstraintsprograms()
         defabsconstraints = defaultabsconstraints(project=self.projectref(),progsetname=self.progsetname)
         if self.absconstraints is None and self.constraints is None and self.proporigconstraints is None:
             return defabsconstraints
@@ -105,7 +106,24 @@ class Optim(object):
     def getproporigconstraints(self):
         """ Does the same thing as getabsconstraints, but then converts the absconstraints into proporigconstraints
         """
+        self.certifyconstraintsprograms()
         return absconstraintstoprogorigconstraints(project=self.projectref(), progsetname=self.progsetname, absconstraints=self.getabsconstraints())
+
+    def certifyconstraintsprograms(self, verbose=2):
+        progset = getprogsetfromproject(project=self.projectref(), progsetname=self.progsetname, function='certifyconstraintsprograms')
+        constrslist = [(constrname,constr) for constrname, constr in zip(['absconstraints','constraints','proporigconstraints'],[self.absconstraints, self.constraints, self.proporigconstraints]) if constr is not None]
+        for constrname,constr in constrslist:
+            for progname in progset.programs.keys():
+                if progname not in constr['name'].keys():
+                    printv(f'WARNING: Program "{progname}" wasn\'t in the {constrname}["name"] of Optim "{self.name}". Not sure why this is??',1,verbose)
+                    constr['name'][progname] = progset.programs[progname].name
+                if progname not in constr['min'].keys():
+                    printv(f'WARNING: Program "{progname}" wasn\'t in the {constrname}["min"] of Optim "{self.name}". Not sure why this is?? Defaulting to 0',1,verbose)
+                    constr['min'][progname] = 0
+                if progname not in constr['max'].keys():
+                    printv(f'WARNING: Program "{progname}" wasn\'t in the {constrname}["max"] of Optim "{self.name}". Not sure why this is?? Defaulting to None',1,verbose)
+                    constr['max'][progname] = None
+
 
 ################################################################################################################################################
 ### Helper functions
