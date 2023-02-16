@@ -1524,15 +1524,18 @@ def set_optimization_summaries_on_project(project, optimization_summaries):
                 optim.objectives[objkey] = summary["objectives"][objkey]
         optim.objectives["which"] = summary["which"]
 
-        if "proporigconstraints" in summary and "absconstraints" not in summary and "constraints" not in summary:
-            print(f'>> set_optimization_summaries_on_project optim "{optim.name}" does not have absconstraints or constraints so updating the proporigconstraints')
+        if "proporigconstraints" in summary:
             optim.proporigconstraints = revert_constraints(summary['proporigconstraints'], project=project, progsetname=optim.progsetname)
-            optim.absconstraints = None  # Make sure if the FE deleted the absconstraints, then we will here too
-            optim.constraints    = None  # Make sure if the FE deleted the constraints, then we will here too
-        else:
-            # The summary still has absconstraints or constraints so we mustn't have saved this optim,
-            # so keep the constraints and absconstraints as is
-            pass
+
+        if "absconstraints" in summary:
+            optim.absconstraints = revert_constraints(summary['absconstraints'], project=project, progsetname=optim.progsetname)
+        else: # Must have deleted from FE so delete here too
+            optim.absconstraints = None
+
+        if "constraints" in summary:
+            optim.constraints = revert_constraints(summary['constraints'], project=project, progsetname=optim.progsetname)
+        else: # Must have deleted from FE so delete here too
+            optim.constraints = None
 
         for tvkey in optim.tvsettings.keys():
             optim.tvsettings[tvkey] = summary["tvsettings"][tvkey]
