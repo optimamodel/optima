@@ -143,8 +143,6 @@ def proporigconstraintstoabsconstraints(project=None, progsetname=None,proporigc
     absconstraints = dcp(proporigconstraints)
 
     for progname in progset.programs.keys():
-        if progname not in proporigconstraints['min'].keys(): proporigconstraints['min'][progname] = None # Occasionally in the FE, the constraints can get disconnected from the progset
-        if progname not in proporigconstraints['max'].keys(): proporigconstraints['max'][progname] = None
         if proporigconstraints['min'][progname] is not None:
             absconstraints['min'][progname] = proporigconstraints['min'][progname] * defbudget[progname]
         if proporigconstraints['max'][progname] is not None:
