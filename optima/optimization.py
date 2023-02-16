@@ -1066,12 +1066,13 @@ def tvoptimize(project=None, optim=None, tvec=None, verbose=None, maxtime=None, 
 
 def minoutcomes(project=None, optim=None, tvec=None, absconstraints=None, verbose=None, maxtime=None, maxiters=None,
                 ncpus=None, parallel=True, origbudget=None, ccsample='best', randseed=None, mc=None, label=None,
-                die=False, timevarying=None, keepraw=False, stoppingfunc=None, **kwargs):
+                die=False, timevarying=None, keepraw=False, stoppingfunc=None, rejectfactor=None, **kwargs):
     ''' Split out minimize outcomes.
         mc: (baselines, randoms, progbaselines) counts the number of optimizations to start with each of:
              baselines start from the origbudget (rescaled and constrained)
              randoms start from a randomized (constrained) budget
-             progbaselines start with all money in a single program
+             progbaselines start with all money in a single program (note that these get rejected and replaced with
+                baseline budgets if their outcome is worse than rejectfactor*optimizationbaselineoutcome)
     '''
 
     ## Handle budget and remove fixed costs
@@ -1236,7 +1237,8 @@ def minoutcomes(project=None, optim=None, tvec=None, absconstraints=None, verbos
             allseeds = [randseed] # Start with current random seed
             # Add progbaselines
             for i in range(min(mc[2], len(besttoworstkeys))):
-                if extremeoutcomes[besttoworstkeys[i]] < extremeoutcomes['Optimization baseline'] * 2: # !! TODO consider the bound here
+                # If we have a rejectfactor, check it doesn't get rejected
+                if rejectfactor is None or extremeoutcomes[besttoworstkeys[i]] < extremeoutcomes['Optimization baseline'] * rejectfactor:
                     allbudgetvecs[f'Program {besttoworstkeys[i]}'] = array([extremebudgets[besttoworstkeys[i]][j] for j in optiminds])  # Include all money going to one program, but only if it's better than the current allocation
                     allseeds.append(randseed+1) # Append a new seed if we're running a program extreme as well
             numrand = 0  # number of random starting budgets
@@ -1269,7 +1271,7 @@ def minoutcomes(project=None, optim=None, tvec=None, absconstraints=None, verbos
                 else: thislabel = '"'+key+'"'
                 allargs[k] = {'function':outcomecalc, 'x':allbudgetvecs[key], 'args':args, 'xmin':xmin, 'maxtime':maxtime, 'maxiters':maxiters, 'verbose':verbose, 'randseed':allseeds[k], 'label':thislabel, 'stoppingfunc':stoppingfunc, **kwargs }
             # Run the optimizations in parallel
-            print(f'minoutcomes running {len(allargs)} optimizations in parallel with ncpus {ncpus}: {[arg["label"] for arg in allargs]}')
+            print(f'\nRunning {len(allargs)} optimizations in parallel using {int(ncpus)} cpu threads')
             asdrawresults = sc.parallelize(asd, iterkwargs=allargs, ncpus=int(ncpus), parallelizer='serial-nocopy' if not parallel else None)
             print(f'\n\nasd returned best outcomes {list(zip(allbudgetvecs.keys(),[res["fval"] for res in asdrawresults]))}\n')
             for k, key in enumerate(allbudgetvecs.keys()):
