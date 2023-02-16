@@ -735,7 +735,7 @@ def outcomecalc(budgetvec=None, which=None, project=None, parsetname=None, progs
 
 
 
-def optimize(optim=None, maxiters=None, maxtime=None, verbose=2, stoppingfunc=None, die=False, origbudget=None,
+def optimize(optim=None, maxiters=None, maxtime=None, finishtime=None, verbose=2, stoppingfunc=None, die=False, origbudget=None,
              randseed=None, mc=None, label=None, outputqueue=None, ncpus=None, parallel=True, *args, **kwargs):
     '''
     The standard Optima optimization function: minimize outcomes for a fixed total budget.
@@ -744,7 +744,8 @@ def optimize(optim=None, maxiters=None, maxtime=None, verbose=2, stoppingfunc=No
         project = the project file
         optim = the optimization object
         maxiters = how many iterations to optimize for
-        maxtime = how many secons to optimize for
+        maxtime = how many seconds to run a single call of asd (not the entire optimization)
+        finishtime = the time given by time() to stop the optimization
         verbose = how much detail to provide
         stoppingfunc = a function called to decide on stopping
         die = whether or not to check things in detail
@@ -770,7 +771,6 @@ def optimize(optim=None, maxiters=None, maxtime=None, verbose=2, stoppingfunc=No
     printv('Running %s optimization...' % which, 1, verbose)
     
     # Set defaults
-    if maxtime is None: maxtime = 3600
     if mc is None or mc == 0 or sum(mc) == 0: mc = (1,0,0)  # Default to just running from Optimization baseline
     if ncpus is None: ncpus = int(ceil( sc.cpu_count()/2 ))
 
@@ -804,14 +804,14 @@ def optimize(optim=None, maxiters=None, maxtime=None, verbose=2, stoppingfunc=No
 
     # Run outcomes minimization
     if which=='outcomes':
-        multires = minoutcomes(project=project, optim=optim, tvec=tvec, verbose=verbose, maxtime=maxtime, maxiters=maxiters,
-                               absconstraints=absconstraints, origbudget=origbudget, randseed=randseed, mc=mc, label=label,
-                               parallel=parallel, ncpus=ncpus,die=die, stoppingfunc=stoppingfunc, **kwargs)
+        multires = minoutcomes(project=project, optim=optim, tvec=tvec, verbose=verbose, maxtime=maxtime, finishtime=finishtime,
+                               maxiters=maxiters, absconstraints=absconstraints, origbudget=origbudget, randseed=randseed,
+                               mc=mc, label=label, parallel=parallel, ncpus=ncpus,die=die, stoppingfunc=stoppingfunc, **kwargs)
 
     # Run money minimization
     elif which=='money':
-        multires = minmoney(project=project, optim=optim, tvec=tvec, verbose=verbose, maxtime=maxtime, maxiters=maxiters, 
-                            fundingchange=1.2, randseed=randseed, stoppingfunc=stoppingfunc,absconstraints=absconstraints,
+        multires = minmoney(project=project, optim=optim, tvec=tvec, verbose=verbose, maxtime=maxtime, finishtime=finishtime,
+                            maxiters=maxiters, fundingchange=1.2, randseed=randseed, stoppingfunc=stoppingfunc,absconstraints=absconstraints,
                             parallel=parallel, ncpus=ncpus, **kwargs)
     
     # If running parallel, put on the queue; otherwise, return
@@ -824,8 +824,8 @@ def optimize(optim=None, maxiters=None, maxtime=None, verbose=2, stoppingfunc=No
 
 
 
-def multioptimize(optim=None, nchains=None, nblocks=None, blockiters=None, mc=None,
-                  randseed=None, maxiters=None, maxtime=None, verbose=2, ncpus=None, parallel=None,
+def multioptimize(optim=None, nchains=None, nblocks=None, blockiters=None, mc=None, randseed=None,
+                  maxiters=None, maxtime=None, finishtime=None, verbose=2, ncpus=None, parallel=None,
                   stoppingfunc=None, die=False, origbudget=None, label=None, tol=1e-3, **kwargs):
     '''
     Run a multi-chain optimization. See project.optimize() for usage examples, and optimize()
@@ -879,7 +879,7 @@ def multioptimize(optim=None, nchains=None, nblocks=None, blockiters=None, mc=No
             if randseed is None: thisseed = (blockrand+threadrand)*randtime # Get a random number based on both the time and the thread
             else:                thisseed = randseed + blockrand+threadrand
             optim._threadindex = thread # Store the thread index
-            optimargs = (optim, maxiters, maxtime, verbose, stoppingfunc, die, origbudget, thisseed, mc, label, outputqueue, chaincpus, parallel, kwargs)
+            optimargs = (optim, maxiters, maxtime, finishtime, verbose, stoppingfunc, die, origbudget, thisseed, mc, label, outputqueue, chaincpus, parallel, kwargs)
             prc = Process(target=optimize, args=optimargs)
             prc.start()
             processes.append(prc)
@@ -916,6 +916,9 @@ def multioptimize(optim=None, nchains=None, nblocks=None, blockiters=None, mc=No
         if bestfvalval / lastfvalval >= 1 and sum(abs(lastbestbudget[:] - origbudget[:])) < tol:
             printv(f'\nSkipping the last {nblocks-(block+1)}/{nblocks} blocks as we got the same budget and outcomes back from this block as the last!\n',2, verbose)
             break
+        if time() > finishtime:
+            printv(f'\nSkipping the last {nblocks-(block+1)}/{nblocks} blocks as we are {time()-finishtime:.2f} seconds past the finish time!\n',2, verbose)
+            break
 
     # Assemble final results object from the initial and final run
     results = dcp(outputlist[bestfvalind]) # Use best results as the basis for the output
@@ -932,7 +935,7 @@ def multioptimize(optim=None, nchains=None, nblocks=None, blockiters=None, mc=No
 
 
 
-def tvoptimize(project=None, optim=None, tvec=None, verbose=None, maxtime=None, maxiters=1000, origbudget=None,
+def tvoptimize(project=None, optim=None, tvec=None, verbose=None, maxtime=None, finishtime=None, maxiters=1000, origbudget=None,
                ccsample='best', randseed=None, mc=3, label=None, die=False, **kwargs):
     '''
     Run a time-varying optimization. See project.optimize() for usage examples, and optimize()
@@ -951,7 +954,7 @@ def tvoptimize(project=None, optim=None, tvec=None, verbose=None, maxtime=None, 
 
     # Do a preliminary non-time-varying optimization
     optim.tvsettings['timevarying'] = False # Turn off for the first run
-    prelim = optimize(optim=optim, maxtime=maxtime, maxiters=maxiters, verbose=verbose, origbudget=origbudget,
+    prelim = optimize(optim=optim, maxtime=maxtime, finishtime=finishtime, maxiters=maxiters, verbose=verbose, origbudget=origbudget,
                 ccsample=ccsample, randseed=randseed, mc=mc, label=label, die=die, keepraw=True, **kwargs)
     rawresults = prelim.raw['Baseline'][0] # Store the raw results; "Baseline" vs. "Optimized" shouldn't matter, and [0] is the first/best run -- not sure if there is a more robut way
 
@@ -1032,7 +1035,7 @@ def tvoptimize(project=None, optim=None, tvec=None, verbose=None, maxtime=None, 
     # Now run the optimization
     origoutcomes = outcomecalc(outputresults=True, **args) # Calculate the initial outcome and pass it back in
     args['origoutcomes'] = origoutcomes
-    res = asd(outcomecalc, tvvec, args=args, xmin=xmin, xmax=xmax, sinitial=sinitial, maxtime=maxtime, maxiters=maxiters, verbose=verbose, randseed=randseed, label=thislabel, **kwargs)
+    res = asd(outcomecalc, tvvec, args=args, xmin=xmin, xmax=xmax, sinitial=sinitial, maxtime=maxtime, finishtime=finishtime, maxiters=maxiters, verbose=verbose, randseed=randseed, label=thislabel, **kwargs)
     tvvecnew, fvals = res.x, res.details.fvals
     budgetvec, tvcontrolvec = separatetv(inputvec=tvvecnew, optimkeys=optimkeys)
     constrainedbudgetnew, constrainedbudgetvecnew, lowerlim, upperlim = constrainbudget(origbudget=origbudget, budgetvec=budgetvec, totalbudget=totalbudget, absconstraints=absconstraints, optiminds=optiminds, outputtype='full', tvsettings=optim.tvsettings)
@@ -1269,7 +1272,7 @@ def minoutcomes(project=None, optim=None, tvec=None, absconstraints=None, verbos
                 printv('Running optimization "%s" (%i/%i) with maxtime=%s, maxiters=%s' % (key, k+1, len(allbudgetvecs), maxtime, maxiters), 2, verbose)
                 if label: thislabel = '"'+label+'-'+key+'"'
                 else: thislabel = '"'+key+'"'
-                allargs[k] = {'function':outcomecalc, 'x':allbudgetvecs[key], 'args':args, 'xmin':xmin, 'maxtime':maxtime, 'maxiters':maxiters, 'verbose':verbose, 'randseed':allseeds[k], 'label':thislabel, 'stoppingfunc':stoppingfunc, **kwargs }
+                allargs[k] = {'function':outcomecalc, 'x':allbudgetvecs[key], 'args':args, 'xmin':xmin, 'maxtime':maxtime, 'finishtime':finishtime, 'maxiters':maxiters, 'verbose':verbose, 'randseed':allseeds[k], 'label':thislabel, 'stoppingfunc':stoppingfunc, **kwargs }
 
             # Run the optimizations in parallel
             if parallel: printv(f'\nRunning {len(allargs)} optimizations in parallel using {int(min(ncpus,len(allargs)))} cpu threads',2,verbose)
@@ -1346,11 +1349,12 @@ def minoutcomes(project=None, optim=None, tvec=None, absconstraints=None, verbos
 
 
 
-def minmoney(project=None, optim=None, tvec=None, verbose=None, maxtime=None, maxiters=1000, absconstraints=None,
+def minmoney(project=None, optim=None, tvec=None, verbose=None, maxtime=None, finishtime=None, maxiters=1000, absconstraints=None,
              fundingchange=1.2, tolerance=1e-2, ccsample='best', randseed=None, keepraw=False, die=False, 
              n_throws=None, n_success=None, n_refine=None, schedule=None, parallel=True, ncpus=None, stoppingfunc=None, **kwargs):
     '''
     A function to minimize money for a fixed objective.
+    Note: maxtime and finishtime does nothing at the moment.
 
     Version: 2019oct14
     '''
