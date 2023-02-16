@@ -771,7 +771,7 @@ def optimize(optim=None, maxiters=None, maxtime=None, verbose=2, stoppingfunc=No
     
     # Set defaults
     if maxtime is None: maxtime = 3600
-    if mc is None or mc == 0: mc = (1,0,0)  # Default to just running from Optimization baseline
+    if mc is None or mc == 0 or sum(mc) == 0: mc = (1,0,0)  # Default to just running from Optimization baseline
     if ncpus is None: ncpus = int(ceil( sc.cpu_count()/2 ))
 
     # Optim structure validation
@@ -1080,9 +1080,9 @@ def minoutcomes(project=None, optim=None, tvec=None, absconstraints=None, verbos
     if absconstraints is None: absconstraints = optim.getabsconstraints()
     if ncpus is None: ncpus = int(ceil( sc.cpu_count()/2 ))
     if not parallel: ncpus = 1
-    if mc is None or mc == 0: mc = (1,0,0)
+    if mc is None or mc == 0 or sum(mc) == 0: mc = (1,0,0)
     elif sc.isnumber(mc): mc = (1,0,mc)  # Default to running 1 from the Optimization baseline, the rest from progbaselines which default to random if they are not good enough
-    print(f'Running minoutcomes with mc: {mc}')
+    printv(f'Running minoutcomes with mc: {mc}',2,verbose)
 
     parset  = project.parsets[optim.parsetname] # Link to the original parameter set
     progset = project.progsets[optim.progsetname] # Link to the original program set
@@ -1232,7 +1232,7 @@ def minoutcomes(project=None, optim=None, tvec=None, absconstraints=None, verbos
         # Set up budgets to run
         if totalbudget: # Budget is nonzero, run
             allbudgetvecs = odict()
-            allbudgetvecs['Optimization baseline'] = dcp(constrainedbudgetvec)
+            if mc[0] > 0: allbudgetvecs['Optimization baseline'] = dcp(constrainedbudgetvec)
             if randseed is None: randseed = int((time()-floor(time()))*1e4) # Make sure a seed is used
             allseeds = [randseed] # Start with current random seed
             # Add progbaselines
@@ -1270,10 +1270,12 @@ def minoutcomes(project=None, optim=None, tvec=None, absconstraints=None, verbos
                 if label: thislabel = '"'+label+'-'+key+'"'
                 else: thislabel = '"'+key+'"'
                 allargs[k] = {'function':outcomecalc, 'x':allbudgetvecs[key], 'args':args, 'xmin':xmin, 'maxtime':maxtime, 'maxiters':maxiters, 'verbose':verbose, 'randseed':allseeds[k], 'label':thislabel, 'stoppingfunc':stoppingfunc, **kwargs }
+
             # Run the optimizations in parallel
-            print(f'\nRunning {len(allargs)} optimizations in parallel using {int(ncpus)} cpu threads')
+            printv(f'\nRunning {len(allargs)} optimizations in parallel using {int(min(ncpus,len(allargs)))} cpu threads',2,verbose)
             asdrawresults = sc.parallelize(asd, iterkwargs=allargs, ncpus=int(ncpus), parallelizer='serial-nocopy' if not parallel else None)
-            print(f'\n\nasd returned best outcomes {list(zip(allbudgetvecs.keys(),[res["fval"] for res in asdrawresults]))}\n')
+            printv(f'\nasd returned best outcomes {list(zip(allbudgetvecs.keys(),[res["fval"] for res in asdrawresults]))}\n',2,verbose)
+
             for k, key in enumerate(allbudgetvecs.keys()):
                 res = asdrawresults[k]
                 # res = asd(outcomecalc, allbudgetvecs[key], args=args, xmin=xmin, maxtime=maxtime, maxiters=maxiters, verbose=verbose, randseed=allseeds[k], label=thislabel, stoppingfunc=stoppingfunc, **kwargs)

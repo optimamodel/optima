@@ -850,8 +850,8 @@ class Project(object):
             defaultsettings = {'maxiters':None, 'multi':False, 'parallel':True, 'nchains':1, 'nblocks':1,  'mc':( 2, 0, 0), 'ncpus':ceil(cpu_count()/2)}
         else:                # Longer than 1 minute, but not unlimited so run the most "efficient" optimization
             defaultsettings = {'maxiters':None, 'multi':False, 'parallel':True, 'nchains':1, 'nblocks':1,  'mc':(24,24,24), 'ncpus':ceil(cpu_count()/2)}
-        for key, setting in settings.items():
-            if setting is None: settings[key] = defaultsettings[key]  # Only overwrite Nones with the default
+        for key in defaultsettings.keys():
+            if settings[key] is None: settings[key] = defaultsettings[key]  # Only overwrite Nones with the default
         multi = settings['nchains'] > 1 or settings['nblocks'] > 1    # Need to run with multioptimize if you have nchains or nblocks
 
         # Run the optimization
