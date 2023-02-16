@@ -1010,7 +1010,7 @@ def tvoptimize(project=None, optim=None, tvec=None, verbose=None, maxtime=None, 
     tvbudgetvec = dcp(budgetvec)
     tvcontrolvec = zeros(noptimprogs) # Generate vector of zeros for correct length
     tvvec = concatenate([tvbudgetvec, tvcontrolvec])
-    if randseed is None: randseed = int((time()-floor(time()))*1e4) # Make sure a seed is used
+    if randseed is None: randseed = randint(2**31) # Make sure a seed is used
     args['totalbudget'] = totalbudget
 
     # Set up the optimizations to run
@@ -1080,6 +1080,7 @@ def minoutcomes(project=None, optim=None, tvec=None, absconstraints=None, verbos
 
     ## Handle budget and remove fixed costs
     if project is None or optim is None: raise OptimaException('An optimization requires both a project and an optimization object to run')
+    if randseed is None: randseed = randint(2**31)
     if absconstraints is None: absconstraints = optim.getabsconstraints()
     if ncpus is None: ncpus = int(ceil( sc.cpu_count()/2 ))
     if not parallel: ncpus = 1
