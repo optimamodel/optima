@@ -791,25 +791,33 @@ class Project(object):
 
     def optimize(self, name=None, parsetname=None, progsetname=None, objectives=None, constraints=None, absconstraints=None, proporigconstraints=None, maxiters=None, maxtime=None,
                  verbose=2, stoppingfunc=None, die=False, origbudget=None, randseed=None, mc=None, optim=None, optimname=None, multi=False, 
-                 nchains=None, nblocks=None, blockiters=None, ncpus=None, parallel=True, timevarying=None, tvsettings=None, tvconstrain=None, which=None,
+                 nchains=None, nblocks=None, blockiters=None, ncpus=None, parallel=None, timevarying=None, tvsettings=None, tvconstrain=None, which=None,
                  makescenarios=True, **kwargs):
         '''
         Function to minimize outcomes or money.
         
         Usage examples:
             P = op.demo(0); P.parset().fixprops(False) # Initialize project so ART has an effect
-            
             P.optimize() # Use defaults
-            P.optimize(maxiters=5, mc=0) # Do a very simple run
-            P.optimize(parsetname=0, progsetname=0) # Use first parset and progset
-            P.optimize(optim=P.optims[-1]) # Use a pre-existing optim
-            P.optimize(optimname=-1) # Same as previous
-            P.optimize(multi=True) # Do a multi-chain optimization
-            P.optimize(multi=True, nchains=8, nblocks=10, blockiters=50) # Do a very large multi-chain optimization
-            P.optimize(timevarying=True, mc=0, maxiters=30) # Do a short time-varying optimization
-            P.optimize(timevarying=True, mc=0, maxiters=200, tvconstrain=False, randseed=1) # Do a time-varying optimization, allowing total annual budget to vary
-            
             pygui(P) # To plot results
+
+        Suggested inputs are: parsetname, progsetname, objectives, proporigconstraints, maxtime, ncpus, randseed
+            (or constraints or absconstraints, but proporigconstraints also work the best in the FE)
+
+        maxtime <= 60 is a test run, maxtime > 60 is a proper run (generally 1000), maxtime = None runs the most thorough optimization
+
+        ncpus is the max number of threads to use: sc.cpu_count()/2 won't slow your computer down,
+            sc.cpu_count()-2 might be faster, sc.cpu_count() if you're a madman
+
+        To customize behaviour, generally use maxtime but:
+            mc: minoutcomes starts optimizations from different starting budgets, either (baselines, randoms, progbaselines). See minoutcomes
+            parallel: whether minoutcomes or minmoney should run in parallel (generally True)
+            maxiters: the max iterations each optimization will stop at (generally None, limited by time or convergence instead)
+            nchains: how many chains multioptimize should run in parallel, NOTE that each chain will run with mc. (generally 1 when using mc)
+            nblocks: runs nchains, then updates origbudget from the best chain and reoptimizes. Repeats this nblocks times (generally 1 or 2)
+            multi: !! This input gets ignored since this function interprets whether or not multioptimize needs to be used now !!
+            blockiters !! This input gets ignored now since it is the same as maxiters !!
+            origbudget: if you want to customize the "Optimization baseline", which is the optimization's starting point
         '''
         
         if parsetname  is None or parsetname == -1:  parsetname  = self.parsets.keys()[-1]  #use the real name instead of -1
@@ -852,7 +860,7 @@ class Project(object):
                                      die=die, origbudget=origbudget, randseed=randseed, mc=mc, **kwargs)
         elif multi and not optim.objectives['which']=='money': # It's a multi-run objectives optimization
             multires = multioptimize(optim=optim, verbose=verbose, stoppingfunc=stoppingfunc, die=die, origbudget=origbudget, randseed=randseed,
-                                     **settings,**kwargs)
+                                     **settings, **kwargs)
         else: # Neither special case, so minoutcomes or minmoney
             multires = optimize(optim=optim, verbose=verbose, stoppingfunc=stoppingfunc, die=die, origbudget=origbudget, randseed=randseed, **settings, **kwargs)
         
