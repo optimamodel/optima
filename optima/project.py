@@ -463,13 +463,13 @@ class Project(object):
         fullpath = makefilepath(filename=filename, folder=folder, default=[self.filename, self.name], ext='prj', sanitize=True)
         self.filename = fullpath # Store file path
         if saveresults and not cleanparsfromscens:
-            saveobj(fullpath, self, verbose=verbose)
+            fullpath = saveobj(fullpath, self, verbose=verbose)
         else:
             tmpproject = dcp(self) # Need to do this so we don't clobber the existing results
             tmpproject.restorelinks() # Make sure links are restored
             if not saveresults:    tmpproject.cleanresults()       # Get rid of all results
             if cleanparsfromscens: tmpproject.cleanparsfromscens() # Get rid of (unnecessary) parameters from scenarios
-            saveobj(fullpath, tmpproject, verbose=verbose) # Save it to file
+            fullpath = saveobj(fullpath, tmpproject, verbose=verbose) # Save it to file
             del tmpproject # Don't need it hanging around any more
         self.settings.advancedtracking = origadvancedtracking
         return fullpath
