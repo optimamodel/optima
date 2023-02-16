@@ -75,7 +75,7 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
 
     # Handle inputs and set defaults
     if maxtime  is None: maxtime  = 3600
-    if maxiters is None: maxiters = 1000
+    if maxiters is None: maxiters = 5000
     maxrangeiters = 100 # Number of times to try generating a new parameter
     x, origshape = consistentshape(x, origshape=True) # Turn it into a vector but keep the original shape (not necessarily class, though)
     nparams = len(x) # Number of parameters
