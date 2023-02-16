@@ -144,6 +144,11 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
     offset = ' ' * 4 # Offset the print statements
     exitreason = 'Unknown exit reason' # Catch everything else
     while True:
+        # Check for finishtime at the start of the loop to speed up exiting
+        if time() > finishtime:
+            exitreason = f'Finish time reached. Ran for {op.sigfig(time() - start)} seconds'
+            break
+
         count += 1 # Increment the count
         if verbose == 1: print(offset + label + 'Iteration %i; elapsed %0.1f s; objective: %0.3e' % (count, time() - start, fval)) # For more verbose, use other print statement below
         if verbose >= 4: print('\n\n Count=%i \n x=%s \n probabilities=%s \n stepsizes=%s' % (count, x, probabilities, stepsizes))
