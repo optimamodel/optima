@@ -439,7 +439,7 @@ def constrainbudget(origbudget=None, budgetvec=None, totalbudget=None, absconstr
         countmax = 1e4
         while sum(scaledbudgetvec) > optimbudget+tolerance:
             count += 1
-            if count>countmax: raise OptimaException('Tried %i times to fix budget and failed! (wanted: %g; actual: %g' % (count, optimbudget, sum(scaledbudgetvec)))
+            if count>countmax: raise OptimaException(f'Tried {count} times to fix budget and failed! (wanted: {optimbudget}; actual: {sum(scaledbudgetvec)}; minoptimbudget: {minoptimbudget};\nabslimits["min"]:\n{abslimits["min"]};\nabslimits["max"]:\n{abslimits["max"]}\nlimlow:\n{limlow}\nscaledbudgetvec: {scaledbudgetvec}')
             overshoot = sum(scaledbudgetvec) - optimbudget
             toomuch = sum(scaledbudgetvec[~limlow]) / float((sum(scaledbudgetvec[~limlow]) - overshoot)+tolerance)
             for oi,okey in enumerate(optimkeys):
@@ -453,7 +453,8 @@ def constrainbudget(origbudget=None, budgetvec=None, totalbudget=None, absconstr
         # Too low
         while sum(scaledbudgetvec) < optimbudget-tolerance:
             count += 1
-            if count>countmax: raise OptimaException('Tried %i times to fix budget and failed! (wanted: %g; actual: %g' % (count, optimbudget, sum(scaledbudgetvec)))
+            if count>countmax: raise OptimaException(f'Tried {count} times to fix budget and failed! (wanted: {optimbudget}; actual: {sum(scaledbudgetvec)}; maxoptimbudget: {maxoptimbudget};\nabslimits["min"]:\n{abslimits["min"]};\nabslimits["max"]:\n{abslimits["max"]}\nlimhigh:\n{limhigh}\nscaledbudgetvec: {scaledbudgetvec}')
+            if sum(scaledbudgetvec[~limhigh]) == 0: scaledbudgetvec[~limhigh] = tolerance  # There are programs that can be scaled up but they are all 0 budget, so add a little to each
             undershoot = optimbudget - sum(scaledbudgetvec)
             toolittle = (sum(scaledbudgetvec[~limhigh]) + undershoot) / float(sum(scaledbudgetvec[~limhigh])+tolerance)
             for oi,okey in enumerate(optimkeys):
