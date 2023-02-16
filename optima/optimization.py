@@ -1272,7 +1272,8 @@ def minoutcomes(project=None, optim=None, tvec=None, absconstraints=None, verbos
                 allargs[k] = {'function':outcomecalc, 'x':allbudgetvecs[key], 'args':args, 'xmin':xmin, 'maxtime':maxtime, 'maxiters':maxiters, 'verbose':verbose, 'randseed':allseeds[k], 'label':thislabel, 'stoppingfunc':stoppingfunc, **kwargs }
 
             # Run the optimizations in parallel
-            printv(f'\nRunning {len(allargs)} optimizations in parallel using {int(min(ncpus,len(allargs)))} cpu threads',2,verbose)
+            if parallel: printv(f'\nRunning {len(allargs)} optimizations in parallel using {int(min(ncpus,len(allargs)))} cpu threads',2,verbose)
+            else: printv(f'\nRunning {len(allargs)} optimizations in serial',2,verbose)
 
             try: asdrawresults = sc.parallelize(asd, iterkwargs=allargs, ncpus=int(ncpus), parallelizer='serial-nocopy' if not parallel else None)
             except AssertionError as e:
