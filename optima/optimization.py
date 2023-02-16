@@ -115,7 +115,7 @@ def getprogsetfromproject(project=None, progsetname=None, function='', verbose=2
     if project is None: raise OptimaException(f'getprogsetfromproject() called from "{function}" must be supplied with a project to get the progset')
     if progsetname is None:
         progsetname = -1
-        printv('getprogsetfromproject() did not get a progsetname input, so using default', 3, verbose)
+        print('getprogsetfromproject() did not get a progsetname input, so using default')
     try:    progset = project.progsets[progsetname]
     except: raise OptimaException('To define constraints, you must supply a program set name as an input')
     return progset
@@ -142,6 +142,7 @@ def proporigconstraintstoabsconstraints(project=None, progsetname=None,proporigc
     defbudget = progset.getdefaultbudget()
     absconstraints = dcp(proporigconstraints)
 
+    print(f'#$^#$^\nproporigconstraints:\n{proporigconstraints}\nprogsetname:\n{progsetname}')
     for progname in progset.programs.keys():
         if proporigconstraints['min'][progname] is not None:
             absconstraints['min'][progname] = proporigconstraints['min'][progname] * defbudget[progname]
