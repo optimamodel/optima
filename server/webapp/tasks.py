@@ -370,8 +370,8 @@ def optimize(project_id, optimization_id, maxtime, stoppingfunc=None):
 
     print(">> optimize start")
     maxtime = float(maxtime)
-    if maxtime>3600: mc = (4,4,4) # Arbitrary threshold for "unlimited" run: run with mc initiation
-    else:            mc = (1,0,0) # No mc
+    if maxtime>3600: mc = (12,6,6) # Arbitrary threshold for "unlimited" run: run with mc initiation
+    else:            mc = (12,0,0) # No mc, just get through as many baseline budgets in the time
     # Notice, we have not modified the optim, so if the optim is from the BE, it will maintain its constraints, absconstraints and proporigconstraints
     result = project.optimize(optim=optim, maxtime=maxtime, mc=mc, nchains=1, nblocks=1, parallel=False, stoppingfunc=stoppingfunc)  # Set this to zero for now while we decide how to handle uncertainties etc.
 
