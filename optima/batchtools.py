@@ -170,8 +170,8 @@ def autofit_task(project, ind, outputqueue, name, fitwhat, fitto, maxtime, maxit
 
 
 def batchBOC(folder=None, projects=None, portfolio=None, budgetratios=None, name=None, parsetname=None, progsetname=None, objectives=None, 
-             constraints=None, absconstraints=None, proporigconstraints=None,  maxiters=200, maxtime=None, verbose=2, stoppingfunc=None,
-             maxload=0.5, interval=None, prerun=True, batch=True, mc=3, die=False, recalculate=True, strict=True, randseed=None):
+             constraints=None, absconstraints=None, proporigconstraints=None, maxiters=200, maxtime=None, verbose=2, stoppingfunc=None,
+             maxload=0.5, interval=None, prerun=True, batch=True, mc=None, die=False, recalculate=True, strict=True, randseed=None, finishtime=None, parallel=False):
     """
     Perform batch BOC calculation.
 
@@ -226,7 +226,7 @@ def batchBOC(folder=None, projects=None, portfolio=None, budgetratios=None, name
     """
     
     # Praeludium
-    starttime = tic()
+    starttime = tic() # We could set finishtime here and give the entire batch a fixed finishtime
     if portfolio is not None: projects = portfolio.projects
     projects, nprojects, fromfolder = getprojects(projects, folder, verbose) # If no projects supplied, load them from the folder
     outputqueue, outputlist, processes = housekeeping(nprojects, batch) # Figure out things that need to be figured out
@@ -239,7 +239,7 @@ def batchBOC(folder=None, projects=None, portfolio=None, budgetratios=None, name
         prjproporigconstraints = project.optims[-1].proporigconstraints if proporigconstraints == 'latest' else proporigconstraints
         args = (project, i, outputqueue, budgetratios, name, parsetname, progsetname, prjobjectives, 
                 prjconstraints,prjabsconstraints,prjproporigconstraints, maxiters, maxtime, verbose, stoppingfunc, maxload, interval,
-                prerun, batch, mc, die, recalculate, strict, randseed)
+                prerun, batch, mc, die, recalculate, strict, randseed, ncpus, finishtime, parallel)
         if batch:
             prc = Process(target=boc_task, args=args)
             prc.start()
@@ -255,7 +255,7 @@ def batchBOC(folder=None, projects=None, portfolio=None, budgetratios=None, name
 
 
 def boc_task(project, ind, outputqueue, budgetratios, name, parsetname, progsetname, objectives, constraints,absconstraints,proporigconstraints, maxiters,
-             maxtime, verbose, stoppingfunc, maxload, interval, prerun, batch, mc, die, recalculate, strict, randseed):
+             maxtime, verbose, stoppingfunc, maxload, interval, prerun, batch, mc, die, recalculate, strict, randseed, ncpus, finishtime, parallel):
     
     # Custom opening
     if batch: loadbalancer(index=ind, maxload=maxload, interval=interval, label=project.name)
@@ -279,10 +279,11 @@ def boc_task(project, ind, outputqueue, budgetratios, name, parsetname, progsetn
     if recalculate or boc is None: # Only run if requested or if a BOC can't be found -- otherwise, skip and return immediately
         if randseed is not None: randseed += (ind+1)*(2**9-1) # Just perturb it so we don't get repeats
         try:
+            # Or we could set finishtime here and give each BOC maxtime to run
             project.genBOC(budgetratios=budgetratios, name=name, parsetname=parsetname,
                            progsetname=progsetname, objectives=objectives, 
                            constraints=constraints, absconstraints=absconstraints, proporigconstraints=proporigconstraints,
-                           maxiters=maxiters, maxtime=maxtime,
+                           maxiters=maxiters, maxtime=maxtime, finishtime=finishtime, ncpus=ncpus, parallel=parallel,
                            verbose=verbose, stoppingfunc=stoppingfunc, mc=mc, die=die, randseed=randseed)
         except Exception as E:
             project.addwarning('Exception: batchBOC() failed for %s: %s' % (project.name, repr(E)))
@@ -298,19 +299,21 @@ def boc_task(project, ind, outputqueue, budgetratios, name, parsetname, progsetn
 
 
 
-def reoptimizeprojects(projects=None, objectives=None, maxtime=None, maxiters=None, mc=None, maxload=None, interval=None, batch=True, verbose=2, randseed=None):
+def reoptimizeprojects(projects=None, objectives=None, maxtime=None, maxiters=None, mc=None, maxload=None, interval=None,
+                       batch=True, verbose=2, randseed=None, parallel=None, ncpus=None, finishtime=None):
     ''' Runs final optimisations for initbudgets and optbudgets so as to summarize GA optimization '''
     
     printv('Reoptimizing portfolio projects...', 2, verbose)
     starttime = tic()
     resultpairs = odict()
+    if parallel is None: parallel = not batch # Run individual projects in parallel only if not running each project in parallel
     if batch:
         outputqueue = Queue()
         processes = []
     else:
         outputqueue = None
     for pind,project in enumerate(projects.values()):
-        args = (project, objectives, pind, outputqueue, maxtime, maxiters, mc, batch, maxload, interval, verbose, randseed)
+        args = (project, objectives, pind, outputqueue, maxtime, maxiters, mc, batch, maxload, interval, verbose, randseed, parallel, ncpus, finishtime)
         if batch:
             prc = Process(target=reoptimizeprojects_task, args=args)
             prc.start()
@@ -341,7 +344,7 @@ def reoptimizeprojects(projects=None, objectives=None, maxtime=None, maxiters=No
     return resultpairs
         
 
-def reoptimizeprojects_task(project, objectives, pind, outputqueue, maxtime, maxiters, mc, batch, maxload, interval, verbose, randseed):
+def reoptimizeprojects_task(project, objectives, pind, outputqueue, maxtime, maxiters, mc, batch, maxload, interval, verbose, randseed, parallel, ncpus, finishtime):
     """Batch function for final re-optimization step of geospatial analysis."""
     if batch: loadbalancer(index=pind, maxload=maxload, interval=interval, label=project.name)
     
@@ -370,6 +373,9 @@ def reoptimizeprojects_task(project, objectives, pind, outputqueue, maxtime, max
                  'maxtime': maxtime,
                  'maxiters': maxiters,
                  'mc':mc,
+                 'ncpus': ncpus,
+                 'parallel': parallel,
+                 'finishtime': finishtime,
                  'randseed':randseed}
 
     # Run the analyses

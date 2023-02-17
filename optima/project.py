@@ -1008,7 +1008,7 @@ class Project(object):
     #######################################################################################################
         
     def genBOC(self, budgetratios=None, name=None, parsetname=None, progsetname=None, objectives=None, constraints=None, absconstraints=None, proporigconstraints=None,
-               maxiters=1000, maxtime=None, verbose=2, stoppingfunc=None, mc=3, die=False, randseed=None, origbudget=None, **kwargs):
+               maxiters=1000, maxtime=None, verbose=2, stoppingfunc=None, mc=None, parallel=True, finishtime=None, ncpus=None, die=False, randseed=None, origbudget=None, **kwargs):
         ''' Function to generate project-specific budget-outcome curve for geospatial analysis '''
         if name is None:
             name = 'BOC ' + self.name
@@ -1024,7 +1024,12 @@ class Project(object):
         if progsetname is None:
             printv('Warning, using default progset', 3, verbose)
             progsetname = -1
-        
+
+        # Set defaults
+        if sc.isnumber(mc): mc = (1,0,mc)
+        elif mc is None or sum(mc) == 0: mc = (3,0,0)
+        if ncpus is None: ncpus = int(ceil( sc.cpu_count()/2 ))
+
         defaultbudget = self.progsets[progsetname].getdefaultbudget()
         
         if budgetratios is None:
@@ -1070,9 +1075,10 @@ class Project(object):
                 closest = argmin(abs(tmptotals[:]-budget)) # Find closest budget
                 origbudget = tmpallocs[closest]
             label = self.name+' $%sm (%i/%i)' % (sigfig(budget/1e6, sigfigs=3), thiscount, totalcount)
-            
+
+            if finishtime is None and maxtime is not None: finishtime = time() + maxtime  # Each optimization gets its own maxtime
             # Actually run
-            results = optimize(optim=optim, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, origbudget=origbudget, label=label, mc=mc, die=die, randseed=randseed, **kwargs)
+            results = optimize(optim=optim, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, origbudget=origbudget, label=label, mc=mc, finishtime=finishtime, parallel=parallel, ncpus=ncpus, die=die, randseed=randseed, **kwargs)
             tmptotals[key] = budget
             tmpallocs[key] = dcp(results.budgets.findbykey('Optim'))
             tmpx[key] = budget # Used to be append, but can't use lists since can iterate multiple times over a single budget
