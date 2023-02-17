@@ -1308,9 +1308,10 @@ def minoutcomes(project=None, optim=None, tvec=None, absconstraints=None, verbos
 
             scalefactorrand = scalefactor * (2**10-1)  # Pseudorandomize the seeds
             maxseed = 2**32
-            def pseudorandomseed(hashed):  # Gets a pseudorandom seed based on the hash of the string name
+            def pseudorandomseed(key):  # Gets a pseudorandom seed based on the string name
+                hashed = int.from_bytes(key.encode(), 'little') % maxseed # converts the key to an int, consistent between runs
                 return int(randseed + scalefactorrand + hashed) % maxseed
-            allseeds = [pseudorandomseed(hash(key)) for key in allbudgetvecs.keys()]
+            allseeds = [pseudorandomseed(key) for key in allbudgetvecs.keys()]
 
             # Actually run the optimizations
             bestfval = inf # Value of outcome
