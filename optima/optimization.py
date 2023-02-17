@@ -1310,7 +1310,7 @@ def minoutcomes(project=None, optim=None, tvec=None, absconstraints=None, verbos
             scalefactorrand = scalefactor * (2**10-1)  # Pseudorandomize the seeds
             maxseed = 2**32
             def pseudorandomseed(key):  # Gets a pseudorandom seed based on the string name
-                hashed = int(md5(key.encode()).hexdigest(), 16)
+                hashed = int(md5(key.encode()).hexdigest(), 16) % maxseed
                 return int(randseed + scalefactorrand + hashed) % maxseed
             allseeds = [pseudorandomseed(key) for key in allbudgetvecs.keys()]
 
