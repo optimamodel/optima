@@ -847,11 +847,11 @@ class Project(object):
         if maxiters is None: maxiters = blockiters  # blockiters and maxiters are the same and will be called maxiters from here on out
         settings = {'maxtime':maxtime,'maxiters':maxiters, 'parallel':parallel, 'ncpus': ncpus, 'nchains':nchains, 'nblocks':nblocks, 'mc':mc}
         if maxtime is None:  # Unlimited time so run the most thorough optimization
-            defaultsettings = {'maxiters':None, 'parallel':True, 'nchains':1, 'nblocks':10, 'mc':(24,24,24), 'ncpus':ceil(cpu_count()/2)}
+            defaultsettings = {'maxiters':None, 'parallel':True, 'nchains':1, 'nblocks':10, 'mc':(24,12,12), 'ncpus':ceil(cpu_count()/2)}
         elif maxtime <= 60:  # 1 min or less, so run a test optimization
             defaultsettings = {'maxiters':None, 'parallel':True, 'nchains':1, 'nblocks':1,  'mc':( 2, 0, 0), 'ncpus':ceil(cpu_count()/2)}
         else:                # Longer than 1 minute, but not unlimited so run the most "efficient" optimization
-            defaultsettings = {'maxiters':None, 'parallel':True, 'nchains':1, 'nblocks':1,  'mc':(24,24,24), 'ncpus':ceil(cpu_count()/2)}
+            defaultsettings = {'maxiters':None, 'parallel':True, 'nchains':1, 'nblocks':1,  'mc':(12,6,6), 'ncpus':ceil(cpu_count()/2)}
         for key in defaultsettings.keys():
             if settings[key] is None: settings[key] = defaultsettings[key]  # Only overwrite Nones with the default
 
