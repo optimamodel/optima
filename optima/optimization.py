@@ -1284,6 +1284,14 @@ def minoutcomes(project=None, optim=None, tvec=None, absconstraints=None, verbos
         if totalbudget: # Budget is nonzero, run
             allbudgetvecs = odict()
 
+            scalefactorrand = scalefactor * (2**10-1)  # Pseudorandomize the seeds
+            maxseed = 2**32
+            def pseudorandomseed(key):  # Gets a pseudorandom seed based on the string name
+                hashed = int(md5(key.encode()).hexdigest(), 16) % maxseed
+                return int(randseed + scalefactorrand + hashed) % maxseed
+
+            seed(pseudorandomseed('Seed before creating the random budgets'))
+
             # Add baseline budgets, then random budgets, then progbaselines
             for i in range(mc[0]):
                 if i == 0: allbudgetvecs[f'Optimization baseline']            = dcp(constrainedbudgetvec)
@@ -1307,11 +1315,6 @@ def minoutcomes(project=None, optim=None, tvec=None, absconstraints=None, verbos
                 randbudget = randbudget / randbudget.sum() * constrainedbudgetvec.sum()
                 allbudgetvecs['Random %s' % (randbudgets+i+1)] = randbudget
 
-            scalefactorrand = scalefactor * (2**10-1)  # Pseudorandomize the seeds
-            maxseed = 2**32
-            def pseudorandomseed(key):  # Gets a pseudorandom seed based on the string name
-                hashed = int(md5(key.encode()).hexdigest(), 16) % maxseed
-                return int(randseed + scalefactorrand + hashed) % maxseed
             allseeds = [pseudorandomseed(key) for key in allbudgetvecs.keys()]
 
             # Actually run the optimizations
