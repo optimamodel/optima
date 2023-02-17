@@ -846,7 +846,7 @@ def optimize(optim=None, maxiters=None, maxtime=None, finishtime=None, verbose=2
 
 def multioptimize(optim=None, nchains=None, nblocks=None, blockiters=None, mc=None, randseed=None,
                   maxiters=None, maxtime=None, finishtime=None, verbose=2, ncpus=None, parallel=None,
-                  stoppingfunc=None, die=False, origbudget=None, label=None, tol=1e-3, budgettol=10, **kwargs):
+                  stoppingfunc=None, die=False, origbudget=None, label=None, tol=1e-3, budgettol=100, **kwargs):
     '''
     Run a multi-chain optimization. See project.optimize() for usage examples, and optimize()
     for kwarg explanation.
