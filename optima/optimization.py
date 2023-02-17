@@ -12,6 +12,7 @@ from numpy.random import random, seed, randint
 from time import time
 import optima as op # Used by minmoney, at some point should make syntax consistent
 import sciris as sc
+from hashlib import md5
 
 # Import dependencies here so no biggie if they fail
 from multiprocessing import Process, Queue
@@ -1309,7 +1310,7 @@ def minoutcomes(project=None, optim=None, tvec=None, absconstraints=None, verbos
             scalefactorrand = scalefactor * (2**10-1)  # Pseudorandomize the seeds
             maxseed = 2**32
             def pseudorandomseed(key):  # Gets a pseudorandom seed based on the string name
-                hashed = int.from_bytes(key.encode(), 'little') % maxseed # converts the key to an int, consistent between runs
+                hashed = int(md5(key.encode()).hexdigest(), 16)
                 return int(randseed + scalefactorrand + hashed) % maxseed
             allseeds = [pseudorandomseed(key) for key in allbudgetvecs.keys()]
 
