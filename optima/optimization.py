@@ -789,7 +789,8 @@ def optimize(optim=None, maxiters=None, maxtime=None, finishtime=None, verbose=2
     printv('Running %s optimization...' % which, 1, verbose)
     
     # Set defaults
-    if mc is None or mc == 0 or sum(mc) == 0: mc = (1,0,0)  # Default to just running from Optimization baseline
+    if sc.isnumber(mc): mc = (1,0,mc)
+    elif mc is None or sum(mc) == 0: mc = (1,0,0) # Default to just running from Optimization baseline
     if ncpus is None: ncpus = int(ceil( sc.cpu_count()/2 ))
 
     # Optim structure validation
@@ -844,7 +845,7 @@ def optimize(optim=None, maxiters=None, maxtime=None, finishtime=None, verbose=2
 
 def multioptimize(optim=None, nchains=None, nblocks=None, blockiters=None, mc=None, randseed=None,
                   maxiters=None, maxtime=None, finishtime=None, verbose=2, ncpus=None, parallel=None,
-                  stoppingfunc=None, die=False, origbudget=None, label=None, tol=1e-3, **kwargs):
+                  stoppingfunc=None, die=False, origbudget=None, label=None, tol=1e-3, budgettol=1, **kwargs):
     '''
     Run a multi-chain optimization. See project.optimize() for usage examples, and optimize()
     for kwarg explanation.
@@ -866,44 +867,53 @@ def multioptimize(optim=None, nchains=None, nblocks=None, blockiters=None, mc=No
     if nblocks is None:  nblocks  = 10
     if maxiters is None: maxiters = blockiters  # should use maxiters, blockiters is for backwards compatability
     if maxiters is None: maxiters = 5000
+    if sc.isnumber(mc): mc = (1,0,mc)
+    elif mc is None or sum(mc) == 0: mc = (1,0,0) # Default to just running from Optimization baseline
     if ncpus is None:    ncpus    = int(ceil( sc.cpu_count()/2 ))
     if parallel is None: parallel = True  # The individual chains should also run in parallel if there are enough cpus
     chaincpus = int(ceil( ncpus/nchains ))
 
-    # nblocks = 1 # Fixed now since the optimizations use absconstraints #TEMPORARY fix as blocks don't apply constraints properly
-    # if mc is None:         mc = 0
-    # if abs(mc)>0:
-    #     errormsg = 'Monte Carlo optimization with multithread optimization has not been implemented'
-    #     raise OptimaException(errormsg)
+    # We only run mc for the first block, then after each block we keep the best newchains chains
+    totalmc = nchains*sum(mc)
+    newchains = int(ceil(sqrt(totalmc)))
+    newmc = zeros(newchains)
+    for i in range(totalmc):
+        newmc[i % newchains] += 1
+    newmc = [(int(thismc),0,0) for thismc in newmc]
+
+    thischains = nchains
+    thismc = [mc for chain in range(nchains)]
+    thisorigbudget = [origbudget for chain in range(nchains)]
+
     totaliters = maxiters*nblocks
-    fvalarray = zeros((nchains,totaliters+1)) + nan
+    fvalarray = zeros((max(nchains,newchains),totaliters+1)) + nan
     bestfvalval = inf
 
     printv('Starting a parallel optimization with %i chains (%i cpu threads) for %i iterations each for %i blocks' % (nchains, ncpus, maxiters, nblocks), 2, verbose)
     # Loop over the optimization blocks
     for block in range(nblocks):
-        printv(f'\nStarting block {block+1}/{nblocks}\n', 2, verbose)
+        printv(f'\nStarting block {block+1}/{nblocks} with {thischains} chains\n', 2, verbose)
 
         # Set up the parallel process
         outputqueue = Queue()
-        outputlist = empty(nchains, dtype=object)
+        outputlist = empty(thischains, dtype=object)
         processes = []
 
         # Loop over the threads, starting the processes
-        for thread in range(nchains):
+        for thread in range(thischains):
             blockrand = (block+1)*(2**6-1) # Pseudorandom seeds
             threadrand = (thread+1)*(2**10-1)
             randtime = int((time()-floor(time()))*1e4)
             if randseed is None: thisseed = (blockrand+threadrand)*randtime # Get a random number based on both the time and the thread
             else:                thisseed = randseed + blockrand+threadrand
             optim._threadindex = thread # Store the thread index
-            optimargs = (optim, maxiters, maxtime, finishtime, verbose, stoppingfunc, die, origbudget, thisseed, mc, label, outputqueue, chaincpus, parallel, kwargs)
+            optimargs = (optim, maxiters, maxtime, finishtime, verbose, stoppingfunc, die, thisorigbudget[thread], thisseed, thismc[thread], label, outputqueue, chaincpus, parallel, kwargs)
             prc = Process(target=optimize, args=optimargs)
             prc.start()
             processes.append(prc)
 
         # Tidy up: close the threads and gather the results
-        for i in range(nchains):
+        for i in range(thischains):
             result = outputqueue.get() # This is needed or else the process never finishes
             threadindex = result.optim._threadindex # To ensure a robust ordering
             outputlist[threadindex] = result
@@ -913,30 +923,45 @@ def multioptimize(optim=None, nchains=None, nblocks=None, blockiters=None, mc=No
 
         # Figure out which one did best
         lastfvalval = bestfvalval if bestfvalval < inf else outputlist[0].improvement[0][0]
-        lastbestbudget = origbudget
+        lastbestbudget = thisorigbudget[0]
         bestfvalval = inf
         bestfvalind = None
-        for i in range(nchains):
+        bestfvalvalarr = zeros(totalmc)
+        originalindarr = zeros(totalmc,dtype=int)
+        allbudgets = [None] * totalmc
+        j = 0
+        for i in range(thischains):
             if block==0 and i==0: fvalarray[:,0] = outputlist[i].improvement[0][0] # Store the initial value
             thischain = outputlist[i].improvement[0][1:] # The chain to store the improvement of -- NB, improvement is an odict
             leftbound = block * maxiters + 1
             rightbound = block * maxiters + len(thischain) + 1
             fvalarray[i,leftbound:rightbound] = thischain
-            thisbestval = outputlist[i].outcome
-            if thisbestval<bestfvalval:
-                bestfvalval = thisbestval
-                bestfvalind = i
+            for key in outputlist[i].fullruninfo[0].keys():
+                allbudgets[j]     = outputlist[i].fullruninfo[0][key]['budget']
+                bestfvalvalarr[j] = outputlist[i].fullruninfo[0][key]['fvals'][-1]
+                originalindarr[j] = i
+                j += 1
 
-        origbudget = outputlist[bestfvalind].budgets['Optimized'] # Update the budget and use it as the input for the next block -- this is key!
+        sortedbestfvalinds = argsort(bestfvalvalarr)
+        bestfvalind = sortedbestfvalinds[0]
+        bestfvalval = bestfvalvalarr[bestfvalind]
+
+        if block == 0:  # After the first block we switch to no mc
+            thischains = newchains
+            thismc = newmc
+
+        thisorigbudget = [allbudgets[sortedbestfvalinds[i]] for i in range(thischains)]  # Update original budgets to choose the best in order, one for each chain
 
         printv(f'\nFinished block {block+1}/{nblocks}. Outcome improved from {lastfvalval} to {bestfvalval}. Ratio: {bestfvalval / lastfvalval}.\n', 2, verbose)
         # Check if we should skip the rest of the blocks, because this block gave the same budget and outcomes back
-        if bestfvalval / lastfvalval >= 1 and sum(abs(lastbestbudget[:] - origbudget[:])) < tol:
+        if lastfvalval - bestfvalval <= tol and sum(abs(lastbestbudget[:] - thisorigbudget[0][:])) < budgettol and block+1 < nblocks:
             printv(f'\nSkipping the last {nblocks-(block+1)}/{nblocks} blocks as we got the same budget and outcomes back from this block as the last!\n',2, verbose)
             break
-        if time() > finishtime:
+        if time() > finishtime and block+1 < nblocks:
             printv(f'\nSkipping the last {nblocks-(block+1)}/{nblocks} blocks as we are {time()-finishtime:.2f} seconds past the finish time!\n',2, verbose)
             break
+
+    bestfvalind = originalindarr[bestfvalind] # Convert from individual run index to chain index
 
     # Assemble final results object from the initial and final run
     results = dcp(outputlist[bestfvalind]) # Use best results as the basis for the output
@@ -1102,8 +1127,8 @@ def minoutcomes(project=None, optim=None, tvec=None, absconstraints=None, verbos
     if absconstraints is None: absconstraints = optim.getabsconstraints()
     if ncpus is None: ncpus = int(ceil( sc.cpu_count()/2 ))
     if not parallel: ncpus = 1
-    if mc is None or mc == 0 or sum(mc) == 0: mc = (1,0,0)
-    elif sc.isnumber(mc): mc = (1,0,mc)  # Default to running 1 from the Optimization baseline, the rest from progbaselines which default to random if they are not good enough
+    if sc.isnumber(mc): mc = (1,0,mc)
+    elif mc is None or sum(mc) == 0: mc = (1,0,0) # Default to just running from Optimization baseline
     printv(f'Running minoutcomes with mc: {mc}',2,verbose)
 
     parset  = project.parsets[optim.parsetname] # Link to the original parameter set
@@ -1308,7 +1333,7 @@ def minoutcomes(project=None, optim=None, tvec=None, absconstraints=None, verbos
                 printv('\nWARNING: Could not run in parallel because this process is already running in parallel. Trying in serial...',1,verbose)
                 asdrawresults = sc.parallelize(asd, iterkwargs=allargs, ncpus=int(ncpus), parallelizer='serial-nocopy')
 
-            printv(f'\nasd returned best outcomes {list(zip(allbudgetvecs.keys(),[res["fval"] for res in asdrawresults]))}\n',2,verbose)
+            if verbose >=3: print(f'\nasd returned best outcomes {list(zip(allbudgetvecs.keys(),[res["fval"] for res in asdrawresults]))}\n')
 
             for k, key in enumerate(allbudgetvecs.keys()):
                 res = asdrawresults[k]
