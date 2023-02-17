@@ -982,8 +982,8 @@ def multioptimize(optim=None, nchains=None, nblocks=None, blockiters=None, mc=No
 
 
 
-def tvoptimize(project=None, optim=None, tvec=None, verbose=None, maxtime=None, finishtime=None, maxiters=1000, origbudget=None,
-               ccsample='best', randseed=None, mc=3, label=None, die=False, **kwargs):
+def tvoptimize(project=None, optim=None, tvec=None, verbose=None, maxtime=None, finishtime=None, maxiters=5000, origbudget=None,
+               ccsample='best', randseed=None, mc=None, label=None, die=False, ncpus=None, parallel=True, **kwargs):
     '''
     Run a time-varying optimization. See project.optimize() for usage examples, and optimize()
     for kwarg explanation.
@@ -999,10 +999,15 @@ def tvoptimize(project=None, optim=None, tvec=None, verbose=None, maxtime=None, 
 
     printv('Preparing to run a time-varying optimization...', 1, verbose)
 
+    # Set defaults
+    if sc.isnumber(mc): mc = (1,0,mc)
+    elif mc is None or sum(mc) == 0: mc = (1,0,0) # Default to just running from Optimization baseline
+    if ncpus is None: ncpus = int(ceil( sc.cpu_count()/2 ))
+
     # Do a preliminary non-time-varying optimization
     optim.tvsettings['timevarying'] = False # Turn off for the first run
     prelim = optimize(optim=optim, maxtime=maxtime, finishtime=finishtime, maxiters=maxiters, verbose=verbose, origbudget=origbudget,
-                ccsample=ccsample, randseed=randseed, mc=mc, label=label, die=die, keepraw=True, **kwargs)
+                ccsample=ccsample, randseed=randseed, mc=mc, ncpus=ncpus, parallel=parallel, label=label, die=die, keepraw=True, **kwargs)
     rawresults = prelim.raw['Baseline'][0] # Store the raw results; "Baseline" vs. "Optimized" shouldn't matter, and [0] is the first/best run -- not sure if there is a more robut way
 
     # Add in the time-varying component
