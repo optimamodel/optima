@@ -957,7 +957,7 @@ def multioptimize(optim=None, nchains=None, nblocks=None, blockiters=None, mc=No
         if lastfvalval - bestfvalval <= tol and sum(abs(lastbestbudget[:] - thisorigbudget[0][:])) < budgettol and block+1 < nblocks:
             printv(f'\nSkipping the last {nblocks-(block+1)}/{nblocks} blocks as we got the same budget and outcomes back from this block as the last!\n',2, verbose)
             break
-        if time() > finishtime and block+1 < nblocks:
+        if finishtime is not None and time() > finishtime and block+1 < nblocks:
             printv(f'\nSkipping the last {nblocks-(block+1)}/{nblocks} blocks as we are {time()-finishtime:.2f} seconds past the finish time!\n',2, verbose)
             break
 

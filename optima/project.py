@@ -851,7 +851,7 @@ class Project(object):
         elif maxtime <= 60:  # 1 min or less, so run a test optimization
             defaultsettings = {'maxiters':None, 'parallel':True, 'nchains':1, 'nblocks':1,  'mc':( 2, 0, 0), 'ncpus':ceil(cpu_count()/2)}
         else:                # Longer than 1 minute, but not unlimited so run the most "efficient" optimization
-            defaultsettings = {'maxiters':None, 'parallel':True, 'nchains':1, 'nblocks':1,  'mc':(12,6,6), 'ncpus':ceil(cpu_count()/2)}
+            defaultsettings = {'maxiters':None, 'parallel':True, 'nchains':1, 'nblocks':1,  'mc':(12, 6, 6), 'ncpus':ceil(cpu_count()/2)}
         for key in defaultsettings.keys():
             if settings[key] is None: settings[key] = defaultsettings[key]  # Only overwrite Nones with the default
 
