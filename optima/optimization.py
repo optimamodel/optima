@@ -845,7 +845,7 @@ def optimize(optim=None, maxiters=None, maxtime=None, finishtime=None, verbose=2
 
 def multioptimize(optim=None, nchains=None, nblocks=None, blockiters=None, mc=None, randseed=None,
                   maxiters=None, maxtime=None, finishtime=None, verbose=2, ncpus=None, parallel=None,
-                  stoppingfunc=None, die=False, origbudget=None, label=None, tol=1e-3, budgettol=1, **kwargs):
+                  stoppingfunc=None, die=False, origbudget=None, label=None, tol=1e-3, budgettol=10, **kwargs):
     '''
     Run a multi-chain optimization. See project.optimize() for usage examples, and optimize()
     for kwarg explanation.
@@ -949,12 +949,15 @@ def multioptimize(optim=None, nchains=None, nblocks=None, blockiters=None, mc=No
         if block == 0:  # After the first block we switch to no mc
             thischains = newchains
             thismc = newmc
+            chaincpus = int(ceil(ncpus / thischains))
 
         thisorigbudget = [allbudgets[sortedbestfvalinds[i]] for i in range(thischains)]  # Update original budgets to choose the best in order, one for each chain
 
         printv(f'\nFinished block {block+1}/{nblocks}. Outcome improved from {lastfvalval} to {bestfvalval}. Ratio: {bestfvalval / lastfvalval}.\n', 2, verbose)
+        printv(f'Last block to this budget difference: {sum(abs(lastbestbudget[:] - thisorigbudget[0][:]))}: {lastbestbudget[:] - thisorigbudget[0][:]}\n', 2, verbose)
+
         # Check if we should skip the rest of the blocks, because this block gave the same budget and outcomes back
-        if lastfvalval - bestfvalval <= tol and sum(abs(lastbestbudget[:] - thisorigbudget[0][:])) < budgettol and block+1 < nblocks:
+        if lastfvalval - bestfvalval <= tol and all(abs(lastbestbudget[:] - thisorigbudget[0][:]) < budgettol) and block+1 < nblocks:
             printv(f'\nSkipping the last {nblocks-(block+1)}/{nblocks} blocks as we got the same budget and outcomes back from this block as the last!\n',2, verbose)
             break
         if finishtime is not None and time() > finishtime and block+1 < nblocks:
