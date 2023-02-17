@@ -739,7 +739,9 @@ def create_project_from_prj_file(prj_filename, user_id, other_names):
     try:
         project = op.loadproj(prj_filename)
     except Exception:
-        return { 'projectId': 'BadFileFormatError' }
+        import traceback
+        error_str = traceback.format_exc()
+        return { 'projectId': 'BadFileFormatError' , 'error_string': error_str }
     project.name = get_unique_name(project.name, other_names)
     save_project_as_new(project, user_id)
     return { 'projectId': str(project.uid) }
