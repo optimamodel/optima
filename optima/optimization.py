@@ -1473,8 +1473,9 @@ def minmoney(project=None, optim=None, tvec=None, verbose=None, maxtime=None, fi
     animate      = False # Whether or not to animate at the end
     if animate: import pylab as pl
     
-    if parallel: printv('Performing parallel money optimization with %s cpus...' % ncpus, 2, verbose)
+    if parallel: printv('Performing parallel money optimization with %s cpus...' % int(ncpus), 2, verbose)
     else:        printv('Performing serial money optimization...', 2, verbose)
+    if randseed is None: randseed = randint(0,2**31-1)  # Random starting point if randseed not given
     seed(randseed)
     
     #%% Definitions
@@ -1527,7 +1528,7 @@ def minmoney(project=None, optim=None, tvec=None, verbose=None, maxtime=None, fi
 
     # Run inf budget (constrained)
     totalbudget = project.settings.infmoney
-    results_inf = op.outcomecalc(budgetvec, totalbudget=totalbudget, outputresults=True, scaleupmethod='add', **args)
+    results_inf = op.outcomecalc(budgetvec, totalbudget=totalbudget, outputresults=True, scaleupmethod='add', warn=False, **args)
     res_inf = results_inf.outcomes['final']
     dists['inf'] = distance(res_targ, res_inf)
     if not met(dists['inf']):
@@ -1541,7 +1542,7 @@ def minmoney(project=None, optim=None, tvec=None, verbose=None, maxtime=None, fi
 
     # Run zero budget (constrained)
     totalbudget = 1e-3
-    results_zero = op.outcomecalc(budgetvec, totalbudget=totalbudget, outputresults=True, **args)
+    results_zero = op.outcomecalc(budgetvec, totalbudget=totalbudget, outputresults=True, warn=False, **args)
     res_zero = results_zero.outcomes['final']
     dists['zero'] = distance(res_targ, res_zero)
     if met(dists['zero']):
@@ -1701,58 +1702,44 @@ def minmoney(project=None, optim=None, tvec=None, verbose=None, maxtime=None, fi
             movie.append('Making throw %s' % (p+1))
             success_count = 1
             success_budgets = [budgetvec]
-            
-            if not parallel:
-                for t,throw in enumerate(range(n_throws-1)): # -1 since include current budget
-                    key = 'Throw %s' % (t+2) # since starting with current
-                    vec = random(nprogs)
-                    vec /= vec.sum() # Normalize
-                    this_budget = op.dcp(allocated_budget) + vec*remaining_budget
-                    this_budget /= this_budget.sum()
-                    this_budget *= totalbudget
-                    results_throw = op.outcomecalc(this_budget, totalbudget=totalbudget, outputresults=True, **args)
-                    res_throw = results_throw.outcomes['final']
-                    dists[key] = distance(res_targ, res_throw)
-                    movie.append(res_throw)
-                    if met(dists[key]):
-                        success_count += 1
-                        success_budgets.append(this_budget)
-                    printv('    %s of %s, %s/%s successes' % (key, n_throws, success_count, n_success), 2, verbose)
-                    if success_count >= n_success:
-                        break
-            
-            else:
-                allkeys = []
-                allvecs = []
-                allbudgets = []
-                for t,throw in enumerate(range(n_throws-1)): # -1 since include current budget
-                    key = 'Throw %s' % (t+2) # since starting with current
-                    vec = random(nprogs)
-                    vec /= vec.sum() # Normalize
-                    this_budget = op.dcp(allocated_budget) + vec*remaining_budget
-                    this_budget /= this_budget.sum()
-                    this_budget *= totalbudget
-                    allkeys.append(key)
-                    allvecs.append(vec)
-                    allbudgets.append(this_budget)
-                parallelargs = sc.dcp(args)
-                parallelargs.update({'totalbudget':totalbudget, 'outputresults':True})
+
+            allkeys = []
+            allvecs = []
+            allbudgets = []
+            for t,throw in enumerate(range(n_throws-1)): # -1 since include current budget
+                key = 'Throw %s' % (t+2) # since starting with current
+                vec = random(nprogs)
+                vec /= vec.sum() # Normalize
+                this_budget = op.dcp(allocated_budget) + vec*remaining_budget
+                this_budget /= this_budget.sum()
+                this_budget *= totalbudget
+
+                allkeys.append(key)
+                allvecs.append(vec)
+                allbudgets.append(this_budget)
+
+            parallelargs = sc.dcp(args)
+            parallelargs.update({'totalbudget':totalbudget, 'outputresults':True})
+            if parallel:
                 try: all_results_throws = sc.parallelize(op.outcomecalc, iterarg=allbudgets, kwargs=parallelargs, ncpus=int(ncpus))
                 except AssertionError as e:
                     parallel = False
                     printv('\nWARNING: Could not run in parallel because this process is already running in parallel. Trying in serial...',1,verbose)
-                    all_results_throws = sc.parallelize(op.outcomecalc, iterarg=allbudgets, kwargs=parallelargs, ncpus=int(ncpus), parallelizer='serial-nocopy')
-                for t,throw in enumerate(range(n_throws-1)): # -1 since include current budget
-                    res_throw = all_results_throws[t].outcomes['final']
-                    dists[allkeys[t]] = distance(res_targ, res_throw)
-                    movie.append(res_throw)
-                    if met(dists[allkeys[t]]):
-                        success_count += 1
-                        success_budgets.append(allbudgets[t])
-                    printv('    %s of %s, %s/%s successes' % (allkeys[t], n_throws, success_count, n_success), 2, verbose)
-                    if success_count >= n_success:
-                        break
-            
+
+            if not parallel:  # Not else since we might need to try again after failing
+                all_results_throws = sc.parallelize(op.outcomecalc, iterarg=allbudgets, kwargs=parallelargs, ncpus=int(ncpus), parallelizer='serial-nocopy')
+
+            for t,throw in enumerate(range(n_throws-1)): # -1 since include current budget
+                res_throw = all_results_throws[t].outcomes['final']
+                dists[allkeys[t]] = distance(res_targ, res_throw)
+                movie.append(res_throw)
+                if met(dists[allkeys[t]]):
+                    success_count += 1
+                    success_budgets.append(allbudgets[t])
+                printv('    %s of %s, %s/%s successes' % (allkeys[t], n_throws, success_count, n_success), 2, verbose)
+                if success_count >= n_success:
+                    break
+
             # Do the refinement
             printv('Refining throw...', 2, verbose)
             movie.append('Refining throw %s' % (p+1))
