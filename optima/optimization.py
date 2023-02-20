@@ -732,7 +732,7 @@ def outcomecalc(budgetvec=None, which=None, project=None, parsetname=None, progs
             final[key] = float(thisresult[finalind])
             if objectives[key] is not None:
                 target[key] = 1 - objectives[key]
-                if final[key] > objectives[key]: targetsmet = False # Targets are NOT met #CKCHANGE
+                if final[key] > target[key]: targetsmet = False # Targets are NOT met #CKCHANGE
             else: target[key] = -1 # WARNING, must be a better way of showing no defined objective
 
         # Output results
