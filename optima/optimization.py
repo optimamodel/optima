@@ -584,7 +584,7 @@ def separatetv(inputvec=None, optiminds=None, optimkeys=None):
 def outcomecalc(budgetvec=None, which=None, project=None, parsetname=None, progsetname=None, scaleupmethod='multiply',
                 objectives=None, absconstraints=None, totalbudget=None, optiminds=None, optimkeys=None, origbudget=None,
                 tvec=None, initpeople=None, initprops=None, startind=None, outputresults=False, verbose=2, ccsample='best',
-                doconstrainbudget=True, tvsettings=None, tvcontrolvec=None, origoutcomes=None, penalty=1e9, warn=True,**kwargs):
+                doconstrainbudget=True, tvsettings=None, tvcontrolvec=None, origoutcomes=None, penalty=1e9, warn=True, printdone=None, **kwargs):
     ''' Function to evaluate the objective for a given budget vector (note, not time-varying) '''
 
     # Set up defaults
@@ -747,7 +747,8 @@ def outcomecalc(budgetvec=None, which=None, project=None, parsetname=None, progs
         else:
             summary = 'Baseline: %0.0f %0.0f %0.0f | Target: %0.0f %0.0f %0.0f | Final: %0.0f %0.0f %0.0f' % tuple(baseline.values()+target.values()+final.values())
             output = (targetsmet, summary)
-    
+
+    if printdone: printv(printdone,2,verbose)
     return output
 
 
@@ -1720,14 +1721,15 @@ def minmoney(project=None, optim=None, tvec=None, verbose=None, maxtime=None, fi
 
             parallelargs = sc.dcp(args)
             parallelargs.update({'totalbudget':totalbudget, 'outputresults':True})
+            iterkwargs = {'budgetvec':allbudgets, 'printdone':[f'    {key} of {n_throws}' for key in allkeys]}
             if parallel:
-                try: all_results_throws = sc.parallelize(op.outcomecalc, iterarg=allbudgets, kwargs=parallelargs, ncpus=int(ncpus))
+                try: all_results_throws = sc.parallelize(op.outcomecalc, iterkwargs=iterkwargs, kwargs=parallelargs, ncpus=int(ncpus))
                 except AssertionError as e:
                     parallel = False
                     printv('\nWARNING: Could not run in parallel because this process is already running in parallel. Trying in serial...',1,verbose)
 
             if not parallel:  # Not else since we might need to try again after failing
-                all_results_throws = sc.parallelize(op.outcomecalc, iterarg=allbudgets, kwargs=parallelargs, ncpus=int(ncpus), parallelizer='serial-nocopy')
+                all_results_throws = sc.parallelize(op.outcomecalc, iterkwargs=iterkwargs, kwargs=parallelargs, ncpus=int(ncpus), parallelizer='serial-nocopy')
 
             for t,throw in enumerate(range(n_throws-1)): # -1 since include current budget
                 res_throw = all_results_throws[t].outcomes['final']
