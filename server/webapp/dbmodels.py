@@ -80,8 +80,8 @@ class PyObjectDb(db.Model):
     def as_portfolio_file(self, loaddir, filename=None):
         portfolio = self.load()
         filename = os.path.join(loaddir, portfolio.name + ".prt")
-        op.saveobj(filename, portfolio)
-        return portfolio.name + ".prt"
+        filename = op.saveobj(filename, portfolio)
+        return filename
 
 
 #@swagger.model

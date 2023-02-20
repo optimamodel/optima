@@ -584,13 +584,16 @@ def get_coverages_for_scenarios(project, year=None):
         for progset in project.progsets.values():
             progset_id = str(progset.uid)
             result[parset_id][progset_id] = {}
-            for year in years:
-                try:
-                    coverage = progset.getdefaultcoverage(t=year, parset=parset)
-                    coverage = normalize_obj(coverage)
-                except:
-                    coverage = None
-                result[parset_id][progset_id][year] = coverage
+            try:
+                coverage = progset.getdefaultcoverage(t=list(years), parset=parset)
+                # Now we swap from an odict of arrays, with a key per program, to an odict of odicts, with a key per year
+                prog_list = coverage.keys()
+                coverage = np.column_stack(coverage.values())
+                for yrno,year in enumerate(years):
+                    result[parset_id][progset_id][year] = normalize_obj(op.odict(zip(prog_list,coverage[yrno,:])))
+            except:
+                for year in years:
+                    result[parset_id][progset_id][year] = None
     return result
 
 
@@ -1377,7 +1380,7 @@ def get_default_optimization_summaries(project):
     for progsetkey,progset in project.progsets.items():
         progset_id = progset.uid
         default = {
-            'constraints': parse_constraints(op.defaultconstraints(project=project, progsetname=progsetkey)),
+            'proporigconstraints': parse_constraints(op.defaultconstraints(project=project, progsetname=progsetkey)),
             'objectives': {},
             'tvsettings': normalize_obj(op.defaulttvsettings())
         }
@@ -1443,14 +1446,24 @@ def get_optimization_summaries(project):
     optim_summaries = []
 
     for optim in project.optims.values():
+        # FE only uses proporigconstraints, so get them for the FE to display
+        # However, this version of the optim doesn't get saved unless "Save" is clicked in the FE, so the optim doesn't get modified until then.
+        # Once we click "Save", that will remove the absconstraints and the constraints
+        # So, we call this every time since there may be absconstraints that are overriding the proporigconstraints
+        optim.proporigconstraints = optim.getproporigconstraints()
 
         optim_summary = {
             "id": str(optim.uid),
             "name": str(optim.name),
             "objectives": normalize_obj(optim.objectives),
-            "constraints": parse_constraints(optim.constraints, project=project, progsetname=optim.progsetname),
+            "proporigconstraints": parse_constraints(optim.proporigconstraints, project=project, progsetname=optim.progsetname),
             "tvsettings": normalize_obj(optim.tvsettings),
         }
+
+        if optim.constraints is not None:
+            optim_summary["constraints"]    = parse_constraints(optim.constraints, project=project, progsetname=optim.progsetname)
+        if optim.absconstraints is not None:
+            optim_summary["absconstraints"] = parse_constraints(optim.absconstraints, project=project, progsetname=optim.progsetname)
 
         optim_summary["which"] = str(optim.objectives["which"])
 
@@ -1511,8 +1524,18 @@ def set_optimization_summaries_on_project(project, optimization_summaries):
                 optim.objectives[objkey] = summary["objectives"][objkey]
         optim.objectives["which"] = summary["which"]
 
+        if "proporigconstraints" in summary:
+            optim.proporigconstraints = revert_constraints(summary['proporigconstraints'], project=project, progsetname=optim.progsetname)
+
+        if "absconstraints" in summary:
+            optim.absconstraints = revert_constraints(summary['absconstraints'], project=project, progsetname=optim.progsetname)
+        else: # Must have deleted from FE so delete here too
+            optim.absconstraints = None
+
         if "constraints" in summary:
             optim.constraints = revert_constraints(summary['constraints'], project=project, progsetname=optim.progsetname)
+        else: # Must have deleted from FE so delete here too
+            optim.constraints = None
 
         for tvkey in optim.tvsettings.keys():
             optim.tvsettings[tvkey] = summary["tvsettings"][tvkey]

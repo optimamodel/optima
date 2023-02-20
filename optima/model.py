@@ -2,7 +2,7 @@
 from numpy import zeros, exp, maximum, minimum, inf, array, isnan, einsum, floor, ones, power as npow, concatenate as cat, interp, nan, squeeze, isinf, isfinite, argsort, take_along_axis, put_along_axis, expand_dims, ix_, tile, arange, swapaxes, errstate, where
 from optima import OptimaException, printv, dcp, odict, findinds, compareversions, version, sanitize
 
-def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False, debug=False, label=None, startind=None, advancedtracking=False):
+def model(simpars=None, settings=None, initpeople=None, initprops=None, verbose=None, die=False, debug=False, label=None, startind=None, advancedtracking=False):
     """
     Runs Optima's epidemiological model.
 
@@ -23,8 +23,8 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
     if verbose is None:  verbose = settings.verbose  # Verbosity of output
     printv('Running model...', 1, verbose)
 
-    if initpeople is not None:
-        print('WARNING, due to parameter interpolation, results are unreliable if initpeople is not None!')
+    if initpeople is not None and initprops is None:
+        print('WARNING, results with initpeople are unreliable if you don\'t also provide the full vectors of propdx, propcare etc through initprops!')
 
     # PMTCT behaviour
     oldbehaviour = compareversions(version,"2.12.0") < 0 # Remove new pmtct behaviour from 2.11.x versions and before
@@ -211,6 +211,10 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
                         ('propsupp', [propsupp, usvl,       svl,   svl,     alltx,    raw_newsupp,    fixpropsupp]),
                         ('proppmtct',[proppmtct,None,       None,  None,    None,     None,           fixproppmtct])])  # Calculation of proppmtct is done in the "Calculate births" section and does not need to be repeated at the end of this file
 
+    propslist = [val[0] for val in propstruct.values()]
+    if advancedtracking:
+        raw_propsarr = zeros((len(propstruct.keys()), npts, npts)) # 1st axis is prop, 2nd axis is at which time, 3rd axis is the prop array over time
+
     # Population sizes
     popsize = dcp(simpars['popsize'])
 
@@ -380,6 +384,21 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
             else:   printv(errormsg, 1, verbose)
             initpeople = None
 
+    # Load the supplied propcare, propdx etc vectors, which will get updated as the model runs
+    if initprops is not None:
+        for i in range(len(propslist)):
+            propslist[i][:] = initprops[i]
+
+    # This would be in the "if initpeople is None:" section but it's needed for the immigration
+    # Set initial distributions within treated & untreated
+    # Weight the initial distribution according to model settings to get an "earlier" or "later" stage epidemic to better match trends in years after initialization
+    # Note that the multiplier is quite heavily weighting toward acute infections - note less multiplier for CD4<50 given diagnosis/death
+    cd4weightings = maximum(minimum(array([initcd4weight**3., initcd4weight**2, initcd4weight, 1./initcd4weight, initcd4weight**-2, initcd4weight**-3]), 10.), 0.1)
+    initprog = prog * cd4weightings
+    untxdist    = (1./initprog) / sum(1./initprog) # Normalize progression rates to get initial distribution
+    txdist      = cat([[1.,1.], svlrecov[2:]]) # Use 1s for the first two entries so that the proportion of people on tx with acute infection is v small
+    txdist      = (1./txdist)  / sum(1./txdist) # Normalize
+
     # If it wasn't specified, or if there's something wrong with it, determine what it should be here
     if initpeople is None:
 
@@ -413,15 +432,6 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
         dxdist = dxfrac*(1.-linktocarefrac)
         incaredist = dxfrac*linktocarefrac*(1.-lostfrac)
         lostdist = dxfrac*linktocarefrac*lostfrac
-
-        # Set initial distributions within treated & untreated
-        # Weight the initial distribution according to model settings to get an "earlier" or "later" stage epidemic to better match trends in years after initialization
-        # Note that the multiplier is quite heavily weighting toward acute infections - note less multiplier for CD4<50 given diagnosis/death
-        cd4weightings = maximum(minimum(array([initcd4weight**3., initcd4weight**2, initcd4weight, 1./initcd4weight, initcd4weight**-2, initcd4weight**-3]), 10.), 0.1)
-        initprog = prog * cd4weightings
-        untxdist    = (1./initprog) / sum(1./initprog) # Normalize progression rates to get initial distribution
-        txdist      = cat([[1.,1.], svlrecov[2:]]) # Use 1s for the first two entries so that the proportion of people on tx with acute infection is v small
-        txdist      = (1./txdist)  / sum(1./txdist) # Normalize
 
         # Set initial distribution of PLHIV
         initundx    = einsum('ij,j,i->ij',undxdist,nevertreated,untxdist)
@@ -601,6 +611,9 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
 
         ## Pull out the transitions for this timestep
         thistransit = alltransmatrices[t]
+
+        # Save the proportions to the raw results
+        if advancedtracking: raw_propsarr[:, t, :] = propslist
 
         ## Calculate "effective" HIV prevalence -- taking diagnosis and treatment into account
         allpeople[:,t] = people[:, :, t].sum(axis=0)
@@ -1193,6 +1206,7 @@ def model(simpars=None, settings=None, initpeople=None, verbose=None, die=False,
         raw['incionpopbypop'] = raw_incionpopbypopmethods.sum(axis=0) # Removes the method of transmission
         raw['incimethods']    = raw_incionpopbypopmethods
         raw['transitpopbypop']= raw_transitpopbypop
+        raw['props']          = raw_propsarr
 
     checkfornegativepeople(people) # Check only once for negative people, right before finishing
 
