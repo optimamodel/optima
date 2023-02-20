@@ -1684,7 +1684,8 @@ def minmoney(project=None, optim=None, tvec=None, verbose=None, maxtime=None, fi
             
             printv('Final value: %s' % (upper_lim/factor), 2, verbose)
             return totalbudget, new_budgetvec, budget_list, result_list # Since we know this meets the targets
-        
+
+
         #%% Do the binary search
         printv('\n\n', 2, verbose)
         movie.append('Scale current budget')
@@ -1719,19 +1720,21 @@ def minmoney(project=None, optim=None, tvec=None, verbose=None, maxtime=None, fi
                 allvecs.append(vec)
                 allbudgets.append(this_budget)
 
-            parallelargs = sc.dcp(args)
-            parallelargs.update({'totalbudget':totalbudget, 'outputresults':True})
-            iterkwargs = {'budgetvec':allbudgets, 'printdone':[f'    {key} of {n_throws}' for key in allkeys]}
             if parallel:
+                parallelargs = sc.dcp(args)
+                parallelargs.update({'totalbudget': totalbudget, 'outputresults': True})
+                # Run here in parallel
+                iterkwargs = {'budgetvec': allbudgets, 'printdone': [f'    {key} of {n_throws}' for key in allkeys]}
                 try: all_results_throws = sc.parallelize(op.outcomecalc, iterkwargs=iterkwargs, kwargs=parallelargs, ncpus=int(ncpus))
                 except AssertionError as e:
                     parallel = False
                     printv('\nWARNING: Could not run in parallel because this process is already running in parallel. Trying in serial...',1,verbose)
-
-            if not parallel:  # Not else since we might need to try again after failing
-                all_results_throws = sc.parallelize(op.outcomecalc, iterkwargs=iterkwargs, kwargs=parallelargs, ncpus=int(ncpus), parallelizer='serial-nocopy')
+            if not parallel: all_results_throws = [None]*(n_throws-1)  # Note else in case the above fails
 
             for t,throw in enumerate(range(n_throws-1)): # -1 since include current budget
+                if not parallel: # Run here not in parallel
+                    all_results_throws[t] = op.outcomecalc(allbudgets[t], totalbudget=totalbudget, outputresults=True, **args)
+
                 res_throw = all_results_throws[t].outcomes['final']
                 dists[allkeys[t]] = distance(res_targ, res_throw)
                 movie.append(res_throw)
