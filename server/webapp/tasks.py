@@ -370,16 +370,24 @@ def optimize(project_id, optimization_id, maxtime, stoppingfunc=None):
 
     print(">> optimize start")
     maxtime = float(maxtime)
-    if maxtime>3600: mc = 9 # Arbitrary threshold for "unlimited" run: run with uncertainty
-    else:            mc = 0
-    result = project.optimize(optim=optim, maxtime=maxtime, mc=mc, stoppingfunc=stoppingfunc)  # Set this to zero for now while we decide how to handle uncertainties etc.
+    if maxtime>3600: mc = (12,6,6) # Arbitrary threshold for "unlimited" run: run with mc initiation
+    else:            mc = (12,0,0) # No mc, just get through as many baseline budgets in the time
+    # Notice, we have not modified the optim, so if the optim is from the BE, it will maintain its constraints, absconstraints and proporigconstraints
+    result = project.optimize(optim=optim, maxtime=maxtime, mc=mc, nchains=1, nblocks=1, parallel=False, stoppingfunc=stoppingfunc)  # Set this to zero for now while we decide how to handle uncertainties etc.
 
     print(">> optimize budgets %s" % result.budgets)
-    
-    # save project
+
+    # Load current project (might have changed since start of optim) and update with optim, result, scenarios and modified
     db_session = init_db_session()
+    project_new = dataio.load_project(project_id, db_session=db_session, authenticate=False)
+
+    project_new.addoptim(optim=optim)
+    project_new.addresult(result=result)
+    project_new.modified = op.today()
+
+    # Save
     project_record = dataio.load_project_record(project_id, db_session=db_session)
-    project_record.save_obj(project)
+    project_record.save_obj(project_new)
     db_session.add(project_record)
 
     # save result

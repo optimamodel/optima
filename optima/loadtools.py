@@ -98,6 +98,7 @@ def setmigrations(which='migrations'):
         ('2.11.0', ('2.11.1', '2022-10-06', None,            'Major bug fixes, FE updates, fixproppmtct now fixes proportion of diagnosed women on PMTCT and propcare brings people from dx and lost')),
         ('2.11.1', ('2.11.2', '2022-10-10', None,            'Big model speed ups (about 25%) and split diagnoses by CD4 count')),
         ('2.11.2', ('2.11.3', '2022-11-02', None,            'Annual data takes precedence over assumption when loading databook, bug fixes, FE Scenario tab add stacked for one scenario + other things.')),
+        ('2.11.3', ('2.11.4', '2023-02-07',addallconstraintsoptim, 'Adds absconstraints and proporigconstraints to Optim, model works with initpeople and optimization improvements')),
         ])
     
     
@@ -1451,6 +1452,18 @@ def clearuntrackedresults(project=None, **kwargs):
             if not hasattr(res, 'advancedtracking'): #if anything wasn't migrated previously just clear the result and user will rerun, migration is complex otherwise
                 project.results = op.odict()
                 break
+    return None
+
+def addallconstraintsoptim(project=None, **kwargs):
+    '''
+    Migration between Optima 2.11.3 and 2.11.4
+    - Add proporigconstraints and absconstraints to the Optims in the project
+    '''
+    if project is not None:
+        for optim in project.optims.values():
+            if not hasattr(optim, 'constraints'):         optim.constraints         = None  # Should already have constraints but check anyway
+            if not hasattr(optim, 'proporigconstraints'): optim.proporigconstraints = None
+            if not hasattr(optim, 'absconstraints'):      optim.absconstraints      = None
     return None
 
 ##########################################################################################

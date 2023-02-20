@@ -2,9 +2,11 @@ from optima import OptimaException, Settings, Parameterset, Programset, Resultse
 from optima import odict, getdate, today, uuid, dcp, makefilepath, objrepr, printv, isnumber, saveobj, promotetolist, promotetoodict, sigfig # Import utilities
 from optima import loadspreadsheet, model, gitinfo, defaultscenarios, makesimpars, makespreadsheet
 from optima import defaultobjectives, autofit, runscenarios, optimize, multioptimize, tvoptimize, outcomecalc, icers # Import functions
-from optima import version # Get current version
-from numpy import argmin, argsort, nan
+from optima import version, cpu_count # Get current version
+from numpy import argmin, argsort, nan, ceil
 from numpy.random import seed, randint
+from time import time
+
 import os
 
 #######################################################################################################
@@ -455,13 +457,13 @@ class Project(object):
         fullpath = makefilepath(filename=filename, folder=folder, default=[self.filename, self.name], ext='prj', sanitize=True)
         self.filename = fullpath # Store file path
         if saveresults and not cleanparsfromscens:
-            saveobj(fullpath, self, verbose=verbose)
+            fullpath = saveobj(fullpath, self, verbose=verbose)
         else:
             tmpproject = dcp(self) # Need to do this so we don't clobber the existing results
             tmpproject.restorelinks() # Make sure links are restored
             if not saveresults:    tmpproject.cleanresults()       # Get rid of all results
             if cleanparsfromscens: tmpproject.cleanparsfromscens() # Get rid of (unnecessary) parameters from scenarios
-            saveobj(fullpath, tmpproject, verbose=verbose) # Save it to file
+            fullpath = saveobj(fullpath, tmpproject, verbose=verbose) # Save it to file
             del tmpproject # Don't need it hanging around any more
         self.settings.advancedtracking = origadvancedtracking
         return fullpath
@@ -629,7 +631,7 @@ class Project(object):
                 except: end   = self.settings.end # Ditto
             for i in range(n):
                 maxint = 2**31-1 # See https://en.wikipedia.org/wiki/2147483647_(number)
-                sampleseed = randint(0,maxint) 
+                sampleseed = randint(0,maxint) if sample is not None else None
                 simparslist.append(makesimpars(pars, start=start, end=end, dt=dt, tvec=tvec, settings=self.settings, name=parsetname, sample=sample, tosample=tosample, randseed=sampleseed, smoothness=smoothness))
         else:
             simparslist = promotetolist(simpars)
@@ -721,7 +723,7 @@ class Project(object):
     
     
     def outcomecalc(self, name=None, budget=None, optim=None, optimname=None, parsetname=None, progsetname=None, 
-                objectives=None, constraints=None, origbudget=None, verbose=2, doconstrainbudget=False):
+                objectives=None, absconstraints=None, origbudget=None, verbose=2, doconstrainbudget=False):
         '''
         Calculate the outcome for a given budget -- a substep of optimize(); similar to runbudget().
         
@@ -747,16 +749,16 @@ class Project(object):
         # Check inputs
         if name is None: name = 'outcomecalc'
         if optim is None:
-            if len(self.optims) and all([arg is None for arg in [objectives, constraints, parsetname, progsetname, optimname]]):
+            if len(self.optims) and all([arg is None for arg in [objectives, absconstraints, parsetname, progsetname, optimname]]):
                 optimname = -1 # No arguments supplied but optims exist, use most recent optim to run
             if optimname is not None: # Get the optimization by name if supplied
                 optim = self.optims[optimname] 
             else: # If neither an optim nor an optimname is supplied, create one
-                optim = Optim(project=self, name=name, objectives=objectives, constraints=constraints, parsetname=parsetname, progsetname=progsetname)
+                optim = Optim(project=self, name=name, objectives=objectives, absconstraints=absconstraints, parsetname=parsetname, progsetname=progsetname)
 
         # Run outcome calculation        
         results = outcomecalc(budgetvec=budget, which='outcomes', project=self, parsetname=optim.parsetname, 
-                              progsetname=optim.progsetname, objectives=optim.objectives, constraints=optim.constraints, 
+                              progsetname=optim.progsetname, objectives=optim.objectives, absconstraints=optim.absconstraints,
                               origbudget=origbudget, outputresults=True, verbose=verbose, doconstrainbudget=doconstrainbudget)
         # Add results
         results.name = name
@@ -782,27 +784,37 @@ class Project(object):
         return results
 
 
-    def optimize(self, name=None, parsetname=None, progsetname=None, objectives=None, constraints=None, maxiters=None, maxtime=None, 
+    def optimize(self, name=None, parsetname=None, progsetname=None, objectives=None, constraints=None, absconstraints=None, proporigconstraints=None, maxiters=None, maxtime=None,
                  verbose=2, stoppingfunc=None, die=False, origbudget=None, randseed=None, mc=None, optim=None, optimname=None, multi=False, 
-                 nchains=None, nblocks=None, blockiters=None, batch=None, timevarying=None, tvsettings=None, tvconstrain=None, which=None, 
+                 nchains=None, nblocks=None, blockiters=None, ncpus=None, parallel=None, timevarying=None, tvsettings=None, tvconstrain=None, which=None,
                  makescenarios=True, **kwargs):
         '''
         Function to minimize outcomes or money.
         
         Usage examples:
             P = op.demo(0); P.parset().fixprops(False) # Initialize project so ART has an effect
-            
             P.optimize() # Use defaults
-            P.optimize(maxiters=5, mc=0) # Do a very simple run
-            P.optimize(parsetname=0, progsetname=0) # Use first parset and progset
-            P.optimize(optim=P.optims[-1]) # Use a pre-existing optim
-            P.optimize(optimname=-1) # Same as previous
-            P.optimize(multi=True) # Do a multi-chain optimization
-            P.optimize(multi=True, nchains=8, nblocks=10, blockiters=50) # Do a very large multi-chain optimization
-            P.optimize(timevarying=True, mc=0, maxiters=30) # Do a short time-varying optimization
-            P.optimize(timevarying=True, mc=0, maxiters=200, tvconstrain=False, randseed=1) # Do a time-varying optimization, allowing total annual budget to vary
-            
             pygui(P) # To plot results
+
+        Suggested inputs are: parsetname, progsetname, objectives, proporigconstraints, maxtime, ncpus, randseed
+            (or constraints or absconstraints, but proporigconstraints also work the best in the FE)
+
+        maxtime <= 60 is a test run, maxtime > 60 is a proper run (generally 1000), maxtime = None runs the most thorough optimization
+        !! Be careful in the code, maxtime for this function refers to the entire optimization time, whereas outside this
+        function it refers to how long a single call of asd will last. That is why we have finishtime !!
+
+        ncpus is the max number of threads to use: sc.cpu_count()/2 won't slow your computer down,
+            sc.cpu_count()-2 might be faster, sc.cpu_count() if you're a madman
+
+        To customize behaviour, generally use maxtime but:
+            mc: minoutcomes starts optimizations from different starting budgets, either (baselines, randoms, progbaselines). See minoutcomes
+            parallel: whether minoutcomes or minmoney should run in parallel (generally True)
+            maxiters: the max iterations each optimization will stop at (generally None, limited by time or convergence instead)
+            nchains: how many chains multioptimize should run in parallel, NOTE that each chain will run with mc. (generally 1 when using mc)
+            nblocks: runs nchains, then updates origbudget from the best chain and reoptimizes. Repeats this nblocks times (generally 1 or 2)
+            multi: !! This input gets ignored since this function interprets whether or not multioptimize needs to be used now !!
+            blockiters !! This input gets ignored now since it is the same as maxiters !!
+            origbudget: if you want to customize the "Optimization baseline", which is the optimization's starting point
         '''
         
         if parsetname  is None or parsetname == -1:  parsetname  = self.parsets.keys()[-1]  #use the real name instead of -1
@@ -811,36 +823,61 @@ class Project(object):
         # Check inputs
         if name is None: name = 'default'
         if optim is None:
-            if len(self.optims) and all([arg is None for arg in [objectives, constraints, parsetname, progsetname, optimname, which]]):
+            if len(self.optims) and all([arg is None for arg in [objectives, parsetname, progsetname, optimname, which]]):
                 optimname = -1 # No arguments supplied but optims exist, use most recent optim to run
             if optimname is not None: # Get the optimization by name if supplied
                 optim = self.optims[optimname] 
             else: # If neither an optim nor an optimname is supplied, create one
-                optim = Optim(project=self, name=name, objectives=objectives, constraints=constraints, parsetname=parsetname, progsetname=progsetname, timevarying=timevarying, tvsettings=tvsettings, which=which)
+                optim = Optim(project=self, name=name, objectives=objectives, constraints=constraints, absconstraints=absconstraints, proporigconstraints=proporigconstraints,
+                              parsetname=parsetname, progsetname=progsetname, timevarying=timevarying, tvsettings=tvsettings, which=which)
         if objectives  is not None: optim.objectives  = objectives # Update optim structure with inputs
-        if constraints is not None: optim.constraints = constraints
         if tvsettings  is not None: optim.tvsettings  = tvsettings
         if timevarying is not None: optim.tvsettings['timevarying'] = timevarying # Set time-varying optimization
         if tvconstrain is not None: optim.tvsettings['tvconstrain'] = tvconstrain # Set whether programs should be constrained to their time-varying values
-        
+        if absconstraints is not None:      optim.absconstraints = absconstraints
+        if constraints is not None:         optim.constraints = constraints
+        if proporigconstraints is not None: optim.proporigconstraints = proporigconstraints
+
+        if maxiters is None: maxiters = blockiters  # blockiters and maxiters are the same and will be called maxiters from here on out
+        settings = {'maxtime':maxtime,'maxiters':maxiters, 'parallel':parallel, 'ncpus': ncpus, 'nchains':nchains, 'nblocks':nblocks, 'mc':mc}
+        if maxtime is None:  # Unlimited time so run the most thorough optimization
+            defaultsettings = {'maxiters':None, 'parallel':True, 'nchains':1, 'nblocks':10, 'mc':(24,12,12), 'ncpus':ceil(cpu_count()/2)}
+        elif maxtime <= 60:  # 1 min or less, so run a test optimization
+            defaultsettings = {'maxiters':None, 'parallel':True, 'nchains':1, 'nblocks':1,  'mc':( 2, 0, 0), 'ncpus':ceil(cpu_count()/2)}
+        else:                # Longer than 1 minute, but not unlimited so run the most "efficient" optimization
+            defaultsettings = {'maxiters':None, 'parallel':True, 'nchains':1, 'nblocks':1,  'mc':(12, 6, 6), 'ncpus':ceil(cpu_count()/2)}
+        for key in defaultsettings.keys():
+            if settings[key] is None: settings[key] = defaultsettings[key]  # Only overwrite Nones with the default
+
+        multi = settings['nchains'] > 1 or settings['nblocks'] > 1    # Need to run with multioptimize if you have nchains or nblocks
+        if settings['maxtime'] is not None: settings['finishtime'] = time() + settings['maxtime'] # START THE TIMER
+        # Note we still pass maxtime into the functions, even though it will reach finishtime before maxtime, so that it saves maxtime
+
         # Run the optimization
         if optim.tvsettings['timevarying']: # Call time-varying optimization
-            multires = tvoptimize(optim=optim, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, 
-                                     die=die, origbudget=origbudget, randseed=randseed, mc=mc, **kwargs)
+            for key in ['nchains','nblocks']: settings.pop(key)
+            multires = tvoptimize(optim=optim, verbose=verbose, stoppingfunc=stoppingfunc, die=die, origbudget=origbudget,
+                                  randseed=randseed, **settings, **kwargs)
         elif multi and not optim.objectives['which']=='money': # It's a multi-run objectives optimization
-            multires = multioptimize(optim=optim, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, 
-                                     die=die, origbudget=origbudget, randseed=randseed, mc=mc, nchains=nchains, nblocks=nblocks, 
-                                     blockiters=blockiters, batch=batch, **kwargs)      
-        else: # Neither special case
-            multires = optimize(optim=optim, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, 
-                                die=die, origbudget=origbudget, randseed=randseed, mc=mc, multi=multi, nchains=nchains, **kwargs)
+            multires = multioptimize(optim=optim, verbose=verbose, stoppingfunc=stoppingfunc, die=die, origbudget=origbudget,
+                                     randseed=randseed, **settings, **kwargs)
+        else: # Neither special case, so minoutcomes or minmoney
+            multires = optimize(optim=optim, verbose=verbose, stoppingfunc=stoppingfunc, die=die, origbudget=origbudget,
+                                randseed=randseed, **settings, **kwargs)
         
         # Tidy up
         optim.resultsref = multires.name
         self.addoptim(optim=optim)
         self.addresult(result=multires)
         self.modified = today()
-        
+
+        try:
+            optbudget = multires.budgets['Optimized']
+            if hasattr(multires,'improvement'):
+                  printv(f'\nOptimization "{name}" finished with outcomes: Original: {multires.improvement[0][0]}, Best: {multires.improvement[0][-1]}!\n',2,verbose)
+            else: printv(f'\nOptimization "{name}" finished with budgets: Original: {sum(multires.budgets["Baseline"])}, Best: {sum(optbudget)}!\n')
+        except:   printv(f'\nOptimization "{name}" unsuccessful!\n',2,verbose)
+
         if makescenarios: #Make a new budget scenario out of each optimized result
             budgetscens = []            
             for resname in multires.resultsetnames:
@@ -944,7 +981,7 @@ class Project(object):
         for on,o in self.optims.items():
             parsetname = "'"+o.parsetname+"'" if isinstance(o.parsetname,str) else str(o.parsetname)
             progsetname = "'"+o.progsetname+"'" if isinstance(o.progsetname,str) else str(o.progsetname)
-            constraints = promotetoodict(o.constraints).export(doprint=False) if o.constraints is not None else 'None'
+            constraints = promotetoodict(o.proporigconstraints).export(doprint=False) if o.proporigconstraints is not None else 'None'
             output += "    P.addoptim(name='"+on+"',\n               optim=Optim(project=P,\n                           parsetname="+parsetname+",\n                           progsetname="+progsetname+",\n                           objectives="+promotetoodict(o.objectives).export(doprint=False)+",\n                           constraints="+constraints+"))\n\n"
 
         output += "    if dorun: P.optimize() # Run the most recent optimization\n\n\n"
@@ -964,17 +1001,15 @@ class Project(object):
     ## Methods to handle tasks for geospatial analysis
     #######################################################################################################
         
-    def genBOC(self, budgetratios=None, name=None, parsetname=None, progsetname=None, objectives=None, constraints=None, maxiters=1000, 
-               maxtime=None, verbose=2, stoppingfunc=None, mc=3, die=False, randseed=None, origbudget=None, **kwargs):
+    def genBOC(self, budgetratios=None, name=None, parsetname=None, progsetname=None, objectives=None, constraints=None, absconstraints=None, proporigconstraints=None,
+               maxiters=1000, maxtime=None, verbose=2, stoppingfunc=None, mc=None, parallel=True, finishtime=None, ncpus=None, die=False, randseed=None, origbudget=None, **kwargs):
         ''' Function to generate project-specific budget-outcome curve for geospatial analysis '''
         if name is None:
             name = 'BOC ' + self.name
-        boc = BOC(name=name)
         if objectives is None:
             printv('Warning, genBOC "%s" did not get objectives, using defaults...' % (self.name), 2, verbose)
             objectives = defaultobjectives(project=self, progsetname=progsetname)
-        boc.objectives = objectives
-        boc.constraints = constraints
+        boc = BOC(name=name,objectives=objectives,constraints=constraints,absconstraints=absconstraints,proporigconstraints=proporigconstraints)
         
         if parsetname is None:
             printv('Warning, using default parset', 3, verbose)
@@ -983,7 +1018,12 @@ class Project(object):
         if progsetname is None:
             printv('Warning, using default progset', 3, verbose)
             progsetname = -1
-        
+
+        # Set defaults
+        if sc.isnumber(mc): mc = (1,0,mc)
+        elif mc is None or sum(mc) == 0: mc = (3,0,0)
+        if ncpus is None: ncpus = int(ceil( sc.cpu_count()/2 ))
+
         defaultbudget = self.progsets[progsetname].getdefaultbudget()
         
         if budgetratios is None:
@@ -1021,23 +1061,25 @@ class Project(object):
             totalcount = len(budgetdict)+sum(counts[:])-1
             printv('Running budget %i/%i ($%0.0f)' % (thiscount, totalcount, budget), 2, verbose)
             objectives['budget'] = budget
-            optim = Optim(project=self, name=name, objectives=objectives, constraints=constraints, parsetname=parsetname, progsetname=progsetname)
+            optim = Optim(project=self, name=name, constraints=constraints,absconstraints=absconstraints,proporigconstraints=proporigconstraints,
+                          objectives=objectives, parsetname=parsetname, progsetname=progsetname)
             
             # All subsequent genBOC steps use the allocation of the previous step as its initial budget, scaled up internally within optimization.py of course.
             if len(tmptotals):
                 closest = argmin(abs(tmptotals[:]-budget)) # Find closest budget
                 origbudget = tmpallocs[closest]
             label = self.name+' $%sm (%i/%i)' % (sigfig(budget/1e6, sigfigs=3), thiscount, totalcount)
-            
+
+            if finishtime is None and maxtime is not None: finishtime = time() + maxtime  # Each optimization gets its own maxtime
             # Actually run
-            results = optimize(optim=optim, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, origbudget=origbudget, label=label, mc=mc, die=die, randseed=randseed, **kwargs)
+            results = optimize(optim=optim, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, origbudget=origbudget, label=label, mc=mc, finishtime=finishtime, parallel=parallel, ncpus=ncpus, die=die, randseed=randseed, **kwargs)
             tmptotals[key] = budget
             tmpallocs[key] = dcp(results.budgets.findbykey('Optim'))
             tmpx[key] = budget # Used to be append, but can't use lists since can iterate multiple times over a single budget
             tmpy[key] = results.outcome
             boc.budgets[key] = tmpallocs[-1]
             if ratio==1.0: # Check if ratio is 1, and if so, store the baseline
-                ybaseline = results.extremeoutcomes.findbykey('Base') # Store baseline result, but also not part of the BOC
+                ybaseline = results.outcomes.findbykey('Base') # Store baseline result, but also not part of the BOC
                 yregionoptim = results.outcome
                 regionoptimbudget = budget
             

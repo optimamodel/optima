@@ -7,8 +7,8 @@ __all__ = ['asd']
 
 def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
     pinitial=None, sinitial=None, xmin=None, xmax=None, maxiters=None, maxtime=None, 
-    abstol=1e-6, reltol=1e-3, stalliters=None, stoppingfunc=None, randseed=None, 
-    label=None, verbose=2, **kwargs):
+    finishtime=None, abstol=1e-6, reltol=1e-3, stalliters=None, stoppingfunc=None,
+    randseed=None, label=None, verbose=2, **kwargs):
     """
     Optimization using adaptive stochastic descent (ASD).
     
@@ -30,6 +30,7 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
       xmax           None    Max value allowed for each parameter 
       maxiters       1000    Maximum number of iterations (1 iteration = 1 function evaluation)
       maxtime        3600    Maximum time allowed, in seconds
+      finishtime     None    Time (given by time() in seconds) after which the calculation will halt
       abstol         1e-6    Minimum absolute change in objective function
       reltol         1e-3    Minimum relative change in objective function
       stalliters     10*n    Number of iterations over which to calculate TolFun (n = number of parameters)
@@ -75,7 +76,7 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
 
     # Handle inputs and set defaults
     if maxtime  is None: maxtime  = 3600
-    if maxiters is None: maxiters = 1000
+    if maxiters is None: maxiters = 5000
     maxrangeiters = 100 # Number of times to try generating a new parameter
     x, origshape = consistentshape(x, origshape=True) # Turn it into a vector but keep the original shape (not necessarily class, though)
     nparams = len(x) # Number of parameters
@@ -137,11 +138,17 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
     allsteps[0, :] = xorig # Store initial input vector
 
     # Loop
-    count = 0 # Keep track of how many iterations have occurred
     start = time() # Keep track of when we begin looping
+    if finishtime is None: finishtime = start + maxtime*2 # If no finish time given, just make a time after the maxtime will be up.
+    count = 0 # Keep track of how many iterations have occurred
     offset = ' ' * 4 # Offset the print statements
     exitreason = 'Unknown exit reason' # Catch everything else
     while True:
+        # Check for finishtime at the start of the loop to speed up exiting
+        if time() > finishtime:
+            exitreason = f'Finish time reached. Ran for {op.sigfig(time() - start)} seconds'
+            break
+
         count += 1 # Increment the count
         if verbose == 1: print(offset + label + 'Iteration %i; elapsed %0.1f s; objective: %0.3e' % (count, time() - start, fval)) # For more verbose, use other print statement below
         if verbose >= 4: print('\n\n Count=%i \n x=%s \n probabilities=%s \n stepsizes=%s' % (count, x, probabilities, stepsizes))
@@ -204,6 +211,9 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
         if (time() - start) > maxtime:
             exitreason = 'Time limit reached (%s > %s)' % op.sigfig([(time()-start), maxtime])
             break
+        if time() > finishtime:
+            exitreason = f'Finish time reached. Ran for {op.sigfig(time() - start)} seconds'
+            break
         if (count > stalliters) and (abs(np.mean(abserrorhistory)) < abstol): # Stop if improvement is too small
             exitreason = 'Absolute improvement too small (%s < %s)' % op.sigfig([np.mean(abserrorhistory), abstol])
             break
@@ -215,7 +225,7 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
             break
 
     # Return
-    if verbose >= 2: print('=== %s %s (%i steps, orig: %s | best: %s | ratio: %s) ===' % ((label, exitreason, count) + op.sigfig([fvals[0], fvals[-1], fvals[-1] / fvals[0]])))
+    if verbose >= 2: print('=== %s %s (%i steps, orig: %s | best: %s | ratio: %s) ===' % ((label, exitreason, count) + op.sigfig([fvals[0], fvals[count], fvals[count] / fvals[0]])))
     output = objdict()
     output['x'] = np.reshape(x, origshape) # Parameters
     output['fval'] = fvals[count]
