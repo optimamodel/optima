@@ -60,9 +60,6 @@ if six.PY3:
 from uuid import uuid4 as uuid
 from copy import deepcopy as dcp
 
-#Utilities replaced by newer Sciris versions
-from sciris import getdate
-
 # Utilities -- import alphabetically
 from .utils import blank, boxoff, checkmem, checktype, colorize, commaticks, compareversions, dataindex, dataframe, defaultrepr
 from .utils import findinds, findnearest,  getfilelist, getvaliddata, getvalidinds, gitinfo, inclusiverange, indent, isnumber, isiterable
@@ -72,6 +69,17 @@ from .utils import promotetoarray, promotetolist, promotetoodict, quantile, runc
 from .utils import sigfig, SItickformatter, SIticks, slacknotification, smoothinterp, tic, toc, today, vec2obj
 from .utils import CancelException
 from . import utils as _utils; del utils
+
+#Utilities replaced by newer Sciris versions
+from sciris import getdate
+# For Optima version 2.11.4 we need sciris version 2.0.2 or later
+from sciris import __version__ as sc_version, __versiondate__ as sc_versiondate
+if compareversions(sc_version, '2.0.2') < 0:
+    print(f'!! WARNING: you are using an old version of sciris: version {sc_version} from {sc_versiondate}.\nPlease update to the latest version using "pip install sciris --upgrade"')
+    from multiprocessing import cpu_count
+else:
+    from sciris import cpu_count
+del sc_version; del sc_versiondate
 
 # Color definitions
 from .colortools import alpinecolormap, bicolormap, gridcolors, vectocolor, shifthue
