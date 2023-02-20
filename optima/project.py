@@ -637,7 +637,7 @@ class Project(object):
                 except: end   = self.settings.end # Ditto
             for i in range(n):
                 maxint = 2**31-1 # See https://en.wikipedia.org/wiki/2147483647_(number)
-                sampleseed = randint(0,maxint) 
+                sampleseed = randint(0,maxint) if sample is not None else None
                 simparslist.append(makesimpars(pars, start=start, end=end, dt=dt, tvec=tvec, settings=self.settings, name=parsetname, sample=sample, tosample=tosample, randseed=sampleseed, smoothness=smoothness))
         else:
             simparslist = promotetolist(simpars)
