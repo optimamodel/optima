@@ -388,7 +388,7 @@ def constrainbudget(origbudget=None, budgetvec=None, totalbudget=None, absconstr
                     tolerance=1e-2, overalltolerance=1.0, outputtype=None, verbose=2, tvsettings=None, dieifcannotreach=False, warn=True):
     """ Take an unnormalized/unconstrained budgetvec and normalize and constrain it """
     # Handle zeros
-    if sum(budgetvec)==0:            budgetvec[:] += tolerance
+    if sum(budgetvec)==0: budgetvec[:] += tolerance
 
     # Get optiminds and optimkeys
     optiminds, optimkeys = calcoptimindsoptimkeys('constrainbudget', prognamelist=origbudget.keys(), progset=None,
@@ -396,21 +396,26 @@ def constrainbudget(origbudget=None, budgetvec=None, totalbudget=None, absconstr
     progkeys = array(origbudget.keys())  # Array of all allowable keys
     fixedkeys = array([p for p in progkeys if p not in optimkeys]) # Get the complement of optimkeys
 
-    # Calculate the total amount available for the optimizable programs
-    optimbudget = totalbudget - sum(origbudget[fixedkeys])
-    optimscaleratio = optimbudget/float(sum(budgetvec)) # If totalbudget=sum(origbudget) and fixed cost lower limits are 1, then optimscaleratio=1
+    canreachtotalbudget = True
+    if totalbudget is not None: # Provided with a totalbudget that we want to be
+        # Calculate the total amount available for the optimizable programs
+        optimbudget = totalbudget - sum(origbudget[fixedkeys])
+        optimscaleratio = optimbudget/float(sum(budgetvec)) # If totalbudget=sum(origbudget) and fixed cost lower limits are 1, then optimscaleratio=1
 
-    # Scale the supplied budgetvec to meet this available amount
-    if scaleupmethod == 'multiply' or optimscaleratio <= 1:
-        scaledbudgetvec = dcp(budgetvec*optimscaleratio)
-    else: # scaleupmethod == 'add'
-        difference = optimbudget - float(sum(budgetvec))
+        # Scale the supplied budgetvec to meet this available amount
+        if scaleupmethod == 'multiply' or optimscaleratio <= 1:
+            scaledbudgetvec = dcp(budgetvec*optimscaleratio)
+        else: # scaleupmethod == 'add'
+            difference = optimbudget - float(sum(budgetvec))
+            scaledbudgetvec = dcp(budgetvec)
+            for i,v in enumerate(scaledbudgetvec): scaledbudgetvec[i] += difference/len(budgetvec) # This is the original budget scaled to the total budget
+
+        if abs(sum(scaledbudgetvec)-optimbudget)>overalltolerance:
+            errormsg = 'Rescaling budget failed (%f != %f)' % (sum(scaledbudgetvec), optimbudget)
+            raise OptimaException(errormsg)
+    else:  # Not provided with a totalbudget that we want to be, just apply absconstraints
+        canreachtotalbudget = False
         scaledbudgetvec = dcp(budgetvec)
-        for i,v in enumerate(scaledbudgetvec): scaledbudgetvec[i] += difference/len(budgetvec) # This is the original budget scaled to the total budget
-
-    if abs(sum(scaledbudgetvec)-optimbudget)>overalltolerance:
-        errormsg = 'Rescaling budget failed (%f != %f)' % (sum(scaledbudgetvec), optimbudget)
-        raise OptimaException(errormsg)
 
     # Calculate absolute limits from relative limits
     abslimits = dcp(absconstraints)
@@ -435,8 +440,7 @@ def constrainbudget(origbudget=None, budgetvec=None, totalbudget=None, absconstr
             limhigh[oi] = True
 
     # Check to see if we will be able to reach the optimbudget
-    canreachtotalbudget = True
-    if minoptimbudget > optimbudget+tolerance:
+    if canreachtotalbudget and minoptimbudget > optimbudget+tolerance:
         canreachtotalbudget = False
         warning = f'WARNING: Not able to reach the total budget of {optimbudget} since the minimum of the optimizable budget is {minoptimbudget}: {list(zip(optimkeys, [abslimits["min"][okey] for oi,okey in enumerate(optimkeys)]))}'
         if dieifcannotreach: raise OptimaException(warning)
@@ -444,7 +448,7 @@ def constrainbudget(origbudget=None, budgetvec=None, totalbudget=None, absconstr
         for oi, okey in enumerate(optimkeys):
             scaledbudgetvec[oi] = abslimits['min'][okey]
 
-    if maxoptimbudget < optimbudget-tolerance:
+    if canreachtotalbudget and maxoptimbudget < optimbudget-tolerance:
         canreachtotalbudget = False
         warning = f'WARNING: Not able to reach the total budget of {optimbudget} since the maximum of the optimizable budget is {maxoptimbudget}: {list(zip(optimkeys, [abslimits["max"][okey] for oi,okey in enumerate(optimkeys)]))}'
         if dieifcannotreach: raise OptimaException(warning)
