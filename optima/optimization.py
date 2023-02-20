@@ -1461,9 +1461,9 @@ def minmoney(project=None, optim=None, tvec=None, verbose=None, maxtime=None, fi
     start = op.tic()
     
     # Set parameters
-    if n_throws  is None: n_throws  = max(50 ,nprogs*5) # Number of throws to try on each round
-    if n_success is None: n_success = max(20, nprogs*2) # The number of successes needed to terminate the throws
-    if n_refine  is None: n_refine  = 200 # The maximum number of refinement steps to take
+    if n_throws  is None: n_throws  = max(200 ,nprogs*20) # Number of throws to try on each round
+    if n_success is None: n_success = max(50,  nprogs*5) # The number of successes needed to terminate the throws
+    if n_refine  is None: n_refine  = 2000  # The maximum number of refinement steps to take
     if schedule  is None: schedule  = [0.3, 0.6, 0.8, 0.9, 1.0] # The budget amounts to allocate on each round
     if ncpus     is None: ncpus     = int(ceil(sc.cpu_count() / 2))
     search_step  = 2.0 # The size of the steps to establish the upper/lower limits for the binary search
