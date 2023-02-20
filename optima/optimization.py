@@ -583,7 +583,7 @@ def separatetv(inputvec=None, optiminds=None, optimkeys=None):
 
 def outcomecalc(budgetvec=None, which=None, project=None, parsetname=None, progsetname=None, scaleupmethod='multiply',
                 objectives=None, absconstraints=None, totalbudget=None, optiminds=None, optimkeys=None, origbudget=None,
-                tvec=None, initpeople=None, initprops=None, startind=None, outputresults=False, verbose=2, ccsample='best',
+                tvec=None, initpeople=None, initprops=None, startind=None, outputresults=False, verbose=2, ccsample='best', eps=1e-3,
                 doconstrainbudget=True, tvsettings=None, tvcontrolvec=None, origoutcomes=None, penalty=1e9, warn=True, printdone=None, **kwargs):
     ''' Function to evaluate the objective for a given budget vector (note, not time-varying) '''
 
@@ -661,8 +661,9 @@ def outcomecalc(budgetvec=None, which=None, project=None, parsetname=None, progs
     initialind = findnearest(results.tvec, objectives['start'])
     finalind   = findnearest(results.tvec, objectives['end'])
     if which=='money': baseind = findnearest(results.tvec, objectives['base']) # Only used for money minimization
+    if which=='money2': baseind = findnearest(results.tvec, objectives['base']) # Only used for money2 minimization
     if which=='outcomes': indices = arange(initialind, finalind) # Only used for outcomes minimization
-    
+
     ## Here, we split depending on whether it's a outcomes or money minimization:
     if which=='outcomes':
         # Calculate outcome
@@ -732,7 +733,7 @@ def outcomecalc(budgetvec=None, which=None, project=None, parsetname=None, progs
             final[key] = float(thisresult[finalind])
             if objectives[key] is not None:
                 target[key] = 1 - objectives[key]
-                if final[key] > objectives[key]: targetsmet = False # Targets are NOT met #CKCHANGE
+                if final[key] > target[key]: targetsmet = False # Targets are NOT met #CKCHANGE
             else: target[key] = -1 # WARNING, must be a better way of showing no defined objective
 
         # Output results
@@ -747,6 +748,49 @@ def outcomecalc(budgetvec=None, which=None, project=None, parsetname=None, progs
         else:
             summary = 'Baseline: %0.0f %0.0f %0.0f | Target: %0.0f %0.0f %0.0f | Final: %0.0f %0.0f %0.0f' % tuple(baseline.values()+target.values()+final.values())
             output = (targetsmet, summary)
+    ## It's money2
+    elif which=='money2':
+        # Calculate outcome
+        outcome = 0 # Preallocate objective value
+        baseline = odict()
+        final = odict()
+        target = odict()
+        targetfrac = odict([(key,objectives[key+'frac']) for key in objectives['keys']]) # e.g. {'inci':objectives['incifrac']} = 0.4 = 40% reduction in incidence
+        for key in objectives['keys']:
+            thisresult = results.main['num'+key].tot[0] # the instantaneous outcome e.g. objectives['numdeath'] -- 0 is since best #CKCHANGE
+            baseline[key] = float(thisresult[baseind])
+            final[key] = float(thisresult[finalind])
+            if targetfrac[key] is not None:
+                target[key] = float(baseline[key]*(1-targetfrac[key]))
+                if final[key] > target[key]:
+                    outcome += (final[key] - target[key]) / ( baseline[key] + eps )  # What percentage short we were from reaching the target
+            else: target[key] = -1 # WARNING, must be a better way of showing no defined objective
+
+        targetprops = odict([(key,objectives[key]) for key in objectives['cascadekeys']])  # e.g. {'propdiag':objectives['propdiag']} = 0.95 = 95% diagnosed
+        for key in objectives['cascadekeys']:
+            thisresult = 1 - results.main[key].tot[0] # What percentage not diagnosed for example
+            final[key] = float(thisresult[finalind])
+            if objectives[key] is not None:
+                target[key] = 1 - objectives[key]  # eg. want 5% not diagnosed
+                if final[key] > objectives[key]:
+                    outcome += (final[key] - target[key])
+            else: target[key] = -1 # WARNING, must be a better way of showing no defined objective
+
+        # Output results
+        if outputresults:
+            results.outcomes = odict([('baseline',baseline), ('final',final), ('target',target), ('targetfrac',targetfrac), ('targetprop',targetprops)])
+            results.budgetyears = [objectives['start']] # Use the starting year
+            results.budget = constrainedbudget # Convert to budget
+            results.targetsmet = targetsmet
+            results.target = target
+            results.rawoutcomes = final
+            output = results
+        else:
+            summary = 'Baseline: %0.0f %0.0f %0.0f | Target: %0.0f %0.0f %0.0f | Final: %0.0f %0.0f %0.0f' % tuple(baseline.values()+target.values()+final.values())
+            output = (targetsmet, summary)
+
+
+
 
     if printdone: printv(printdone,2,verbose)
     return output
@@ -1483,6 +1527,7 @@ def minmoney(project=None, optim=None, tvec=None, verbose=None, maxtime=None, fi
     def distance(target, this):
         ''' Calculate the Euclidean distance to nearest point on the target region. '''
         each_dist = []
+        print('#$^',target,this)
         for key in target.keys():
             ax_dist = max(0, this[key]-target[key])
             each_dist.append(ax_dist)
