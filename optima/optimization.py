@@ -1462,7 +1462,7 @@ def minmoney(project=None, optim=None, tvec=None, verbose=None, maxtime=None, fi
     
     # Set parameters
     if n_throws  is None: n_throws  = max(200 ,nprogs*20) # Number of throws to try on each round
-    if n_success is None: n_success = max(50,  nprogs*5) # The number of successes needed to terminate the throws
+    if n_success is None: n_success = max(200 ,nprogs*20) # The number of successes needed to terminate the throws
     if n_refine  is None: n_refine  = 2000  # The maximum number of refinement steps to take
     if schedule  is None: schedule  = [0.3, 0.6, 0.8, 0.9, 1.0] # The budget amounts to allocate on each round
     if ncpus     is None: ncpus     = int(ceil(sc.cpu_count() / 2))
@@ -1741,7 +1741,8 @@ def minmoney(project=None, optim=None, tvec=None, verbose=None, maxtime=None, fi
                 if met(dists[allkeys[t]]):
                     success_count += 1
                     success_budgets.append(allbudgets[t])
-                printv('    %s of %s, %s/%s successes' % (allkeys[t], n_throws, success_count, n_success), 2, verbose)
+                if not parallel or success_count >= n_success: # print all for non-parallel and just once for parallel
+                    printv('    %s of %s, %s/%s successes' % (allkeys[t], n_throws, success_count, n_success), 2, verbose)
                 if success_count >= n_success:
                     break
 
