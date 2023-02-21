@@ -2185,6 +2185,7 @@ def minmoney2(project=None, optim=None, tvec=None, absconstraints=None, verbose=
         seed(pseudorandomseed('Seed before creating the random budgets'))
 
         # Run progbaselines if we need them
+        besttoworstkeys = []
         if mc[2]:
             progbudgets  = odict()
             progoutcomes = odict()
