@@ -858,7 +858,7 @@ class Project(object):
             for key in ['nchains','nblocks']: settings.pop(key)
             multires = tvoptimize(optim=optim, verbose=verbose, stoppingfunc=stoppingfunc, die=die, origbudget=origbudget,
                                   randseed=randseed, **settings, **kwargs)
-        elif multi and not optim.objectives['which']=='money': # It's a multi-run objectives optimization
+        elif multi and not optim.objectives['which'] in ['money', 'money2']: # It's a multi-run objectives optimization
             multires = multioptimize(optim=optim, verbose=verbose, stoppingfunc=stoppingfunc, die=die, origbudget=origbudget,
                                      randseed=randseed, **settings, **kwargs)
         else: # Neither special case, so minoutcomes or minmoney
