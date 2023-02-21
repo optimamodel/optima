@@ -784,6 +784,8 @@ def outcomecalc(budgetvec=None, which=None, project=None, parsetname=None, progs
             else: target[key] = -1 # WARNING, must be a better way of showing no defined objective
 
         rawoutcome = outcome
+        if rawoutcome < 1e-13: rawoutcome = 0  # Close enough to zero that we can get roundoff errors
+
         if all(input is not None for input in [ULB,ZB,outZB]): # We have all the inputs so use the full outcome function
             gradient = k * (ULB-ZB) / outZB
             outcome = sum(constrainedbudget[:]) + (ULB + gradient*rawoutcome)
