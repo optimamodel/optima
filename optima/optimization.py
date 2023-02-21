@@ -5,7 +5,8 @@ Version: 2019dec02
 """
 
 from optima import OptimaException, Link, Multiresultset, ICER, asd, getresults # Main functions
-from optima import printv, dcp, odict, findinds, today, getdate, uuid, objrepr, promotetoarray, findnearest, sanitize, inclusiverange, sigfig # Utilities
+from optima import printv, dcp, odict, findinds, today, getdate, uuid, objrepr, promotetoarray, findnearest, sanitize, \
+    inclusiverange, sigfig, compareversions # Utilities
 
 from numpy import zeros, ones, empty, arange, array, inf, isfinite, argmin, argsort, nan, floor, concatenate, exp, sqrt, logical_and, ceil
 from numpy.random import random, seed, randint
@@ -1341,11 +1342,15 @@ def minoutcomes(project=None, optim=None, tvec=None, absconstraints=None, verbos
             if parallel: printv(f'\nRunning {len(allargs)} optimizations in parallel using {int(min(ncpus,len(allargs)))} cpu threads',2,verbose)
             else: printv(f'\nRunning {len(allargs)} optimizations in serial',2,verbose)
 
-            try: asdrawresults = sc.parallelize(asd, iterkwargs=allargs, ncpus=int(ncpus), parallelizer='serial-nocopy' if not parallel else None)
+            # Need different settings for older than sciris 2.0.2
+            if compareversions(sc.__version__, '2.0.2') < 0:  not_parsettings = {'serial':True}
+            else: not_parsettings = {'parallelizer':'serial-nocopy'}
+
+            try: asdrawresults = sc.parallelize(asd, iterkwargs=allargs, ncpus=int(ncpus), **(not_parsettings if not parallel else {}))
             except AssertionError as e:
                 parallel = False
                 printv('\nWARNING: Could not run in parallel because this process is already running in parallel. Trying in serial...',1,verbose)
-                asdrawresults = sc.parallelize(asd, iterkwargs=allargs, ncpus=int(ncpus), parallelizer='serial-nocopy')
+                asdrawresults = sc.parallelize(asd, iterkwargs=allargs, ncpus=int(ncpus), **not_parsettings)
 
             if verbose >=3: print(f'\nasd returned best outcomes {list(zip(allbudgetvecs.keys(),[res["fval"] for res in asdrawresults]))}\n')
 
