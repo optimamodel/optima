@@ -2154,6 +2154,7 @@ def minmoney2(project=None, optim=None, tvec=None, absconstraints=None, verbose=
         zerofailed = False
         printv('Zero (constrained) money check passes (distance: %s)' % dists['zero'], 2, verbose)
 
+    asdresults, bestkey = None, None
     # If infinite or zero money met objectives, don't bother proceeding
     if infinitefailed or zerofailed:
         if zerofailed:
@@ -2168,7 +2169,7 @@ def minmoney2(project=None, optim=None, tvec=None, absconstraints=None, verbose=
     # Checks didn't fail, DO THE ALGORITHM:
     else:
         ## Increase/decrease current budget until targets met
-        totalbudget,_,_ = binary_search(budgetvec=budgetvec, totalbudget=origtotalbudget, args=args, curr_met=(dists['curr'] == 0))
+        totalbudget,_,_ = binary_search(budgetvec=budgetvec, totalbudget=origtotalbudget, args=args, curr_met=bool(dists['curr'] == 0))
         ULB = totalbudget
         args.update({'ULB':ULB,'k':1,'ZB':ZB,'outZB':outZB})
 
@@ -2185,30 +2186,17 @@ def minmoney2(project=None, optim=None, tvec=None, absconstraints=None, verbose=
         seed(pseudorandomseed('Seed before creating the random budgets'))
 
         # Run progbaselines if we need them
-        besttoworstkeys = []
         if mc[2]:
-            progbudgets  = odict()
-            progoutcomes = odict()
-            for p,prog in zip(optiminds,optimkeys):
-                progbudgets[prog] = zeros(nprogs)
-                progbudgets[prog][p] = sum(ULB_budget[optimkeys])
-                # for i in nonoptiminds: progbudgets[prog][p] = ULB_budget[p]  # Copy the original budget
-
-                res = op.outcomecalc(progbudgets[prog][optiminds], outputresults=True, **args)
-                progoutcomes[prog] = res.rawoutcome # should be same order as outcome
-
-            besttoworstinds = argsort(progoutcomes[:])
-            besttoworstkeys = optimkeys[besttoworstinds]
-            longestkey = -1
-            for key in besttoworstkeys: longestkey = max(longestkey, len(key))
-            for key in besttoworstkeys:
-                printv(f'Outcome for {key:>{longestkey}}: {progoutcomes[key]}')
+            oneprogbudgets, twoprogbudgets, _,_,_ = get_progbaseline_budgets(sum(ULB_budget[optimkeys]), args, optimkeys, optiminds, nprogs, numone=ceil(mc[2]/2), numtwo=ceil(mc[2]/2), either=0, verbose=verbose)
+            mcbudgets = oneprogbudgets
+            mcbudgets.update(twoprogbudgets)
+        else: mcbudgets = odict()
 
         allbudgetvecs = odict()
         # Add baseline budgets, then random budgets, then progbaselines
         for i in range(mc[0]):
-            if i == 0: allbudgetvecs[f'Optimization baseline']            = dcp(ULB_budgetvec)
-            else:      allbudgetvecs[f'Optimization baseline {int(i+1)}'] = dcp(ULB_budgetvec)
+            if i == 0: allbudgetvecs[f'Optimization baseline']            = dcp(origbudget[optimkeys])
+            else:      allbudgetvecs[f'Optimization baseline {int(i+1)}'] = dcp(origbudget[optimkeys])
 
         randbudgets = 0
         for i in range(mc[1]):
@@ -2217,15 +2205,15 @@ def minmoney2(project=None, optim=None, tvec=None, absconstraints=None, verbose=
             allbudgetvecs['Random %s' % (i+1)] = randbudget
             randbudgets += 1
 
-        for i in range(min(mc[2], len(besttoworstkeys))):
+        for i in range(min(mc[2], len(mcbudgets.keys()))):
             # If we have a rejectfactor, check that this extremeoutcome is close enough to the Optimization baseline outcome
-            allbudgetvecs[f'Program {besttoworstkeys[i]}'] = progbudgets[besttoworstkeys[i]][optiminds]
+            allbudgetvecs[f'Program {mcbudgets.keys()[i]}'] = mcbudgets.values()[i][optiminds]
 
         # Fill out the rest with extra random budgets if needed
-            for i in range( sum(mc) - len(allbudgetvecs.keys()) ):
-                randbudget = random(noptimprogs)
-                randbudget = randbudget / randbudget.sum() * ULB_budgetvec.sum()
-                allbudgetvecs['Random %s' % (randbudgets+i+1)] = randbudget
+        for i in range( sum(mc) - len(allbudgetvecs.keys()) ):
+            randbudget = random(noptimprogs)
+            randbudget = randbudget / randbudget.sum() * ULB_budgetvec.sum()
+            allbudgetvecs['Random %s' % (randbudgets+i+1)] = randbudget
 
         allseeds = [pseudorandomseed(key) for key in allbudgetvecs.keys()]
 
@@ -2302,10 +2290,78 @@ def minmoney2(project=None, optim=None, tvec=None, absconstraints=None, verbose=
     # Store optimization settings
     multires.optimsettings = odict([('maxiters',maxiters),('maxtime',maxtime),('randseed',randseed)])
     multires.optim = optim # Store the optimization object as well
+    multires.fullruninfo = asdresults
+    multires.bestkey = bestkey
 
     printv('Money minimization complete after %s seconds' % op.toc(start, output=True), 2, verbose)
 
     return multires
+
+
+def get_progbaseline_budgets(optimbudget, args, optimkeys, optiminds, nprogs, numone=0, numtwo=0, either=0, doprint=True, verbose=2):
+    """Sets up progbaseline budgets, which have all the money in either one or two programs.
+    Runs these programs and returns the best"""
+    n = (nprogs, nprogs*(nprogs-1)/2)
+    num = int(n[0]*(numone>0 or either>0) + n[1]*(numtwo>0 or either>0))
+    numone,numtwo,either = int(numone),int(numtwo),int(either)
+    printv(f'Running {num} scenarios for progbaselines....',2,verbose)
+
+    allbudgets, alloutcomes = odict(), odict()
+    oneprogbudgetskeep, twoprogbudgetskeep, eitherprogbudgetskeep = odict(), odict(), odict()
+    if numone or either:
+        oneprogbudgets  = odict()
+        oneprogoutcomes = odict()
+        for p,prog in zip(optiminds, optimkeys):
+            oneprogbudgets[prog] = zeros(nprogs)
+            oneprogbudgets[prog][p] = optimbudget
+
+            printv(f'    Running scenario: "{prog}"',2,verbose)
+            res = op.outcomecalc(oneprogbudgets[prog][optiminds], outputresults=True, **args)
+            oneprogoutcomes[prog] = res.rawoutcome # should be same order as outcome
+
+        besttoworstinds = argsort(oneprogoutcomes[:])
+        besttoworstkeys = array(oneprogoutcomes.keys())[besttoworstinds]
+
+        allbudgets.update(oneprogbudgets)
+        alloutcomes.update(oneprogoutcomes)
+
+        oneprogbudgetskeep = odict({key:oneprogbudgets[key] for key in besttoworstkeys[0:numone]})
+
+    if numtwo or either:
+        twoprogbudgets  = odict()
+        twoprogoutcomes = odict()
+        for p1,proga in zip(optiminds, optimkeys):
+            for p2, progb in zip(optiminds[p1+1:], optimkeys[p1+1:]):
+                key = f'{proga} && {progb}'
+                twoprogbudgets[key] = zeros(nprogs)
+                twoprogbudgets[key][p1] = optimbudget/2
+                twoprogbudgets[key][p2] = optimbudget/2
+
+                printv(f'    Running scenario: "{key}"',2,verbose)
+                res = op.outcomecalc(twoprogbudgets[key][optiminds], outputresults=True, **args)
+                twoprogoutcomes[key] = res.rawoutcome # should be same order as outcome
+
+        besttoworstinds = argsort(twoprogoutcomes[:])
+        besttoworstkeys = array(twoprogoutcomes.keys())[besttoworstinds]
+
+        allbudgets.update(twoprogbudgets)
+        alloutcomes.update(twoprogoutcomes)
+
+        twoprogbudgetskeep = odict({key:twoprogbudgets[key] for key in besttoworstkeys[0:numtwo]})
+
+    besttoworstinds = argsort(alloutcomes[:])
+    besttoworstkeys = array(alloutcomes.keys())[besttoworstinds]
+    if either:
+        eitherprogbudgetskeep = odict({key:allbudgets[key] for key in besttoworstkeys[0:either]})
+
+    if doprint:
+        longestkey = -1
+        for key in besttoworstkeys: longestkey = max(longestkey, len(key))
+        for key in besttoworstkeys:
+            printv(f'Outcome for {key:>{longestkey}}: {alloutcomes[key]}')
+
+    return oneprogbudgetskeep, twoprogbudgetskeep, eitherprogbudgetskeep, allbudgets, alloutcomes
+
 
 ################################################################################################################################################
 ### ICER calculation
