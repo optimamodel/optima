@@ -8,7 +8,7 @@ __all__ = ['asd']
 def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
     pinitial=None, sinitial=None, xmin=None, xmax=None, maxiters=None, maxtime=None, 
     finishtime=None, abstol=1e-6, reltol=1e-3, stalliters=None, stoppingfunc=None,
-    randseed=None, label=None, verbose=2, **kwargs):
+    randseed=None, label=None, verbose=2, SI=False, **kwargs):
     """
     Optimization using adaptive stochastic descent (ASD).
     
@@ -198,7 +198,7 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
             flag = '--' # Marks no change
             if np.isnan(fvalnew):
                 if verbose >= 1: print('ASD: Warning, objective function returned NaN')
-        if verbose >= 2: print(offset + label + ' step %i (%0.1f s) %s (orig: %s | best:%s | new:%s | diff:%s)' % ((count, time() - start, flag) + op.sigfig([fvalorig, fvalold, fvalnew, fvalnew - fvalold])))
+        if verbose >= 2: print(offset + label + ' step %i (%0.1f s) %s (orig: %s | best:%s | new:%s | diff:%s)' % ((count, time() - start, flag) + op.sigfig([fvalorig, fvalold, fvalnew, fvalnew - fvalold],SI=SI)))
 
         # Store output information
         fvals[count] = fval # Store objective function evaluations
@@ -225,7 +225,7 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
             break
 
     # Return
-    if verbose >= 2: print('=== %s %s (%i steps, orig: %s | best: %s | ratio: %s) ===' % ((label, exitreason, count) + op.sigfig([fvals[0], fvals[count], fvals[count] / fvals[0]])))
+    if verbose >= 2: print('=== %s %s (%i steps, orig: %s | best: %s | ratio: %s) ===' % ((label, exitreason, count) + op.sigfig([fvals[0], fvals[count], fvals[count] / fvals[0]],SI=SI)))
     output = objdict()
     output['x'] = np.reshape(x, origshape) # Parameters
     output['fval'] = fvals[count]
