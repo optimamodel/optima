@@ -1341,11 +1341,11 @@ def minoutcomes(project=None, optim=None, tvec=None, absconstraints=None, verbos
             if parallel: printv(f'\nRunning {len(allargs)} optimizations in parallel using {int(min(ncpus,len(allargs)))} cpu threads',2,verbose)
             else: printv(f'\nRunning {len(allargs)} optimizations in serial',2,verbose)
 
-            try: asdrawresults = sc.parallelize(asd, iterkwargs=allargs, ncpus=int(ncpus), parallelizer='serial-nocopy' if not parallel else None)
+            try: asdrawresults = sc.parallelize(asd, iterkwargs=allargs, ncpus=int(ncpus), serial=(not parallel))
             except AssertionError as e:
                 parallel = False
                 printv('\nWARNING: Could not run in parallel because this process is already running in parallel. Trying in serial...',1,verbose)
-                asdrawresults = sc.parallelize(asd, iterkwargs=allargs, ncpus=int(ncpus), parallelizer='serial-nocopy')
+                asdrawresults = sc.parallelize(asd, iterkwargs=allargs, ncpus=int(ncpus), serial=True)
 
             if verbose >=3: print(f'\nasd returned best outcomes {list(zip(allbudgetvecs.keys(),[res["fval"] for res in asdrawresults]))}\n')
 
