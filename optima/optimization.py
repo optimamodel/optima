@@ -1646,6 +1646,7 @@ def minmoney(project=None, optim=None, tvec=None, verbose=None, maxtime=None, fi
             printv('Starting binary search from %s...' % (totalbudget/factor), 2, verbose)
             if step is None: step = search_step # Step size to increase/decrease guess
             if tol  is None: tol  = search_tol # How close to get before declaring a solution
+            if totalbudget == 0: totalbudget += tol
             if curr_met is True: 
                 upper_lim = totalbudget
                 lower_lim = None
@@ -2071,6 +2072,7 @@ def minmoney2(project=None, optim=None, tvec=None, absconstraints=None, verbose=
         printv('Starting binary search from %s...' % (totalbudget/factor), 2, verbose)
         if step is None: step = search_step # Step size to increase/decrease guess
         if tol  is None: tol  = search_tol # How close to get before declaring a solution
+        if totalbudget == 0: totalbudget += tol
         if curr_met is True:
             upper_lim = totalbudget
             lower_lim = None
