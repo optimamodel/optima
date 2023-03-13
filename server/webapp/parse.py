@@ -1168,6 +1168,7 @@ def convert_program_list(program_list):
 
 
 def revert_program_list(program_list):
+    print('\nrevert_program_list: ', program_list)
     result = {}
     for entry in program_list:
         key = entry["program"]
