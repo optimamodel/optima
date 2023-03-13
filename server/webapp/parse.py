@@ -17,7 +17,6 @@ from uuid import UUID
 
 import numpy as np
 import optima as op
-from sciris import isiterable
 
 from .exceptions import ParsetDoesNotExist, ProgramDoesNotExist, ProgsetDoesNotExist
 
@@ -1259,9 +1258,6 @@ def get_scenario_summary(project, scenario):
 
     warning, _,_,_, combinedwarningmsg, warningmessages = \
         op.checkifparsetoverridesscenario(project=project, parset=parset,progset=progset, scen=scenario, formatfor='html', createmessages=True)
-
-    # The FE has problems if the time the scenario starts isn't in an array
-    scenario.t = op.promotetoarray(scenario.t)
 
     result = {
         'id': scenario_id,
