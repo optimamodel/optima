@@ -1163,11 +1163,7 @@ def revert_scenario_pars(pars):
 
 def convert_program_list(program_list):
     items = program_list.items()
-    result_list = [None] * len(items)
-    for i, (x,y) in enumerate(items):
-        if y is not None: y = op.promotetoarray(y) # FE has problems if budget values aren't arrays
-        result_list[i] = {"program": x, "values": y}
-    return result_list
+    return [{"program": x, "values": op.promotetoarray(y) if y is not None else y} for x, y in items]
 
 
 def revert_program_list(program_list):
