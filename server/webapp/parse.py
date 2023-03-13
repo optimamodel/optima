@@ -17,7 +17,6 @@ from uuid import UUID
 
 import numpy as np
 import optima as op
-from sciris import isiterable
 
 from .exceptions import ParsetDoesNotExist, ProgramDoesNotExist, ProgsetDoesNotExist
 
@@ -1164,7 +1163,7 @@ def revert_scenario_pars(pars):
 
 def convert_program_list(program_list):
     items = program_list.items()
-    return [{"program": x, "values": op.promotetoarray(y)} for x, y in items]
+    return [{"program": x, "values": op.promotetoarray(y)} for x, y in items] # FE has problems if budget values aren't arrays
 
 
 def revert_program_list(program_list):
