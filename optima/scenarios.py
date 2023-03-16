@@ -223,9 +223,9 @@ def makescenarios(project=None, scenlist=None, verbose=2, ccsample=None, randsee
             except: results = None
 
             scen.t = promotetoarray(scen.t)
-            if scen.t==array([]):
-                raise OptimaException(f'Scenario "{scen.name}" does not have a first year specified - this is necessary to determine when programs start applying.')
-            
+            if not len(scen.t):
+                raise OptimaException(f'Scenario "{scen.name}" does not have a year specified - this is necessary to determine when programs start applying.')
+
             if isinstance(scen, Budgetscen):
                 
                 # If the budget has been passed in as a vector, convert it to an odict & sort by program names
