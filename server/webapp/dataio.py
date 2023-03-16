@@ -1417,17 +1417,10 @@ def save_progset(project_id, progset_id, progset_summary):
     Returns progset summary
     """
     project = load_project(project_id)
-    print(f">> SAVE_PROGSET progset_summary {progset_summary}")
-
-    check_no_conflicting_program_shortnames(progset_summary)
-
     parse.set_progset_summary_on_project(project, progset_summary, progset_id=progset_id)
     save_project(project)
     return parse.get_progset_summary(project, progset_summary["name"])
 
-
-def check_no_conflicting_program_shortnames(progset_summary):
-    pass
 
 def rename_progset(project_id, progset_id, new_name):
     def update_project_fn(project):
