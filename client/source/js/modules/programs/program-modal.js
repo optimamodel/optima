@@ -231,12 +231,27 @@ define(['angular', 'underscore'], function (angular, _) {
       });
     };
 
-    $scope.checkClashingProgramName = function (name, programForm) {
-      var exists = _(programList).some(function(program) {
+    $scope.checkClashingProgramName = function (name, shortname, programForm) {
+      var longexists = _(programList).some(function(program) {
         return program.name == name && program.id !== $scope.state.program.id;
       });
-      programForm.programName.$setValidity("programExists", !exists);
-      return exists;
+      var shortexists = _(programList).some(function(program) {
+        return program.short == shortname && program.id !== $scope.state.program.id;
+      });
+      programForm.programName.$setValidity("programExists", !(longexists || shortexists));
+      return longexists;
+    };
+
+
+    $scope.checkClashingProgramShortName = function (name, shortname, programForm) {
+      var longexists = _(programList).some(function(program) {
+        return program.name == name && program.id !== $scope.state.program.id;
+      });
+      var shortexists = _(programList).some(function(program) {
+        return program.short == shortname && program.id !== $scope.state.program.id;
+      });
+      programForm.programName.$setValidity("programExists", !(longexists || shortexists));
+      return shortexists;
     };
 
     // Add a new parameter
