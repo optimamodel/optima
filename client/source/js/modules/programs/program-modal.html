@@ -34,8 +34,8 @@
           ng-model="state.program.name"
           required autofocus name="programName">
       <div class="error-hint"
-           ng-show="checkClashingProgramName(state.program.name, programForm)">
-        A program set with this name already exists,
+           ng-show="checkClashingProgramName(state.program.name, state.program.short, programForm)">
+        A program with this name already exists,
         please choose a different one.
       </div>
     </div>
@@ -49,7 +49,11 @@
           class="txbox __block"
           ng-model="state.program.short"
           required>
-      </input>
+      <div class="error-hint"
+           ng-show="checkClashingProgramShortName(state.program.name, state.program.short, programForm)">
+        A program with this short name already exists,
+        please choose a different one.
+      </div>
     </div>
 
 
