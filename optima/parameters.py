@@ -6,7 +6,7 @@ parameters, the Parameterset class.
 Version: 2.1 (2017apr04)
 """
 
-from numpy import array, nan, isnan, isfinite, zeros, ones, argmax, mean, log, polyfit, exp, maximum, minimum, Inf, linspace, median, shape, append, logical_and, isin
+from numpy import array, nan, isnan, isfinite, zeros, ones, argmax, mean, log, polyfit, exp, maximum, minimum, Inf, linspace, median, shape, append, logical_and, isin, multiply
 from numpy.random import uniform, normal, seed
 from optima import OptimaException, version, compareversions, Link, odict, dataframe, printv, sanitize, uuid, today, getdate, makefilepath, smoothinterp, dcp, defaultrepr, isnumber, findinds, findnearest, getvaliddata, promotetoarray, promotetolist, inclusiverange # Utilities
 from optima import Settings, getresults, convertlimits, gettvecdt, loadpartable, loadtranstable # Heftier functions
@@ -1089,7 +1089,10 @@ def balance(act=None, which=None, data=None, popkeys=None, limits=None, popsizep
         if which=='numacts':
             smatrix = dcp(symmetricmatrix) # Initialize
             psize = popsize[:,t]
+            popsize_div_mean_2d = psize[:,None] / psize.max() # divide by max is just so numbers don't blow up / shrink causing roundoff errors
             popacts = tmpsim[:,t]
+
+            smatrix = smatrix / multiply(popsize_div_mean_2d,popsize_div_mean_2d.T) # divide the partnership a,b by the product of the popsizes a,b
             for pop1 in range(npops): smatrix[pop1,:] = smatrix[pop1,:]*psize[pop1] # Yes, this needs to be separate! Don't try to put in the next for loop, the indices are opposite!
             for pop1 in range(npops): smatrix[:,pop1] = psize[pop1]*popacts[pop1]*smatrix[:,pop1] / float(eps+sum(smatrix[:,pop1])) # Divide by the sum of the column to normalize the probability, then multiply by the number of acts and population size to get total number of acts
         
