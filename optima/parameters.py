@@ -1105,6 +1105,13 @@ def balance(act=None, which=None, data=None, popkeys=None, limits=None, popsizep
                     thispoint[pop1,pop2] = (tmpsim[pop1,t]+tmpsim[pop2,t])/2.0
                     thispoint[pop2,pop1] = thispoint[pop1,pop2]
     
+        # if act == 'reg' and which == 'numacts':
+        #     print(f"BALANCE\nmixmatrix\n{mixmatrix}\nsymmetricmatrix\n{symmetricmatrix.round()}\nsmatrix\n{smatrix.round()}\nthispoint\n{thispoint}")
+
+        if act == 'reg' and which == 'numacts':
+            print(f"BALANCE\nmixmatrix\n{mixmatrix}\nthispoint\n{thispoint.round(3)}")
+
+
         output[:,:,t] = thispoint
     
     return output, ctrlpts
