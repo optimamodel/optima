@@ -519,6 +519,7 @@ def model(simpars=None, settings=None, initpeople=None, initprops=None, verbose=
 
             if male[pop1] and male[pop2]: homopartnerarr.add((pop1, pop2))
             else: heteropartnerarr.add((pop1, pop2))  # If a population is both male and female default to heterosexual
+            print(act, key, trans[-1], wholeactssexarr[actind][i,:], fracactssexarr[actind][i,:], condarr[actind][i,:], sexpartnerarr[actind][i,:])
 
             if debug:
                 for k,arr in {'wholeacts':wholeactssexarr[actind][i,:],'fracacts':fracactssexarr[actind][i,:],'cond':condarr[actind][i,:]}.items():
