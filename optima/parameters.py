@@ -1100,13 +1100,17 @@ def balance(act=None, which=None, data=None, popkeys=None, limits=None, popsizep
             for pop1 in range(npops): smatrix[:,pop1] = psize[pop1]*popacts[pop1]*smatrix[:,pop1] / float(eps+sum(smatrix[:,pop1])) # Divide by the sum of the column to normalize the probability, then multiply by the number of acts and population size to get total number of acts
         
         # Reconcile different estimates of number of acts, which must balance
+        balancedmatrix = zeros((npops, npops))
+        proportioninsertive = zeros((npops, npops))
         thispoint = zeros((npops,npops));
         for pop1 in range(npops):
             for pop2 in range(npops):
                 if which=='numacts':
-                    balanced = (smatrix[pop1,pop2] * psize[pop1] + smatrix[pop2,pop1] * psize[pop2])/(psize[pop1]+psize[pop2]) # here are two estimates for each interaction; reconcile them here
-                    thispoint[pop2,pop1] = balanced/psize[pop2] # Divide by population size to get per-person estimate
-                    thispoint[pop1,pop2] = balanced/psize[pop1] # ...and for the other population
+                    balancedmatrix[pop1,pop2] = (smatrix[pop1,pop2] * psize[pop1] + smatrix[pop2,pop1] * psize[pop2])/(psize[pop1]+psize[pop2]) # here are two estimates for each interaction; reconcile them here
+                    proportioninsertive[pop1,pop2] = mixmatrix[pop1,pop2] / (mixmatrix[pop1,pop2] + mixmatrix[pop2,pop1]) \
+                                                            if (mixmatrix[pop1,pop2] + mixmatrix[pop2,pop1]) > 0 else 1.
+                    thispoint[pop1,pop2] = balancedmatrix[pop1,pop2] * proportioninsertive[pop1,pop2] / psize[pop1]
+                    print(popkeys[pop1], popkeys[pop2], f'balancedmatrix[pop1,pop2] {balancedmatrix[pop1,pop2]} proportioninsertive[pop1,pop2] {proportioninsertive[pop1,pop2]} psize[pop1] {psize[pop1]} thispoint[pop1,pop2] {thispoint[pop1,pop2]}')
                 if which=='condom':
                     thispoint[pop1,pop2] = (tmpsim[pop1,t]+tmpsim[pop2,t])/2.0
                     thispoint[pop2,pop1] = thispoint[pop1,pop2]
