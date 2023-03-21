@@ -1089,10 +1089,13 @@ def balance(act=None, which=None, data=None, popkeys=None, limits=None, popsizep
         if which=='numacts':
             smatrix = dcp(symmetricmatrix) # Initialize
             psize = popsize[:,t]
-            popsize_div_mean_2d = psize[:,None] / psize.max() # divide by max is just so numbers don't blow up / shrink causing roundoff errors
             popacts = tmpsim[:,t]
 
-            smatrix = smatrix / multiply(popsize_div_mean_2d,popsize_div_mean_2d.T) # divide the partnership a,b by the product of the popsizes a,b
+            ## The below commented out code makes it so that the numbers in the Partnership matrices in the databook
+            ## don't get multiplied by popsizes before being balanced
+            # popsize_div_mean_2d = psize[:,None] / psize.max() # divide by max is just so numbers don't blow up / shrink causing roundoff errors
+            # smatrix = smatrix / multiply(popsize_div_mean_2d,popsize_div_mean_2d.T) # divide the partnership a,b by the product of the popsizes a,b
+
             for pop1 in range(npops): smatrix[pop1,:] = smatrix[pop1,:]*psize[pop1] # Yes, this needs to be separate! Don't try to put in the next for loop, the indices are opposite!
             for pop1 in range(npops): smatrix[:,pop1] = psize[pop1]*popacts[pop1]*smatrix[:,pop1] / float(eps+sum(smatrix[:,pop1])) # Divide by the sum of the column to normalize the probability, then multiply by the number of acts and population size to get total number of acts
         
