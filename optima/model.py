@@ -465,13 +465,15 @@ def model(simpars=None, settings=None, initpeople=None, initprops=None, verbose=
     ##################################################################################################################
     nsexacts = [0,0,0]
     ninjacts = 0
+    allsexkeys = {}
     for actind,act in enumerate(['reg','cas','com']):
-        for key in simpars['acts'+act]:
-            nsexacts[actind] += 1
+        allsexkeys[act] = set(simpars[f'acts{act}insertive'].keys())
+        allsexkeys[act].update(set(simpars[f'acts{act}receptive'].keys()))
+        nsexacts[actind] += len(allsexkeys[act])
     for key in simpars['actsinj']:
         ninjacts += 1
 
-    transsexarr     = [zeros(nsexacts[i])         for i in range(3)]
+    transsexarr     = [zeros((nsexacts[i], npts)) for i in range(3)]
     condarr         = [zeros((nsexacts[i], npts)) for i in range(3)]
     sexpartnerarr   = [zeros((nsexacts[i], 2), dtype=int) for i in range(3)]
     homopartnerarr  = set()
@@ -484,10 +486,12 @@ def model(simpars=None, settings=None, initpeople=None, initprops=None, verbose=
 
     # Sex
     for actind, act in enumerate(['reg','cas','com']):
-        for i,key in enumerate(simpars['acts'+act]):
-            print('MODEL SETUP', 'acts'+act, key, simpars['acts'+act][key])
-            wholeactssexarr[actind][i,:] = floor(dt*simpars['acts'+act][key])
-            fracactssexarr[actind][i,:]  = dt*simpars['acts'+act][key] - wholeactssexarr[actind][i,:] # Probability of an additional act
+        for i,key in enumerate(allsexkeys[act]):
+            insertiveacts = simpars[f'acts{act}insertive'][key] if key in simpars[f'acts{act}insertive'].keys() else 0
+            receptiveacts = simpars[f'acts{act}receptive'][key] if key in simpars[f'acts{act}receptive'].keys() else 0
+            totalacts = insertiveacts + receptiveacts
+            wholeactssexarr[actind][i,:] = floor(dt*totalacts)
+            fracactssexarr[actind][i,:]  = dt*totalacts - wholeactssexarr[actind][i,:] # Probability of an additional act
 
             if simpars['cond'+act].get(key) is not None:
                 condkey = simpars['cond'+act][key]
@@ -503,15 +507,15 @@ def model(simpars=None, settings=None, initpeople=None, initprops=None, verbose=
             pop1 = popkeys.index(key[0])
             pop2 = popkeys.index(key[1])
             sexpartnerarr[actind][i,:] = [pop1, pop2]
-            if     male[pop1] and   male[pop2]: trans = (simpars['transmmi'] + simpars['transmmr'])/2.0
-            elif   male[pop1] and female[pop2]: trans = simpars['transmfi']
-            elif female[pop1] and   male[pop2]: trans = simpars['transmfr']
+            if     male[pop1] and   male[pop2]: trans = (insertiveacts*simpars['transmmi'] + receptiveacts*simpars['transmmr']) / totalacts
+            elif   male[pop1] and female[pop2]: trans = simpars['transmfi']*ones(len(totalacts))
+            elif female[pop1] and   male[pop2]: trans = simpars['transmfr']*ones(len(totalacts))
             else:
                 errormsg = label + 'Not able to figure out the sex of "%s" and "%s"' % (key[0], key[1])
                 printv(errormsg, 3, verbose)
                 trans = (simpars['transmmi'] + simpars['transmmr'] + simpars['transmfi'] + simpars['transmfr'])/4.0 # May as well just assume all transmissions apply equally - will undersestimate if pop is predominantly biologically male and oversestimate if pop is predominantly biologically female
 
-            transsexarr[actind][i] = trans
+            transsexarr[actind][i,:] = trans
 
             if male[pop1] and male[pop2]: homopartnerarr.add((pop1, pop2))
             else: heteropartnerarr.add((pop1, pop2))  # If a population is both male and female default to heterosexual
@@ -652,10 +656,10 @@ def model(simpars=None, settings=None, initpeople=None, initprops=None, verbose=
             pop2 = sexpartnerarr[i][:,1]
             forceinffullsex = ones((len(sus), nstates, len(pop1)))
             # only effallprev[:,:] is time dependent
-            forceinffullsex[:,:,:] *= 1 - einsum('m,m,m,mi,km->ikm', fracactssexarr[i][:,t], transsexarr[i][:],
+            forceinffullsex[:,:,:] *= 1 - einsum('m,m,m,mi,km->ikm', fracactssexarr[i][:,t], transsexarr[i][:,t],
                                                 condarr[i][:,t], alleff[:,t,:][pop1,:], effallprev[:,pop2])
 
-            forceinffullsex[:,:,:] *= npow(1 - einsum('m,m,mi,km,m->ikm', transsexarr[i], condarr[i][:,t], alleff[pop1,t,:], effallprev[:,pop2],
+            forceinffullsex[:,:,:] *= npow(1 - einsum('m,m,mi,km,m->ikm', transsexarr[i][:,t], condarr[i][:,t], alleff[pop1,t,:], effallprev[:,pop2],
                                 (wholeactssexarr[i][:,t].astype(int) != 0) ), wholeactssexarr[i][:,t].astype(int))  # If wholeacts[t] == 0, then this will equal one so will not change forceinffull
             forceinffull[:,pop1,:,pop2] *= swapaxes(swapaxes(forceinffullsex[:,:,:],1,2),0,1)  # Slicing a more than 2d array puts the pop1,pop2 in the first dimension
         print(f'forceinffull t {tvec[t]} ', forceinffull.sum())
@@ -669,7 +673,7 @@ def model(simpars=None, settings=None, initpeople=None, initprops=None, verbose=
                     if not ( not((forceinffull[:,pop1,:,pop2]>=0).all()) or not((forceinffull[:,pop1,:,pop2]<=1).all()) ):
                         errormsg = label + 'Sexual force-of-infection is invalid between populations %s and %s, time %0.1f, FOI:\n%s)' % (
                             popkeys[pop1], popkeys[pop2], tvec[t], forceinffull[:,pop1,:,pop2])
-                        for var in ['i','m','transsexarr[i][m]','condarr[i][m,t]','alleff[pop1,t,:]','effallprev[:,pop2]','fracactssexarr[i][m,t]','wholeactssexarr[i][m,t]']:
+                        for var in ['i','m','transsexarr[i][m,t]','condarr[i][m,t]','alleff[pop1,t,:]','effallprev[:,pop2]','fracactssexarr[i][m,t]','wholeactssexarr[i][m,t]']:
                             errormsg += '\n%20s = %f' % (var, eval(var))  # Print out extra debugging information
                         raise OptimaException(errormsg)
 
