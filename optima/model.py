@@ -467,7 +467,7 @@ def model(simpars=None, settings=None, initpeople=None, initprops=None, verbose=
     ninjacts = 0
     allsexkeys = {}
     for actind,act in enumerate(['reg','cas','com']):
-        allsexkeys[act] = set(simpars[f'acts{act}insertive'].keys())
+        allsexkeys[act] = set(simpars[f'acts{act}insertive'].keys())  # Make a set of all partnerships for reg, cas, com
         allsexkeys[act].update(set(simpars[f'acts{act}receptive'].keys()))
         nsexacts[actind] += len(allsexkeys[act])
     for key in simpars['actsinj']:
