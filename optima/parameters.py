@@ -1341,7 +1341,7 @@ def getreceptiveactsfrominsertive(insertivepar, popsizepar, popkeys, popsizeargs
         alltimes.update(set(times))
     alltimes = array(sorted(list(alltimes)))
 
-    if alltimes:
+    if len(alltimes):
         popsizesimpar = popsizepar.interp(tvec=alltimes, **popsizeargs)
 
         for partnership, times in insertivepar.t.items():
