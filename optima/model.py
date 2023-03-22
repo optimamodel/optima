@@ -467,8 +467,11 @@ def model(simpars=None, settings=None, initpeople=None, initprops=None, verbose=
     ninjacts = 0
     allsexkeys = {}
     for actind,act in enumerate(['reg','cas','com']):
-        allsexkeys[act] = set(simpars[f'acts{act}insertive'].keys())  # Make a set of all partnerships for reg, cas, com
-        allsexkeys[act].update(set(simpars[f'acts{act}receptive'].keys()))
+        if compareversions(version,"2.12.0") >= 0: # New behaviour
+            allsexkeys[act] = set(simpars[f'acts{act}insertive'].keys())  # Make a set of all partnerships for reg, cas, com
+            allsexkeys[act].update(set(simpars[f'acts{act}receptive'].keys()))
+        else: # Old behaviour
+            allsexkeys[act] = set(simpars[f'acts{act}'].keys())
         nsexacts[actind] += len(allsexkeys[act])
     for key in simpars['actsinj']:
         ninjacts += 1
@@ -487,9 +490,18 @@ def model(simpars=None, settings=None, initpeople=None, initprops=None, verbose=
     # Sex
     for actind, act in enumerate(['reg','cas','com']):
         for i,key in enumerate(sorted(allsexkeys[act])):
-            insertiveacts = simpars[f'acts{act}insertive'][key] if key in simpars[f'acts{act}insertive'].keys() else 0
-            receptiveacts = simpars[f'acts{act}receptive'][key] if key in simpars[f'acts{act}receptive'].keys() else 0
-            totalacts = insertiveacts + receptiveacts
+            pop1 = popkeys.index(key[0])
+            pop2 = popkeys.index(key[1])
+
+            if compareversions(version, "2.12.0") >= 0:  # New behaviour
+                insertiveacts = simpars[f'acts{act}insertive'][key] if key in simpars[f'acts{act}insertive'].keys() else 0
+                receptiveacts = simpars[f'acts{act}receptive'][key] if key in simpars[f'acts{act}receptive'].keys() else 0
+                totalacts = insertiveacts + receptiveacts
+            else: # Old behaviour
+                totalacts = simpars['acts'+act][key] * ones(npts)
+                if male[pop1] and male[pop2]: insertiveacts, receptiveacts = totalacts/2, totalacts/2
+
+
             wholeactssexarr[actind][i,:] = floor(dt*totalacts)
             fracactssexarr[actind][i,:]  = dt*totalacts - wholeactssexarr[actind][i,:] # Probability of an additional act
 
@@ -504,8 +516,6 @@ def model(simpars=None, settings=None, initpeople=None, initprops=None, verbose=
                 condkey = 0.0
             condarr[actind][i,:] = 1.0 - condkey*effcondom
 
-            pop1 = popkeys.index(key[0])
-            pop2 = popkeys.index(key[1])
             sexpartnerarr[actind][i,:] = [pop1, pop2]
             if     male[pop1] and   male[pop2]: trans = (insertiveacts*simpars['transmmi'] + receptiveacts*simpars['transmmr']) / totalacts
             elif   male[pop1] and female[pop2]: trans = simpars['transmfi']*ones(len(totalacts))

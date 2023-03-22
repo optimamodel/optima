@@ -1115,14 +1115,21 @@ def balance(act=None, which=None, data=None, popkeys=None, fpopkeys=None, mpopke
         thispoint = zeros((npops,npops));
         for pop1 in range(npops):
             for pop2 in range(npops):
-                if which=='numacts' and act != 'inj': # The total number of acts = insertive + receptive, we only keep insertive in actsreg etc
-                    balancedmatrix[pop1,pop2] = (smatrix[pop1,pop2] * psize[pop1] + smatrix[pop2,pop1] * psize[pop2])/(psize[pop1]+psize[pop2]) # here are two estimates for each interaction; reconcile them here
-                    proportioninsertive[pop1,pop2] = mixmatrix[pop1,pop2] / (mixmatrix[pop1,pop2] + mixmatrix[pop2,pop1]) \
-                                                            if (mixmatrix[pop1,pop2] + mixmatrix[pop2,pop1]) > 0 else 1.
-                    thispoint[pop1,pop2] = balancedmatrix[pop1,pop2] * proportioninsertive[pop1,pop2] / psize[pop1]
-                if which=='numacts' and act == 'inj': # We want the total number of acts = total number of injections, so we keep all
-                    balanced = (smatrix[pop1,pop2] * psize[pop1] + smatrix[pop2,pop1] * psize[pop2])/(psize[pop1]+psize[pop2]) # here are two estimates for each interaction; reconcile them here
-                    thispoint[pop1,pop2] = balanced/psize[pop1]
+                if compareversions(version,"2.12.0") >= 0: # New behaviour
+                    if which=='numacts' and act != 'inj': # The total number of acts = insertive + receptive, we only keep insertive in actsreg etc
+                        balancedmatrix[pop1,pop2] = (smatrix[pop1,pop2] * psize[pop1] + smatrix[pop2,pop1] * psize[pop2])/(psize[pop1]+psize[pop2]) # here are two estimates for each interaction; reconcile them here
+                        proportioninsertive[pop1,pop2] = mixmatrix[pop1,pop2] / (mixmatrix[pop1,pop2] + mixmatrix[pop2,pop1]) \
+                                                                if (mixmatrix[pop1,pop2] + mixmatrix[pop2,pop1]) > 0 else 1.
+                        thispoint[pop1,pop2] = balancedmatrix[pop1,pop2] * proportioninsertive[pop1,pop2] / psize[pop1]
+                    if which=='numacts' and act == 'inj': # We want the total number of acts = total number of injections, so we keep all
+                        balanced = (smatrix[pop1,pop2] * psize[pop1] + smatrix[pop2,pop1] * psize[pop2])/(psize[pop1]+psize[pop2]) # here are two estimates for each interaction; reconcile them here
+                        thispoint[pop1,pop2] = balanced/psize[pop1]
+                else: # Old behaviour
+                    if which=='numacts':
+                        balanced = (smatrix[pop1,pop2] * psize[pop1] + smatrix[pop2,pop1] * psize[pop2])/(psize[pop1]+psize[pop2]) # here are two estimates for each interaction; reconcile them here
+                        thispoint[pop2,pop1] = balanced/psize[pop2] # Divide by population size to get per-person estimate
+                        thispoint[pop1,pop2] = balanced/psize[pop1] # ...and for the other population
+
                 if which=='condom':
                     thispoint[pop1,pop2] = (tmpsim[pop1,t]+tmpsim[pop2,t])/2.0
                     thispoint[pop2,pop1] = thispoint[pop1,pop2]
@@ -1379,47 +1386,49 @@ def makesimpars(pars, name=None, keys=None, start=None, end=None, dt=None, tvec=
 
     # Loop over requested keys
     for key in keys: # Loop over all keys
-        if key not in ['actsreg', 'actscas', 'actscom', 'actsreginsertive', 'actscasinsertive', 'actscominsertive', 'actsregreceptive', 'actscasreceptive', 'actscomreceptive']:
-            if isinstance(pars[key], Par): # Check that it is actually a parameter -- it could be the popkeys odict, for example
-                thissample = sample # Make a copy of it to check it against the list of things we are sampling
-                if tosample and tosample[0] is not None and key not in tosample: thissample = False # Don't sample from unselected parameters -- tosample[0] since it's been promoted to a list
-                try:
-                    simpars[key] = pars[key].interp(tvec=simpars['tvec'], dt=dt, popkeys=popkeys, smoothness=smoothness, asarray=asarray, sample=thissample, randseed=randseed)
-                except OptimaException as E:
-                    errormsg = 'Could not figure out how to interpolate parameter "%s"' % key
-                    errormsg += 'Error: "%s"' % repr(E)
-                    raise OptimaException(errormsg)
-
-    # Special treatment for actsreg, actscas, actscom because they contain only insertive acts and so we need to calculate the receptive acts
-    for key in keys:
-        if key in ['actsreg', 'actscas', 'actscom', 'actsreginsertive', 'actscasinsertive', 'actscominsertive', 'actsregreceptive', 'actscasreceptive', 'actscomreceptive']:
-            if 'popsize' not in keys:
-                raise OptimaException(f'In order to makesimpars for "{key}", "popsize" needs to be in the keys to be included in the simpars.')
-            key = key[0:7]
-
-            popsizesample = sample
-            if tosample and tosample[0] is not None and 'popsize' not in tosample: popsizesample = False
-            popsizeargs = {'dt':dt, 'popkeys':popkeys, 'smoothness':smoothness, 'asarray':asarray, 'sample':popsizesample, 'randseed':randseed}
-
-            insertivepar = pars[key]  # actsreg only contains insertive acts, eg. actsreg[(popA, popB)] = c is c insertive acts for each person in popA
-            receptivepar = getreceptiveactsfrominsertive(insertivepar, pars['popsize'], popkeys=popkeys, popsizeargs=popsizeargs)
-
-            insertivekey = key + 'insertive'
-            receptivekey = key + 'receptive'
-
-            insertivesample, receptivesample = sample, sample
-            if tosample and tosample[0] is not None: # We have a list of keys to check
-                thissample = key in tosample
-                insertivesample = thissample or insertivekey in tosample
-                receptivesample = thissample or receptivekey in tosample
-
+        if compareversions(version,"2.12.0") >= 0 and key in ['actsreg', 'actscas', 'actscom', 'actsreginsertive', 'actscasinsertive', 'actscominsertive', 'actsregreceptive', 'actscasreceptive', 'actscomreceptive']:
+            continue  # New behaviour, the above pars are handled in the next loop
+        if isinstance(pars[key], Par): # Check that it is actually a parameter -- it could be the popkeys odict, for example
+            thissample = sample # Make a copy of it to check it against the list of things we are sampling
+            if tosample and tosample[0] is not None and key not in tosample: thissample = False # Don't sample from unselected parameters -- tosample[0] since it's been promoted to a list
             try:
-                simpars[insertivekey] = insertivepar.interp(sample=insertivesample, tvec=simpars['tvec'], dt=dt, popkeys=popkeys, smoothness=smoothness, asarray=asarray, randseed=randseed)
-                simpars[receptivekey] = receptivepar.interp(sample=receptivesample, tvec=simpars['tvec'], dt=dt, popkeys=popkeys, smoothness=smoothness, asarray=asarray, randseed=randseed)
+                simpars[key] = pars[key].interp(tvec=simpars['tvec'], dt=dt, popkeys=popkeys, smoothness=smoothness, asarray=asarray, sample=thissample, randseed=randseed)
             except OptimaException as E:
                 errormsg = 'Could not figure out how to interpolate parameter "%s"' % key
                 errormsg += 'Error: "%s"' % repr(E)
                 raise OptimaException(errormsg)
+
+    if compareversions(version,"2.12.0") >= 0:
+        # Special treatment for actsreg, actscas, actscom because they contain only insertive acts and so we need to calculate the receptive acts
+        for key in keys:
+            if key in ['actsreg', 'actscas', 'actscom', 'actsreginsertive', 'actscasinsertive', 'actscominsertive', 'actsregreceptive', 'actscasreceptive', 'actscomreceptive']:
+                if 'popsize' not in keys:
+                    raise OptimaException(f'In order to makesimpars for "{key}", "popsize" needs to be in the keys to be included in the simpars.')
+                key = key[0:7]
+
+                popsizesample = sample
+                if tosample and tosample[0] is not None and 'popsize' not in tosample: popsizesample = False
+                popsizeargs = {'dt':dt, 'popkeys':popkeys, 'smoothness':smoothness, 'asarray':asarray, 'sample':popsizesample, 'randseed':randseed}
+
+                insertivepar = pars[key]  # actsreg only contains insertive acts, eg. actsreg[(popA, popB)] = c is c insertive acts for each person in popA
+                receptivepar = getreceptiveactsfrominsertive(insertivepar, pars['popsize'], popkeys=popkeys, popsizeargs=popsizeargs)
+
+                insertivekey = key + 'insertive'
+                receptivekey = key + 'receptive'
+
+                insertivesample, receptivesample = sample, sample
+                if tosample and tosample[0] is not None: # We have a list of keys to check
+                    thissample = key in tosample
+                    insertivesample = thissample or insertivekey in tosample
+                    receptivesample = thissample or receptivekey in tosample
+
+                try:
+                    simpars[insertivekey] = insertivepar.interp(sample=insertivesample, tvec=simpars['tvec'], dt=dt, popkeys=popkeys, smoothness=smoothness, asarray=asarray, randseed=randseed)
+                    simpars[receptivekey] = receptivepar.interp(sample=receptivesample, tvec=simpars['tvec'], dt=dt, popkeys=popkeys, smoothness=smoothness, asarray=asarray, randseed=randseed)
+                except OptimaException as E:
+                    errormsg = 'Could not figure out how to interpolate parameter "%s"' % key
+                    errormsg += 'Error: "%s"' % repr(E)
+                    raise OptimaException(errormsg)
 
 
     return simpars
