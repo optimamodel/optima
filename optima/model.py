@@ -663,6 +663,7 @@ def model(simpars=None, settings=None, initpeople=None, initprops=None, verbose=
             forceinffullsex[:,:,:] *= npow(1 - einsum('m,m,mi,km,m->ikm', transsexarr[i][:,t], condarr[i][:,t], alleff[pop1,t,:], effallprev[:,pop2],
                                 (wholeactssexarr[i][:,t].astype(int) != 0) ), wholeactssexarr[i][:,t].astype(int))  # If wholeacts[t] == 0, then this will equal one so will not change forceinffull
             forceinffull[:,pop1,:,pop2] *= swapaxes(swapaxes(forceinffullsex[:,:,:],1,2),0,1)  # Slicing a more than 2d array puts the pop1,pop2 in the first dimension
+            print('!', forceinffull.sum(axis=(2, 3)))
             print(f'forceinffull t {tvec[t]} ', forceinffullsex.sum(axis=(0,1)), 'asdfas', people[2,:,t])
             # print(f'forceinffull t {tvec[t]} ', forceinffullsex.sum(), 'asdfas', people[2,:,t])
             # print(f'forceinffull t {tvec[t]} ', forceinffull[:,2,:,2], array(popkeys), effallprev, pop1, pop2, array(popkeys)[pop1], array(popkeys)[pop2])
@@ -671,6 +672,7 @@ def model(simpars=None, settings=None, initpeople=None, initprops=None, verbose=
         if advancedtracking:
             forceinffullsexinj[homosexsex,:,homopartnerarr[:,0],:,homopartnerarr[:,1]] = forceinffull[:,homopartnerarr[:,0],:,homopartnerarr[:,1]]
             forceinffullsexinj[heterosexsex,:,heteropartnerarr[:,0],:,heteropartnerarr[:,1]] = forceinffull[:,heteropartnerarr[:,0],:,heteropartnerarr[:,1]]
+        print('!!', forceinffull.sum(axis=(2, 3)))
 
         if debug and ( not((forceinffull[:,:,:,:]>=0).all()) or not((forceinffull[:,:,:,:]<=1).all()) ):
             for i,arr in enumerate(sexpartnerarr):
@@ -695,7 +697,7 @@ def model(simpars=None, settings=None, initpeople=None, initprops=None, verbose=
                                         wholeactsinjarr[:,t].astype(int))   # If wholeacts[t] == 0, then this will equal one so will not change forceinffull
 
         forceinffull[:,pop1,:,pop2] *= swapaxes(swapaxes(forceinffullinj[:,:,:],1,2),0,1)  # Slicing a more than 2d array puts the pop1,pop2 in the first dimension
-
+        print('!!!', forceinffull.sum(axis=(2, 3)))
         if advancedtracking:
             forceinffullsexinj[inj,:,:,:,:][:,pop1,:,pop2] = swapaxes(swapaxes(forceinffullinj[:,:,:],1,2),0,1)
 
@@ -709,6 +711,7 @@ def model(simpars=None, settings=None, initpeople=None, initprops=None, verbose=
                     raise OptimaException(errormsg)
 
         # Probability of getting infected is one minus forceinffull times any scaling factors !! copied below !!
+        print('***',forceinffull.sum(axis=(2,3)))
         forceinffull  = einsum('ijkl,j,j,j->ijkl', 1.-forceinffull, force, inhomo,(1.-background[:,t]))
         infections_to = forceinffull.sum(axis=(2,3)) # Infections acquired through sex and injecting - by population who gets infected
         infections_to = minimum(infections_to, 1.0-eps-background[:,t].max()) # Make sure it never exceeds the limit
