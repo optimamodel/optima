@@ -465,13 +465,18 @@ def model(simpars=None, settings=None, initpeople=None, initprops=None, verbose=
     ##################################################################################################################
     nsexacts = [0,0,0]
     ninjacts = 0
+    allsexkeys = {}
     for actind,act in enumerate(['reg','cas','com']):
-        for key in simpars['acts'+act]:
-            nsexacts[actind] += 1
+        if compareversions(version,"2.12.0") >= 0: # New behaviour
+            allsexkeys[act] = set(simpars[f'acts{act}insertive'].keys())  # Make a set of all partnerships for reg, cas, com
+            allsexkeys[act].update(set(simpars[f'acts{act}receptive'].keys()))
+        else: # Old behaviour
+            allsexkeys[act] = set(simpars[f'acts{act}'].keys())
+        nsexacts[actind] += len(allsexkeys[act])
     for key in simpars['actsinj']:
         ninjacts += 1
 
-    transsexarr     = [zeros(nsexacts[i])         for i in range(3)]
+    transsexarr     = [zeros((nsexacts[i], npts)) for i in range(3)]
     condarr         = [zeros((nsexacts[i], npts)) for i in range(3)]
     sexpartnerarr   = [zeros((nsexacts[i], 2), dtype=int) for i in range(3)]
     homopartnerarr  = set()
@@ -484,9 +489,21 @@ def model(simpars=None, settings=None, initpeople=None, initprops=None, verbose=
 
     # Sex
     for actind, act in enumerate(['reg','cas','com']):
-        for i,key in enumerate(simpars['acts'+act]):
-            wholeactssexarr[actind][i,:] = floor(dt*simpars['acts'+act][key])
-            fracactssexarr[actind][i,:]  = dt*simpars['acts'+act][key] - wholeactssexarr[actind][i,:] # Probability of an additional act
+        for i,key in enumerate(sorted(allsexkeys[act])):
+            pop1 = popkeys.index(key[0])
+            pop2 = popkeys.index(key[1])
+
+            if compareversions(version, "2.12.0") >= 0:  # New behaviour
+                insertiveacts = simpars[f'acts{act}insertive'][key] if key in simpars[f'acts{act}insertive'].keys() else 0
+                receptiveacts = simpars[f'acts{act}receptive'][key] if key in simpars[f'acts{act}receptive'].keys() else 0
+                totalacts = insertiveacts + receptiveacts
+            else: # Old behaviour
+                totalacts = simpars['acts'+act][key] * ones(npts)
+                if male[pop1] and male[pop2]: insertiveacts, receptiveacts = totalacts/2, totalacts/2
+
+
+            wholeactssexarr[actind][i,:] = floor(dt*totalacts)
+            fracactssexarr[actind][i,:]  = dt*totalacts - wholeactssexarr[actind][i,:] # Probability of an additional act
 
             if simpars['cond'+act].get(key) is not None:
                 condkey = simpars['cond'+act][key]
@@ -499,18 +516,16 @@ def model(simpars=None, settings=None, initpeople=None, initprops=None, verbose=
                 condkey = 0.0
             condarr[actind][i,:] = 1.0 - condkey*effcondom
 
-            pop1 = popkeys.index(key[0])
-            pop2 = popkeys.index(key[1])
             sexpartnerarr[actind][i,:] = [pop1, pop2]
-            if     male[pop1] and   male[pop2]: trans = (simpars['transmmi'] + simpars['transmmr'])/2.0
-            elif   male[pop1] and female[pop2]: trans = simpars['transmfi']
-            elif female[pop1] and   male[pop2]: trans = simpars['transmfr']
+            if     male[pop1] and   male[pop2]: trans = (insertiveacts*simpars['transmmi'] + receptiveacts*simpars['transmmr']) / totalacts
+            elif   male[pop1] and female[pop2]: trans = simpars['transmfi']*ones(len(totalacts))
+            elif female[pop1] and   male[pop2]: trans = simpars['transmfr']*ones(len(totalacts))
             else:
                 errormsg = label + 'Not able to figure out the sex of "%s" and "%s"' % (key[0], key[1])
                 printv(errormsg, 3, verbose)
                 trans = (simpars['transmmi'] + simpars['transmmr'] + simpars['transmfi'] + simpars['transmfr'])/4.0 # May as well just assume all transmissions apply equally - will undersestimate if pop is predominantly biologically male and oversestimate if pop is predominantly biologically female
 
-            transsexarr[actind][i] = trans
+            transsexarr[actind][i,:] = trans
 
             if male[pop1] and male[pop2]: homopartnerarr.add((pop1, pop2))
             else: heteropartnerarr.add((pop1, pop2))  # If a population is both male and female default to heterosexual
@@ -651,10 +666,10 @@ def model(simpars=None, settings=None, initpeople=None, initprops=None, verbose=
             pop2 = sexpartnerarr[i][:,1]
             forceinffullsex = ones((len(sus), nstates, len(pop1)))
             # only effallprev[:,:] is time dependent
-            forceinffullsex[:,:,:] *= 1 - einsum('m,m,m,mi,km->ikm', fracactssexarr[i][:,t], transsexarr[i][:],
+            forceinffullsex[:,:,:] *= 1 - einsum('m,m,m,mi,km->ikm', fracactssexarr[i][:,t], transsexarr[i][:,t],
                                                 condarr[i][:,t], alleff[:,t,:][pop1,:], effallprev[:,pop2])
 
-            forceinffullsex[:,:,:] *= npow(1 - einsum('m,m,mi,km,m->ikm', transsexarr[i], condarr[i][:,t], alleff[pop1,t,:], effallprev[:,pop2],
+            forceinffullsex[:,:,:] *= npow(1 - einsum('m,m,mi,km,m->ikm', transsexarr[i][:,t], condarr[i][:,t], alleff[pop1,t,:], effallprev[:,pop2],
                                 (wholeactssexarr[i][:,t].astype(int) != 0) ), wholeactssexarr[i][:,t].astype(int))  # If wholeacts[t] == 0, then this will equal one so will not change forceinffull
             forceinffull[:,pop1,:,pop2] *= swapaxes(swapaxes(forceinffullsex[:,:,:],1,2),0,1)  # Slicing a more than 2d array puts the pop1,pop2 in the first dimension
 
@@ -668,7 +683,7 @@ def model(simpars=None, settings=None, initpeople=None, initprops=None, verbose=
                     if not ( not((forceinffull[:,pop1,:,pop2]>=0).all()) or not((forceinffull[:,pop1,:,pop2]<=1).all()) ):
                         errormsg = label + 'Sexual force-of-infection is invalid between populations %s and %s, time %0.1f, FOI:\n%s)' % (
                             popkeys[pop1], popkeys[pop2], tvec[t], forceinffull[:,pop1,:,pop2])
-                        for var in ['i','m','transsexarr[i][m]','condarr[i][m,t]','alleff[pop1,t,:]','effallprev[:,pop2]','fracactssexarr[i][m,t]','wholeactssexarr[i][m,t]']:
+                        for var in ['i','m','transsexarr[i][m,t]','condarr[i][m,t]','alleff[pop1,t,:]','effallprev[:,pop2]','fracactssexarr[i][m,t]','wholeactssexarr[i][m,t]']:
                             errormsg += '\n%20s = %f' % (var, eval(var))  # Print out extra debugging information
                         raise OptimaException(errormsg)
 
@@ -856,10 +871,10 @@ def model(simpars=None, settings=None, initpeople=None, initprops=None, verbose=
         _all,_allplhiv,_undx,_alldx,_alltx = range(5) # Start with underscore to not override other variables
         numpotmothers = zeros((npops,5))
         numpotmothers[:,_all]      = people[:,:,t].sum(axis=0)
-        numpotmothers[:,_allplhiv] = people[allplhiv,:,t].sum(axis=0)* relhivbirth
-        numpotmothers[:,_undx]     = people[undx,:,t].sum(axis=0)    * relhivbirth
-        numpotmothers[:,_alldx]    = people[alldx,:,t].sum(axis=0)   * relhivbirth
-        numpotmothers[:,_alltx]    = people[alltx,:,t].sum(axis=0)   * relhivbirth
+        numpotmothers[:,_allplhiv] = people[alldx,:,t].sum(axis=0) * relhivbirth + people[undx,:,t].sum(axis=0)
+        numpotmothers[:,_undx]     = people[undx,:,t].sum(axis=0)
+        numpotmothers[:,_alldx]    = people[alldx,:,t].sum(axis=0) * relhivbirth
+        numpotmothers[:,_alltx]    = people[alltx,:,t].sum(axis=0) * relhivbirth
         numpotmothers[notmotherpops,:] = 0
 
         numhivpospregwomen     = numpotmothers[:,_allplhiv] * totalbirthrate
@@ -885,7 +900,7 @@ def model(simpars=None, settings=None, initpeople=None, initprops=None, verbose=
             initrawdiag = raw_diagcd4[:,:,t].sum(axis=(0,1))
 
             numdxforpmtct = 0 #total
-            thispoptobedx = einsum('ij,j->ij',people[undx, :, t],totalbirthrate) * relhivbirth * proptobedx # this is split by cd4 state
+            thispoptobedx = einsum('ij,j->ij',people[undx,:,t], totalbirthrate) * proptobedx # this is split by cd4 state
             if t<npts-1:
                     people[undx, :, t+1] -= thispoptobedx
                     people[dx,   :, t+1] += thispoptobedx

@@ -23,10 +23,10 @@ n_benchmark = 10  # Number of times to run the cpu benchmark
 n_runsim = 1     # Number of times to run the model
 
 # If running profiling, choose which function to line profile.
-functiontoprofile = 'outcomecalc' # Choices are: P_optimize, optimize, minoutcomes, outcomecalc, runsim, makesimpars, getpars, getouctomes, progs_by_targetpar
+functiontoprofile = 'makesimpars' # Choices are: P_optimize, optimize, minoutcomes, outcomecalc, runsim, makesimpars, getpars, getouctomes, progs_by_targetpar
 tobenchmark = 'runsim' # Choices are 'runsim' or 'runbudget'
 
-args = {'multi':False,'nchains':2, 'nblocks':None, 'blockiters':20,'maxiters':20,'maxtime':100,'randseed':5,'mc':0}
+args = {'multi':False,'maxtime':10,'randseed':5,'parallel':False}
 
 
 ############################################################################################################################
@@ -102,6 +102,7 @@ if doprofile:
     from line_profiler import LineProfiler
     from optima.optimization import minoutcomes
     from optima import Project, Optim, optimize,model,makesimpars, applylimits,asd,outcomecalc,Programset,Program,convertlimits, smoothinterp# analysis:ignore -- called by eval() function
+    from optima.parameters import getreceptiveactsfrominsertive
     # P = Project(spreadsheet='generalized.xlsx', dorun=False)
 
     from hiv_utils import *
