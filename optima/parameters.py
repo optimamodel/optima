@@ -1063,7 +1063,7 @@ def balance(act=None, which=None, data=None, popkeys=None, fpopkeys=None, mpopke
             if which=='numacts': symmetricmatrix[pop1,pop2] = symmetricmatrix[pop1,pop2] + (mixmatrix[pop1,pop2] + mixmatrix[pop2,pop1]) / float(eps+((mixmatrix[pop1,pop2]>0)+(mixmatrix[pop2,pop1]>0)))
             if which=='condom': symmetricmatrix[pop1,pop2] = bool(symmetricmatrix[pop1,pop2] + mixmatrix[pop1,pop2] + mixmatrix[pop2,pop1])
 
-    if which == 'numacts': # Check for F->M acts and F->F acts
+    if which == 'numacts' and act != 'inj': # Check for F->M acts and F->F acts
         for pop1 in range(npops):
             for pop2 in range(npops):
                 if mixmatrix[pop1,pop2] > 0 and popkeys[pop1] in fpopkeys:
