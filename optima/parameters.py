@@ -1110,14 +1110,9 @@ def balance(act=None, which=None, data=None, popkeys=None, limits=None, popsizep
                     proportioninsertive[pop1,pop2] = mixmatrix[pop1,pop2] / (mixmatrix[pop1,pop2] + mixmatrix[pop2,pop1]) \
                                                             if (mixmatrix[pop1,pop2] + mixmatrix[pop2,pop1]) > 0 else 1.
                     thispoint[pop1,pop2] = balancedmatrix[pop1,pop2] * proportioninsertive[pop1,pop2] / psize[pop1]
-                    # print(popkeys[pop1], popkeys[pop2], f'balancedmatrix[pop1,pop2] {balancedmatrix[pop1,pop2]} proportioninsertive[pop1,pop2] {proportioninsertive[pop1,pop2]} psize[pop1] {psize[pop1]} thispoint[pop1,pop2] {thispoint[pop1,pop2]}')
                 if which=='condom':
                     thispoint[pop1,pop2] = (tmpsim[pop1,t]+tmpsim[pop2,t])/2.0
                     thispoint[pop2,pop1] = thispoint[pop1,pop2]
-
-        if act == 'inj' and which == 'numacts':
-            print(f"BALANCE\nmixmatrix\n{mixmatrix}\nsmatrix\n{smatrix}\nbalancedmatrix\n{balancedmatrix}\nbalancedmatrix.T\n{balancedmatrix.transpose()}\nthispoint\n{thispoint.round(3)}")
-
 
         output[:,:,t] = thispoint
     
@@ -1417,6 +1412,7 @@ def makesimpars(pars, name=None, keys=None, start=None, end=None, dt=None, tvec=
                 errormsg = 'Could not figure out how to interpolate parameter "%s"' % key
                 errormsg += 'Error: "%s"' % repr(E)
                 raise OptimaException(errormsg)
+
 
     return simpars
 

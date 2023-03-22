@@ -519,7 +519,6 @@ def model(simpars=None, settings=None, initpeople=None, initprops=None, verbose=
 
             if male[pop1] and male[pop2]: homopartnerarr.add((pop1, pop2))
             else: heteropartnerarr.add((pop1, pop2))  # If a population is both male and female default to heterosexual
-            # print(act, key, trans[-1], wholeactssexarr[actind][i,:], fracactssexarr[actind][i,:], condarr[actind][i,:], sexpartnerarr[actind][i,:])
 
             if debug:
                 for k,arr in {'wholeacts':wholeactssexarr[actind][i,:],'fracacts':fracactssexarr[actind][i,:],'cond':condarr[actind][i,:]}.items():
@@ -663,16 +662,10 @@ def model(simpars=None, settings=None, initpeople=None, initprops=None, verbose=
             forceinffullsex[:,:,:] *= npow(1 - einsum('m,m,mi,km,m->ikm', transsexarr[i][:,t], condarr[i][:,t], alleff[pop1,t,:], effallprev[:,pop2],
                                 (wholeactssexarr[i][:,t].astype(int) != 0) ), wholeactssexarr[i][:,t].astype(int))  # If wholeacts[t] == 0, then this will equal one so will not change forceinffull
             forceinffull[:,pop1,:,pop2] *= swapaxes(swapaxes(forceinffullsex[:,:,:],1,2),0,1)  # Slicing a more than 2d array puts the pop1,pop2 in the first dimension
-            print('!', forceinffull.sum(axis=(2, 3)))
-            print(f'forceinffull t {tvec[t]} ', forceinffullsex.sum(axis=(0,1)), 'asdfas', people[2,:,t])
-            # print(f'forceinffull t {tvec[t]} ', forceinffullsex.sum(), 'asdfas', people[2,:,t])
-            # print(f'forceinffull t {tvec[t]} ', forceinffull[:,2,:,2], array(popkeys), effallprev, pop1, pop2, array(popkeys)[pop1], array(popkeys)[pop2])
-            # print(f'forceinffull t {tvec[t]} ', forceinffull.sum(), effallprev, pop1, pop2, array(popkeys)[pop1], array(popkeys)[pop2])
-            # print(f'forceinffull t {tvec[t]} ', forceinffull.sum(), fracactssexarr[i][:,t], wholeactssexarr[i][:,t].astype(int), transsexarr[i][:,t], condarr[i][:,t],  alleff[pop1,t,:],  effallprev[:,pop2])
+
         if advancedtracking:
             forceinffullsexinj[homosexsex,:,homopartnerarr[:,0],:,homopartnerarr[:,1]] = forceinffull[:,homopartnerarr[:,0],:,homopartnerarr[:,1]]
             forceinffullsexinj[heterosexsex,:,heteropartnerarr[:,0],:,heteropartnerarr[:,1]] = forceinffull[:,heteropartnerarr[:,0],:,heteropartnerarr[:,1]]
-        print('!!', forceinffull.sum(axis=(2, 3)))
 
         if debug and ( not((forceinffull[:,:,:,:]>=0).all()) or not((forceinffull[:,:,:,:]<=1).all()) ):
             for i,arr in enumerate(sexpartnerarr):
@@ -711,24 +704,19 @@ def model(simpars=None, settings=None, initpeople=None, initprops=None, verbose=
                     raise OptimaException(errormsg)
 
         # Probability of getting infected is one minus forceinffull times any scaling factors !! copied below !!
-        print('***',forceinffull.sum(axis=(2,3)))
         forceinffull  = einsum('ijkl,j,j,j->ijkl', 1.-forceinffull, force, inhomo,(1.-background[:,t]))
         infections_to = forceinffull.sum(axis=(2,3)) # Infections acquired through sex and injecting - by population who gets infected
         infections_to = minimum(infections_to, 1.0-eps-background[:,t].max()) # Make sure it never exceeds the limit
-        print('**',forceinffull.sum(axis=(2,3)), infections_to, force, inhomo, (1.-background[:,t]))
+
         # Add these transition probabilities to the main array
         si = susreg[0] # susreg is a single element, but needs an index since can't index a list with an array
         pi = progcirc[0] # as above
         ui = undx[0]
-        K=0
-        print(K, thistransit.sum(axis=(0, 1)), people[sus,:,t], people[2,:,t+1], thistransit[:,2,:].sum(axis=1))
-        K += 1
         thistransit[si,si,:] *= (1.-background[:,t]) - infections_to[si] # Index for moving from sus to sus
         thistransit[si,ui,:] *= infections_to[si] # Index for moving from sus to infection
         thistransit[pi,pi,:] *= (1.-background[:,t]) - infections_to[pi] # Index for moving from circ to circ
         thistransit[pi,ui,:] *= infections_to[pi] # Index for moving from circ to infection
-        print(K, thistransit.sum(axis=(0, 1)),  people[2,:,t+1], thistransit[:,2,:].sum(axis=1))
-        K += 1
+
         # Calculate infections acquired and transmitted
         raw_inci[:,t]               = einsum('ij,ijkl->j', people[sus,:,t], forceinffull)/dt
         raw_incibypop[:,:,t]        = einsum('ij,ijkl->kl', people[sus,:,t], forceinffull)/dt
@@ -759,8 +747,7 @@ def model(simpars=None, settings=None, initpeople=None, initprops=None, verbose=
         ##############################################################################################################
         ### Calculate deaths
         ##############################################################################################################
-        print(K, thistransit.sum(axis=(0, 1)),  people[2,:,t+1], thistransit[:,2,:].sum(axis=1))
-        K += 1
+
         # Adjust transition rates
         thistransit[nsus:,:,:] *= (1.-background[:,t])
 
@@ -777,8 +764,6 @@ def model(simpars=None, settings=None, initpeople=None, initprops=None, verbose=
             elif isnan(prop[t-1]): return True # The previous timestep had a rate, so keep the rate here
             else:                  return False # Neither: use a proportion instead of a rate
 
-        print(K, thistransit.sum(axis=(0, 1)),  people[2,:,t+1], thistransit[:,2,:].sum(axis=1))
-        K += 1
         # Undiagnosed to diagnosed
         if userate(propdx,t): # Need to project forward one year to avoid mismatch
             dxprobarr = tile(hivtest[:,t], (ncd4,1))
@@ -790,8 +775,7 @@ def model(simpars=None, settings=None, initpeople=None, initprops=None, verbose=
         thistransit[ix_(undx, alldx, arange(npops))] *= einsum('ik,ij->ijk', dxprobarr[undx - undx[0],:], fromtoarr[ix_(undx,alldx)])
         raw_diagcd4[:,:,t] += einsum('ij,ij->ij', people[undx,:,t], thistransit[ix_(undx, alldx, arange(npops))].sum(axis=1) ) /dt
 
-        print(K, thistransit.sum(axis=(0, 1)),  people[2,:,t+1], thistransit[:,2,:].sum(axis=1))
-        K += 1
+
         # Diagnosed/lost to care
         if True: # userate(propcare,t): Put people onto care even if there is propcare set, propcare will adjust after the fact. Otherwise, propcare doesn't link people to care at the rate that people should be (because theres enough in care) and we get too many people diagnosed but not linked.
             careprobarr   = tile(linktocare[:,t],   (ncd4,1))
@@ -834,8 +818,7 @@ def model(simpars=None, settings=None, initpeople=None, initprops=None, verbose=
         thistransit[ix_(usvl, usvl, arange(npops))]  *= einsum(',k,ij->ijk', (1.-svlprob), ones(npops), fromtoarr[ix_(usvl,usvl)])
         # usvl -> svl: thistransit[fromstate,tostate,:] *=  svlprob
         thistransit[ix_(usvl, svl, arange(npops))]  *= einsum(',k,ij->ijk', svlprob, ones(npops), fromtoarr[ix_(usvl,svl)])
-        print(K, thistransit.sum(axis=(0, 1)),  people[2,:,t+1], thistransit[:,2,:].sum(axis=1))
-        K += 1
+
         # Check that probabilities all sum to 1
         if debug:
             transtest = array([(abs(thistransit[j,:,:].sum(axis=0)/(1.-background[:,t])+deathprob[j]*transdeathmatrix[j,:,t]-ones(npops))>eps).any() for j in range(nstates)])
@@ -854,12 +837,10 @@ def model(simpars=None, settings=None, initpeople=None, initprops=None, verbose=
             errormsg = label + 'Transitions are less than 0 at time t=%f for states %s: sums are \n%s' % (tvec[t], wrongstates, wrongprobs)
             raise OptimaException(errormsg)
 
-
         ## Shift people as required
         if t<npts-1:
             people[:,:,t+1] += einsum('ij,ikj->kj',people[:,:,t],thistransit[:,:,:])  # Assuming that there are no illegal tranfers in thistransit
 
-            print('here?', people[2,:,t+1], thistransit[:,2,:].sum(axis=1))
 
         ##############################################################################################################
         ### Calculate births
