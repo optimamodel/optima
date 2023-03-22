@@ -1105,12 +1105,12 @@ def balance(act=None, which=None, data=None, popkeys=None, limits=None, popsizep
         thispoint = zeros((npops,npops));
         for pop1 in range(npops):
             for pop2 in range(npops):
-                if which=='numacts' and act != 'inj':
+                if which=='numacts' and act != 'inj': # The total number of acts = insertive + receptive, we only keep insertive in actsreg etc
                     balancedmatrix[pop1,pop2] = (smatrix[pop1,pop2] * psize[pop1] + smatrix[pop2,pop1] * psize[pop2])/(psize[pop1]+psize[pop2]) # here are two estimates for each interaction; reconcile them here
                     proportioninsertive[pop1,pop2] = mixmatrix[pop1,pop2] / (mixmatrix[pop1,pop2] + mixmatrix[pop2,pop1]) \
                                                             if (mixmatrix[pop1,pop2] + mixmatrix[pop2,pop1]) > 0 else 1.
                     thispoint[pop1,pop2] = balancedmatrix[pop1,pop2] * proportioninsertive[pop1,pop2] / psize[pop1]
-                if which=='numacts' and act == 'inj':
+                if which=='numacts' and act == 'inj': # We want the total number of acts = total number of injections, so we keep all
                     balanced = (smatrix[pop1,pop2] * psize[pop1] + smatrix[pop2,pop1] * psize[pop2])/(psize[pop1]+psize[pop2]) # here are two estimates for each interaction; reconcile them here
                     thispoint[pop1,pop2] = balanced/psize[pop1]
                 if which=='condom':

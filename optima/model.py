@@ -537,8 +537,6 @@ def model(simpars=None, settings=None, initpeople=None, initprops=None, verbose=
         fracactsinjarr[i,:] = dt*simpars['actsinj'][key] - wholeactsinjarr[i,:]
         injpartnerarr[i,:] = [popkeys.index(key[0]), popkeys.index(key[1])]
 
-        print(key, wholeactsinjarr[i,:], fracactsinjarr[i,:], injpartnerarr[i,:])
-
         if debug:
             for k,arr in {'wholeacts':wholeactsinjarr[i,:],'fracacts':fracactsinjarr[i,:]}.items():
                 if not(all(arr>=0)):
@@ -692,7 +690,7 @@ def model(simpars=None, settings=None, initpeople=None, initprops=None, verbose=
                                         wholeactsinjarr[:,t].astype(int))   # If wholeacts[t] == 0, then this will equal one so will not change forceinffull
 
         forceinffull[:,pop1,:,pop2] *= swapaxes(swapaxes(forceinffullinj[:,:,:],1,2),0,1)  # Slicing a more than 2d array puts the pop1,pop2 in the first dimension
-        print('!!!', forceinffull.sum(axis=(2, 3)))
+
         if advancedtracking:
             forceinffullsexinj[inj,:,:,:,:][:,pop1,:,pop2] = swapaxes(swapaxes(forceinffullinj[:,:,:],1,2),0,1)
 
