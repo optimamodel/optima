@@ -712,7 +712,7 @@ def model(simpars=None, settings=None, initpeople=None, initprops=None, verbose=
         forceinffull  = einsum('ijkl,j,j,j->ijkl', 1.-forceinffull, force, inhomo,(1.-background[:,t]))
         infections_to = forceinffull.sum(axis=(2,3)) # Infections acquired through sex and injecting - by population who gets infected
         infections_to = minimum(infections_to, 1.0-eps-background[:,t].max()) # Make sure it never exceeds the limit
-
+        print('**',forceinffull.sum(axis=(2,3)), infections_to, force, inhomo, (1.-background[:,t]))
         # Add these transition probabilities to the main array
         si = susreg[0] # susreg is a single element, but needs an index since can't index a list with an array
         pi = progcirc[0] # as above
