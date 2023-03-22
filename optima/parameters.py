@@ -1046,7 +1046,7 @@ def data2timepar(data=None, years=None, keys=None, defaultind=0, verbose=2, **de
 
 
 ## Acts
-def balance(act=None, which=None, data=None, popkeys=None, limits=None, popsizepar=None, eps=None):
+def balance(act=None, which=None, data=None, popkeys=None, fpopkeys=None, mpopkeys=None, limits=None, popsizepar=None, eps=None):
     ''' 
     Combine the different estimates for the number of acts or condom use and return the "average" value.
     
@@ -1062,7 +1062,17 @@ def balance(act=None, which=None, data=None, popkeys=None, limits=None, popsizep
         for pop2 in range(npops):
             if which=='numacts': symmetricmatrix[pop1,pop2] = symmetricmatrix[pop1,pop2] + (mixmatrix[pop1,pop2] + mixmatrix[pop2,pop1]) / float(eps+((mixmatrix[pop1,pop2]>0)+(mixmatrix[pop2,pop1]>0)))
             if which=='condom': symmetricmatrix[pop1,pop2] = bool(symmetricmatrix[pop1,pop2] + mixmatrix[pop1,pop2] + mixmatrix[pop2,pop1])
-        
+
+    if which == 'numacts': # Check for F->M acts and F->F acts
+        for pop1 in range(npops):
+            for pop2 in range(npops):
+                if mixmatrix[pop1,pop2] > 0 and popkeys[pop1] in fpopkeys:
+                    actname = 'Regular' if act == 'reg' else 'Casual' if act == 'cas' else 'Commercial'
+                    pop2type = 'M' if popkeys[pop2] in mpopkeys else 'F'
+                    print(f'\nWARNING!!: In the Partnerships & transitions sheet in the databook, there is a F->{pop2type} insertive partnership in the {actname} acts matrix from {popkeys[pop1]} to {popkeys[pop2]}')
+                    if pop2type == 'M': print(f'This should normally go the other way around. So move the {mixmatrix[pop1, pop2]} from the ({popkeys[pop1]} row, {popkeys[pop2]} column) into the ({popkeys[pop2]} row, {popkeys[pop1]} column)')
+                    print('If you don\'t adjust this, the model may not work properly!!\n')
+
     # Decide which years to use -- use the earliest year, the latest year, and the most time points available
     yearstouse = []    
     for row in range(npops): yearstouse.append(getvaliddata(data['years'], data[which+act][row]))
@@ -1290,10 +1300,10 @@ def makepars(data=None, verbose=2, die=True, fixprops=None):
     tmpcondpts = odict()
     for act in ['reg','cas','com', 'inj']: # Number of acts
         actsname = 'acts'+act
-        tmpacts[act], tmpactspts[act] = balance(act=act, which='numacts', data=data, popkeys=popkeys, popsizepar=pars['popsize'])
+        tmpacts[act], tmpactspts[act] = balance(act=act, which='numacts', data=data, popkeys=popkeys, fpopkeys=fpopkeys, mpopkeys=mpopkeys, popsizepar=pars['popsize'])
     for act in ['reg','cas','com']: # Condom use
         condname = 'cond'+act
-        tmpcond[act], tmpcondpts[act] = balance(act=act, which='condom', data=data, popkeys=popkeys)
+        tmpcond[act], tmpcondpts[act] = balance(act=act, which='condom', data=data, popkeys=popkeys, fpopkeys=fpopkeys, mpopkeys=mpopkeys)
         
     # Convert matrices to lists of of population-pair keys
     for act in ['reg', 'cas', 'com', 'inj']: # Will probably include birth matrices in here too...
@@ -1306,9 +1316,8 @@ def makepars(data=None, verbose=2, die=True, fixprops=None):
                     pars[actsname].t[(key1,key2)] = array(tmpactspts[act])
                     if act!='inj':
                         if (key2, key1) not in pars[condname].y.keys(): # For condom use, only store one of the pair
-                            if not (key1 in fpopkeys and key2 in mpopkeys):  # Store as (M,F) not (F,M) -- WARNING (F,F) partnerships are likely to cause errors elsewhere in the code, not here though
-                                pars[condname].y[(key1,key2)] = array(tmpcond[act])[i,j,:]
-                                pars[condname].t[(key1,key2)] = array(tmpcondpts[act])
+                            pars[condname].y[(key1,key2)] = array(tmpcond[act])[i,j,:]
+                            pars[condname].t[(key1,key2)] = array(tmpcondpts[act])
 
     # Store information about injecting populations -- needs to be here since relies on other calculations
     pars['injects'] = array([pop in [pop1 for (pop1,pop2) in pars['actsinj'].keys()] for pop in pars['popkeys']])
