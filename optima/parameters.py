@@ -1332,6 +1332,9 @@ def getreceptiveactsfrominsertive(insertivepar, popsizesimpar, popkeys, simparst
         receptivepar.t[reversedpartnership] = times
         receptivepar.y[reversedpartnership] = receptiveactsperB
 
+        print(f'{insertivepar.short} {partnership} Using popsizeA {popsizeA[0]} popsizeB {popsizeB[0]} insertiveactsA {insertivepar.y[partnership][0]} receptiveactsperB {receptiveactsperB[0]} times {times}')
+
+
     return receptivepar
 
 
