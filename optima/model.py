@@ -537,6 +537,8 @@ def model(simpars=None, settings=None, initpeople=None, initprops=None, verbose=
         fracactsinjarr[i,:] = dt*simpars['actsinj'][key] - wholeactsinjarr[i,:]
         injpartnerarr[i,:] = [popkeys.index(key[0]), popkeys.index(key[1])]
 
+        print(key, wholeactsinjarr[i,:], fracactsinjarr[i,:], injpartnerarr[i,:])
+
         if debug:
             for k,arr in {'wholeacts':wholeactsinjarr[i,:],'fracacts':fracactsinjarr[i,:]}.items():
                 if not(all(arr>=0)):
