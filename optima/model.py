@@ -871,10 +871,10 @@ def model(simpars=None, settings=None, initpeople=None, initprops=None, verbose=
         _all,_allplhiv,_undx,_alldx,_alltx = range(5) # Start with underscore to not override other variables
         numpotmothers = zeros((npops,5))
         numpotmothers[:,_all]      = people[:,:,t].sum(axis=0)
-        numpotmothers[:,_allplhiv] = people[allplhiv,:,t].sum(axis=0)* relhivbirth
-        numpotmothers[:,_undx]     = people[undx,:,t].sum(axis=0)    * relhivbirth
-        numpotmothers[:,_alldx]    = people[alldx,:,t].sum(axis=0)   * relhivbirth
-        numpotmothers[:,_alltx]    = people[alltx,:,t].sum(axis=0)   * relhivbirth
+        numpotmothers[:,_allplhiv] = people[alldx,:,t].sum(axis=0) * relhivbirth + people[undx,:,t].sum(axis=0)
+        numpotmothers[:,_undx]     = people[undx,:,t].sum(axis=0)
+        numpotmothers[:,_alldx]    = people[alldx,:,t].sum(axis=0) * relhivbirth
+        numpotmothers[:,_alltx]    = people[alltx,:,t].sum(axis=0) * relhivbirth
         numpotmothers[notmotherpops,:] = 0
 
         numhivpospregwomen     = numpotmothers[:,_allplhiv] * totalbirthrate
@@ -900,7 +900,7 @@ def model(simpars=None, settings=None, initpeople=None, initprops=None, verbose=
             initrawdiag = raw_diagcd4[:,:,t].sum(axis=(0,1))
 
             numdxforpmtct = 0 #total
-            thispoptobedx = einsum('ij,j->ij',people[undx, :, t],totalbirthrate) * relhivbirth * proptobedx # this is split by cd4 state
+            thispoptobedx = einsum('ij,j->ij',people[undx,:,t], totalbirthrate) * proptobedx # this is split by cd4 state
             if t<npts-1:
                     people[undx, :, t+1] -= thispoptobedx
                     people[dx,   :, t+1] += thispoptobedx
