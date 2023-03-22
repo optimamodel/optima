@@ -846,6 +846,7 @@ def model(simpars=None, settings=None, initpeople=None, initprops=None, verbose=
         if t<npts-1:
             people[:,:,t+1] += einsum('ij,ikj->kj',people[:,:,t],thistransit[:,:,:])  # Assuming that there are no illegal tranfers in thistransit
 
+            print('here?', people[2,:,t+1])
 
         ##############################################################################################################
         ### Calculate births
