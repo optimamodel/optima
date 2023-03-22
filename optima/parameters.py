@@ -1330,7 +1330,6 @@ def getreceptiveactsfrominsertive(insertivepar, popsizepar, popkeys, popsizeargs
 
         for partnership, times in insertivepar.t.items():
             timeinds = findnearest(alltimes, times)
-            # print(partnership, times,alltimes[timeinds])
             popsizeA = popsizesimpar[popkeys.index(partnership[0])][timeinds]
             popsizeB = popsizesimpar[popkeys.index(partnership[1])][timeinds]
 
@@ -1338,10 +1337,6 @@ def getreceptiveactsfrominsertive(insertivepar, popsizepar, popkeys, popsizeargs
             reversedpartnership = (partnership[1], partnership[0])
             receptivepar.t[reversedpartnership] = times
             receptivepar.y[reversedpartnership] = receptiveactsperB
-
-            # print(f'{insertivepar.short} {partnership} {popsizesimpar[popkeys.index(partnership[0]),:]} {popsizesimpar[popkeys.index(partnership[1]),:]}')
-            # print(f'{insertivepar.short} {partnership} Using popsizeA {popsizeA} popsizeB {popsizeB} insertiveactsA {insertivepar.y[partnership][0]} receptiveactsperB {receptiveactsperB[0]} times {times}')
-
 
     return receptivepar
 
