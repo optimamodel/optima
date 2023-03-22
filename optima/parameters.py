@@ -1325,21 +1325,22 @@ def getreceptiveactsfrominsertive(insertivepar, popsizepar, popkeys, popsizeargs
         alltimes.update(set(times))
     alltimes = array(sorted(list(alltimes)))
 
-    popsizesimpar = popsizepar.interp(tvec=alltimes, **popsizeargs)
+    if alltimes:
+        popsizesimpar = popsizepar.interp(tvec=alltimes, **popsizeargs)
 
-    for partnership, times in insertivepar.t.items():
-        timeinds = findnearest(alltimes, times)
-        # print(partnership, times,alltimes[timeinds])
-        popsizeA = popsizesimpar[popkeys.index(partnership[0])][timeinds]
-        popsizeB = popsizesimpar[popkeys.index(partnership[1])][timeinds]
+        for partnership, times in insertivepar.t.items():
+            timeinds = findnearest(alltimes, times)
+            # print(partnership, times,alltimes[timeinds])
+            popsizeA = popsizesimpar[popkeys.index(partnership[0])][timeinds]
+            popsizeB = popsizesimpar[popkeys.index(partnership[1])][timeinds]
 
-        receptiveactsperB = insertivepar.y[partnership] * popsizeA / popsizeB
-        reversedpartnership = (partnership[1], partnership[0])
-        receptivepar.t[reversedpartnership] = times
-        receptivepar.y[reversedpartnership] = receptiveactsperB
+            receptiveactsperB = insertivepar.y[partnership] * popsizeA / popsizeB
+            reversedpartnership = (partnership[1], partnership[0])
+            receptivepar.t[reversedpartnership] = times
+            receptivepar.y[reversedpartnership] = receptiveactsperB
 
-        # print(f'{insertivepar.short} {partnership} {popsizesimpar[popkeys.index(partnership[0]),:]} {popsizesimpar[popkeys.index(partnership[1]),:]}')
-        # print(f'{insertivepar.short} {partnership} Using popsizeA {popsizeA} popsizeB {popsizeB} insertiveactsA {insertivepar.y[partnership][0]} receptiveactsperB {receptiveactsperB[0]} times {times}')
+            # print(f'{insertivepar.short} {partnership} {popsizesimpar[popkeys.index(partnership[0]),:]} {popsizesimpar[popkeys.index(partnership[1]),:]}')
+            # print(f'{insertivepar.short} {partnership} Using popsizeA {popsizeA} popsizeB {popsizeB} insertiveactsA {insertivepar.y[partnership][0]} receptiveactsperB {receptiveactsperB[0]} times {times}')
 
 
     return receptivepar
