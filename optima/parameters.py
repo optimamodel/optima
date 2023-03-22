@@ -1317,23 +1317,31 @@ def makepars(data=None, verbose=2, die=True, fixprops=None):
     
     return pars
 
-def getreceptiveactsfrominsertive(insertivepar, popsizesimpar, popkeys, simparstvec):
+def getreceptiveactsfrominsertive(insertivepar, popsizepar, popkeys, popsizeargs):
     receptivepar = dcp(insertivepar)
     receptivepar.t = odict()
     receptivepar.y = odict()
 
+    alltimes = set()
+    for times in insertivepar.t.values():
+        alltimes.update(set(times))
+    alltimes = array(sorted(list(alltimes)))
+
+    popsizesimpar = popsizepar.interp(tvec=alltimes, **popsizeargs)
+
     for partnership, times in insertivepar.t.items():
-        timeinds = findnearest(simparstvec, times)
-        popsizeA = popsizesimpar[popkeys.index(partnership[0]),timeinds]
-        popsizeB = popsizesimpar[popkeys.index(partnership[1]),timeinds]
+        timeinds = findnearest(alltimes, times)
+        # print(partnership, times,alltimes[timeinds])
+        popsizeA = popsizesimpar[popkeys.index(partnership[0])][timeinds]
+        popsizeB = popsizesimpar[popkeys.index(partnership[1])][timeinds]
 
         receptiveactsperB = insertivepar.y[partnership] * popsizeA / popsizeB
         reversedpartnership = (partnership[1], partnership[0])
         receptivepar.t[reversedpartnership] = times
         receptivepar.y[reversedpartnership] = receptiveactsperB
 
-        print(f'{insertivepar.short} {partnership} {popsizesimpar[popkeys.index(partnership[0]),:]} {popsizesimpar[popkeys.index(partnership[1]),:]}')
-        print(f'{insertivepar.short} {partnership} Using popsizeA {popsizeA} popsizeB {popsizeB} insertiveactsA {insertivepar.y[partnership][0]} receptiveactsperB {receptiveactsperB[0]} times {times}')
+        # print(f'{insertivepar.short} {partnership} {popsizesimpar[popkeys.index(partnership[0]),:]} {popsizesimpar[popkeys.index(partnership[1]),:]}')
+        # print(f'{insertivepar.short} {partnership} Using popsizeA {popsizeA} popsizeB {popsizeB} insertiveactsA {insertivepar.y[partnership][0]} receptiveactsperB {receptiveactsperB[0]} times {times}')
 
 
     return receptivepar
@@ -1386,8 +1394,12 @@ def makesimpars(pars, name=None, keys=None, start=None, end=None, dt=None, tvec=
                 raise OptimaException(f'In order to makesimpars for "{key}", "popsize" needs to be in the keys to be included in the simpars.')
             key = key[0:7]
 
-            insertivepar = pars[key]
-            receptivepar = getreceptiveactsfrominsertive(insertivepar, simpars['popsize'], popkeys=popkeys, simparstvec=simpars['tvec'])
+            popsizesample = sample
+            if tosample and tosample[0] is not None and 'popsize' not in tosample: popsizesample = False
+            popsizeargs = {'dt':dt, 'popkeys':popkeys, 'smoothness':smoothness, 'asarray':asarray, 'sample':popsizesample, 'randseed':randseed}
+
+            insertivepar = pars[key]  # actsreg only contains insertive acts, eg. actsreg[(popA, popB)] = c is c insertive acts for each person in popA
+            receptivepar = getreceptiveactsfrominsertive(insertivepar, pars['popsize'], popkeys=popkeys, popsizeargs=popsizeargs)
 
             insertivekey = key + 'insertive'
             receptivekey = key + 'receptive'
