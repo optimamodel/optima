@@ -663,7 +663,7 @@ def model(simpars=None, settings=None, initpeople=None, initprops=None, verbose=
             forceinffullsex[:,:,:] *= npow(1 - einsum('m,m,mi,km,m->ikm', transsexarr[i][:,t], condarr[i][:,t], alleff[pop1,t,:], effallprev[:,pop2],
                                 (wholeactssexarr[i][:,t].astype(int) != 0) ), wholeactssexarr[i][:,t].astype(int))  # If wholeacts[t] == 0, then this will equal one so will not change forceinffull
             forceinffull[:,pop1,:,pop2] *= swapaxes(swapaxes(forceinffullsex[:,:,:],1,2),0,1)  # Slicing a more than 2d array puts the pop1,pop2 in the first dimension
-        print(f'forceinffull t {tvec[t]} ', forceinffull.sum())
+            print(f'forceinffull t {tvec[t]} ', forceinffull.sum(), fracactssexarr[i][:,t], wholeactssexarr[i][:,t].astype(int), transsexarr[i][:,t], condarr[i][:,t],  alleff[pop1,t,:],  effallprev[:,pop2])
         if advancedtracking:
             forceinffullsexinj[homosexsex,:,homopartnerarr[:,0],:,homopartnerarr[:,1]] = forceinffull[:,homopartnerarr[:,0],:,homopartnerarr[:,1]]
             forceinffullsexinj[heterosexsex,:,heteropartnerarr[:,0],:,heteropartnerarr[:,1]] = forceinffull[:,heteropartnerarr[:,0],:,heteropartnerarr[:,1]]
