@@ -486,7 +486,7 @@ def model(simpars=None, settings=None, initpeople=None, initprops=None, verbose=
 
     # Sex
     for actind, act in enumerate(['reg','cas','com']):
-        for i,key in enumerate(allsexkeys[act]):
+        for i,key in enumerate(sorted(allsexkeys[act])):
             insertiveacts = simpars[f'acts{act}insertive'][key] if key in simpars[f'acts{act}insertive'].keys() else 0
             receptiveacts = simpars[f'acts{act}receptive'][key] if key in simpars[f'acts{act}receptive'].keys() else 0
             totalacts = insertiveacts + receptiveacts
