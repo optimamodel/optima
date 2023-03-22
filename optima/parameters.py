@@ -11,6 +11,7 @@ from numpy.random import uniform, normal, seed
 from optima import OptimaException, version, compareversions, Link, odict, dataframe, printv, sanitize, uuid, today, getdate, makefilepath, smoothinterp, dcp, defaultrepr, isnumber, findinds, findnearest, getvaliddata, promotetoarray, promotetolist, inclusiverange # Utilities
 from optima import Settings, getresults, convertlimits, gettvecdt, loadpartable, loadtranstable # Heftier functions
 import optima as op
+from sciris import cp
 
 defaultsmoothness = 1.0 # The number of years of smoothing to do by default
 generalkeys = ['male', 'female', 'popkeys', 'injects', 'fromto', 'transmatrix'] # General parameter keys that are just copied
@@ -1331,28 +1332,22 @@ def makepars(data=None, verbose=2, die=True, fixprops=None):
     
     return pars
 
-def getreceptiveactsfrominsertive(insertivepar, popsizepar, popkeys, popsizeargs):
-    receptivepar = dcp(insertivepar)
+def getreceptiveactsfrominsertive(insertivepar, popsizetimes, popsizeinterped, popkeys, popsizeargs):
+    receptivepar = cp(insertivepar)
     receptivepar.t = odict()
     receptivepar.y = odict()
 
-    alltimes = set()
-    for times in insertivepar.t.values():
-        alltimes.update(set(times))
-    alltimes = array(sorted(list(alltimes)))
+    timeindsdict = {time:ind for ind, time in enumerate(popsizetimes)}
 
-    if len(alltimes):
-        popsizesimpar = popsizepar.interp(tvec=alltimes, **popsizeargs)
+    for partnership, times in insertivepar.t.items():
+        timeinds = [timeindsdict[time] for time in times]
+        popsizeA = popsizeinterped[popkeys.index(partnership[0])][timeinds]
+        popsizeB = popsizeinterped[popkeys.index(partnership[1])][timeinds]
 
-        for partnership, times in insertivepar.t.items():
-            timeinds = findnearest(alltimes, times)
-            popsizeA = popsizesimpar[popkeys.index(partnership[0])][timeinds]
-            popsizeB = popsizesimpar[popkeys.index(partnership[1])][timeinds]
-
-            receptiveactsperB = insertivepar.y[partnership] * popsizeA / popsizeB
-            reversedpartnership = (partnership[1], partnership[0])
-            receptivepar.t[reversedpartnership] = times
-            receptivepar.y[reversedpartnership] = receptiveactsperB
+        receptiveactsperB = insertivepar.y[partnership] * popsizeA / popsizeB
+        reversedpartnership = (partnership[1], partnership[0])
+        receptivepar.t[reversedpartnership] = times
+        receptivepar.y[reversedpartnership] = receptiveactsperB
 
     return receptivepar
 
@@ -1400,18 +1395,28 @@ def makesimpars(pars, name=None, keys=None, start=None, end=None, dt=None, tvec=
 
     if compareversions(version,"2.12.0") >= 0:
         # Special treatment for actsreg, actscas, actscom because they contain only insertive acts and so we need to calculate the receptive acts
+        # Get the popsize at the times when the acts are set. Need the popsize for the receptive act calculation
+        alltimes = set()
+        for key in ['actsreg', 'actscas', 'actscom']:
+            for times in pars[key].t.values():
+                alltimes.update(set(times))
+        alltimes = array(sorted(list(alltimes)))
+
+        popsizesample = sample
+        if tosample and tosample[0] is not None and 'popsize' not in tosample: popsizesample = False
+
+        if len(alltimes):
+            popsizeinterped = pars['popsize'].interp(tvec=alltimes, dt=dt, popkeys=popkeys, smoothness=smoothness, asarray=True, sample=popsizesample, randseed=randseed)
+        else: popsizeinterped = None
+
         for key in keys:
             if key in ['actsreg', 'actscas', 'actscom', 'actsreginsertive', 'actscasinsertive', 'actscominsertive', 'actsregreceptive', 'actscasreceptive', 'actscomreceptive']:
                 if 'popsize' not in keys:
                     raise OptimaException(f'In order to makesimpars for "{key}", "popsize" needs to be in the keys to be included in the simpars.')
                 key = key[0:7]
 
-                popsizesample = sample
-                if tosample and tosample[0] is not None and 'popsize' not in tosample: popsizesample = False
-                popsizeargs = {'dt':dt, 'popkeys':popkeys, 'smoothness':smoothness, 'asarray':asarray, 'sample':popsizesample, 'randseed':randseed}
-
                 insertivepar = pars[key]  # actsreg only contains insertive acts, eg. actsreg[(popA, popB)] = c is c insertive acts for each person in popA
-                receptivepar = getreceptiveactsfrominsertive(insertivepar, pars['popsize'], popkeys=popkeys, popsizeargs=popsizeargs)
+                receptivepar = getreceptiveactsfrominsertive(insertivepar, alltimes, popsizeinterped, popkeys=popkeys, popsizeargs=popsizeargs)
 
                 insertivekey = key + 'insertive'
                 receptivekey = key + 'receptive'
