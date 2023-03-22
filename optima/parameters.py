@@ -1332,7 +1332,7 @@ def makepars(data=None, verbose=2, die=True, fixprops=None):
     
     return pars
 
-def getreceptiveactsfrominsertive(insertivepar, popsizetimes, popsizeinterped, popkeys, popsizeargs):
+def getreceptiveactsfrominsertive(insertivepar, popsizetimes, popsizeinterped, popkeys):
     receptivepar = cp(insertivepar)
     receptivepar.t = odict()
     receptivepar.y = odict()
@@ -1416,7 +1416,7 @@ def makesimpars(pars, name=None, keys=None, start=None, end=None, dt=None, tvec=
                 key = key[0:7]
 
                 insertivepar = pars[key]  # actsreg only contains insertive acts, eg. actsreg[(popA, popB)] = c is c insertive acts for each person in popA
-                receptivepar = getreceptiveactsfrominsertive(insertivepar, alltimes, popsizeinterped, popkeys=popkeys, popsizeargs=popsizeargs)
+                receptivepar = getreceptiveactsfrominsertive(insertivepar, alltimes, popsizeinterped, popkeys=popkeys)
 
                 insertivekey = key + 'insertive'
                 receptivekey = key + 'receptive'
