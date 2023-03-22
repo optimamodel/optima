@@ -663,7 +663,8 @@ def model(simpars=None, settings=None, initpeople=None, initprops=None, verbose=
             forceinffullsex[:,:,:] *= npow(1 - einsum('m,m,mi,km,m->ikm', transsexarr[i][:,t], condarr[i][:,t], alleff[pop1,t,:], effallprev[:,pop2],
                                 (wholeactssexarr[i][:,t].astype(int) != 0) ), wholeactssexarr[i][:,t].astype(int))  # If wholeacts[t] == 0, then this will equal one so will not change forceinffull
             forceinffull[:,pop1,:,pop2] *= swapaxes(swapaxes(forceinffullsex[:,:,:],1,2),0,1)  # Slicing a more than 2d array puts the pop1,pop2 in the first dimension
-            print(f'forceinffull t {tvec[t]} ', forceinffullsex.sum(), 'asdfas', people[2,:,t])
+            print(f'forceinffull t {tvec[t]} ', forceinffullsex.sum(axis=(0,1)), 'asdfas', people[2,:,t])
+            # print(f'forceinffull t {tvec[t]} ', forceinffullsex.sum(), 'asdfas', people[2,:,t])
             # print(f'forceinffull t {tvec[t]} ', forceinffull[:,2,:,2], array(popkeys), effallprev, pop1, pop2, array(popkeys)[pop1], array(popkeys)[pop2])
             # print(f'forceinffull t {tvec[t]} ', forceinffull.sum(), effallprev, pop1, pop2, array(popkeys)[pop1], array(popkeys)[pop2])
             # print(f'forceinffull t {tvec[t]} ', forceinffull.sum(), fracactssexarr[i][:,t], wholeactssexarr[i][:,t].astype(int), transsexarr[i][:,t], condarr[i][:,t],  alleff[pop1,t,:],  effallprev[:,pop2])
