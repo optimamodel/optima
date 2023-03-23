@@ -1400,13 +1400,13 @@ def makesimpars(pars, name=None, keys=None, start=None, end=None, dt=None, tvec=
         for key in ['actsreg', 'actscas', 'actscom']:
             for times in pars[key].t.values():
                 alltimes.update(set(times))
-        alltimes = array(sorted(list(alltimes)))
+        list_times = linspace(min(alltimes), max(alltimes),num=(int(max(alltimes)/dt)-int(min(alltimes)/dt)+1))
 
         popsizesample = sample
         if tosample and tosample[0] is not None and 'popsize' not in tosample: popsizesample = False
 
         if len(alltimes):
-            popsizeinterped = pars['popsize'].interp(tvec=alltimes, dt=dt, popkeys=popkeys, smoothness=smoothness, asarray=True, sample=popsizesample, randseed=randseed)
+            popsizeinterped = pars['popsize'].interp(tvec=list_times, dt=dt, popkeys=popkeys, smoothness=smoothness, asarray=True, sample=popsizesample, randseed=randseed)
         else: popsizeinterped = None
 
         for key in keys:
@@ -1416,7 +1416,7 @@ def makesimpars(pars, name=None, keys=None, start=None, end=None, dt=None, tvec=
                 key = key[0:7]
 
                 insertivepar = pars[key]  # actsreg only contains insertive acts, eg. actsreg[(popA, popB)] = c is c insertive acts for each person in popA
-                receptivepar = getreceptiveactsfrominsertive(insertivepar, alltimes, popsizeinterped, popkeys=popkeys)
+                receptivepar = getreceptiveactsfrominsertive(insertivepar, list_times, popsizeinterped, popkeys=popkeys)
 
                 insertivekey = key + 'insertive'
                 receptivekey = key + 'receptive'
