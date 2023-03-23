@@ -452,7 +452,7 @@ def model(simpars=None, settings=None, initpeople=None, initprops=None, verbose=
     ninjacts = 0
     allsexkeys = {}
     for actind,act in enumerate(['reg','cas','com']):
-        if compareversions(version,"2.12.0") >= 0: # New behaviour
+        if compareversions(version,"2.12.0") >= 0 and f'acts{act}insertive' in simpars.keys(): # New behaviour
             allsexkeys[act] = set(simpars[f'acts{act}insertive'].keys())  # Make a set of all partnerships for reg, cas, com
             allsexkeys[act].update(set(simpars[f'acts{act}receptive'].keys()))
         else: # Old behaviour
@@ -478,7 +478,7 @@ def model(simpars=None, settings=None, initpeople=None, initprops=None, verbose=
             pop1 = popkeys.index(key[0])
             pop2 = popkeys.index(key[1])
 
-            if compareversions(version, "2.12.0") >= 0:  # New behaviour
+            if compareversions(version, "2.12.0") >= 0 and f'acts{act}insertive' in simpars.keys():  # New behaviour
                 insertiveacts = simpars[f'acts{act}insertive'][key] if key in simpars[f'acts{act}insertive'].keys() else 0
                 receptiveacts = simpars[f'acts{act}receptive'][key] if key in simpars[f'acts{act}receptive'].keys() else 0
                 totalacts = insertiveacts + receptiveacts

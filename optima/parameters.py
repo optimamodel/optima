@@ -1382,7 +1382,9 @@ def makesimpars(pars, name=None, keys=None, start=None, end=None, dt=None, tvec=
     # Loop over requested keys
     for key in keys: # Loop over all keys
         if compareversions(version,"2.12.0") >= 0 and key in ['actsreg', 'actscas', 'actscom', 'actsreginsertive', 'actscasinsertive', 'actscominsertive', 'actsregreceptive', 'actscasreceptive', 'actscomreceptive']:
-            continue  # New behaviour, the above pars are handled in the next loop
+            par = pars[key[0:7]]
+            if hasattr(par, 'insertiveonly') and par.insertiveonly:
+                continue  # New behaviour, the insertiveonly pars are handled in the next loop
         if isinstance(pars[key], Par): # Check that it is actually a parameter -- it could be the popkeys odict, for example
             thissample = sample # Make a copy of it to check it against the list of things we are sampling
             if tosample and tosample[0] is not None and key not in tosample: thissample = False # Don't sample from unselected parameters -- tosample[0] since it's been promoted to a list
@@ -1411,8 +1413,9 @@ def makesimpars(pars, name=None, keys=None, start=None, end=None, dt=None, tvec=
 
         for key in keys:
             if key in ['actsreg', 'actscas', 'actscom', 'actsreginsertive', 'actscasinsertive', 'actscominsertive', 'actsregreceptive', 'actscasreceptive', 'actscomreceptive']:
-                if 'popsize' not in keys:
-                    raise OptimaException(f'In order to makesimpars for "{key}", "popsize" needs to be in the keys to be included in the simpars.')
+                if not (hasattr(pars[key], 'insertiveonly') and pars[key].insertiveonly):
+                    print(f'WARNING: Acts "{key}" are not "insertiveonly" so these sexual acts will have the old (v2.11.4) non-directional behaviour!')
+                    continue
                 key = key[0:7]
 
                 insertivepar = pars[key]  # actsreg only contains insertive acts, eg. actsreg[(popA, popB)] = c is c insertive acts for each person in popA
