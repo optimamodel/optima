@@ -1327,6 +1327,10 @@ def makepars(data=None, verbose=2, die=True, fixprops=None):
                             pars[condname].y[(key1,key2)] = array(tmpcond[act])[i,j,:]
                             pars[condname].t[(key1,key2)] = array(tmpcondpts[act])
 
+    insertiveonly = True if compareversions(version,"2.12.0") >= 0 else False
+    for act in ['reg', 'cas', 'com']:
+        pars['acts'+act].insertiveonly = insertiveonly # So that the model knows whether or not to use the new behaviour
+
     # Store information about injecting populations -- needs to be here since relies on other calculations
     pars['injects'] = array([pop in [pop1 for (pop1,pop2) in pars['actsinj'].keys()] for pop in pars['popkeys']])
     
