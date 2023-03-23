@@ -1327,6 +1327,10 @@ def makepars(data=None, verbose=2, die=True, fixprops=None):
                             pars[condname].y[(key1,key2)] = array(tmpcond[act])[i,j,:]
                             pars[condname].t[(key1,key2)] = array(tmpcondpts[act])
 
+    insertiveonly = True if compareversions(version,"2.12.0") >= 0 else False
+    for act in ['reg', 'cas', 'com']:
+        pars['acts'+act].insertiveonly = insertiveonly # So that the model knows whether or not to use the new behaviour
+
     # Store information about injecting populations -- needs to be here since relies on other calculations
     pars['injects'] = array([pop in [pop1 for (pop1,pop2) in pars['actsinj'].keys()] for pop in pars['popkeys']])
     
@@ -1382,7 +1386,9 @@ def makesimpars(pars, name=None, keys=None, start=None, end=None, dt=None, tvec=
     # Loop over requested keys
     for key in keys: # Loop over all keys
         if compareversions(version,"2.12.0") >= 0 and key in ['actsreg', 'actscas', 'actscom', 'actsreginsertive', 'actscasinsertive', 'actscominsertive', 'actsregreceptive', 'actscasreceptive', 'actscomreceptive']:
-            continue  # New behaviour, the above pars are handled in the next loop
+            par = pars[key[0:7]]
+            if hasattr(par, 'insertiveonly') and par.insertiveonly:
+                continue  # New behaviour, the insertiveonly pars are handled in the next loop
         if isinstance(pars[key], Par): # Check that it is actually a parameter -- it could be the popkeys odict, for example
             thissample = sample # Make a copy of it to check it against the list of things we are sampling
             if tosample and tosample[0] is not None and key not in tosample: thissample = False # Don't sample from unselected parameters -- tosample[0] since it's been promoted to a list
@@ -1400,23 +1406,24 @@ def makesimpars(pars, name=None, keys=None, start=None, end=None, dt=None, tvec=
         for key in ['actsreg', 'actscas', 'actscom']:
             for times in pars[key].t.values():
                 alltimes.update(set(times))
-        alltimes = array(sorted(list(alltimes)))
+        list_times = linspace(min(alltimes), max(alltimes),num=(int(max(alltimes)/dt)-int(min(alltimes)/dt)+1))
 
         popsizesample = sample
         if tosample and tosample[0] is not None and 'popsize' not in tosample: popsizesample = False
 
         if len(alltimes):
-            popsizeinterped = pars['popsize'].interp(tvec=alltimes, dt=dt, popkeys=popkeys, smoothness=smoothness, asarray=True, sample=popsizesample, randseed=randseed)
+            popsizeinterped = pars['popsize'].interp(tvec=list_times, dt=dt, popkeys=popkeys, smoothness=smoothness, asarray=True, sample=popsizesample, randseed=randseed)
         else: popsizeinterped = None
 
         for key in keys:
             if key in ['actsreg', 'actscas', 'actscom', 'actsreginsertive', 'actscasinsertive', 'actscominsertive', 'actsregreceptive', 'actscasreceptive', 'actscomreceptive']:
-                if 'popsize' not in keys:
-                    raise OptimaException(f'In order to makesimpars for "{key}", "popsize" needs to be in the keys to be included in the simpars.')
+                if not (hasattr(pars[key], 'insertiveonly') and pars[key].insertiveonly):
+                    print(f'WARNING: Acts "{key}" are not "insertiveonly" so these sexual acts will have the old (v2.11.4) non-directional behaviour!')
+                    continue
                 key = key[0:7]
 
                 insertivepar = pars[key]  # actsreg only contains insertive acts, eg. actsreg[(popA, popB)] = c is c insertive acts for each person in popA
-                receptivepar = getreceptiveactsfrominsertive(insertivepar, alltimes, popsizeinterped, popkeys=popkeys)
+                receptivepar = getreceptiveactsfrominsertive(insertivepar, list_times, popsizeinterped, popkeys=popkeys)
 
                 insertivekey = key + 'insertive'
                 receptivekey = key + 'receptive'

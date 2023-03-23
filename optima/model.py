@@ -322,41 +322,26 @@ def model(simpars=None, settings=None, initpeople=None, initprops=None, verbose=
         # Iterate over the states you could be going to
         for tostate in fromto[fromstate]:
             if fromstate in acute: # You can progress from acute
-                if tostate in acute:
-                    transmatrix[fromstate,tostate,:] = 1.-prog[0]
-                elif tostate in gt500:
-                    transmatrix[fromstate,tostate,:] = prog[0]
+                if tostate in acute:   transmatrix[fromstate,tostate,:] = 1.-prog[0]
+                elif tostate in gt500: transmatrix[fromstate,tostate,:] = prog[0]
             elif fromstate in gt500:
-                if tostate in gt500:
-                    transmatrix[fromstate,tostate,:] = 1.-simpars['usvlproggt500']*dt
-                elif tostate in gt350:
-                    transmatrix[fromstate,tostate,:] = simpars['usvlproggt500']*dt
+                if tostate in gt500:   transmatrix[fromstate,tostate,:] = 1.-simpars['usvlproggt500']*dt
+                elif tostate in gt350: transmatrix[fromstate,tostate,:] = simpars['usvlproggt500']*dt
             elif fromstate in gt350:
-                if tostate in gt500:
-                    transmatrix[fromstate,tostate,:] = simpars['usvlrecovgt350']*dt
-                elif tostate in gt350:
-                    transmatrix[fromstate,tostate,:] = 1.-simpars['usvlrecovgt350']*dt-simpars['usvlproggt350']*dt
-                elif tostate in gt200:
-                    transmatrix[fromstate,tostate,:] = simpars['usvlproggt350']*dt
+                if tostate in gt500:   transmatrix[fromstate,tostate,:] = simpars['usvlrecovgt350']*dt
+                elif tostate in gt350: transmatrix[fromstate,tostate,:] = 1.-simpars['usvlrecovgt350']*dt-simpars['usvlproggt350']*dt
+                elif tostate in gt200: transmatrix[fromstate,tostate,:] = simpars['usvlproggt350']*dt
             elif fromstate in gt200:
-                if tostate in gt350:
-                    transmatrix[fromstate,tostate,:] = simpars['usvlrecovgt200']*dt
-                elif tostate in gt200:
-                    transmatrix[fromstate,tostate,:] = 1.-simpars['usvlrecovgt200']*dt-simpars['usvlproggt200']*dt
-                elif tostate in gt50:
-                    transmatrix[fromstate,tostate,:] = simpars['usvlproggt200']*dt
+                if tostate in gt350:   transmatrix[fromstate,tostate,:] = simpars['usvlrecovgt200']*dt
+                elif tostate in gt200: transmatrix[fromstate,tostate,:] = 1.-simpars['usvlrecovgt200']*dt-simpars['usvlproggt200']*dt
+                elif tostate in gt50:  transmatrix[fromstate,tostate,:] = simpars['usvlproggt200']*dt
             elif fromstate in gt50:
-                if tostate in gt200:
-                    transmatrix[fromstate,tostate,:] = simpars['usvlrecovgt50']*dt
-                elif tostate in gt50:
-                    transmatrix[fromstate,tostate,:] = 1.-simpars['usvlrecovgt50']*dt-simpars['usvlproggt50']*dt
-                elif tostate in lt50:
-                    transmatrix[fromstate,tostate,:] = simpars['usvlproggt50']*dt
+                if tostate in gt200:   transmatrix[fromstate,tostate,:] = simpars['usvlrecovgt50']*dt
+                elif tostate in gt50:  transmatrix[fromstate,tostate,:] = 1.-simpars['usvlrecovgt50']*dt-simpars['usvlproggt50']*dt
+                elif tostate in lt50:  transmatrix[fromstate,tostate,:] = simpars['usvlproggt50']*dt
             elif fromstate in lt50:
-                if tostate in gt50:
-                    transmatrix[fromstate,tostate,:] = simpars['usvlrecovlt50']*dt
-                elif tostate in lt50:
-                    transmatrix[fromstate,tostate,:] = 1.-simpars['usvlrecovlt50']*dt
+                if tostate in gt50:    transmatrix[fromstate,tostate,:] = simpars['usvlrecovlt50']*dt
+                elif tostate in lt50:  transmatrix[fromstate,tostate,:] = 1.-simpars['usvlrecovlt50']*dt
 
             # Death probabilities
             transmatrix[fromstate,tostate,:] *= 1.-deathhiv[fromhealthstate]*relhivdeath*deathusvl*dt
@@ -467,7 +452,7 @@ def model(simpars=None, settings=None, initpeople=None, initprops=None, verbose=
     ninjacts = 0
     allsexkeys = {}
     for actind,act in enumerate(['reg','cas','com']):
-        if compareversions(version,"2.12.0") >= 0: # New behaviour
+        if compareversions(version,"2.12.0") >= 0 and f'acts{act}insertive' in simpars.keys(): # New behaviour
             allsexkeys[act] = set(simpars[f'acts{act}insertive'].keys())  # Make a set of all partnerships for reg, cas, com
             allsexkeys[act].update(set(simpars[f'acts{act}receptive'].keys()))
         else: # Old behaviour
@@ -493,7 +478,7 @@ def model(simpars=None, settings=None, initpeople=None, initprops=None, verbose=
             pop1 = popkeys.index(key[0])
             pop2 = popkeys.index(key[1])
 
-            if compareversions(version, "2.12.0") >= 0:  # New behaviour
+            if compareversions(version, "2.12.0") >= 0 and f'acts{act}insertive' in simpars.keys():  # New behaviour
                 insertiveacts = simpars[f'acts{act}insertive'][key] if key in simpars[f'acts{act}insertive'].keys() else 0
                 receptiveacts = simpars[f'acts{act}receptive'][key] if key in simpars[f'acts{act}receptive'].keys() else 0
                 totalacts = insertiveacts + receptiveacts
@@ -871,10 +856,16 @@ def model(simpars=None, settings=None, initpeople=None, initprops=None, verbose=
         _all,_allplhiv,_undx,_alldx,_alltx = range(5) # Start with underscore to not override other variables
         numpotmothers = zeros((npops,5))
         numpotmothers[:,_all]      = people[:,:,t].sum(axis=0)
-        numpotmothers[:,_allplhiv] = people[alldx,:,t].sum(axis=0) * relhivbirth + people[undx,:,t].sum(axis=0)
-        numpotmothers[:,_undx]     = people[undx,:,t].sum(axis=0)
-        numpotmothers[:,_alldx]    = people[alldx,:,t].sum(axis=0) * relhivbirth
-        numpotmothers[:,_alltx]    = people[alltx,:,t].sum(axis=0) * relhivbirth
+
+        if compareversions(version, "2.12.0") >= 0: # New behaviour
+            numpotmothers[:,_allplhiv] = people[alldx,:,t].sum(axis=0) * relhivbirth + people[undx,:,t].sum(axis=0)
+            numpotmothers[:,_undx] = people[undx, :,t].sum(axis=0)
+        else:  # Old behaviour
+            numpotmothers[:,_allplhiv] = people[allplhiv,:,t].sum(axis=0) * relhivbirth
+            numpotmothers[:,_undx] = people[undx, :,t].sum(axis=0)   * relhivbirth
+
+        numpotmothers[:,_alldx]    = people[alldx,:,t].sum(axis=0)   * relhivbirth
+        numpotmothers[:,_alltx]    = people[alltx,:,t].sum(axis=0)   * relhivbirth
         numpotmothers[notmotherpops,:] = 0
 
         numhivpospregwomen     = numpotmothers[:,_allplhiv] * totalbirthrate
@@ -900,10 +891,13 @@ def model(simpars=None, settings=None, initpeople=None, initprops=None, verbose=
             initrawdiag = raw_diagcd4[:,:,t].sum(axis=(0,1))
 
             numdxforpmtct = 0 #total
-            thispoptobedx = einsum('ij,j->ij',people[undx,:,t], totalbirthrate) * proptobedx # this is split by cd4 state
+            if compareversions(version, "2.12.0") >= 0:  # New behaviour
+                thispoptobedx = einsum('ij,j->ij',people[undx,:,t], totalbirthrate) * proptobedx # this is split by cd4 state
+            else:  # Old behaviour
+                thispoptobedx = einsum('ij,j->ij',people[undx, :, t],totalbirthrate) * relhivbirth * proptobedx # this is split by cd4 state
             if t<npts-1:
-                    people[undx, :, t+1] -= thispoptobedx
-                    people[dx,   :, t+1] += thispoptobedx
+                people[undx, :, t+1] -= thispoptobedx
+                people[dx,   :, t+1] += thispoptobedx
             raw_diagcd4[:,:,t]  += thispoptobedx /dt  # annualise
             thispoptobedx        = thispoptobedx.sum(axis=0)  # from here on, only split by population, not state
             raw_dxforpmtct[:,t] += thispoptobedx /dt  # annualise

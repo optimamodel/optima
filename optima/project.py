@@ -501,6 +501,7 @@ class Project(object):
                     if key!='initprev' or resetprevalence: # Initial prevalence is a special case: the only user-edited parameter that is also a data parameter
                         if hasattr(parset.pars[key],'y'): parset.pars[key].y = origparset.pars[key].y # Reset y (value) variable, if it exists
                         if hasattr(parset.pars[key],'t'): parset.pars[key].t = origparset.pars[key].t # Reset t (time) variable, if it exists
+                        if hasattr(parset.pars[key],'insertiveonly'): parset.pars[key].insertiveonly = origparset.pars[key].insertiveonly # Special to actsreg, actscas, actscom
                 # Reset transition matrices
                 if key in ['birthtransit','agetransit','risktransit']: 
                     parset.pars[key] = dcp(origparset.pars[key])
