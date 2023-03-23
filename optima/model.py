@@ -322,41 +322,26 @@ def model(simpars=None, settings=None, initpeople=None, initprops=None, verbose=
         # Iterate over the states you could be going to
         for tostate in fromto[fromstate]:
             if fromstate in acute: # You can progress from acute
-                if tostate in acute:
-                    transmatrix[fromstate,tostate,:] = 1.-prog[0]
-                elif tostate in gt500:
-                    transmatrix[fromstate,tostate,:] = prog[0]
+                if tostate in acute:   transmatrix[fromstate,tostate,:] = 1.-prog[0]
+                elif tostate in gt500: transmatrix[fromstate,tostate,:] = prog[0]
             elif fromstate in gt500:
-                if tostate in gt500:
-                    transmatrix[fromstate,tostate,:] = 1.-simpars['usvlproggt500']*dt
-                elif tostate in gt350:
-                    transmatrix[fromstate,tostate,:] = simpars['usvlproggt500']*dt
+                if tostate in gt500:   transmatrix[fromstate,tostate,:] = 1.-simpars['usvlproggt500']*dt
+                elif tostate in gt350: transmatrix[fromstate,tostate,:] = simpars['usvlproggt500']*dt
             elif fromstate in gt350:
-                if tostate in gt500:
-                    transmatrix[fromstate,tostate,:] = simpars['usvlrecovgt350']*dt
-                elif tostate in gt350:
-                    transmatrix[fromstate,tostate,:] = 1.-simpars['usvlrecovgt350']*dt-simpars['usvlproggt350']*dt
-                elif tostate in gt200:
-                    transmatrix[fromstate,tostate,:] = simpars['usvlproggt350']*dt
+                if tostate in gt500:   transmatrix[fromstate,tostate,:] = simpars['usvlrecovgt350']*dt
+                elif tostate in gt350: transmatrix[fromstate,tostate,:] = 1.-simpars['usvlrecovgt350']*dt-simpars['usvlproggt350']*dt
+                elif tostate in gt200: transmatrix[fromstate,tostate,:] = simpars['usvlproggt350']*dt
             elif fromstate in gt200:
-                if tostate in gt350:
-                    transmatrix[fromstate,tostate,:] = simpars['usvlrecovgt200']*dt
-                elif tostate in gt200:
-                    transmatrix[fromstate,tostate,:] = 1.-simpars['usvlrecovgt200']*dt-simpars['usvlproggt200']*dt
-                elif tostate in gt50:
-                    transmatrix[fromstate,tostate,:] = simpars['usvlproggt200']*dt
+                if tostate in gt350:   transmatrix[fromstate,tostate,:] = simpars['usvlrecovgt200']*dt
+                elif tostate in gt200: transmatrix[fromstate,tostate,:] = 1.-simpars['usvlrecovgt200']*dt-simpars['usvlproggt200']*dt
+                elif tostate in gt50:  transmatrix[fromstate,tostate,:] = simpars['usvlproggt200']*dt
             elif fromstate in gt50:
-                if tostate in gt200:
-                    transmatrix[fromstate,tostate,:] = simpars['usvlrecovgt50']*dt
-                elif tostate in gt50:
-                    transmatrix[fromstate,tostate,:] = 1.-simpars['usvlrecovgt50']*dt-simpars['usvlproggt50']*dt
-                elif tostate in lt50:
-                    transmatrix[fromstate,tostate,:] = simpars['usvlproggt50']*dt
+                if tostate in gt200:   transmatrix[fromstate,tostate,:] = simpars['usvlrecovgt50']*dt
+                elif tostate in gt50:  transmatrix[fromstate,tostate,:] = 1.-simpars['usvlrecovgt50']*dt-simpars['usvlproggt50']*dt
+                elif tostate in lt50:  transmatrix[fromstate,tostate,:] = simpars['usvlproggt50']*dt
             elif fromstate in lt50:
-                if tostate in gt50:
-                    transmatrix[fromstate,tostate,:] = simpars['usvlrecovlt50']*dt
-                elif tostate in lt50:
-                    transmatrix[fromstate,tostate,:] = 1.-simpars['usvlrecovlt50']*dt
+                if tostate in gt50:    transmatrix[fromstate,tostate,:] = simpars['usvlrecovlt50']*dt
+                elif tostate in lt50:  transmatrix[fromstate,tostate,:] = 1.-simpars['usvlrecovlt50']*dt
 
             # Death probabilities
             transmatrix[fromstate,tostate,:] *= 1.-deathhiv[fromhealthstate]*relhivdeath*deathusvl*dt
