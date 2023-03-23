@@ -937,8 +937,8 @@ def model(simpars=None, settings=None, initpeople=None, initprops=None, verbose=
         calcproppmtct = thisnumpmtct / (eps*dt+numdxhivpospregwomen.sum()) # eps*dt to make sure that backwards compatible
         calcproppmtct = minimum(calcproppmtct,1)
         if oldbehaviour: thisproppmtct = calcproppmtct  # old behaviour is calcproppmtct = numpmtct / dxpregwomen, and thisproppmtct = numpmtct / dxpregwomen
-        else:           thisproppmtct = thisnumpmtct / (eps+numhivpospregwomen.sum())
-        thisproppmtct = minimum(calcproppmtct, 1)
+        else:            thisproppmtct = thisnumpmtct / (eps+numhivpospregwomen.sum())
+        thisproppmtct = minimum(thisproppmtct, 1)
 
         undxhivbirths = zeros(npops) # Store undiagnosed HIV+ births for this timestep
         dxhivbirths = zeros(npops) # Store diagnosed HIV+ births for this timestep
