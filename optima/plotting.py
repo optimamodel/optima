@@ -311,44 +311,53 @@ def makeplots(results=None, toplot=None, die=False, verbose=2, plotstartyear=Non
     ## Plot new infections, transitions, deaths and other death, giving total change in PLHIV
     if 'changeinplhivallsources' in toplot:
         toplot.remove('changeinplhivallsources')
-        plots = plotchangeinplhivallsources(results,which='changeinplhivallsources-population+stacked', die=die, fig=fig, **kwargs)
+        plots = plotchangeinplhivallsources(results,which='changeinplhivallsources-population+stacked', die=die,
+                                            plotstartyear=plotstartyear, plotendyear=plotendyear,fig=fig, **kwargs)
         allplots.update(plots)
     ## Plot new infections, transitions, deaths and other death, giving total change in PLHIV
     if 'changeinplhivallsources-population+stacked' in toplot:
         toplot.remove('changeinplhivallsources-population+stacked')
-        plots = plotchangeinplhivallsources(results,which='changeinplhivallsources-population+stacked', die=die, fig=fig, **kwargs)
+        plots = plotchangeinplhivallsources(results,which='changeinplhivallsources-population+stacked', die=die,
+                                            plotstartyear=plotstartyear, plotendyear=plotendyear, fig=fig, **kwargs)
         allplots.update(plots)
     ## Plot new infections, transitions, deaths and other death, giving total change in PLHIV
     if 'changeinplhivallsources-stacked' in toplot:
         toplot.remove('changeinplhivallsources-stacked')
-        plots = plotchangeinplhivallsources(results,which='changeinplhivallsources-stacked', die=die, fig=fig, **kwargs)
+        plots = plotchangeinplhivallsources(results,which='changeinplhivallsources-stacked', die=die, plotstartyear=plotstartyear,
+                                            plotendyear=plotendyear, fig=fig, **kwargs)
         allplots.update(plots)
     ## Plot new infections, transitions, deaths and other death, giving total change in PLHIV
     if 'plhivallsources' in toplot:
         toplot.remove('plhivallsources')
-        plots = plotchangeinplhivallsources(results, which='plhivallsources-population+stacked', die=die, fig=fig,**kwargs)
+        plots = plotchangeinplhivallsources(results, which='plhivallsources-population+stacked', die=die,
+                                            plotstartyear=plotstartyear, plotendyear=plotendyear, fig=fig,**kwargs)
         allplots.update(plots)
     if 'plhivallsources-population+stacked' in toplot:
         toplot.remove('plhivallsources-population+stacked')
-        plots = plotchangeinplhivallsources(results, which='plhivallsources-population+stacked', die=die, fig=fig,**kwargs)
+        plots = plotchangeinplhivallsources(results, which='plhivallsources-population+stacked', die=die, plotstartyear=plotstartyear,
+                                            plotendyear=plotendyear,fig=fig,**kwargs)
         allplots.update(plots)
     if 'plhivallsources-stacked' in toplot:
         toplot.remove('plhivallsources-stacked')
-        plots = plotchangeinplhivallsources(results, which='plhivallsources-stacked', die=die, fig=fig,**kwargs)
+        plots = plotchangeinplhivallsources(results, which='plhivallsources-stacked', die=die, plotstartyear=plotstartyear,
+                                            plotendyear=plotendyear, fig=fig,**kwargs)
         allplots.update(plots)
 
     ## Plot infections by method of transmission, and by population
     if 'numincimethods' in toplot:
         toplot.remove('numincimethods')  # Because everything else is passed to plotepi()
-        plots = plotbymethod(results, toplot='numincimethods', die=die, fig=fig, **kwargs)
+        plots = plotbymethod(results, toplot='numincimethods', die=die, fig=fig, plotstartyear=plotstartyear,
+                             plotendyear=plotendyear, **kwargs)
         allplots.update(plots)
     if 'numincimethods-population+stacked' in toplot:
         toplot.remove('numincimethods-population+stacked')  # Because everything else is passed to plotepi()
-        plots = plotbymethod(results, toplot='numincimethods-population+stacked', die=die, fig=fig, **kwargs)
+        plots = plotbymethod(results, toplot='numincimethods-population+stacked', die=die, fig=fig,
+                             plotstartyear=plotstartyear, plotendyear=plotendyear, **kwargs)
         allplots.update(plots)
     if 'numincimethods-stacked' in toplot:
         toplot.remove('numincimethods-stacked')  # Because everything else is passed to plotepi()
-        plots = plotbymethod(results, toplot='numincimethods-stacked', die=die, fig=fig, **kwargs)
+        plots = plotbymethod(results, toplot='numincimethods-stacked', die=die, fig=fig, plotstartyear=plotstartyear,
+                             plotendyear=plotendyear, **kwargs)
         allplots.update(plots)
 
 
