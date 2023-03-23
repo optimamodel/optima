@@ -889,7 +889,6 @@ def model(simpars=None, settings=None, initpeople=None, initprops=None, verbose=
             else:                   thisnumpmtct = proppmtct[t] * numhivpospregwomen.sum()  # Else, just use the proportion specified
 
         calcproppmtct = thisnumpmtct / (eps*dt+numdxhivpospregwomen.sum()) # eps*dt to make sure that backwards compatible
-        overallproppmtct = thisnumpmtct / (eps*dt+numhivpospregwomen.sum()) # in case of using for fixproppmtct
 
         if calcproppmtct > 1 and diagnosemothersforpmtct: # Need more on PMTCT than we have available diagnosed
             calcproppmtct = 1
@@ -1119,7 +1118,7 @@ def model(simpars=None, settings=None, initpeople=None, initprops=None, verbose=
                     if not name == 'proppmtct':
                         calcprop = people[numer,:,t].sum()/(eps+people[denom,:,t].sum()) # This is the value we fix it at
                     else:
-                        calcprop = min(overallproppmtct, thisproppmtct)  # proppmtct is calculated earlier in the timestep so we don't need to recalc
+                        calcprop = thisproppmtct  # proppmtct is calculated earlier in the timestep so we don't need to recalc
                     naninds    = findinds(isnan(prop)) # Find the indices that are nan -- to be replaced by current values
                     infinds    = findinds(isinf(prop)) # Find indices that are infinite -- to be scaled up/down to a target value
                     finiteinds = findinds(isfinite(prop)) # Find indices that are defined
