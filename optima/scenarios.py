@@ -151,13 +151,13 @@ def makescenarios(project=None, scenlist=None, verbose=2, ccsample=None, randsee
                 thispar = thisparset.pars[scenpar['name']]
 
                 if isinstance(thispar, Timepar): # Sometimes Timepar.t = dict accidentally, which causes issues in this code (maybe elsewhere too)
-                    if type(thispar.t) != odict: thispar.t = op.odict(thispar.t) # Ugly fix...
-                    if type(thispar.y) != odict: thispar.y = op.odict(thispar.y)
+                    if type(thispar.t) != odict: thispar.t = odict(thispar.t) # Ugly fix...
+                    if type(thispar.y) != odict: thispar.y = odict(thispar.y)
                 if isinstance(thispar, Popsizepar): # Similarly for Popsizepar
-                    if type(thispar.t) != odict: thispar.t = op.odict(thispar.t)
-                    if type(thispar.y) != odict: thispar.y = op.odict(thispar.y)
-                    if type(thispar.e) != odict: thispar.e = op.odict(thispar.e)
-                    if type(thispar.start) != odict: thispar.start = op.odict(thispar.start)
+                    if type(thispar.t) != odict: thispar.t = odict(thispar.t)
+                    if type(thispar.y) != odict: thispar.y = odict(thispar.y)
+                    if type(thispar.e) != odict: thispar.e = odict(thispar.e)
+                    if type(thispar.start) != odict: thispar.start = odict(thispar.start)
 
                 # Parse inputs to figure out which population(s) are affected
                 if type(scenpar['for'])==tuple: # If it's a partnership...
