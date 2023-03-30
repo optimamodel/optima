@@ -182,7 +182,7 @@ def makescenarios(project=None, scenlist=None, verbose=2, ccsample=None, randsee
 
                     # Get the index of the population
                     if isnumber(pop): popind = pop
-                    else: popind = thispar.keys().index(pop)
+                    else: popind = list(thispar.keys()).index(pop)
                     
                     # Find or set new value 
                     if scenpar.get('startval') is not None:
