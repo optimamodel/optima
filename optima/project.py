@@ -2,11 +2,10 @@ from optima import OptimaException, Settings, Parameterset, Programset, Resultse
 from optima import odict, getdate, today, uuid, dcp, makefilepath, objrepr, printv, isnumber, saveobj, promotetolist, promotetoodict, sigfig # Import utilities
 from optima import loadspreadsheet, model, gitinfo, defaultscenarios, makesimpars, makespreadsheet
 from optima import defaultobjectives, autofit, runscenarios, optimize, multioptimize, tvoptimize, outcomecalc, icers # Import functions
-from optima import version, cpu_count, compareversions # Get current version
+from optima import version, cpu_count # Get current version
 from numpy import argmin, argsort, nan, ceil
 from numpy.random import seed, randint
 from time import time
-from sciris import parallelize, __version__ as sciris__version__
 
 import os
 
