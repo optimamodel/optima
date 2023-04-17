@@ -583,7 +583,7 @@ class Project(object):
                budget=None, coverage=None, budgetyears=None, data=None, n=1, sample=None, tosample=None, randseed=None,
                addresult=True, overwrite=True, keepraw=False, doround=False, die=True, debug=False, verbose=None,
                parsetname=None, progsetname=None, resultname=None, label=None, smoothness=None,
-               advancedtracking=None, **kwargs):
+               advancedtracking=None, parallel=False, ncpus=None, **kwargs):
         ''' 
         This function runs a single simulation, or multiple simulations if n>1. This is the
         core function for actually running the model!!!!!!
@@ -593,6 +593,7 @@ class Project(object):
         if dt      is None: dt      = self.settings.dt # Specify the timestep
         if verbose is None: verbose = self.settings.verbose
         if advancedtracking is None: advancedtracking = self.settings.advancedtracking # settings.advancedtracking defaults to False
+        if ncpus is not None: ncpus = int(ncpus)
 
         # Extract parameters either from a parset stored in project or from input
         if parsetname is None:
@@ -639,9 +640,20 @@ class Project(object):
 
         # Run the model!
         rawlist = []
-        for ind,simpars in enumerate(simparslist):
-            raw = model(simpars, self.settings, die=die, debug=debug, verbose=verbose, label=self.name, advancedtracking=advancedtracking, **kwargs) # ACTUALLY RUN THE MODEL
-            rawlist.append(raw)
+        if n == 1 or (not parallel): # Run single simulation as quick as possible (or just not in parallel)
+            for ind,simpars in enumerate(simparslist):
+                raw = model(simpars, self.settings, die=die, debug=debug, verbose=verbose, label=self.name, advancedtracking=advancedtracking, **kwargs) # ACTUALLY RUN THE MODEL
+                rawlist.append(raw)
+
+        else: # Run in parallel
+            all_kwargs = {'settings':self.settings, 'die':die, 'debug':debug, 'verbose':verbose, 'label':self.name, 'advancedtracking':advancedtracking, **kwargs}
+            try: rawlist = parallelize(model, iterarg=simparslist, kwargs=all_kwargs, ncpus=ncpus) # ACTUALLY RUN THE MODEL
+            except:
+                printv('\nWARNING: Could not run in parallel probably because this process is already running in parallel. Trying in serial...', 1, verbose)
+                rawlist = []
+                for ind,simpars in enumerate(simparslist):
+                    raw = model(simpars, self.settings, die=die, debug=debug, verbose=verbose, label=self.name, advancedtracking=advancedtracking, **kwargs) # ACTUALLY RUN THE MODEL
+                    rawlist.append(raw)
 
         # Store results if required
         results = Resultset(name=resultname, pars=pars, parsetname=parsetname, parsetuid=parsetuid, progsetname=progsetname, raw=rawlist, simpars=simparslist, budget=budget, coverage=coverage, budgetyears=budgetyears, project=self, keepraw=keepraw, doround=doround, data=data, verbose=verbose, advancedtracking=advancedtracking) # Create structure for storing results
