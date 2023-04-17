@@ -14,6 +14,7 @@ from time import time
 import optima as op # Used by minmoney, at some point should make syntax consistent
 import sciris as sc
 from hashlib import md5
+from traceback import print_exc
 
 # Import dependencies here so no biggie if they fail
 from multiprocessing import Process, Queue
@@ -1351,9 +1352,13 @@ def minoutcomes(project=None, optim=None, tvec=None, absconstraints=None, verbos
             else: not_parsettings = {'parallelizer':'serial-nocopy'}
 
             try: asdrawresults = sc.parallelize(asd, iterkwargs=allargs, ncpus=int(ncpus), **(not_parsettings if not parallel else {}))
-            except AssertionError as e:
+            except Exception as e:
                 parallel = False
-                printv('\nWARNING: Could not run in parallel because this process is already running in parallel. Trying in serial...',1,verbose)
+                if isinstance(e, AssertionError):
+                    printv('\nWARNING: Could not run in parallel because this process is already running in parallel. Trying in serial...',1,verbose)
+                else:
+                    print_exc()
+                    printv('\nWARNING: Could not run in parallel from some unknown error: Trying in serial...',1,verbose)
                 asdrawresults = sc.parallelize(asd, iterkwargs=allargs, ncpus=int(ncpus), **not_parsettings)
 
             if verbose >=3: print(f'\nasd returned best outcomes {list(zip(allbudgetvecs.keys(),[res["fval"] for res in asdrawresults]))}\n')
@@ -1741,10 +1746,14 @@ def minmoney(project=None, optim=None, tvec=None, verbose=None, maxtime=None, fi
                 # Run here in parallel
                 iterkwargs = {'budgetvec': allbudgets, 'printdone': [f'    {key} of {n_throws}' for key in allkeys]}
                 try: all_results_throws = sc.parallelize(op.outcomecalc, iterkwargs=iterkwargs, kwargs=parallelargs, ncpus=int(ncpus))
-                except AssertionError as e:
+                except Exception as e:
                     parallel = False
-                    printv('\nWARNING: Could not run in parallel because this process is already running in parallel. Trying in serial...',1,verbose)
-            if not parallel: all_results_throws = [None]*(n_throws-1)  # Note else in case the above fails
+                    if isinstance(e, AssertionError):
+                        printv('\nWARNING: Could not run in parallel because this process is already running in parallel. Trying in serial...',1,verbose)
+                    else:
+                        print_exc()
+                        printv('\nWARNING: Could not run in parallel from some unknown error: Trying in serial...',1,verbose)
+            if not parallel: all_results_throws = [None]*(n_throws-1)  # Not else in case the above fails
 
             for t,throw in enumerate(range(n_throws-1)): # -1 since include current budget
                 if not parallel: # Run here not in parallel
