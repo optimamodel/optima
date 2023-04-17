@@ -6,6 +6,7 @@ from optima import version, cpu_count # Get current version
 from numpy import argmin, argsort, nan, ceil
 from numpy.random import seed, randint
 from time import time
+from sciris import parallelize
 
 import os
 
@@ -649,6 +650,7 @@ class Project(object):
             all_kwargs = {'settings':self.settings, 'die':die, 'debug':debug, 'verbose':verbose, 'label':self.name, 'advancedtracking':advancedtracking, **kwargs}
             try: rawlist = parallelize(model, iterarg=simparslist, kwargs=all_kwargs, ncpus=ncpus) # ACTUALLY RUN THE MODEL
             except:
+                raise
                 printv('\nWARNING: Could not run in parallel probably because this process is already running in parallel. Trying in serial...', 1, verbose)
                 rawlist = []
                 for ind,simpars in enumerate(simparslist):
