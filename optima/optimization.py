@@ -1445,7 +1445,7 @@ def minmoney(project=None, optim=None, tvec=None, verbose=None, maxtime=None, fi
     ## Handle budget and remove fixed costs
     if project is None or optim is None: raise OptimaException('An optimization requires both a project and an optimization object to run')
     parset = project.parsets[optim.parsetname] # Original parameter set
-    parset.fixprops(False) # It doesn't really make sense to minimize money with these fixed ... This shouldn't be handled here
+    # parset.fixprops(False) # It doesn't really make sense to minimize money with these fixed ... This shouldn't be handled here
     progset = project.progsets[optim.progsetname] # Link to the original program set
     if absconstraints is None: absconstraints = optim.getabsconstraints()
 
