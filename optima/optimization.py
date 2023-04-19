@@ -609,8 +609,8 @@ def outcomecalc(budgetvec=None, which=None, project=None, parsetname=None, progs
         if budgetvec is None: totalbudget = objectives['budget']
         else:                 totalbudget = budgetvec[:].sum() # If a budget vector is supplied
     if origbudget  is None: origbudget  = progset.getdefaultbudget()
-    if budgetvec   is None: budgetvec   = dcp(origbudget[:][optiminds])
-    if isinstance(budgetvec, dict): budgetvec = dcp(budgetvec[:][optiminds]) # Assuming odict
+    if budgetvec   is None: budgetvec   = dcp(origbudget[optimkeys])
+    if isinstance(budgetvec, dict): budgetvec = dcp(budgetvec[optimkeys])
        
     # Validate input    
     arglist = [budgetvec, which, parset, progset, objectives, totalbudget, absconstraints, optimkeys, origbudget]
@@ -726,7 +726,7 @@ def outcomecalc(budgetvec=None, which=None, project=None, parsetname=None, progs
             if targetfrac[key] is not None:
                 target[key] = float(baseline[key]*(1-targetfrac[key]))
                 if final[key] > target[key]: targetsmet = False # Targets are NOT met #CKCHANGE
-            else: target[key] = -1 # WARNING, must be a better way of showing no defined objective
+            else: pass # Used to make target[key] = -1, but it is more robust to not add a target when there is not one
         
         targetprops = odict([(key,objectives[key]) for key in objectives['cascadekeys']])
         for key in objectives['cascadekeys']:
@@ -735,7 +735,7 @@ def outcomecalc(budgetvec=None, which=None, project=None, parsetname=None, progs
             if objectives[key] is not None:
                 target[key] = 1 - objectives[key]
                 if final[key] > target[key]: targetsmet = False # Targets are NOT met #CKCHANGE
-            else: target[key] = -1 # WARNING, must be a better way of showing no defined objective
+            else: pass # Used to make target[key] = -1, but it is more robust to not add a target when there is not one
 
         # Output results
         if outputresults:
