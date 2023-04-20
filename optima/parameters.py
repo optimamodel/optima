@@ -1323,19 +1323,21 @@ def makepars(data=None, verbose=2, die=True, fixprops=None):
                     pars[actsname].y[(key1,key2)] = array(tmpacts[act])[i,j,:]
                     pars[actsname].t[(key1,key2)] = array(tmpactspts[act])
                     if act!='inj':
-                        if (key2, key1) not in pars[condname].y.keys() and (key1, key2) not in pars[condname].y.keys(): # For condom use, only store one of the pair
-                            # We can store it either (key1, key2) or (key2, key1) but we have the below conventions
-                            if key1 in mpopkeys: #  Prefer M,F.  If M,M then either way around is fine
-                                store_key1 = key1
-                                store_key2 = key2
-                            elif key1 in fpopkeys: #  Prefer M,F.
-                                store_key1 = key2
-                                store_key2 = key1
-                            else: # Neither M nor F ???
-                                store_key1 = key1
-                                store_key2 = key2
-                            pars[condname].y[(store_key1,store_key2)] = array(tmpcond[act])[i,j,:]
-                            pars[condname].t[(store_key1,store_key2)] = array(tmpcondpts[act])
+                        if compareversions(version, '2.12.0') < 0: # Old behaviour which would incorrectly add both (MSM1,MSM2) and (MSM2,MSM1)
+                            if key1 in mpopkeys or key1 not in fpopkeys: # For condom use, only store one of the pair -- and store male first -- WARNING, would this fail with multiple MSM populations?
+                                pars[condname].y[(key1,key2)] = array(tmpcond[act])[i,j,:]
+                                pars[condname].t[(key1,key2)] = array(tmpcondpts[act])
+                        else: # New behaviour
+                            if (key2, key1) not in pars[condname].y.keys() and (key1, key2) not in pars[condname].y.keys(): # For condom use, only store one of the pair
+                                # We can store it either (key1, key2) or (key2, key1) but we have the below conventions
+                                if   key1 in mpopkeys and key2 in fpopkeys: #  Prefer M,F
+                                    store_key1, store_key2 = key1, key2
+                                elif key1 in fpopkeys and key2 in mpopkeys: #  Prefer M,F.
+                                    store_key1, store_key2 = key2, key1
+                                else: # M,M just sort them by name
+                                    store_key1, store_key2 = tuple(sorted((key1,key2)))
+                                pars[condname].y[(store_key1,store_key2)] = array(tmpcond[act])[i,j,:]
+                                pars[condname].t[(store_key1,store_key2)] = array(tmpcondpts[act])
 
     insertiveonly = True if compareversions(version,"2.12.0") >= 0 else False
     for act in ['reg', 'cas', 'com']:
