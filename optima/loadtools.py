@@ -1475,9 +1475,9 @@ def convertactsinsertonly(project=None, **kwargs):
       from the data if available, else we make some assumptions
     '''
     if project is not None:
-        print(f"{project.name}: Overwriting ['actsreg', 'actscas', 'actscom'] in parsets {project.parsets.keys()} to be insertive only. This will likely change the calibration.")
+        print(f"{project.name}: Overwriting ['actsreg', 'actscas', 'actscom'] in parsets {project.parsets.keys()} to be insertive only. This will possibly change the calibration.")
 
-        try:    newpars = op.makepars(data=P.data, verbose=2, die=True)
+        try:    newpars = op.makepars(data=project.data, verbose=2, die=True)
         except: newpars = None  # Either we have no data or the data is corrupt somehow
 
         for parset in project.parsets.values():
