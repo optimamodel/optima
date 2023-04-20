@@ -99,7 +99,8 @@ def setmigrations(which='migrations'):
         ('2.11.1', ('2.11.2', '2022-10-10', None,            'Big model speed ups (about 25%) and split diagnoses by CD4 count')),
         ('2.11.2', ('2.11.3', '2022-11-02', None,            'Annual data takes precedence over assumption when loading databook, bug fixes, FE Scenario tab add stacked for one scenario + other things.')),
         ('2.11.3', ('2.11.4', '2023-02-07',addallconstraintsoptim, 'Adds absconstraints and proporigconstraints to Optim, model works with initpeople and optimization improvements')),
-        ('2.11.4', ('2.12.0', '2023-03-10',addinsertonlyacts,'Adds ANC testing to diagnose mothers to put onto PMTCT, actsreg etc only contain insertive acts, and relhivbirth only reduces birth rate of diagnosed HIV+ potential mothers.')),
+        ('2.11.4', ('2.12.0', '2023-03-10',convertactsinsertonly,'Adds ANC testing to diagnose mothers to put onto PMTCT, actsreg etc only contain insertive acts, and relhivbirth only reduces birth rate of diagnosed HIV+ potential mothers.')),
+        ('2.12.0', ('2.12.1', '2023-04-20',convertactsinsertonly,'Change insertive proportion to only be 0%, 50% or 100% not arbitrary proportion.')),
         ])
     
     
@@ -1467,17 +1468,35 @@ def addallconstraintsoptim(project=None, **kwargs):
             if not hasattr(optim, 'absconstraints'):      optim.absconstraints      = None
     return None
 
-def addinsertonlyacts(project=None, **kwargs):
+def convertactsinsertonly(project=None, **kwargs):
     '''
     Migration between Optima 2.11.4 and 2.12.0
-    - actsreg, actscas, actscom are now only insertive acts, so we add a attribute insertiveonly to pars['actsreg'] etc
+    - actsreg, actscas, actscom are now only insertive acts, we force this update in the parsets,
+      from the data if available, else we make some assumptions
     '''
     if project is not None:
+        try:    newpars = op.makepars(data=P.data, verbose=2, die=True)
+        except: newpars = None  # Either we have no data or the data is corrupt somehow
+
         for parset in project.parsets.values():
-            for parname in ['actsreg', 'actscas', 'actscom']:
-                par = parset.pars[parname]
-                if not hasattr(par, 'insertiveonly'):
-                    par.insertiveonly = False  # Previously generated parsets don't have insertive only
+            print(f"{project.name}: Overwriting ['actsreg', 'actscas', 'actscom'] in parset \"{parset.name}\" to be insertive only. This will likely change the calibration.")
+
+            if newpars is not None:
+                for parname in ['actsreg', 'actscas', 'actscom']:  # Only override these parameters
+                    parset.pars[parname] = newpars[parname]
+
+            else:  # No data so make assumptions
+                print('NO DATA')
+                mpopkeys = parset.popkeys[parset.pars['male']]
+                fpopkeys = parset.popkeys[parset.pars['female']]
+                for parname in ['actsreg', 'actscas', 'actscom']:  # Only override these parameters
+                    par = parset.pars[parname]
+                    for partnership, actsarray in par.y.items():
+                        actsarray = array(actsarray)
+                        if   partnership[0] in fpopkeys: par.y[partnership] = actsarray * 0.0  # Assume F,M is 0% insertive
+                        elif partnership[1] in fpopkeys: par.y[partnership] = actsarray * 1.0  # Assume M,F is 100% insertive
+                        else:                            par.y[partnership] = actsarray * 0.5  # Assume M,M is 50% insertive
+
     return None
 
 

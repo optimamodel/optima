@@ -1096,6 +1096,8 @@ def balance(act=None, which=None, data=None, popkeys=None, fpopkeys=None, mpopke
     
     # Compute the balanced acts
     output = zeros((npops,npops,npts))
+    if which == 'numacts':
+        proportioninsertive = getproportioninsertivematrix(act, popkeys, mpopkeys, fpopkeys, npops, mixmatrix)
     for t in range(npts):
         if which=='numacts':
             smatrix = dcp(symmetricmatrix) # Initialize
@@ -1112,24 +1114,13 @@ def balance(act=None, which=None, data=None, popkeys=None, fpopkeys=None, mpopke
         
         # Reconcile different estimates of number of acts, which must balance
         balancedmatrix = zeros((npops, npops))
-        proportioninsertive = zeros((npops, npops))
-        thispoint = zeros((npops,npops));
+        thispoint = zeros((npops,npops))
         for pop1 in range(npops):
             for pop2 in range(npops):
-                if compareversions(version,"2.12.0") >= 0: # New behaviour
-                    if which=='numacts' and act != 'inj': # The total number of acts = insertive + receptive, we only keep insertive in actsreg etc
-                        balancedmatrix[pop1,pop2] = (smatrix[pop1,pop2] * psize[pop1] + smatrix[pop2,pop1] * psize[pop2])/(psize[pop1]+psize[pop2]) # here are two estimates for each interaction; reconcile them here
-                        proportioninsertive[pop1,pop2] = mixmatrix[pop1,pop2] / (mixmatrix[pop1,pop2] + mixmatrix[pop2,pop1]) \
-                                                                if (mixmatrix[pop1,pop2] + mixmatrix[pop2,pop1]) > 0 else 1.
-                        thispoint[pop1,pop2] = balancedmatrix[pop1,pop2] * proportioninsertive[pop1,pop2] / psize[pop1]
-                    if which=='numacts' and act == 'inj': # We want the total number of acts = total number of injections, so we keep all
-                        balanced = (smatrix[pop1,pop2] * psize[pop1] + smatrix[pop2,pop1] * psize[pop2])/(psize[pop1]+psize[pop2]) # here are two estimates for each interaction; reconcile them here
-                        thispoint[pop1,pop2] = balanced/psize[pop1]
-                else: # Old behaviour
-                    if which=='numacts':
-                        balanced = (smatrix[pop1,pop2] * psize[pop1] + smatrix[pop2,pop1] * psize[pop2])/(psize[pop1]+psize[pop2]) # here are two estimates for each interaction; reconcile them here
-                        thispoint[pop2,pop1] = balanced/psize[pop2] # Divide by population size to get per-person estimate
-                        thispoint[pop1,pop2] = balanced/psize[pop1] # ...and for the other population
+                if which == 'numacts':
+                    # here are two estimates for each interaction; reconcile them here
+                    balancedmatrix[pop1,pop2] = (smatrix[pop1,pop2] * psize[pop1] + smatrix[pop2,pop1] * psize[pop2])/(psize[pop1]+psize[pop2])
+                    thispoint[pop1,pop2] = balancedmatrix[pop1,pop2] * proportioninsertive[pop1,pop2] / psize[pop1]
 
                 if which=='condom':
                     thispoint[pop1,pop2] = (tmpsim[pop1,t]+tmpsim[pop2,t])/2.0
@@ -1140,7 +1131,38 @@ def balance(act=None, which=None, data=None, popkeys=None, fpopkeys=None, mpopke
     return output, ctrlpts
 
 
+def getproportioninsertivematrix(act, popkeys, mpopkeys, fpopkeys, npops, mixmatrix):
+    print('VERSION ', version)
+    proportioninsertive = ones(mixmatrix.shape)
+    if act == 'inj':  # We want the total number of acts = total number of injections, so we keep all of them
+        return proportioninsertive
+    if compareversions(version, "2.12.0") < 0:  # Old behaviour, keep all the insertive and receptive acts in the actsreg, etc
+        return proportioninsertive
 
+    # Now 2.12.0 and later behaviour
+    for pop1 in range(npops):
+        for pop2 in range(npops):
+            if   popkeys[pop1] in fpopkeys and popkeys[pop2] in mpopkeys:
+                proportioninsertive[pop1,pop2] = 0.  # F,M is 0% insertive
+            elif popkeys[pop1] in mpopkeys and popkeys[pop2] in fpopkeys:
+                proportioninsertive[pop1,pop2] = 1.  # M,F is 100% insertive
+            else:  # M1,M2
+                if compareversions(version, "2.12.0") == 0:
+                    # proportioninsertive ratio of mixmatrix[pop1,pop2] : mixmatrix[pop2, pop1]
+                    proportioninsertive[pop1,pop2] = mixmatrix[pop1,pop2] / (mixmatrix[pop1,pop2] + mixmatrix[pop2,pop1]) \
+                                                        if (mixmatrix[pop1,pop2] + mixmatrix[pop2,pop1]) > 0 else 1.
+                else: # 2.12.1 onwards,
+                    # M1,M2 either 0%, 50% or 100% insertive depending on partnership matrix
+                    if  mixmatrix[pop1,pop2] > 0 and mixmatrix[pop2,pop1] > 0:
+                        proportioninsertive[pop1, pop2] = 0.5
+                    elif mixmatrix[pop1,pop2] == 0 and mixmatrix[pop2,pop1] > 0:
+                        proportioninsertive[pop1, pop2] = 0.
+                    elif mixmatrix[pop1,pop2] > 0 and mixmatrix[pop2,pop1] == 0:
+                        proportioninsertive[pop1, pop2] = 1.
+                    else: # mixmatrix[pop1,pop2] == 0 and mixmatrix[pop2,pop1] == 0:
+                        proportioninsertive[pop1, pop2] = 1. ## Both are zero so shouldn't matter
+
+    return proportioninsertive
 
 
 
@@ -1337,10 +1359,6 @@ def makepars(data=None, verbose=2, die=True, fixprops=None):
                             pars[condname].y[(store_key1,store_key2)] = array(tmpcond[act])[i,j,:]
                             pars[condname].t[(store_key1,store_key2)] = array(tmpcondpts[act])
 
-    insertiveonly = True if compareversions(version,"2.12.0") >= 0 else False
-    for act in ['reg', 'cas', 'com']:
-        pars['acts'+act].insertiveonly = insertiveonly # So that the model knows whether or not to use the new behaviour
-
     # Store information about injecting populations -- needs to be here since relies on other calculations
     pars['injects'] = array([pop in [pop1 for (pop1,pop2) in pars['actsinj'].keys()] for pop in pars['popkeys']])
     
@@ -1395,10 +1413,10 @@ def makesimpars(pars, name=None, keys=None, start=None, end=None, dt=None, tvec=
 
     # Loop over requested keys
     for key in keys: # Loop over all keys
-        if compareversions(version,"2.12.0") >= 0 and key in ['actsreg', 'actscas', 'actscom', 'actsreginsertive', 'actscasinsertive', 'actscominsertive', 'actsregreceptive', 'actscasreceptive', 'actscomreceptive']:
-            par = pars[key[0:7]]
-            if hasattr(par, 'insertiveonly') and par.insertiveonly:
-                continue  # New behaviour, the insertiveonly pars are handled in the next loop
+        if key in ['actsreg', 'actscas', 'actscom', 'actsreginsertive', 'actscasinsertive', 'actscominsertive', 'actsregreceptive', 'actscasreceptive', 'actscomreceptive'] \
+                    and compareversions(version,"2.12.0") >= 0:
+            # In version 2.12.0 onwards we force the new behaviour
+            continue  # New behaviour, the insertiveonly pars are handled in the next loop
         if isinstance(pars[key], Par): # Check that it is actually a parameter -- it could be the popkeys odict, for example
             thissample = sample # Make a copy of it to check it against the list of things we are sampling
             if tosample and tosample[0] is not None and key not in tosample: thissample = False # Don't sample from unselected parameters -- tosample[0] since it's been promoted to a list
@@ -1427,9 +1445,9 @@ def makesimpars(pars, name=None, keys=None, start=None, end=None, dt=None, tvec=
 
         for key in keys:
             if key in ['actsreg', 'actscas', 'actscom', 'actsreginsertive', 'actscasinsertive', 'actscominsertive', 'actsregreceptive', 'actscasreceptive', 'actscomreceptive']:
-                if not (hasattr(pars[key], 'insertiveonly') and pars[key].insertiveonly):
-                    print(f'WARNING: Acts "{key}" are not "insertiveonly" so these sexual acts will have the old (v2.11.4) non-directional behaviour!')
-                    continue
+                # if not (hasattr(pars[key], 'insertiveonly') and pars[key].insertiveonly):
+                #     print(f'WARNING: Acts "{key}" are not "insertiveonly" so these sexual acts will have the old (v2.11.4) non-directional behaviour!')
+                #     continue
                 key = key[0:7]
 
                 insertivepar = pars[key]  # actsreg only contains insertive acts, eg. actsreg[(popA, popB)] = c is c insertive acts for each person in popA
