@@ -1487,7 +1487,7 @@ def convertactsinsertonly(project=None, **kwargs):
                     parset.pars[parname] = newpars[parname]
 
             else:  # No data so make assumptions
-                print('NO DATA')
+                print(f"      {project.name}: WARNING there was no data in the project so ['actsreg', 'actscas', 'actscom'] might not have the right insertive proportions.")
                 mpopkeys = parset.popkeys[parset.pars['male']]
                 fpopkeys = parset.popkeys[parset.pars['female']]
                 for parname in ['actsreg', 'actscas', 'actscom']:  # Only override these parameters
