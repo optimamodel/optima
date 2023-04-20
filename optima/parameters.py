@@ -1132,7 +1132,6 @@ def balance(act=None, which=None, data=None, popkeys=None, fpopkeys=None, mpopke
 
 
 def getproportioninsertivematrix(act, popkeys, mpopkeys, fpopkeys, npops, mixmatrix):
-    print('VERSION ', version)
     proportioninsertive = ones(mixmatrix.shape)
     if act == 'inj':  # We want the total number of acts = total number of injections, so we keep all of them
         return proportioninsertive
