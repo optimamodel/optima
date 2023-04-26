@@ -74,6 +74,7 @@ def model(simpars=None, settings=None, initpeople=None, initprops=None, verbose=
     raw_newsupp         = zeros((npops, npts))                 # Number newly suppressed per timestep
     raw_death           = zeros((nstates, npops, npts))        # Number of deaths per timestep
     raw_otherdeath      = zeros((npops, npts))                 # Number of other deaths per timestep
+    raw_emi             = zeros((nstates, npops, npts))        # Number of immigrants by state per year
     raw_immi            = zeros((nstates, npops, npts))        # Number of immigrants by state per year
     raw_transitpopbypop = zeros((npops, nstates, npops, npts)) # Number of ageing AND risk transitions to and from each population and each state
 
@@ -84,7 +85,9 @@ def model(simpars=None, settings=None, initpeople=None, initprops=None, verbose=
     deathsvl        = simpars['deathsvl']           # Death rate whilst on suppressive ART
     deathusvl       = simpars['deathusvl']          # Death rate whilst on unsuppressive ART
     cd4trans        = array([simpars['cd4transacute'], simpars['cd4transgt500'], simpars['cd4transgt350'], simpars['cd4transgt200'], simpars['cd4transgt50'], simpars['cd4translt50']])
-    background      = (simpars['death']+simpars['propemigrate'])*dt           # Background death rates
+    backgrounddeath = simpars['death']*dt           # Background death rates
+    emiprob         = simpars['propemigrate']*dt    # Emigration probability in a timestep
+    background      = backgrounddeath + emiprob     # Background removal through other death and emigration
     relhivdeath     = simpars['hivdeath']           # Relative HIV-related death rates
     rrcomorbiditydeathtx = simpars['rrcomorbiditydeathtx']  # Relative HIV-related death rates for people on treatment (whether suppressive or unsuppressive) by time and population
     deathprob       = zeros((nstates,npops))        # Initialise death probability array
@@ -748,7 +751,8 @@ def model(simpars=None, settings=None, initpeople=None, initprops=None, verbose=
 
         # Store deaths
         raw_death[:,:,t]    = einsum('ij,ij,ij->ij', people[:,:,t], deathprob, transdeathmatrix[:,:,t])/dt
-        raw_otherdeath[:,t] = einsum('ij,j->j',   people[:,:,t], background[:,t])/dt
+        raw_emi[:,:,t]      = einsum('ij,j->ij',   people[:,:,t], emiprob[:,t])   /dt
+        raw_otherdeath[:,t] = einsum('ij,j->j',    people[:,:,t], backgrounddeath[:,t])/dt
 
         ##############################################################################################################
         ### Calculate probabilities of shifting along cascade (if programmatically determined)
@@ -1210,6 +1214,7 @@ def model(simpars=None, settings=None, initpeople=None, initprops=None, verbose=
     raw['newtreat']       = raw_newtreat
     raw['death']          = raw_death
     raw['otherdeath']     = raw_otherdeath
+    raw['emigration']     = raw_emi
     if advancedtracking:
         raw['diagcd4']        = raw_diagcd4
         raw['incionpopbypop'] = raw_incionpopbypopmethods.sum(axis=0) # Removes the method of transmission
