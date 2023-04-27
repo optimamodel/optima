@@ -1102,6 +1102,10 @@ def model(simpars=None, settings=None, initpeople=None, initprops=None, verbose=
                         errormsg = label + 'Warning, expected population size is nowhere near calculated population size (t=%f, pop=%s, wanted=%f, actual=%f, ratio=%f)' % (t, popkeys[p], wantedpeople, actualpeople, ratio)
                         if die: raise OptimaException(errormsg)
                         else: printv(errormsg, 1, verbose=verbose)
+                    if ratio < 1:
+                        raw_emi[susnotonart,p,t]  += people[susnotonart,p,t+1] * (1-ratio) /dt
+                    elif ratio > 1:
+                        raw_immi[susnotonart,p,t] += people[susnotonart,p,t+1] * (ratio-1) /dt
                     people[susnotonart,p,t+1] *= ratio # It's OK, so scale to match
 
 
