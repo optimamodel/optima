@@ -272,7 +272,7 @@ def model(simpars=None, settings=None, initpeople=None, initprops=None, verbose=
     force = simpars['force']
     inhomopar = simpars['inhomo']
 
-    plhivmap = array([0 if i in allplhiv else 1 for i in range(nstates)]) #Must be simpler syntax
+    plhivmap = array([1 if i in allplhiv else 0 for i in range(nstates)]) #Must be simpler syntax
 
     ##################################################################################################################
     ### Make time-constant, dt-dependent transitions
