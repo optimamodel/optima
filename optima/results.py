@@ -129,6 +129,8 @@ class Resultset(object):
         self.other['numbirths']         = Result('Total births)')
         self.other['numimmi']           = Result('New immigrants')
         self.other['numimmiplhiv']      = Result('New PLHIV immigrants')
+        self.other['numemi']            = Result('New emigrants')
+        self.other['numemiplhiv']       = Result('New PLHIV emigrants')
         if advancedtracking:
             self.other['numnewdiagcd4']      = Result('New HIV diagnoses by CD4 count', defaultplot='stacked')
             self.other['proplatediag']       = Result('Proportion of new HIV diagnoses with CD4<200 (%)', ispercentage=True, defaultplot='total')
@@ -326,6 +328,7 @@ class Resultset(object):
         allbirths    = assemble('births')
         allpmtct     = assemble('pmtct')
         allimmi      = assemble('immi')
+        allemi       = assemble('emigration')
         allplhiv     = self.settings.allplhiv
         allsus       = self.settings.sus
         allaids      = self.settings.allaids
@@ -527,8 +530,14 @@ class Resultset(object):
         self.other['numimmi'].pops = process(allimmi[:,:,:,indices].sum(axis=1))  # Axis 1 is health state
         self.other['numimmi'].tot  = process(allimmi[:,:,:,indices].sum(axis=(1,2)))  # Axis 2 is population
 
+        self.other['numemi'].pops = process(allemi[:,:,:,indices].sum(axis=1))  # Axis 1 is health state
+        self.other['numemi'].tot  = process(allemi[:,:,:,indices].sum(axis=(1,2)))  # Axis 2 is population
+
         self.other['numimmiplhiv'].pops = process(allimmi[:,allplhiv,:,:][:,:,:,indices].sum(axis=1))  # Axis 1 is health state
         self.other['numimmiplhiv'].tot  = process(allimmi[:,allplhiv,:,:][:,:,:,indices].sum(axis=(1, 2)))   # Axis 2 is population
+
+        self.other['numemiplhiv'].pops = process(allemi[:,allplhiv,:,:][:,:,:,indices].sum(axis=1))  # Axis 1 is health state
+        self.other['numemiplhiv'].tot  = process(allemi[:,allplhiv,:,:][:,:,:,indices].sum(axis=(1, 2)))   # Axis 2 is population
 
         self.other['numdiagpmtct'].pops = process(alldiagpmtct[:,:,indices])
         self.other['numdiagpmtct'].tot  = process(alldiagpmtct[:,:,indices].sum(axis=1))  # Axis 1 is populations
