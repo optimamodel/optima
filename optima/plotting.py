@@ -2338,8 +2338,12 @@ def plotcostcov(program=None, year=None, parset=None, results=None, plotoptions=
                                   lw=0)
     
     ax.scatter(costdata, covdata, color='#666666')
-    
-    setylim(0, ax) # Equivalent to ax.set_ylim(bottom=0)
+
+    if plotoptions and plotoptions.get('yupperlim'):
+        ax.set_ylim((0, plotoptions['yupperlim']))
+    else:
+        setylim(0, ax) # Equivalent to ax.set_ylim(bottom=0)
+
     ax.set_xlim([0, xupperlim])
     ax.tick_params(axis='both', which='major', labelsize=11)
     ax.set_xlabel(plotdata['xlabel'], fontsize=11)
