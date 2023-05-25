@@ -632,10 +632,16 @@ class Project(object):
             if end is None: 
                 try:    end   = self.parsets[parsetname].end # Ditto
                 except: end   = self.settings.end # Ditto
-            for i in range(n):
-                maxint = 2**31-1 # See https://en.wikipedia.org/wiki/2147483647_(number)
-                sampleseed = randint(0,maxint) if sample is not None else None
-                simparslist.append(makesimpars(pars, start=start, end=end, dt=dt, tvec=tvec, settings=self.settings, name=parsetname, sample=sample, tosample=tosample, randseed=sampleseed, smoothness=smoothness))
+            maxint = 2**31-1  # See https://en.wikipedia.org/wiki/2147483647_(number)
+            sampleseeds = randint(0,maxint, size=n) if sample is not None else [None]*n
+
+            simparkwargs = {'pars': pars, 'start':start, 'end':end, 'dt':dt, 'tvec':tvec, 'settings':self.settings, 'name':parsetname,
+                            'sample':sample, 'tosample':tosample, 'smoothness':smoothness}
+            if n == 1 or (not parallel):
+                for i in range(n):
+                    simparslist.append(makesimpars(randseed=sampleseeds[i], **simparkwargs))
+            else:  # Run makesimpars in parallel
+                simparslist = parallelize(makesimpars, kwargs=simparkwargs, iterkwargs={'randseed': sampleseeds}, parallelizer='fast')
         else:
             simparslist = promotetolist(simpars)
 
@@ -648,7 +654,7 @@ class Project(object):
 
         else: # Run in parallel
             all_kwargs = {'settings':self.settings, 'die':die, 'debug':debug, 'verbose':verbose, 'label':self.name, 'advancedtracking':advancedtracking, **kwargs}
-            try: rawlist = parallelize(model, iterarg=simparslist, kwargs=all_kwargs, ncpus=ncpus) # ACTUALLY RUN THE MODEL
+            try: rawlist = parallelize(model, iterarg=simparslist, kwargs=all_kwargs, ncpus=ncpus, parallelizer='fast') # ACTUALLY RUN THE MODEL
             except:
                 printv('\nWARNING: Could not run in parallel probably because this process is already running in parallel. Trying in serial...', 1, verbose)
                 rawlist = []
