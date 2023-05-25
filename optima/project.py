@@ -641,7 +641,10 @@ class Project(object):
                 for i in range(n):
                     simparslist.append(makesimpars(randseed=sampleseeds[i], **simparkwargs))
             else:  # Run makesimpars in parallel
-                simparslist = parallelize(makesimpars, kwargs=simparkwargs, iterkwargs={'randseed': sampleseeds}, parallelizer='fast')
+                try: simparslist = parallelize(makesimpars, kwargs=simparkwargs, iterkwargs={'randseed': sampleseeds}, parallelizer='fast')
+                except:  # Fallback to serial
+                    simparslist = []
+                    for i in range(n): simparslist.append(makesimpars(randseed=sampleseeds[i], **simparkwargs))
         else:
             simparslist = promotetolist(simpars)
 
