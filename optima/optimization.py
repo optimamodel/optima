@@ -1408,8 +1408,12 @@ def minoutcomes(project=None, optim=None, tvec=None, absconstraints=None, verbos
             if parallel: printv(f'\nRunning {len(allargs)} optimizations in parallel using {int(min(ncpus,len(allargs)))} cpu threads',2,verbose)
             else: printv(f'\nRunning {len(allargs)} optimizations in serial',2,verbose)
 
-            try: asdrawresults = sc.parallelize(asd, iterkwargs=allargs, ncpus=int(ncpus), parallelizer='serial-nocopy' if not parallel else None)
-            except AssertionError as e:
+            # Need different settings for older than sciris 2.0.2
+            if compareversions(sc.__version__, '2.0.2') < 0:  not_parsettings = {'serial':True}
+            else: not_parsettings = {'parallelizer':'serial-nocopy'}
+
+            try: asdrawresults = sc.parallelize(asd, iterkwargs=allargs, ncpus=int(ncpus), **(not_parsettings if not parallel else {'parallelizer':'fast'}))
+            except Exception as e:
                 parallel = False
                 printv('\nWARNING: Could not run in parallel because this process is already running in parallel. Trying in serial...',1,verbose)
                 asdrawresults = sc.parallelize(asd, iterkwargs=allargs, ncpus=int(ncpus), parallelizer='serial-nocopy')
@@ -1480,7 +1484,7 @@ def minoutcomes(project=None, optim=None, tvec=None, absconstraints=None, verbos
 
 
 def minmoney(project=None, optim=None, tvec=None, verbose=None, maxtime=None, finishtime=None, maxiters=1000, absconstraints=None,
-             fundingchange=1.2, tolerance=1e-2, ccsample='best', randseed=None, keepraw=False, die=False, 
+             fundingchange=1.2, tolerance=1e-2, ccsample='best', randseed=None, keepraw=False, die=False,
              n_throws=None, n_success=None, n_refine=None, schedule=None, parallel=True, ncpus=None, stoppingfunc=None, **kwargs):
     '''
     A function to minimize money for a fixed objective.
@@ -1647,7 +1651,7 @@ def minmoney(project=None, optim=None, tvec=None, verbose=None, maxtime=None, fi
             if step is None: step = search_step # Step size to increase/decrease guess
             if tol  is None: tol  = search_tol # How close to get before declaring a solution
             if totalbudget == 0: totalbudget += tol
-            if curr_met is True: 
+            if curr_met is True:
                 upper_lim = totalbudget
                 lower_lim = None
             elif curr_met is False:
@@ -1793,8 +1797,8 @@ def minmoney(project=None, optim=None, tvec=None, verbose=None, maxtime=None, fi
                 parallelargs.update({'totalbudget': totalbudget, 'outputresults': True})
                 # Run here in parallel
                 iterkwargs = {'budgetvec': allbudgets, 'printdone': [f'    {key} of {n_throws}' for key in allkeys]}
-                try: all_results_throws = sc.parallelize(op.outcomecalc, iterkwargs=iterkwargs, kwargs=parallelargs, ncpus=int(ncpus))
-                except AssertionError as e:
+                try: all_results_throws = sc.parallelize(op.outcomecalc, iterkwargs=iterkwargs, kwargs=parallelargs, ncpus=int(ncpus), parallelizer='fast')
+                except Exception as e:
                     parallel = False
                     printv('\nWARNING: Could not run in parallel because this process is already running in parallel. Trying in serial...',1,verbose)
             if not parallel: all_results_throws = [None]*(n_throws-1)  # Note else in case the above fails
