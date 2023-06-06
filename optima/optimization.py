@@ -5,7 +5,7 @@ Version: 2019dec02
 """
 
 from optima import OptimaException, Link, Multiresultset, ICER, asd, getresults # Main functions
-from optima import printv, dcp, odict, findinds, today, getdate, uuid, objrepr, promotetoarray, findnearest, sanitize, inclusiverange, sigfig # Utilities
+from optima import printv, dcp, odict, findinds, today, getdate, uuid, objrepr, promotetoarray, findnearest, sanitize, inclusiverange, sigfig, compareversions # Utilities
 
 from numpy import zeros, ones, empty, arange, array, inf, isfinite, argmin, argsort, nan, floor, concatenate, exp, sqrt, logical_and, ceil
 from numpy.random import random, seed, randint
