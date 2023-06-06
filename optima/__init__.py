@@ -75,16 +75,13 @@ else:
 del sc_version; del sc_versiondate
 
 # Color definitions
-from .colortools import alpinecolormap, bicolormap, gridcolors, vectocolor, shifthue
-from . import colortools as _colortools; del colortools
+from .colortools import *
 
 # Optimization algorithm
 from .asd import asd
 
 # Interpolation
 from .pchip import pchip, plotpchip
-
-
 
 
 #####################################################################################################################
@@ -129,53 +126,41 @@ class OptimaException(Exception):
 
 # File I/O
 from sciris  import loadobj, saveobj, loadstr, dumpstr # Insist sciris is installed
-from .fileio import optimafolder, loadpartable, loadtranstable, loaddatapars # CK: may want to tidy up
-from . import fileio as _fileio; del fileio
+from .fileio import * # CK: may want to tidy up
 
 # Project settings
-from .settings import Settings, convertlimits, gettvecdt
-from . import settings as _settings; del settings
+from .settings import *
 
 # Generate results -- import first because parameters use results
 from .results import Result, Resultset, Multiresultset, BOC, ICER, getresults
-from . import results as _results; del results
 
 # Define the model parameters -- import before makespreadsheet because makespreadsheet uses partable to make a pre-filled spreadsheet
-from .parameters import Par, Dist, Constant, Metapar, Timepar, Popsizepar, Yearpar, Parameterset # Parameter and Parameterset classes
-from .parameters import makepars, makesimpars, applylimits, comparepars, comparesimpars, sanitycheck, checkifparsoverridepars, createwarningforoverride
-from . import parameters as _parameters; del parameters
+from .parameters import * # Parameter and Parameterset classes and methods
 
 # Create a blank spreadsheet
-try: from .makespreadsheet import makespreadsheet, makeprogramspreadsheet, default_datastart, default_dataend
+try: from .makespreadsheet import *
 except Exception as E: _failed.append('makespreadsheet: %s' % repr(E))
 
 # Load a completed a spreadsheet
-from .loadspreadsheet import loadspreadsheet, loadprogramspreadsheet
+from .loadspreadsheet import *
 
 # Define and run the model
-from .model import model
+from .model import *
 
 # Define the programs and cost functions
-from .programs import Program, Programset
-from .programs import checkifparsetoverridesprogset
-from . import programs as _programs; del programs
+from .programs import *
 
 # Automatic calibration and sensitivity
-from .calibration import autofit
-from . import calibration as _calibration; del calibration
+from .calibration import *
 
 # Scenario analyses
-from .scenarios import Parscen, Budgetscen, Coveragescen, Progscen, runscenarios, makescenarios, baselinescenario, setparscenvalues, defaultscenarios, checkifparsetoverridesscenario
-from . import scenarios as _scenarios; del scenarios
+from .scenarios import *
 
 # Optimization and ICER analyses
-from .optimization import Optim, defaultobjectives, defaultconstraints, defaultabsconstraints, defaulttvsettings, optimize, multioptimize, tvoptimize, outcomecalc, icers, tvfunction
-from . import optimization as _optimization; del optimization
+from .optimization import *
 
 # Plotting functions
-try:
-    from .plotting import getplotselections, makeplots, plotepi, plotcascade, plotbudget, plottvbudget, plotcoverage, plotallocations, plotcostcov, plotbycd4, ploticers, saveplots, reanimateplots, sanitizeresults, checkifneedtorerunwithadvancedtracking
-    from . import plotting as _plotting; del plotting
+try: from .plotting import *
 except Exception as E: _failed.append('plotting: %s' % repr(E))
 
 #####################################################################################################################
@@ -183,25 +168,20 @@ except Exception as E: _failed.append('plotting: %s' % repr(E))
 #####################################################################################################################
 
 # Load the code to load projects and portfolios (before defining them, oddly!)
-from .loadtools import migrate, loadproj, loadportfolio, optimaversion
-from . import loadtools as _loadtools; del loadtools
-changelog = _loadtools.setmigrations('changelog')
+from .loadtools import *
+changelog = loadtools.setmigrations('changelog')
 
 # Load batch functions (has to load projects, so has to come after migration)
-from .batchtools import batchautofit, batchBOC, reoptimizeprojects, getprojects
-from . import batchtools as _batchtools; del batchtools
+from .batchtools import *
 
 # Import the Project class that ties everything together
-from .project import Project
-from . import project as _project; del project
+from .project import *
 
 # Load the portfolio class (container of Projects), relies on batch functions, hence is here
-from .portfolio import Portfolio, makegeospreadsheet, makegeoprojects
-from . import portfolio as _portfolio; del portfolio
+from .portfolio import *
 
 # Finally, load defaults
-from .defaults import defaultproject, defaultprogset, defaultprograms, demo
-from . import defaults as _defaults; del defaults
+from .defaults import *
 
 
 #####################################################################################################################
@@ -210,13 +190,11 @@ from . import defaults as _defaults; del defaults
 
 # Load high level GUI module
 try:
-    from .gui import plotresults, pygui, plotpeople, plotpars, manualfit, showplots, loadplot, geogui
-    from . import gui as _gui; del gui
+    from .gui import *
 except Exception as E: _failed.append('gui: %s' % repr(E))
 
 try:
     from .webserver import browser
-    from . import webserver as _webserver; del webserver
 except Exception as E: _failed.append('webserver: %s' % repr(E))
 
 

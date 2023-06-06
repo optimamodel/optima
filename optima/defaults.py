@@ -7,7 +7,12 @@ Version: 2016jan28
 from numpy import array, nan
 from optima import OptimaException, Project, Program, Programset, printv, odict, optimafolder
 
-
+__all__ = [
+    'defaultproject',
+    'defaultprogset',
+    'defaultprograms',
+    'demo'
+]
 
 def defaultprograms(project, addcostcovpars=False, addcostcovdata=False, filterprograms=None):
     ''' Make some default programs'''

@@ -6,6 +6,12 @@ from xlsxwriter.utility import xl_rowcol_to_cell as rc
 from xlrd import open_workbook
 import re
 
+__all__ = [
+    'Portfolio',
+    'makegeospreadsheet',
+    'makegeoprojects'
+]
+
 #######################################################################################################
 ## Portfolio class
 #######################################################################################################

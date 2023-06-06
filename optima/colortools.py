@@ -1,3 +1,12 @@
+
+__all__ = [
+    'alpinecolormap',
+    'bicolormap',
+    'gridcolors',
+    'vectocolor',
+    'shifthue'
+]
+
 def processcolors(colors=None, asarray=False, reverse=False):
     ''' 
     Small helper function to do common transformations on the colors, once generated.

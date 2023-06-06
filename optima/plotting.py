@@ -38,6 +38,11 @@ globalfigsize = (8,4)
 globalposition = [0.1,0.06,0.6,0.8]
 interactiveposition = [0.15,0.1,0.55,0.75] # Use slightly larger margnis for interactive plots
 
+__all__ = [
+    'getplotselections', 'makeplots', 'plotepi', 'plotcascade', 'plotbudget', 'plottvbudget', 'plotcoverage',
+    'plotallocations', 'plotcostcov', 'plotbycd4', 'ploticers', 'saveplots', 'reanimateplots', 'sanitizeresults',
+    'checkifneedtorerunwithadvancedtracking'
+]
 
 def getdefaultplots(ismulti='both'):
     ''' Since these can get overwritten otherwise '''

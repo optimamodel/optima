@@ -10,6 +10,19 @@ from optima import OptimaException, Link, Multiresultset # Core classes/function
 from optima import dcp, today, odict, printv, findinds, defaultrepr, getresults, vec2obj, isnumber, uuid, promotetoarray # Utilities
 from optima import checkifparsetoverridesprogset, checkifparsoverridepars, createwarningforoverride # From programs.py and parameters.py for warning
 
+__all__ = [
+    'Parscen',
+    'Budgetscen',
+    'Coveragescen',
+    'Progscen',
+    'runscenarios',
+    'makescenarios',
+    'baselinescenario',
+    'setparscenvalues',
+    'defaultscenarios',
+    'checkifparsetoverridesscenario'
+]
+
 class Scen(object):
     ''' The scenario base class -- not to be used directly, instead use Parscen or Progscen '''
     def __init__(self, name=None, parsetname=-1, progsetname=-1, t=None, active=True):
