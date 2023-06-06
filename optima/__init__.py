@@ -36,7 +36,7 @@ Version: 2019jan09
 
 
 # Specify the version, for the purposes of figuring out which version was used to create a project
-from .version import version, versiondate
+from .version import *
 
 # Print the license
 optimalicense = 'Optima HIV %s (%s) -- (c) Optima Consortium' % (version, versiondate)
@@ -61,14 +61,7 @@ from uuid import uuid4 as uuid
 from copy import deepcopy as dcp
 
 # Utilities -- import alphabetically
-from .utils import blank, boxoff, checkmem, checktype, colorize, commaticks, compareversions, dataindex, dataframe, defaultrepr
-from .utils import findinds, findnearest,  getfilelist, getvaliddata, getvalidinds, gitinfo, inclusiverange, indent, isnumber, isiterable
-from .utils import Link, LinkException, loadbalancer, loadtext, makefilepath, objectid, objatt, objmeth, objrepr
-from .utils import odict, percentcomplete, perturb, printarr, printdata as pd, printdr, printv, printvars, printtologfile
-from .utils import promotetoarray, promotetolist, promotetoodict, quantile, runcommand, sanitize, sanitizefilename, savetext, scaleratio, setylim
-from .utils import sigfig, SItickformatter, SIticks, slacknotification, smoothinterp, tic, toc, today, vec2obj
-from .utils import CancelException
-from . import utils as _utils; del utils
+from .utils import *
 
 #Utilities replaced by newer Sciris versions
 from sciris import getdate
