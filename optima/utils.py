@@ -3,6 +3,16 @@ if six.PY3:
 	basestring = str
 	unicode = str
 
+__all__ = [
+"CancelException",
+"blank", "boxoff", "checkmem", "checktype", "colorize", "commaticks", "compareversions", "dataindex", "dataframe", "defaultrepr",
+"findinds", "findnearest",  "getfilelist", "getvaliddata", "getvalidinds", "gitinfo", "inclusiverange", "indent", "isnumber", "isiterable",
+"Link", "LinkException", "loadbalancer", "loadtext", "makefilepath", "objectid", "objatt", "objmeth", "objrepr",
+"odict", "percentcomplete", "perturb", "printarr", "pd", "printdr", "printv", "printvars", "printtologfile", "promotetoarray",
+"promotetolist", "promotetoodict", "quantile", "runcommand", "sanitize", "sanitizefilename", "savetext", "scaleratio", "setylim",
+"sigfig", "SItickformatter", "SIticks", "slacknotification", "smoothinterp", "tic", "toc", "today", "vec2obj",
+]
+
 ##############################################################################
 ### PRINTING/NOTIFICATION FUNCTIONS
 ##############################################################################
@@ -355,6 +365,8 @@ def printvars(localvars=None, varlist=None, label=None, divider=True, spaces=1, 
     if divider: print(dividerstr) # If necessary, print the divider again
     return None
 
+# Alias
+pd = printdata
 
 def today(timezone='utc', die=False):
     ''' Get the current time, in UTC time '''
