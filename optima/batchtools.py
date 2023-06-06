@@ -14,6 +14,12 @@ from numpy import empty, inf
 try: from multiprocessing import Process, Queue
 except: Process, Queue = None, None # OK to skip these if batch is False
 
+__all__ = [
+    'batchautofit',
+    'batchBOC',
+    'reoptimizeprojects',
+    'getprojects'
+]
 
 ####################################################################################################
 ### Simple template functions

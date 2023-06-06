@@ -4,13 +4,13 @@ if six.PY3:
 	unicode = str
 
 __all__ = [
-"CancelException",
-"blank", "boxoff", "checkmem", "checktype", "colorize", "commaticks", "compareversions", "dataindex", "dataframe", "defaultrepr",
-"findinds", "findnearest",  "getfilelist", "getvaliddata", "getvalidinds", "gitinfo", "inclusiverange", "indent", "isnumber", "isiterable",
-"Link", "LinkException", "loadbalancer", "loadtext", "makefilepath", "objectid", "objatt", "objmeth", "objrepr",
-"odict", "percentcomplete", "perturb", "printarr", "pd", "printdr", "printv", "printvars", "printtologfile", "promotetoarray",
-"promotetolist", "promotetoodict", "quantile", "runcommand", "sanitize", "sanitizefilename", "savetext", "scaleratio", "setylim",
-"sigfig", "SItickformatter", "SIticks", "slacknotification", "smoothinterp", "tic", "toc", "today", "vec2obj",
+'CancelException',
+'blank', 'boxoff', 'checkmem', 'checktype', 'colorize', 'commaticks', 'compareversions', 'dataindex', 'dataframe', 'defaultrepr',
+'findinds', 'findnearest',  'getfilelist', 'getvaliddata', 'getvalidinds', 'gitinfo', 'inclusiverange', 'indent', 'isnumber', 'isiterable',
+'Link', 'LinkException', 'loadbalancer', 'loadtext', 'makefilepath', 'objectid', 'objatt', 'objmeth', 'objrepr',
+'odict', 'percentcomplete', 'perturb', 'printarr', 'pd', 'printdr', 'printv', 'printvars', 'printtologfile', 'promotetoarray',
+'promotetolist', 'promotetoodict', 'quantile', 'runcommand', 'sanitize', 'sanitizefilename', 'savetext', 'scaleratio', 'setylim',
+'sigfig', 'SItickformatter', 'SIticks', 'slacknotification', 'smoothinterp', 'tic', 'toc', 'today', 'vec2obj',
 ]
 
 ##############################################################################
