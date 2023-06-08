@@ -1,5 +1,11 @@
 from optima import isnumber, checktype, promotetoarray, dcp
 from numpy import linspace, array, diff, argsort
+
+__all__ = [
+    'pchip',
+    'plotpchip'
+]
+
 pchipeps = 1e-8
 
 def pchip(x=None, y=None, xnew=None, deriv = False, method=None, smooth=None, smoothness=None, monotonic=True):

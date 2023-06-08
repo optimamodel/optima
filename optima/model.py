@@ -2,6 +2,8 @@
 from numpy import zeros, exp, maximum, minimum, inf, array, isnan, einsum, floor, ones, power as npow, concatenate as cat, interp, nan, squeeze, isinf, isfinite, argsort, take_along_axis, put_along_axis, expand_dims, ix_, tile, arange, swapaxes, errstate, where
 from optima import OptimaException, printv, dcp, odict, findinds, compareversions, version, sanitize
 
+__all__ = ['model']
+
 def model(simpars=None, settings=None, initpeople=None, initprops=None, verbose=None, die=False, debug=False, label=None, startind=None, advancedtracking=False):
     """
     Runs Optima's epidemiological model.

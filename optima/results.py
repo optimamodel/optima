@@ -21,6 +21,15 @@ prcstr = '!PERC'  # included as string in cells that should be formatted as perc
 condstr = '!COND'  # included as string in cells that should be coloured conditionally
 epsbudcov = 0.1 # The minimum budget or coverage amount to consider to be nonzero -- only used for budget comparisons
 
+__all__ = [
+    'Result',
+    'Resultset',
+    'Multiresultset',
+    'BOC',
+    'ICER',
+    'getresults'
+]
+
 
 class Result(object):
     ''' Class to hold overall and by-population results '''

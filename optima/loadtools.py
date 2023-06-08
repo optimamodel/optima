@@ -1,6 +1,12 @@
 import optima as op
 from numpy import nan, isnan, mean, concatenate as cat, array, exp, append
 
+__all__ = [
+    'migrate',
+    'loadproj',
+    'loadportfolio',
+    'optimaversion'
+]
 
 ##########################################################################################
 ### MIGRATION DEFINITIONS
