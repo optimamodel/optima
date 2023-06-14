@@ -1613,7 +1613,7 @@ def minmoney(project=None, optim=None, tvec=None, verbose=None, maxtime=None, fi
     printv('  Current distance: %s' % dists['curr'], 2, verbose)
 
     # Run inf budget (constrained)
-    totalbudget = project.settings.infmoney
+    totalbudget = project.settings.infmoney * len(budgetvec)
     results_inf = op.outcomecalc(budgetvec, totalbudget=totalbudget, outputresults=True, scaleupmethod='add', warn=False, **args)
     res_inf = results_inf.outcomes['final']
     dists['inf'] = distance(res_targ, res_inf)
