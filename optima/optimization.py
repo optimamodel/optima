@@ -746,16 +746,17 @@ def outcomecalc(budgetvec=None, which=None, project=None, parsetname=None, progs
             if targetfrac[key] is not None:
                 target[key] = float(baseline[key]*(1-targetfrac[key]))
                 if final[key] > target[key]: targetsmet = False # Targets are NOT met #CKCHANGE
-            else: target[key] = -1 # WARNING, must be a better way of showing no defined objective
-        
+            else: pass # WARNING, must be a better way of showing no defined objective
+
         targetprops = odict([(key,objectives[key]) for key in objectives['cascadekeys']])
         for key in objectives['cascadekeys']:
             thisresult = 1 - results.main[key].tot[0] # the instantaneous outcome e.g. objectives['numdeath'] -- 0 is since best #CKCHANGE
             final[key] = float(thisresult[finalind])
+            baseline[key] = float(thisresult[baseind])
             if objectives[key] is not None:
                 target[key] = 1 - objectives[key]
                 if final[key] > target[key]: targetsmet = False # Targets are NOT met #CKCHANGE
-            else: target[key] = -1 # WARNING, must be a better way of showing no defined objective
+            else: pass # WARNING, must be a better way of showing no defined objective
 
         # Output results
         if outputresults:
@@ -1548,7 +1549,7 @@ def minmoney(project=None, optim=None, tvec=None, verbose=None, maxtime=None, fi
     # Set parameters
     if n_throws  is None: n_throws  = max(200 ,nprogs*20) # Number of throws to try on each round
     if n_success is None: n_success = max(200 ,nprogs*20) # The number of successes needed to terminate the throws
-    if n_refine  is None: n_refine  = 2000  # The maximum number of refinement steps to take
+    if n_refine  is None: n_refine  = 200  # The maximum number of refinement steps to take
     if schedule  is None: schedule  = [0.3, 0.6, 0.8, 0.9, 1.0] # The budget amounts to allocate on each round
     if ncpus     is None: ncpus     = int(ceil(sc.cpu_count() / 2))
     search_step  = 2.0 # The size of the steps to establish the upper/lower limits for the binary search
