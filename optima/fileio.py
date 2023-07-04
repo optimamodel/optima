@@ -24,7 +24,12 @@ else: # Python 2
     from cStringIO import StringIO as IO
     import cPickle as pkl
 
-
+__all__ = [
+    'optimafolder',
+    'loadpartable',
+    'loadtranstable',
+    'loaddatapars'
+]
 
 #############################################################################################################################
 ### Basic I/O functions

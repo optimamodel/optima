@@ -16,6 +16,13 @@ settings = Settings()
 default_datastart = settings.start
 default_dataend    = settings.dataend
 
+__all__ = [
+    'makespreadsheet',
+    'makeprogramspreadsheet',
+    'default_datastart',
+    'default_dataend'
+]
+
 def makespreadsheet(filename=None, pops=None, datastart=None, dataend=None, data=None, verbose=2):
     """
     Generate the Optima spreadsheet. pops can be supplied as a number of populations, 

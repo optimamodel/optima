@@ -30,6 +30,24 @@ overridingpars = odict([('propdx',['hivtest','aidstest']),
                         ('fixpropsupp',['treatfail','regainvs','numvlmon']),
                         ('fixproppmtct',['numpmtct']) ])
 
+__all__ = [
+    'Par',
+    'Dist',
+    'Constant',
+    'Metapar',
+    'Timepar',
+    'Popsizepar',
+    'Yearpar',
+    'Parameterset',
+    'makepars',
+    'makesimpars',
+    'applylimits',
+    'comparepars',
+    'comparesimpars',
+    'sanitycheck',
+    'checkifparsoverridepars',
+    'createwarningforoverride'
+]
 
 #################################################################################################################################
 ### Define the parameter set
