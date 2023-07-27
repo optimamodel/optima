@@ -1007,16 +1007,16 @@ class Multiresultset(Resultset):
                               'Optimized budget', '% optimized budget', '% budget change',
                               'Baseline coverage', 'Optimized coverage', '% coverage change'])  # Create headers
         baselinetotal = sum(self.budgets.findbykey('Base').values())
-        optimtotal    = sum(self.budgets.findbykey('Optim').values())
+        optimtotal    = sum(self.budgets.findbykey('Optimized').values())
         for prog, baselinebud in self.budgets.findbykey('Base').items():
             outputstr += '\n'
 
-            optimbud = self.budgets.findbykey('Optim')[prog]
+            optimbud = self.budgets.findbykey('Optimized')[prog]
             baselinecov = self.coverages.findbykey('Base')[prog]
             if checktype(baselinecov, 'arraylike'):
                 baselinecov = baselinecov[0]  # Only pull out the first element if it's an array/list
             if baselinecov is None: baselinecov = 0  # Just reset
-            optimcov = self.coverages.findbykey('Optim')[prog]
+            optimcov = self.coverages.findbykey('Optimized')[prog]
             if checktype(optimcov, 'arraylike'):
                 optimcov = optimcov[0]  # Only pull out the first element if it's an array/list
             if optimcov is None: optimcov = 0  # Just reset
