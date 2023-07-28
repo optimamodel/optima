@@ -1046,7 +1046,7 @@ class Multiresultset(Resultset):
             prog_budgets_percent_change = [(self.budgets[scen_key][prog]-baseline_prog_budget) / baseline_prog_budget*100
                                     for scen_key in scen_keys]
             outputstr += sep.join(['% budget change from baseline', prog]) + sep
-            outputstr += sep.join(map(str, prog_budgets_percent))
+            outputstr += ('%'+sep).join(map(str, prog_budgets_percent_change))
             outputstr += '\n'
         total_budget_changes = [(total_budgets[scen_key] - total_budgets[baseline_key]) / total_budgets[baseline_key] * 100
                                    for scen_key in scen_keys]
