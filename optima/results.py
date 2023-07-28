@@ -1003,6 +1003,11 @@ class Multiresultset(Resultset):
         
     def comparebudgets(self, sep=',', sigfigs=3):
         """ Make a separate sheet in the workbook with a comparison of budget and coverage for an optimization or scenarios """
+        def select_zeroth(possible_list):
+            if checktype(possible_list, 'arraylike'):
+                return possible_list[0]  # Only pull out the first element if it's an array/list
+            return possible_list
+
         scen_keys = self.budgets.keys()  # Only include scenarios/results with budgets ie no parameter scenarios
         if len(scen_keys) == 0:
             return None ### Don't put anything if there is no budget scenarios
@@ -1022,7 +1027,7 @@ class Multiresultset(Resultset):
         outputstr += '\n'+'\n'
         # Budgets first
         for prog in all_progs:
-            prog_budgets = [self.budgets[scen_key][prog] for scen_key in scen_keys]
+            prog_budgets = [select_zeroth(self.budgets[scen_key][prog]) for scen_key in scen_keys]
             outputstr += sep.join(['Budget', prog]) + sep
             outputstr += sep.join(map(str,prog_budgets))
             outputstr += '\n'
@@ -1033,7 +1038,7 @@ class Multiresultset(Resultset):
 
         # % of budget
         for prog in all_progs:
-            prog_budgets_percent = [self.budgets[scen_key][prog]/total_budgets[scen_key]*100 if total_budgets[scen_key] >0 else ""
+            prog_budgets_percent = [select_zeroth(self.budgets[scen_key][prog]) / total_budgets[scen_key]*100 if total_budgets[scen_key] >0 else ""
                                         for scen_key in scen_keys]
             outputstr += sep.join(['% of budget', prog]) + sep
             outputstr += sep.join(map(str, prog_budgets_percent))
@@ -1042,8 +1047,8 @@ class Multiresultset(Resultset):
 
         # % budget change from baseline
         for prog in all_progs:
-            baseline_prog_budget = self.budgets[baseline_key][prog]
-            prog_budgets_percent_change = [(self.budgets[scen_key][prog]-baseline_prog_budget) / baseline_prog_budget if baseline_prog_budget >0 else ""
+            baseline_prog_budget = select_zeroth(self.budgets[baseline_key][prog])
+            prog_budgets_percent_change = [select_zeroth(self.budgets[scen_key][prog]-baseline_prog_budget) / baseline_prog_budget if baseline_prog_budget > 0 else ""
                                     for scen_key in scen_keys]
             outputstr += sep.join(['% budget change from baseline', prog]) + sep
             outputstr += sep.join([str(out)+prcstr+condstr for out in prog_budgets_percent_change])
@@ -1056,8 +1061,7 @@ class Multiresultset(Resultset):
 
         # coverage
         for prog in all_progs:
-            prog_coverages = [self.coverages[scen_key][prog] for scen_key in scen_keys]
-            prog_coverages = [cov[0] if checktype(cov, 'arraylike') else cov for cov in prog_coverages]
+            prog_coverages = [select_zeroth(self.coverages[scen_key][prog]) for scen_key in scen_keys]
             outputstr += sep.join(['Coverage', prog]) + sep
             outputstr += sep.join(map(str, prog_coverages))
             outputstr += '\n'
@@ -1065,12 +1069,9 @@ class Multiresultset(Resultset):
 
         # % coverage change from baseline
         for prog in all_progs:
-            baseline_prog_coverage = self.coverages[baseline_key][prog]
-            if checktype(baseline_prog_coverage, 'arraylike'):
-                baseline_prog_coverage = baseline_prog_coverage[0]  # Only pull out the first element if it's an array/list
-            prog_coverages_percent_change = [(self.coverages[scen_key][prog]-baseline_prog_coverage) / baseline_prog_coverage
+            baseline_prog_coverage = select_zeroth(self.coverages[baseline_key][prog])
+            prog_coverages_percent_change = [select_zeroth(self.coverages[scen_key][prog]-baseline_prog_coverage) / baseline_prog_coverage
                                     for scen_key in scen_keys]
-            prog_coverages_percent_change = [cov[0] if checktype(cov, 'arraylike') else cov for cov in prog_coverages_percent_change]
             outputstr += sep.join(['% coverage change from baseline', prog]) + sep
             outputstr += sep.join([str(out)+prcstr+condstr for out in prog_coverages_percent_change])
             outputstr += '\n'
