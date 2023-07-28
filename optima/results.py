@@ -1336,6 +1336,8 @@ def exporttoexcel(filename=None, outdict=None):
 
                 percentincrease = False
                 percentdecrease = False
+                if conditionalcell:
+                    print('conditional cell', conditionalcell, thistxt, type(thistxt))
                 if conditionalcell and thistxt > 0:
                     percentincrease = True
                 elif conditionalcell and thistxt < 0:
