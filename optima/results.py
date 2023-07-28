@@ -1031,8 +1031,7 @@ class Multiresultset(Resultset):
             outputstr += sep.join(['Budget', prog]) + sep
             outputstr += sep.join(map(str,prog_budgets))
             outputstr += '\n'
-        total_budgets = {scen_key: sum(self.budgets[scen_key][:]) for scen_key in scen_keys}
-        print({scen_key: (self.budgets[scen_key][:]) for scen_key in scen_keys})
+        total_budgets = {scen_key: select_zeroth(self.budgets[scen_key][:].sum(axis=self.budgets[scen_key][:].ndim-1)) for scen_key in scen_keys}
         outputstr += sep.join(['Budget', 'TOTAL']) + sep
         outputstr += sep.join(map(str, total_budgets.values()))
         outputstr += '\n'+'\n'
