@@ -981,9 +981,9 @@ class Multiresultset(Resultset):
                 outputstr += thisoutput
                 outputstr += '\n'*5
 
-        if asexcel and hasattr(self, 'optim'): # Only produce a comparsion if it's an optimization and it's for Excel
+        if asexcel and (hasattr(self, 'optim') or self.name == 'scenarios'): # Only produce a comparsion if it's an optimization or scenarios and it's for Excel
             thisoutput = self.comparebudgets()
-            outputdict['Comparison'] = thisoutput
+            if thisoutput is not None: outputdict['Comparison'] = thisoutput
         
         if writetofile: 
             ext = 'xlsx' if asexcel else 'csv'
@@ -1002,43 +1002,97 @@ class Multiresultset(Resultset):
         
         
     def comparebudgets(self, sep=',', sigfigs=3):
-        """ Make a separate sheet in the workbook with a comparison of budget and coverage for an optimization """
-        outputstr = sep.join(['Programs', 'Baseline budget', '% baseline budget', 
-                              'Optimized budget', '% optimized budget', '% budget change',
-                              'Baseline coverage', 'Optimized coverage', '% coverage change'])  # Create headers
-        baselinetotal = sum(self.budgets.findbykey('Base').values())
-        optimtotal    = sum(self.budgets.findbykey('Optimized').values())
-        for prog, baselinebud in self.budgets.findbykey('Base').items():
-            outputstr += '\n'
+        """ Make a separate sheet in the workbook with a comparison of budget and coverage for an optimization or scenarios """
+        scen_keys = self.budgets.keys()  # Only include scenarios/results with budgets ie no parameter scenarios
+        if len(scen_keys) == 0:
+            return None ### Don't put anything if there is no budget scenarios
+        scen_keys = sorted(scen_keys) # sort alphabetically since baseline < optimization baselin < optimized
 
-            optimbud = self.budgets.findbykey('Optimized')[prog]
-            baselinecov = self.coverages.findbykey('Base')[prog]
-            if checktype(baselinecov, 'arraylike'):
-                baselinecov = baselinecov[0]  # Only pull out the first element if it's an array/list
-            if baselinecov is None: baselinecov = 0  # Just reset
-            optimcov = self.coverages.findbykey('Optimized')[prog]
-            if checktype(optimcov, 'arraylike'):
-                optimcov = optimcov[0]  # Only pull out the first element if it's an array/list
-            if optimcov is None: optimcov = 0  # Just reset
+        baseline_key = self.budgets.findkeys('aseline')  ### Baseline scenario looks for "aseline"
+        baseline_key = baseline_key[0] if len(baseline_key) > 0 else 0
 
-            budchange = 0.0  # By default, assume no change
-            covchange = 0.0
-            if baselinebud > epsbudcov: budchange = (optimbud - baselinebud) / baselinebud  # Ensure budget to divide by is large enough
-            if baselinecov > epsbudcov: covchange = (optimcov - baselinecov) / baselinecov
-            baselinetotalstr = '%f' % (baselinebud/baselinetotal)
-            optimtotalstr    = '%f' % (optimbud/optimtotal)
-            covchangestr     = '%f' % covchange
-            budchangestr     = '%f' % budchange
-            outputstr += sanitizeseps(prog) + sep + str(baselinebud) + sep + \
-                         baselinetotalstr + prcstr + sep + \
-                         str(optimbud) + sep + \
-                         optimtotalstr + prcstr + sep + \
-                         budchangestr + prcstr + condstr + sep + \
-                         str(baselinecov) + sep + \
-                         str(optimcov) + sep + \
-                         covchangestr + prcstr + condstr
+        # Get all the program names as different results might have different program
+        all_progs = set(self.budgets[0].keys())
+        for scen_key in scen_keys:
+            all_progs = all_progs.union(self.budgets[scen_key].keys())
+        all_progs = sorted(all_progs) # Sort in alphabetical order
+
+        # Make the output
+        outputstr = sep.join(['Output', 'Programs'] + list(scen_keys))  # Create headers
         outputstr += '\n'
-        outputstr += sep.join(['Total', str(baselinetotal), '', str(optimtotal), '', '', '', '', ''])
+        # Budgets first
+        for prog in all_progs:
+            prog_budgets = [self.budgets[scen_key][prog] for scen_key in scen_keys]
+            outputstr += sep.join(['Budget', prog] + prog_budgets)
+        total_budgets = {scen_key: sum(self.budgets[scen_key][:]) for scen_key in scen_keys}
+        outputstr += sep.join(['Budget', 'TOTAL'] + total_budgets.values())
+        outputstr += '\n'
+
+        # % of budget
+        for prog in all_progs:
+            prog_budgets_percent = [self.budgets[scen_key][prog]/total_budgets[scen_key]*100
+                                        for scen_key in scen_keys]
+            outputstr += sep.join(['% of budget', prog] + prog_budgets_percent)
+        outputstr += '\n'
+
+        # % budget change from baseline
+        for prog in all_progs:
+            baseline_prog_budget = self.budgets[baseline_key][prog]
+            prog_budgets_percent_change = [(self.budgets[scen_key][prog]-baseline_prog_budget) / baseline_prog_budget*100
+                                    for scen_key in scen_keys]
+            outputstr += sep.join(['% budget change from baseline', prog] + prog_budgets_percent)
+        total_budget_changes = [(total_budgets[scen_key] - total_budgets[baseline_key]) / total_budgets[baseline_key] * 100
+                                   for scen_key in scen_keys]
+        outputstr += sep.join(['% budget change from baseline', 'TOTAL'] + total_budget_changes)
+        outputstr += '\n'
+
+        # coverage
+        for prog in all_progs:
+            prog_coverages = [self.coverages[scen_key][prog] for scen_key in scen_keys]
+            outputstr += sep.join(['Coverage', prog] + prog_coverages)
+        outputstr += '\n'
+
+        # % coverage change from baseline
+        for prog in all_progs:
+            baseline_prog_coverage = self.coverages[baseline_key][prog]
+            prog_coverages_percent_change = [(self.coverages[scen_key][prog]-baseline_prog_coverage) / baseline_prog_coverage*100
+                                    for scen_key in scen_keys]
+            outputstr += sep.join(['% coverage change from baseline', prog] + prog_coverages_percent)
+        outputstr += '\n'
+
+        # baselinetotal = sum(self.budgets.findbykey('Base').values())
+        # optimtotal    = sum(self.budgets.findbykey('Optimized').values())
+        # for prog, baselinebud in self.budgets.findbykey('Base').items():
+        #     outputstr += '\n'
+        #
+        #     optimbud = self.budgets.findbykey('Optimized')[prog]
+        #     baselinecov = self.coverages.findbykey('Base')[prog]
+        #     if checktype(baselinecov, 'arraylike'):
+        #         baselinecov = baselinecov[0]  # Only pull out the first element if it's an array/list
+        #     if baselinecov is None: baselinecov = 0  # Just reset
+        #     optimcov = self.coverages.findbykey('Optimized')[prog]
+        #     if checktype(optimcov, 'arraylike'):
+        #         optimcov = optimcov[0]  # Only pull out the first element if it's an array/list
+        #     if optimcov is None: optimcov = 0  # Just reset
+        #
+        #     budchange = 0.0  # By default, assume no change
+        #     covchange = 0.0
+        #     if baselinebud > epsbudcov: budchange = (optimbud - baselinebud) / baselinebud  # Ensure budget to divide by is large enough
+        #     if baselinecov > epsbudcov: covchange = (optimcov - baselinecov) / baselinecov
+        #     baselinetotalstr = '%f' % (baselinebud/baselinetotal)
+        #     optimtotalstr    = '%f' % (optimbud/optimtotal)
+        #     covchangestr     = '%f' % covchange
+        #     budchangestr     = '%f' % budchange
+        #     outputstr += sanitizeseps(prog) + sep + str(baselinebud) + sep + \
+        #                  baselinetotalstr + prcstr + sep + \
+        #                  str(optimbud) + sep + \
+        #                  optimtotalstr + prcstr + sep + \
+        #                  budchangestr + prcstr + condstr + sep + \
+        #                  str(baselinecov) + sep + \
+        #                  str(optimcov) + sep + \
+        #                  covchangestr + prcstr + condstr
+        # outputstr += '\n'
+        # outputstr += sep.join(['Total', str(baselinetotal), '', str(optimtotal), '', '', '', '', ''])
 
         return outputstr
 
