@@ -1009,7 +1009,7 @@ class Multiresultset(Resultset):
         scen_keys = sorted(scen_keys) # sort alphabetically since baseline < optimization baselin < optimized
 
         baseline_key = self.budgets.findkeys('aseline')  ### Baseline scenario looks for "aseline"
-        baseline_key = baseline_key[0] if len(baseline_key) > 0 else 0
+        baseline_key = sorted(baseline_key)[0] if len(baseline_key) > 0 else 0
 
         # Get all the program names as different results might have different program
         all_progs = set(self.budgets[0].keys())
