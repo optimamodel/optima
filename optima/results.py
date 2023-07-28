@@ -1057,7 +1057,7 @@ class Multiresultset(Resultset):
         # coverage
         for prog in all_progs:
             prog_coverages = [self.coverages[scen_key][prog] for scen_key in scen_keys]
-            prog_coverages_percent_change = [cov[0] if checktype(cov, 'arraylike') else cov for cov in prog_coverages]
+            prog_coverages = [cov[0] if checktype(cov, 'arraylike') else cov for cov in prog_coverages]
             outputstr += sep.join(['Coverage', prog]) + sep
             outputstr += sep.join(map(str, prog_coverages))
             outputstr += '\n'
