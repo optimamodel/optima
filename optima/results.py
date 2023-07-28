@@ -1027,7 +1027,7 @@ class Multiresultset(Resultset):
             outputstr += sep.join(map(str,prog_budgets))
             outputstr += '\n'
         total_budgets = {scen_key: sum(self.budgets[scen_key][:]) for scen_key in scen_keys}
-        outputstr += sep.join(['Budget', 'TOTAL'])
+        outputstr += sep.join(['Budget', 'TOTAL']) + sep
         outputstr += sep.join(map(str, total_budgets.values()))
         outputstr += '\n'+'\n'
 
@@ -1035,7 +1035,7 @@ class Multiresultset(Resultset):
         for prog in all_progs:
             prog_budgets_percent = [self.budgets[scen_key][prog]/total_budgets[scen_key]*100
                                         for scen_key in scen_keys]
-            outputstr += sep.join(['% of budget', prog])
+            outputstr += sep.join(['% of budget', prog]) + sep
             outputstr += sep.join(map(str, prog_budgets_percent))
             outputstr += '\n'
         outputstr += '\n'+'\n'
@@ -1045,19 +1045,20 @@ class Multiresultset(Resultset):
             baseline_prog_budget = self.budgets[baseline_key][prog]
             prog_budgets_percent_change = [(self.budgets[scen_key][prog]-baseline_prog_budget) / baseline_prog_budget*100
                                     for scen_key in scen_keys]
-            outputstr += sep.join(['% budget change from baseline', prog])
+            outputstr += sep.join(['% budget change from baseline', prog]) + sep
             outputstr += sep.join(map(str, prog_budgets_percent))
             outputstr += '\n'
         total_budget_changes = [(total_budgets[scen_key] - total_budgets[baseline_key]) / total_budgets[baseline_key] * 100
                                    for scen_key in scen_keys]
-        outputstr += sep.join(['% budget change from baseline', 'TOTAL'])
+        outputstr += sep.join(['% budget change from baseline', 'TOTAL']) + sep
         outputstr += sep.join(map(str, total_budget_changes))
         outputstr += '\n'+'\n'
 
         # coverage
         for prog in all_progs:
             prog_coverages = [self.coverages[scen_key][prog] for scen_key in scen_keys]
-            outputstr += sep.join(['Coverage', prog])
+            prog_coverages_percent_change = [cov[0] if checktype(cov, 'arraylike') else cov for cov in prog_coverages]
+            outputstr += sep.join(['Coverage', prog]) + sep
             outputstr += sep.join(map(str, prog_coverages))
             outputstr += '\n'
         outputstr += '\n'+'\n'
@@ -1065,9 +1066,12 @@ class Multiresultset(Resultset):
         # % coverage change from baseline
         for prog in all_progs:
             baseline_prog_coverage = self.coverages[baseline_key][prog]
+            if checktype(baseline_prog_coverage, 'arraylike'):
+                baseline_prog_coverage = baseline_prog_coverage[0]  # Only pull out the first element if it's an array/list
             prog_coverages_percent_change = [(self.coverages[scen_key][prog]-baseline_prog_coverage) / baseline_prog_coverage*100
                                     for scen_key in scen_keys]
-            outputstr += sep.join(['% coverage change from baseline', prog])
+            prog_coverages_percent_change = [cov[0] if checktype(cov, 'arraylike') else cov for cov in prog_coverages_percent_change]
+            outputstr += sep.join(['% coverage change from baseline', prog]) + sep
             outputstr += sep.join(map(str, prog_coverages_percent_change))
             outputstr += '\n'
         outputstr += '\n'+'\n'
