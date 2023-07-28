@@ -1043,12 +1043,12 @@ class Multiresultset(Resultset):
         # % budget change from baseline
         for prog in all_progs:
             baseline_prog_budget = self.budgets[baseline_key][prog]
-            prog_budgets_percent_change = [(self.budgets[scen_key][prog]-baseline_prog_budget) / baseline_prog_budget*100
+            prog_budgets_percent_change = [(self.budgets[scen_key][prog]-baseline_prog_budget) / baseline_prog_budget
                                     for scen_key in scen_keys]
             outputstr += sep.join(['% budget change from baseline', prog]) + sep
             outputstr += sep.join([str(out)+prcstr+condstr for out in prog_budgets_percent_change])
             outputstr += '\n'
-        total_budget_changes = [(total_budgets[scen_key] - total_budgets[baseline_key]) / total_budgets[baseline_key] * 100
+        total_budget_changes = [(total_budgets[scen_key] - total_budgets[baseline_key]) / total_budgets[baseline_key]
                                    for scen_key in scen_keys]
         outputstr += sep.join(['% budget change from baseline', 'TOTAL']) + sep
         outputstr += sep.join([str(out)+prcstr+condstr for out in total_budget_changes])
@@ -1068,7 +1068,7 @@ class Multiresultset(Resultset):
             baseline_prog_coverage = self.coverages[baseline_key][prog]
             if checktype(baseline_prog_coverage, 'arraylike'):
                 baseline_prog_coverage = baseline_prog_coverage[0]  # Only pull out the first element if it's an array/list
-            prog_coverages_percent_change = [(self.coverages[scen_key][prog]-baseline_prog_coverage) / baseline_prog_coverage*100
+            prog_coverages_percent_change = [(self.coverages[scen_key][prog]-baseline_prog_coverage) / baseline_prog_coverage
                                     for scen_key in scen_keys]
             prog_coverages_percent_change = [cov[0] if checktype(cov, 'arraylike') else cov for cov in prog_coverages_percent_change]
             outputstr += sep.join(['% coverage change from baseline', prog]) + sep
