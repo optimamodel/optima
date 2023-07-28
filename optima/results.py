@@ -1032,18 +1032,20 @@ class Multiresultset(Resultset):
             outputstr += sep.join(map(str,prog_budgets))
             outputstr += '\n'
         total_budgets = {scen_key: select_zeroth(self.budgets[scen_key][:].sum(axis=self.budgets[scen_key][:].ndim-1)) for scen_key in scen_keys}
+        print({scen_key: select_zeroth(self.budgets[scen_key][:].sum(axis=self.budgets[scen_key][:].ndim-1)) for scen_key in scen_keys})
+        print({scen_key: select_zeroth(self.budgets[scen_key][:].sum(axis=0)) for scen_key in scen_keys})
         outputstr += sep.join(['Budget', 'TOTAL']) + sep
         outputstr += sep.join(map(str, total_budgets.values()))
         outputstr += '\n'+'\n'
 
         # % of budget
         for prog in all_progs:
-            prog_budgets_percent = [select_zeroth(self.budgets[scen_key][prog]) / total_budgets[scen_key]*100 if total_budgets[scen_key] >0 else ""
+            prog_budgets_percent = [select_zeroth(self.budgets[scen_key][prog]) / total_budgets[scen_key] if total_budgets[scen_key] >0 else ""
                                         for scen_key in scen_keys]
             outputstr += sep.join(['% of budget', prog]) + sep
-            outputstr += sep.join(map(str, prog_budgets_percent))
+            outputstr += sep.join([str(out)+prcstr for out in prog_budgets_percent])
             outputstr += '\n'
-        outputstr += '\n'+'\n'
+        outputstr += '\n'
 
         # % budget change from baseline
         for prog in all_progs:
@@ -1065,7 +1067,7 @@ class Multiresultset(Resultset):
             outputstr += sep.join(['Coverage', prog]) + sep
             outputstr += sep.join(map(str, prog_coverages))
             outputstr += '\n'
-        outputstr += '\n'+'\n'
+        outputstr += '\n'
 
         # % coverage change from baseline
         for prog in all_progs:
@@ -1075,41 +1077,7 @@ class Multiresultset(Resultset):
             outputstr += sep.join(['% coverage change from baseline', prog]) + sep
             outputstr += sep.join([str(out)+prcstr+condstr for out in prog_coverages_percent_change])
             outputstr += '\n'
-        outputstr += '\n'+'\n'
-
-        # baselinetotal = sum(self.budgets.findbykey('Base').values())
-        # optimtotal    = sum(self.budgets.findbykey('Optimized').values())
-        # for prog, baselinebud in self.budgets.findbykey('Base').items():
-        #     outputstr += '\n'
-        #
-        #     optimbud = self.budgets.findbykey('Optimized')[prog]
-        #     baselinecov = self.coverages.findbykey('Base')[prog]
-        #     if checktype(baselinecov, 'arraylike'):
-        #         baselinecov = baselinecov[0]  # Only pull out the first element if it's an array/list
-        #     if baselinecov is None: baselinecov = 0  # Just reset
-        #     optimcov = self.coverages.findbykey('Optimized')[prog]
-        #     if checktype(optimcov, 'arraylike'):
-        #         optimcov = optimcov[0]  # Only pull out the first element if it's an array/list
-        #     if optimcov is None: optimcov = 0  # Just reset
-        #
-        #     budchange = 0.0  # By default, assume no change
-        #     covchange = 0.0
-        #     if baselinebud > epsbudcov: budchange = (optimbud - baselinebud) / baselinebud  # Ensure budget to divide by is large enough
-        #     if baselinecov > epsbudcov: covchange = (optimcov - baselinecov) / baselinecov
-        #     baselinetotalstr = '%f' % (baselinebud/baselinetotal)
-        #     optimtotalstr    = '%f' % (optimbud/optimtotal)
-        #     covchangestr     = '%f' % covchange
-        #     budchangestr     = '%f' % budchange
-        #     outputstr += sanitizeseps(prog) + sep + str(baselinebud) + sep + \
-        #                  baselinetotalstr + prcstr + sep + \
-        #                  str(optimbud) + sep + \
-        #                  optimtotalstr + prcstr + sep + \
-        #                  budchangestr + prcstr + condstr + sep + \
-        #                  str(baselinecov) + sep + \
-        #                  str(optimcov) + sep + \
-        #                  covchangestr + prcstr + condstr
-        # outputstr += '\n'
-        # outputstr += sep.join(['Total', str(baselinetotal), '', str(optimtotal), '', '', '', '', ''])
+        outputstr += '\n'
 
         return outputstr
 
@@ -1336,8 +1304,6 @@ def exporttoexcel(filename=None, outdict=None):
 
                 percentincrease = False
                 percentdecrease = False
-                if conditionalcell:
-                    print('conditional cell', conditionalcell, thistxt, type(thistxt))
                 if conditionalcell and thistxt > 0:
                     percentincrease = True
                 elif conditionalcell and thistxt < 0:
