@@ -14,6 +14,7 @@ To use a different version, change it without committing in `optima/version.py`.
  - Outcomes optimization now stop at after a `maxtime` properly.
  - Speed-ups to both running the model and optimizations.
  - Budget and coverage scenarios need to have at least 1 year for the programs to start applying from - otherwise an error is thrown.
+ - Update `numcirc` to default to "general" not "percentage" format in databooks (and to load correctly)
 
 ### FE changes
  - An error will show if making a program with the same long or short name as another one.
