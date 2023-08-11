@@ -14,11 +14,11 @@ To use a different version, change it without committing in `optima/version.py`.
  - Outcomes optimization now stop at after a `maxtime` properly.
  - Speed-ups to both running the model and optimizations.
  - Budget and coverage scenarios need to have at least 1 year for the programs to start applying from - otherwise an error is thrown.
- - 
 
 ### FE changes
  - An error will show if making a program with the same long or short name as another one.
  - The Optimization constraints are now proportional to the default budget (latest) for that progset (`proporigconstraints`). This means a 100% min constraint actually means the min budget is the latest budget - as opposed to having to scale it up or down depending on the total budget. If an Optim also has `contraints` and `absconstraints` those will also be followed and reflected in the constraints shown. But if you change the optimization then the `constraints` and `absconstraints` will be removed.
+ - Improved `Export data` button Excel file for both Scenarios and Optimization Tab - the `Comparison` tab in the Excel file has an easier to read comparison of budgets and coverages.
  -
 
 
@@ -26,7 +26,7 @@ To use a different version, change it without committing in `optima/version.py`.
 ALL TODO:
  - Change acts to either be 0%, 50% or 100% insertive or receptive for a population, not based on the numbers in the Partnerships tab - these numbers are used to calibrate the split of a population's acts with the other populations, not the relative insertive/receptive split.
  - Change `fixpopsize` to not affect the number of PLHIV. The previous assumption was to remove (or add) people from (or into) the susceptible and the "not on ART" states. Now people only are removed from (or added into) the susceptible states.
- - `Multiresultset.parsetname` and `Multiresultset.progsetname` is now a dictionary, with a key and value for each result.
+ - `Multiresultset.parsetname` and `Multiresultset.progsetname` is now an odict, with a key and value for each result.
 
 
 ## [2.12.0] - 2023-
