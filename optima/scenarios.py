@@ -6,7 +6,7 @@ Version: 2017jun03
 
 ## Imports
 from numpy import append, array, inf
-from optima import OptimaException, Link, Multiresultset # Core classes/functions
+from optima import OptimaException, Link, Multiresultset, Timepar, Popsizepar # Core classes/functions
 from optima import dcp, today, odict, printv, findinds, defaultrepr, getresults, vec2obj, isnumber, uuid, promotetoarray # Utilities
 from optima import checkifparsetoverridesprogset, checkifparsoverridepars, createwarningforoverride # From programs.py and parameters.py for warning
 
@@ -163,6 +163,15 @@ def makescenarios(project=None, scenlist=None, verbose=2, ccsample=None, randsee
                 # Get the parameter object
                 thispar = thisparset.pars[scenpar['name']]
 
+                if isinstance(thispar, Timepar): # Sometimes Timepar.t = dict accidentally, which causes issues in this code (maybe elsewhere too)
+                    if type(thispar.t) != odict: thispar.t = odict(thispar.t) # Ugly fix...
+                    if type(thispar.y) != odict: thispar.y = odict(thispar.y)
+                if isinstance(thispar, Popsizepar): # Similarly for Popsizepar
+                    if type(thispar.t) != odict: thispar.t = odict(thispar.t)
+                    if type(thispar.y) != odict: thispar.y = odict(thispar.y)
+                    if type(thispar.e) != odict: thispar.e = odict(thispar.e)
+                    if type(thispar.start) != odict: thispar.start = odict(thispar.start)
+
                 # Parse inputs to figure out which population(s) are affected
                 if type(scenpar['for'])==tuple: # If it's a partnership...
                     if not scenpar['for'] in thispar.keys():
@@ -236,9 +245,9 @@ def makescenarios(project=None, scenlist=None, verbose=2, ccsample=None, randsee
             except: results = None
 
             scen.t = promotetoarray(scen.t)
-            if scen.t==array([]):
-                raise OptimaException(f'Scenario "{scen.name}" does not have a first year specified - this is necessary to determine when programs start applying.')
-            
+            if not len(scen.t):
+                raise OptimaException(f'Scenario "{scen.name}" does not have a year specified - this is necessary to determine when programs start applying.')
+
             if isinstance(scen, Budgetscen):
                 
                 # If the budget has been passed in as a vector, convert it to an odict & sort by program names

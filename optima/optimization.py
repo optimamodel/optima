@@ -5,7 +5,8 @@ Version: 2019dec02
 """
 
 from optima import OptimaException, Link, Multiresultset, ICER, asd, getresults # Main functions
-from optima import printv, dcp, odict, findinds, today, getdate, uuid, objrepr, promotetoarray, findnearest, sanitize, inclusiverange, sigfig, compareversions # Utilities
+from optima import printv, dcp, odict, findinds, today, getdate, uuid, objrepr, promotetoarray, findnearest, sanitize, \
+    inclusiverange, sigfig, compareversions # Utilities
 
 from numpy import zeros, ones, empty, arange, array, inf, isfinite, argmin, argsort, nan, floor, concatenate, exp, sqrt, logical_and, ceil
 from numpy.random import random, seed, randint
@@ -13,6 +14,7 @@ from time import time
 import optima as op # Used by minmoney, at some point should make syntax consistent
 import sciris as sc
 from hashlib import md5
+from traceback import print_exc
 
 # Import dependencies here so no biggie if they fail
 from multiprocessing import Process, Queue
@@ -628,8 +630,8 @@ def outcomecalc(budgetvec=None, which=None, project=None, parsetname=None, progs
         elif budgetvec is None: totalbudget = objectives['budget']
         else:                   totalbudget = budgetvec[:].sum() # If a budget vector is supplied
     if origbudget  is None: origbudget  = progset.getdefaultbudget()
-    if budgetvec   is None: budgetvec   = dcp(origbudget[:][optiminds])
-    if isinstance(budgetvec, dict): budgetvec = dcp(budgetvec[:][optiminds]) # Assuming odict
+    if budgetvec   is None: budgetvec   = dcp(origbudget[optimkeys])
+    if isinstance(budgetvec, dict): budgetvec = dcp(budgetvec[optimkeys])
        
     # Validate input    
     arglist = [budgetvec, which, parset, progset, objectives, absconstraints, optimkeys, origbudget]
@@ -746,7 +748,7 @@ def outcomecalc(budgetvec=None, which=None, project=None, parsetname=None, progs
             if targetfrac[key] is not None:
                 target[key] = float(baseline[key]*(1-targetfrac[key]))
                 if final[key] > target[key]: targetsmet = False # Targets are NOT met #CKCHANGE
-            else: pass # WARNING, must be a better way of showing no defined objective
+            else: pass # Used to make target[key] = -1, but it is more robust to not add a target when there is not one
 
         targetprops = odict([(key,objectives[key]) for key in objectives['cascadekeys']])
         for key in objectives['cascadekeys']:
@@ -756,7 +758,7 @@ def outcomecalc(budgetvec=None, which=None, project=None, parsetname=None, progs
             if objectives[key] is not None:
                 target[key] = 1 - objectives[key]
                 if final[key] > target[key]: targetsmet = False # Targets are NOT met #CKCHANGE
-            else: pass # WARNING, must be a better way of showing no defined objective
+            else: pass # Used to make target[key] = -1, but it is more robust to not add a target when there is not one
 
         # Output results
         if outputresults:
@@ -916,7 +918,7 @@ def optimize(optim=None, maxiters=None, maxtime=None, finishtime=None, verbose=2
                                maxiters=maxiters, absconstraints=absconstraints, origbudget=origbudget, randseed=randseed,
                                mc=mc, label=label, parallel=parallel, ncpus=ncpus,die=die, stoppingfunc=stoppingfunc, **kwargs)
 
-    
+
     # If running parallel, put on the queue; otherwise, return
     if outputqueue is not None:
         outputqueue.put(multires)
@@ -1066,7 +1068,7 @@ def multioptimize(optim=None, nchains=None, nblocks=None, blockiters=None, mc=No
 
 
 def tvoptimize(project=None, optim=None, tvec=None, verbose=None, maxtime=None, finishtime=None, maxiters=5000, origbudget=None,
-               ccsample='best', randseed=None, mc=None, label=None, die=False, ncpus=None, parallel=True, **kwargs):
+               ccsample='best', randseed=None, mc=None, label=None, die=False, ncpus=None, parallel=True, keepzeroinfresults=False, **kwargs):
     '''
     Run a time-varying optimization. See project.optimize() for usage examples, and optimize()
     for kwarg explanation.
@@ -1090,7 +1092,8 @@ def tvoptimize(project=None, optim=None, tvec=None, verbose=None, maxtime=None, 
     # Do a preliminary non-time-varying optimization
     optim.tvsettings['timevarying'] = False # Turn off for the first run
     prelim = optimize(optim=optim, maxtime=maxtime, finishtime=finishtime, maxiters=maxiters, verbose=verbose, origbudget=origbudget,
-                ccsample=ccsample, randseed=randseed, mc=mc, ncpus=ncpus, parallel=parallel, label=label, die=die, keepraw=True, **kwargs)
+                ccsample=ccsample, randseed=randseed, mc=mc, ncpus=ncpus, parallel=parallel, label=label, die=die, keepraw=True,
+                keepzeroinfresults=keepzeroinfresults, **kwargs)
     rawresults = prelim.raw['Baseline'][0] # Store the raw results; "Baseline" vs. "Optimized" shouldn't matter, and [0] is the first/best run -- not sure if there is a more robut way
 
     # Add in the time-varying component
@@ -1137,6 +1140,9 @@ def tvoptimize(project=None, optim=None, tvec=None, verbose=None, maxtime=None, 
     # This generates the baseline results
     tmpresults['Baseline']  = outcomecalc(prelim.budgets['Baseline'],  outputresults=True, doconstrainbudget=False, **args) ## !! I think 'Baseline' is supposed to be rescaled and constrained, but it's not now, not sure if this will break the tvoptimization
     tmpresults['Optimized'] = outcomecalc(prelim.budgets['Optimized'], outputresults=True, doconstrainbudget=False, **args)
+    if keepzeroinfresults:
+        tmpresults['Minimal spending']    = outcomecalc(prelim.budgets['Minimal spending'],     outputresults=True, doconstrainbudget=False, **args)
+        tmpresults['Saturation spending'] = outcomecalc(prelim.budgets['Saturation spending'],  outputresults=True, doconstrainbudget=False, **args)
     for key,result in tmpresults.items():
         result.name = key # Update names
         tmpimprovements[key] = [tmpresults[key].outcome] # Hacky, since expects a list
@@ -1204,7 +1210,7 @@ def tvoptimize(project=None, optim=None, tvec=None, verbose=None, maxtime=None, 
 
 def minoutcomes(project=None, optim=None, tvec=None, absconstraints=None, verbose=None, maxtime=None, finishtime=None,
                 maxiters=None, ncpus=None, parallel=True, origbudget=None, ccsample='best', randseed=None, mc=None, label=None,
-                die=False, timevarying=None, keepraw=False, stoppingfunc=None, rejectfactor=None, **kwargs):
+                die=False, timevarying=None, keepraw=False, stoppingfunc=None, rejectfactor=None, keepzeroinfresults=False, **kwargs):
     ''' Split out minimize outcomes.
         mc: (baselines, randoms, progbaselines) counts the number of optimizations to start with each of:
              baselines start from the origbudget (rescaled and constrained)
@@ -1469,6 +1475,12 @@ def minoutcomes(project=None, optim=None, tvec=None, absconstraints=None, verbos
         tmpresults['Baseline'].name = 'Baseline'
         tmpresults.pop('Optimization baseline')
 
+    if keepzeroinfresults:
+        tmpresults['Minimal spending'] = extremeresults['Zero']
+        tmpresults['Minimal spending'].name = 'Minimal budget'
+        tmpresults['Saturation spending'] = extremeresults['Infinite']
+        tmpresults['Saturation spending'].name = 'Saturation spending'
+
     ## Output
     multires = Multiresultset(resultsetlist=tmpresults.values(), name='optim-%s' % optim.name)
     optim.resultsref = multires.name # Store the reference for this result
@@ -1491,7 +1503,7 @@ def minoutcomes(project=None, optim=None, tvec=None, absconstraints=None, verbos
 
 
 def minmoney(project=None, optim=None, tvec=None, verbose=None, maxtime=None, finishtime=None, maxiters=1000, absconstraints=None,
-             fundingchange=1.2, tolerance=1e-2, ccsample='best', randseed=None, keepraw=False, die=False,
+             fundingchange=1.2, tolerance=1e-2, ccsample='best', randseed=None, keepraw=False, die=False, keepzeroinfresults=False,
              n_throws=None, n_success=None, n_refine=None, schedule=None, parallel=True, ncpus=None, stoppingfunc=None, **kwargs):
     '''
     A function to minimize money for a fixed objective.
@@ -1503,7 +1515,7 @@ def minmoney(project=None, optim=None, tvec=None, verbose=None, maxtime=None, fi
     ## Handle budget and remove fixed costs
     if project is None or optim is None: raise OptimaException('An optimization requires both a project and an optimization object to run')
     parset = project.parsets[optim.parsetname] # Original parameter set
-    parset.fixprops(False) # It doesn't really make sense to minimize money with these fixed ... This shouldn't be handled here
+    # parset.fixprops(False) # It doesn't really make sense to minimize money with these fixed ... This shouldn't be handled here
     progset = project.progsets[optim.progsetname] # Link to the original program set
     if absconstraints is None: absconstraints = optim.getabsconstraints()
 
@@ -1807,7 +1819,7 @@ def minmoney(project=None, optim=None, tvec=None, verbose=None, maxtime=None, fi
                 all_results_throws = op.parallelize(op.outcomecalc, iterkwargs=iterkwargs, kwargs=parallelargs, ncpus=int(ncpus))
 
             if not parallel:
-                all_results_throws = [None]*(n_throws-1)  # Note else in case the above fails
+                all_results_throws = [None]*(n_throws-1)
                 for t,throw in enumerate(range(n_throws-1)): # -1 since include current budget
                     all_results_throws[t] = op.outcomecalc(allbudgets[t], totalbudget=totalbudget, outputresults=True, **args)
 
@@ -1986,6 +1998,14 @@ def minmoney(project=None, optim=None, tvec=None, verbose=None, maxtime=None, fi
     else:
         orig.name = 'Baseline'
         tmpresults = [new, orig]
+    if keepzeroinfresults:
+        if not zerofailed:
+            results_zero.name = 'Minimal spending'
+            tmpresults.append(results_zero)
+        if not infinitefailed:
+            results_inf.name = 'Saturation spending'
+            tmpresults.append(results_inf)
+
     multires = Multiresultset(resultsetlist=tmpresults, name='optim-%s' % optim.name)
     optim.resultsref = multires.name # Store the reference for this result
     for k,key in enumerate(multires.keys): multires.budgetyears[key] = tmpresults[k].budgetyears 
@@ -1993,7 +2013,7 @@ def minmoney(project=None, optim=None, tvec=None, verbose=None, maxtime=None, fi
     # Store optimization settings
     multires.optimsettings = odict([('maxiters',maxiters),('maxtime',maxtime),('randseed',randseed)])
     multires.optim = optim # Store the optimization object as well
-    
+
     printv('Money minimization complete after %s seconds' % op.toc(start, output=True), 2, verbose)
 
     return multires

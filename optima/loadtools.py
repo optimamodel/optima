@@ -105,6 +105,7 @@ def setmigrations(which='migrations'):
         ('2.11.1', ('2.11.2', '2022-10-10', None,            'Big model speed ups (about 25%) and split diagnoses by CD4 count')),
         ('2.11.2', ('2.11.3', '2022-11-02', None,            'Annual data takes precedence over assumption when loading databook, bug fixes, FE Scenario tab add stacked for one scenario + other things.')),
         ('2.11.3', ('2.11.4', '2023-02-07',addallconstraintsoptim, 'Adds absconstraints and proporigconstraints to Optim, model works with initpeople and optimization improvements')),
+        ('2.11.4', ('2.12.0', '2023-03-10',addinsertonlyacts,'Adds ANC testing to diagnose mothers to put onto PMTCT, actsreg etc only contain insertive acts, and relhivbirth only reduces birth rate of diagnosed HIV+ potential mothers.')),
         ])
     
     
@@ -1472,6 +1473,20 @@ def addallconstraintsoptim(project=None, **kwargs):
             if not hasattr(optim, 'absconstraints'):      optim.absconstraints      = None
     return None
 
+def addinsertonlyacts(project=None, **kwargs):
+    '''
+    Migration between Optima 2.11.4 and 2.12.0
+    - actsreg, actscas, actscom are now only insertive acts, so we add a attribute insertiveonly to pars['actsreg'] etc
+    '''
+    if project is not None:
+        for parset in project.parsets.values():
+            for parname in ['actsreg', 'actscas', 'actscom']:
+                par = parset.pars[parname]
+                if not hasattr(par, 'insertiveonly'):
+                    par.insertiveonly = False  # Previously generated parsets don't have insertive only
+    return None
+
+
 ##########################################################################################
 ### CORE MIGRATION FUNCTIONS
 ##########################################################################################
@@ -1480,12 +1495,12 @@ def migrate(project, verbose=2, die=False):
     """
     Migrate an Optima Project by inspecting the version and working its way up.
     """
-    
+
     migrations = setmigrations() # Get the migrations to run
 
     while str(project.version) != str(op.version):
         currentversion = str(project.version)
-        
+
         # Check that the migration exists
         if not currentversion in migrations:
             if op.compareversions(currentversion, op.version)<0:
@@ -1499,8 +1514,8 @@ def migrate(project, verbose=2, die=False):
         # Do the migration
         newversion,currentdate,migrator,msg = migrations[currentversion] # Get the details of the current migration -- version, date, function ("migrator"), and message
         op.printv('Migrating "%s" from %6s -> %s' % (project.name, currentversion, newversion), 2, verbose)
-        if migrator is not None: 
-            try: 
+        if migrator is not None:
+            try:
                 migrator(project, verbose=verbose, die=die) # Sometimes there is no upgrader
             except Exception as E:
                 errormsg = 'WARNING, migrating "%s" from %6s -> %6s failed:\n%s' % (project.name, currentversion, newversion, repr(E))
@@ -1509,20 +1524,20 @@ def migrate(project, verbose=2, die=False):
                 if die: raise op.OptimaException(errormsg)
                 else:   op.printv(errormsg, 1, verbose)
                 return project # Abort, if haven't died already
-        
+
         # Update project info
         project.version = newversion # Update the version info
-    
+
     # Restore links just in case
     project.restorelinks()
-    
+
     # If any warnings were generated during the migration, print them now
     warnings = project.getwarnings()
-    if warnings and die: 
+    if warnings and die:
         errormsg = 'WARNING, Please resolve warnings in projects before continuing'
         if die: raise op.OptimaException(errormsg)
         else:   op.printv(errormsg+'\n'+warnings, 1, verbose)
-    
+
     op.printv('Migration successful!', 3, verbose)
     return project
 

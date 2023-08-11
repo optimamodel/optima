@@ -316,44 +316,53 @@ def makeplots(results=None, toplot=None, die=False, verbose=2, plotstartyear=Non
     ## Plot new infections, transitions, deaths and other death, giving total change in PLHIV
     if 'changeinplhivallsources' in toplot:
         toplot.remove('changeinplhivallsources')
-        plots = plotchangeinplhivallsources(results,which='changeinplhivallsources-population+stacked', die=die, fig=fig, **kwargs)
+        plots = plotchangeinplhivallsources(results,which='changeinplhivallsources-population+stacked', die=die,
+                                            plotstartyear=plotstartyear, plotendyear=plotendyear,fig=fig, **kwargs)
         allplots.update(plots)
     ## Plot new infections, transitions, deaths and other death, giving total change in PLHIV
     if 'changeinplhivallsources-population+stacked' in toplot:
         toplot.remove('changeinplhivallsources-population+stacked')
-        plots = plotchangeinplhivallsources(results,which='changeinplhivallsources-population+stacked', die=die, fig=fig, **kwargs)
+        plots = plotchangeinplhivallsources(results,which='changeinplhivallsources-population+stacked', die=die,
+                                            plotstartyear=plotstartyear, plotendyear=plotendyear, fig=fig, **kwargs)
         allplots.update(plots)
     ## Plot new infections, transitions, deaths and other death, giving total change in PLHIV
     if 'changeinplhivallsources-stacked' in toplot:
         toplot.remove('changeinplhivallsources-stacked')
-        plots = plotchangeinplhivallsources(results,which='changeinplhivallsources-stacked', die=die, fig=fig, **kwargs)
+        plots = plotchangeinplhivallsources(results,which='changeinplhivallsources-stacked', die=die, plotstartyear=plotstartyear,
+                                            plotendyear=plotendyear, fig=fig, **kwargs)
         allplots.update(plots)
     ## Plot new infections, transitions, deaths and other death, giving total change in PLHIV
     if 'plhivallsources' in toplot:
         toplot.remove('plhivallsources')
-        plots = plotchangeinplhivallsources(results, which='plhivallsources-population+stacked', die=die, fig=fig,**kwargs)
+        plots = plotchangeinplhivallsources(results, which='plhivallsources-population+stacked', die=die,
+                                            plotstartyear=plotstartyear, plotendyear=plotendyear, fig=fig,**kwargs)
         allplots.update(plots)
     if 'plhivallsources-population+stacked' in toplot:
         toplot.remove('plhivallsources-population+stacked')
-        plots = plotchangeinplhivallsources(results, which='plhivallsources-population+stacked', die=die, fig=fig,**kwargs)
+        plots = plotchangeinplhivallsources(results, which='plhivallsources-population+stacked', die=die, plotstartyear=plotstartyear,
+                                            plotendyear=plotendyear,fig=fig,**kwargs)
         allplots.update(plots)
     if 'plhivallsources-stacked' in toplot:
         toplot.remove('plhivallsources-stacked')
-        plots = plotchangeinplhivallsources(results, which='plhivallsources-stacked', die=die, fig=fig,**kwargs)
+        plots = plotchangeinplhivallsources(results, which='plhivallsources-stacked', die=die, plotstartyear=plotstartyear,
+                                            plotendyear=plotendyear, fig=fig,**kwargs)
         allplots.update(plots)
 
     ## Plot infections by method of transmission, and by population
     if 'numincimethods' in toplot:
         toplot.remove('numincimethods')  # Because everything else is passed to plotepi()
-        plots = plotbymethod(results, toplot='numincimethods', die=die, fig=fig, **kwargs)
+        plots = plotbymethod(results, toplot='numincimethods', die=die, fig=fig, plotstartyear=plotstartyear,
+                             plotendyear=plotendyear, **kwargs)
         allplots.update(plots)
     if 'numincimethods-population+stacked' in toplot:
         toplot.remove('numincimethods-population+stacked')  # Because everything else is passed to plotepi()
-        plots = plotbymethod(results, toplot='numincimethods-population+stacked', die=die, fig=fig, **kwargs)
+        plots = plotbymethod(results, toplot='numincimethods-population+stacked', die=die, fig=fig,
+                             plotstartyear=plotstartyear, plotendyear=plotendyear, **kwargs)
         allplots.update(plots)
     if 'numincimethods-stacked' in toplot:
         toplot.remove('numincimethods-stacked')  # Because everything else is passed to plotepi()
-        plots = plotbymethod(results, toplot='numincimethods-stacked', die=die, fig=fig, **kwargs)
+        plots = plotbymethod(results, toplot='numincimethods-stacked', die=die, fig=fig, plotstartyear=plotstartyear,
+                             plotendyear=plotendyear, **kwargs)
         allplots.update(plots)
 
 
@@ -397,6 +406,7 @@ def plotchangeinplhivallsources(results,which='change',showdata=False,die=None,f
             scen = 0  # 0th is best
             numdeath = results.main['numdeath'].pops[scen]
             numimmiplhiv = results.other['numimmiplhiv'].pops[scen]
+            numemiplhiv  = results.other['numemiplhiv'].pops[scen]
 
             propdeath = results.other['numotherdeath'].pops[scen] / results.main['popsize'].pops[scen]
             numotherhivdeath = propdeath * results.main['numplhiv'].pops[scen]
@@ -406,7 +416,7 @@ def plotchangeinplhivallsources(results,which='change',showdata=False,die=None,f
                 numtransitpopbypop = results.other['numtransitpopbypop'].pops[scen]
 
                 stackedabove = [[numimmiplhiv, numincionpopbypop, numtransitpopbypop]]
-                stackedbelow = [[-swapaxes(numtransitpopbypop, axis1=0, axis2=1), -numdeath, -numotherhivdeath]]
+                stackedbelow = [[-swapaxes(numtransitpopbypop, axis1=0, axis2=1), -numdeath, -numotherhivdeath, -numemiplhiv]]
 
                 stackedabovelabels = [
                     [['Immigrant HIV+ in: ' + pk for pk in results.popkeys],
@@ -415,7 +425,8 @@ def plotchangeinplhivallsources(results,which='change',showdata=False,die=None,f
                 stackedbelowlabels = [
                     [['Transition out: ' + pk for pk in results.popkeys],
                      ['HIV-related death: ' + pk for pk in results.popkeys],
-                     ['Other death + emigration: ' + pk for pk in results.popkeys]]]
+                     ['Other death: ' + pk for pk in results.popkeys],
+                     ['Emigration: ' + pk for pk in results.popkeys]]]
 
                 plottitle = 'Change in PLHIV'
                 showoverall = True
@@ -427,14 +438,15 @@ def plotchangeinplhivallsources(results,which='change',showdata=False,die=None,f
                 numinci = results.main['numinci'].pops[scen]
 
                 stackedabove = [[numimmiplhiv.sum(axis=0), numinci]]
-                stackedbelow = [[-numdeath.sum(axis=0), -numotherhivdeath.sum(axis=0)]]
+                stackedbelow = [[-numdeath.sum(axis=0), -numotherhivdeath.sum(axis=0), -numemiplhiv.sum(axis=0)]]
 
                 stackedabovelabels = [
                     [['Immigrant HIV+'],
                      ['Infection in: ' + pk for pk in results.popkeys] ] ]
                 stackedbelowlabels = [
                      [['HIV-related death'],
-                     ['Other death + emigration'] ] ]
+                      ['Other death'],
+                      ['Emigration'] ] ]
 
                 plottitle = 'Change in PLHIV'
                 showoverall = True
@@ -447,6 +459,7 @@ def plotchangeinplhivallsources(results,which='change',showdata=False,die=None,f
             numtransitpopbypop = results.other['numtransitpopbypop'].pops[scen]
             numdeath = results.main['numdeath'].pops[scen]
             numimmiplhiv = results.other['numimmiplhiv'].pops[scen]
+            numemiplhiv  = results.other['numemiplhiv'].pops[scen]
 
             numplhiv = results.main['numplhiv'].pops[scen]
             numplhivdata = results.main['numplhiv'].datatot
@@ -462,7 +475,7 @@ def plotchangeinplhivallsources(results,which='change',showdata=False,die=None,f
 
             if plottype == 'population+stacked':
                 stackedabove = [[numimmiplhiv, numincionpopbypop, existingplhiv, numtransitpopbypop]]
-                stackedbelow = [[-swapaxes(numtransitpopbypop, axis1=0, axis2=1), -numdeath, -numotherhivdeath]]
+                stackedbelow = [[-swapaxes(numtransitpopbypop, axis1=0, axis2=1), -numdeath, -numotherhivdeath, -numemiplhiv]]
 
                 data = results.main['numplhiv'].pops[scen]
                 data = [data for i in range(3)]
@@ -471,13 +484,13 @@ def plotchangeinplhivallsources(results,which='change',showdata=False,die=None,f
                      ['PLHIV retained: ' + pk for pk in results.popkeys], ['Transition in: ' + pk for pk in results.popkeys] ]]
                 stackedbelowlabels = [
                     [['Transition out: ' + pk for pk in results.popkeys], ['HIV-related death: ' + pk for pk in results.popkeys],
-                     ['Other death + emigration: ' + pk for pk in results.popkeys]]]
+                     ['Other death: ' + pk for pk in results.popkeys], ['Emigration out: ' + pk for pk in results.popkeys]]]
                 stackedabovecolors = [[None] * len(results.popkeys), [None] * len(results.popkeys),
                                       ]
             elif plottype == 'stacked':
 
                 stackedabove = [[numimmiplhiv.sum(axis=0), numincionpopbypop.sum(axis=(0,1)), existingplhiv.sum(axis=0), numtransitpopbypop.sum(axis=(0,1))]]
-                stackedbelow = [[-numdeath.sum(axis=0), -numotherhivdeath.sum(axis=0)]]
+                stackedbelow = [[-numdeath.sum(axis=0), -numotherhivdeath.sum(axis=0), -numemiplhiv.sum(axis=0),]]
 
                 data = results.main['numplhiv'].datatot[:,0,:]
                 showdata = True
@@ -489,7 +502,8 @@ def plotchangeinplhivallsources(results,which='change',showdata=False,die=None,f
                      ['PLHIV transition b/w populations']] ]
                 stackedbelowlabels = [
                     [['HIV-related death'],
-                     ['Other death + emigration']] ]
+                     ['Other death'],
+                     ['Emigration']] ]
 
 
             plottitle = 'Number of PLHIV'
@@ -2329,8 +2343,12 @@ def plotcostcov(program=None, year=None, parset=None, results=None, plotoptions=
                                   lw=0)
     
     ax.scatter(costdata, covdata, color='#666666')
-    
-    setylim(0, ax) # Equivalent to ax.set_ylim(bottom=0)
+
+    if plotoptions and plotoptions.get('yupperlim'):
+        ax.set_ylim((0, plotoptions['yupperlim']))
+    else:
+        setylim(0, ax) # Equivalent to ax.set_ylim(bottom=0)
+
     ax.set_xlim([0, xupperlim])
     ax.tick_params(axis='both', which='major', labelsize=11)
     ax.set_xlabel(plotdata['xlabel'], fontsize=11)

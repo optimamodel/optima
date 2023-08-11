@@ -1163,7 +1163,7 @@ def revert_scenario_pars(pars):
 
 def convert_program_list(program_list):
     items = program_list.items()
-    return [{"program": x, "values": y} for x, y in items]
+    return [{"program": x, "values": op.promotetoarray(y) if y is not None else y} for x, y in items]
 
 
 def revert_program_list(program_list):
@@ -1258,6 +1258,9 @@ def get_scenario_summary(project, scenario):
 
     warning, _,_,_, combinedwarningmsg, warningmessages = \
         op.checkifparsetoverridesscenario(project=project, parset=parset,progset=progset, scen=scenario, formatfor='html', createmessages=True)
+
+    # The FE has problems if the time the scenario starts isn't in an array
+    if scenario.t is not None: scenario.t = op.promotetoarray(scenario.t)
 
     result = {
         'id': scenario_id,

@@ -6,11 +6,12 @@ parameters, the Parameterset class.
 Version: 2.1 (2017apr04)
 """
 
-from numpy import array, nan, isnan, isfinite, zeros, ones, argmax, mean, log, polyfit, exp, maximum, minimum, Inf, linspace, median, shape, append, logical_and, isin
+from numpy import array, nan, isnan, isfinite, zeros, ones, argmax, mean, log, polyfit, exp, maximum, minimum, Inf, linspace, median, shape, append, logical_and, isin, multiply
 from numpy.random import uniform, normal, seed
 from optima import OptimaException, version, compareversions, Link, odict, dataframe, printv, sanitize, uuid, today, getdate, makefilepath, smoothinterp, dcp, defaultrepr, isnumber, findinds, findnearest, getvaliddata, promotetoarray, promotetolist, inclusiverange # Utilities
 from optima import Settings, getresults, convertlimits, gettvecdt, loadpartable, loadtranstable # Heftier functions
 import optima as op
+from sciris import cp
 
 defaultsmoothness = 1.0 # The number of years of smoothing to do by default
 generalkeys = ['male', 'female', 'popkeys', 'injects', 'fromto', 'transmatrix'] # General parameter keys that are just copied
@@ -1064,7 +1065,7 @@ def data2timepar(data=None, years=None, keys=None, defaultind=0, verbose=2, **de
 
 
 ## Acts
-def balance(act=None, which=None, data=None, popkeys=None, limits=None, popsizepar=None, eps=None):
+def balance(act=None, which=None, data=None, popkeys=None, fpopkeys=None, mpopkeys=None, limits=None, popsizepar=None, eps=None):
     ''' 
     Combine the different estimates for the number of acts or condom use and return the "average" value.
     
@@ -1080,7 +1081,17 @@ def balance(act=None, which=None, data=None, popkeys=None, limits=None, popsizep
         for pop2 in range(npops):
             if which=='numacts': symmetricmatrix[pop1,pop2] = symmetricmatrix[pop1,pop2] + (mixmatrix[pop1,pop2] + mixmatrix[pop2,pop1]) / float(eps+((mixmatrix[pop1,pop2]>0)+(mixmatrix[pop2,pop1]>0)))
             if which=='condom': symmetricmatrix[pop1,pop2] = bool(symmetricmatrix[pop1,pop2] + mixmatrix[pop1,pop2] + mixmatrix[pop2,pop1])
-        
+
+    if which == 'numacts' and act != 'inj': # Check for F->M acts and F->F acts
+        for pop1 in range(npops):
+            for pop2 in range(npops):
+                if mixmatrix[pop1,pop2] > 0 and popkeys[pop1] in fpopkeys:
+                    actname = 'Regular' if act == 'reg' else 'Casual' if act == 'cas' else 'Commercial'
+                    pop2type = 'M' if popkeys[pop2] in mpopkeys else 'F'
+                    print(f'\nWARNING!!: In the Partnerships & transitions sheet in the databook, there is a F->{pop2type} insertive partnership in the {actname} acts matrix from {popkeys[pop1]} to {popkeys[pop2]}')
+                    if pop2type == 'M': print(f'This should normally go the other way around. So move the {mixmatrix[pop1, pop2]} from the ({popkeys[pop1]} row, {popkeys[pop2]} column) into the ({popkeys[pop2]} row, {popkeys[pop1]} column)')
+                    print('If you don\'t adjust this, the model may not work properly!!\n')
+
     # Decide which years to use -- use the earliest year, the latest year, and the most time points available
     yearstouse = []    
     for row in range(npops): yearstouse.append(getvaliddata(data['years'], data[which+act][row]))
@@ -1108,21 +1119,40 @@ def balance(act=None, which=None, data=None, popkeys=None, limits=None, popsizep
             smatrix = dcp(symmetricmatrix) # Initialize
             psize = popsize[:,t]
             popacts = tmpsim[:,t]
+
+            ## The below commented out code makes it so that the numbers in the Partnership matrices in the databook
+            ## don't get multiplied by popsizes before being balanced
+            # popsize_div_mean_2d = psize[:,None] / psize.max() # divide by max is just so numbers don't blow up / shrink causing roundoff errors
+            # smatrix = smatrix / multiply(popsize_div_mean_2d,popsize_div_mean_2d.T) # divide the partnership a,b by the product of the popsizes a,b
+
             for pop1 in range(npops): smatrix[pop1,:] = smatrix[pop1,:]*psize[pop1] # Yes, this needs to be separate! Don't try to put in the next for loop, the indices are opposite!
             for pop1 in range(npops): smatrix[:,pop1] = psize[pop1]*popacts[pop1]*smatrix[:,pop1] / float(eps+sum(smatrix[:,pop1])) # Divide by the sum of the column to normalize the probability, then multiply by the number of acts and population size to get total number of acts
         
         # Reconcile different estimates of number of acts, which must balance
+        balancedmatrix = zeros((npops, npops))
+        proportioninsertive = zeros((npops, npops))
         thispoint = zeros((npops,npops));
         for pop1 in range(npops):
             for pop2 in range(npops):
-                if which=='numacts':
-                    balanced = (smatrix[pop1,pop2] * psize[pop1] + smatrix[pop2,pop1] * psize[pop2])/(psize[pop1]+psize[pop2]) # here are two estimates for each interaction; reconcile them here
-                    thispoint[pop2,pop1] = balanced/psize[pop2] # Divide by population size to get per-person estimate
-                    thispoint[pop1,pop2] = balanced/psize[pop1] # ...and for the other population
+                if compareversions(version,"2.12.0") >= 0: # New behaviour
+                    if which=='numacts' and act != 'inj': # The total number of acts = insertive + receptive, we only keep insertive in actsreg etc
+                        balancedmatrix[pop1,pop2] = (smatrix[pop1,pop2] * psize[pop1] + smatrix[pop2,pop1] * psize[pop2])/(psize[pop1]+psize[pop2]) # here are two estimates for each interaction; reconcile them here
+                        proportioninsertive[pop1,pop2] = mixmatrix[pop1,pop2] / (mixmatrix[pop1,pop2] + mixmatrix[pop2,pop1]) \
+                                                                if (mixmatrix[pop1,pop2] + mixmatrix[pop2,pop1]) > 0 else 1.
+                        thispoint[pop1,pop2] = balancedmatrix[pop1,pop2] * proportioninsertive[pop1,pop2] / psize[pop1]
+                    if which=='numacts' and act == 'inj': # We want the total number of acts = total number of injections, so we keep all
+                        balanced = (smatrix[pop1,pop2] * psize[pop1] + smatrix[pop2,pop1] * psize[pop2])/(psize[pop1]+psize[pop2]) # here are two estimates for each interaction; reconcile them here
+                        thispoint[pop1,pop2] = balanced/psize[pop1]
+                else: # Old behaviour
+                    if which=='numacts':
+                        balanced = (smatrix[pop1,pop2] * psize[pop1] + smatrix[pop2,pop1] * psize[pop2])/(psize[pop1]+psize[pop2]) # here are two estimates for each interaction; reconcile them here
+                        thispoint[pop2,pop1] = balanced/psize[pop2] # Divide by population size to get per-person estimate
+                        thispoint[pop1,pop2] = balanced/psize[pop1] # ...and for the other population
+
                 if which=='condom':
                     thispoint[pop1,pop2] = (tmpsim[pop1,t]+tmpsim[pop2,t])/2.0
                     thispoint[pop2,pop1] = thispoint[pop1,pop2]
-    
+
         output[:,:,t] = thispoint
     
     return output, ctrlpts
@@ -1296,10 +1326,10 @@ def makepars(data=None, verbose=2, die=True, fixprops=None):
     tmpcondpts = odict()
     for act in ['reg','cas','com', 'inj']: # Number of acts
         actsname = 'acts'+act
-        tmpacts[act], tmpactspts[act] = balance(act=act, which='numacts', data=data, popkeys=popkeys, popsizepar=pars['popsize'])
+        tmpacts[act], tmpactspts[act] = balance(act=act, which='numacts', data=data, popkeys=popkeys, fpopkeys=fpopkeys, mpopkeys=mpopkeys, popsizepar=pars['popsize'])
     for act in ['reg','cas','com']: # Condom use
         condname = 'cond'+act
-        tmpcond[act], tmpcondpts[act] = balance(act=act, which='condom', data=data, popkeys=popkeys)
+        tmpcond[act], tmpcondpts[act] = balance(act=act, which='condom', data=data, popkeys=popkeys, fpopkeys=fpopkeys, mpopkeys=mpopkeys)
         
     # Convert matrices to lists of of population-pair keys
     for act in ['reg', 'cas', 'com', 'inj']: # Will probably include birth matrices in here too...
@@ -1311,14 +1341,49 @@ def makepars(data=None, verbose=2, die=True, fixprops=None):
                     pars[actsname].y[(key1,key2)] = array(tmpacts[act])[i,j,:]
                     pars[actsname].t[(key1,key2)] = array(tmpactspts[act])
                     if act!='inj':
-                        if key1 in mpopkeys or key1 not in fpopkeys: # For condom use, only store one of the pair -- and store male first -- WARNING, would this fail with multiple MSM populations?
-                            pars[condname].y[(key1,key2)] = array(tmpcond[act])[i,j,:]
-                            pars[condname].t[(key1,key2)] = array(tmpcondpts[act])
-    
+                        if compareversions(version, '2.12.0') < 0: # Old behaviour which would incorrectly add both (MSM1,MSM2) and (MSM2,MSM1)
+                            if key1 in mpopkeys or key1 not in fpopkeys: # For condom use, only store one of the pair -- and store male first -- WARNING, would this fail with multiple MSM populations?
+                                pars[condname].y[(key1,key2)] = array(tmpcond[act])[i,j,:]
+                                pars[condname].t[(key1,key2)] = array(tmpcondpts[act])
+                        else: # New behaviour
+                            if (key2, key1) not in pars[condname].y.keys() and (key1, key2) not in pars[condname].y.keys(): # For condom use, only store one of the pair
+                                # We can store it either (key1, key2) or (key2, key1) but we have the below conventions
+                                if   key1 in mpopkeys and key2 in fpopkeys: #  Prefer M,F
+                                    store_key1, store_key2 = key1, key2
+                                elif key1 in fpopkeys and key2 in mpopkeys: #  Prefer M,F.
+                                    store_key1, store_key2 = key2, key1
+                                else: # M,M just sort them by name
+                                    store_key1, store_key2 = tuple(sorted((key1,key2)))
+                                pars[condname].y[(store_key1,store_key2)] = array(tmpcond[act])[i,j,:]
+                                pars[condname].t[(store_key1,store_key2)] = array(tmpcondpts[act])
+
+    insertiveonly = True if compareversions(version,"2.12.0") >= 0 else False
+    for act in ['reg', 'cas', 'com']:
+        pars['acts'+act].insertiveonly = insertiveonly # So that the model knows whether or not to use the new behaviour
+
     # Store information about injecting populations -- needs to be here since relies on other calculations
     pars['injects'] = array([pop in [pop1 for (pop1,pop2) in pars['actsinj'].keys()] for pop in pars['popkeys']])
     
     return pars
+
+def getreceptiveactsfrominsertive(insertivepar, popsizetimes, popsizeinterped, popkeys):
+    receptivepar = cp(insertivepar)
+    receptivepar.t = odict()
+    receptivepar.y = odict()
+
+    timeindsdict = {time:ind for ind, time in enumerate(popsizetimes)}
+
+    for partnership, times in insertivepar.t.items():
+        timeinds = [timeindsdict[time] for time in times]
+        popsizeA = popsizeinterped[popkeys.index(partnership[0])][timeinds]
+        popsizeB = popsizeinterped[popkeys.index(partnership[1])][timeinds]
+
+        receptiveactsperB = insertivepar.y[partnership] * popsizeA / popsizeB
+        reversedpartnership = (partnership[1], partnership[0])
+        receptivepar.t[reversedpartnership] = times
+        receptivepar.y[reversedpartnership] = receptiveactsperB
+
+    return receptivepar
 
 
 
@@ -1350,15 +1415,62 @@ def makesimpars(pars, name=None, keys=None, start=None, end=None, dt=None, tvec=
 
     # Loop over requested keys
     for key in keys: # Loop over all keys
+        if compareversions(version,"2.12.0") >= 0 and key in ['actsreg', 'actscas', 'actscom', 'actsreginsertive', 'actscasinsertive', 'actscominsertive', 'actsregreceptive', 'actscasreceptive', 'actscomreceptive']:
+            par = pars[key[0:7]]
+            if hasattr(par, 'insertiveonly') and par.insertiveonly:
+                continue  # New behaviour, the insertiveonly pars are handled in the next loop
         if isinstance(pars[key], Par): # Check that it is actually a parameter -- it could be the popkeys odict, for example
             thissample = sample # Make a copy of it to check it against the list of things we are sampling
             if tosample and tosample[0] is not None and key not in tosample: thissample = False # Don't sample from unselected parameters -- tosample[0] since it's been promoted to a list
             try:
                 simpars[key] = pars[key].interp(tvec=simpars['tvec'], dt=dt, popkeys=popkeys, smoothness=smoothness, asarray=asarray, sample=thissample, randseed=randseed)
-            except OptimaException as E: 
+            except OptimaException as E:
                 errormsg = 'Could not figure out how to interpolate parameter "%s"' % key
                 errormsg += 'Error: "%s"' % repr(E)
                 raise OptimaException(errormsg)
+
+    if compareversions(version,"2.12.0") >= 0:
+        # Special treatment for actsreg, actscas, actscom because they contain only insertive acts and so we need to calculate the receptive acts
+        # Get the popsize at the times when the acts are set. Need the popsize for the receptive act calculation
+        alltimes = set()
+        for key in ['actsreg', 'actscas', 'actscom']:
+            for times in pars[key].t.values():
+                alltimes.update(set(times))
+        list_times = linspace(min(alltimes), max(alltimes),num=(int(max(alltimes)/dt)-int(min(alltimes)/dt)+1))
+
+        popsizesample = sample
+        if tosample and tosample[0] is not None and 'popsize' not in tosample: popsizesample = False
+
+        if len(alltimes):
+            popsizeinterped = pars['popsize'].interp(tvec=list_times, dt=dt, popkeys=popkeys, smoothness=smoothness, asarray=True, sample=popsizesample, randseed=randseed)
+        else: popsizeinterped = None
+
+        for key in keys:
+            if key in ['actsreg', 'actscas', 'actscom', 'actsreginsertive', 'actscasinsertive', 'actscominsertive', 'actsregreceptive', 'actscasreceptive', 'actscomreceptive']:
+                if not (hasattr(pars[key], 'insertiveonly') and pars[key].insertiveonly):
+                    print(f'WARNING: Acts "{key}" are not "insertiveonly" so these sexual acts will have the old (v2.11.4) non-directional behaviour!')
+                    continue
+                key = key[0:7]
+
+                insertivepar = pars[key]  # actsreg only contains insertive acts, eg. actsreg[(popA, popB)] = c is c insertive acts for each person in popA
+                receptivepar = getreceptiveactsfrominsertive(insertivepar, list_times, popsizeinterped, popkeys=popkeys)
+
+                insertivekey = key + 'insertive'
+                receptivekey = key + 'receptive'
+
+                insertivesample, receptivesample = sample, sample
+                if tosample and tosample[0] is not None: # We have a list of keys to check
+                    thissample = key in tosample
+                    insertivesample = thissample or insertivekey in tosample
+                    receptivesample = thissample or receptivekey in tosample
+
+                try:
+                    simpars[insertivekey] = insertivepar.interp(sample=insertivesample, tvec=simpars['tvec'], dt=dt, popkeys=popkeys, smoothness=smoothness, asarray=asarray, randseed=randseed)
+                    simpars[receptivekey] = receptivepar.interp(sample=receptivesample, tvec=simpars['tvec'], dt=dt, popkeys=popkeys, smoothness=smoothness, asarray=asarray, randseed=randseed)
+                except OptimaException as E:
+                    errormsg = 'Could not figure out how to interpolate parameter "%s"' % key
+                    errormsg += 'Error: "%s"' % repr(E)
+                    raise OptimaException(errormsg)
 
 
     return simpars
