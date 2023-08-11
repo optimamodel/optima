@@ -14,6 +14,12 @@ if six.PY3:
 	basestring = str
 	unicode = str
 
+__all__ = [
+    'Program',
+    'Programset',
+    'checkifparsetoverridesprogset'
+]
+
 class Programset(object):
 
     def __init__(self, name='default', programs=None, default_interaction='additive', project=None):

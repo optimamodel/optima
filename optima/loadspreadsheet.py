@@ -7,6 +7,10 @@ from numpy import nan, isnan, array, shape # For reading in empty values
 from xlrd import open_workbook, colname # For opening Excel workbooks
 versioncheck = '\n(spreadsheet version not available)' # To be filled once the version is checked below
 
+__all__ = [
+    'loadspreadsheet',
+    'loadprogramspreadsheet'
+]
 
 def forcebool(entry, location=''):
     ''' Convert an entry to be Boolean '''

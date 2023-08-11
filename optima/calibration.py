@@ -11,6 +11,7 @@ import six
 if six.PY3:
     unicode = str
 
+__all__ = ['autofit']
 
 def autofit(project=None, name=None, fitwhat=None, fitto=None, method='wape', maxtime=None, maxiters=1000, verbose=2, doplot=False, randseed=None, **kwargs):
     ''' 
