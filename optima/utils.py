@@ -1,4 +1,5 @@
 import six
+from sciris import __version__ as sc_version, parallelize as sc_parallelize
 if six.PY3:
 	basestring = str
 	unicode = str
@@ -10,7 +11,7 @@ __all__ = [
 'Link', 'LinkException', 'loadbalancer', 'loadtext', 'makefilepath', 'objectid', 'objatt', 'objmeth', 'objrepr',
 'odict', 'percentcomplete', 'perturb', 'printarr', 'pd', 'printdr', 'printv', 'printvars', 'printtologfile', 'promotetoarray',
 'promotetolist', 'promotetoodict', 'quantile', 'runcommand', 'sanitize', 'sanitizefilename', 'savetext', 'scaleratio', 'setylim',
-'sigfig', 'SItickformatter', 'SIticks', 'slacknotification', 'smoothinterp', 'tic', 'toc', 'today', 'vec2obj',
+'sigfig', 'SItickformatter', 'SIticks', 'slacknotification', 'smoothinterp', 'tic', 'toc', 'today', 'vec2obj', 'parallelize',
 ]
 
 ##############################################################################
@@ -1401,6 +1402,39 @@ def gitinfo(die=False):
                 raise Exception(errormsg)
     return gitbranch, gitversion
 
+
+def parallelize(*args, parallel=True, default_back_to_serial=True, warning='\nWARNING: Could not run in parallel. Trying in serial...', verbose=2, **kwargs):
+    """
+    A wrapper around sc.parallelize that is quickest for each version of sciris and defaults back to serial if there is an error
+
+    Don't include parallelizer or serial in the kwargs
+    """
+
+    if compareversions(sc_version, '2.0.2') < 0: # Below 2.0.2
+        serial_kwargs   = {'serial': True}
+        parallel_kwargs = {'parallelizer': 'concurrent.futures'}
+
+    elif compareversions(sc_version, '3.0.0') < 0: # 2.0.2 - 2.1.0
+        serial_kwargs   = {'parallelizer': 'serial-nocopy'}
+        parallel_kwargs = {'parallelizer': 'fast'}
+
+    else: # 3.0.0 and above
+        serial_kwargs   = {'serial': True}
+        parallel_kwargs = {'parallelizer': 'fast'}
+
+    if parallel:
+        try:  # Run in parallel
+            return sc_parallelize(*args, **parallel_kwargs, **kwargs)
+        except Exception as e:  # Very general, might not be related to running in parallel, but we'll try anyway
+            if default_back_to_serial:
+                if warning:
+                    printv(warning,1,verbose)
+                parallel = False
+            else:
+                raise e
+
+    if not parallel:  # Run in serial
+        return sc_parallelize(*args, **serial_kwargs, **kwargs)
 
 
 def compareversions(version1=None, version2=None):

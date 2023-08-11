@@ -1423,15 +1423,7 @@ def minoutcomes(project=None, optim=None, tvec=None, absconstraints=None, verbos
             if parallel: printv(f'\nRunning {len(allargs)} optimizations in parallel using {int(min(ncpus,len(allargs)))} cpu threads',2,verbose)
             else: printv(f'\nRunning {len(allargs)} optimizations in serial',2,verbose)
 
-            # Need different settings for older than sciris 2.0.2
-            if compareversions(sc.__version__, '2.0.2') < 0:  not_parsettings = {'serial':True}
-            else: not_parsettings = {'parallelizer':'serial-nocopy'}
-
-            try: asdrawresults = sc.parallelize(asd, iterkwargs=allargs, ncpus=int(ncpus), **(not_parsettings if not parallel else {'parallelizer':'fast'}))
-            except Exception as e:
-                parallel = False
-                printv('\nWARNING: Could not run in parallel because this process is already running in parallel. Trying in serial...',1,verbose)
-                asdrawresults = sc.parallelize(asd, iterkwargs=allargs, ncpus=int(ncpus), parallelizer='serial-nocopy')
+            asdrawresults = op.parallelize(asd, iterkwargs=allargs, ncpus=int(ncpus), parallel=parallel)
 
             if verbose >=3: print(f'\nasd returned best outcomes {list(zip(allbudgetvecs.keys(),[res["fval"] for res in asdrawresults]))}\n')
 
@@ -1812,14 +1804,11 @@ def minmoney(project=None, optim=None, tvec=None, verbose=None, maxtime=None, fi
                 parallelargs.update({'totalbudget': totalbudget, 'outputresults': True})
                 # Run here in parallel
                 iterkwargs = {'budgetvec': allbudgets, 'printdone': [f'    {key} of {n_throws}' for key in allkeys]}
-                try: all_results_throws = sc.parallelize(op.outcomecalc, iterkwargs=iterkwargs, kwargs=parallelargs, ncpus=int(ncpus), parallelizer='fast')
-                except Exception as e:
-                    parallel = False
-                    printv('\nWARNING: Could not run in parallel because this process is already running in parallel. Trying in serial...',1,verbose)
-            if not parallel: all_results_throws = [None]*(n_throws-1)  # Note else in case the above fails
+                all_results_throws = op.parallelize(op.outcomecalc, iterkwargs=iterkwargs, kwargs=parallelargs, ncpus=int(ncpus))
 
-            for t,throw in enumerate(range(n_throws-1)): # -1 since include current budget
-                if not parallel: # Run here not in parallel
+            if not parallel:
+                all_results_throws = [None]*(n_throws-1)  # Note else in case the above fails
+                for t,throw in enumerate(range(n_throws-1)): # -1 since include current budget
                     all_results_throws[t] = op.outcomecalc(allbudgets[t], totalbudget=totalbudget, outputresults=True, **args)
 
                 res_throw = all_results_throws[t].outcomes['final']
@@ -2252,15 +2241,11 @@ def minmoney2(project=None, optim=None, tvec=None, absconstraints=None, verbose=
             else: thislabel = f'"{key}"'
             allargs[k] = {'function':outcomecalc, 'x':allbudgetvecs[key], 'args':args, 'xmin':xmin, 'maxtime':maxtime, 'finishtime':finishtime, 'maxiters':maxiters, 'verbose':verbose, 'randseed':allseeds[k], 'label':thislabel, 'stoppingfunc':stoppingfunc, 'SI':True, **kwargs }
 
-        # Run the optimizations in parallel
+        # Run the optimizations in parallel (or not)
         if parallel: printv(f'\nRunning {len(allargs)} optimizations in parallel using {int(min(ncpus,len(allargs)))} cpu threads',2,verbose)
         else: printv(f'\nRunning {len(allargs)} optimizations in serial',2,verbose)
 
-        try: asdrawresults = sc.parallelize(asd, iterkwargs=allargs, ncpus=int(ncpus), parallelizer='serial-nocopy' if not parallel else None)
-        except AssertionError as e:
-            parallel = False
-            printv('\nWARNING: Could not run in parallel because this process is already running in parallel. Trying in serial...',1,verbose)
-            asdrawresults = sc.parallelize(asd, iterkwargs=allargs, ncpus=int(ncpus), parallelizer='serial-nocopy')
+        asdrawresults = op.parallelize(asd, iterkwargs=allargs, ncpus=int(ncpus), parallel=parallel)
 
         if verbose >=2: print(f'\nasd returned best outcomes {list(zip(allbudgetvecs.keys(),[res["fval"] for res in asdrawresults]))}\n')
 
