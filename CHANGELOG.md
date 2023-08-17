@@ -15,6 +15,7 @@ To use a different version, change it without committing in `optima/version.py`.
  - Speed-ups to both running the model and optimizations.
  - Budget and coverage scenarios need to have at least 1 year for the programs to start applying from - otherwise an error is thrown.
  - Update `numcirc` to default to "general" not "percentage" format in databooks (and to load correctly)
+ - When loading a spreadsheet, the matrices get their dimensions checked properly
 
 ### FE changes
  - An error will show if making a program with the same long or short name as another one.
