@@ -7,8 +7,10 @@ Version: 2017jun03
 ## Imports
 from numpy import append, array, inf
 from optima import OptimaException, Link, Multiresultset, Timepar, Popsizepar # Core classes/functions
-from optima import dcp, today, odict, printv, findinds, defaultrepr, getresults, vec2obj, isnumber, uuid, promotetoarray # Utilities
+from optima import dcp, today, odict, printv, findinds, defaultrepr, getresults, vec2obj, isnumber, uuid, promotetoarray, cpu_count # Utilities
 from optima import checkifparsetoverridesprogset, checkifparsoverridepars, createwarningforoverride # From programs.py and parameters.py for warning
+from sciris import parallelize
+from numpy import ceil
 
 __all__ = [
     'Parscen',
@@ -79,8 +81,12 @@ class Coveragescen(Progscen):
         Progscen.__init__(self, **defaultargs)
         self.coverage = coverage
 
+def runsim_wrapper(project, print_label, verbose=2, **kwargs):
+    printv(print_label, 2, verbose)
+    return project.runsim(verbose=0, **kwargs)
 
-def runscenarios(project=None, verbose=2, name=None, defaultparset=-1, debug=False, nruns=None, base=None, ccsample=None, randseed=None, **kwargs):
+def runscenarios(project=None, verbose=2, name=None, defaultparset=-1, debug=False, nruns=None, base=None, ccsample=None,
+                 randseed=None, parallel=False, ncpus=None, **kwargs):
     """
     Run all the scenarios.
     Version: 2017aug15
@@ -100,17 +106,25 @@ def runscenarios(project=None, verbose=2, name=None, defaultparset=-1, debug=Fal
     if ccsample is None: ccsample = 'best' 
     if nruns is None:    nruns = 1
     if base is None:     base = 0
-    
+    if ncpus is None:    ncpus = int(ceil( cpu_count()/2 ))
+    # We run in a parallel here if the number of scenarios is more than the number of runs per scenario (nruns)
+    this_parallel = True if (parallel and nscens > nruns) else False
+    parallel = parallel and (not this_parallel)  # Allowed to run in parallel and we are not running here in parallel
+
+    if this_parallel:
+        project_copy = dcp(project)
+        project_copy.parsets  = odict()
+        project_copy.progsets = odict()
+        project_copy.optims   = odict()
+
     # Convert the list of scenarios to the actual parameters to use in the model
     scenparsets = makescenarios(project=project, scenlist=scenlist, ccsample=ccsample, randseed=randseed, verbose=verbose)        
 
     # Run scenarios
-    allresults = []
+    all_kwargs = [None] * nscens
     for scenno, scen in enumerate(scenparsets):
-        printv('Running scenario "%s" (%i/%i)...' % (scen, scenno+1, nscens), 2, verbose)
         scenparset = scenparsets[scen]
         project.scens[scenno].scenparset = scenparset # Copy into scenarios objects
-        
 
         # Items specific to program (budget or coverage) scenarios
         budget = scenlist[scenno].budget if isinstance(scenlist[scenno], Progscen) else None
@@ -118,13 +132,30 @@ def runscenarios(project=None, verbose=2, name=None, defaultparset=-1, debug=Fal
         budgetyears = scenlist[scenno].t if isinstance(scenlist[scenno], Progscen) else None
         progsetname = scenlist[scenno].progsetname if isinstance(scenlist[scenno], Progscen) else None
 
-        # Run model and add results
-        result = project.runsim(pars=scenparset.pars, name=scenlist[scenno].parsetname, progsetname=progsetname, budget=budget, coverage=coverage, budgetyears=budgetyears, verbose=0, debug=debug, resultname=project.name+'-scenarios', addresult=False, n=nruns, **kwargs)
+        if this_parallel: # Create a specific copy that only has the one parset and progset, simply for speed of pickling which is part of the process running in parallel.
+            this_project = dcp(project_copy)
+            this_project.addparset(project.parsets[scenlist[scenno].parsetname])
+            if progsetname: this_project.addprogset(project.parsets[progsetname])
+        else:
+            this_project = project
 
+        # Run model and add results
+        all_kwargs[scenno] = {'project': this_project, 'pars': scenparset.pars, 'name': scenlist[scenno].parsetname, 'progsetname': progsetname,
+                              'print_label': f'Running scenario "{scen}" ({scenno+1}/{nscens})...',
+                              'budget': budget, 'coverage': coverage, 'budgetyears': budgetyears, 'verbose': verbose, 'parallel': parallel,
+                              'debug': debug, 'resultname': project.name+'-scenarios', 'addresult': False, 'n': nruns, **kwargs}
+
+    # We need the runsim_wrapper instead of project.runsim because we need different projects in parallel
+    allresults = parallelize(runsim_wrapper, iterkwargs=all_kwargs, serial=(not this_parallel), parallelizer='fast', ncpus=ncpus)
+
+    for scenno, result in enumerate(allresults):
         result.name = scenlist[scenno].name # Give a name to these results so can be accessed for the plot legend
-        allresults.append(result) 
-        printv('... completed scenario: %i/%i' % (scenno+1, nscens), 3, verbose)
-    
+        # Make sure all results refer to the same project
+        if this_parallel:
+            result.projectref  = Link(project)
+            result.projectinfo = project.getinfo()
+            result.settings    = project.settings
+
     if name is None: name='scenarios'
 
     multires = Multiresultset(resultsetlist=allresults, name=name)
