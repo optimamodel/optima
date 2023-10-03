@@ -805,7 +805,7 @@ class Project(object):
     def optimize(self, name=None, parsetname=None, progsetname=None, objectives=None, constraints=None, absconstraints=None, proporigconstraints=None, maxiters=None, maxtime=None,
                  verbose=2, stoppingfunc=None, die=False, origbudget=None, randseed=None, mc=None, optim=None, optimname=None, multi=False, 
                  nchains=None, nblocks=None, blockiters=None, ncpus=None, parallel=None, timevarying=None, tvsettings=None, tvconstrain=None, which=None,
-                 makescenarios=True, **kwargs):
+                 makescenarios=True, k_penalty=1, **kwargs):
         '''
         Function to minimize outcomes or money.
         
@@ -881,7 +881,7 @@ class Project(object):
                                      randseed=randseed, **settings, **kwargs)
         else: # Neither special case, so minoutcomes or minmoney
             multires = optimize(optim=optim, verbose=verbose, stoppingfunc=stoppingfunc, die=die, origbudget=origbudget,
-                                randseed=randseed, **settings, **kwargs)
+                                randseed=randseed, k_penalty=k_penalty, **settings, **kwargs)
         
         # Tidy up
         optim.resultsref = multires.name

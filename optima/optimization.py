@@ -606,7 +606,7 @@ def outcomecalc(budgetvec=None, which=None, project=None, parsetname=None, progs
                 objectives=None, absconstraints=None, totalbudget=None, optiminds=None, optimkeys=None, origbudget=None,
                 tvec=None, initpeople=None, initprops=None, startind=None, outputresults=False, verbose=2, ccsample='best', eps=1e-3,
                 doconstrainbudget=True, tvsettings=None, tvcontrolvec=None, origoutcomes=None, penalty=1e9, warn=True,
-                printdone=None, ULB=None, ZB=None, outZB=None, k=1, **kwargs):
+                printdone=None, ULB=None, ZB=None, outZB=None, k_penalty=1, **kwargs):
     ''' Function to evaluate the objective for a given budget vector (note, not time-varying) '''
 
     # Set up defaults
@@ -804,7 +804,7 @@ def outcomecalc(budgetvec=None, which=None, project=None, parsetname=None, progs
         if rawoutcome < 1e-13: rawoutcome = 0  # Close enough to zero that we can get roundoff errors
 
         if all(input is not None for input in [ULB,ZB,outZB]): # We have all the inputs so use the full outcome function
-            gradient = k * (ULB-ZB) / outZB
+            gradient = k_penalty * (ULB-ZB) / outZB
             outcome = sum(constrainedbudget[:]) + (ULB + gradient*rawoutcome)
             if rawoutcome == 0: # Don't add the penalty if we met the targets
                 outcome = sum(constrainedbudget[:])
@@ -833,7 +833,7 @@ def outcomecalc(budgetvec=None, which=None, project=None, parsetname=None, progs
 
 
 def optimize(optim=None, maxiters=None, maxtime=None, finishtime=None, verbose=2, stoppingfunc=None, die=False, origbudget=None,
-             randseed=None, mc=None, label=None, outputqueue=None, ncpus=None, parallel=True, *args, **kwargs):
+             randseed=None, mc=None, label=None, outputqueue=None, ncpus=None, parallel=True, k_penalty=1, *args, **kwargs):
     '''
     The standard Optima optimization function: minimize outcomes for a fixed total budget.
     
@@ -916,7 +916,8 @@ def optimize(optim=None, maxiters=None, maxtime=None, finishtime=None, verbose=2
     elif which=='money2':
         multires = minmoney2(project=project, optim=optim, tvec=tvec, verbose=verbose, maxtime=maxtime, finishtime=finishtime,
                                maxiters=maxiters, absconstraints=absconstraints, origbudget=origbudget, randseed=randseed,
-                               mc=mc, label=label, parallel=parallel, ncpus=ncpus,die=die, stoppingfunc=stoppingfunc, **kwargs)
+                               mc=mc, label=label, parallel=parallel, ncpus=ncpus,die=die, stoppingfunc=stoppingfunc,
+                               k_penalty=k_penalty, **kwargs)
 
 
     # If running parallel, put on the queue; otherwise, return
@@ -2020,7 +2021,8 @@ def minmoney(project=None, optim=None, tvec=None, verbose=None, maxtime=None, fi
 
 def minmoney2(project=None, optim=None, tvec=None, absconstraints=None, verbose=None, maxtime=None, finishtime=None,
               maxiters=None, ncpus=None, parallel=True, origbudget=None, ccsample='best', randseed=None, mc=None, label=None,
-              die=False, timevarying=None, keepraw=False, stoppingfunc=None, rejectfactor=None, **kwargs):
+              die=False, timevarying=None, keepraw=False, stoppingfunc=None, rejectfactor=None,
+              k_penalty=1, **kwargs):
     ## Set up
     if project is None or optim is None: raise OptimaException('An optimization requires both a project and an optimization object to run')
     if absconstraints is None: absconstraints = optim.getabsconstraints()
@@ -2203,7 +2205,7 @@ def minmoney2(project=None, optim=None, tvec=None, absconstraints=None, verbose=
         ## Increase/decrease current budget until targets met
         totalbudget,_,_ = binary_search(budgetvec=budgetvec, totalbudget=origtotalbudget, args=args, curr_met=bool(dists['curr'] == 0))
         ULB = totalbudget
-        args.update({'ULB':ULB,'k':1,'ZB':ZB,'outZB':outZB})
+        args.update({'ULB':ULB,'k_penalty':k_penalty,'ZB':ZB,'outZB':outZB})
 
         ULB_results = op.outcomecalc(budgetvec, totalbudget=totalbudget, outputresults=True, scaleupmethod='add', **args)
         ULB_budget = ULB_results.budget
@@ -2227,8 +2229,8 @@ def minmoney2(project=None, optim=None, tvec=None, absconstraints=None, verbose=
         allbudgetvecs = odict()
         # Add baseline budgets, then random budgets, then progbaselines
         for i in range(mc[0]):
-            if i == 0: allbudgetvecs[f'Optimization baseline']            = dcp(origbudget[optimkeys])
-            else:      allbudgetvecs[f'Optimization baseline {int(i+1)}'] = dcp(origbudget[optimkeys])
+            if i == 0: allbudgetvecs[f'Scaled baseline']            = dcp(ULB_budgetvec)
+            else:      allbudgetvecs[f'Scaled baseline {int(i+1)}'] = dcp(ULB_budgetvec)
 
         randbudgets = 0
         for i in range(mc[1]):
