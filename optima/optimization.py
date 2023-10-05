@@ -1822,7 +1822,8 @@ def minmoney(project=None, optim=None, tvec=None, verbose=None, maxtime=None, fi
             if not parallel:
                 all_results_throws = [None]*(n_throws-1)
                 for t,throw in enumerate(range(n_throws-1)): # -1 since include current budget
-                    all_results_throws[t] = op.outcomecalc(allbudgets[t], totalbudget=totalbudget, outputresults=True, **args)
+                    all_results_throws[t] = op.outcomecalc(allbudgets[t], totalbudget=totalbudget, outputresults=True,
+                                                           printdone=f'    {allkeys[throw]} of {n_throws}', **args)
 
                 res_throw = all_results_throws[t].outcomes['final']
                 dists[allkeys[t]] = distance(res_targ, res_throw)
@@ -1901,9 +1902,9 @@ def minmoney(project=None, optim=None, tvec=None, verbose=None, maxtime=None, fi
     
     #%% Tidy up
     op.toc(start)
-    newbudget = op.dcp(origbudget)
-    newbudget[optiminds] = budgetvec
-    
+    res = op.outcomecalc(budgetvec, totalbudget=totalbudget, outputresults=True, scaleupmethod='add', **args)
+    newbudget = res.budget
+
     #%% Animation
     if animate:
         # Plot setup
@@ -1972,10 +1973,7 @@ def minmoney(project=None, optim=None, tvec=None, verbose=None, maxtime=None, fi
         pl.pie(newbudget[:], labels=newbudget.keys())
         pl.axis('equal')
         pl.title('Optimized')
-    
-    # Impose lower limits only !!! why is this here ???
-    for key in absconstraints['min']:
-        newbudget[key] = max(newbudget[key], absconstraints['min'][key])
+
     
     ## Tidy up
     args['doconstrainbudget'] = True
