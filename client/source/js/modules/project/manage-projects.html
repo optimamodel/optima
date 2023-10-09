@@ -73,6 +73,12 @@
           <span ng-show="sortType == 'dataUploadTime' && sortReverse" class="fa fa-caret-up"></span>
           <span ng-show="sortType != 'dataUploadTime'" class="fa fa-caret-up" style="visibility: hidden"></span>
         </th>
+        <th ng-click="updateSorting('version')" class="sortable">
+          Version
+          <span ng-show="sortType == 'version' && !sortReverse" class="fa fa-caret-down"></span>
+          <span ng-show="sortType == 'version' && sortReverse" class="fa fa-caret-up"></span>
+          <span ng-show="sortType != 'version'" class="fa fa-caret-up" style="visibility: hidden"></span>
+        </th>
         <th>Actions</th>
         <th>Data spreadsheet</th>
         <th>Project file</th>
@@ -97,6 +103,12 @@
         </td>
         <td>
           {{ ::project.dataUploadTime ? (project.dataUploadTime | date:'yyyy-MMM-dd hh:mm a') : 'No data uploaded'}}
+        </td>
+        <td>
+          {{ ::project.dataUploadTime ? (project.dataUploadTime | date:'yyyy-MMM-dd hh:mm a') : 'No data uploaded'}}
+        </td>
+        <td>
+          {{ ::project.version }}
         </td>
         <td style="white-space: nowrap">
           <button class="btn" ng-click="copy(project.name, project.id)">Copy</button>
