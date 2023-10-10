@@ -2,7 +2,7 @@ from optima import OptimaException, Settings, Parameterset, Programset, Resultse
 from optima import odict, getdate, today, uuid, dcp, makefilepath, objrepr, printv, isnumber, saveobj, promotetolist, promotetoodict, sigfig # Import utilities
 from optima import loadspreadsheet, model, gitinfo, defaultscenarios, makesimpars, makespreadsheet
 from optima import defaultobjectives, autofit, runscenarios, optimize, multioptimize, tvoptimize, outcomecalc, icers # Import functions
-from optima import version, cpu_count # Get current version
+from optima import supported_versions, revision, cpu_count # Get current version
 from numpy import argmin, argsort, nan, ceil
 from numpy.random import seed, randint
 from time import time
@@ -51,7 +51,7 @@ class Project(object):
     ### Built-in methods -- initialization, and the thing to print if you call a project
     #######################################################################################################
 
-    def __init__(self, name='default', spreadsheet=None, dorun=True, makedefaults=True, verbose=2, **kwargs):
+    def __init__(self, name='default', spreadsheet=None, dorun=True, makedefaults=True, verbose=2, version=None, **kwargs):
         ''' Initialize the project '''
 
         ## Define the structure sets
@@ -71,7 +71,10 @@ class Project(object):
         self.created = today()
         self.modified = today()
         self.spreadsheetdate = 'Spreadsheet never loaded'
-        self.version = version
+        if version is not None and version not in supported_versions:
+            raise OptimaException(f'Version {version} for Project is not one of the currently supported versions {supported_versions}')
+        self.version = version if version is not None else supported_versions[-1]  # Default to the most recent version supported
+        self.revision = revision
         self.gitbranch, self.gitversion = gitinfo()
         self.filename = None # File path, only present if self.save() is used
         self.warnings = None # Place to store information about warnings (mostly used during migrations)
