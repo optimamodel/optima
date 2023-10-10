@@ -39,7 +39,7 @@ Version: 2019jan09
 from .version import *
 
 # Print the license
-optimalicense = 'Optima HIV %s (%s) -- (c) Optima Consortium' % (version, versiondate)
+optimalicense = f'Optima HIV {"/".join(supported_versions)} ({revision}) {revisiondate} -- (c) Optima Consortium'
 print(optimalicense)
 
 # Create an empty list to stored failed imports
@@ -102,7 +102,8 @@ def optimapath(subdir=None, trailingsep=True):
 # Debugging information
 def debuginfo(dooutput=False):
     output = '\nOptima debugging info:\n'
-    output += '   Version: %s\n' % version
+    output += '   Versions: %s\n' % supported_versions
+    output += '   Revision: %s\n' % revision
     output += '   Branch:  %s\n' % gitinfo()[0]
     output += '   SHA:     %s\n' % gitinfo()[1][:7]
     output += '   Path:    %s\n' % optimapath()
