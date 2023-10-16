@@ -11,6 +11,7 @@ __all__ = [
 'odict', 'percentcomplete', 'perturb', 'printarr', 'pd', 'printdr', 'printv', 'printvars', 'printtologfile', 'promotetoarray',
 'promotetolist', 'promotetoodict', 'quantile', 'runcommand', 'sanitize', 'sanitizefilename', 'savetext', 'scaleratio', 'setylim',
 'sigfig', 'SItickformatter', 'SIticks', 'slacknotification', 'smoothinterp', 'tic', 'toc', 'today', 'vec2obj',
+'odict_linked',
 ]
 
 ##############################################################################
@@ -2325,10 +2326,47 @@ class odict(OrderedDict):
         def iteritems(self):
             """ Method to generate an item iterator as in Python 2. """
             return list(OrderedDict.items(self))
+
         
-        
-        
-        
+class odict_linked(odict):
+    '''
+    A version of the odict where each of the values (value) has:
+        value.linkname = Link(objlinkto)
+    and each time you set a value it sets this link
+    '''
+
+    def __init__(self, objlinkto, linkname, *args, **kwargs):
+        if linkname is None:
+            raise OptimaException('Cannot create a odict_linked with linkname being None')
+
+        odict.__init__(self, *args, **kwargs)  # Standard init
+
+        self.objlinkto = objlinkto
+        self.linkname = linkname
+        self.relinkalllinks()
+
+    def relinkalllinks(self, objlinkto=None, linkname=None):
+        if linkname is not None:  self.linkname  = linkname
+        if objlinkto is not None: self.objlinkto = objlinkto
+
+        for val in self.values():
+            self._linkval(val)
+
+    #def unlinkalllinks(self):
+
+    def _linkval(self, value):
+        try: setattr(value, self.linkname, Link(self.objlinkto))
+        except:
+            # In the future remove this warning I think
+            print('Warning: odict_linked could not link:')
+            import traceback
+            traceback.print_exc()
+
+    def __setitem__(self, key, value):
+        out = odict.__setitem__(self, key, value)
+        self.relinkalllinks()
+
+
         
 
         
