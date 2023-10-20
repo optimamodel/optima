@@ -93,7 +93,7 @@ class Programset(object):
         progdefaultpars = self.projectref().parset().getprogdefaultpars() # Get list of parameters that have default values under zero program coverage
 
         for targetpartype in self.targetpartypes: # Loop over parameter types
-            if not self.covout.get(targetpartype): self.covout[targetpartype] = odict() # Initialize if it's not there already
+            if not self.covout.get(targetpartype): self.covout[targetpartype] = odict() # Initialize if it's not there already HERE could be linked
             for thispop in self.progs_by_targetpar(targetpartype).keys(): # Loop over populations
                 if self.covout[targetpartype].get(thispop): # Take the pre-existing one if it's there... 
                     ccopars = self.covout[targetpartype][thispop].ccopars 

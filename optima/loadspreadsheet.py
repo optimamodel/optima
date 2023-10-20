@@ -2,10 +2,10 @@
 ## Preliminaries
 ###########################################################################
 
-from optima import OptimaException, loaddatapars, odict, printv, today, isnumber, makefilepath, version, compareversions, dcp
+from optima import OptimaException, loaddatapars, odict, printv, today, isnumber, makefilepath, compatibledatabookversion, versions_different_databook, compareversions, dcp
 from numpy import nan, isnan, array, shape # For reading in empty values
 from xlrd import open_workbook, colname # For opening Excel workbooks
-versioncheck = '\n(spreadsheet version not available)' # To be filled once the version is checked below
+versioncheck = '\n(spreadsheet or project version not available)' # To be filled once the version is checked below
 
 __all__ = [
     'loadspreadsheet',
@@ -72,13 +72,12 @@ def getyears(sheetdata):
             years.append(float(thiscell)) # Add this year
     
     return lastdatacol, years
-    
+
 
 ###########################################################################################################
 ## Define the workbook and parameter names -- should match makespreadsheet.py and partable in parameters.py
 ###########################################################################################################
-        
-def loadspreadsheet(filename=None, folder=None, verbose=2):
+def loadspreadsheet(filename=None, folder=None, verbose=2, projectversion=None):
     '''
     Loads the spreadsheet (i.e. reads its contents into the data).
     This data sheet is used in the next step to update the corresponding model.
@@ -150,16 +149,24 @@ def loadspreadsheet(filename=None, folder=None, verbose=2):
             data['meta']['datacomments'].append(comment) # Store the data comment entered on the instructions sheet
     versioncell = instructionssheet.cell_value(versionrow, 0)
     versionstr = versioncell.split()[-1] # Last bit should be the version
-    if compareversions(versionstr, version) != 0:
-        strict_version_controls = ['2.10.8', '2.10.13'] #versions to strictly enforce that the spreadsheet exceeds this as there will be known errors
-        for svc in strict_version_controls:
-            if compareversions(versionstr, svc)< 0:
-                raise OptimaException('Optima version %s, cannot load incompatible databook with version %s (databook needs to be updated to at least %s: review user guide for changes or create a new project and copy data).' %(version, versionstr, svc))
-        versioncheck = '\nNote: spreadsheet version does not match Optima version: %s vs. %s' % (versionstr, version)
-        printv(versioncheck, 1, verbose)
-    else:
-        versioncheck = '\nHowever, spreadsheet and Optima versions match (%s = %s)' % (versionstr, version)
-    
+    data['meta']['databookversion'] = versionstr
+    if projectversion is None:
+        firstcompatible = compatibledatabookversion(versionstr)
+        lastcompatible  = 'latest' if versions_different_databook.index(firstcompatible) == len(versions_different_databook) \
+                                    else '<' + versions_different_databook[versions_different_databook.index(firstcompatible) + 1]
+        print(f'Warning loadspreadsheet was not given the projectversion, so check the P.version is compatible with the databook version: {versionstr} which is compatible with versions {firstcompatible} to {lastcompatible}')
+    else: # projectversion was given so check it is compatible
+        if compareversions(compatibledatabookversion(versionstr), compatibledatabookversion(projectversion)) != 0:
+            raise OptimaException(f'Optima version of project {projectversion}, cannot load incompatible databook with version {versionstr} (databook needs to be updated to at least {compatibledatabookversion(projectversion)}: review user guide for changes or create a new project and copy data).')
+
+        if compareversions(versionstr, projectversion) != 0:
+            versioncheck = f'\nNote: databook version does not match Optima version: databook: {versionstr} vs. project: {projectversion}'
+            versioncheck += f' (and they are {"NOT" if compareversions(compatibledatabookversion(versionstr), compatibledatabookversion(projectversion)) != 0 else ""} compatible)'
+        else:
+            versioncheck = f'\nHowever, databook and Optima version of project match ({versionstr} == {projectversion})'
+
+    load_version = compatibledatabookversion(versionstr) # Use corresponding functions to this version
+
     ## Load population data
     printv('Loading populations...', 3, verbose)
     popssheet = workbook.sheet_by_name('Populations')

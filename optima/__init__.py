@@ -171,6 +171,7 @@ except Exception as E: _failed.append('plotting: %s' % repr(E))
 # Load the code to load projects and portfolios (before defining them, oddly!)
 from .loadtools import *
 changelog = loadtools.setmigrations('changelog')
+revisionchangelog = loadtools.setrevisionmigrations('changelog')
 
 # Load batch functions (has to load projects, so has to come after migration)
 from .batchtools import *

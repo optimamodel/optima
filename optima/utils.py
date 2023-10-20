@@ -2,6 +2,8 @@ import six
 if six.PY3:
 	basestring = str
 	unicode = str
+from copy import deepcopy, copy
+import types
 
 __all__ = [
 'CancelException',
@@ -11,7 +13,7 @@ __all__ = [
 'odict', 'percentcomplete', 'perturb', 'printarr', 'pd', 'printdr', 'printv', 'printvars', 'printtologfile', 'promotetoarray',
 'promotetolist', 'promotetoodict', 'quantile', 'runcommand', 'sanitize', 'sanitizefilename', 'savetext', 'scaleratio', 'setylim',
 'sigfig', 'SItickformatter', 'SIticks', 'slacknotification', 'smoothinterp', 'tic', 'toc', 'today', 'vec2obj',
-'odict_linked',
+'odict_linked', 'PersistentLink', 'standard_dcp', 'standard_cp',
 ]
 
 ##############################################################################
@@ -107,20 +109,22 @@ def objrepr(obj, showid=True, showmeth=True, showatt=True):
     return output
 
 
-def defaultrepr(obj, maxlen=None):
+def defaultrepr(obj, maxlen=None, printattrvals=True):
     ''' Prints out the default representation of an object -- all attributes, plust methods and ID '''
     if maxlen is None: maxlen = 300
-    keys = sorted(obj.__dict__.keys()) # Get the attribute keys
+    keys = obj.__dict__.keys() # Get the attribute keys
+    keys = sorted([key for key in keys if not isinstance(getattr(obj,key), types.MethodType)]) # Exclude methods
     maxkeylen = max([len(key) for key in keys]) # Find the maximum length of the attribute keys
     if maxkeylen<maxlen: maxlen = maxlen - maxkeylen # Shorten the amount of data shown if the keys are long
     formatstr = '%'+ '%i'%maxkeylen + 's' # Assemble the format string for the keys, e.g. '%21s'
-    output  = objrepr(obj, showatt=False) # Get the methods
-    for key in keys: # Loop over each attribute
-        thisattr = flexstr(getattr(obj, key)) # Get the string representation of the attribute
-        if len(thisattr)>maxlen: thisattr = thisattr[:maxlen] + ' [...]' # Shorten it
-        prefix = formatstr%key + ': ' # The format key
-        output += indent(prefix, thisattr)
-    output += '============================================================\n'
+    output  = objrepr(obj, showatt=(not printattrvals)) # Get the methods
+    if printattrvals:
+        for key in keys: # Loop over each attribute
+            thisattr = flexstr(getattr(obj, key)) # Get the string representation of the attribute
+            if len(thisattr)>maxlen: thisattr = thisattr[:maxlen] + ' [...]' # Shorten it
+            prefix = formatstr%key + ': ' # The format key
+            output += indent(prefix, thisattr)
+        output += '============================================================\n'
 
     return output
 
@@ -1467,6 +1471,34 @@ def savetext(filename=None, string=None):
     with open(filename, 'w') as f: f.write(string)
     return None
 
+def standard_cp(obj):
+    ''' Same idea as standard_dcp
+    Don't use unless you understand it
+    '''
+    obj._cp = obj.__copy__  # Save __deepcopy__ for later
+    obj.__copy__ = None  # Setting to None means that copy.copy will use the default copier
+
+    output = copy(obj)
+
+    output.__copy__ = output._cp
+    obj.__copy__    = obj._cp
+    return output
+
+def standard_dcp(obj, memodict={}):
+    ''' Function that stores the __deepcopy__ so that we can use the standard
+        copy.deepcopy() to copy it and return to the original __deepcopy__
+        NOT THE SAME AS DCP since that will use the __deepcopy__ of the object (as intended)
+        In general don't use this unless you understand it
+    '''
+    obj._dcp = obj.__deepcopy__  # Save __deepcopy__ for later
+    obj.__deepcopy__ = None  # Setting to None means that copy.deepcopy will use the default copier
+
+    output = deepcopy(obj, memodict)
+
+    output.__deepcopy__ = output._dcp
+    obj.__deepcopy__    = obj._dcp
+    return output
+
 ##############################################################################
 ### NESTED DICTIONARY FUNCTIONS
 ##############################################################################
@@ -2335,36 +2367,54 @@ class odict_linked(odict):
     and each time you set a value it sets this link
     '''
 
-    def __init__(self, objlinkto, linkname, *args, **kwargs):
+    def __init__(self, *args, objlinkto=None, linkname=None, **kwargs):
         if linkname is None:
-            raise OptimaException('Cannot create a odict_linked with linkname being None')
+            raise Exception('Cannot create a odict_linked with linkname being None')
 
+        self.linkname = None # Set to None for initial filling in of dict
         odict.__init__(self, *args, **kwargs)  # Standard init
 
         self.objlinkto = objlinkto
         self.linkname = linkname
-        self.relinkalllinks()
+        self.relink()
 
-    def relinkalllinks(self, objlinkto=None, linkname=None):
+    def relink(self, objlinkto=None, linkname=None):
         if linkname is not None:  self.linkname  = linkname
         if objlinkto is not None: self.objlinkto = objlinkto
 
-        for val in self.values():
+        for val in OrderedDict.values(self):
             self._linkval(val)
 
     #def unlinkalllinks(self):
 
     def _linkval(self, value):
-        try: setattr(value, self.linkname, Link(self.objlinkto))
-        except:
-            # In the future remove this warning I think
-            print('Warning: odict_linked could not link:')
-            import traceback
-            traceback.print_exc()
+        # pass
+        if not hasattr(value, self.linkname):
+            return
+        if getattr(value, self.linkname) is not None and not isinstance(getattr(value, self.linkname).obj, LinkException) and getattr(value, self.linkname)() == self.objlinkto:
+            return
+        setattr(value, self.linkname, Link(self.objlinkto))
+        # except: raise
+
+            # # In the future remove this warning I think
+            # print('Warning: odict_linked could not link:')
+            # import traceback
+            # traceback.print_exc()
 
     def __setitem__(self, key, value):
         out = odict.__setitem__(self, key, value)
-        self.relinkalllinks()
+        if self.linkname is not None: self.relink()
+
+    def __copy__(self):
+        ''' Do NOT automatically copy link objects!! '''
+        return odict_linked(self, linkname=self.linkname, objlinkto=LinkException('odict_link object copied but link not yet repaired'))
+
+
+    def __deepcopy__(self, memo):
+        ''' Same as copy '''
+        result = odict_linked(dcp(dict(self)), linkname=self.linkname, objlinkto=LinkException('odict_link object copied but link not yet repaired'))
+        memo[id(self)] = result
+        return result
 
 
         
@@ -2709,13 +2759,19 @@ class Link(object):
     
     def __repr__(self):
         ''' Just use default '''
-        output  = defaultrepr(self)
+        output = objectid(self)
+        output += '=========================================================\n'
+        output += 'Links to obj=' + objectid(self.obj)
+        if hasattr(self.obj, 'name'):
+            output = output.rstrip() + f' obj.name={self.obj.name}\n'
+        output += '========================================================='
         return output
     
     def __call__(self, obj=None):
         ''' If called with no argument, return the stored object; if called with argument, update object '''
         if obj is None:
             if type(self.obj)==LinkException: # If the link is broken, raise it now
+                print(self)
                 raise self.obj 
             return self.obj
         else:
@@ -2725,9 +2781,18 @@ class Link(object):
     def __copy__(self, *args, **kwargs):
         ''' Do NOT automatically copy link objects!! '''
         return Link(LinkException('Link object copied but not yet repaired'))
-    
+
     def __deepcopy__(self, *args, **kwargs):
         ''' Same as copy '''
+        return self.__copy__(self, *args, **kwargs)
+
+class PersistentLink(Link):
+    def __copy__(self, *args, **kwargs):
+        ''' Note we don't copy self.obj '''
+        return Link(self.obj)
+
+    def __deepcopy__(self, *args, **kwargs):
+        ''' Despite deepcopy we again don't copy self.obj '''
         return self.__copy__(self, *args, **kwargs)
 
 class CancelException(Exception):

@@ -1,5 +1,5 @@
 from optima import OptimaException, Settings, Parameterset, Programset, Resultset, BOC, Parscen, Budgetscen, Coveragescen, Progscen, Optim, Link # Import classes
-from optima import odict, getdate, today, uuid, dcp, makefilepath, objrepr, printv, isnumber, saveobj, promotetolist, promotetoodict, sigfig # Import utilities
+from optima import odict, standard_dcp, getdate, today, uuid, dcp, makefilepath, objrepr, printv, isnumber, saveobj, promotetolist, promotetoodict, sigfig # Import utilities
 from optima import loadspreadsheet, model, gitinfo, defaultscenarios, makesimpars, makespreadsheet
 from optima import defaultobjectives, autofit, runscenarios, optimize, multioptimize, tvoptimize, outcomecalc, icers # Import functions
 from optima import supported_versions, revision, cpu_count # Get current version
@@ -97,7 +97,7 @@ class Project(object):
         output += '     Optimizations: %i\n'    % len(self.optims)
         output += '      Results sets: %i\n'    % len(self.results)
         output += '\n'
-        output += '    Optima version: %s\n'    % self.version
+        output += '    Optima version: %s (%s)\n'% (self.version, self.revision)
         output += '      Date created: %s\n'    % getdate(self.created)
         output += '     Date modified: %s\n'    % getdate(self.modified)
         output += 'Spreadsheet loaded: %s\n'    % getdate(self.spreadsheetdate)
@@ -107,12 +107,21 @@ class Project(object):
         output += '============================================================\n'
         output += self.getwarnings(doprint=False) # Don't print since print later
         return output
-    
+
+    def __copy__(self):
+        copy = standard_cp(self)
+        copy.restorelinks()
+        return copy
+
+    def __deepcopy__(self, memodict={}):
+        copy = standard_dcp(self, memodict)
+        copy.restorelinks()
+        return copy
     
     def getinfo(self):
         ''' Return an odict with basic information about the project -- used in resultsets '''
         info = odict()
-        for attr in ['name', 'version', 'created', 'modified', 'spreadsheetdate', 'gitbranch', 'gitversion', 'uid']:
+        for attr in ['name', 'version', 'revision', 'created', 'modified', 'spreadsheetdate', 'gitbranch', 'gitversion', 'uid']:
             info[attr] = getattr(self, attr) # Populate the dictionary
         info['parsetkeys'] = self.parsets.keys()
         info['progsetkeys'] = self.progsets.keys()
@@ -150,7 +159,7 @@ class Project(object):
         :param refreshparsets: Boolean for whether to update with the new data. Happens AFTER creating new parset if requested (may refresh the same parset!)
         '''
         ## Load spreadsheet and update metadata
-        newdata = loadspreadsheet(filename=filename, folder=folder, verbose=self.settings.verbose) # Do the hard work of actually loading the spreadsheet
+        newdata = loadspreadsheet(filename=filename, folder=folder, verbose=self.settings.verbose, projectversion=self.version) # Do the hard work of actually loading the spreadsheet
         firstbook = True if self.data==odict() else False #is this the first time a databook has ever been loaded to the project?
         if refreshparsets is None:
             refreshparsets = False if firstbook else True #Generally True unless making a first parset in which case no need to refresh it immediately
@@ -543,6 +552,8 @@ class Project(object):
         for item in self.parsets.values()+self.progsets.values()+self.scens.values()+self.optims.values()+self.results.values():
             if hasattr(item, 'projectref'):
                 item.projectref = Link(self)
+            if hasattr(item, 'restorelinks'):
+                item.restorelinks()
         return None
 
 

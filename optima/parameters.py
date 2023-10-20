@@ -8,7 +8,7 @@ Version: 2.1 (2017apr04)
 
 from numpy import array, nan, isnan, isfinite, zeros, ones, argmax, mean, log, polyfit, exp, maximum, minimum, Inf, linspace, median, shape, append, logical_and, isin, multiply
 from numpy.random import uniform, normal, seed
-from optima import OptimaException, version, compareversions, Link, odict, dataframe, printv, sanitize, uuid, today, getdate, makefilepath, smoothinterp, dcp, defaultrepr, isnumber, findinds, findnearest, getvaliddata, promotetoarray, promotetolist, inclusiverange # Utilities
+from optima import OptimaException, compareversions, Link, LinkException, standard_dcp, odict, odict_linked, dataframe, printv, sanitize, uuid, today, getdate, makefilepath, smoothinterp, dcp, defaultrepr, isnumber, findinds, findnearest, getvaliddata, promotetoarray, promotetolist, inclusiverange # Utilities
 from optima import Settings, getresults, convertlimits, gettvecdt, loadpartable, loadtranstable # Heftier functions
 import optima as op
 from sciris import cp
@@ -59,6 +59,7 @@ class Parameterset(object):
     ''' Class to hold all parameters and information on how they were generated, and perform operations on them'''
     
     def __init__(self, name='default', project=None, progsetname=None, budget=None, start=None, end=None):
+        print('init Parameterset')
         self.name = name # Name of the parameter set, e.g. 'default'
         self.uid = uuid() # ID
         self.projectref = Link(project) # Store pointer for the project, if available
@@ -73,7 +74,16 @@ class Parameterset(object):
         self.start = start # Store the startyear of the parset
         self.end = end # Store the endyear of the parset
         self.isfixed = None # Store whether props are fixed or not
-        
+
+    def __copy__(self):
+        copy = standard_cp(self)
+        copy.restorelinks()
+        return copy
+
+    def __deepcopy__(self, memodict={}):
+        copy = standard_dcp(self, memodict)
+        copy.restorelinks()
+        return copy
     
     def __repr__(self):
         ''' Print out useful information when called'''
@@ -84,6 +94,20 @@ class Parameterset(object):
         output += '               UID: %s\n'    % self.uid
         output += '============================================================\n'
         return output
+
+    def getprojectversion(self, projectversion=None, die=False):
+        if projectversion is not None:  # Provided with a version, check that it matches projectref().version
+            if isinstance(self.projectref(), op.Project) and self.projectref().version != projectversion:
+                err = f'Parset "{self.name}" was provided the projectversion={projectversion} which conflicts with the projectref().version={self.projectref().version}. Using {projectversion}'
+                if die: raise OptimaException(err)
+                else: print('WARNING: '+err)
+            return projectversion
+        if self.projectref is None or not isinstance(self.projectref(), op.Project): # Missing both projectversion and projectref().version
+            err = f'Parset "{self.name}" is missing a link to its project and therefore cannot get the project.version'
+            if die: raise OptimaException(err)
+            else: print('WARNING: '+err)
+            return None
+        return self.projectref().version
     
     
     def getresults(self, die=True):
@@ -114,10 +138,15 @@ class Parameterset(object):
             if issubclass(type(par), Par):
                 parslist.append(key)
         return parslist
+
+    def restorelinks(self, project=None):
+        if project is not None:
+            self.projectref = Link(project)
+        if self.pars is not None and hasattr(self.pars, 'relink'):
+            self.pars.relink(objlinkto=self, linkname='parsetref')
     
-    
-    def makepars(self, data=None, fix=True, verbose=2, start=None, end=None):
-        self.pars = makepars(data=data, verbose=verbose) # Initialize as list with single entry
+    def makepars(self, data=None, fix=True, verbose=2, start=None, end=None, projectversion=None):
+        self.pars = makepars(data=data, verbose=verbose, parset=self, projectversion=self.getprojectversion(projectversion)) # Initialize as list with single entry
         self.fixprops(fix=fix)
         self.popkeys = dcp(self.pars['popkeys']) # Store population keys more accessibly
         if start is None: self.start = data['years'][0] # Store the start year -- if not supplied, use beginning of data
@@ -127,17 +156,19 @@ class Parameterset(object):
         return None
 
 
-    def interp(self, keys=None, start=None, end=2030, dt=0.2, tvec=None, smoothness=20, asarray=True, samples=None, verbose=2):
+    def interp(self, keys=None, start=None, end=2030, dt=0.2, tvec=None, smoothness=20, asarray=True, samples=None, verbose=2, projectversion=None):
         """ Prepares model parameters to run the simulation. """
         printv('Making model parameters...', 1, verbose),
         
         if start is None: start = self.start
+        projectversion = self.getprojectversion(projectversion)
 
         simparslist = []
         if isnumber(tvec): tvec = array([tvec]) # Convert to 1-element array -- WARNING, not sure if this is necessary or should be handled lower down
         if samples is None: samples = [None]
         for sample in samples:
-            simpars = makesimpars(pars=self.pars, name=self.name, keys=keys, start=start, end=end, dt=dt, tvec=tvec, smoothness=smoothness, asarray=asarray, sample=sample, verbose=verbose)
+            simpars = makesimpars(pars=self.pars, name=self.name, keys=keys, start=start, end=end, dt=dt, tvec=tvec, smoothness=smoothness,
+                                  asarray=asarray, sample=sample, verbose=verbose, projectversion=projectversion)
             simparslist.append(simpars) # Wrap up
         
         return simparslist
@@ -499,7 +530,7 @@ class Par(object):
     
     Version: 2016nov06 
     '''
-    def __init__(self, short=None, name=None, limits=(0.,1.), by=None, manual='', fromdata=None, m=1.0, progdefault=None, prior=None, verbose=None, **defaultargs): # "type" data needed for parameter table, but doesn't need to be stored
+    def __init__(self, short=None, name=None, limits=(0.,1.), by=None, manual='', fromdata=None, m=1.0, progdefault=None, prior=None, verbose=None, parset=None, **defaultargs): # "type" data needed for parameter table, but doesn't need to be stored
         ''' To initialize with a prior, prior should be a dict with keys 'dist' and 'pars' '''
         self.short = short # The short name, e.g. "hivtest"
         self.name = name # The full name, e.g. "HIV testing rate"
@@ -509,7 +540,9 @@ class Par(object):
         self.fromdata = fromdata # Whether or not the parameter is made from data
         self.progdefault = progdefault # Whether or not the parameter has a default value when not targeted by programs
         self.m = m # Multiplicative metaparameter, e.g. 1
-        self.msample = None # The latest sampled version of the metaparameter -- None unless uncertainty has been run, and only used for uncertainty runs 
+        self.msample = None # The latest sampled version of the metaparameter -- None unless uncertainty has been run, and only used for uncertainty runs
+        if parset is None: self.parsetref = Link(parset) # This might get overwritten by the odict_linked but that is ok
+        else:              self.parsetref = Link(LinkException(f'This Par "{self.short}" is missing its link to its parset')) # This will get filled in by the odict_linked
         if prior is None:             self.prior = Dist() # Not supplied, create default distribution
         elif isinstance(prior, dict): self.prior = Dist(**prior) # Supplied as a dict, use it to create a distribution
         elif isinstance(prior, Dist): self.prior = prior # Supplied as a distribution, use directly
@@ -521,7 +554,22 @@ class Par(object):
         ''' Print out useful information when called'''
         output = defaultrepr(self)
         return output
-    
+
+    def getprojectversion(self, projectversion=None, die=False):
+        if not hasattr(self, 'parsetref'):
+            self.parsetref = Link(LinkException(f'This Par "{self.short}" is missing its link to its parset'))
+        if projectversion is not None:  # Provided with a version, check that it matches parsetref().projectversion
+            if isinstance(self.parsetref(), Parameterset):
+                return self.parsetref().getprojectversion(projectversion, die=die)
+            return projectversion
+        if self.parsetref is None or not isinstance(self.parsetref(), Parameterset): # Missing both projectversion and parsetref()
+            err = f'Par "{self.short}" is missing a link to its Parset and therefore cannot get the project.version'
+            if die: raise OptimaException(err)
+            else: print('WARNING: '+err)
+            return None
+        # projectversion is None, but we do have a valid parsetref
+        return self.parsetref().getprojectversion(projectversion, die=die)
+
     def iscoveragepar(self):
         ''' Determine whether it's a coverage parameter'''
         return True if self.limits[1] == 'maxpopsize' else False
@@ -562,7 +610,7 @@ class Constant(Par):
             raise OptimaException(errormsg)
         return None
     
-    def interp(self, tvec=None, dt=None, smoothness=None, asarray=True, sample=False, randseed=None, usemeta=True, popkeys=None): # Keyword arguments are for consistency but not actually used
+    def interp(self, tvec=None, dt=None, smoothness=None, asarray=True, sample=False, randseed=None, usemeta=True, popkeys=None, projectversion=None): # Keyword arguments are for consistency but not actually used
         """
         Take parameters and turn them into model parameters -- here, just return a constant value at every time point
         
@@ -627,7 +675,7 @@ class Metapar(Par):
                 raise OptimaException(errormsg)
         return None
     
-    def interp(self, tvec=None, dt=None, smoothness=None, asarray=True, sample=None, randseed=None, usemeta=True, popkeys=None): # Keyword arguments are for consistency but not actually used
+    def interp(self, tvec=None, dt=None, smoothness=None, asarray=True, sample=None, randseed=None, usemeta=True, popkeys=None, projectversion=None): # Keyword arguments are for consistency but not actually used
         """ Take parameters and turn them into model parameters -- here, just return a constant value at every time point """
         
         # Figure out sample
@@ -704,7 +752,7 @@ class Timepar(Par):
             raise OptimaException(errormsg)
         return None
     
-    def interp(self, tvec=None, dt=None, smoothness=None, asarray=True, sample=None, randseed=None, usemeta=True, popkeys=None):
+    def interp(self, tvec=None, dt=None, smoothness=None, asarray=True, sample=None, randseed=None, usemeta=True, popkeys=None, projectversion=None):
         """ Take parameters and turn them into model parameters """
         
         # Validate input
@@ -779,10 +827,13 @@ class Popsizepar(Par):
             raise OptimaException(errormsg)
         return None
 
-    def interp(self, tvec=None, dt=None, smoothness=None, asarray=True, sample=None, randseed=None, usemeta=True, popkeys=None): # WARNING: smoothness isn't used, but kept for consistency with other methods...
+    def interp(self, tvec=None, dt=None, smoothness=None, asarray=True, sample=None, randseed=None, usemeta=True, popkeys=None, projectversion=None): # WARNING: smoothness isn't used, but kept for consistency with other methods...
         """ Take population size parameter and turn it into a model parameters """
 
         # Validate input
+        projectversion = self.getprojectversion(projectversion)
+        if projectversion is None:
+            raise OptimaException('Must pass projectversion to Popsizepar.interp as the behaviour is version-dependent')
         if tvec is None: #Warning, may be able to send an empty list/array here instead?
             errormsg = 'Cannot interpolate parameter "%s" with no time vector specified' % self.name
             raise OptimaException(errormsg)
@@ -818,7 +869,7 @@ class Popsizepar(Par):
                 yinterp = meta * smoothinterp(localtvec, self.t[key], self.y[key], smoothness=0) # Use interpolation without smoothness so that it aligns exactly with a starting point for 
                 #2. Replace linear interpolation after self.start
                 expstartind = findnearest(localtvec, self.start[key])
-                if compareversions(version,"2.12.0") < 0:  # old behaviour, the exponential is applied unnecessarily if only one t value is given
+                if compareversions(projectversion, "2.12.0") < 0:  # old behaviour, the exponential is applied unnecessarily if only one t value is given
                     yinterp[expstartind:] = yinterp[expstartind] * grow(self.e[key], array(localtvec[expstartind:])-self.start[key]) #don't apply meta again (it's already factored into the linear part)
                 else:  # New behaviour, exponential applied at the proper timestep
                     if abs(localtvec[expstartind] - self.start[key]) < dt: # Check localtvec[expstartind] is close enough to self.start[key], otherwise self.start[key] is not in localtvec
@@ -857,7 +908,7 @@ class Yearpar(Par):
         '''No prior, so return nothing'''
         return None
     
-    def interp(self, tvec=None, dt=None, smoothness=None, sample=None, randseed=None, asarray=True, usemeta=True, popkeys=None): # Keyword arguments are for consistency but not actually used
+    def interp(self, tvec=None, dt=None, smoothness=None, sample=None, randseed=None, asarray=True, usemeta=True, popkeys=None, projectversion=None): # Keyword arguments are for consistency but not actually used
         '''No interpolation, so simply return the value'''
         return self.t
 
@@ -927,7 +978,7 @@ def data2prev(data=None, keys=None, index=0, blh=0, **defaultargs): # WARNING, "
 
 
 
-def data2popsize(data=None, keys=None, blh=0, uniformgrowth=False, doplot=False, **defaultargs):
+def data2popsize(data=None, keys=None, blh=0, uniformgrowth=False, doplot=False, projectversion=None, **defaultargs):
     ''' Convert population size data into population size parameters '''
     par = Popsizepar(m=1, **defaultargs)
     
@@ -1014,7 +1065,7 @@ def data2popsize(data=None, keys=None, blh=0, uniformgrowth=False, doplot=False,
         nplots = len(par.keys())
         figure()
         tvec = arange(data['years'][0], data['years'][-1]+1)
-        yvec = par.interp(tvec=tvec)
+        yvec = par.interp(tvec=tvec, projectversion=projectversion)
         for k,key in enumerate(par.keys()):
             subplot(nplots,1,k+1)
             if key in atleast2datapoints: scatter(tdata[key]+startyear, exp(ydata[key]))
@@ -1065,14 +1116,17 @@ def data2timepar(data=None, years=None, keys=None, defaultind=0, verbose=2, **de
 
 
 ## Acts
-def balance(act=None, which=None, data=None, popkeys=None, fpopkeys=None, mpopkeys=None, limits=None, popsizepar=None, eps=None):
+def balance(act=None, which=None, data=None, popkeys=None, fpopkeys=None, mpopkeys=None, limits=None, popsizepar=None, eps=None, projectversion=None):
     ''' 
     Combine the different estimates for the number of acts or condom use and return the "average" value.
     
     Set which='numacts' to compute for number of acts, which='condom' to compute for condom.
     '''
-    if eps is None: eps = Settings().eps   # If not supplied (it won't be), get from default settings  
-    
+    if eps is None: eps = Settings().eps   # If not supplied (it won't be), get from default settings
+    if projectversion is None:
+        try: projectversion = popsizepar.getprojectversion(die=True)
+        except Exception as e: raise OptimaException('Must pass projectversion or popsizepar to balance() as the behaviour is version-dependent') from e
+
     if which not in ['numacts','condom']: raise OptimaException('Can only balance numacts or condom, not "%s"' % which)
     mixmatrix = array(data['part'+act]) # Get the partnerships matrix
     npops = len(popkeys) # Figure out the number of populations
@@ -1108,8 +1162,8 @@ def balance(act=None, which=None, data=None, popkeys=None, fpopkeys=None, mpopke
     
     # Interpolate over population acts data for each year
     tmppar = data2timepar(name='tmp', short=which+act, limits=(0,'maxacts'), data=data[which+act], years=data['years'], keys=popkeys, by='pop', verbose=0) # Temporary parameter for storing acts
-    tmpsim = tmppar.interp(tvec=ctrlpts)
-    if which=='numacts': popsize = popsizepar.interp(tvec=ctrlpts)
+    tmpsim = tmppar.interp(tvec=ctrlpts, projectversion=projectversion)
+    if which=='numacts': popsize = popsizepar.interp(tvec=ctrlpts, projectversion=projectversion)
     npts = len(ctrlpts)
     
     # Compute the balanced acts
@@ -1134,7 +1188,7 @@ def balance(act=None, which=None, data=None, popkeys=None, fpopkeys=None, mpopke
         thispoint = zeros((npops,npops));
         for pop1 in range(npops):
             for pop2 in range(npops):
-                if compareversions(version,"2.12.0") >= 0: # New behaviour
+                if compareversions(projectversion,"2.12.0") >= 0: # New behaviour
                     if which=='numacts' and act != 'inj': # The total number of acts = insertive + receptive, we only keep insertive in actsreg etc
                         balancedmatrix[pop1,pop2] = (smatrix[pop1,pop2] * psize[pop1] + smatrix[pop2,pop1] * psize[pop2])/(psize[pop1]+psize[pop2]) # here are two estimates for each interaction; reconcile them here
                         proportioninsertive[pop1,pop2] = mixmatrix[pop1,pop2] / (mixmatrix[pop1,pop2] + mixmatrix[pop2,pop1]) \
@@ -1164,7 +1218,7 @@ def balance(act=None, which=None, data=None, popkeys=None, fpopkeys=None, mpopke
 
 
 
-def makepars(data=None, verbose=2, die=True, fixprops=None):
+def makepars(data=None, verbose=2, die=True, fixprops=None, parset=None, projectversion=None):
     """
     Translates the raw data (which were read from the spreadsheet) into
     parameters that can be used in the model. These data are then used to update 
@@ -1173,15 +1227,21 @@ def makepars(data=None, verbose=2, die=True, fixprops=None):
     
     Version: 2017jun03
     """
-    
+    if parset is None:
+        print('WARNING: Should pass parset to makepars so that Par.parsetref can be linked, to fix you can do pars.relink(objlinkto=parset, linkname="parsetref")')
+
+    if projectversion is None:
+        try: projectversion = parset.getprojectversion(die=True)
+        except Exception as e: raise OptimaException('Must pass parset or projectversion to makepars() as the behaviour is version-dependent') from e
+
     printv('Converting data to parameters...', 1, verbose)
     
     ###############################################################################
     ## Loop over quantities
     ###############################################################################
     
-    pars = odict()
-    
+    pars = odict_linked(objlinkto=parset, linkname='parsetref')
+
     # Shorten information on which populations are male, which are female, which inject, which provide commercial sex
     pars['male'] = array(data['pops']['male']).astype(bool) # Male populations 
     pars['female'] = array(data['pops']['female']).astype(bool) # Female populations
@@ -1326,10 +1386,10 @@ def makepars(data=None, verbose=2, die=True, fixprops=None):
     tmpcondpts = odict()
     for act in ['reg','cas','com', 'inj']: # Number of acts
         actsname = 'acts'+act
-        tmpacts[act], tmpactspts[act] = balance(act=act, which='numacts', data=data, popkeys=popkeys, fpopkeys=fpopkeys, mpopkeys=mpopkeys, popsizepar=pars['popsize'])
+        tmpacts[act], tmpactspts[act] = balance(act=act, which='numacts', data=data, popkeys=popkeys, fpopkeys=fpopkeys, mpopkeys=mpopkeys, popsizepar=pars['popsize'], projectversion=projectversion)
     for act in ['reg','cas','com']: # Condom use
         condname = 'cond'+act
-        tmpcond[act], tmpcondpts[act] = balance(act=act, which='condom', data=data, popkeys=popkeys, fpopkeys=fpopkeys, mpopkeys=mpopkeys)
+        tmpcond[act], tmpcondpts[act] = balance(act=act, which='condom', data=data, popkeys=popkeys, fpopkeys=fpopkeys, mpopkeys=mpopkeys, popsizepar=pars['popsize'], projectversion=projectversion)
         
     # Convert matrices to lists of of population-pair keys
     for act in ['reg', 'cas', 'com', 'inj']: # Will probably include birth matrices in here too...
@@ -1341,7 +1401,7 @@ def makepars(data=None, verbose=2, die=True, fixprops=None):
                     pars[actsname].y[(key1,key2)] = array(tmpacts[act])[i,j,:]
                     pars[actsname].t[(key1,key2)] = array(tmpactspts[act])
                     if act!='inj':
-                        if compareversions(version, '2.12.0') < 0: # Old behaviour which would incorrectly add both (MSM1,MSM2) and (MSM2,MSM1)
+                        if compareversions(projectversion, '2.12.0') < 0: # Old behaviour which would incorrectly add both (MSM1,MSM2) and (MSM2,MSM1)
                             if key1 in mpopkeys or key1 not in fpopkeys: # For condom use, only store one of the pair -- and store male first -- WARNING, would this fail with multiple MSM populations?
                                 pars[condname].y[(key1,key2)] = array(tmpcond[act])[i,j,:]
                                 pars[condname].t[(key1,key2)] = array(tmpcondpts[act])
@@ -1357,7 +1417,7 @@ def makepars(data=None, verbose=2, die=True, fixprops=None):
                                 pars[condname].y[(store_key1,store_key2)] = array(tmpcond[act])[i,j,:]
                                 pars[condname].t[(store_key1,store_key2)] = array(tmpcondpts[act])
 
-    insertiveonly = True if compareversions(version,"2.12.0") >= 0 else False
+    insertiveonly = True if compareversions(projectversion,"2.12.0") >= 0 else False
     for act in ['reg', 'cas', 'com']:
         pars['acts'+act].insertiveonly = insertiveonly # So that the model knows whether or not to use the new behaviour
 
@@ -1387,7 +1447,8 @@ def getreceptiveactsfrominsertive(insertivepar, popsizetimes, popsizeinterped, p
 
 
 
-def makesimpars(pars, name=None, keys=None, start=None, end=None, dt=None, tvec=None, settings=None, smoothness=None, asarray=True, sample=None, tosample=None, randseed=None, verbose=2):
+def makesimpars(pars, name=None, keys=None, start=None, end=None, dt=None, tvec=None, settings=None, smoothness=None, asarray=True,
+                sample=None, tosample=None, randseed=None, verbose=2, projectversion=None):
     ''' 
     A function for taking a single set of parameters and returning the interpolated versions -- used
     very directly in Parameterset.
@@ -1408,14 +1469,17 @@ def makesimpars(pars, name=None, keys=None, start=None, end=None, dt=None, tvec=
     if smoothness is None: smoothness = int(defaultsmoothness/dt)
     tosample = promotetolist(tosample) # Convert to list
     popkeys = pars['popkeys'] # Used for interpolation
-    
+    if projectversion is None: # If not provided, get from one of the pars
+        try: projectversion = pars['popsize'].getprojectversion(die=True)
+        except Exception as e: raise OptimaException('Must pass projectversion to makesimpars() as the behaviour is version-dependent') from e
+
     # Copy default keys by default
     for key in generalkeys: simpars[key] = dcp(pars[key])
     for key in staticmatrixkeys: simpars[key] = dcp(array(pars[key]))
 
     # Loop over requested keys
     for key in keys: # Loop over all keys
-        if compareversions(version,"2.12.0") >= 0 and key in ['actsreg', 'actscas', 'actscom', 'actsreginsertive', 'actscasinsertive', 'actscominsertive', 'actsregreceptive', 'actscasreceptive', 'actscomreceptive']:
+        if compareversions(projectversion, "2.12.0") >= 0 and key in ['actsreg', 'actscas', 'actscom', 'actsreginsertive', 'actscasinsertive', 'actscominsertive', 'actsregreceptive', 'actscasreceptive', 'actscomreceptive']:
             par = pars[key[0:7]]
             if hasattr(par, 'insertiveonly') and par.insertiveonly:
                 continue  # New behaviour, the insertiveonly pars are handled in the next loop
@@ -1423,13 +1487,13 @@ def makesimpars(pars, name=None, keys=None, start=None, end=None, dt=None, tvec=
             thissample = sample # Make a copy of it to check it against the list of things we are sampling
             if tosample and tosample[0] is not None and key not in tosample: thissample = False # Don't sample from unselected parameters -- tosample[0] since it's been promoted to a list
             try:
-                simpars[key] = pars[key].interp(tvec=simpars['tvec'], dt=dt, popkeys=popkeys, smoothness=smoothness, asarray=asarray, sample=thissample, randseed=randseed)
+                simpars[key] = pars[key].interp(tvec=simpars['tvec'], dt=dt, popkeys=popkeys, smoothness=smoothness, asarray=asarray, sample=thissample, randseed=randseed, projectversion=projectversion)
             except OptimaException as E:
                 errormsg = 'Could not figure out how to interpolate parameter "%s"' % key
                 errormsg += 'Error: "%s"' % repr(E)
                 raise OptimaException(errormsg)
 
-    if compareversions(version,"2.12.0") >= 0:
+    if compareversions(projectversion,"2.12.0") >= 0:
         # Special treatment for actsreg, actscas, actscom because they contain only insertive acts and so we need to calculate the receptive acts
         # Get the popsize at the times when the acts are set. Need the popsize for the receptive act calculation
         alltimes = set()
@@ -1442,7 +1506,7 @@ def makesimpars(pars, name=None, keys=None, start=None, end=None, dt=None, tvec=
         if tosample and tosample[0] is not None and 'popsize' not in tosample: popsizesample = False
 
         if len(alltimes):
-            popsizeinterped = pars['popsize'].interp(tvec=list_times, dt=dt, popkeys=popkeys, smoothness=smoothness, asarray=True, sample=popsizesample, randseed=randseed)
+            popsizeinterped = pars['popsize'].interp(tvec=list_times, dt=dt, popkeys=popkeys, smoothness=smoothness, asarray=True, sample=popsizesample, randseed=randseed, projectversion=projectversion)
         else: popsizeinterped = None
 
         for key in keys:
@@ -1465,8 +1529,8 @@ def makesimpars(pars, name=None, keys=None, start=None, end=None, dt=None, tvec=
                     receptivesample = thissample or receptivekey in tosample
 
                 try:
-                    simpars[insertivekey] = insertivepar.interp(sample=insertivesample, tvec=simpars['tvec'], dt=dt, popkeys=popkeys, smoothness=smoothness, asarray=asarray, randseed=randseed)
-                    simpars[receptivekey] = receptivepar.interp(sample=receptivesample, tvec=simpars['tvec'], dt=dt, popkeys=popkeys, smoothness=smoothness, asarray=asarray, randseed=randseed)
+                    simpars[insertivekey] = insertivepar.interp(sample=insertivesample, tvec=simpars['tvec'], dt=dt, popkeys=popkeys, smoothness=smoothness, asarray=asarray, randseed=randseed, projectversion=projectversion)
+                    simpars[receptivekey] = receptivepar.interp(sample=receptivesample, tvec=simpars['tvec'], dt=dt, popkeys=popkeys, smoothness=smoothness, asarray=asarray, randseed=randseed, projectversion=projectversion)
                 except OptimaException as E:
                     errormsg = 'Could not figure out how to interpolate parameter "%s"' % key
                     errormsg += 'Error: "%s"' % repr(E)
