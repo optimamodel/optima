@@ -2417,7 +2417,8 @@ class odict_linked(odict):
         return result
 
 
-        
+
+import inspect
 class odict_custom(odict):
     '''
     A version of the odict where you have a custom function: `func(keys, values)`
@@ -2426,6 +2427,7 @@ class odict_custom(odict):
 
     def __init__(self, *args, func=None, **kwargs):
         print('odict_custom __init__')
+        print([frame.function for frame in inspect.stack()])
         # if func is None:
         #     raise Exception('Cannot create a odict_custom with func=None')
         self.func = None
