@@ -2420,6 +2420,7 @@ class odict_linked(odict):
 
 import inspect
 import time
+import sciris as sc
 class odict_custom(odict):
     '''
     A version of the odict where you have a custom function: `func(keys, values)`
@@ -2432,12 +2433,15 @@ class odict_custom(odict):
         # if func is None:
         #     raise Exception('Cannot create a odict_custom with func=None')
         self.func = None
+        start = sc.tic()
         odict.__init__(self, *args, **kwargs)  # Standard init
+        sc.toc(start=start)
         self.func = func
         if len(self.keys()) and self.func is not None: # func gets called after we insert the initial keys and values
             # pass
             # print(f'2 calling func with keys={self.keys()}')
             self.func(self, self.keys(), self.values())
+        sc.toc(start=start)
 
     def __is_odict_iterable(self, key):
         ''' Check to see whether the "key" is actually an iterable '''
