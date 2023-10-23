@@ -688,7 +688,7 @@ class Project(object):
             for i in range(n):
                 maxint = 2**31-1 # See https://en.wikipedia.org/wiki/2147483647_(number)
                 sampleseed = randint(0,maxint) if sample is not None else None
-                simparslist.append(makesimpars(pars, start=start, end=end, dt=dt, tvec=tvec, settings=self.settings, name=parsetname, sample=sample, tosample=tosample, randseed=sampleseed, smoothness=smoothness))
+                simparslist.append(makesimpars(pars, projectversion=self.version, start=start, end=end, dt=dt, tvec=tvec, settings=self.settings, name=parsetname, sample=sample, tosample=tosample, randseed=sampleseed, smoothness=smoothness))
         else:
             simparslist = promotetolist(simpars)
 
@@ -696,17 +696,19 @@ class Project(object):
         rawlist = []
         if n == 1 or (not parallel): # Run single simulation as quick as possible (or just not in parallel)
             for ind,simpars in enumerate(simparslist):
-                raw = model(simpars, self.settings, die=die, debug=debug, verbose=verbose, label=self.name, advancedtracking=advancedtracking, **kwargs) # ACTUALLY RUN THE MODEL
+                raw = model(simpars=simpars, settings=self.settings, version=self.version, die=die, debug=debug, verbose=verbose,
+                            label=self.name, advancedtracking=advancedtracking, **kwargs) # ACTUALLY RUN THE MODEL
                 rawlist.append(raw)
 
         else: # Run in parallel
-            all_kwargs = {'settings':self.settings, 'die':die, 'debug':debug, 'verbose':verbose, 'label':self.name, 'advancedtracking':advancedtracking, **kwargs}
+            all_kwargs = {'settings':self.settings, 'version':self.version, 'die':die, 'debug':debug, 'verbose':verbose, 'label':self.name, 'advancedtracking':advancedtracking, **kwargs}
             try: rawlist = parallelize(model, iterarg=simparslist, kwargs=all_kwargs, ncpus=ncpus) # ACTUALLY RUN THE MODEL
             except:
                 printv('\nWARNING: Could not run in parallel probably because this process is already running in parallel. Trying in serial...', 1, verbose)
                 rawlist = []
                 for ind,simpars in enumerate(simparslist):
-                    raw = model(simpars, self.settings, die=die, debug=debug, verbose=verbose, label=self.name, advancedtracking=advancedtracking, **kwargs) # ACTUALLY RUN THE MODEL
+                    raw = model(simpars=simpars, settings=self.settings, version=self.version, die=die, debug=debug, verbose=verbose,
+                                label=self.name, advancedtracking=advancedtracking, **kwargs) # ACTUALLY RUN THE MODEL
                     rawlist.append(raw)
 
         # Store results if required
