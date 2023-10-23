@@ -139,13 +139,15 @@ class Parameterset(object):
         return output
 
     def getprojectversion(self, projectversion=None, die=False):
+        if projectversion is None: projectversion = self.projectversion
         if projectversion is not None:  # Provided with a version, check that it matches projectref().version
             if isinstance(self.projectref.obj, op.Project) and self.projectref().version != projectversion:
                 err = f'Parset "{self.name}" was provided the projectversion={projectversion} which conflicts with the projectref().version={self.projectref().version}. Using {projectversion}'
                 if die: raise OptimaException(err)
                 else: print('WARNING: '+err)
             return projectversion
-        if self.projectref is None or not isinstance(self.projectref(), op.Project): # Missing both projectversion and projectref().version
+        # not provided with a version, get it from the project
+        if self.projectref is None or not isinstance(self.projectref.obj, op.Project): # Missing both projectversion and projectref().version
             err = f'Parset "{self.name}" is missing a link to its project and therefore cannot get the project.version'
             if die: raise OptimaException(err)
             else: print('WARNING: '+err)
@@ -1011,7 +1013,7 @@ def getvalidyears(years, validdata, defaultind=0):
 
 
 
-def data2prev(data=None, keys=None, index=0, blh=0, projectversion=projectversion, **defaultargs): # WARNING, "blh" means "best low high", currently upper and lower limits are being thrown away, which is OK here...?
+def data2prev(data=None, keys=None, index=0, blh=0, projectversion=None, **defaultargs): # WARNING, "blh" means "best low high", currently upper and lower limits are being thrown away, which is OK here...?
     """ Take an array of data return either the first or last (...or some other) non-NaN entry -- used for initial HIV prevalence only so far... """
     par = Metapar(y=odict([(key,None) for key in keys]), projectversion=projectversion, **defaultargs) # Create structure -- need key:None for prior
     for row,key in enumerate(keys):
