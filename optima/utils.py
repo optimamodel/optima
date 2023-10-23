@@ -2433,7 +2433,7 @@ class odict_custom(odict):
         self.func = func
         if len(self.keys()) and self.func is not None: # func gets called after we insert the initial keys and values
             # pass
-            print(f'2 calling func with keys={self.keys()}')
+            # print(f'2 calling func with keys={self.keys()}')
             self.func(self, self.keys(), self.values())
 
     def __is_odict_iterable(self, key):
@@ -2473,7 +2473,7 @@ class odict_custom(odict):
 
 
     def __setitem__(self, key, value):
-        print('calling __setitem__', key)
+        # print('calling __setitem__', key)
         if self.func is not None: # If this is the parent call
             self._func = self.func
             self.func = None
@@ -2483,7 +2483,7 @@ class odict_custom(odict):
 
             if self.func is not None:
                 keys, vals = self._get_keys_vals(key, value)
-                print(f'calling func with keys={keys}')
+                # print(f'calling func with keys={keys}')
                 self.func(self, keys, vals)
         else:  # The child call doesn't call the func
             out = super().__setitem__(key, value)
