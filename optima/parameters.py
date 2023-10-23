@@ -187,8 +187,6 @@ class Parameterset(object):
     def restorelinks(self, project=None):
         if project is not None:
             self.projectref = Link(project)
-        if self.pars is not None and hasattr(self.pars, 'relink'):
-            self.pars.relink(objlinkto=self, linkname='parsetref')
     
     def makepars(self, data=None, fix=True, verbose=2, start=None, end=None, projectversion=None):
         self.pars = makepars(data=data, verbose=verbose, parset=self, projectversion=self.getprojectversion(projectversion)) # Initialize as list with single entry
@@ -601,19 +599,13 @@ class Par(object):
         return output
 
     def getprojectversion(self, projectversion=None, die=False):
-        if not hasattr(self, 'parsetref'):
-            self.parsetref = Link(LinkException(f'This Par "{self.short}" is missing its link to its parset'))
-        if projectversion is not None:  # Provided with a version, check that it matches parsetref().projectversion
-            if isinstance(self.parsetref(), Parameterset):
-                return self.parsetref().getprojectversion(projectversion, die=die)
-            return projectversion
-        if self.parsetref is None or not isinstance(self.parsetref(), Parameterset): # Missing both projectversion and parsetref()
-            err = f'Par "{self.short}" is missing a link to its Parset and therefore cannot get the project.version'
+        if projectversion is None: projectversion = self.projectversion
+        if projectversion is None:
+            err = f'Par "{self.short}" is missing its projectversion'
             if die: raise OptimaException(err)
             else: print('WARNING: '+err)
             return None
-        # projectversion is None, but we do have a valid parsetref
-        return self.parsetref().getprojectversion(projectversion, die=die)
+        return projectversion
 
     def iscoveragepar(self):
         ''' Determine whether it's a coverage parameter'''
@@ -1272,9 +1264,6 @@ def makepars(data=None, verbose=2, die=True, fixprops=None, parset=None, project
     
     Version: 2017jun03
     """
-    if parset is None:
-        print('WARNING: Should pass parset to makepars so that Par.parsetref can be linked, to fix you can do pars.relink(objlinkto=parset, linkname="parsetref")')
-
     if projectversion is None:
         try: projectversion = parset.getprojectversion(die=True)
         except Exception as e: raise OptimaException('Must pass parset or projectversion to makepars() as the behaviour is version-dependent') from e
