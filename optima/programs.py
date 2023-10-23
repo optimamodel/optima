@@ -27,8 +27,9 @@ class Programset(object):
         self.name = name
         self.uid = uuid()
         self.default_interaction = default_interaction
-        self.programs = odict()
+        self.programs = odict_custom(func=self.checkpropagateversion)
         self.projectref = Link(project) # Store pointer for the project, if available
+        self.projectversion = project.version if hasattr(project, 'version') else None
         if programs is not None: self.addprograms(programs)
         else: self.updateprogset()
         self.defaultbudget = odict()
@@ -47,6 +48,58 @@ class Programset(object):
         output += '============================================================\n'
         
         return output
+
+    def __copy__(self):
+        print('WARNING: copying a Programset will make it so that the programs[:].projectversion will get updated by this new progset, not the old one which they are still included in. '
+              'It is recommended to deepcopy the progset instead.')
+        copy = standard_cp(self)
+        if isinstance(copy.programs, odict_custom): copy.programs.func = copy.checkpropagateversion
+        return copy
+
+    def __deepcopy__(self, memodict={}):
+        copy = standard_dcp(self, memodict)
+        if isinstance(copy.programs, odict_custom): copy.programs.func = copy.checkpropagateversion
+        return copy
+
+    def __setattr__(self, name, value):
+        if name == 'programs':
+            if not isinstance(value, odict_custom):
+                value = odict_custom(value, func=self.checkpropagateversion)
+            value.func = self.checkpropagateversion
+
+        super(Programset, self).__setattr__(name, value)
+
+        if name == 'programs': # If we are adding programs, make sure they match the projectversion of the parset
+            self.checkpropagateversion(None, None, self.programs.values())
+        if name == 'projectversion':
+            self.propagateversion(None, None, self.programs.values())
+
+    def propagateversion(self, odict, keys, values, version=None, die=False):
+        if version is not None: self.projectversion = version
+        values = promotetolist(values)
+        for val in values:
+            try: val.projectversion = self.projectversion
+            except: # try to add projectversion but don't stress if it doesn't work
+                if die: raise
+
+    def checkversion(self, odict, keys, values):
+        if self.projectversion is None:
+            return
+        values = promotetolist(values)
+        for val in values:
+            if not hasattr(val, 'projectversion'):
+                raise OptimaException(f'Cannot add {type(val)} "{val.name}" to Programset "{self.name}" because it is '
+                                      f'missing a projectversion so it might not be compatible with Programset.projectversion={self.projectversion}')
+            if self.projectversion is not None and val.projectversion is not None and val.projectversion != self.projectversion:
+                raise OptimaException(f'Cannot add {type(val)} "{val.name}" to Programset "{self.name}" because it has '
+                                      f'a different projectversion={val.projectversion} than the Programset.projectversion={self.projectversion}')
+
+    def checkpropagateversion(self, odict, keys, values):
+        values = promotetolist(values)
+
+        if self.projectversion is not None:
+            self.checkversion(odict, keys, values)
+            self.propagateversion(odict, keys, values)
 
     def getsettings(self, project=None, parset=None, results=None):
         ''' Try to get the freshest settings available '''
@@ -173,7 +226,7 @@ class Programset(object):
             raise OptimaException(f'You have asked to reorder the programs {[thisprog for thisprog in self.programs]} of programset {self.name} into order {desiredorder}, but the desired order does not have all of the programs.')
 
         originalprograms = dcp(self.programs)
-        self.programs = odict()
+        self.programs = odict_custom(func=self.checkpropagateversion)
         for i,program in enumerate(desiredorder):
             if program not in originalprograms:
                 raise OptimaException(f'You have asked to reorder the program "{program}" to position {i} in programset {self.name}, but there is no program by this name. Available programs are {[thisprog for thisprog in self.programs]}')
@@ -890,7 +943,7 @@ class Program(object):
     '''
 
     def __init__(self, short, targetpars=None, targetpops=None, ccopars=None, costcovdata=None, nonhivdalys=0,
-        category='No category', name='', criteria=None, targetcomposition=None):
+        category='No category', name='', criteria=None, targetcomposition=None, projectversion=None):
         '''Initialize'''
         self.short = short
         self.name = name
@@ -909,6 +962,7 @@ class Program(object):
         self.category = category
         self.criteria = criteria if criteria else {'hivstatus': 'allstates', 'pregnant': False}
         self.targetcomposition = targetcomposition
+        self.projectversion = projectversion
 
 
     def __repr__(self):

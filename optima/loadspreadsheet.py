@@ -150,20 +150,24 @@ def loadspreadsheet(filename=None, folder=None, verbose=2, projectversion=None):
     versioncell = instructionssheet.cell_value(versionrow, 0)
     versionstr = versioncell.split()[-1] # Last bit should be the version
     data['meta']['databookversion'] = versionstr
+    if compatibledatabookversion(versionstr) is None:
+        raise OptimaException(f'Cannot load incompatible databook with version {versionstr} it needs to be updated to at least {versions_different_databook[0]}: review user guide for changes or create a new project and copy data.')
+
     if projectversion is None:
         firstcompatible = compatibledatabookversion(versionstr)
         lastcompatible  = 'latest' if versions_different_databook.index(firstcompatible) == len(versions_different_databook) \
                                     else '<' + versions_different_databook[versions_different_databook.index(firstcompatible) + 1]
-        print(f'Warning loadspreadsheet was not given the projectversion, so check the P.version is compatible with the databook version: {versionstr} which is compatible with versions {firstcompatible} to {lastcompatible}')
+        print(f'Warning: loadspreadsheet was not given the projectversion, so check the P.version is compatible with the databook version: {versionstr} which is compatible with versions {firstcompatible} to {lastcompatible}')
     else: # projectversion was given so check it is compatible
+        if compareversions(versionstr, projectversion) != 0:
+            versioncheck = f'\nNote: databook version does not match Optima version: databook: {versionstr} vs. project: {projectversion}'
+            versioncheck += f' (and they are {"NOT " if compareversions(compatibledatabookversion(versionstr), compatibledatabookversion(projectversion)) != 0 else ""}compatible)'
+        else:
+            versioncheck = f'\nHowever, databook and Optima version of project match ({versionstr} == {projectversion})'
+
         if compareversions(compatibledatabookversion(versionstr), compatibledatabookversion(projectversion)) != 0:
             raise OptimaException(f'Optima version of project {projectversion}, cannot load incompatible databook with version {versionstr} (databook needs to be updated to at least {compatibledatabookversion(projectversion)}: review user guide for changes or create a new project and copy data).')
 
-        if compareversions(versionstr, projectversion) != 0:
-            versioncheck = f'\nNote: databook version does not match Optima version: databook: {versionstr} vs. project: {projectversion}'
-            versioncheck += f' (and they are {"NOT" if compareversions(compatibledatabookversion(versionstr), compatibledatabookversion(projectversion)) != 0 else ""} compatible)'
-        else:
-            versioncheck = f'\nHowever, databook and Optima version of project match ({versionstr} == {projectversion})'
 
     load_version = compatibledatabookversion(versionstr) # Use corresponding functions to this version
 

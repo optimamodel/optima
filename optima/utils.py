@@ -13,7 +13,7 @@ __all__ = [
 'odict', 'percentcomplete', 'perturb', 'printarr', 'pd', 'printdr', 'printv', 'printvars', 'printtologfile', 'promotetoarray',
 'promotetolist', 'promotetoodict', 'quantile', 'runcommand', 'sanitize', 'sanitizefilename', 'savetext', 'scaleratio', 'setylim',
 'sigfig', 'SItickformatter', 'SIticks', 'slacknotification', 'smoothinterp', 'tic', 'toc', 'today', 'vec2obj',
-'odict_linked', 'PersistentLink', 'standard_dcp', 'standard_cp',
+'odict_linked', 'PersistentLink', 'standard_dcp', 'standard_cp', 'odict_custom'
 ]
 
 ##############################################################################
@@ -2418,8 +2418,86 @@ class odict_linked(odict):
 
 
         
+class odict_custom(odict):
+    '''
+    A version of the odict where you have a custom function: `func(keys, values)`
+    that gets called after the keys and values get set in the odict
+    '''
 
-        
+    def __init__(self, *args, func=None, **kwargs):
+        print('odict_custom __init__')
+        # if func is None:
+        #     raise Exception('Cannot create a odict_custom with func=None')
+        self.func = None
+        odict.__init__(self, *args, **kwargs)  # Standard init
+        self.func = func
+        if len(self.keys()) and self.func is not None: # func gets called after we insert the initial keys and values
+            # pass
+            print(f'2 calling func with keys={self.keys()}')
+            self.func(self, self.keys(), self.values())
+
+    def __is_odict_iterable(self, key):
+        ''' Check to see whether the "key" is actually an iterable '''
+        output = type(key)==list or type(key)==type(array([])) # Do *not* include dict, since that would be recursive
+        return output
+
+    def _get_keys_vals(self, key, value):
+        ''' Copied from odict.__setitem__ to map the key, value to keys, values either list or single value '''
+        if isinstance(key, (str, tuple)):  # single key
+            this_keys = key
+            this_vals = value
+
+        elif isinstance(key, Number):  # single number: convert to key
+            this_keys = list(self.keys())[int(key)]
+            this_vals = value
+
+        elif type(key) == slice:
+            this_keys = list(self.keys())[key]
+            if hasattr(value, '__len__'):
+                this_vals = list(value) # don't have to check they are the same length because __setitem__ has done that already
+            else:  # eg. odict[:] = 4
+                this_vals = [value] * len(this_keys)
+
+        elif self.__is_odict_iterable(key) and hasattr(value, '__len__'):  # Iterate over items
+            this_keys = [None] * len(key)
+            this_vals = [None] * len(this_keys)
+
+            for ind, thiskey in enumerate(key):
+                this_keys[ind], this_vals[ind] = self._get_keys_vals(thiskey, value[ind])
+
+        else:
+            this_keys = key
+            this_vals = val
+
+        return this_keys, this_vals
+
+
+    def __setitem__(self, key, value):
+        print('calling __setitem__', key)
+        if self.func is not None: # If this is the parent call
+            self._func = self.func
+            self.func = None
+
+            try: out = super().__setitem__(key, value)
+            finally: self.func = self._func
+
+            if self.func is not None:
+                keys, vals = self._get_keys_vals(key, value)
+                print(f'calling func with keys={keys}')
+                self.func(self, keys, vals)
+        else:  # The child call doesn't call the func
+            out = super().__setitem__(key, value)
+        return out
+
+    def __copy__(self):
+        return odict_custom(self, func=None)
+
+    def __deepcopy__(self, memodict={}):
+        self._func = self.func
+        self.func = None
+        copy = standard_dcp(self)
+        self.func = self._func
+        return copy
 
 
 

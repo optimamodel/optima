@@ -1523,22 +1523,24 @@ def parsandprograms_odictlinked(project=None, **kwargs):
         Convert Parameterset.pars and Programset.programs to be odict_linked, which links back to the
         Parameterset and Programset respectively
     '''
-    print('SNOB')
     if project is not None:
+        # propagate version, then we make sure that any new parsets we add have projectversion == version
+        project.parsets = op.odict_custom(project.parsets, func=project.propagateversion)
+        project.parsets.func = project.checkpropagateversionlink
+        project.parsets.func(project.parsets, project.parsets.keys(), project.parsets.values()) # run it once to link
+
         for parset in project.parsets.values():
-            for parname, par in parset.pars.items():
-                try:
-                    if not hasattr(par, 'parsetref'):
-                        par.parsetref = None
-                except: pass
-            parset.pars = op.odict_linked(parset.pars, linkname='parsetref', objlinkto=parset)
-            # print(parset.pars)
+            parset.pars = op.odict_custom(parset.pars, func=parset.propagateversion)
+            parset.pars.func = parset.checkpropagateversion
+
+        # propagate version, then we make sure that any new parsets we add have projectversion == version
+        project.progsets = op.odict_custom(project.progsets, func=project.propagateversion)
+        project.progsets.func = project.checkpropagateversionlink
+        project.progsets.func(project.progsets, project.progsets.keys(), project.progsets.values())  # run it once to link
 
         for progset in project.progsets.values():
-            for program in progset.programs.values():
-                if not hasattr(program, 'progsetref'):
-                    program.progsetref = op.Link(op.LinkException(f'This Program "{program.short}" is missing its link to its progset'))
-            progset.programs = op.odict_linked(progset.programs, linkname='progsetref', objlinkto=progset)
+            progset.programs = op.odict_custom(progset.programs, func=progset.propagateversion)
+            progset.programs.func = progset.checkpropagateversion
 
 
 ##########################################################################################
@@ -1546,6 +1548,11 @@ def parsandprograms_odictlinked(project=None, **kwargs):
 ##########################################################################################
 def versiontomigrateto(project, migrateversion='supported'):
     """
+        migrateversion: 'supported' = up to the first supported version (default),
+                    False = do not migrate at all (which prints a warning if the project version is not supported)
+                    'minor' = migrate 2.a.b to 2.a.c with c as large as it can be within supported versions (minor calibration changes likely)
+                    'major' = 'latest' = True = migrate 2.a.b to 2.x.y the latest version within supported versions (possible major calibration changes / databook changes)
+                    or a specific version
     Returns:
         versiontomigrateto: either a version, False (don't migrate) or None which means couldn't find a version to migrate to
     """
@@ -1608,7 +1615,7 @@ def migrate(project, migrateversion='supported', verbose=2, die=None):
 
     migrations = setmigrations() # Get the migrations to run
     newversion = versiontomigrateto(project, migrateversion)
-    print('newversion', newversion) ## TODO-kelvin test and remove
+    print('newversion', newversion, migrateversion) ## TODO-kelvin test and remove
 
     if newversion is None:
         errormsg = f'WARNING: Could not find a version for project "{project.name}" to migrate to from version {project.version} using migrateversion={migrateversion}'
@@ -1619,7 +1626,7 @@ def migrate(project, migrateversion='supported', verbose=2, die=None):
         return project
 
 
-    while str(project.version) != str(newversion): ## TODO-kelvin here is the main migration code
+    while str(project.version) != str(newversion):
         currentversion = str(project.version)
 
         # Check that the migration exists
@@ -1669,36 +1676,40 @@ def migraterevisionfunc(project, migraterevision=True, verbose=2, die=False):
     if not migraterevision: # If we don't want to migrate
         return project
 
-    while str(project.revision) != str(op.revision): ## TODO-kelvin here is the main migration code
+    if migraterevision == True or migraterevision == 'latest':
+        newrevision = op.revision
+    else: # A specific revision
+        newrevision = migraterevision
+
+    while str(project.revision) != str(newrevision):
         currentrevision = str(project.revision)
 
         # Check that the migration exists
         if not currentrevision in revmigrations:
-            if op.compareversions(currentrevision, op.revision)<0:
-                errormsg = "WARNING, migrating %s failed: no migration exists from revision %s to the current revision (%s)" % (project.name, currentrevision, op.revision)
-            elif op.compareversions(currentrevision, op.revision)>0:
-                errormsg = "WARNING, migrating %s failed: project revision %s more recent than current Optima revision (%s)" % (project.name, currentrevision, op.revision)
+            if op.compareversions(currentrevision, newrevision)<0: # We aren't yet where we want
+                errormsg = "WARNING, migrating %s to revision %s failed: no migration exists from revision %s" % (project.name, newrevision, currentrevision)
+            elif op.compareversions(currentrevision, newrevision)>0: # We are further where we want
+                errormsg = "WARNING, migrating %s failed: project revision %s more recent than desired revision (%s), current Optima revision (%s)" % (project.name, currentrevision, newrevision, op.revision)
             if die: raise op.OptimaException(errormsg)
             else:   op.printv(errormsg, 1, verbose)
             return project # Abort, if haven't died already
 
         # Do the migration
-        newrevision,currentdate,migrator,msg = revmigrations[currentrevision] # Get the details of the current migration -- newrevision, date, function ("migrator"), and message
-        op.printv('Migrating "%s" from %6s -> %s' % (project.name, currentrevision, newrevision), 2, verbose)
+        nextrevision,currentdate,migrator,msg = revmigrations[currentrevision] # Get the details of the current migration -- newrevision, date, function ("migrator"), and message
+        op.printv('Migrating revision "%s" from %6s -> %s' % (project.name, currentrevision, nextrevision), 2, verbose)
         if migrator is not None: # Sometimes there is no upgrader
             try:
                 migrator(project, verbose=verbose, die=die)
             except Exception as E:
-                raise E
-                # errormsg = 'WARNING, migrating revision "%s" from %6s -> %6s failed:\n%s' % (project.name, currentrevision, newrevision, repr(E))
-                # if not hasattr(project, 'failedmigrations'): project.failedmigrations = [] # Create if it doesn't already exist
-                # project.failedmigrations.append(errormsg)
-                # if die: raise op.OptimaException(errormsg)
-                # else:   op.printv(errormsg, 1, verbose)
-                # return project # Abort, if haven't died already
+                errormsg = 'WARNING, migrating revision "%s" from %6s -> %6s failed:\n%s' % (project.name, currentrevision, nextrevision, repr(E))
+                if not hasattr(project, 'failedmigrations'): project.failedmigrations = [] # Create if it doesn't already exist
+                project.failedmigrations.append(errormsg)
+                if die: raise op.OptimaException(errormsg)
+                else:   op.printv(errormsg, 1, verbose)
+                return project # Abort, if haven't died already
 
         # Update project info
-        project.revision = newrevision # Update the revision info
+        project.revision = nextrevision # Update the revision info
 
     # Restore links just in case
     project.restorelinks()
@@ -1734,8 +1745,9 @@ def loadproj(filename=None, folder=None, verbose=2, die=None, fromdb=False, migr
     else: P = origP # Don't migrate
 
     if P.version not in op.supported_versions:
-        print(f'WARNING!: P.version={P.version} of this project "{P.name}" is not supported and you have set migrateversion={migrateversion}. '
-              f'\n\tThis will likely cause problems until it is updated to one of the supported versions: {op.supported_versions}')
+        errmsg = f'P.version={P.version} of this project "{P.name}" is not supported ({op.supported_versions}) and you have set migrateversion={migrateversion}. '
+        if die: raise OptimaException(errmsg)
+        else: print('WARNING!: ' + errmsg + f'\n\tThis will likely cause problems until it is updated to one of the supported versions: {op.supported_versions}')
 
     try: # Note we don't have a `if migraterevsion` check, since we need to call migraterevisionfunc which adds P.revision if it needs it
         P = migraterevisionfunc(origP, migraterevision=migraterevision, verbose=verbose, die=die)
@@ -1744,9 +1756,10 @@ def loadproj(filename=None, folder=None, verbose=2, die=None, fromdb=False, migr
         if die: raise E
         else: print(f'WARNING: Error when trying to update project "{P.name}" to revision {op.revision} from revision {P.revision}:\n'+str(E))
 
-    if P.revision != op.revision:
-        print(f'WARNING!: P.revision={P.revision} of this project "{P.name}" is not supported and you have set migraterevision={migraterevision}. '
-              f'\n\tThis will likely cause problems until it is updated to the latest revision {op.revision}')
+    if str(P.revision) != str(op.revision):
+        errmsg = f'P.revision={P.revision} of this project "{P.name}" is not supported ({op.revision}) and you have set migraterevision={migraterevision}. '
+        if die: raise OptimaException(errmsg)
+        else: print('WARNING!: ' + errmsg + f'\n\tThis will likely cause problems until it is updated to the latest revision {op.revision}')
 
     if not fromdb and updatefilename: P.filename = filename  # Update filename if not being loaded from a database - note this used to be in the `if migrateversion` block, not sure why?
 
@@ -1809,6 +1822,7 @@ def loadportfolio(filename=None, folder=None, verbose=2):
     for i in range(len(portfolio.projects)): # Migrate projects one by one
         op.printv('Loading project %s...' % portfolio.projects[i].name, 3, verbose)
         portfolio.projects[i] = migrate(portfolio.projects[i], verbose=verbose)
+        portfolio.projects[i] = migraterevisionfunc(portfolio.projects[i], verbose=verbose)
     
     portfolio.filename = filename # Update filename
     

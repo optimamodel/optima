@@ -8,7 +8,7 @@ Version: 2.1 (2017apr04)
 
 from numpy import array, nan, isnan, isfinite, zeros, ones, argmax, mean, log, polyfit, exp, maximum, minimum, Inf, linspace, median, shape, append, logical_and, isin, multiply
 from numpy.random import uniform, normal, seed
-from optima import OptimaException, compareversions, Link, LinkException, standard_dcp, odict, odict_linked, dataframe, printv, sanitize, uuid, today, getdate, makefilepath, smoothinterp, dcp, defaultrepr, isnumber, findinds, findnearest, getvaliddata, promotetoarray, promotetolist, inclusiverange # Utilities
+from optima import OptimaException, compareversions, Link, LinkException, standard_dcp, odict, odict_custom, dataframe, printv, sanitize, uuid, today, getdate, makefilepath, smoothinterp, dcp, defaultrepr, isnumber, findinds, findnearest, getvaliddata, promotetoarray, promotetolist, inclusiverange # Utilities
 from optima import Settings, getresults, convertlimits, gettvecdt, loadpartable, loadtranstable # Heftier functions
 import optima as op
 from sciris import cp
@@ -59,10 +59,10 @@ class Parameterset(object):
     ''' Class to hold all parameters and information on how they were generated, and perform operations on them'''
     
     def __init__(self, name='default', project=None, progsetname=None, budget=None, start=None, end=None):
-        print('init Parameterset')
         self.name = name # Name of the parameter set, e.g. 'default'
         self.uid = uuid() # ID
         self.projectref = Link(project) # Store pointer for the project, if available
+        self.projectversion = project.version if hasattr(project, 'version') else None
         self.created = today() # Date created
         self.modified = today() # Date modified
         self.pars = None
@@ -76,15 +76,58 @@ class Parameterset(object):
         self.isfixed = None # Store whether props are fixed or not
 
     def __copy__(self):
+        print('WARNING: copying a Parameterset will make it so that the pars[:].projectversion will get updated by this new parset, not the old one which they are still included in. '
+              'It is recommended to deepcopy the parset instead.')
         copy = standard_cp(self)
-        copy.restorelinks()
+        if isinstance(copy.pars, odict_custom): copy.pars.func = copy.checkpropagateversion
         return copy
 
     def __deepcopy__(self, memodict={}):
         copy = standard_dcp(self, memodict)
-        copy.restorelinks()
+        if isinstance(copy.pars, odict_custom): copy.pars.func = copy.checkpropagateversion
         return copy
-    
+
+    def __setattr__(self, name, value):
+        if name == 'pars':
+            if not isinstance(value, odict_custom):
+                value = odict_custom(value, func=self.checkpropagateversion)
+            value.func = self.checkpropagateversion
+
+        super(Parameterset, self).__setattr__(name, value)
+
+        if name == 'pars': # If we are adding pars, make sure they match the projectversion of the parset
+            self.checkpropagateversion(None, None, self.pars.values())
+        if name == 'projectversion':
+            self.propagateversion(None, None, self.pars.values())
+
+    def propagateversion(self, odict, keys, values, version=None, die=False):
+        if version is not None: self.projectversion = version
+        values = promotetolist(values)
+        for val in values:
+            try: val.projectversion = self.projectversion
+            except: # try to add projectversion but don't stress if it doesn't work
+                if die: raise
+
+    def checkversion(self, odict, keys, values):
+        if self.projectversion is None:
+            return
+        values = promotetolist(values)
+        for val in values:
+            if not isinstance(val, Par): continue
+            if not hasattr(val, 'projectversion'):
+                raise OptimaException(f'Cannot add {type(val)} "{val.name}" to Parameterset "{self.name}" because it is '
+                                      f'missing a projectversion so it might not be compatible with Parameterset.projectversion={self.projectversion}')
+            if self.projectversion is not None and val.projectversion is not None and val.projectversion != self.projectversion:
+                raise OptimaException(f'Cannot add {type(val)} "{val.name}" to Parameterset "{self.name}" because it has '
+                                      f'a different projectversion={val.projectversion} than the Parameterset.projectversion={self.projectversion}')
+    def checkpropagateversion(self, odict, keys, values):
+        print('Parset checkpropagateversion keys', keys, 'self.projectversion', self.projectversion)
+        values = promotetolist(values)
+
+        if self.projectversion is not None:
+            self.checkversion(odict, keys, values)
+            self.propagateversion(odict, keys, values)
+
     def __repr__(self):
         ''' Print out useful information when called'''
         output  = defaultrepr(self)
@@ -97,7 +140,7 @@ class Parameterset(object):
 
     def getprojectversion(self, projectversion=None, die=False):
         if projectversion is not None:  # Provided with a version, check that it matches projectref().version
-            if isinstance(self.projectref(), op.Project) and self.projectref().version != projectversion:
+            if isinstance(self.projectref.obj, op.Project) and self.projectref().version != projectversion:
                 err = f'Parset "{self.name}" was provided the projectversion={projectversion} which conflicts with the projectref().version={self.projectref().version}. Using {projectversion}'
                 if die: raise OptimaException(err)
                 else: print('WARNING: '+err)
@@ -530,7 +573,8 @@ class Par(object):
     
     Version: 2016nov06 
     '''
-    def __init__(self, short=None, name=None, limits=(0.,1.), by=None, manual='', fromdata=None, m=1.0, progdefault=None, prior=None, verbose=None, parset=None, **defaultargs): # "type" data needed for parameter table, but doesn't need to be stored
+    def __init__(self, short=None, name=None, limits=(0.,1.), by=None, manual='', fromdata=None, m=1.0, progdefault=None,
+                 prior=None, verbose=None, parset=None, projectversion=None, **defaultargs): # "type" data needed for parameter table, but doesn't need to be stored
         ''' To initialize with a prior, prior should be a dict with keys 'dist' and 'pars' '''
         self.short = short # The short name, e.g. "hivtest"
         self.name = name # The full name, e.g. "HIV testing rate"
@@ -541,14 +585,13 @@ class Par(object):
         self.progdefault = progdefault # Whether or not the parameter has a default value when not targeted by programs
         self.m = m # Multiplicative metaparameter, e.g. 1
         self.msample = None # The latest sampled version of the metaparameter -- None unless uncertainty has been run, and only used for uncertainty runs
-        if parset is None: self.parsetref = Link(parset) # This might get overwritten by the odict_linked but that is ok
-        else:              self.parsetref = Link(LinkException(f'This Par "{self.short}" is missing its link to its parset')) # This will get filled in by the odict_linked
         if prior is None:             self.prior = Dist() # Not supplied, create default distribution
         elif isinstance(prior, dict): self.prior = Dist(**prior) # Supplied as a dict, use it to create a distribution
         elif isinstance(prior, Dist): self.prior = prior # Supplied as a distribution, use directly
         else:
             errormsg = 'Prior must either be None, a Dist, or a dict with keys "dist" and "pars", not %s' % type(prior)
             raise OptimaException(errormsg)
+        self.projectversion = projectversion
     
     def __repr__(self):
         ''' Print out useful information when called'''
@@ -968,9 +1011,9 @@ def getvalidyears(years, validdata, defaultind=0):
 
 
 
-def data2prev(data=None, keys=None, index=0, blh=0, **defaultargs): # WARNING, "blh" means "best low high", currently upper and lower limits are being thrown away, which is OK here...?
+def data2prev(data=None, keys=None, index=0, blh=0, projectversion=projectversion, **defaultargs): # WARNING, "blh" means "best low high", currently upper and lower limits are being thrown away, which is OK here...?
     """ Take an array of data return either the first or last (...or some other) non-NaN entry -- used for initial HIV prevalence only so far... """
-    par = Metapar(y=odict([(key,None) for key in keys]), **defaultargs) # Create structure -- need key:None for prior
+    par = Metapar(y=odict([(key,None) for key in keys]), projectversion=projectversion, **defaultargs) # Create structure -- need key:None for prior
     for row,key in enumerate(keys):
         par.y[key] = sanitize(data['hivprev'][blh][row])[index] # Return the specified index -- usually either the first [0] or last [-1]
         par.prior[key].pars *= par.y[key] # Get prior in right range
@@ -980,7 +1023,7 @@ def data2prev(data=None, keys=None, index=0, blh=0, **defaultargs): # WARNING, "
 
 def data2popsize(data=None, keys=None, blh=0, uniformgrowth=False, doplot=False, projectversion=None, **defaultargs):
     ''' Convert population size data into population size parameters '''
-    par = Popsizepar(m=1, **defaultargs)
+    par = Popsizepar(m=1, projectversion=projectversion, **defaultargs)
     
     # Parse data into consistent form
     sanitizedy = odict() # Initialize to be empty
@@ -1080,7 +1123,7 @@ def data2popsize(data=None, keys=None, blh=0, uniformgrowth=False, doplot=False,
 
 
 
-def data2timepar(data=None, years=None, keys=None, defaultind=0, verbose=2, **defaultargs):
+def data2timepar(data=None, years=None, keys=None, defaultind=0, verbose=2, projectversion=None, **defaultargs):
     """ Take an array of data and turn it into default parameters -- here, just take the means """
     # Check that at minimum, name and short were specified, since can't proceed otherwise
     try: 
@@ -1096,7 +1139,7 @@ def data2timepar(data=None, years=None, keys=None, defaultind=0, verbose=2, **de
     elif isinstance(data,list): # Just the relevant entry has been passed
         thisdata = data
         
-    par = Timepar(m=1.0, y=odict(), t=odict(), **defaultargs) # Create structure
+    par = Timepar(m=1.0, y=odict(), t=odict(), projectversion=projectversion, **defaultargs) # Create structure
     for row,key in enumerate(keys):
         try:
             validdata = ~isnan(thisdata[row]) # WARNING, this could all be greatly simplified!!!! Shouldn't need to call this and sanitize()
@@ -1240,7 +1283,7 @@ def makepars(data=None, verbose=2, die=True, fixprops=None, parset=None, project
     ## Loop over quantities
     ###############################################################################
     
-    pars = odict_linked(objlinkto=parset, linkname='parsetref')
+    pars = odict_custom(func=(parset.checkpropagateversion if parset is not None else None))
 
     # Shorten information on which populations are male, which are female, which inject, which provide commercial sex
     pars['male'] = array(data['pops']['male']).astype(bool) # Male populations 
@@ -1276,6 +1319,7 @@ def makepars(data=None, verbose=2, die=True, fixprops=None, parset=None, project
             fromdata = rawpar['fromdata']
             rawpar['verbose'] = verbose # Easiest way to pass it in
             rawpar['progdefault'] = None if rawpar['progdefault'] == '' else rawpar['progdefault']
+            rawpar['projectversion'] = projectversion
 
             # Decide what the keys are
             if   by=='tot' : keys = totkey

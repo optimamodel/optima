@@ -1,5 +1,5 @@
 from optima import OptimaException, Settings, Parameterset, Programset, Resultset, BOC, Parscen, Budgetscen, Coveragescen, Progscen, Optim, Link # Import classes
-from optima import odict, standard_dcp, getdate, today, uuid, dcp, makefilepath, objrepr, printv, isnumber, saveobj, promotetolist, promotetoodict, sigfig # Import utilities
+from optima import odict, odict_custom, standard_dcp, getdate, today, uuid, dcp, makefilepath, objrepr, printv, isnumber, saveobj, promotetolist, promotetoodict, sigfig # Import utilities
 from optima import loadspreadsheet, model, gitinfo, defaultscenarios, makesimpars, makespreadsheet
 from optima import defaultobjectives, autofit, runscenarios, optimize, multioptimize, tvoptimize, outcomecalc, icers # Import functions
 from optima import supported_versions, revision, cpu_count # Get current version
@@ -55,8 +55,8 @@ class Project(object):
         ''' Initialize the project '''
 
         ## Define the structure sets
-        self.parsets  = odict()
-        self.progsets = odict()
+        self.parsets  = odict_custom(func=self.checkpropagateversionlink)
+        self.progsets = odict_custom(func=self.checkpropagateversionlink)
         self.scens    = odict()
         self.optims   = odict()
         self.results  = odict()
@@ -85,6 +85,39 @@ class Project(object):
 
         return None
 
+    def __setattr__(self, name, value):
+        super(Project, self).__setattr__(name, value)
+        if name == 'version':
+            self.propagateversion(None, None, 'all')
+
+    def propagateversion(self, odict, keys, vals):
+        if vals == 'all':
+            vals = []
+            if self.parsets  is not None: vals.extend(self.parsets.values())
+            if self.progsets is not None: vals.extend(self.progsets.values())
+        vals = promotetolist(vals)
+        for val in vals:
+            val.projectversion = self.version
+
+    def checkversion(self, odict, keys, values):
+        values = promotetolist(values)
+        for val in values:
+            if not hasattr(val, 'projectversion'):
+                raise OptimaException(f'Cannot add {type(val)} "{val.name if hasattr(val, "name") else None}" to Project "{self.name}" because it is '
+                                      f'missing a projectversion so it might not be compatible with Project.version={self.version}')
+            if val.projectversion is not None and val.projectversion != self.version:
+                raise OptimaException(f'Cannot add {type(val)} "{val.name if hasattr(val, "name") else None}" to project "{self.name}" because it has '
+                                      f'a different version {val.projectversion} than the project {self.version}')
+
+    def checkpropagateversionlink(self, odict, keys, vals):
+        # print('checkpropagateversionlink', 'self', self.name, 'keys', keys)
+        vals = promotetolist(vals)
+
+        self.checkversion(odict, keys, vals)
+        self.propagateversion(odict, keys, vals)
+        for val in vals:
+            val.projectref = Link(self)
+
 
     def __repr__(self):
         ''' Print out useful information when called '''
@@ -109,6 +142,8 @@ class Project(object):
         return output
 
     def __copy__(self):
+        print('WARNING: copying a Project will make it so that the parsets[:].projectref point to the new Project, not the old one which they are still included in. '
+              'It is recommended to deepcopy the project instead.')
         copy = standard_cp(self)
         copy.restorelinks()
         return copy
@@ -199,7 +234,7 @@ class Project(object):
         if dataend is None:   
             try:    dataend = self.data['years'][-1]
             except: dataend = self.settings.dataend
-        makespreadsheet(filename=fullpath, pops=pops, data=self.data, datastart=datastart, dataend=dataend)
+        makespreadsheet(filename=fullpath, pops=pops, data=self.data, datastart=datastart, dataend=dataend, version=self.version)
         return fullpath
 
 
