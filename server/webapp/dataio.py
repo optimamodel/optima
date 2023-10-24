@@ -492,10 +492,12 @@ def load_current_user_project_summaries():
     query = ProjectDb.query.filter_by(user_id=current_user.id)
     return {'projects': map(load_project_summary_from_project_record, query.all())}
 
-
+import sciris as sc
 def load_all_project_summaries():
     query = ProjectDb.query
-    return {'projects': map(load_project_summary_from_project_record, query.all())}
+    start= sc.tic()
+    out = {'projects': map(load_project_summary_from_project_record, query.all())}
+    sc.toc(start=start, label='load_all_project_summaries():')
 
 
 def get_default_populations():
