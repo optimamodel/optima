@@ -437,16 +437,21 @@ def save_project(project, db_session=None, is_skip_result=False):
     db_session.commit()
 
 
+times2=[]
+
 def load_project_from_record(project_record):
     try:
         project = project_record.load()
     except:
         print('WARNING, could not load project!')
         return None
+    start = sc.tic()
     for progset in project.progsets.values():
         if not hasattr(progset, 'inactive_programs'):
             progset.inactive_programs = op.odict()
     project.restorelinks()
+    times2.append(sc.toc(start=start, output=True, doprint=False))
+    print(' > load_project_from_record times2', times2, sum(times2))
     return project
 
 
