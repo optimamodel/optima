@@ -97,9 +97,12 @@ def loadstr(string, forceold=False, **kwargs):
         return loads(string, **kwargs)
     except:
         print('WARNING REVERTING loadstr')
+
+        out=  sc_loadstr(string, **kwargs)
+        print(type(out), out.name if hasattr(out, 'name') else None)
         import traceback
         traceback.print_exc()
-        return sc_loadstr(string, **kwargs)
+        return out
 
 
 ## Now using sciris dumpstr and loadstr

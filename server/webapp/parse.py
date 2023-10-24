@@ -71,20 +71,20 @@ def normalize_obj(obj):
     Returns:
         A converted dict/list/value that should be JSON compatible
     """
-    thetype = ['tuple', isinstance(obj, list) or isinstance(obj, tuple),
-               'ndarray', isinstance(obj, np.ndarray),
-               'dict', isinstance(obj, dict),
-               'odict', isinstance(obj, op.odict),
-               'np.bool_', isinstance(obj, np.bool_),
-               'float',isinstance(obj, float),
-               'float64',isinstance(obj, np.float64),
-               'int3264',isinstance(obj, (np.int32, np.int64)),
-               'unicode',isinstance(obj, unicode),
-               'set',isinstance(obj, set),
-               'UUID',isinstance(obj, UUID),
-               'map',isinstance(obj, map),
-               'range',isinstance(obj, range),]
-    print(' > normalize_obj starting: ', type(obj),thetype, obj.name if hasattr(obj, 'name') else None)
+    # thetype = ['tuple', isinstance(obj, list) or isinstance(obj, tuple),
+    #            'ndarray', isinstance(obj, np.ndarray),
+    #            'dict', isinstance(obj, dict),
+    #            'odict', isinstance(obj, op.odict),
+    #            'np.bool_', isinstance(obj, np.bool_),
+    #            'float',isinstance(obj, float),
+    #            'float64',isinstance(obj, np.float64),
+    #            'int3264',isinstance(obj, (np.int32, np.int64)),
+    #            'unicode',isinstance(obj, unicode),
+    #            'set',isinstance(obj, set),
+    #            'UUID',isinstance(obj, UUID),
+    #            'map',isinstance(obj, map),
+    #            'range',isinstance(obj, range),]
+    # print(' > normalize_obj starting: ', type(obj),thetype, obj.name if hasattr(obj, 'name') else None)
 
     if isinstance(obj, list) or isinstance(obj, tuple):
         return [normalize_obj(p) for p in list(obj)]

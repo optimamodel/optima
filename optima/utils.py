@@ -2427,7 +2427,7 @@ class odict_custom(odict):
 
     def __init__(self, *args, func=None, **kwargs):
         print(time.time(), 'odict_custom __init__', args.keys() if hasattr(args, 'keys') else None, kwargs)
-        print([frame.function for frame in inspect.stack()])
+        # print([frame.function for frame in inspect.stack()])
         # if func is None:
         #     raise Exception('Cannot create a odict_custom with func=None')
         self.func = None
