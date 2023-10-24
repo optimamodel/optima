@@ -153,9 +153,9 @@ def run_remote_procedure():
     result = fn(*args, **kwargs)
     print(f'> run_remote_procedure type(result): {result} {sc.toc(start=start, output=True, doprint=False)}')
 
-    if isinstance(result, map):
+    if fn_name == 'load_current_user_project_summaries':
         print(f'> run_remote_procedure mapping {sc.toc(start=start, output=True, doprint=False)}')
-        result = list(result)
+        result['projects'] = list(result['projects'])
     print(f'> run_remote_procedure normalize_obj {sc.toc(start=start, output=True, doprint=False)}')
 
     if result is None:
