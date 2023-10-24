@@ -102,33 +102,43 @@ class ProjectDb(db.Model):
 
 
     def load(self):
-        import sciris as sc
-        print(">> ProjectDb.load " + self.id.hex)
-        redis_entry = redis.get(self.id.hex)
-        # print('redis_entry', redis_entry)
-        start = sc.tic()
-        project = op.loadproj(redis_entry, fromdb=True)
-        sc.toc(start=start, label='loadstr')
+        try:
+            import sciris as sc
+            print(">> ProjectDb.load " + self.id.hex)
+            redis_entry = redis.get(self.id.hex)
+            # print('redis_entry', redis_entry)
+            start = sc.tic()
+            project = op.loadproj(redis_entry, fromdb=True)
+            sc.toc(start=start, label='loadstr')
 
-        pickled = pickle.dumps(obj)
-        start = sc.tic()
-        project2 = pickle.loads(pickled)
-        sc.toc(start=start, label='pickle.loads(pickled)')
+            pickled = pickle.dumps(obj)
+            start = sc.tic()
+            project2 = pickle.loads(pickled)
+            sc.toc(start=start, label='pickle.loads(pickled)')
 
-        print('ASDHFI@(#$&')
-        return project
+            print('ASDHFI@(#$&')
+            return project
+        except:
+            import  traceback
+            traceback.print_exc()
+            raise
 
     def save_obj(self, obj):
-        print(">> ProjectDb.save " + self.id.hex)
+        try:
+            print(">> ProjectDb.save " + self.id.hex)
 
-        start = sc.tic()
-        op.dumpstr(obj)
-        sc.toc(start=start, label='op.dumpstr')
-        start = sc.tic()
-        pickle.dumps(obj)
-        sc.toc(start=start, label='pickle.dumps(obj)')
+            start = sc.tic()
+            op.dumpstr(obj)
+            sc.toc(start=start, label='op.dumpstr')
+            start = sc.tic()
+            pickle.dumps(obj)
+            sc.toc(start=start, label='pickle.dumps(obj)')
 
-        redis.set(self.id.hex, op.dumpstr(obj))
+            redis.set(self.id.hex, op.dumpstr(obj))
+        except:
+            import  traceback
+            traceback.print_exc()
+            raise
 
     def as_file(self, loaddir, filename=None):
         project = self.load()
