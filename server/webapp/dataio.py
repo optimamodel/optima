@@ -437,21 +437,16 @@ def save_project(project, db_session=None, is_skip_result=False):
     db_session.commit()
 
 
-times2=[]
-
 def load_project_from_record(project_record):
     try:
         project = project_record.load()
     except:
         print('WARNING, could not load project!')
         return None
-    start = sc.tic()
     for progset in project.progsets.values():
         if not hasattr(progset, 'inactive_programs'):
             progset.inactive_programs = op.odict()
     project.restorelinks()
-    times2.append(sc.toc(start=start, output=True, doprint=False))
-    print(' > load_project_from_record times2', times2, sum(times2))
     return project
 
 
@@ -479,13 +474,9 @@ def update_project_with_fn(project_id, update_project_fn, db_session=None):
     project.modified = op.today()
     save_project(project, db_session=db_session)
 
-times = []
 
 def load_project_summary_from_project_record(project_record):
-    start = sc.tic()
     project = load_project_from_record(project_record)
-    times.append(sc.toc(start=start, output=True, doprint=False))
-    print(' > load_project_summary_from_project_record times', times, sum(times))
     project_summary = parse.get_project_summary_from_project(project)
     project_summary['id'] = project_record.id
     project_summary['userId'] = project_record.user_id
@@ -499,19 +490,12 @@ def load_project_summary(project_id):
 
 def load_current_user_project_summaries():
     query = ProjectDb.query.filter_by(user_id=current_user.id)
-    start = sc.tic()
-    out= {'projects': map(load_project_summary_from_project_record, query.all())}
-    sc.toc(start=start, label='load_current_user_project_summaries():')
-    return out
+    return {'projects': map(load_project_summary_from_project_record, query.all())}
 
-import sciris as sc
+
 def load_all_project_summaries():
-    print(' > load_all_project_summaries')
     query = ProjectDb.query
-    start= sc.tic()
-    out = {'projects': map(load_project_summary_from_project_record, query.all())}
-    sc.toc(start=start, label='load_all_project_summaries():')
-    return out
+    return {'projects': map(load_project_summary_from_project_record, query.all())}
 
 
 def get_default_populations():
@@ -1310,17 +1294,12 @@ def load_parset_graphs(project_id, parset_id, calculation_type, which=None, para
     print(">> load_parset_graphs args project_id %s" % project_id)
     print(">> load_parset_graphs args parset_id %s" % parset_id)
     print(">> load_parset_graphs args calculation_type %s" % calculation_type)
-    start = sc.tic()
-
     project = load_project(project_id)
-    print(">> load_parset_graphs times loaded project", sc.toc(start=start, output=True, doprint=False))
     parset = parse.get_parset_from_project(project, parset_id)
-    print(">> load_parset_graphs times loaded parset", sc.toc(start=start, output=True, doprint=False))
 
     result_name = "parset-" + parset.name
     print(">> load_parset_graphs result-name '%s'" % result_name)
     result = load_result(project_id, name=result_name, which=which)
-    print(">> load_parset_graphs times loaded result", sc.toc(start=start, output=True, doprint=False))
     needtorerun = False
     if result is None:
         needtorerun = True
@@ -1354,28 +1333,25 @@ def load_parset_graphs(project_id, parset_id, calculation_type, which=None, para
             whichprocessed = which  # Default to not processing which should still work fine - if it fails it should only be a false positive
         runwithadvancedtracking = runwithadvancedtracking or op.checkifneedtorerunwithadvancedtracking(results=result, which=whichprocessed)
         needtorerun = (needtorerun or runwithadvancedtracking)  # Only overwrite needtorerun from false -> true
-    print(">> load_parset_graphs times checked if need to rerun", sc.toc(start=start, output=True, doprint=False))
+
     if needtorerun:
         delete_result_by_parset_id(project_id, parset_id)
         save_project(project)
         result = None
-        print(">> load_parset_graphs times deleted old result", sc.toc(start=start, output=True, doprint=False))
 
     if result is None or needtorerun:
         print(f">> load_parset_graphs running model, with advancedtracking={runwithadvancedtracking}")
 
         result = project.runsim(name=parset.name, end=endYear, advancedtracking=runwithadvancedtracking) # When running, possibly modify the end year, but not the start
-
         result.which = which
         record = update_or_create_result_record_by_id(
             result, project_id, parset_id, calculation_type, db_session=db.session)
         db.session.add(record)
         print(">> load_parset_graphs calc result for parset '%s'" % parset.name)
         db.session.commit()
-        print(">> load_parset_graphs times ran new result", sc.toc(start=start, output=True, doprint=False))
 
     graph_dict = make_mpld3_graph_dict(result=result, which=which, zoom=zoom, startYear=startYear, endYear=endYear,includeadvancedtracking=includeadvancedtracking)
-    print(">> load_parset_graphs times made graphs", sc.toc(start=start, output=True, doprint=False))
+
     return {
         "parameters": parse.get_parameters_from_parset(parset, advanced=advanced_pars),
         "graphs": graph_dict["graphs"]

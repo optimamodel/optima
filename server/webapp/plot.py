@@ -28,24 +28,17 @@ def extract_graph_selector(graph_key):
         suffix = ""
     return base + suffix
 
-times = []
-def convert_to_mpld3(figure, zoom=None, graph_pos=None):
-    start2 = sc.tic()
 
+def convert_to_mpld3(figure, zoom=None, graph_pos=None):
     plugin = mpld3.plugins.MousePosition(fontsize=8, fmt='.4r')
-    times.append(sc.toc(start=start2, output=True, doprint=False))
-    start2 = sc.tic()
     mpld3.plugins.connect(figure, plugin)
-    times.append(sc.toc(start=start2, output=True, doprint=False))
-    start2 = sc.tic()
 
     # Handle figure size
     if zoom is None: zoom = 0.8
     zoom = 1.8 - zoom
     figsize = (frontendfigsize[0]*zoom, frontendfigsize[1]*zoom)
     figure.set_size_inches(figsize)
-    times.append(sc.toc(start=start2, output=True, doprint=False))
-    start2 = sc.tic()
+
     if len(figure.axes) == 1:
         ax = figure.axes[0]
         legend = ax.get_legend()
@@ -57,16 +50,10 @@ def convert_to_mpld3(figure, zoom=None, graph_pos=None):
             else:                ax.set_position(Bbox(array(frontendpositionlegend)))
         else:
             ax.set_position(Bbox(array(frontendpositionnolegend)))
-    times.append(sc.toc(start=start2, output=True, doprint=False))
-    start2 = sc.tic()
+
     mpld3_dict = mpld3.fig_to_dict(figure) # !~! most likely the yticklabels are getting lost here, could be related to https://stackoverflow.com/a/37277515 perhaps
-    times.append(sc.toc(start=start2, output=True, doprint=False))
-    start2 = sc.tic()
     graph_dict = normalize_obj(mpld3_dict)
-    times.append(sc.toc(start=start2, output=True, doprint=False))
-    start2 = sc.tic()
-    times.append('')
-    # print('> convert_to_mpld3 times', times, sum(time for time in times if isinstance(time, float)))
+
     return graph_dict
 
 
@@ -163,7 +150,7 @@ def process_which(result=None, which=None, advanced=None, includeadvancedtrackin
 
     return which,selectors,advanced,origwhich
 
-import sciris as sc
+
 def make_mpld3_graph_dict(result=None, which=None, zoom=None, startYear=None, endYear=None, includeadvancedtracking=False):
     """
     Converts an Optima sim Result into a dictionary containing
@@ -191,28 +178,20 @@ def make_mpld3_graph_dict(result=None, which=None, zoom=None, startYear=None, en
               }
         }
     """
-    start = sc.tic()
+
     which, selectors, advanced,origwhich = process_which(result=result,which=which, includeadvancedtracking=includeadvancedtracking)
 
     print(">> make_mpld3_graph_dict which:", which)
-    print(">> make_mpld3_graph_dict times starting", sc.toc(start=start, output=True, doprint=False))
+
     graphs = op.makeplots(result, toplot=which, plotstartyear=startYear, plotendyear=endYear, newfig=True, die=False)
-    print(">> make_mpld3_graph_dict times madeplots", sc.toc(start=start, output=True, doprint=False))
     op.reanimateplots(graphs)
-    print(">> make_mpld3_graph_dict times reanimated", sc.toc(start=start, output=True, doprint=False))
 
     graph_selectors = []
     mpld3_graphs = []
-    times = []
-    start2 = sc.tic()
     for g,graph_key in enumerate(graphs):
         graph_selectors.append(extract_graph_selector(graph_key))
-        times.append(sc.toc(start=start2, output=True, doprint=False))
-        start2 = sc.tic()
         graph_pos = None
         graph_dict = convert_to_mpld3(graphs[graph_key], zoom=zoom, graph_pos=graph_pos) # !~! most likely the yticklabels are getting lost here
-        times.append(sc.toc(start=start2, output=True, doprint=False))
-        start2 = sc.tic()
         graph = graphs[graph_key]
         while len(graph.axes)>1:
             print('Warning, too many axes, attempting removal')
@@ -223,11 +202,7 @@ def make_mpld3_graph_dict(result=None, which=None, zoom=None, startYear=None, en
         graph_dict['xlabels'] = xlabels
         graph_dict['id'] = ('graph%i-' % g) + graph_dict['id'] # Prepend graph dict
         mpld3_graphs.append(graph_dict)
-        times.append(sc.toc(start=start2, output=True, doprint=False))
-        start2 = sc.tic()
-        times.append('')
-    print(">> make_mpld3_graph_dict times made dicts", sc.toc(start=start, output=True, doprint=False))
-    print(">> make_mpld3_graph_dict times made dicts", times)
+
     return {
         'graphs': {
             "advanced": advanced,

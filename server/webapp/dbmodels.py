@@ -1,7 +1,5 @@
 import os
 #from flask_restful_swagger import swagger
-import pickle
-
 from sqlalchemy import text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.dialects.postgresql import JSON
@@ -85,9 +83,6 @@ class PyObjectDb(db.Model):
         filename = op.saveobj(filename, portfolio)
         return filename
 
-import sciris as sc
-
-times = []
 
 #@swagger.model
 class ProjectDb(db.Model):
@@ -102,46 +97,14 @@ class ProjectDb(db.Model):
         self.user_id = user_id
 
     def load(self):
-        start = sc.tic()
-
-
-        try:
-            print(">> ProjectDb.load " + self.id.hex)
-            redis_entry = redis.get(self.id.hex)
-
-            start2 = sc.tic()
-            project = op.loadproj(redis_entry, fromdb=True)
-
-
-            # pickled = pickle.dumps(project)
-            # start = sc.tic()
-            # project2 = pickle.loads(pickled)
-            # sc.toc(start=start, label='pickle.loads(pickled)')
-
-        except:
-            import  traceback
-            traceback.print_exc()
-            raise
-        times.append(sc.toc(start=start, output=True, doprint=False))
-        print(' > ProjectDb.load times', times, sum(times))
+        print(">> ProjectDb.load " + self.id.hex)
+        redis_entry = redis.get(self.id.hex)
+        project = op.loadproj(redis_entry, fromdb=True)
         return project
 
     def save_obj(self, obj):
-        try:
-            print(">> ProjectDb.save " + self.id.hex)
-
-            # start = sc.tic()
-            # op.dumpstr(obj)
-            # sc.toc(start=start, label='op.dumpstr')
-            # start = sc.tic()
-            # pickle.dumps(obj)
-            # sc.toc(start=start, label='pickle.dumps(obj)')
-
-            redis.set(self.id.hex, pickle.dumps(obj))
-        except:
-            import  traceback
-            traceback.print_exc()
-            raise
+        print(">> ProjectDb.save " + self.id.hex)
+        redis.set(self.id.hex, op.dumpstr(obj))
 
     def as_file(self, loaddir, filename=None):
         project = self.load()
@@ -202,9 +165,7 @@ class ResultsDb(db.Model):
             self.id = id
 
     def load(self):
-        import inspect
         print(">> ResultsDb.load result-" + self.id.hex)
-        print([frame.function for frame in inspect.stack()])
         return op.loadstr(redis.get("result-" + self.id.hex))
 
     def save_obj(self, obj):

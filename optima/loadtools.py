@@ -1723,10 +1723,7 @@ def migraterevisionfunc(project, migraterevision=True, verbose=2, die=False):
 
     op.printv('Migration successful!', 3, verbose)
     return project
-times = []
-times2 = []
-import sciris as sc
-import pickle
+
 def loadproj(filename=None, folder=None, verbose=2, die=None, fromdb=False, migrateversion='supported', migraterevision='latest', updatefilename=True):
     ''' Load a saved project file -- wrapper for loadobj using legacy classes
         migrateversion: 'supported' = up to the first supported version (default),
@@ -1734,11 +1731,9 @@ def loadproj(filename=None, folder=None, verbose=2, die=None, fromdb=False, migr
                         'minor' = migrate 2.a.b to 2.a.c with c as large as it can be within supported versions (minor calibration changes likely)
                         'major' = 'latest' = migrate 2.a.b to 2.x.y the latest version within supported versions (possible major calibration changes / databook changes)
     '''
-    start = sc.tic()
-    if fromdb: origP = op.loadstr(filename) # Load from database
-    else:      origP = op.loadobj(filename=filename, folder=folder, verbose=(True if verbose>2 else None if verbose>0 else False)) # Normal usage case: load from file
+    if fromdb:    origP = op.loadstr(filename) # Load from database
+    else:         origP = op.loadobj(filename=filename, folder=folder, verbose=(True if verbose>2 else None if verbose>0 else False)) # Normal usage case: load from file
 
-    print(' > loadproj times just loaded', sc.toc(start=start, output=True, doprint=False))
 
     if migrateversion:
         try:
@@ -1748,7 +1743,7 @@ def loadproj(filename=None, folder=None, verbose=2, die=None, fromdb=False, migr
             if die: raise E
             else:   P = origP # Fail: return unmigrated version
     else: P = origP # Don't migrate
-    print(' > loadproj times migratedversion', sc.toc(start=start, output=True, doprint=False))
+
     if P.version not in op.supported_versions:
         errmsg = f'P.version={P.version} of this project "{P.name}" is not supported ({op.supported_versions}) and you have set migrateversion={migrateversion}. '
         if die: raise OptimaException(errmsg)
@@ -1760,15 +1755,13 @@ def loadproj(filename=None, folder=None, verbose=2, die=None, fromdb=False, migr
         raise E # # TODO-kelvin remove this
         if die: raise E
         else: print(f'WARNING: Error when trying to update project "{P.name}" to revision {op.revision} from revision {P.revision}:\n'+str(E))
-    print(' > loadproj times migratedrevision', sc.toc(start=start, output=True, doprint=False))
+
     if str(P.revision) != str(op.revision):
         errmsg = f'P.revision={P.revision} of this project "{P.name}" is not supported ({op.revision}) and you have set migraterevision={migraterevision}. '
         if die: raise OptimaException(errmsg)
         else: print('WARNING!: ' + errmsg + f'\n\tThis will likely cause problems until it is updated to the latest revision {op.revision}')
 
     if not fromdb and updatefilename: P.filename = filename  # Update filename if not being loaded from a database - note this used to be in the `if migrateversion` block, not sure why?
-
-    print(' > loadproj times done', sc.toc(start=start, output=True, doprint=False))
 
     return P
 

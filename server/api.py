@@ -146,24 +146,13 @@ def run_remote_procedure():
     print('>> Checking function "dataio.%s" -> %s' % (fn_name, hasattr(dataio, fn_name)))
     fn = getattr(dataio, fn_name)
 
-    # print(f'> run_remote_procedure setting up args {sc.toc(start=start, output=True, doprint=False)}')
     args = json.get('args', [])
     kwargs = json.get('kwargs', {})
-    print(f'> run_remote_procedure calling function {fn_name} {sc.toc(start=start, output=True, doprint=False)}')
     result = fn(*args, **kwargs)
-    print(f'> run_remote_procedure ran function: {fn_name} {sc.toc(start=start, output=True, doprint=False)}')
-
-    if fn_name == 'load_current_user_project_summaries':
-        print(f'> run_remote_procedure mapping {fn_name} {sc.toc(start=start, output=True, doprint=False)}')
-        result['projects'] = list(result['projects'])
-    print(f'> run_remote_procedure normalize_obj {fn_name} {sc.toc(start=start, output=True, doprint=False)}')
-
     if result is None:
         result = ''
     else:
-        res = normalize_obj(result)
-        print(f'> run_remote_procedure jsonify {fn_name} {sc.toc(start=start, output=True, doprint=False)}')
-        result = jsonify(res)
+        result = jsonify(normalize_obj(result))
     print(f'> run_remote_procedure returning times {fn_name} {sc.toc(start=start, output=True, doprint=False)}')
     return result
 
