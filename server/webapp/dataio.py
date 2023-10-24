@@ -482,10 +482,10 @@ def update_project_with_fn(project_id, update_project_fn, db_session=None):
 times = []
 
 def load_project_summary_from_project_record(project_record):
-    # sc.tic()
+    start = sc.tic()
     project = load_project_from_record(project_record)
-    # times.append(sc.toc(output=True, doprint=False))
-    # print(' > load_project_summary_from_project_record times', times, sum(times))
+    times.append(sc.toc(start=start, output=True, doprint=False))
+    print(' > load_project_summary_from_project_record times', times, sum(times))
     project_summary = parse.get_project_summary_from_project(project)
     project_summary['id'] = project_record.id
     project_summary['userId'] = project_record.user_id
