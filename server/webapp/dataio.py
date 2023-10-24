@@ -1310,12 +1310,17 @@ def load_parset_graphs(project_id, parset_id, calculation_type, which=None, para
     print(">> load_parset_graphs args project_id %s" % project_id)
     print(">> load_parset_graphs args parset_id %s" % parset_id)
     print(">> load_parset_graphs args calculation_type %s" % calculation_type)
+    start = sc.tic()
+
     project = load_project(project_id)
+    print(">> load_parset_graphs times loaded project", sc.toc(start=start, output=True, doprint=False))
     parset = parse.get_parset_from_project(project, parset_id)
+    print(">> load_parset_graphs times loaded parset", sc.toc(start=start, output=True, doprint=False))
 
     result_name = "parset-" + parset.name
     print(">> load_parset_graphs result-name '%s'" % result_name)
     result = load_result(project_id, name=result_name, which=which)
+    print(">> load_parset_graphs times loaded result", sc.toc(start=start, output=True, doprint=False))
     needtorerun = False
     if result is None:
         needtorerun = True
@@ -1349,25 +1354,28 @@ def load_parset_graphs(project_id, parset_id, calculation_type, which=None, para
             whichprocessed = which  # Default to not processing which should still work fine - if it fails it should only be a false positive
         runwithadvancedtracking = runwithadvancedtracking or op.checkifneedtorerunwithadvancedtracking(results=result, which=whichprocessed)
         needtorerun = (needtorerun or runwithadvancedtracking)  # Only overwrite needtorerun from false -> true
-
+    print(">> load_parset_graphs times checked if need to rerun", sc.toc(start=start, output=True, doprint=False))
     if needtorerun:
         delete_result_by_parset_id(project_id, parset_id)
         save_project(project)
         result = None
+        print(">> load_parset_graphs times deleted old result", sc.toc(start=start, output=True, doprint=False))
 
     if result is None or needtorerun:
         print(f">> load_parset_graphs running model, with advancedtracking={runwithadvancedtracking}")
 
         result = project.runsim(name=parset.name, end=endYear, advancedtracking=runwithadvancedtracking) # When running, possibly modify the end year, but not the start
+
         result.which = which
         record = update_or_create_result_record_by_id(
             result, project_id, parset_id, calculation_type, db_session=db.session)
         db.session.add(record)
         print(">> load_parset_graphs calc result for parset '%s'" % parset.name)
         db.session.commit()
+        print(">> load_parset_graphs times ran new result", sc.toc(start=start, output=True, doprint=False))
 
     graph_dict = make_mpld3_graph_dict(result=result, which=which, zoom=zoom, startYear=startYear, endYear=endYear,includeadvancedtracking=includeadvancedtracking)
-
+    print(">> load_parset_graphs times made graphs", sc.toc(start=start, output=True, doprint=False))
     return {
         "parameters": parse.get_parameters_from_parset(parset, advanced=advanced_pars),
         "graphs": graph_dict["graphs"]
