@@ -87,6 +87,8 @@ class PyObjectDb(db.Model):
 
 import sciris as sc
 
+times = []
+
 #@swagger.model
 class ProjectDb(db.Model):
 
@@ -100,6 +102,9 @@ class ProjectDb(db.Model):
         self.user_id = user_id
 
     def load(self):
+        sc.tic()
+
+
         try:
             print(">> ProjectDb.load " + self.id.hex)
             redis_entry = redis.get(self.id.hex)
@@ -119,6 +124,9 @@ class ProjectDb(db.Model):
             import  traceback
             traceback.print_exc()
             raise
+
+        times.append(sc.toc(output=True, doprint=False))
+        print(' > ProjectDb.load times', times, sum(times))
 
     def save_obj(self, obj):
         try:
