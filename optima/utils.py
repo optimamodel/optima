@@ -2417,7 +2417,7 @@ class odict_linked(odict):
         return result
 
 
-
+import time
 class odict_custom(odict):
     '''
     A version of the odict where you have a custom function: `func(keys, values)`
