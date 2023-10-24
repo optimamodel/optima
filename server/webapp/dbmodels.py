@@ -105,9 +105,9 @@ class ProjectDb(db.Model):
         redis_entry = redis.get(self.id.hex)
         # print('redis_entry', redis_entry)
         start = sc.tic()
-        project = pickle.loads(redis_entry)
-        project = op.loadproj(project, fromdb=True)
-        # project = op.loadproj(redis_entry, fromdb=True)
+        print('tye:::::', type(redis_entry))
+        project = op.loadproj(redis_entry, fromdb=True)
+        print('tye2:::::', type(pickle.dumps(project)))
         sc.toc(start=start)
         print('ASDHFI@(#$&')
         return project
