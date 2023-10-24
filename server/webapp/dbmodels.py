@@ -106,7 +106,7 @@ class ProjectDb(db.Model):
         # print('redis_entry', redis_entry)
         start = sc.tic()
         project = pickle.loads(redis_entry)
-        project = op.loadproj(project)
+        project = op.loadproj(project, fromdb=True)
         # project = op.loadproj(redis_entry, fromdb=True)
         sc.toc(start=start)
         print('ASDHFI@(#$&')
