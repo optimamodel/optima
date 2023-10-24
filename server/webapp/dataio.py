@@ -494,10 +494,12 @@ def load_current_user_project_summaries():
 
 import sciris as sc
 def load_all_project_summaries():
+    print(' > load_all_project_summaries')
     query = ProjectDb.query
     start= sc.tic()
     out = {'projects': map(load_project_summary_from_project_record, query.all())}
     sc.toc(start=start, label='load_all_project_summaries():')
+    return out
 
 
 def get_default_populations():
