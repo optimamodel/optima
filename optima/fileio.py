@@ -28,7 +28,9 @@ __all__ = [
     'optimafolder',
     'loadpartable',
     'loadtranstable',
-    'loaddatapars'
+    'loaddatapars',
+    'dumpstr',
+    'loadstr',
 ]
 
 #############################################################################################################################
@@ -70,24 +72,57 @@ def loadobj(filename=None, folder=None, verbose=True):
     if verbose: print('Object loaded from "%s"' % filename)
     return obj
 
+from sciris import dumpstr as sc_dumpstr, loadstr as sc_loadstr
+from pickle import dumps, loads
+def dumpstr(obj, forceold=False, **kwargs):
+    ''' Try to use pickle.dumps otherwise actually dump to str using sc.dumpstr '''
+    if forceold:
+        return sc_dumpstr(obj, **kwargs)
 
-def dumpstr(obj):
-    ''' Write data to a fake file object,then read from it -- used on the FE '''
-    result = None
-    with closing(IO()) as output:
-        with GzipFile(fileobj = output, mode = 'wb') as fileobj: 
-            fileobj.write(pkl.dumps(obj, protocol=-1))
-        output.seek(0)
-        result = output.read()
-    return result
+    try:
+        return dumps(obj, **kwargs)
+    except:
+        print('WARNING REVERTING dumpstr')
+        import traceback
+        traceback.print_exc()
+        return sc_dumpstr(obj, **kwargs)
 
 
-def loadstr(source):
-    ''' Load data from a fake file object -- also used on the FE '''
-    with closing(IO(source)) as output:
-        with GzipFile(fileobj = output, mode = 'rb') as fileobj: 
-            obj = loadpickle(fileobj)
-    return obj
+def loadstr(string, forceold=False, **kwargs):
+    ''' Try to use pickle.dumps otherwise actually dump to str using sc.dumpstr '''
+    if forceold:
+        return sc_loadstr(string, **kwargs)
+
+    try:
+        return loads(string, **kwargs)
+    except:
+        print('WARNING REVERTING loadstr')
+
+        out=  sc_loadstr(string, **kwargs)
+        print(type(out), out.name if hasattr(out, 'name') else None)
+        import traceback
+        traceback.print_exc()
+        return out
+
+
+## Now using sciris dumpstr and loadstr
+# def dumpstr(obj):
+#     ''' Write data to a fake file object,then read from it -- used on the FE '''
+#     result = None
+#     with closing(IO()) as output:
+#         with GzipFile(fileobj = output, mode = 'wb') as fileobj:
+#             fileobj.write(pkl.dumps(obj, protocol=-1))
+#         output.seek(0)
+#         result = output.read()
+#     return result
+#
+#
+# def loadstr(source):
+#     ''' Load data from a fake file object -- also used on the FE '''
+#     with closing(IO(source)) as output:
+#         with GzipFile(fileobj = output, mode = 'rb') as fileobj:
+#             obj = loadpickle(fileobj)
+#     return obj
 
 
 def loadpickle(fileobj, verbose=False):
