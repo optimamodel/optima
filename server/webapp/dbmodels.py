@@ -83,6 +83,7 @@ class PyObjectDb(db.Model):
         filename = op.saveobj(filename, portfolio)
         return filename
 
+import pickle
 
 #@swagger.model
 class ProjectDb(db.Model):
@@ -96,20 +97,24 @@ class ProjectDb(db.Model):
     def __init__(self, user_id):
         self.user_id = user_id
 
+
+
     def load(self):
         import sciris as sc
         print(">> ProjectDb.load " + self.id.hex)
         redis_entry = redis.get(self.id.hex)
         # print('redis_entry', redis_entry)
         start = sc.tic()
-        project = op.loadproj(redis_entry, fromdb=True)
+        project = pickle.loads(redis_entry)
+        project = op.loadproj(project)
+        # project = op.loadproj(redis_entry, fromdb=True)
         sc.toc(start=start)
         print('ASDHFI@(#$&')
         return project
 
     def save_obj(self, obj):
         print(">> ProjectDb.save " + self.id.hex)
-        redis.set(self.id.hex, op.dumpstr(obj))
+        redis.set(self.id.hex, pickle.dumps(obj))
 
     def as_file(self, loaddir, filename=None):
         project = self.load()
