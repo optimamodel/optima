@@ -475,9 +475,8 @@ def update_project_with_fn(project_id, update_project_fn, db_session=None):
     save_project(project, db_session=db_session)
 
 
-def load_project_summary_from_project_record(project_record, save=False):
+def load_project_summary_from_project_record(project_record):
     project = load_project_from_record(project_record)
-    if save: save_project(project)
     project_summary = parse.get_project_summary_from_project(project)
     project_summary['id'] = project_record.id
     project_summary['userId'] = project_record.user_id
@@ -488,11 +487,10 @@ def load_project_summary(project_id):
     project_entry = load_project_record(project_id)
     return load_project_summary_from_project_record(project_entry)
 
-from functools import partial
 
 def load_current_user_project_summaries():
     query = ProjectDb.query.filter_by(user_id=current_user.id)
-    return {'projects': map(partial(load_project_summary_from_project_record,save=True), query.all())}
+    return {'projects': map(load_project_summary_from_project_record, query.all())}
 
 
 def load_all_project_summaries():
