@@ -28,17 +28,24 @@ def extract_graph_selector(graph_key):
         suffix = ""
     return base + suffix
 
-
+times = []
 def convert_to_mpld3(figure, zoom=None, graph_pos=None):
+    start2 = sc.tic()
+
     plugin = mpld3.plugins.MousePosition(fontsize=8, fmt='.4r')
+    times.append(sc.toc(start=start2, output=True, doprint=False))
+    start2 = sc.tic()
     mpld3.plugins.connect(figure, plugin)
+    times.append(sc.toc(start=start2, output=True, doprint=False))
+    start2 = sc.tic()
 
     # Handle figure size
     if zoom is None: zoom = 0.8
     zoom = 1.8 - zoom
     figsize = (frontendfigsize[0]*zoom, frontendfigsize[1]*zoom)
     figure.set_size_inches(figsize)
-
+    times.append(sc.toc(start=start2, output=True, doprint=False))
+    start2 = sc.tic()
     if len(figure.axes) == 1:
         ax = figure.axes[0]
         legend = ax.get_legend()
@@ -50,10 +57,16 @@ def convert_to_mpld3(figure, zoom=None, graph_pos=None):
             else:                ax.set_position(Bbox(array(frontendpositionlegend)))
         else:
             ax.set_position(Bbox(array(frontendpositionnolegend)))
-
+    times.append(sc.toc(start=start2, output=True, doprint=False))
+    start2 = sc.tic()
     mpld3_dict = mpld3.fig_to_dict(figure) # !~! most likely the yticklabels are getting lost here, could be related to https://stackoverflow.com/a/37277515 perhaps
+    times.append(sc.toc(start=start2, output=True, doprint=False))
+    start2 = sc.tic()
     graph_dict = normalize_obj(mpld3_dict)
-
+    times.append(sc.toc(start=start2, output=True, doprint=False))
+    start2 = sc.tic()
+    times.append('')
+    print('> convert_to_mpld3 times', times, sum(time for time in times if isinstance(time, float)))
     return graph_dict
 
 
