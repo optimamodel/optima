@@ -123,7 +123,6 @@ class ProjectDb(db.Model):
             traceback.print_exc()
             raise
 
-        times.append(sc.toc(start=start, output=True, doprint=False))
         print(' > ProjectDb.load times', times, sum(times))
         return project
 
