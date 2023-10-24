@@ -146,10 +146,10 @@ def run_remote_procedure():
     print('>> Checking function "dataio.%s" -> %s' % (fn_name, hasattr(dataio, fn_name)))
     fn = getattr(dataio, fn_name)
 
-    print(f'> run_remote_procedure setting up args {sc.toc(start=start, output=True, doprint=False)}')
+    # print(f'> run_remote_procedure setting up args {sc.toc(start=start, output=True, doprint=False)}')
     args = json.get('args', [])
     kwargs = json.get('kwargs', {})
-    print(f'> run_remote_procedure calling function {sc.toc(start=start, output=True, doprint=False)}')
+    # print(f'> run_remote_procedure calling function {sc.toc(start=start, output=True, doprint=False)}')
     result = fn(*args, **kwargs)
     print(f'> run_remote_procedure normalize_obj {sc.toc(start=start, output=True, doprint=False)}')
 
