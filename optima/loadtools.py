@@ -1737,7 +1737,11 @@ def loadproj(filename=None, folder=None, verbose=2, die=None, fromdb=False, migr
     start = sc.tic()
     if fromdb:
         try: origP = pickle.loads(filename) # Load from database
-        except: origP = op.loadstr(filename)
+        except:
+            import traceback
+            traceback.print_exc()
+            origP = op.loadstr(filename)
+            print('times !! reverted', origP.name)
     else:         origP = op.loadobj(filename=filename, folder=folder, verbose=(True if verbose>2 else None if verbose>0 else False)) # Normal usage case: load from file
 
     print(' > loadproj times just loaded', sc.toc(start=start, output=True, doprint=False))
