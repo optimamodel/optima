@@ -426,7 +426,9 @@ def save_project(project, db_session=None, is_skip_result=False):
         db_session = db.session
     project_record = load_project_record(project.uid, db_session=db_session)
     # Copy the project, only save what we want...
+    start = sc.tic()
     new_project = op.dcp(project)
+    sc.toc(label='op.dcp(project)')
     new_project.spreadsheet = None
     if is_skip_result:
         new_project.results = op.odict()
