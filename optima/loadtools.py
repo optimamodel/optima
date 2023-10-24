@@ -1525,22 +1525,22 @@ def parsandprograms_odictlinked(project=None, **kwargs):
     '''
     if project is not None:
         # propagate version, then we make sure that any new parsets we add have projectversion == version
-        project.parsets = op.odict_custom(project.parsets, func=project.propagateversion)
-        project.parsets.func = project.checkpropagateversionlink
-        project.parsets.func(project.parsets, project.parsets.keys(), project.parsets.values()) # run it once to link
+        project.parsets = op.odict_custom(project.parsets, func=None)
+        project.parsets.func = None
+        # project.parsets.func(project.parsets, project.parsets.keys(), project.parsets.values()) # run it once to link
 
         for parset in project.parsets.values():
-            parset.pars = op.odict_custom(parset.pars, func=parset.propagateversion)
-            parset.pars.func = parset.checkpropagateversion
+            parset.pars = op.odict_custom(parset.pars, func=None)
+            parset.pars.func = None
 
         # propagate version, then we make sure that any new parsets we add have projectversion == version
-        project.progsets = op.odict_custom(project.progsets, func=project.propagateversion)
-        project.progsets.func = project.checkpropagateversionlink
-        project.progsets.func(project.progsets, project.progsets.keys(), project.progsets.values())  # run it once to link
+        project.progsets = op.odict_custom(project.progsets, func=None)
+        project.progsets.func = None
+        # project.progsets.func(project.progsets, project.progsets.keys(), project.progsets.values())  # run it once to link
 
         for progset in project.progsets.values():
-            progset.programs = op.odict_custom(progset.programs, func=progset.propagateversion)
-            progset.programs.func = progset.checkpropagateversion
+            progset.programs = op.odict_custom(progset.programs, func=None)
+            progset.programs.func = None
 
 
 ##########################################################################################
