@@ -1,5 +1,7 @@
 import os
 #from flask_restful_swagger import swagger
+import pickle
+
 from sqlalchemy import text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.dialects.postgresql import JSON
@@ -83,7 +85,7 @@ class PyObjectDb(db.Model):
         filename = op.saveobj(filename, portfolio)
         return filename
 
-import pickle
+import sciris as sc
 
 #@swagger.model
 class ProjectDb(db.Model):
@@ -105,16 +107,28 @@ class ProjectDb(db.Model):
         redis_entry = redis.get(self.id.hex)
         # print('redis_entry', redis_entry)
         start = sc.tic()
-        print('tye:::::', type(redis_entry))
         project = op.loadproj(redis_entry, fromdb=True)
-        print('tye2:::::', type(pickle.dumps(project)))
-        sc.toc(start=start)
+        sc.toc(start=start, label='loadstr')
+
+        pickled = pickle.dumps(obj)
+        start = sc.tic()
+        project2 = pickle.loads(pickled)
+        sc.toc(start=start, label='pickle.loads(pickled)')
+
         print('ASDHFI@(#$&')
         return project
 
     def save_obj(self, obj):
         print(">> ProjectDb.save " + self.id.hex)
-        redis.set(self.id.hex, pickle.dumps(obj))
+
+        start = sc.tic()
+        op.dumpstr(obj)
+        sc.toc(start=start, label='op.dumpstr')
+        start = sc.tic()
+        pickle.dumps(obj)
+        sc.toc(start=start, label='pickle.dumps(obj)')
+
+        redis.set(self.id.hex, op.dumpstr(obj))
 
     def as_file(self, loaddir, filename=None):
         project = self.load()
