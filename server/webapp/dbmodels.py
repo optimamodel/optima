@@ -112,8 +112,8 @@ class ProjectDb(db.Model):
             # start = sc.tic()
             # project2 = pickle.loads(pickled)
             # sc.toc(start=start, label='pickle.loads(pickled)')
-
-            # print('ASDHFI@(#$&')
+            print(op.dumpstr(project) == redis_entry)
+            print('ASDHFI@(#$&')
             return project
         except:
             import  traceback
