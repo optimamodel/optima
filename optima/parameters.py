@@ -88,38 +88,23 @@ class Parameterset(object):
         return copy
 
     def __setattr__(self, name, value):
-        if name == 'pars':
-            if not isinstance(value, odict_custom):
-                value = odict_custom(value, func=self.checkpropagateversion)
-            value.func = self.checkpropagateversion
+        # if name == 'pars':
+        #     if not isinstance(value, odict_custom):
+        #         value = odict_custom(value, func=self.checkpropagateversion)
+        #     value.func = self.checkpropagateversion
 
         super(Parameterset, self).__setattr__(name, value)
 
-        if name == 'pars': # If we are adding pars, make sure they match the projectversion of the parset
-            self.checkpropagateversion(None, None, self.pars.values())
-        if name == 'projectversion':
-            self.propagateversion(None, None, self.pars.values())
+        # if name == 'pars': # If we are adding pars, make sure they match the projectversion of the parset
+        #     self.checkpropagateversion(None, None, self.pars.values())
+        # if name == 'projectversion':
+        #     self.propagateversion(None, None, self.pars.values())
 
     def propagateversion(self, odict, keys, values, version=None, die=False):
-        if version is not None: self.projectversion = version
-        values = promotetolist(values)
-        for val in values:
-            try: val.projectversion = self.projectversion
-            except: # try to add projectversion but don't stress if it doesn't work
-                if die: raise
+        pass
 
     def checkversion(self, odict, keys, values):
-        if self.projectversion is None:
-            return
-        values = promotetolist(values)
-        for val in values:
-            if not isinstance(val, Par): continue
-            if not hasattr(val, 'projectversion'):
-                raise OptimaException(f'Cannot add {type(val)} "{val.name}" to Parameterset "{self.name}" because it is '
-                                      f'missing a projectversion so it might not be compatible with Parameterset.projectversion={self.projectversion}')
-            if self.projectversion is not None and val.projectversion is not None and val.projectversion != self.projectversion:
-                raise OptimaException(f'Cannot add {type(val)} "{val.name}" to Parameterset "{self.name}" because it has '
-                                      f'a different projectversion={val.projectversion} than the Parameterset.projectversion={self.projectversion}')
+        pass
     def checkpropagateversion(self, odict, keys, values):
         pass
 
