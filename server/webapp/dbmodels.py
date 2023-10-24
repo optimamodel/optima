@@ -111,7 +111,7 @@ class ProjectDb(db.Model):
             project = op.loadproj(redis_entry, fromdb=True)
             sc.toc(start=start, label='loadstr')
 
-            pickled = pickle.dumps(obj)
+            pickled = pickle.dumps(project)
             start = sc.tic()
             project2 = pickle.loads(pickled)
             sc.toc(start=start, label='pickle.loads(pickled)')
