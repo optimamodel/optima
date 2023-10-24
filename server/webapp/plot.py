@@ -190,10 +190,16 @@ def make_mpld3_graph_dict(result=None, which=None, zoom=None, startYear=None, en
 
     graph_selectors = []
     mpld3_graphs = []
+    times = []
+    start2 = sc.tic()
     for g,graph_key in enumerate(graphs):
         graph_selectors.append(extract_graph_selector(graph_key))
+        times.append(sc.toc(start=start2, output=True, doprint=False))
+        start2 = sc.tic()
         graph_pos = None
         graph_dict = convert_to_mpld3(graphs[graph_key], zoom=zoom, graph_pos=graph_pos) # !~! most likely the yticklabels are getting lost here
+        times.append(sc.toc(start=start2, output=True, doprint=False))
+        start2 = sc.tic()
         graph = graphs[graph_key]
         while len(graph.axes)>1:
             print('Warning, too many axes, attempting removal')
@@ -204,7 +210,11 @@ def make_mpld3_graph_dict(result=None, which=None, zoom=None, startYear=None, en
         graph_dict['xlabels'] = xlabels
         graph_dict['id'] = ('graph%i-' % g) + graph_dict['id'] # Prepend graph dict
         mpld3_graphs.append(graph_dict)
+        times.append(sc.toc(start=start2, output=True, doprint=False))
+        start2 = sc.tic()
+        times.append('')
     print(">> make_mpld3_graph_dict times made dicts", sc.toc(start=start, output=True, doprint=False))
+    print(">> make_mpld3_graph_dict times made dicts", times)
     return {
         'graphs': {
             "advanced": advanced,
