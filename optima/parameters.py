@@ -88,17 +88,17 @@ class Parameterset(object):
         return copy
 
     def __setattr__(self, name, value):
-        # if name == 'pars':
-        #     if not isinstance(value, odict_custom):
-        #         value = odict_custom(value, func=self.checkpropagateversion)
-        #     value.func = self.checkpropagateversion
+        if name == 'pars':
+            if not isinstance(value, odict_custom):
+                value = odict_custom(value, func=self.checkpropagateversion)
+            value.func = self.checkpropagateversion
 
         super(Parameterset, self).__setattr__(name, value)
 
-        # if name == 'pars': # If we are adding pars, make sure they match the projectversion of the parset
-        #     self.checkpropagateversion(None, None, self.pars.values())
-        # if name == 'projectversion':
-        #     self.propagateversion(None, None, self.pars.values())
+        if name == 'pars': # If we are adding pars, make sure they match the projectversion of the parset
+            self.checkpropagateversion(None, None, self.pars.values())
+        if name == 'projectversion':
+            self.propagateversion(None, None, self.pars.values())
 
     def propagateversion(self, odict, keys, values, version=None, die=False):
         pass

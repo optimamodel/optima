@@ -62,17 +62,17 @@ class Programset(object):
         return copy
 
     def __setattr__(self, name, value):
-        # if name == 'programs':
-        #     if not isinstance(value, odict_custom):
-        #         value = odict_custom(value, func=self.checkpropagateversion)
-        #     value.func = self.checkpropagateversion
+        if name == 'programs':
+            if not isinstance(value, odict_custom):
+                value = odict_custom(value, func=self.checkpropagateversion)
+            value.func = self.checkpropagateversion
 
         super(Programset, self).__setattr__(name, value)
 
-        # if name == 'programs': # If we are adding programs, make sure they match the projectversion of the parset
-        #     self.checkpropagateversion(None, None, self.programs.values())
-        # if name == 'projectversion':
-        #     self.propagateversion(None, None, self.programs.values())
+        if name == 'programs': # If we are adding programs, make sure they match the projectversion of the parset
+            self.checkpropagateversion(None, None, self.programs.values())
+        if name == 'projectversion':
+            self.propagateversion(None, None, self.programs.values())
 
     def propagateversion(self, odict, keys, values, version=None, die=False):
         pass
