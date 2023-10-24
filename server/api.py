@@ -151,12 +151,14 @@ def run_remote_procedure():
     kwargs = json.get('kwargs', {})
     print(f'> run_remote_procedure calling function {sc.toc(start=start, output=True, doprint=False)}')
     result = fn(*args, **kwargs)
-    print(f'> run_remote_procedure jsonifying {sc.toc(start=start, output=True, doprint=False)}')
+    print(f'> run_remote_procedure normalize_obj {sc.toc(start=start, output=True, doprint=False)}')
 
     if result is None:
         result = ''
     else:
-        result = jsonify(normalize_obj(result))
+        res = normalize_obj(result)
+        print(f'> run_remote_procedure jsonify {sc.toc(start=start, output=True, doprint=False)}')
+        result = jsonify(res)
     print(f'> run_remote_procedure returning {sc.toc(start=start, output=True, doprint=False)}')
     return result
 
