@@ -149,8 +149,11 @@ def run_remote_procedure():
     # print(f'> run_remote_procedure setting up args {sc.toc(start=start, output=True, doprint=False)}')
     args = json.get('args', [])
     kwargs = json.get('kwargs', {})
-    # print(f'> run_remote_procedure calling function {sc.toc(start=start, output=True, doprint=False)}')
+    print(f'> run_remote_procedure calling function {sc.toc(start=start, output=True, doprint=False)}')
     result = fn(*args, **kwargs)
+    if isinstance(result, map):
+        print(f'> run_remote_procedure mapping {sc.toc(start=start, output=True, doprint=False)}')
+        result = list(result)
     print(f'> run_remote_procedure normalize_obj {sc.toc(start=start, output=True, doprint=False)}')
 
     if result is None:
