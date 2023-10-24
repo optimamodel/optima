@@ -1733,7 +1733,7 @@ def loadproj(filename=None, folder=None, verbose=2, die=None, fromdb=False, migr
     '''
     if fromdb:    origP = op.loadstr(filename) # Load from database
     else:         origP = op.loadobj(filename=filename, folder=folder, verbose=(True if verbose>2 else None if verbose>0 else False)) # Normal usage case: load from file
-    print('origP', type(origP))
+
 
     if migrateversion:
         try:

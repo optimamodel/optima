@@ -99,24 +99,21 @@ class ProjectDb(db.Model):
     def __init__(self, user_id):
         self.user_id = user_id
 
-
-
     def load(self):
         try:
-            import sciris as sc
             print(">> ProjectDb.load " + self.id.hex)
             redis_entry = redis.get(self.id.hex)
             # print('redis_entry', redis_entry)
             start = sc.tic()
             project = op.loadproj(redis_entry, fromdb=True)
-            sc.toc(start=start, label='loadstr')
+            sc.toc(start=start, label='Project: loadstr')
 
-            pickled = pickle.dumps(project)
-            start = sc.tic()
-            project2 = pickle.loads(pickled)
-            sc.toc(start=start, label='pickle.loads(pickled)')
+            # pickled = pickle.dumps(project)
+            # start = sc.tic()
+            # project2 = pickle.loads(pickled)
+            # sc.toc(start=start, label='pickle.loads(pickled)')
 
-            print('ASDHFI@(#$&')
+            # print('ASDHFI@(#$&')
             return project
         except:
             import  traceback
@@ -127,12 +124,12 @@ class ProjectDb(db.Model):
         try:
             print(">> ProjectDb.save " + self.id.hex)
 
-            start = sc.tic()
-            op.dumpstr(obj)
-            sc.toc(start=start, label='op.dumpstr')
-            start = sc.tic()
-            pickle.dumps(obj)
-            sc.toc(start=start, label='pickle.dumps(obj)')
+            # start = sc.tic()
+            # op.dumpstr(obj)
+            # sc.toc(start=start, label='op.dumpstr')
+            # start = sc.tic()
+            # pickle.dumps(obj)
+            # sc.toc(start=start, label='pickle.dumps(obj)')
 
             redis.set(self.id.hex, op.dumpstr(obj))
         except:
