@@ -150,7 +150,7 @@ def process_which(result=None, which=None, advanced=None, includeadvancedtrackin
 
     return which,selectors,advanced,origwhich
 
-
+import sciris as sc
 def make_mpld3_graph_dict(result=None, which=None, zoom=None, startYear=None, endYear=None, includeadvancedtracking=False):
     """
     Converts an Optima sim Result into a dictionary containing
@@ -178,13 +178,15 @@ def make_mpld3_graph_dict(result=None, which=None, zoom=None, startYear=None, en
               }
         }
     """
-
+    start = sc.tic()
     which, selectors, advanced,origwhich = process_which(result=result,which=which, includeadvancedtracking=includeadvancedtracking)
 
     print(">> make_mpld3_graph_dict which:", which)
-
+    print(">> make_mpld3_graph_dict times starting", sc.toc(start=start, output=True, doprint=False))
     graphs = op.makeplots(result, toplot=which, plotstartyear=startYear, plotendyear=endYear, newfig=True, die=False)
+    print(">> make_mpld3_graph_dict times madeplots", sc.toc(start=start, output=True, doprint=False))
     op.reanimateplots(graphs)
+    print(">> make_mpld3_graph_dict times reanimated", sc.toc(start=start, output=True, doprint=False))
 
     graph_selectors = []
     mpld3_graphs = []
@@ -202,7 +204,7 @@ def make_mpld3_graph_dict(result=None, which=None, zoom=None, startYear=None, en
         graph_dict['xlabels'] = xlabels
         graph_dict['id'] = ('graph%i-' % g) + graph_dict['id'] # Prepend graph dict
         mpld3_graphs.append(graph_dict)
-
+    print(">> make_mpld3_graph_dict times made dicts", sc.toc(start=start, output=True, doprint=False))
     return {
         'graphs': {
             "advanced": advanced,
