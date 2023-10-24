@@ -490,7 +490,10 @@ def load_project_summary(project_id):
 
 def load_current_user_project_summaries():
     query = ProjectDb.query.filter_by(user_id=current_user.id)
-    return {'projects': map(load_project_summary_from_project_record, query.all())}
+    start = sc.tic()
+    out= {'projects': map(load_project_summary_from_project_record, query.all())}
+    sc.toc(start=start, label='load_current_user_project_summaries():')
+    return out
 
 import sciris as sc
 def load_all_project_summaries():
