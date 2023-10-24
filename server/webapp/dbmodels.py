@@ -119,7 +119,7 @@ class ProjectDb(db.Model):
             # sc.toc(start=start, label='pickle.loads(pickled)')
             print(op.dumpstr(project) == redis_entry)
             print('ASDHFI@(#$&')
-            return project
+
         except:
             import  traceback
             traceback.print_exc()
@@ -127,6 +127,7 @@ class ProjectDb(db.Model):
 
         times.append(sc.toc(output=True, doprint=False))
         print(' > ProjectDb.load times', times, sum(times))
+        return project
 
     def save_obj(self, obj):
         try:
