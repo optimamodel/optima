@@ -137,7 +137,7 @@ class ProjectDb(db.Model):
             # pickle.dumps(obj)
             # sc.toc(start=start, label='pickle.dumps(obj)')
 
-            redis.set(self.id.hex, op.dumpstr(obj))
+            redis.set(self.id.hex, pickle.dumps(obj))
         except:
             import  traceback
             traceback.print_exc()

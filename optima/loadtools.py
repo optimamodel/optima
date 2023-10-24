@@ -1726,6 +1726,7 @@ def migraterevisionfunc(project, migraterevision=True, verbose=2, die=False):
 times = []
 times2 = []
 import sciris as sc
+import pickle
 def loadproj(filename=None, folder=None, verbose=2, die=None, fromdb=False, migrateversion='supported', migraterevision='latest', updatefilename=True):
     ''' Load a saved project file -- wrapper for loadobj using legacy classes
         migrateversion: 'supported' = up to the first supported version (default),
@@ -1734,7 +1735,9 @@ def loadproj(filename=None, folder=None, verbose=2, die=None, fromdb=False, migr
                         'major' = 'latest' = migrate 2.a.b to 2.x.y the latest version within supported versions (possible major calibration changes / databook changes)
     '''
     start = sc.tic()
-    if fromdb:    origP = op.loadstr(filename) # Load from database
+    if fromdb:
+        try: origP = op.loadstr(filename) # Load from database
+        except: origP = pickle.loads(filename)
     else:         origP = op.loadobj(filename=filename, folder=folder, verbose=(True if verbose>2 else None if verbose>0 else False)) # Normal usage case: load from file
 
     print(' > loadproj times just loaded', sc.toc(start=start, output=True, doprint=False))

@@ -164,7 +164,7 @@ def run_remote_procedure():
         res = normalize_obj(result)
         print(f'> run_remote_procedure jsonify {sc.toc(start=start, output=True, doprint=False)}')
         result = jsonify(res)
-    print(f'> run_remote_procedure returning {sc.toc(start=start, output=True, doprint=False)}')
+    print(f'> run_remote_procedure returning times {sc.toc(start=start, output=True, doprint=False)}')
     return result
 
 
