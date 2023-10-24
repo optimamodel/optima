@@ -102,32 +102,29 @@ class ProjectDb(db.Model):
         self.user_id = user_id
 
     def load(self):
-        sc.tic()
+        start = sc.tic()
 
 
         try:
             print(">> ProjectDb.load " + self.id.hex)
             redis_entry = redis.get(self.id.hex)
-            # print('redis_entry', redis_entry)
-            start = sc.tic()
+
+            start2 = sc.tic()
             project = op.loadproj(redis_entry, fromdb=True)
-            times.append(sc.toc(output=True, doprint=False))
-            print(' > ProjectDb.load times', times, sum(times))
-            sc.toc(start=start, label='Project: loadstr')
+            times.append(sc.toc(start=start2, output=True, doprint=False))
 
             # pickled = pickle.dumps(project)
             # start = sc.tic()
             # project2 = pickle.loads(pickled)
             # sc.toc(start=start, label='pickle.loads(pickled)')
-            # print(op.dumpstr(project) == redis_entry)
-            print('ASDHFI@(#$&')
 
         except:
             import  traceback
             traceback.print_exc()
             raise
 
-
+        times.append(sc.toc(start=start, output=True, doprint=False))
+        print(' > ProjectDb.load times', times, sum(times))
         return project
 
     def save_obj(self, obj):
