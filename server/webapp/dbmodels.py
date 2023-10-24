@@ -111,7 +111,7 @@ class ProjectDb(db.Model):
 
             start2 = sc.tic()
             project = op.loadproj(redis_entry, fromdb=True)
-            times.append(sc.toc(start=start2, output=True, doprint=False))
+
 
             # pickled = pickle.dumps(project)
             # start = sc.tic()
@@ -122,7 +122,7 @@ class ProjectDb(db.Model):
             import  traceback
             traceback.print_exc()
             raise
-
+        times.append(sc.toc(start=start, output=True, doprint=False))
         print(' > ProjectDb.load times', times, sum(times))
         return project
 
