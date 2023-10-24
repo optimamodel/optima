@@ -101,12 +101,32 @@ class Parameterset(object):
             self.propagateversion(None, None, self.pars.values())
 
     def propagateversion(self, odict, keys, values, version=None, die=False):
-        pass
+        if version is not None: self.projectversion = version
+        values = promotetolist(values)
+        for val in values:
+            try: val.projectversion = self.projectversion
+            except: # try to add projectversion but don't stress if it doesn't work
+                if die: raise
 
     def checkversion(self, odict, keys, values):
-        pass
+        if self.projectversion is None:
+            return
+        values = promotetolist(values)
+        for val in values:
+            if not isinstance(val, Par): continue
+            if not hasattr(val, 'projectversion'):
+                raise OptimaException(f'Cannot add {type(val)} "{val.name}" to Parameterset "{self.name}" because it is '
+                                      f'missing a projectversion so it might not be compatible with Parameterset.projectversion={self.projectversion}')
+            if self.projectversion is not None and val.projectversion is not None and val.projectversion != self.projectversion:
+                raise OptimaException(f'Cannot add {type(val)} "{val.name}" to Parameterset "{self.name}" because it has '
+                                      f'a different projectversion={val.projectversion} than the Parameterset.projectversion={self.projectversion}')
     def checkpropagateversion(self, odict, keys, values):
-        pass
+        print('Parset checkpropagateversion keys', keys, 'self.projectversion', self.projectversion)
+        values = promotetolist(values)
+
+        if self.projectversion is not None:
+            self.checkversion(odict, keys, values)
+            self.propagateversion(odict, keys, values)
 
     def __repr__(self):
         ''' Print out useful information when called'''
