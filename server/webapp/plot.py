@@ -66,7 +66,7 @@ def convert_to_mpld3(figure, zoom=None, graph_pos=None):
     times.append(sc.toc(start=start2, output=True, doprint=False))
     start2 = sc.tic()
     times.append('')
-    print('> convert_to_mpld3 times', times, sum(time for time in times if isinstance(time, float)))
+    # print('> convert_to_mpld3 times', times, sum(time for time in times if isinstance(time, float)))
     return graph_dict
 
 

@@ -151,7 +151,7 @@ def run_remote_procedure():
     kwargs = json.get('kwargs', {})
     print(f'> run_remote_procedure calling function {fn_name} {sc.toc(start=start, output=True, doprint=False)}')
     result = fn(*args, **kwargs)
-    print(f'> run_remote_procedure type(result): {fn_name} {result} {sc.toc(start=start, output=True, doprint=False)}')
+    print(f'> run_remote_procedure ran function: {fn_name} {sc.toc(start=start, output=True, doprint=False)}')
 
     if fn_name == 'load_current_user_project_summaries':
         print(f'> run_remote_procedure mapping {fn_name} {sc.toc(start=start, output=True, doprint=False)}')

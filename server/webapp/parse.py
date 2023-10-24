@@ -146,7 +146,7 @@ def normalize_obj(obj):
         if isinstance(obj, range):
             return list(obj)
 
-    print(' > normalize_obj couldnotfind: ', type(obj), obj.name if hasattr(obj, 'name') else None)
+    # print(' > normalize_obj couldnotfind: ', type(obj), obj.name if hasattr(obj, 'name') else None)
     return obj
 
 
