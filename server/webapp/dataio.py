@@ -490,9 +490,7 @@ def load_project_summary(project_id):
 
 def load_current_user_project_summaries():
     query = ProjectDb.query.filter_by(user_id=current_user.id)
-    projects = list(map(load_project_summary_from_project_record, query.all()))
-    for project in projects: save_project(project)
-    return {'projects': projects}
+    return {'projects': map(load_project_summary_from_project_record, query.all())}
 
 
 def load_all_project_summaries():
