@@ -425,13 +425,9 @@ def save_project(project, db_session=None, is_skip_result=False):
     if db_session is None:
         db_session = db.session
     project_record = load_project_record(project.uid, db_session=db_session)
-    # Copy the project, only save what we want...
-    start = sc.tic()
-    new_project = op.dcp(project)
-    sc.toc(label='op.dcp(project)')
-    new_project.spreadsheet = None
-    if is_skip_result:
-        new_project.results = op.odict()
+    if is_skip_result: # Copy the project, only save what we want...
+        project = op.dcp(project)
+        project.results = op.odict()
     project_record.save_obj(project)
     db_session.add(project_record)
     db_session.commit()
