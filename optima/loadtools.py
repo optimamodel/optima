@@ -1731,9 +1731,9 @@ def loadproj(filename=None, folder=None, verbose=2, die=None, fromdb=False, migr
                         'minor' = migrate 2.a.b to 2.a.c with c as large as it can be within supported versions (minor calibration changes likely)
                         'major' = 'latest' = migrate 2.a.b to 2.x.y the latest version within supported versions (possible major calibration changes / databook changes)
     '''
-    if fromdb:    origP = filename # Load from database
+    if fromdb:    origP = op.loadstr(filename) # Load from database
     else:         origP = op.loadobj(filename=filename, folder=folder, verbose=(True if verbose>2 else None if verbose>0 else False)) # Normal usage case: load from file
-    print('origP', origP)
+    print('origP', type(origP))
 
     if migrateversion:
         try:
