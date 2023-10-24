@@ -2418,6 +2418,7 @@ class odict_linked(odict):
 
 
 import time
+import inspect
 class odict_custom(odict):
     '''
     A version of the odict where you have a custom function: `func(keys, values)`
