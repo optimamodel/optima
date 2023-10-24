@@ -82,6 +82,9 @@ def dumpstr(obj, forceold=False, **kwargs):
     try:
         return dumps(obj, **kwargs)
     except:
+        print('WARNING REVERTING dumpstr')
+        import traceback
+        traceback.print_exc()
         return sc_dumpstr(obj, **kwargs)
 
 
@@ -93,6 +96,9 @@ def loadstr(string, forceold=False, **kwargs):
     try:
         return loads(string, **kwargs)
     except:
+        print('WARNING REVERTING loadstr')
+        import traceback
+        traceback.print_exc()
         return sc_loadstr(string, **kwargs)
 
 
