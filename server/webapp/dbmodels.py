@@ -202,7 +202,9 @@ class ResultsDb(db.Model):
             self.id = id
 
     def load(self):
+        import inspect
         print(">> ResultsDb.load result-" + self.id.hex)
+        print([frame.function for frame in inspect.stack()])
         return op.loadstr(redis.get("result-" + self.id.hex))
 
     def save_obj(self, obj):
