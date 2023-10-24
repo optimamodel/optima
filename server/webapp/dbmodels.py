@@ -99,6 +99,7 @@ class ProjectDb(db.Model):
     def load(self):
         print(">> ProjectDb.load " + self.id.hex)
         redis_entry = redis.get(self.id.hex)
+        print('redis_entry', redis_entry)
         project = op.loadproj(redis_entry, fromdb=True)
         return project
 
