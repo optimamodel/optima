@@ -151,7 +151,7 @@ def run_remote_procedure():
     kwargs = json.get('kwargs', {})
     print(f'> run_remote_procedure calling function {sc.toc(start=start, output=True, doprint=False)}')
     result = fn(*args, **kwargs)
-    print(f'> run_remote_procedure type(result): {type(result)} {sc.toc(start=start, output=True, doprint=False)}')
+    print(f'> run_remote_procedure type(result): {result} {sc.toc(start=start, output=True, doprint=False)}')
 
     if isinstance(result, map):
         print(f'> run_remote_procedure mapping {sc.toc(start=start, output=True, doprint=False)}')
