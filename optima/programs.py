@@ -62,44 +62,47 @@ class Programset(object):
         return copy
 
     def __setattr__(self, name, value):
-        if name == 'programs':
-            if not isinstance(value, odict_custom):
-                value = odict_custom(value, func=self.checkpropagateversion)
-            value.func = self.checkpropagateversion
+        # if name == 'programs':
+        #     if not isinstance(value, odict_custom):
+        #         value = odict_custom(value, func=self.checkpropagateversion)
+        #     value.func = self.checkpropagateversion
 
         super(Programset, self).__setattr__(name, value)
 
-        if name == 'programs': # If we are adding programs, make sure they match the projectversion of the parset
-            self.checkpropagateversion(None, None, self.programs.values())
-        if name == 'projectversion':
-            self.propagateversion(None, None, self.programs.values())
+        # if name == 'programs': # If we are adding programs, make sure they match the projectversion of the parset
+        #     self.checkpropagateversion(None, None, self.programs.values())
+        # if name == 'projectversion':
+        #     self.propagateversion(None, None, self.programs.values())
 
     def propagateversion(self, odict, keys, values, version=None, die=False):
-        if version is not None: self.projectversion = version
-        values = promotetolist(values)
-        for val in values:
-            try: val.projectversion = self.projectversion
-            except: # try to add projectversion but don't stress if it doesn't work
-                if die: raise
+        pass
+        # if version is not None: self.projectversion = version
+        # values = promotetolist(values)
+        # for val in values:
+        #     try: val.projectversion = self.projectversion
+        #     except: # try to add projectversion but don't stress if it doesn't work
+        #         if die: raise
 
     def checkversion(self, odict, keys, values):
-        if self.projectversion is None:
-            return
-        values = promotetolist(values)
-        for val in values:
-            if not hasattr(val, 'projectversion'):
-                raise OptimaException(f'Cannot add {type(val)} "{val.name}" to Programset "{self.name}" because it is '
-                                      f'missing a projectversion so it might not be compatible with Programset.projectversion={self.projectversion}')
-            if self.projectversion is not None and val.projectversion is not None and val.projectversion != self.projectversion:
-                raise OptimaException(f'Cannot add {type(val)} "{val.name}" to Programset "{self.name}" because it has '
-                                      f'a different projectversion={val.projectversion} than the Programset.projectversion={self.projectversion}')
+        pass
+        # if self.projectversion is None:
+        #     return
+        # values = promotetolist(values)
+        # for val in values:
+        #     if not hasattr(val, 'projectversion'):
+        #         raise OptimaException(f'Cannot add {type(val)} "{val.name}" to Programset "{self.name}" because it is '
+        #                               f'missing a projectversion so it might not be compatible with Programset.projectversion={self.projectversion}')
+        #     if self.projectversion is not None and val.projectversion is not None and val.projectversion != self.projectversion:
+        #         raise OptimaException(f'Cannot add {type(val)} "{val.name}" to Programset "{self.name}" because it has '
+        #                               f'a different projectversion={val.projectversion} than the Programset.projectversion={self.projectversion}')
 
     def checkpropagateversion(self, odict, keys, values):
-        values = promotetolist(values)
-
-        if self.projectversion is not None:
-            self.checkversion(odict, keys, values)
-            self.propagateversion(odict, keys, values)
+        pass
+        # values = promotetolist(values)
+        #
+        # if self.projectversion is not None:
+        #     self.checkversion(odict, keys, values)
+        #     self.propagateversion(odict, keys, values)
 
     def getsettings(self, project=None, parset=None, results=None):
         ''' Try to get the freshest settings available '''
