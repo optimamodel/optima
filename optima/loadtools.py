@@ -1630,9 +1630,9 @@ def migrate(project, migrateversion='supported', verbose=2, die=None):
         # Check that the migration exists
         if not currentversion in migrations:
             if op.compareversions(currentversion, newversion)<0:
-                errormsg = "WARNING, migrating %s failed: no migration exists from version %s to the current version (%s)" % (project.name, currentversion, op.version)
+                errormsg = "WARNING, migrating %s failed: no migration exists from version %s to the desired version (%s)" % (project.name, currentversion, newversion)
             elif op.compareversions(currentversion, newversion)>0:
-                errormsg = "WARNING, migrating %s failed: project version %s more recent than current Optima version (%s)" % (project.name, currentversion, op.version)
+                errormsg = "WARNING, migrating %s failed: project version %s more recent than desired Optima version (%s)" % (project.name, currentversion, newversion)
             if die: raise op.OptimaException(errormsg)
             else:   op.printv(errormsg, 1, verbose)
             return project # Abort, if haven't died already
