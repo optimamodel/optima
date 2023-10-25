@@ -51,9 +51,16 @@ define(['angular', '../common/local-storage-polyfill'], function (angular) {
         localStorage[makeUserSettingsKey(userManager.user.id)] = settingsStr;
     }
 
-    function getGraphSettings(settings) {
+    function getGraphSettings() {
         var settingsStr = localStorage[makeUserSettingsKey(userManager.user.id)];
-        return JSON.parse(settingsStr);
+        if (settingsStr == null || projectStr == undefined) {
+          return {'figwidth':0.48, 'fontsize':0.8}
+        }
+        try {
+          return JSON.parse(settingsStr);
+        } catch (exception) {
+          return {'figwidth':0.48, 'fontsize':0.8}
+        }
     }
 
     function loadActiveProject() {

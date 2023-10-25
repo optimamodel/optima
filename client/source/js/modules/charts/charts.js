@@ -351,7 +351,7 @@ define(
     };
   });
 
-  module.directive('optimaGraphs', function (toastr, rpcService, RzSliderOptions) {
+  module.directive('optimaGraphs', function (toastr, rpcService, RzSliderOptions, projectService) {
     return {
       scope: { 'graphs':'=' },
       templateUrl: './js/modules/charts/optima-graphs.html?cacheBust=xxx',
@@ -363,7 +363,7 @@ define(
 
           scope.state = {
             slider1: {
-              value: 0.45,
+              value: projectService.getGraphSettings().figwidth,
               options: {
                 floor: 0.1,
                 ceil: 1,
@@ -373,8 +373,8 @@ define(
               }
             },
               slider2: {
-                value: 0.8,
-                currentValue: 0.8, // To look at changes
+                value: projectService.getGraphSettings().fontsize,
+                currentValue: projectService.getGraphSettings().fontsize, // To look at changes
                 options: {
                   floor: 0.1,
                   ceil: 1,
@@ -547,6 +547,9 @@ define(
             .each(function(i, svg) {
               changeWidthOfSvg(svg, width);
             });
+          settings = projectService.getGraphSettings();
+          settings.figwidth = scope.state.slider1.value;
+          projectService.setGraphSettings(settings);
         };
 
         scope.getSettings = function() {
@@ -557,6 +560,9 @@ define(
         scope.changeFontSize = function() {
           if (scope.state.slider2.currentValue !== scope.state.slider2.value) {
             scope.state.slider2.currentValue = scope.state.slider2.value;
+            settings = projectService.getGraphSettings();
+            settings.fontsize = scope.state.slider2.currentValue;
+            projectService.setGraphSettings(settings);
             scope.updateGraphs();
           }
 
