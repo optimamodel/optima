@@ -4,6 +4,8 @@
 
 from gzip import GzipFile
 from contextlib import closing
+from sciris import dumpstr as sc_dumpstr, loadstr as sc_loadstr
+from pickle import dumps, loads
 from numpy import ones, zeros
 from optima import odict, OptimaException, makefilepath
 import xlrd #WARNING TODO temporary fix for compatibility in Python 3.9 until replacing with openpyxl
@@ -72,8 +74,7 @@ def loadobj(filename=None, folder=None, verbose=True):
     if verbose: print('Object loaded from "%s"' % filename)
     return obj
 
-from sciris import dumpstr as sc_dumpstr, loadstr as sc_loadstr
-from pickle import dumps, loads
+
 def dumpstr(obj, forceold=False, **kwargs):
     ''' Try to use pickle.dumps otherwise actually dump to str using sc.dumpstr '''
     if forceold:
@@ -82,9 +83,6 @@ def dumpstr(obj, forceold=False, **kwargs):
     try:
         return dumps(obj, **kwargs)
     except:
-        print('WARNING REVERTING dumpstr')
-        import traceback
-        traceback.print_exc()
         return sc_dumpstr(obj, **kwargs)
 
 
@@ -96,13 +94,7 @@ def loadstr(string, forceold=False, **kwargs):
     try:
         return loads(string, **kwargs)
     except:
-        print('WARNING REVERTING loadstr')
-
-        out=  sc_loadstr(string, **kwargs)
-        print(type(out), out.name if hasattr(out, 'name') else None)
-        import traceback
-        traceback.print_exc()
-        return out
+        return sc_loadstr(string, **kwargs)
 
 
 ## Now using sciris dumpstr and loadstr

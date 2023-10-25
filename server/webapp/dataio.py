@@ -420,7 +420,7 @@ def load_project_record(project_id, raise_exception=True, db_session=None, authe
 
     return project_record
 
-import sciris as sc
+
 def save_project(project, db_session=None, is_skip_result=False):
     if db_session is None:
         db_session = db.session
