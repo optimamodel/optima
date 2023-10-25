@@ -215,10 +215,10 @@ define(['angular', 'ui.router'], function (angular) {
             });
         },
         undefined,
-        'Yes, update',
+        'Yes, upgrade',
         'Cancel',
-        project.updateMessage,
-        'Update project'
+        project.migrateMessage,
+        'Migrate project'
       );
       };
 

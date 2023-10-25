@@ -322,13 +322,13 @@ def get_project_summary_from_project(project):
             warningMessage = f'Warning: This version is not supported, must be one of: {op.supported_versions}'
             print(' > get_project_summary_from_project warning', warning, warningMessage)
 
-        canUpdate = False
-        updateMessage = f'Are you sure you want to migrate this project "{project.name}" from version {project.version} to {op.supported_versions[-1]}?' \
-                         f'\nNote that this will likely change the calibration and results.'
+        canMigrate = False
+        migrateMessage = f'Are you sure you want to migrate this project "{project.name}" from version {project.version} to {op.supported_versions[-1]}?' \
+                         f'\nNote, this will likely change the calibration and results and is an irreversible process. Download a copy before upgrading if you need it.'
         if op.compareversions(project.version, op.supported_versions[-1]) < 0:
-            canUpdate = True
+            canMigrate = True
             if op.compareversions(op.compatibledatabookversion(project.version), op.compatibledatabookversion(op.supported_versions[-1])) != 0:
-                updateMessage += f'\nWARNING: Updating to this version will mean that you need to update your databook. This change occured in version {op.compatibledatabookversion(op.supported_versions[-1])}'
+                migrateMessage += f'\n\nWARNING: Upgrading to this version will mean that you need to update your databook. This change occured in version {op.compatibledatabookversion(op.supported_versions[-1])}, so you will have to update your databook to this version or later. You can do this by downloading the new Data spreadsheet after upgrading the project and editing that one.'
 
 
         project_summary = {
@@ -346,8 +346,8 @@ def get_project_summary_from_project(project):
             'costFuncsOK':   costFuncsOK,
             'warning':       warning,
             'warningMessage':warningMessage,
-            'canUpdate':     canUpdate,
-            'updateMessage': updateMessage,
+            'canMigrate':     canMigrate,
+            'migrateMessage': migrateMessage,
         }
     except:
         print_exc()
