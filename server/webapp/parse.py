@@ -318,8 +318,8 @@ def get_project_summary_from_project(project):
         warning_message = ''
         if project.version not in op.supported_versions:
             warning = True
-            warning_message = f'Warning: this version is not supported, must be one of: {op.supported_versions}'
-        print(' > get_project_summary_from_project warning', warning, warning_message)
+            warning_message = f'Warning: This version is not supported, must be one of: {op.supported_versions}'
+            print(' > get_project_summary_from_project warning', warning, warning_message)
 
         project_summary = {
             'id':            project.uid,
