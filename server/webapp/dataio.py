@@ -476,6 +476,7 @@ def update_project_version(project_id, db_session=None):
     if db_session is None:
         db_session = db.session
     project = load_project(project_id, db_session=db_session)
+    raise op.OptimaException('A test exception')
     project = op.migrate(project, migrateversion='latest', die=True)
     project.modified = op.today()
     save_project(project, db_session=db_session)
