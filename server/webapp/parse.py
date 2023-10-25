@@ -328,7 +328,7 @@ def get_project_summary_from_project(project):
         if op.compareversions(project.version, op.supported_versions[-1]) < 0:
             canUpdate = True
             if op.compareversions(op.compatibledatabookversion(project.version), op.compatibledatabookversion(op.supported_versions[-1])) != 0:
-                updateMessage += f'<br>WARNING: Updating to this version will mean that you need to update your databook. This change occured in version {compatibledatabookversion(op.supported_versions[-1])}'
+                updateMessage += f'<br>WARNING: Updating to this version will mean that you need to update your databook. This change occured in version {op.compatibledatabookversion(op.supported_versions[-1])}'
 
 
         project_summary = {
