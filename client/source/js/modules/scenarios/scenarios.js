@@ -51,7 +51,7 @@ define([
           $scope.years = _.range($scope.project.startYear, $scope.project.endYear+21);
           $scope.isMissingData = !$scope.project.calibrationOK;
 
-          return new Promise((resolve, reject) => {resolve('bob');})
+//          return new Promise((resolve, reject) => {resolve('bob');})
         });
 
 //        promise.then(function(emptyresponse) {
