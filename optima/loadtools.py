@@ -152,8 +152,6 @@ def setrevisionmigrations(which='migrations'):
 ### MIGRATION UTILITIES
 ##########################################################################################
 
-## TODO-kelvin Don't think we need this anymore? - but it is used in a bunch of old analyses files
-# - although it is kind of cool to know exactly what version a file was meant for
 def optimaversion(filename=None, version=None, branch=None, sha=None, verbose=False, die=False):
     '''
     Reads the current script file and adds Optima version info. Simply add the line
@@ -1631,9 +1629,9 @@ def migrate(project, migrateversion='supported', verbose=2, die=None):
 
         # Check that the migration exists
         if not currentversion in migrations:
-            if op.compareversions(currentversion, op.version)<0:
+            if op.compareversions(currentversion, newversion)<0:
                 errormsg = "WARNING, migrating %s failed: no migration exists from version %s to the current version (%s)" % (project.name, currentversion, op.version)
-            elif op.compareversions(currentversion, op.version)>0:
+            elif op.compareversions(currentversion, newversion)>0:
                 errormsg = "WARNING, migrating %s failed: project version %s more recent than current Optima version (%s)" % (project.name, currentversion, op.version)
             if die: raise op.OptimaException(errormsg)
             else:   op.printv(errormsg, 1, verbose)
