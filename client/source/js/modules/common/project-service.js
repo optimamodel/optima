@@ -293,6 +293,21 @@ define(['angular', '../common/local-storage-polyfill'], function (angular) {
       return deferred.promise;
     }
 
+    function updateProjectVersion(project) {
+      var deferred = $q.defer();
+      rpcService
+        .rpcRun('update_project_version', [project.id])
+        .then(
+          function(response) {
+            setActiveProjectId(project.id);
+            deferred.resolve(response);
+          },
+          function(response) {
+            deferred.reject(response);
+          });
+      return deferred.promise;
+    }
+
     function deleteProjects(projectIds) {
       var deferred = $q.defer();
       rpcService

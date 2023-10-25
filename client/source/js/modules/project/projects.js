@@ -207,10 +207,10 @@ define(['angular', 'ui.router'], function (angular) {
       $scope.updateProjectVersion = function(project) {
         modalService.confirm(
         function() {
-          rpcService
-            .rpcRun('update_project_version', [project.id])
+          projectService
+            .updateProjectVersion(project)
             .then(function(response) {
-              toastr.success('Project updated!');
+              toastr.success('Project upgraded!');
               $scope.reload();
             });
         },
