@@ -234,9 +234,9 @@ define(['angular', 'underscore', 'toastr'], function(angular, _) {
           console.log('changeProgsetAndParset outcomes', response);
           vm.outcomes = response.data.outcomes;
           console.log('changeProgsetAndParset outcomes', vm.outcomes);
+          changeParset();
+          vm.changeProgram();
         })
-        changeParset();
-        vm.changeProgram();
       };
 
       vm.undo = function() {
