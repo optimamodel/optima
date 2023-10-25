@@ -229,7 +229,7 @@ define(['angular', 'underscore', 'toastr'], function(angular, _) {
         });
         // Fetch outcomes for this progset
         rpcService.rpcRun(
-          'load_progset_outcome_summaries', [vm.project.id, vm.state.progset.id]);
+          'load_progset_outcome_summaries', [vm.project.id, vm.state.progset.id])
         .then(function(response) {
           console.log('changeProgsetAndParset outcomes', response);
           vm.outcomes = response.data.outcomes;
