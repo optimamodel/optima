@@ -100,15 +100,17 @@ class Parameterset(object):
         if name == 'projectversion' and hasattr(self, 'pars') and self.pars is not None:
             self.propagateversion(None, None, self.pars.values())
 
-    def propagateversion(self, odict, keys, values, version=None, die=False):
-        if version is not None: self.projectversion = version
+    def propagateversion(self, odict, keys, values, die=True):
+        ''' Only adds to Pars'''
         values = promotetolist(values)
         for val in values:
+            if not isinstance(val, Par): continue
             try: val.projectversion = self.projectversion
-            except: # try to add projectversion but don't stress if it doesn't work
+            except:
                 if die: raise
 
     def checkversion(self, odict, keys, values):
+        ''' Only checks Pars'''
         if self.projectversion is None:
             return
         values = promotetolist(values)
@@ -120,8 +122,8 @@ class Parameterset(object):
             if self.projectversion is not None and val.projectversion is not None and val.projectversion != self.projectversion:
                 raise OptimaException(f'Cannot add {type(val)} "{val.name}" to Parameterset "{self.name}" because it has '
                                       f'a different projectversion={val.projectversion} than the Parameterset.projectversion={self.projectversion}')
+
     def checkpropagateversion(self, odict, keys, values):
-        print('Parset checkpropagateversion keys', keys, 'self.projectversion', self.projectversion)
         values = promotetolist(values)
 
         if self.projectversion is not None:
@@ -140,7 +142,7 @@ class Parameterset(object):
 
     def getprojectversion(self, projectversion=None, die=False):
         if projectversion is None: projectversion = self.projectversion
-        if projectversion is not None:  # Provided with a version, check that it matches projectref().version
+        if projectversion is not None:  # We have a version, check that it matches projectref().version
             if isinstance(self.projectref.obj, op.Project) and self.projectref().version != projectversion:
                 err = f'Parset "{self.name}" was provided the projectversion={projectversion} which conflicts with the projectref().version={self.projectref().version}. Using {projectversion}'
                 if die: raise OptimaException(err)
@@ -574,7 +576,7 @@ class Par(object):
     Version: 2016nov06 
     '''
     def __init__(self, short=None, name=None, limits=(0.,1.), by=None, manual='', fromdata=None, m=1.0, progdefault=None,
-                 prior=None, verbose=None, parset=None, projectversion=None, **defaultargs): # "type" data needed for parameter table, but doesn't need to be stored
+                 prior=None, verbose=None, projectversion=None, **defaultargs): # "type" data needed for parameter table, but doesn't need to be stored
         ''' To initialize with a prior, prior should be a dict with keys 'dist' and 'pars' '''
         self.short = short # The short name, e.g. "hivtest"
         self.name = name # The full name, e.g. "HIV testing rate"

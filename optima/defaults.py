@@ -77,192 +77,168 @@ def defaultprograms(project, addcostcovpars=False, addcostcovdata=False, filterp
                   category='Prevention',
                   targetpars=[{'param': 'condcas', 'pop': caspship} for caspship in caspships],
                   targetpops=pops,
-                  criteria = {'hivstatus': 'allstates', 'pregnant': False},
-                  projectversion=projectversion)
+                  criteria = {'hivstatus': 'allstates', 'pregnant': False})
     
     SBCC = Program(short='SBCC',
                   name='Social and behavior change communication',
                   category='Prevention',
                   targetpars=[{'param': 'condcas', 'pop': caspship} for caspship in caspships],
                   targetpops=pops,
-                  criteria = {'hivstatus': 'allstates', 'pregnant': False},
-                  projectversion=projectversion)
+                  criteria = {'hivstatus': 'allstates', 'pregnant': False})
                   
     STI = Program(short='STI',
                   name='Diagnosis and treatment of sexually transmissible infections',
                   category='Prevention',
                   targetpars=[{'param': 'stiprev', 'pop': pop} for pop in pops],
                   targetpops=pops,
-                  criteria = {'hivstatus': 'allstates', 'pregnant': False},
-                  projectversion=projectversion)
+                  criteria = {'hivstatus': 'allstates', 'pregnant': False})
     
     VMMC = Program(short='VMMC',
                   name='Voluntary medical male circumcision',
                   category='Prevention',
                   targetpars=[{'param': 'numcirc', 'pop': male} for male in malelist],
                   targetpops=malelist,
-                  criteria = {'hivstatus': 'allstates', 'pregnant': False},
-                  projectversion=projectversion)
+                  criteria = {'hivstatus': 'allstates', 'pregnant': False})
                   
     FSW_programs = Program(short='FSW programs',
                   name='Programs for female sex workers',
                   category='Prevention',
                   targetpars=[{'param': 'condcom', 'pop': compship} for compship in fsw_compships] + [{'param': 'condcas', 'pop': caspship} for caspship in fsw_caspships] + [{'param': 'hivtest', 'pop': pop} for pop in fswlist],
                   targetpops=fswlist,
-                  criteria = {'hivstatus': 'allstates', 'pregnant': False},
-                  projectversion=projectversion)
+                  criteria = {'hivstatus': 'allstates', 'pregnant': False})
                  
     MSM_programs = Program(short='MSM programs',
                   name='Programs for men who have sex with men',
                   category='Prevention',
                   targetpars=[{'param': 'condcas', 'pop': caspship} for caspship in msm_caspships] + [{'param': 'hivtest', 'pop': pop} for pop in msmlist],
                   targetpops=msmlist,
-                  criteria = {'hivstatus': 'allstates', 'pregnant': False},
-                  projectversion=projectversion)
+                  criteria = {'hivstatus': 'allstates', 'pregnant': False})
                   
     PWID_programs = Program(short='PWID programs',
                   name='Programs for people who inject drugs',
                   category='Prevention',
                   targetpars=[{'param': 'condcas', 'pop': caspship} for caspship in pwid_caspships] + [{'param': 'hivtest', 'pop': pop} for pop in pwidlist] + [{'param': 'sharing', 'pop': pop} for pop in pwidlist],
                   targetpops=pwidlist,
-                  criteria = {'hivstatus': 'allstates', 'pregnant': False},
-                  projectversion=projectversion)
+                  criteria = {'hivstatus': 'allstates', 'pregnant': False})
                   
     OST = Program(short='OST',
                   name='Opiate substitution therapy',
                   category='Prevention',
                   targetpars=[{'param': 'numost', 'pop': 'tot'}],
                   targetpops=pops,
-                  criteria = {'hivstatus': 'allstates', 'pregnant': False},
-                  projectversion=projectversion)
+                  criteria = {'hivstatus': 'allstates', 'pregnant': False})
                   
     NSP = Program(short='NSP',
                   name='Needle-syringe programs',
                   category='Prevention',
                   targetpars=[{'param': 'sharing', 'pop': pop} for pop in pwidlist],
                   targetpops=pwidlist,
-                  criteria = {'hivstatus': 'allstates', 'pregnant': False},
-                  projectversion=projectversion)
+                  criteria = {'hivstatus': 'allstates', 'pregnant': False})
                   
     Cash = Program(short='Cash transfers',
                   name='Cash transfers for HIV risk reduction',
                   category='Prevention',
                   targetpars=[{'param': 'actscas', 'pop': caspship} for caspship in caspships],
                   targetpops=pops,
-                  criteria = {'hivstatus': 'allstates', 'pregnant': False},
-                  projectversion=projectversion)
+                  criteria = {'hivstatus': 'allstates', 'pregnant': False})
                   
     PrEP = Program(short='PrEP',
                   name='Pre-exposure prophylaxis',
                   category='Prevention',
                   targetpars=[{'param': 'prep', 'pop':  pop} for pop in pops],
                   targetpops=pops,
-                  criteria = {'hivstatus': 'allstates', 'pregnant': False},
-                  projectversion=projectversion)
+                  criteria = {'hivstatus': 'allstates', 'pregnant': False})
                   
     PEP = Program(short='PEP',
                   name='Post-exposure prophylaxis',
                   category='Prevention',
                   targetpars=[{'param': 'prep', 'pop':  pop} for pop in pops],
                   targetpops=pops,
-                  criteria = {'hivstatus': ['lt50', 'gt50', 'gt200', 'gt350'], 'pregnant': False},
-                  projectversion=projectversion)
+                  criteria = {'hivstatus': ['lt50', 'gt50', 'gt200', 'gt350'], 'pregnant': False})
                   
     HTS = Program(short='HTS',
                   name='HIV testing services',
                   category='Care and treatment',
                   targetpars=[{'param': 'hivtest', 'pop': pop} for pop in pops],
                   targetpops=pops,
-                  criteria = {'hivstatus': 'allstates', 'pregnant': False},
-                  projectversion=projectversion)
+                  criteria = {'hivstatus': 'allstates', 'pregnant': False})
     
     ART = Program(short='ART',
                   name='Antiretroviral therapy',
                   category='Care and treatment',
                   targetpars=[{'param': 'numtx', 'pop': 'tot'}],# for pop in pops],
                   targetpops=pops,
-                  criteria = {'hivstatus': hivstates, 'pregnant': False},
-                  projectversion=projectversion)
+                  criteria = {'hivstatus': hivstates, 'pregnant': False})
     
     Lab = Program(short='Lab',
                   name='Lab monitoring',
                   category='Care and treatment',
                   targetpars=[{'param': 'numvlmon', 'pop': 'tot'}],# for pop in pops],
                   targetpops=pops,
-                  criteria = {'hivstatus': hivstates, 'pregnant': False},
-                  projectversion=projectversion)
+                  criteria = {'hivstatus': hivstates, 'pregnant': False})
     
     Adherence = Program(short='Adherence',
                   name='Adherence support',
                   category='Care and treatment',
                   targetpars=[{'param': 'leavecare', 'pop': pop} for pop in pops],# for pop in pops],
                   targetpops=pops,
-                  criteria = {'hivstatus': hivstates, 'pregnant': False},
-                  projectversion=projectversion)
+                  criteria = {'hivstatus': hivstates, 'pregnant': False})
     
     Tracing = Program(short='Tracing',
                   name='Pre-ART tracing',
                   category='Care and treatment',
                   targetpars=[{'param': 'linktocare', 'pop': pop} for pop in pops] + [{'param': 'returntocare', 'pop': pop} for pop in pops],# for pop in pops],
                   targetpops=pops,
-                  criteria = {'hivstatus': hivstates, 'pregnant': False},
-                  projectversion=projectversion)
+                  criteria = {'hivstatus': hivstates, 'pregnant': False})
     
     PMTCT = Program(short='PMTCT',
                   name='Prevention of mother-to-child transmission',
                   category='Care and treatment',
                   targetpars=[{'param': 'numtx', 'pop': 'tot'}, {'param': 'numpmtct', 'pop': 'tot'}],
                   targetpops=pops,
-                  criteria = {'hivstatus': hivstates, 'pregnant': True},
-                  projectversion=projectversion)
+                  criteria = {'hivstatus': hivstates, 'pregnant': True})
                   
     OVC = Program(short='OVC',
                   name='Orphans and vulnerable children',
                   category='Care and treatment',
-                  criteria = {'hivstatus': 'allstates', 'pregnant': False},
-                  projectversion=projectversion)
+                  criteria = {'hivstatus': 'allstates', 'pregnant': False})
     
     Other_care = Program(short='Other care',
                   name='Other HIV care',
                   category='Care and treatment',
-                  criteria = {'hivstatus': ['lt50', 'gt50', 'gt200'], 'pregnant': False},
-                  projectversion=projectversion)
+                  criteria = {'hivstatus': ['lt50', 'gt50', 'gt200'], 'pregnant': False})
     
     MGMT = Program(short='MGMT',
                   name='Management',
-                  category='Management and administration',
-                  projectversion=projectversion)
+                  category='Management and administration')
     
     HR = Program(short='HR',
                  name='HR and training',
-                 category='Management and administration',
-                  projectversion=projectversion)
+                 category='Management and administration')
     
     ENV = Program(short='ENV',
                   name='Enabling environment',
-                  category='Management and administration',
-                  projectversion=projectversion)
+                  category='Management and administration')
     
     SP = Program(short='SP',
                  name='Social protection',
-                 category='Other',
-                  projectversion=projectversion)
+                 category='Other')
     
     ME = Program(short='ME',
                  name='Monitoring, evaluation, surveillance, and research',
-                 category='Other',
-                  projectversion=projectversion)
+                 category='Other')
     
     INFR = Program(short='INFR',
                    name='Health infrastructure',
-                   category='Other',
-                  projectversion=projectversion)
+                   category='Other')
     
     Other = Program(short='Other',
                     name='Other',
-                    category='Other',
-                  projectversion=projectversion)
-                  
+                    category='Other')
+
+    allprograms = [Condoms, SBCC, STI, VMMC, FSW_programs, MSM_programs, PWID_programs, OST, NSP, Cash, PrEP, PEP, HTS, ART, Lab, Adherence, Tracing, PMTCT, OVC, Other_care, MGMT, HR, ENV, SP, ME, INFR, Other]
+    for prog in allprograms: prog.projectversion = projectversion
+
     if addcostcovpars: # WARNING, does not include popfactors except as an example -- assumed to be 1
         Condoms.costcovfn.addccopar({'saturation': (0.75,0.75),
                                  't': 2016.0,
@@ -362,8 +338,6 @@ def defaultprograms(project, addcostcovpars=False, addcostcovdata=False, filterp
         ME.addcostcovdatum({'t':2014,'cost':1e7,'coverage':None})
         INFR.addcostcovdatum({'t':2014,'cost':1e7,'coverage':None})
         Other.addcostcovdatum({'t':2014,'cost':5e5,'coverage':None})
-        
-    allprograms = [Condoms, SBCC, STI, VMMC, FSW_programs, MSM_programs, PWID_programs, OST, NSP, Cash, PrEP, PEP, HTS, ART, Lab, Adherence, Tracing, PMTCT, OVC, Other_care, MGMT, HR, ENV, SP, ME, INFR, Other]
 
     if filterprograms: # Only select those programs in filterprograms
         finalprograms = [program for program in allprograms if program.short in filterprograms]

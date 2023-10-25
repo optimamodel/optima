@@ -71,11 +71,11 @@ class Programset(object):
 
         if name == 'programs': # If we are adding programs, make sure they match the projectversion of the parset
             self.checkpropagateversion(None, None, self.programs.values())
-        if name == 'projectversion':
+        if name == 'projectversion' and hasattr(self, 'programs') and self.programs is not None:
             self.propagateversion(None, None, self.programs.values())
 
-    def propagateversion(self, odict, keys, values, version=None, die=False):
-        if version is not None: self.projectversion = version
+    def propagateversion(self, odict, keys, values, die=True):
+        ''' Dies because it should be able to add .projectversion to a Program'''
         values = promotetolist(values)
         for val in values:
             try: val.projectversion = self.projectversion
@@ -183,6 +183,8 @@ class Programset(object):
 
     def updateprogset(self, verbose=2):
         ''' Update (run this is you change something... )'''
+        if self.programs is not None and not isinstance(self.programs, odict_custom):
+            self.programs = odict_custom(self.programs, func=self.checkpropagateversion)
         self.gettargetpars()
         self.gettargetpartypes()
         self.gettargetpops()
@@ -974,6 +976,14 @@ class Program(object):
         output += '\n'
         return output
 
+    def getprojectversion(self, projectversion=None, die=False):
+        if projectversion is None: projectversion = self.projectversion
+        if projectversion is None:
+            err = f'Program "{self.short}" is missing its projectversion'
+            if die: raise OptimaException(err)
+            else: print('WARNING: '+err)
+            return None
+        return projectversion
 
     def optimizable(self):
         return True if self.targetpars else False # and self.hasbudget()

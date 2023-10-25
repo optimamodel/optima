@@ -26,7 +26,6 @@ from flask import current_app, abort, request, session, make_response, jsonify
 from flask_login import current_user, login_user, logout_user
 from werkzeug.utils import secure_filename
 from validate_email import validate_email
-from traceback import format_exc
 
 import optima as op
 from pylab import argsort
@@ -477,7 +476,7 @@ def update_project_version(project_id, db_session=None):
     if db_session is None:
         db_session = db.session
     project = load_project(project_id, db_session=db_session)
-    project = op.migrate(project, migrateversion='latest', die=True)
+    project = op.migrate(project, migrateversion='latest', die=True) # die=True so we know on the FE
     project.modified = op.today()
     save_project(project, db_session=db_session)
     return {'version': project.version}

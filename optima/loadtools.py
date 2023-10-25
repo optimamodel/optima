@@ -133,7 +133,7 @@ def setrevisionmigrations(which='migrations'):
 
     migrations = op.odict([
         # Orig     New       Date         Migration           Description
-        ('0',   ('1', '2023-10-17', parsandprograms_odictlinked,   'Add P.revision, change Parameterset.pars and Programset.programs from odict to odict_linked and link them')),
+        ('0',   ('1', '2023-10-17', parsandprograms_odictcustom,   'Add P.revision, change Parameterset.pars and Programset.programs from odict to odict_custom and link them')),
         ])
 
 
@@ -1515,10 +1515,10 @@ def addinsertonlyacts(project=None, **kwargs):
 ### REVISION MIGRATION FUNCTIONS
 ##########################################################################################
 
-def parsandprograms_odictlinked(project=None, **kwargs):
+def parsandprograms_odictcustom(project=None, **kwargs):
     '''
         Migration between revision 0 and 1
-        Convert Parameterset.pars and Programset.programs to be odict_linked, which links back to the
+        Convert Parameterset.pars and Programset.programs to be odict_custom, which links back to the
         Parameterset and Programset respectively
     '''
     if project is not None:
@@ -1613,7 +1613,6 @@ def migrate(project, migrateversion='supported', verbose=2, die=None):
 
     migrations = setmigrations() # Get the migrations to run
     newversion = versiontomigrateto(project, migrateversion)
-    print('newversion', newversion, migrateversion) ## TODO-kelvin test and remove
 
     if newversion is None:
         errormsg = f'WARNING: Could not find a version for project "{project.name}" to migrate to from version {project.version} using migrateversion={migrateversion}'
@@ -1687,7 +1686,7 @@ def migraterevisionfunc(project, migraterevision=True, verbose=2, die=False):
             if op.compareversions(currentrevision, newrevision)<0: # We aren't yet where we want
                 errormsg = "WARNING, migrating %s to revision %s failed: no migration exists from revision %s" % (project.name, newrevision, currentrevision)
             elif op.compareversions(currentrevision, newrevision)>0: # We are further where we want
-                errormsg = "WARNING, migrating %s failed: project revision %s more recent than desired revision (%s), current Optima revision (%s)" % (project.name, currentrevision, newrevision, op.revision)
+                errormsg = "WARNING, migrating %s failed: project revision %s more recent than desired revision %s, current Optima revision (%s)" % (project.name, currentrevision, newrevision, op.revision)
             if die: raise op.OptimaException(errormsg)
             else:   op.printv(errormsg, 1, verbose)
             return project # Abort, if haven't died already
@@ -1728,6 +1727,7 @@ def loadproj(filename=None, folder=None, verbose=2, die=None, fromdb=False, migr
                         False = do not migrate at all (which prints a warning if the project version is not supported)
                         'minor' = migrate 2.a.b to 2.a.c with c as large as it can be within supported versions (minor calibration changes likely)
                         'major' = 'latest' = migrate 2.a.b to 2.x.y the latest version within supported versions (possible major calibration changes / databook changes)
+        migraterevision='latest'=True, False, or a specific revision (only latest is supported)
     '''
     if fromdb:    origP = op.loadstr(filename) # Load from database
     else:         origP = op.loadobj(filename=filename, folder=folder, verbose=(True if verbose>2 else None if verbose>0 else False)) # Normal usage case: load from file
@@ -1737,25 +1737,23 @@ def loadproj(filename=None, folder=None, verbose=2, die=None, fromdb=False, migr
         try:
             P = migrate(origP, migrateversion=migrateversion, verbose=verbose, die=die)
         except Exception as E:
-            raise E ## TODO-kelvin remove this
             if die: raise E
             else:   P = origP # Fail: return unmigrated version
     else: P = origP # Don't migrate
 
     if P.version not in op.supported_versions:
-        errmsg = f'P.version={P.version} of this project "{P.name}" is not supported ({op.supported_versions}) and you have set migrateversion={migrateversion}. '
+        errmsg = f'P.version={P.version} of this project "{P.name}" is not supported: {op.supported_versions} and you have set migrateversion={migrateversion}. '
         if die: raise OptimaException(errmsg)
         else: print('WARNING!: ' + errmsg + f'\n\tThis will likely cause problems until it is updated to one of the supported versions: {op.supported_versions}')
 
     try: # Note we don't have a `if migraterevsion` check, since we need to call migraterevisionfunc which adds P.revision if it needs it
         P = migraterevisionfunc(origP, migraterevision=migraterevision, verbose=verbose, die=die)
     except Exception as E:
-        raise E # # TODO-kelvin remove this
         if die: raise E
         else: print(f'WARNING: Error when trying to update project "{P.name}" to revision {op.revision} from revision {P.revision}:\n'+str(E))
 
     if str(P.revision) != str(op.revision):
-        errmsg = f'P.revision={P.revision} of this project "{P.name}" is not supported ({op.revision}) and you have set migraterevision={migraterevision}. '
+        errmsg = f'P.revision={P.revision} of this project "{P.name}" is not supported (only {op.revision}) and you have set migraterevision={migraterevision}. '
         if die: raise OptimaException(errmsg)
         else: print('WARNING!: ' + errmsg + f'\n\tThis will likely cause problems until it is updated to the latest revision {op.revision}')
 

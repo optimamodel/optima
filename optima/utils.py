@@ -13,7 +13,7 @@ __all__ = [
 'odict', 'percentcomplete', 'perturb', 'printarr', 'pd', 'printdr', 'printv', 'printvars', 'printtologfile', 'promotetoarray',
 'promotetolist', 'promotetoodict', 'quantile', 'runcommand', 'sanitize', 'sanitizefilename', 'savetext', 'scaleratio', 'setylim',
 'sigfig', 'SItickformatter', 'SIticks', 'slacknotification', 'smoothinterp', 'tic', 'toc', 'today', 'vec2obj',
-'odict_linked', 'PersistentLink', 'standard_dcp', 'standard_cp', 'odict_custom'
+'PersistentLink', 'standard_dcp', 'standard_cp', 'odict_custom'
 ]
 
 ##############################################################################
@@ -1475,7 +1475,7 @@ def standard_cp(obj):
     ''' Same idea as standard_dcp
     Don't use unless you understand it
     '''
-    obj._cp = obj.__copy__  # Save __deepcopy__ for later
+    obj._cp = obj.__copy__  # Save __copy__ for later
     obj.__copy__ = None  # Setting to None means that copy.copy will use the default copier
 
     output = copy(obj)
@@ -2360,61 +2360,61 @@ class odict(OrderedDict):
             return list(OrderedDict.items(self))
 
         
-class odict_linked(odict):
-    '''
-    A version of the odict where each of the values (value) has:
-        value.linkname = Link(objlinkto)
-    and each time you set a value it sets this link
-    '''
-
-    def __init__(self, *args, objlinkto=None, linkname=None, **kwargs):
-        if linkname is None:
-            raise Exception('Cannot create a odict_linked with linkname being None')
-
-        self.linkname = None # Set to None for initial filling in of dict
-        odict.__init__(self, *args, **kwargs)  # Standard init
-
-        self.objlinkto = objlinkto
-        self.linkname = linkname
-        self.relink()
-
-    def relink(self, objlinkto=None, linkname=None):
-        if linkname is not None:  self.linkname  = linkname
-        if objlinkto is not None: self.objlinkto = objlinkto
-
-        for val in OrderedDict.values(self):
-            self._linkval(val)
-
-    #def unlinkalllinks(self):
-
-    def _linkval(self, value):
-        # pass
-        if not hasattr(value, self.linkname):
-            return
-        if getattr(value, self.linkname) is not None and not isinstance(getattr(value, self.linkname).obj, LinkException) and getattr(value, self.linkname)() == self.objlinkto:
-            return
-        setattr(value, self.linkname, Link(self.objlinkto))
-        # except: raise
-
-            # # In the future remove this warning I think
-            # print('Warning: odict_linked could not link:')
-            # import traceback
-            # traceback.print_exc()
-
-    def __setitem__(self, key, value):
-        out = odict.__setitem__(self, key, value)
-        if self.linkname is not None: self.relink()
-
-    def __copy__(self):
-        ''' Do NOT automatically copy link objects!! '''
-        return odict_linked(self, linkname=self.linkname, objlinkto=LinkException('odict_link object copied but link not yet repaired'))
-
-
-    def __deepcopy__(self, memo):
-        ''' Same as copy '''
-        result = odict_linked(dcp(dict(self)), linkname=self.linkname, objlinkto=LinkException('odict_link object copied but link not yet repaired'))
-        memo[id(self)] = result
-        return result
+# class odict_linked(odict):
+#     '''
+#     A version of the odict where each of the values (value) has:
+#         value.linkname = Link(objlinkto)
+#     and each time you set a value it sets this link
+#     '''
+#
+#     def __init__(self, *args, objlinkto=None, linkname=None, **kwargs):
+#         if linkname is None:
+#             raise Exception('Cannot create a odict_linked with linkname being None')
+#
+#         self.linkname = None # Set to None for initial filling in of dict
+#         odict.__init__(self, *args, **kwargs)  # Standard init
+#
+#         self.objlinkto = objlinkto
+#         self.linkname = linkname
+#         self.relink()
+#
+#     def relink(self, objlinkto=None, linkname=None):
+#         if linkname is not None:  self.linkname  = linkname
+#         if objlinkto is not None: self.objlinkto = objlinkto
+#
+#         for val in OrderedDict.values(self):
+#             self._linkval(val)
+#
+#     #def unlinkalllinks(self):
+#
+#     def _linkval(self, value):
+#         # pass
+#         if not hasattr(value, self.linkname):
+#             return
+#         if getattr(value, self.linkname) is not None and not isinstance(getattr(value, self.linkname).obj, LinkException) and getattr(value, self.linkname)() == self.objlinkto:
+#             return
+#         setattr(value, self.linkname, Link(self.objlinkto))
+#         # except: raise
+#
+#             # # In the future remove this warning I think
+#             # print('Warning: odict_linked could not link:')
+#             # import traceback
+#             # traceback.print_exc()
+#
+#     def __setitem__(self, key, value):
+#         out = odict.__setitem__(self, key, value)
+#         if self.linkname is not None: self.relink()
+#
+#     def __copy__(self):
+#         ''' Do NOT automatically copy link objects!! '''
+#         return odict_linked(self, linkname=self.linkname, objlinkto=LinkException('odict_link object copied but link not yet repaired'))
+#
+#
+#     def __deepcopy__(self, memo):
+#         ''' Same as copy '''
+#         result = odict_linked(dcp(dict(self)), linkname=self.linkname, objlinkto=LinkException('odict_link object copied but link not yet repaired'))
+#         memo[id(self)] = result
+#         return result
 
 
 
@@ -2425,8 +2425,6 @@ class odict_custom(odict):
     '''
 
     def __init__(self, *args, func=None, **kwargs):
-        # if func is None:
-        #     raise Exception('Cannot create a odict_custom with func=None')
         self.func = None
         odict.__init__(self, *args, **kwargs)  # Standard init
         self.func = func
@@ -2470,30 +2468,36 @@ class odict_custom(odict):
 
 
     def __setitem__(self, key, value):
-        # print('calling __setitem__', key)
         if self.func is not None: # If this is the parent call
             self._func = self.func
             self.func = None
 
             try: out = super().__setitem__(key, value)
-            finally: self.func = self._func
+            finally:
+                self.func = self._func
+                del self._func
 
             if self.func is not None:
                 keys, vals = self._get_keys_vals(key, value)
-                # print(f'calling func with keys={keys}')
                 self.func(self, keys, vals)
         else:  # The child call doesn't call the func
             out = super().__setitem__(key, value)
         return out
 
     def __copy__(self):
+        ''' Doesn't keep the function as it is probably linked to the parent object'''
         return odict_custom(self, func=None)
 
     def __deepcopy__(self, memodict={}):
+        ''' Doesn't keep the function as it is probably linked to the parent object'''
         self._func = self.func
         self.func = None
+
         copy = standard_dcp(self)
+
         self.func = self._func
+        del self._func
+        del copy._func
         return copy
 
 
@@ -2846,8 +2850,7 @@ class Link(object):
         ''' If called with no argument, return the stored object; if called with argument, update object '''
         if obj is None:
             if type(self.obj)==LinkException: # If the link is broken, raise it now
-                print(self)
-                raise self.obj 
+                raise self.obj
             return self.obj
         else:
             self.__init__(obj)

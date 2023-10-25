@@ -97,26 +97,6 @@ def loadstr(string, forceold=False, **kwargs):
         return sc_loadstr(string, **kwargs)
 
 
-## Now using sciris dumpstr and loadstr
-# def dumpstr(obj):
-#     ''' Write data to a fake file object,then read from it -- used on the FE '''
-#     result = None
-#     with closing(IO()) as output:
-#         with GzipFile(fileobj = output, mode = 'wb') as fileobj:
-#             fileobj.write(pkl.dumps(obj, protocol=-1))
-#         output.seek(0)
-#         result = output.read()
-#     return result
-#
-#
-# def loadstr(source):
-#     ''' Load data from a fake file object -- also used on the FE '''
-#     with closing(IO(source)) as output:
-#         with GzipFile(fileobj = output, mode = 'rb') as fileobj:
-#             obj = loadpickle(fileobj)
-#     return obj
-
-
 def loadpickle(fileobj, verbose=False):
     ''' Loads a pickled object -- need to define legacy classes here since they're needed for unpickling '''
     

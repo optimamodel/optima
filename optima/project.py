@@ -1,5 +1,5 @@
 from optima import OptimaException, Settings, Parameterset, Programset, Resultset, BOC, Parscen, Budgetscen, Coveragescen, Progscen, Optim, Link # Import classes
-from optima import odict, odict_custom, standard_dcp, getdate, today, uuid, dcp, makefilepath, objrepr, printv, isnumber, saveobj, promotetolist, promotetoodict, sigfig # Import utilities
+from optima import odict, odict_custom, standard_dcp, standard_cp, getdate, today, uuid, dcp, makefilepath, objrepr, printv, isnumber, saveobj, promotetolist, promotetoodict, sigfig # Import utilities
 from optima import loadspreadsheet, model, gitinfo, defaultscenarios, makesimpars, makespreadsheet
 from optima import defaultobjectives, autofit, runscenarios, optimize, multioptimize, tvoptimize, outcomecalc, icers # Import functions
 from optima import supported_versions, revision, cpu_count # Get current version
@@ -74,7 +74,7 @@ class Project(object):
         if version is not None and version not in supported_versions:
             raise OptimaException(f'Version {version} for Project is not one of the currently supported versions {supported_versions}')
         self.version = version if version is not None else supported_versions[-1]  # Default to the most recent version supported
-        self.revision = revision
+        self.revision = revision # Always uses the current op.revision
         self.gitbranch, self.gitversion = gitinfo()
         self.filename = None # File path, only present if self.save() is used
         self.warnings = None # Place to store information about warnings (mostly used during migrations)
@@ -101,7 +101,6 @@ class Project(object):
 
     def checkversion(self, odict, keys, values):
         values = promotetolist(values)
-        print('checkversion', [val.name if hasattr(val, "name") else None for val in values], [val.projectversion if hasattr(val, "projectversion") else None for val in values])
         for val in values:
             if not hasattr(val, 'projectversion'):
                 raise OptimaException(f'Cannot add {type(val)} "{val.name if hasattr(val, "name") else None}" to Project "{self.name}" because it is '
@@ -111,7 +110,6 @@ class Project(object):
                                       f'a different version {val.projectversion} than the project {self.version}')
 
     def checkpropagateversionlink(self, odict, keys, vals):
-        # print('checkpropagateversionlink', 'self', self.name, 'keys', keys)
         vals = promotetolist(vals)
 
         self.checkversion(odict, keys, vals)
@@ -131,7 +129,7 @@ class Project(object):
         output += '     Optimizations: %i\n'    % len(self.optims)
         output += '      Results sets: %i\n'    % len(self.results)
         output += '\n'
-        output += '    Optima version: %s (%s)\n'% (self.version, self.revision)
+        output += '   Project version: %s (%s)\n'% (self.version, self.revision)
         output += '      Date created: %s\n'    % getdate(self.created)
         output += '     Date modified: %s\n'    % getdate(self.modified)
         output += 'Spreadsheet loaded: %s\n'    % getdate(self.spreadsheetdate)
@@ -379,7 +377,6 @@ class Project(object):
                     raise OptimaException('Unable to add item of type "%s", please supply explicitly' % what)
         structlist = self.getwhat(item=item, what=what)
         self.checkname(structlist, checkabsent=name, overwrite=overwrite)
-        print(' >>> add structlist', type(structlist), structlist.func if hasattr(structlist, 'func') else None, name, item)
         structlist[name] = item
         if consistentnames: structlist[name].name = name # Make sure names are consistent -- should be the case for everything except results, where keys are UIDs
         if hasattr(structlist[name], 'projectref'): structlist[name].projectref = Link(self) # Fix project links
