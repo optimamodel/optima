@@ -299,7 +299,7 @@ define(['angular', '../common/local-storage-polyfill'], function (angular) {
     }
 
       getProjectList();
-      getOptimaDemoProjectList();
+//      getOptimaDemoProjectList();
 
       function getActiveProject() {
         var projectId = projectService.project.id;
