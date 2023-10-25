@@ -309,7 +309,7 @@ define(['angular', 'ui.router'], function (angular) {
               $scope.state.isRunnable = false;
               $scope.state.isRunning = true;
               $scope.statusMessage = calcState.status_string;
-              $scope.state.timer = $timeout(updateOptimizationStatus, 500);
+              $scope.state.timer = $timeout(updateOptimizationStatus, 1000);
             } else {
               $scope.state.isRunnable = true;
               $scope.state.isRunning = false;
