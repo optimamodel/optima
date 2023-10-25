@@ -323,12 +323,12 @@ def get_project_summary_from_project(project):
             print(' > get_project_summary_from_project warning', warning, warningMessage)
 
         canUpdate = False
-        updateMessage = f'Are you sure you want to migrate this project "{project.name}" from version {project.version} to {op.supported_versions[-1]} (latest)?' \
-                         f'\nNote that this will likely change the calibration and results.'
+        updateMessage = f'Are you sure you want to migrate this project "{project.name}" from version {project.version} to {op.supported_versions[-1]}?' \
+                         f'<br>Note that this will likely change the calibration and results.'
         if op.compareversions(project.version, op.supported_versions[-1]) < 0:
             canUpdate = True
             if op.compareversions(op.compatibledatabookversion(project.version), op.compatibledatabookversion(op.supported_versions[-1])) != 0:
-                updateMessage += f'\nWARNING: Updating to this version will mean that you need to update your databook. This change occured in version {compatibledatabookversion(op.supported_versions[-1])}'
+                updateMessage += f'<br>WARNING: Updating to this version will mean that you need to update your databook. This change occured in version {compatibledatabookversion(op.supported_versions[-1])}'
 
 
         project_summary = {
