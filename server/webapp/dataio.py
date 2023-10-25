@@ -26,6 +26,7 @@ from flask import current_app, abort, request, session, make_response, jsonify
 from flask_login import current_user, login_user, logout_user
 from werkzeug.utils import secure_filename
 from validate_email import validate_email
+from traceback import print_exc
 
 import optima as op
 from pylab import argsort
@@ -959,6 +960,9 @@ def upload_project_object(filename, project_id, obj_type):
     project = load_project(project_id)
     try:
         obj = op.loadobj(filename)
+    except Exception:
+        return { 'name': 'BadFileFormatError' }
+    try:
         if obj_type == "parset":
             project.addparset(parset=obj, overwrite=True)
         elif obj_type == "progset":
@@ -968,7 +972,8 @@ def upload_project_object(filename, project_id, obj_type):
         elif obj_type == "optimization":
             project.addoptim(optim=obj, overwrite=True)
     except Exception:
-        return { 'name': 'BadFileFormatError' }
+        return { 'name': 'AddObjectError',
+                 'message': f'Could not add the {obj_type} to the project due to the following error:\n' + print_exc()}
     save_project(project)
     return { 'name': obj.name }
 

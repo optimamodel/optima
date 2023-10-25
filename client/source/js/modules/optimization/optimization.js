@@ -240,7 +240,9 @@ define(['angular', 'ui.router'], function (angular) {
         .then(function(response) {
 			if (response.data.name == 'BadFileFormatError') {
 			  toastr.error('The file you have chosen is not valid for uploading');  
-		    } else {
+		    } else if (response.data.name == 'AddObjectError') {
+              modalService.informError([{message: response.data.message}]);
+            } else {
               toastr.success('Optimization uploaded');
               var name = response.data.name;
               rpcService

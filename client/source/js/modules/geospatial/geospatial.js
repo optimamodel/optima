@@ -148,7 +148,9 @@ define(['angular', 'underscore'], function( angular, _) {
           .then(function(response) {
 		    if (response.data.created == 'BadFileFormatError') {
 			  toastr.error('The file you have chosen is not valid for uploading');  
-		    } else {
+		    } else if (response.data.name == 'AddObjectError') {
+              modalService.informError([{message: response.data.message}]);
+            } else {
               console.log('uploadPortfolio response.data', response.data);
               $scope.portfolios.push(response.data);
               $scope.state.portfolio = response.data;
@@ -399,7 +401,9 @@ define(['angular', 'underscore'], function( angular, _) {
           .then(function(response) {
 		    if (response.data.prjNames == 'BadFileFormatError') {
 			  toastr.error('The file you have chosen is not valid for uploading');  
-		    } else {
+		    } else if (response.data.name == 'AddObjectError') {
+              modalService.informError([{message: response.data.message}]);
+            } else {
               $scope.state.prjNames = response.data.prjNames;
               console.log('$scope.state.prjNames', $scope.state.prjNames);
               _.each($scope.state.prjNames, function(prjName) {
