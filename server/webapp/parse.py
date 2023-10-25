@@ -1453,7 +1453,7 @@ def get_optimization_summaries(project):
         # However, this version of the optim doesn't get saved unless "Save" is clicked in the FE, so the optim doesn't get modified until then.
         # Once we click "Save", that will remove the absconstraints and the constraints
         # So, we call this every time since there may be absconstraints that are overriding the proporigconstraints
-        optim.proporigconstraints = optim.getproporigconstraints()
+        # optim.proporigconstraints = optim.getproporigconstraints()
 
         optim_summary = {
             "id": str(optim.uid),
