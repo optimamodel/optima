@@ -3,7 +3,7 @@
   {{ ::title }}
 </div>
 <div class="modal-body" style="margin-bottom: 20px">
-  {{ $compile(::message) }}
+  {{ $compile(message) }}
 </div>
 <div class="modal-footer">
   <button type="button" class="btn __white" ng-click="$dismiss('cancel')">{{ ::rejectButton }}</button>
