@@ -315,11 +315,20 @@ def get_project_summary_from_project(project):
             costFuncsOK = False
 
         warning = False
-        warning_message = ''
+        warningMessage = ''
         if project.version not in op.supported_versions:
             warning = True
-            warning_message = f'Warning: This version is not supported, must be one of: {op.supported_versions}'
+            warningMessage = f'Warning: This version is not supported, must be one of: {op.supported_versions}'
             print(' > get_project_summary_from_project warning', warning, warning_message)
+
+        canUpdate = False
+        updateMessage = f'Are you sure you want to migrate this project from version {project.version} to {op.supported_versions[-1]} (latest)?' \
+                         f'\nNote that this will likely change the calibration and results.'
+        if op.compareversions(project.version, op.supported_versions[-1]) < 0:
+            canUpdate = True
+            if op.compareversions(op.compatibledatabookversion(project.version), compatibledatabookversion(op.supported_versions[-1])) != 0:
+                updateMessage += f'\nWARNING: Updating to this version will mean that you need to update your databook. This change occured in version {compatibledatabookversion(op.supported_versions[-1])}'
+
 
         project_summary = {
             'id':            project.uid,
@@ -335,7 +344,9 @@ def get_project_summary_from_project(project):
             'programsOK':    programsOK,
             'costFuncsOK':   costFuncsOK,
             'warning':       warning,
-            'warningMessage':warning_message
+            'warningMessage':warningMessage,
+            'canUpdate':     canUpdate,
+            'updateMessage': updateMessage,
         }
     except:
         project_summary = {
