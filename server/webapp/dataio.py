@@ -479,6 +479,7 @@ def update_project_version(project_id, db_session=None):
     project = op.migrate(project, migrateversion='latest', die=True)
     project.modified = op.today()
     save_project(project, db_session=db_session)
+    return {'version': project.version}
 
 
 def load_project_summary_from_project_record(project_record):

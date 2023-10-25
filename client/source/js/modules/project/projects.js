@@ -211,6 +211,8 @@ define(['angular', 'ui.router'], function (angular) {
             .rpcRun('update_project_version', [project.id])
             .then(function(response) {
               project.canMigrate = false;
+              console.log('update_project_version response', response)
+              project.version = response.version
               toastr.success('Project upgraded!');
               getActiveProject()
               $scope.reload();
