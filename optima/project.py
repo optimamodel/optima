@@ -101,6 +101,7 @@ class Project(object):
 
     def checkversion(self, odict, keys, values):
         values = promotetolist(values)
+        print('checkversion', [val.name if hasattr(val, "name") else None for val in values], [val.projectversion if hasattr(val, "projectversion") else None for val in values])
         for val in values:
             if not hasattr(val, 'projectversion'):
                 raise OptimaException(f'Cannot add {type(val)} "{val.name if hasattr(val, "name") else None}" to Project "{self.name}" because it is '
@@ -378,7 +379,7 @@ class Project(object):
                     raise OptimaException('Unable to add item of type "%s", please supply explicitly' % what)
         structlist = self.getwhat(item=item, what=what)
         self.checkname(structlist, checkabsent=name, overwrite=overwrite)
-        print(' >>> add structlist', structlist.keys(), name, item)
+        print(' >>> add structlist', type(structlist), structlist.func, name, item)
         structlist[name] = item
         if consistentnames: structlist[name].name = name # Make sure names are consistent -- should be the case for everything except results, where keys are UIDs
         if hasattr(structlist[name], 'projectref'): structlist[name].projectref = Link(self) # Fix project links
