@@ -55,7 +55,7 @@ define([
         });
 
         promise.then(function(emptyresponse) {
-          return rpcService.rpcRun('load_progset_summaries', [$scope.project.id]);
+          return rpcService.rpcRun('load_parset_summaries', [$scope.project.id]);
         })
           .then(function(parsetResponse) {
             $scope.parsets = parsetResponse.data.parsets;
