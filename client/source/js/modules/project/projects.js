@@ -214,7 +214,7 @@ define(['angular', 'ui.router'], function (angular) {
               console.log('update_project_version response', response)
               project.version = response.version
               toastr.success('Project upgraded!');
-              getActiveProject()
+              projectService.getActiveProject()
               $scope.reload();
             });
         },
