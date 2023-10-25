@@ -72,8 +72,8 @@ define(['angular', 'underscore', 'toastr'], function(angular, _) {
       }
 
       function reloadActiveProject(useUndoStack) {
-        projectService
-          .getActiveProject()
+        promise =
+          projectService.getActiveProject()
           .then(function(response) {
             vm.project = response.data;
             console.log('reloadActiveProject init vm.project', vm.project);
@@ -87,16 +87,23 @@ define(['angular', 'underscore', 'toastr'], function(angular, _) {
             }
 
             // Fetch progsets
-            return rpcService.rpcRun('load_progset_summaries', [vm.project.id]);
+            return new Promise(function(resolve, reject) {resolve('bob');});
           })
+
+        promise.then(function(response) {
+            return rpcService.rpcRun('load_progset_summaries', [vm.project.id]);
+        })
           .then(function(response) {
             vm.progsets = response.data.progsets;
             console.log('reloadActiveProject init vm.progsets', vm.progsets);
             vm.state.progset = vm.progsets[0];
+            vm.changeProgsetAndParset();
+          });
 
+        promise.then(function(response) {
             // Fetch parsets
             return rpcService.rpcRun('load_parset_summaries', [vm.project.id]);
-          })
+        })
           .then(function(response) {
             vm.parsets = response.data.parsets;
             console.log('reloadActiveProject vm.parsets', vm.parsets);
@@ -189,6 +196,9 @@ define(['angular', 'underscore', 'toastr'], function(angular, _) {
         if (vm.state.progset === undefined) {
           return;
         }
+        if (vm.state.parset === undefined) {
+          return;
+        }
 
         function isActive(program) {
           return program.targetpars
@@ -216,18 +226,17 @@ define(['angular', 'underscore', 'toastr'], function(angular, _) {
         .then(function(response) {
           vm.state.summary = response.data;
           console.log('changeProgsetAndParset reconcile', response.data);
-
-          // Fetch outcomes for this progset
-          return rpcService.rpcRun(
-            'load_progset_outcome_summaries', [vm.project.id, vm.state.progset.id]);
-        })
+        });
+        // Fetch outcomes for this progset
+        rpcService.rpcRun(
+          'load_progset_outcome_summaries', [vm.project.id, vm.state.progset.id]);
         .then(function(response) {
           console.log('changeProgsetAndParset outcomes', response);
           vm.outcomes = response.data.outcomes;
           console.log('changeProgsetAndParset outcomes', vm.outcomes);
-          changeParset();
-          vm.changeProgram();
         })
+        changeParset();
+        vm.changeProgram();
       };
 
       vm.undo = function() {
