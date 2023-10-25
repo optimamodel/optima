@@ -1459,9 +1459,12 @@ def get_optimization_summaries(project):
             "id": str(optim.uid),
             "name": str(optim.name),
             "objectives": normalize_obj(optim.objectives),
-            "proporigconstraints": parse_constraints(optim.proporigconstraints, project=project, progsetname=optim.progsetname),
+            # "proporigconstraints": parse_constraints(optim.proporigconstraints, project=project, progsetname=optim.progsetname),
             "tvsettings": normalize_obj(optim.tvsettings),
         }
+
+        print('235235', optim_summary, optim.progsetname, project.progsets.keys())
+        optim_summary['proporigconstraints'] = parse_constraints(optim.proporigconstraints, project=project, progsetname=optim.progsetname),
 
         if optim.constraints is not None:
             optim_summary["constraints"]    = parse_constraints(optim.constraints, project=project, progsetname=optim.progsetname)
