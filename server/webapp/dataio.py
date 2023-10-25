@@ -26,7 +26,7 @@ from flask import current_app, abort, request, session, make_response, jsonify
 from flask_login import current_user, login_user, logout_user
 from werkzeug.utils import secure_filename
 from validate_email import validate_email
-from traceback import print_exc
+from traceback import format_exc
 
 import optima as op
 from pylab import argsort
@@ -973,7 +973,7 @@ def upload_project_object(filename, project_id, obj_type):
             project.addoptim(optim=obj, overwrite=True)
     except Exception:
         return { 'name': 'AddObjectError',
-                 'message': f'Could not add the {obj_type} to the project due to the following error:\n' + print_exc()}
+                 'message': f'Could not add the {obj_type} to the project due to the following error:\n' + format_exc()}
     save_project(project)
     return { 'name': obj.name }
 
