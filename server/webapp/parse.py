@@ -324,7 +324,7 @@ def get_project_summary_from_project(project):
 
         canMigrate = False
         migrateMessage = f'Are you sure you want to migrate this project "{project.name}" from version {project.version} to {op.supported_versions[-1]}?' \
-                         f'\nNote, this will likely change the calibration and results and is an irreversible process. Download a copy before upgrading if you need it.'
+                         f'\n\nNote, this will likely change the calibration and results. It is an irreversible process. Download a copy before upgrading if you need it.'
         if op.compareversions(project.version, op.supported_versions[-1]) < 0:
             canMigrate = True
             if op.compareversions(op.compatibledatabookversion(project.version), op.compatibledatabookversion(op.supported_versions[-1])) != 0:
