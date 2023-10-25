@@ -299,7 +299,7 @@ define(['angular', '../common/local-storage-polyfill'], function (angular) {
         .rpcRun('update_project_version', [project.id])
         .then(
           function(response) {
-            project.canMigrate = False;
+            project.canMigrate = false;
             setActiveProjectId(project.id);
             deferred.resolve(response);
           },
