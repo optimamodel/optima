@@ -23,6 +23,7 @@ define(['angular', 'ui.router'], function (angular) {
         $scope.sortType = 'name'; // set the default sort type
         $scope.sortReverse = false;  // set the default sort order
         $scope.projectService = projectService;
+        projectService.getOptimaDemoProjectList();
         // Set up a watcher to check when the projectService has things loaded in
         // and when it is, select the first project for the select list.
         $scope.$watch('projectService.optimademoprojects[0]', function() {
