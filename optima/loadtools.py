@@ -1584,7 +1584,7 @@ def versiontomigrateto(project, migrateversion='supported'):
     # If it wasn't one of the above then migrateversion is a specific version
     import packaging
     if type(packaging.version.parse(migrateversion)) == packaging.version.Version: # check it is a valid version string
-        requestversion_split = requestversion.split('.')
+        requestversion_split = migrateversion.split('.')
         if len(requestversion_split) < 2: # '2' Warning: won't work with 3.x.y
             return supported_versions[-1] # latest
         if len(requestversion_split) == 2: # '2.12'
