@@ -30,7 +30,6 @@ define(['angular', 'ui.bootstrap'], function(angular) {
             $scope.message = message || 'Are you sure?';
             $scope.acceptButton = acceptButton || 'Yes';
             $scope.rejectButton = rejectButton || 'No';
-            $scope.trust = $sce.trustAsHtml;
             $document.on('keydown', onModalKeyDown); // observe
             $scope.$on('$destroy', function() {
               $document.off('keydown', onModalKeyDown);

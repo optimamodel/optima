@@ -2,10 +2,13 @@
   <a class="modal-close" ng-click="$dismiss('cancel')">&times;</a>
   {{ ::title }}
 </div>
-<div class="modal-body" style="margin-bottom: 20px">
-  <span ng-bind-html="trust(message)"></span>
+<div class="modal-body multi_lines_text" style="margin-bottom: 20px">
+  {{ ::message }}
 </div>
 <div class="modal-footer">
   <button type="button" class="btn __white" ng-click="$dismiss('cancel')">{{ ::rejectButton }}</button>
   <button type="submit" class="btn" ng-click="$close(model)" ng-disabled="addDialogForm.$invalid">{{ ::acceptButton }}</button>
 </div>
+<style>
+.multi_lines_text { white-space: pre-line; }
+</style>
