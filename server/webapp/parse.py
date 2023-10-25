@@ -319,7 +319,7 @@ def get_project_summary_from_project(project):
         if project.version not in op.supported_versions:
             warning = True
             warningMessage = f'Warning: This version is not supported, must be one of: {op.supported_versions}'
-            print(' > get_project_summary_from_project warning', warning, warning_message)
+            print(' > get_project_summary_from_project warning', warning, warningMessage)
 
         canUpdate = False
         updateMessage = f'Are you sure you want to migrate this project from version {project.version} to {op.supported_versions[-1]} (latest)?' \
