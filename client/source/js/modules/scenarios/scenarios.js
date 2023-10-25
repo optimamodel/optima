@@ -53,18 +53,18 @@ define([
 
           return rpcService.rpcRun('load_parset_summaries', [$scope.project.id]);
         })
-        .then(function(parsetResponse) {
-          $scope.parsets = parsetResponse.data.parsets;
-
-          return rpcService.rpcRun('load_progset_summaries', [$scope.project.id]);
-        })
-        .then(function(progsetsResponse) {
-          $scope.progsets = progsetsResponse.data.progsets;
-          $scope.anyOptimizable = $scope.project.costFuncsOK;
-        })
-        .then(function () {
-          return rpcService.rpcRun('load_scenario_summaries', [$scope.project.id]);
-        })
+//        .then(function(parsetResponse) {
+//          $scope.parsets = parsetResponse.data.parsets;
+//
+//          return rpcService.rpcRun('load_progset_summaries', [$scope.project.id]);
+//        })
+//        .then(function(progsetsResponse) {
+//          $scope.progsets = progsetsResponse.data.progsets;
+//          $scope.anyOptimizable = $scope.project.costFuncsOK;
+//        })
+//        .then(function () {
+//          return rpcService.rpcRun('load_scenario_summaries', [$scope.project.id]);
+//        })
         .then(function(scenariosResponse) {
           console.log("scenarios response", scenariosResponse.data);
           $scope.parametersByParsetId = scenariosResponse.data.ykeysByParsetId;
