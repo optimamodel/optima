@@ -349,6 +349,8 @@ def get_project_summary_from_project(project):
             'updateMessage': updateMessage,
         }
     except:
+        import traceback
+        traceback.print_exc()
         project_summary = {
             'id':            '000000',
             'name':          'Load failed',
