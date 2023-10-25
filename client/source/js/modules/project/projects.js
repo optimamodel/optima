@@ -204,6 +204,24 @@ define(['angular', 'ui.router'], function (angular) {
           _.without(getProjectNames(), project.name));
       };
 
+      $scope.updateProjectVersion = function(project) {
+        modalService.confirm(
+        function() {
+          rpcService
+            .rpcRun('update_project_version', [project.id])
+            .then(function(response) {
+              toastr.success('Project updated!');
+              $scope.reload();
+            });
+        },
+        undefined,
+        'Yes, update',
+        'Cancel',
+        project.updateMessage,
+        'Update project'
+      );
+      };
+
       $scope.downloadProject = function (name, id) {
         rpcService
           .rpcDownload(

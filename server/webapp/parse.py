@@ -323,7 +323,7 @@ def get_project_summary_from_project(project):
             print(' > get_project_summary_from_project warning', warning, warningMessage)
 
         canUpdate = False
-        updateMessage = f'Are you sure you want to migrate this project from version {project.version} to {op.supported_versions[-1]} (latest)?' \
+        updateMessage = f'Are you sure you want to migrate this project "{project.name}" from version {project.version} to {op.supported_versions[-1]} (latest)?' \
                          f'\nNote that this will likely change the calibration and results.'
         if op.compareversions(project.version, op.supported_versions[-1]) < 0:
             canUpdate = True

@@ -472,6 +472,15 @@ def update_project_with_fn(project_id, update_project_fn, db_session=None):
     save_project(project, db_session=db_session)
 
 
+def update_project_version(project_id, db_session=None):
+    if db_session is None:
+        db_session = db.session
+    project = load_project(project_id, db_session=db_session)
+    project = op.migrate(project, migrateversion='latest', die=True)
+    project.modified = op.today()
+    save_project(project, db_session=db_session)
+
+
 def load_project_summary_from_project_record(project_record):
     project = load_project_from_record(project_record)
     project_summary = parse.get_project_summary_from_project(project)
