@@ -40,7 +40,7 @@ define([
     }
 
     function reloadActiveProject() {
-      projectService
+      promise = projectService
         .getActiveProject()
         .then(function(response) {
           $scope.project = response.data;
@@ -51,8 +51,8 @@ define([
           $scope.years = _.range($scope.project.startYear, $scope.project.endYear+21);
           $scope.isMissingData = !$scope.project.calibrationOK;
 
-          return rpcService.rpcRun('load_parset_summaries', [$scope.project.id]);
-        })
+          return new Promise()
+        });
 //        .then(function(parsetResponse) {
 //          $scope.parsets = parsetResponse.data.parsets;
 //
@@ -65,7 +65,7 @@ define([
 //        .then(function () {
 //          return rpcService.rpcRun('load_scenario_summaries', [$scope.project.id]);
 //        })
-        .then(function(scenariosResponse) {
+        promise.then(function(scenariosResponse) {
           console.log("scenarios response", scenariosResponse.data);
           $scope.parametersByParsetId = scenariosResponse.data.ykeysByParsetId;
           $scope.budgetsByProgsetId = scenariosResponse.data.defaultBudgetsByProgsetId;
