@@ -47,13 +47,13 @@ define(['angular', '../common/local-storage-polyfill'], function (angular) {
     }
 
     function setGraphSettings(settings) {
-        var settingsStr = JSON.stringify(projectService.project);
+        var settingsStr = JSON.stringify(settings);
         localStorage[makeUserSettingsKey(userManager.user.id)] = settingsStr;
     }
 
     function getGraphSettings() {
         var settingsStr = localStorage[makeUserSettingsKey(userManager.user.id)];
-        if (settingsStr == null || projectStr == undefined) {
+        if (settingsStr == null || settingsStr == undefined) {
           return {'figwidth':0.48, 'fontsize':0.8}
         }
         try {
