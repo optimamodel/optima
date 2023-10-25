@@ -2425,15 +2425,12 @@ class odict_custom(odict):
     '''
 
     def __init__(self, *args, func=None, **kwargs):
-        print('odict_custom __init__')
         # if func is None:
         #     raise Exception('Cannot create a odict_custom with func=None')
         self.func = None
         odict.__init__(self, *args, **kwargs)  # Standard init
         self.func = func
         if len(self.keys()) and self.func is not None: # func gets called after we insert the initial keys and values
-            # pass
-            # print(f'2 calling func with keys={self.keys()}')
             self.func(self, self.keys(), self.values())
 
     def __is_odict_iterable(self, key):
