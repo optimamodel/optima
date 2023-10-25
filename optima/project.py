@@ -378,6 +378,7 @@ class Project(object):
                     raise OptimaException('Unable to add item of type "%s", please supply explicitly' % what)
         structlist = self.getwhat(item=item, what=what)
         self.checkname(structlist, checkabsent=name, overwrite=overwrite)
+        print(' >>> add structlist', structlist.keys(), name, item)
         structlist[name] = item
         if consistentnames: structlist[name].name = name # Make sure names are consistent -- should be the case for everything except results, where keys are UIDs
         if hasattr(structlist[name], 'projectref'): structlist[name].projectref = Link(self) # Fix project links
