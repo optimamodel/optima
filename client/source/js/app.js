@@ -101,7 +101,7 @@ define([
               if (rejection.data && (rejection.data.message || rejection.data.exception || rejection.data.reason)) {
                 errorText = rejection.data.message || rejection.data.exception || rejection.data.reason;
               } else {
-                errorText = JSON.stringify(rejection, null, 2);
+                errorText = 'Unknown error, perhaps your internet dropped out?\n' + JSON.stringify(rejection, null, 2);
               }
               message = 'We are very sorry, but it seems an error has occurred. Please contact us (info@optimamodel.com). In your email, copy and paste the error message below, and please also provide the date and time, your user name, the project you were working on (if applicable), and as much detail as possible about the steps leading up to the error. We apologize for the inconvenience.';
               var modalService = $injector.get('modalService');
