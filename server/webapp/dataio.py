@@ -972,8 +972,7 @@ def upload_project_object(filename, project_id, obj_type):
         elif obj_type == "optimization":
             project.addoptim(optim=obj, overwrite=True)
     except Exception:
-        return { 'name': 'AddObjectError',
-                 'message': f'Could not add the {obj_type} to the project due to the following error:\n' + format_exc()}
+        raise
     save_project(project)
     return { 'name': obj.name }
 

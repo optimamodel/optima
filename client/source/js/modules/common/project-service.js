@@ -200,9 +200,7 @@ define(['angular', '../common/local-storage-polyfill'], function (angular) {
           function(response) {
 			if (response.data.projectId == 'BadFileFormatError') {
 			  deferred.reject(response);
-			} else if (response.data.name == 'AddObjectError') {
-              deferred.reject(response);
-            } else {
+			} else {
               getProjectAndMakeActive(response.data.projectId)
                 .then(
                   function(response) { deferred.resolve(response); },
@@ -228,8 +226,6 @@ define(['angular', '../common/local-storage-polyfill'], function (angular) {
           function(response) {
 			if (response.data.projectId == 'BadFileFormatError') {
 			  deferred.reject(response);
-            } else if (response.data.name == 'AddObjectError') {
-              deferred.reject(response);
             } else {
               getProjectAndMakeActive(response.data.projectId)
                 .then(
@@ -340,7 +336,7 @@ define(['angular', '../common/local-storage-polyfill'], function (angular) {
     }
 
       getProjectList();
-//      getOptimaDemoProjectList();
+//      getOptimaDemoProjectList(); Note that this now happens in projects.js: initialize()
 
       function getActiveProject() {
         var projectId = projectService.project.id;
