@@ -552,10 +552,6 @@ define(
           projectService.setGraphSettings(settings);
         };
 
-        scope.getSettings = function() {
-
-        }
-
         // Update the grahps, but only if the font size has actually changed -- called by the "Font" slider
         scope.changeFontSize = function() {
           if (scope.state.slider2.currentValue !== scope.state.slider2.value) {
