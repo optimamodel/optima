@@ -1544,10 +1544,14 @@ def launch_reconcile_calc(project_id, progset_id, parset_id, year, maxtime):
 #############################################################################################
 ### SCENARIOS
 #############################################################################################
-
+import sciris as sc
 
 def make_scenarios_graphs(project_id, which=None, is_run=False, zoom=None, startYear=None, endYear=None,includeadvancedtracking=True):
+    start = sc.tic()
+    print(' > make_scenarios_graphs starting')
     result = load_result(project_id, name="scenarios", which=which)
+
+    print(' > make_scenarios_graphs loaded result', sc.toc(start=start, output=True, doprint=False))
 
     if result is None:
         if not is_run:
@@ -1559,6 +1563,7 @@ def make_scenarios_graphs(project_id, which=None, is_run=False, zoom=None, start
             which = result.which
     needtorerun = op.checkifneedtorerunwithadvancedtracking(results=result, which=which)
     if is_run or needtorerun:
+        print(' > make_scenarios_graphs have to run', sc.toc(start=start, output=True, doprint=False))
         project = load_project(project_id)
         if result is not None:
             delete_result_by_parset_id(project_id, parset_id=None, calculation_type='scenarios')
@@ -1568,15 +1573,21 @@ def make_scenarios_graphs(project_id, which=None, is_run=False, zoom=None, start
             return {}
         advancedtracking = op.checkifneedtorerunwithadvancedtracking(results=None, which=which)
         print(f">> make_scenarios_graphs project '{project_id}' from {startYear} to {endYear}, advancedtracking: {advancedtracking}")       # start=None, end=None -> does nothing
+        print(' > make_scenarios_graphs running', sc.toc(start=start, output=True, doprint=False))
         project.runscenarios(end=endYear, advancedtracking=advancedtracking) # Only change end year from default
+        print(' > make_scenarios_graphs finished running', sc.toc(start=start, output=True, doprint=False))
         result = project.results[-1]
         if which:
             result.which = which
         record = update_or_create_result_record_by_id(result, project.uid, None, 'scenarios')
         db.session.add(record)
         db.session.commit()
-    return make_mpld3_graph_dict(result=result, which=which, zoom=zoom, startYear=startYear, endYear=endYear,
+        print(' > make_scenarios_graphs added to db', sc.toc(start=start, output=True, doprint=False))
+    print(' > make_scenarios_graphs making graphs', sc.toc(start=start, output=True, doprint=False))
+    out = make_mpld3_graph_dict(result=result, which=which, zoom=zoom, startYear=startYear, endYear=endYear,
                                  includeadvancedtracking=includeadvancedtracking)
+    print(' > make_scenarios_graphs returning', sc.toc(start=start, output=True, doprint=False))
+    return out
 
 
 def save_scenario_summaries(project_id, scenario_summaries):
