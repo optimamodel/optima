@@ -102,10 +102,8 @@ def runscenarios(project=None, verbose=2, name=None, defaultparset=-1, debug=Fal
     if base is None:     base = 0
     
     # Convert the list of scenarios to the actual parameters to use in the model
-    import sciris as sc
-    start = sc.tic()
     scenparsets = makescenarios(project=project, scenlist=scenlist, ccsample=ccsample, randseed=randseed, verbose=verbose)        
-    print('   >>> make_scenarios_graphs runscenarios makescenarios took', sc.toc(start=start, output=True, doprint=False))
+
     # Run scenarios
     allresults = []
     for scenno, scen in enumerate(scenparsets):
@@ -126,14 +124,10 @@ def runscenarios(project=None, verbose=2, name=None, defaultparset=-1, debug=Fal
         result.name = scenlist[scenno].name # Give a name to these results so can be accessed for the plot legend
         allresults.append(result) 
         printv('... completed scenario: %i/%i' % (scenno+1, nscens), 3, verbose)
-    print('   >>> make_scenarios_graphs runscenarios running scenarios took',
-          sc.toc(start=start, output=True, doprint=False))
     
     if name is None: name='scenarios'
 
     multires = Multiresultset(resultsetlist=allresults, name=name)
-    print('   >>> make_scenarios_graphs runscenarios turning results into multiresultset took',
-          sc.toc(start=start, output=True, doprint=False))
     for scen in scenlist: scen.resultsref = multires.uid # Copy results into each scenario that's been run
     scenres = odict()
     scenres[name] = multires
