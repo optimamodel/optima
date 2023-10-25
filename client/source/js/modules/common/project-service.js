@@ -36,10 +36,24 @@ define(['angular', '../common/local-storage-polyfill'], function (angular) {
       return 'activeProjectFor:' + userId;
     }
 
+    function makeUserSettingsKey(userId) {
+      return 'settingsForUser:' + userId;
+    }
+
     function setActiveProjectId(projectId) {
       projectService.project.id = projectId;
       var projectStr = JSON.stringify(projectService.project);
       localStorage[makeUserKey(userManager.user.id)] = projectStr;
+    }
+
+    function setGraphSettings(settings) {
+        var settingsStr = JSON.stringify(projectService.project);
+        localStorage[makeUserSettingsKey(userManager.user.id)] = settingsStr;
+    }
+
+    function getGraphSettings(settings) {
+        var settingsStr = localStorage[makeUserSettingsKey(userManager.user.id)];
+        return JSON.parse(settingsStr);
     }
 
     function loadActiveProject() {
@@ -324,6 +338,8 @@ define(['angular', '../common/local-storage-polyfill'], function (angular) {
       uploadProject: uploadProject,
       uploadProjectFromSpreadsheet: uploadProjectFromSpreadsheet,
       getActiveProject: getActiveProject,
+      setGraphSettings: setGraphSettings,
+      getGraphSettings: getGraphSettings,
       downloadSelectedProjects: function (projectIds) {
         return rpcService.rpcDownload('load_zip_of_prj_files', [projectIds]);
       },

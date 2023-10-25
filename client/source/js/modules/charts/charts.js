@@ -363,7 +363,7 @@ define(
 
           scope.state = {
             slider1: {
-              value: 0.48,
+              value: 0.45,
               options: {
                 floor: 0.1,
                 ceil: 1,
@@ -548,6 +548,10 @@ define(
               changeWidthOfSvg(svg, width);
             });
         };
+
+        scope.getSettings = function() {
+
+        }
 
         // Update the grahps, but only if the font size has actually changed -- called by the "Font" slider
         scope.changeFontSize = function() {
