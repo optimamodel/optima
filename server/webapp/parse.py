@@ -1449,30 +1449,6 @@ def get_optimization_summaries(project):
     optim_summaries = []
 
     for optim in project.optims.values():
-        # FE only uses proporigconstraints, so get them for the FE to display
-        # However, this version of the optim doesn't get saved unless "Save" is clicked in the FE, so the optim doesn't get modified until then.
-        # Once we click "Save", that will remove the absconstraints and the constraints
-        # So, we call this every time since there may be absconstraints that are overriding the proporigconstraints
-        # optim.proporigconstraints = optim.getproporigconstraints()
-
-        optim_summary = {
-            "id": str(optim.uid),
-            "name": str(optim.name),
-            "objectives": normalize_obj(optim.objectives),
-            # "proporigconstraints": parse_constraints(optim.proporigconstraints, project=project, progsetname=optim.progsetname),
-            "tvsettings": normalize_obj(optim.tvsettings),
-        }
-
-        print('235235', optim_summary, optim.progsetname, project.progsets.keys())
-        optim_summary['proporigconstraints'] = parse_constraints(optim.proporigconstraints, project=project, progsetname=optim.progsetname),
-
-        if optim.constraints is not None:
-            optim_summary["constraints"]    = parse_constraints(optim.constraints, project=project, progsetname=optim.progsetname)
-        if optim.absconstraints is not None:
-            optim_summary["absconstraints"] = parse_constraints(optim.absconstraints, project=project, progsetname=optim.progsetname)
-
-        optim_summary["which"] = str(optim.objectives["which"])
-
         try:
             parset_id = project.parsets[optim.parsetname].uid # Try to extract the
             parset    = project.parsets[optim.parsetname]
@@ -1480,6 +1456,7 @@ def get_optimization_summaries(project):
             print('>> Warning, optimization parset "%s" not in project parsets: %s; reverting to default "%s"' % (optim.parsetname, project.parsets.keys(), project.parset().name))
             parset_id = project.parset().uid # Just get the default
             parset    = project.parset()
+            optim.parsetname = parset.name
 
         try:
             progset_id = project.progsets[optim.progsetname].uid # Try to extract the
@@ -1488,6 +1465,28 @@ def get_optimization_summaries(project):
             print('>> Warning, optimization progset "%s" not in project progsets: %s; reverting to default "%s"' % (optim.progsetname, project.progsets.keys(), project.progset().name))
             progset_id = project.progset().uid # Just get the default
             progset    = project.progset()
+            optim.progsetname = progset.name
+
+        # FE only uses proporigconstraints, so get them for the FE to display
+        # However, this version of the optim doesn't get saved unless "Save" is clicked in the FE, so the optim doesn't get modified until then.
+        # Once we click "Save", that will remove the absconstraints and the constraints
+        # So, we call this every time since there may be absconstraints that are overriding the proporigconstraints
+        optim.proporigconstraints = optim.getproporigconstraints()
+
+        optim_summary = {
+            "id": str(optim.uid),
+            "name": str(optim.name),
+            "objectives": normalize_obj(optim.objectives),
+            "proporigconstraints": parse_constraints(optim.proporigconstraints, project=project, progsetname=optim.progsetname),
+            "tvsettings": normalize_obj(optim.tvsettings),
+        }
+
+        if optim.constraints is not None:
+            optim_summary["constraints"]    = parse_constraints(optim.constraints, project=project, progsetname=optim.progsetname)
+        if optim.absconstraints is not None:
+            optim_summary["absconstraints"] = parse_constraints(optim.absconstraints, project=project, progsetname=optim.progsetname)
+
+        optim_summary["which"] = str(optim.objectives["which"])
 
         optim_summary["parset_id"]   = parset_id
         optim_summary["progset_id"] = progset_id
