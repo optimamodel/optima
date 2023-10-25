@@ -1799,11 +1799,11 @@ def migrateportfolio(portfolio=None, verbose=2, die=True):
     
     # Update version number to the latest -- no other changes  should be necessary
     if op.compareversions(portfolio.version, '2.9.0')>=0:
-        portfolio.version = op.version
+        portfolio.version = op.supported_versions[-1]
     
     # Check to make sure it's the latest version -- should not happen, but just in case!
-    if portfolio.version != op.version:
-        errormsg = "No portfolio migration exists from version %s to the latest version (%s)" % (portfolio.version, op.version)
+    if portfolio.version != op.supported_versions[-1]:
+        errormsg = "No portfolio migration exists from version %s to the latest version (%s)" % (portfolio.version, op.supported_versions[-1])
         if die: raise op.OptimaException(errormsg)
         else:   op.printv(errormsg, 1, verbose)
     
