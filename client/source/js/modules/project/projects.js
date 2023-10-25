@@ -212,7 +212,7 @@ define(['angular', 'ui.router'], function (angular) {
             .then(function(response) {
               project.canMigrate = false;
               console.log('update_project_version response', response)
-              project.version = response.version
+              project.version = response.data.version
               toastr.success('Project upgraded!');
               projectService.getActiveProject()
               $scope.reload();
