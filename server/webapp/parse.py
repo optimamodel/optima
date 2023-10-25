@@ -334,6 +334,8 @@ def get_project_summary_from_project(project):
             'calibrationOK': calibrationOK,
             'programsOK':    programsOK,
             'costFuncsOK':   costFuncsOK,
+            'warning':       warning,
+            'warningMessage':warning_message
         }
     except:
         project_summary = {
