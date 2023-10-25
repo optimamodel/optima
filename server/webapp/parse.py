@@ -14,6 +14,7 @@ There should be no references to the database or web-handlers.
 from collections import defaultdict, OrderedDict
 from pprint import pformat
 from uuid import UUID
+from traceback import print_exc
 
 import numpy as np
 import optima as op
@@ -326,7 +327,7 @@ def get_project_summary_from_project(project):
                          f'\nNote that this will likely change the calibration and results.'
         if op.compareversions(project.version, op.supported_versions[-1]) < 0:
             canUpdate = True
-            if op.compareversions(op.compatibledatabookversion(project.version), compatibledatabookversion(op.supported_versions[-1])) != 0:
+            if op.compareversions(op.compatibledatabookversion(project.version), op.compatibledatabookversion(op.supported_versions[-1])) != 0:
                 updateMessage += f'\nWARNING: Updating to this version will mean that you need to update your databook. This change occured in version {compatibledatabookversion(op.supported_versions[-1])}'
 
 
@@ -349,8 +350,7 @@ def get_project_summary_from_project(project):
             'updateMessage': updateMessage,
         }
     except:
-        import traceback
-        traceback.print_exc()
+        print_exc()
         project_summary = {
             'id':            '000000',
             'name':          'Load failed',
