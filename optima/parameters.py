@@ -97,7 +97,7 @@ class Parameterset(object):
 
         if name == 'pars': # If we are adding pars, make sure they match the projectversion of the parset
             self.checkpropagateversion(None, None, self.pars.values())
-        if name == 'projectversion':
+        if name == 'projectversion' and hasattr(self, 'pars') and self.pars is not None:
             self.propagateversion(None, None, self.pars.values())
 
     def propagateversion(self, odict, keys, values, version=None, die=False):

@@ -97,7 +97,7 @@ class Programset(object):
     def checkpropagateversion(self, odict, keys, values):
         values = promotetolist(values)
 
-        if self.projectversion is not None:
+        if hasattr(self, 'projectversion') and self.projectversion is not None:
             self.checkversion(odict, keys, values)
             self.propagateversion(odict, keys, values)
 
