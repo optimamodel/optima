@@ -369,7 +369,7 @@ define(['angular', 'underscore'], function (angular, _) {
               toastr.error('The file you have chosen is not valid for uploading');
             }
             else if (response.data.name == 'AddObjectError') {
-              modalService.informError([{message: response.data.message}]);
+              modalService.inform(angular.noop, 'Okay', '', 'Error adding object', response.data.message);
             }
             else {
               toastr.success('Parameter set uploaded');
