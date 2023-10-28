@@ -159,14 +159,15 @@ def loadspreadsheet(filename=None, folder=None, verbose=2, projectversion=None):
                                     else '<' + versions_different_databook[versions_different_databook.index(firstcompatible) + 1]
         print(f'Warning: loadspreadsheet was not given the projectversion, so check the P.version is compatible with the databook version: {versionstr} which is compatible with versions {firstcompatible} to {lastcompatible}')
     else: # projectversion was given so check it is compatible
+    
         if compareversions(versionstr, projectversion) != 0:
-            versioncheck = f'\nNote: databook version does not match Optima version: databook: {versionstr} vs. project: {projectversion}'
-            versioncheck += f' (and they are {"NOT " if compareversions(compatibledatabookversion(versionstr), compatibledatabookversion(projectversion)) != 0 else ""}compatible)'
+            if compareversions(compatibledatabookversion(versionstr), compatibledatabookversion(projectversion)) != 0: #then it's not compatible
+                raise OptimaException(f'Optima version of project {projectversion}, cannot load incompatible databook with version {versionstr} (databook needs to be updated to at least {compatibledatabookversion(projectversion)}: review user guide for changes or create a new project and copy data).')
+            else:
+                versioncheck = f'\nNote: databook version {versionstr} does not match project version {projectversion}, although they are intended to be compatible'
         else:
             versioncheck = f'\nHowever, databook and Optima version of project match ({versionstr} == {projectversion})'
-
-        if compareversions(compatibledatabookversion(versionstr), compatibledatabookversion(projectversion)) != 0:
-            raise OptimaException(f'Optima version of project {projectversion}, cannot load incompatible databook with version {versionstr} (databook needs to be updated to at least {compatibledatabookversion(projectversion)}: review user guide for changes or create a new project and copy data).')
+            
 
 
     load_version = compatibledatabookversion(versionstr) # Use corresponding functions to this version
