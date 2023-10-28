@@ -261,7 +261,7 @@ def loadspreadsheet(filename=None, folder=None, verbose=2):
     
     # Check that matrices have correct shape
     data['npops'] = len(data['pops']['short'])
-    for key in sheets['Partnerships & transitions']:
+    for key in data['meta']['sheets']['Partnerships & transitions']:  # Have to use data['meta']['sheets'] since the sheets has all the parameters popped with thispar = subparlist.pop(0)
         thesedata = data[key]
         matrixshape = shape(array(thesedata))
         correctfirstdim = data['npops'] if key!='birthtransit' else sum(data['pops']['female'])
