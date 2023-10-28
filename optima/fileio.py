@@ -75,10 +75,10 @@ def loadobj(filename=None, folder=None, verbose=True):
     return obj
 
 
-def dumpstr(obj, forceold=False, **kwargs):
+def dumpstr(obj, forcefunction=None, **kwargs):
     ''' Try to use pickle.dumps otherwise actually dump to str using sc.dumpstr '''
-    if forceold:
-        return sc_dumpstr(obj, **kwargs)
+    if forcefunction:
+        return forcefunction(obj, **kwargs)
 
     try:
         return dumps(obj, **kwargs)
@@ -86,10 +86,10 @@ def dumpstr(obj, forceold=False, **kwargs):
         return sc_dumpstr(obj, **kwargs)
 
 
-def loadstr(string, forceold=False, **kwargs):
+def loadstr(string, forcefunction=None, **kwargs):
     ''' Try to use pickle.dumps otherwise actually dump to str using sc.dumpstr '''
-    if forceold:
-        return sc_loadstr(string, **kwargs)
+    if forcefunction:
+        return forcefunction(string, **kwargs)
 
     try:
         return loads(string, **kwargs)
