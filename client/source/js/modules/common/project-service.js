@@ -347,7 +347,6 @@ define(['angular', '../common/local-storage-polyfill'], function (angular) {
       getActiveProject: getActiveProject,
       setGraphSettings: setGraphSettings,
       getGraphSettings: getGraphSettings,
-      updateProjectVersion: updateProjectVersion,
       downloadSelectedProjects: function (projectIds) {
         return rpcService.rpcDownload('load_zip_of_prj_files', [projectIds]);
       },
