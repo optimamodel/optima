@@ -9,7 +9,7 @@ Version: 2017feb10
 import xlsxwriter
 from xlsxwriter.utility import xl_rowcol_to_cell
 from numpy import isnan
-from optima import printv, isnumber, version, odict, getdate, today, loaddatapars, Settings
+from optima import printv, isnumber, supported_versions, versions_different_databook, compareversions, odict, getdate, today, loaddatapars, Settings, promotetolist
 
 
 settings = Settings()
@@ -20,10 +20,25 @@ __all__ = [
     'makespreadsheet',
     'makeprogramspreadsheet',
     'default_datastart',
-    'default_dataend'
+    'default_dataend',
+    'compatibledatabookversion',
 ]
 
-def makespreadsheet(filename=None, pops=None, datastart=None, dataend=None, data=None, verbose=2):
+def compatibledatabookversion(projectversions):
+    def versiontoint(version):
+        split = version.split('.')
+        return 1000000000000 * int(split[0]) + 1000000 * int(split[1]) + int(split[2])
+
+    thisprojectversions = promotetolist(projectversions)
+    databookversions = [None] * len(thisprojectversions)
+    for i, projectversion in enumerate(thisprojectversions):
+        for databookversion in sorted(versions_different_databook, key=versiontoint):
+            if compareversions(projectversion, databookversion) >= 0:
+                databookversions[i] = databookversion
+    return databookversions[0] if type(projectversions) == str else databookversions
+
+
+def makespreadsheet(filename=None, pops=None, datastart=None, dataend=None, data=None, verbose=2, version=None):
     """
     Generate the Optima spreadsheet. pops can be supplied as a number of populations, 
     or as a list of dictionaries with keys 'short', 'name', 'male', 'female', 'age_from', 'age_to'.
@@ -58,7 +73,7 @@ def makespreadsheet(filename=None, pops=None, datastart=None, dataend=None, data
     
     printv('Generating spreadsheet: pops=%i, datastart=%s, dataend=%s' % (len(pops), datastart, dataend), 1, verbose)
 
-    book = OptimaSpreadsheet(filename, pops, datastart, dataend, data=data, verbose=verbose)
+    book = OptimaSpreadsheet(filename, pops, datastart, dataend, data=data, verbose=verbose, version=version)
     book.create(filename)
 
     printv('  ...done making spreadsheet %s.' % filename, 2, verbose)
@@ -395,7 +410,7 @@ class TitledRange(object):
 
 
 class OptimaSpreadsheet:
-    def __init__(self, name, pops, data_start=None, data_end=None, data=None, verbose=0):
+    def __init__(self, name, pops, data_start=None, data_end=None, data=None, verbose=0, version=None):
         self.name = name
         self.pops = pops
         self.data_start = data_start
@@ -410,6 +425,12 @@ class OptimaSpreadsheet:
         self.ref_pop_range = None
         self.years_range = range(self.data_start, self.data_end+1)
         self.npops = len(pops)
+        if version is None:
+            version = supported_versions[-1]
+            print(f'Warning: Creating a spreadsheet without a given version so defaulting to the latest version {version} which is compatible back to version {compatibledatabookversion(version)}')
+        if compatibledatabookversion(version) is None:
+            raise OptimaException(f'Cannot create an OptimaSpreadsheet with incompatible version {version}. Must be version {versions_different_databook[0]} or later.')
+        self.version = version
             
     #############################################################################################################################
     ### Helper methods
@@ -522,7 +543,7 @@ class OptimaSpreadsheet:
         current_row = self.formats.writeline(self.current_sheet, current_row)
         current_row = self.formats.writeblock(self.current_sheet, current_row, row_height=30, text='Welcome to the Optima HIV data entry spreadsheet. This is where all data for the model will be entered. Please ask someone from the Optima development team if you need help, or use the default contact (info@optimamodel.com).')
         current_row = self.formats.writeblock(self.current_sheet, current_row, text='For further details please visit: http://optimamodel.com/indicator-guide')
-        current_row = self.formats.writeblock(self.current_sheet, current_row, text='Spreadsheet created with Optima version %s' % version)
+        current_row = self.formats.writeblock(self.current_sheet, current_row, text='Spreadsheet created with Optima version %s' % self.version)
         current_row = self.formats.writeblock(self.current_sheet, current_row, text='Date created: %s' % getdate(today()))
         current_row = self.formats.writeblock(self.current_sheet, current_row, row_height=80, add_line=False, text='After you upload this spreadsheet to your Optima HIV project, your data will be stored in the project but any comments you make on individual cells will NOT be stored. You are therefore encouraged to enter any specific comments that you would like to make about this data spreadsheet in the shaded cells below. These comments will be stored. We recommend that you insert a link to the project logbook in one of these cells.')
         current_row = self.formats.writeline(self.current_sheet, current_row, row_format='bold')

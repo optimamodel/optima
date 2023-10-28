@@ -4,6 +4,8 @@
 
 from gzip import GzipFile
 from contextlib import closing
+from sciris import dumpstr as sc_dumpstr, loadstr as sc_loadstr
+from pickle import dumps, loads
 from numpy import ones, zeros
 from optima import odict, OptimaException, makefilepath
 import xlrd #WARNING TODO temporary fix for compatibility in Python 3.9 until replacing with openpyxl
@@ -28,7 +30,9 @@ __all__ = [
     'optimafolder',
     'loadpartable',
     'loadtranstable',
-    'loaddatapars'
+    'loaddatapars',
+    'dumpstr',
+    'loadstr',
 ]
 
 #############################################################################################################################
@@ -71,23 +75,26 @@ def loadobj(filename=None, folder=None, verbose=True):
     return obj
 
 
-def dumpstr(obj):
-    ''' Write data to a fake file object,then read from it -- used on the FE '''
-    result = None
-    with closing(IO()) as output:
-        with GzipFile(fileobj = output, mode = 'wb') as fileobj: 
-            fileobj.write(pkl.dumps(obj, protocol=-1))
-        output.seek(0)
-        result = output.read()
-    return result
+def dumpstr(obj, forcefunction=None, **kwargs):
+    ''' Try to use pickle.dumps otherwise actually dump to str using sc.dumpstr '''
+    if forcefunction:
+        return forcefunction(obj, **kwargs)
+
+    try:
+        return dumps(obj, **kwargs)
+    except:
+        return sc_dumpstr(obj, **kwargs)
 
 
-def loadstr(source):
-    ''' Load data from a fake file object -- also used on the FE '''
-    with closing(IO(source)) as output:
-        with GzipFile(fileobj = output, mode = 'rb') as fileobj: 
-            obj = loadpickle(fileobj)
-    return obj
+def loadstr(string, forcefunction=None, **kwargs):
+    ''' Try to use pickle.dumps otherwise actually dump to str using sc.dumpstr '''
+    if forcefunction:
+        return forcefunction(string, **kwargs)
+
+    try:
+        return loads(string, **kwargs)
+    except:
+        return sc_loadstr(string, **kwargs)
 
 
 def loadpickle(fileobj, verbose=False):
