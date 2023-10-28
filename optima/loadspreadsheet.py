@@ -166,7 +166,7 @@ def loadspreadsheet(filename=None, folder=None, verbose=2, projectversion=None):
             else:
                 versioncheck = f'\nNote: databook version {versionstr} does not match project version {projectversion}, although they are intended to be compatible'
         else:
-            versioncheck = f'\nHowever, databook and Optima version of project match ({versionstr} == {projectversion})'
+            versioncheck = f'\nHowever, databook and Optima version of project match ({versionstr} == {projectversion})' #This only gets printed after an error if one occurs on load, hence "however"
             
 
 
