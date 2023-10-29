@@ -109,7 +109,7 @@ define([
                   if (rejection.data && (rejection.data.message || rejection.data.exception || rejection.data.reason)) {
                     errorText = rejection.data.message || rejection.data.exception || rejection.data.reason;
                   } else if (isJsonBlob(rejection.data)) {
-                      const responseData = isJsonBlob(response.data) ? (response.data).text() : response.data || {};
+                      const responseData = isJsonBlob(rejection.data) ? (rejection.data).text() : rejection.data || {};
                       const responseJson = (typeof responseData === "string") ? JSON.parse(responseData) : responseData;
                       resolve(responseJson);
                   } else {
