@@ -101,7 +101,7 @@ define(['angular' ], function (angular) {
               isJsonBlob = function(data) {
                 return data instanceof Blob && data.type === "application/json";
               }
-              const responseData = isJsonBlob(response.data) ? await (response.data).text() : response.data || {};
+              const responseData = isJsonBlob(response.data) ? (response.data).text() : response.data || {};
               const responseJson = (typeof responseData === "string") ? JSON.parse(responseData) : responseData;
               response.data = responseJson
               deferred.reject(response);
