@@ -14,10 +14,9 @@ __all__ = [
     'demo'
 ]
 
-def defaultprograms(project, addcostcovpars=False, addcostcovdata=False, filterprograms=None, projectversion=None):
+def defaultprograms(project, addcostcovpars=False, addcostcovdata=False, filterprograms=None):
     ''' Make some default programs'''
-
-    if projectversion is None: projectversion = project.version
+    
     # Shorten variable names
     pops = project.pars()['popkeys']
     hivstates = project.settings.hivstates
@@ -98,7 +97,7 @@ def defaultprograms(project, addcostcovpars=False, addcostcovdata=False, filterp
                   category='Prevention',
                   targetpars=[{'param': 'numcirc', 'pop': male} for male in malelist],
                   targetpops=malelist,
-                  criteria = {'hivstatus': 'allstates', 'pregnant': False})
+                  criteria = {'hivstatus': 'allstates', 'pregnant': False})              
                   
     FSW_programs = Program(short='FSW programs',
                   name='Programs for female sex workers',
@@ -235,10 +234,7 @@ def defaultprograms(project, addcostcovpars=False, addcostcovdata=False, filterp
     Other = Program(short='Other',
                     name='Other',
                     category='Other')
-
-    allprograms = [Condoms, SBCC, STI, VMMC, FSW_programs, MSM_programs, PWID_programs, OST, NSP, Cash, PrEP, PEP, HTS, ART, Lab, Adherence, Tracing, PMTCT, OVC, Other_care, MGMT, HR, ENV, SP, ME, INFR, Other]
-    for prog in allprograms: prog.projectversion = projectversion
-
+                  
     if addcostcovpars: # WARNING, does not include popfactors except as an example -- assumed to be 1
         Condoms.costcovfn.addccopar({'saturation': (0.75,0.75),
                                  't': 2016.0,
@@ -338,6 +334,8 @@ def defaultprograms(project, addcostcovpars=False, addcostcovdata=False, filterp
         ME.addcostcovdatum({'t':2014,'cost':1e7,'coverage':None})
         INFR.addcostcovdatum({'t':2014,'cost':1e7,'coverage':None})
         Other.addcostcovdatum({'t':2014,'cost':5e5,'coverage':None})
+        
+    allprograms = [Condoms, SBCC, STI, VMMC, FSW_programs, MSM_programs, PWID_programs, OST, NSP, Cash, PrEP, PEP, HTS, ART, Lab, Adherence, Tracing, PMTCT, OVC, Other_care, MGMT, HR, ENV, SP, ME, INFR, Other]
 
     if filterprograms: # Only select those programs in filterprograms
         finalprograms = [program for program in allprograms if program.short in filterprograms]
@@ -348,7 +346,7 @@ def defaultprograms(project, addcostcovpars=False, addcostcovdata=False, filterp
 
 def defaultprogset(P, addcostcovpars=False, addcostcovdata=False, filterprograms=None, verbose=2):
     ''' Make a default programset (for testing optimisations)'''
-    programs = defaultprograms(P, addcostcovpars=addcostcovpars, addcostcovdata=addcostcovdata, filterprograms=filterprograms, projectversion=P.version)
+    programs = defaultprograms(P, addcostcovpars=addcostcovpars, addcostcovdata=addcostcovdata, filterprograms=filterprograms)
     R = Programset(programs=programs, project=P)   
     return R
 
