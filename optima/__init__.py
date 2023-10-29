@@ -39,7 +39,7 @@ Version: 2019jan09
 from .version import *
 
 # Print the license
-optimalicense = f'Optima HIV {"/".join(supported_versions)} ({revision}) {revisiondate} -- (c) Optima Consortium'
+optimalicense = 'Optima HIV %s (%s) -- (c) Optima Consortium' % (version, versiondate)
 print(optimalicense)
 
 # Create an empty list to stored failed imports
@@ -102,8 +102,7 @@ def optimapath(subdir=None, trailingsep=True):
 # Debugging information
 def debuginfo(dooutput=False):
     output = '\nOptima debugging info:\n'
-    output += '   Versions: %s\n' % supported_versions
-    output += '   Revision: %s\n' % revision
+    output += '   Version: %s\n' % version
     output += '   Branch:  %s\n' % gitinfo()[0]
     output += '   SHA:     %s\n' % gitinfo()[1][:7]
     output += '   Path:    %s\n' % optimapath()
@@ -126,7 +125,7 @@ class OptimaException(Exception):
 #####################################################################################################################
 
 # File I/O
-from sciris  import loadobj, saveobj #, loadstr, dumpstr # Insist sciris is installed
+from sciris  import loadobj, saveobj, loadstr, dumpstr # Insist sciris is installed
 from .fileio import * # CK: may want to tidy up
 
 # Project settings
@@ -171,7 +170,6 @@ except Exception as E: _failed.append('plotting: %s' % repr(E))
 # Load the code to load projects and portfolios (before defining them, oddly!)
 from .loadtools import *
 changelog = loadtools.setmigrations('changelog')
-revisionchangelog = loadtools.setrevisionmigrations('changelog')
 
 # Load batch functions (has to load projects, so has to come after migration)
 from .batchtools import *
