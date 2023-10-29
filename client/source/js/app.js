@@ -98,14 +98,39 @@ define([
               // is stored in a data.message | data.reason property
               var message, errorText;
               console.log('catching error', rejection);
-              if (rejection.data && (rejection.data.message || rejection.data.exception || rejection.data.reason)) {
-                errorText = rejection.data.message || rejection.data.exception || rejection.data.reason;
-              } else {
-                errorText = 'Unknown error, check Internet connection and try again.\n' + JSON.stringify(rejection, null, 2);
+
+              isJsonBlob = function(data) { // Used for the rpcDownload which has responseType: 'blob'
+                return data instanceof Blob && data.type === "application/json";
               }
-              message = 'We are very sorry, but it seems an error has occurred. Please contact us (info@optimamodel.com). In your email, copy and paste the error message below, and please also provide the date and time, your user name, the project you were working on (if applicable), and as much detail as possible about the steps leading up to the error. We apologize for the inconvenience.';
-              var modalService = $injector.get('modalService');
-              modalService.inform(angular.noop, 'Okay', message, 'Server Error', errorText);
+
+              getRejectionMessagePromise = function(rejection) {
+                return new Promise(function (resolve, reject) {
+                  // Get the message from the rejection
+                  if (rejection.data && (rejection.data.message || rejection.data.exception || rejection.data.reason)) {
+                    resolve(rejection.data.message || rejection.data.exception || rejection.data.reason);
+                  }
+                  else if (isJsonBlob(rejection.data)) { // Used for the rpcDownload which has responseType: 'blob'
+                    const responseData = isJsonBlob(rejection.data) ? (rejection.data).text() : rejection.data || {};
+                    const responseJson = (typeof responseData === "string") ? JSON.parse(responseData) : responseData;
+                    exception = responseJson.then(function(response) {  // responseJson is a Promise object so we convert
+                      const insideJson = (typeof response === "string") ? JSON.parse(response) : response;
+                      return (insideJson.exception);
+                    });
+                    resolve(exception);
+                  }
+                  else {
+                    resolve('Unknown error, check Internet connection and try again.\n' + JSON.stringify(rejection, null, 2));
+                  }
+
+                });
+              }
+
+              getRejectionMessagePromise(rejection)
+              .then(function(response) {
+                message = 'We are very sorry, but it seems an error has occurred. Please contact us (info@optimamodel.com). In your email, copy and paste the error message below, and please also provide the date and time, your user name, the project you were working on (if applicable), and as much detail as possible about the steps leading up to the error. We apologize for the inconvenience.';
+                var modalService = $injector.get('modalService');
+                modalService.inform(angular.noop, 'Okay', message, 'Server Error', response);
+              })
 
               return $q.reject(rejection);
             }
