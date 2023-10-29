@@ -2497,7 +2497,7 @@ class odict_custom(odict):
 
         self.func = self._func
         del self._func
-        del copy._func
+        if hasattr(copy, '_func'): del copy._func
         return copy
 
 
