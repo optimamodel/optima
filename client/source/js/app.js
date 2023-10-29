@@ -108,10 +108,13 @@ define([
                 return new Promise(function (resolve, reject) {
                   if (rejection.data && (rejection.data.message || rejection.data.exception || rejection.data.reason)) {
                     errorText = rejection.data.message || rejection.data.exception || rejection.data.reason;
-                  } else if (isJsonBlob(rejection.data)) {
+                  } else if (isJsonBlob(rejection.data)) { // Used for the rpcDownload which has responseType: 'blob'
                       const responseData = isJsonBlob(rejection.data) ? (rejection.data).text() : rejection.data || {};
                       const responseJson = (typeof responseData === "string") ? JSON.parse(responseData) : responseData;
-                      resolve(responseJson);
+                      responseJson.then(function(response) {
+                        const insideJson = (typeof response === "string") ? JSON.parse(response) : response;
+                        resolve(insideJson);
+                      })
                   } else {
                     errorText = 'Unknown error, check Internet connection and try again.\n' + JSON.stringify(rejection, null, 2);
                   }
@@ -122,8 +125,8 @@ define([
 
               getRejectionMessagePromise(rejection)
               .then(function(response) {
-                console.log('inside', response, errorText);
-                if (response !== errorText) {
+                console.log('inside', response, errorText)
+                if (response !== errorText) { // Used for the rpcDownload which has responseType: 'blob'
                   const responseJson = (typeof response === "string") ? JSON.parse(response) : response;
                   errorText = responseJson.exception;
                 }
