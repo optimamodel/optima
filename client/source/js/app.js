@@ -111,11 +111,11 @@ define([
                   } else if (isJsonBlob(rejection.data)) { // Used for the rpcDownload which has responseType: 'blob'
                       const responseData = isJsonBlob(rejection.data) ? (rejection.data).text() : rejection.data || {};
                       const responseJson = (typeof responseData === "string") ? JSON.parse(responseData) : responseData;
-                      response = responseJson.then(function(response) {  // responseJson is a Promise object so we convert
+                      exception = responseJson.then(function(response) {  // responseJson is a Promise object so we convert
                         const insideJson = (typeof response === "string") ? JSON.parse(response) : response;
                         return (insideJson.exception);
                       });
-                      resolve(response);
+                      resolve(exception);
                   } else {
                     errorText = 'Unknown error, check Internet connection and try again.\n' + JSON.stringify(rejection, null, 2);
                   }
