@@ -114,7 +114,8 @@ define([
                       responseJson.then(function(response) {
                         const insideJson = (typeof response === "string") ? JSON.parse(response) : response;
                         resolve(insideJson);
-                      })
+                      });
+                      resolve(responseJson);
                   } else {
                     errorText = 'Unknown error, check Internet connection and try again.\n' + JSON.stringify(rejection, null, 2);
                   }
