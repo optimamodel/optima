@@ -124,7 +124,7 @@ define([
               .then(function(response) {
                 console.log('inside', response, errorText);
                 if (response !== errorText) {
-                  const responseJson = (typeof responseData === "string") ? JSON.parse(responseData) : responseData;
+                  const responseJson = (typeof response === "string") ? JSON.parse(response) : response;
                   errorText = responseJson.exception;
                 }
                 message = 'We are very sorry, but it seems an error has occurred. Please contact us (info@optimamodel.com). In your email, copy and paste the error message below, and please also provide the date and time, your user name, the project you were working on (if applicable), and as much detail as possible about the steps leading up to the error. We apologize for the inconvenience.';
