@@ -107,9 +107,6 @@ define([
                 errorText = rejection.data.message || rejection.data.exception || rejection.data.reason;
               } else if (isJsonBlob(rejection.data)) {
                 reader = new FileReader();
-                reader.addEventListener('loadend', (e) => {
-                  console.log(JSON.parse(e.srcElement['result']));
-                });
                 rejection.data = reader.readAsText(rejection.data);
 //                const responseData = isJsonBlob(response.data) ? (response.data).text() : response.data || {};
 //                const responseJson = (typeof responseData === "string") ? JSON.parse(responseData) : responseData;
