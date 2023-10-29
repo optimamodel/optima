@@ -97,14 +97,6 @@ define(['angular' ], function (angular) {
               deferred.resolve(response);
             },
             function(response) {
-              console.log('downloading error',response)
-              // Convert error blob to json using https://github.com/axios/axios/issues/3779
-              isJsonBlob = function(data) {
-                return data instanceof Blob && data.type === "application/json";
-              }
-//              const responseData = isJsonBlob(response.data) ? (response.data).text() : response.data || {};
-//              const responseJson = (typeof responseData === "string") ? JSON.parse(responseData) : responseData;
-//              response.data = responseJson
               deferred.reject(response);
             });
         return deferred.promise;
