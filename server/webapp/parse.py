@@ -14,6 +14,7 @@ There should be no references to the database or web-handlers.
 from collections import defaultdict, OrderedDict
 from pprint import pformat
 from uuid import UUID
+from traceback import print_exc
 
 import numpy as np
 import optima as op
@@ -314,6 +315,22 @@ def get_project_summary_from_project(project):
             programsOK = False
             costFuncsOK = False
 
+        warning = False
+        warningMessage = ''
+        if project.version not in op.supported_versions:
+            warning = True
+            warningMessage = f'Warning: This version is not supported, must be one of: {op.supported_versions}'
+            print(' > get_project_summary_from_project warning', warning, warningMessage)
+
+        canMigrate = False
+        migrateMessage = f'Are you sure you want to migrate this project "{project.name}" from version {project.version} to {op.supported_versions[-1]}?' \
+                         f'\n\nNote, this will likely change the calibration and results. It is an irreversible process. Download a copy before upgrading if you need it.'
+        if op.compareversions(project.version, op.supported_versions[-1]) < 0:
+            canMigrate = True
+            if op.compareversions(op.compatibledatabookversion(project.version), op.compatibledatabookversion(op.supported_versions[-1])) != 0:
+                migrateMessage += f'\n\nWARNING: Upgrading to this version will mean that you need to update your databook. This change occured in version {op.compatibledatabookversion(op.supported_versions[-1])}, so you will have to update your databook to this version or later. You can do this by downloading the new Data spreadsheet after upgrading the project and editing that one.'
+
+
         project_summary = {
             'id':            project.uid,
             'name':          project.name,
@@ -327,8 +344,13 @@ def get_project_summary_from_project(project):
             'calibrationOK': calibrationOK,
             'programsOK':    programsOK,
             'costFuncsOK':   costFuncsOK,
+            'warning':       warning,
+            'warningMessage':warningMessage,
+            'canMigrate':     canMigrate,
+            'migrateMessage': migrateMessage,
         }
     except:
+        print_exc()
         project_summary = {
             'id':            '000000',
             'name':          'Load failed',
@@ -1449,6 +1471,24 @@ def get_optimization_summaries(project):
     optim_summaries = []
 
     for optim in project.optims.values():
+        try:
+            parset_id = project.parsets[optim.parsetname].uid # Try to extract the
+            parset    = project.parsets[optim.parsetname]
+        except:
+            print('>> Warning, optimization parset "%s" not in project parsets: %s; reverting to default "%s"' % (optim.parsetname, project.parsets.keys(), project.parset().name))
+            parset_id = project.parset().uid # Just get the default
+            parset    = project.parset()
+            optim.parsetname = parset.name
+
+        try:
+            progset_id = project.progsets[optim.progsetname].uid # Try to extract the
+            progset    = project.progsets[optim.progsetname]
+        except:
+            print('>> Warning, optimization progset "%s" not in project progsets: %s; reverting to default "%s"' % (optim.progsetname, project.progsets.keys(), project.progset().name))
+            progset_id = project.progset().uid # Just get the default
+            progset    = project.progset()
+            optim.progsetname = progset.name
+
         # FE only uses proporigconstraints, so get them for the FE to display
         # However, this version of the optim doesn't get saved unless "Save" is clicked in the FE, so the optim doesn't get modified until then.
         # Once we click "Save", that will remove the absconstraints and the constraints
@@ -1469,22 +1509,6 @@ def get_optimization_summaries(project):
             optim_summary["absconstraints"] = parse_constraints(optim.absconstraints, project=project, progsetname=optim.progsetname)
 
         optim_summary["which"] = str(optim.objectives["which"])
-
-        try:
-            parset_id = project.parsets[optim.parsetname].uid # Try to extract the
-            parset    = project.parsets[optim.parsetname]
-        except:
-            print('>> Warning, optimization parset "%s" not in project parsets: %s; reverting to default "%s"' % (optim.parsetname, project.parsets.keys(), project.parset().name))
-            parset_id = project.parset().uid # Just get the default
-            parset    = project.parset()
-
-        try:
-            progset_id = project.progsets[optim.progsetname].uid # Try to extract the
-            progset    = project.progsets[optim.progsetname]
-        except:
-            print('>> Warning, optimization progset "%s" not in project progsets: %s; reverting to default "%s"' % (optim.progsetname, project.progsets.keys(), project.progset().name))
-            progset_id = project.progset().uid # Just get the default
-            progset    = project.progset()
 
         optim_summary["parset_id"]   = parset_id
         optim_summary["progset_id"] = progset_id

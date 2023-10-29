@@ -5,7 +5,8 @@ __all__ = [
     'migrate',
     'loadproj',
     'loadportfolio',
-    'optimaversion'
+    'optimaversion',
+    'migraterevisionfunc',
 ]
 
 ##########################################################################################
@@ -119,14 +120,37 @@ def setmigrations(which='migrations'):
     else:                  return migrations
 
 
+def setrevisionmigrations(which='migrations'):
+    '''
+    Define the migrations -- format is
+        'current_version': ('new_version', function, 'date', 'string description of change')
 
+    If "which" is anything other than "changelog", then return the list of migrations.
+    Otherwise, return the changelog (just the new version and message).
+
+    Version: 2017may23
+    '''
+
+    migrations = op.odict([
+        # Orig     New       Date         Migration           Description
+        ('0',   ('1', '2023-10-17', parsandprograms_odictcustom,   'Add P.revision, change Parameterset.pars and Programset.programs from odict to odict_custom and link them')),
+        ])
+
+
+    # Define changelog
+    changelog = op.odict()
+    for ver,date,migrator,msg in migrations.values():
+        changelog[ver] = date+' | '+msg
+
+    # Return the migrations structure, unless the changelog is specifically requested
+    if which=='changelog': return changelog
+    else:                  return migrations
 
 
 
 ##########################################################################################
 ### MIGRATION UTILITIES
 ##########################################################################################
-
 
 def optimaversion(filename=None, version=None, branch=None, sha=None, verbose=False, die=False):
     '''
@@ -153,9 +177,9 @@ def optimaversion(filename=None, version=None, branch=None, sha=None, verbose=Fa
         errormsg = 'Please call this function like this: optimaversion(__file__)'
         if die: raise op.OptimaException(errormsg)
         else: print(errormsg); return None
-    currversion = op.version # Get Optima version info
+    currversion = op.supported_versions # Get Optima version info
     currbranch,currsha = op.gitinfo(die=die) # Get git info, dying on failure if requested
-    if version is not None and version!=currversion: # Optionally check that versions match
+    if version is not None and version not in currversion: # Optionally check that versions match
         errormsg = 'Actual version does not match requested version (%s vs. %s)' % (currversion, version)
         raise op.OptimaException(errormsg)
     if branch is not None and branch!=currbranch: # Optionally check that versions match
@@ -166,7 +190,7 @@ def optimaversion(filename=None, version=None, branch=None, sha=None, verbose=Fa
         if sha[:validshalength+1]!=currsha[:validshalength+1]: # Optionally check that versions match
             errormsg = 'Actual SHA does not match requested SHA (%s vs. %s)' % (currsha[:validshalength+1], sha[:validshalength+1])
             raise op.OptimaException(errormsg)
-    versionstring = ' # Version: %s | Branch: %s | SHA: %s\n' % (currversion, currbranch, currsha[:shalength+1]) # Create string to write
+    versionstring = ' # Version: %s (%s) | Branch: %s | SHA: %s\n' % (currversion, op.revision, currbranch, currsha[:shalength+1]) # Create string to write
     strtofind = 'optimaversion(' # String to look for -- note, must exactly match function call!
 
     # Read script file
@@ -1488,37 +1512,138 @@ def addinsertonlyacts(project=None, **kwargs):
 
 
 ##########################################################################################
-### CORE MIGRATION FUNCTIONS
+### REVISION MIGRATION FUNCTIONS
 ##########################################################################################
 
-def migrate(project, verbose=2, die=False):
+def parsandprograms_odictcustom(project=None, **kwargs):
+    '''
+        Migration between revision 0 and 1
+        Convert Parameterset.pars and Programset.programs to be odict_custom, which links back to the
+        Parameterset and Programset respectively
+    '''
+    if project is not None:
+        # propagate version, then we make sure that any new parsets we add have projectversion == version
+        project.parsets = op.odict_custom(project.parsets, func=project.propagateversion)
+        project.parsets.func = project.checkpropagateversionlink
+        project.parsets.func(project.parsets, project.parsets.keys(), project.parsets.values()) # run it once to link
+
+        for parset in project.parsets.values():
+            parset.pars = op.odict_custom(parset.pars, func=parset.propagateversion)
+            parset.pars.func = parset.checkpropagateversion
+
+        # propagate version, then we make sure that any new parsets we add have projectversion == version
+        project.progsets = op.odict_custom(project.progsets, func=project.propagateversion)
+        project.progsets.func = project.checkpropagateversionlink
+        project.progsets.func(project.progsets, project.progsets.keys(), project.progsets.values())  # run it once to link
+
+        for progset in project.progsets.values():
+            progset.programs = op.odict_custom(progset.programs, func=progset.propagateversion)
+            progset.programs.func = progset.checkpropagateversion
+
+
+##########################################################################################
+### CORE MIGRATION FUNCTIONS
+##########################################################################################
+def versiontomigrateto(project, migrateversion='supported'):
+    """
+        migrateversion: 'supported' = up to the first supported version (default),
+                    False = do not migrate at all (which prints a warning if the project version is not supported)
+                    'minor' = migrate 2.a.b to 2.a.c with c as large as it can be within supported versions (minor calibration changes likely)
+                    'major' = 'latest' = True = migrate 2.a.b to 2.x.y the latest version within supported versions (possible major calibration changes / databook changes)
+                    or a specific version
+    Returns:
+        versiontomigrateto: either a version, False (don't migrate) or None which means couldn't find a version to migrate to
+    """
+    def versiontoint(version):  # only works up to 999,999 versions for each x.y.z
+        split = version.split('.')
+        return 1000000000000 * int(split[0]) + 1000000 * int(split[1]) + int(split[2])
+    supported_versions = sorted(op.supported_versions, key=versiontoint)
+
+    if not migrateversion: # Takes care of migrateversion = False
+       return False
+
+    if migrateversion == 'supported':
+        # Need to migrate
+        newversion = None
+        for version in reversed(supported_versions):
+            if op.compareversions(project.version, version) <= 0:
+                newversion = version
+        return newversion
+    if migrateversion == 'minor':
+        # Assuming x.y.z
+        newversion = None
+        version_split = project.version.split('.')
+        for version in supported_versions: # find x.y.B that matches x.y.z
+            new_version_split = version.split('.')
+            if version_split[0] == new_version_split[0] and version_split[1] == new_version_split[1]:
+                newversion = version
+        return newversion
+    if migrateversion == 'latest' or migrateversion == 'major' or migrateversion == True:
+        return supported_versions[-1]
+
+    # If it wasn't one of the above then migrateversion is a specific version
+    import packaging
+    if type(packaging.version.parse(migrateversion)) == packaging.version.Version: # check it is a valid version string
+        requestversion_split = migrateversion.split('.')
+        if len(requestversion_split) < 2: # '2' Warning: won't work with 3.x.y
+            return supported_versions[-1] # latest
+        if len(requestversion_split) == 2: # '2.12'
+            newversion = None
+            for version in supported_versions:  # find x.y.B that matches x.y.z
+                version_split = version.split('.')
+                if version_split[0] == requestversion_split[0] and version_split[1] == requestversion_split[1]:
+                    newversion = version
+            return newversion
+        # '2.12.2' or some other exact version: note gets cut off after x.y.z
+        return f'{requestversion_split[0]}.{requestversion_split[1]}.{requestversion_split[2]}'
+    else:
+        raise op.OptimaException(f'Could not parse migrateversion="{migrateversion}"')
+
+
+def migrate(project, migrateversion='supported', verbose=2, die=None):
     """
     Migrate an Optima Project by inspecting the version and working its way up.
+    migrateversion: 'supported' = up to the first supported version (default),
+                    False = do not migrate at all (which prints a warning if the project version is not supported)
+                    'minor' = migrate 2.a.b to 2.a.c with c as large as it can be within supported versions (minor calibration changes likely)
+                    'major' = 'latest' = True = migrate 2.a.b to 2.x.y the latest version within supported versions (possible major calibration changes / databook changes)
+                    or a specific version
     """
+    if die is None: die = migrateversion !='supported' # supported is the default so don't die, but die otherwise
 
     migrations = setmigrations() # Get the migrations to run
+    newversion = versiontomigrateto(project, migrateversion)
 
-    while str(project.version) != str(op.version):
+    if newversion is None:
+        errormsg = f'WARNING: Could not find a version for project "{project.name}" to migrate to from version {project.version} using migrateversion={migrateversion}'
+        if die: raise op.OptimaException(errormsg)
+        else: print(errormsg)
+        return project
+    elif newversion == False:
+        return project
+
+
+    while str(project.version) != str(newversion):
         currentversion = str(project.version)
 
         # Check that the migration exists
         if not currentversion in migrations:
-            if op.compareversions(currentversion, op.version)<0:
-                errormsg = "WARNING, migrating %s failed: no migration exists from version %s to the current version (%s)" % (project.name, currentversion, op.version)
-            elif op.compareversions(currentversion, op.version)>0:
-                errormsg = "WARNING, migrating %s failed: project version %s more recent than current Optima version (%s)" % (project.name, currentversion, op.version)
+            if op.compareversions(currentversion, newversion)<0:
+                errormsg = "WARNING, migrating %s failed: no migration exists from version %s to the desired version (%s)" % (project.name, currentversion, newversion)
+            elif op.compareversions(currentversion, newversion)>0:
+                errormsg = "WARNING, migrating %s failed: project version %s more recent than desired Optima version (%s)" % (project.name, currentversion, newversion)
             if die: raise op.OptimaException(errormsg)
             else:   op.printv(errormsg, 1, verbose)
             return project # Abort, if haven't died already
 
         # Do the migration
-        newversion,currentdate,migrator,msg = migrations[currentversion] # Get the details of the current migration -- version, date, function ("migrator"), and message
-        op.printv('Migrating "%s" from %6s -> %s' % (project.name, currentversion, newversion), 2, verbose)
-        if migrator is not None:
+        nextversion,currentdate,migrator,msg = migrations[currentversion] # Get the details of the current migration -- version, date, function ("migrator"), and message
+        op.printv('Migrating "%s" from %6s -> %s' % (project.name, currentversion, nextversion), 2, verbose)
+        if migrator is not None: # Sometimes there is no upgrader
             try:
-                migrator(project, verbose=verbose, die=die) # Sometimes there is no upgrader
+                migrator(project, verbose=verbose, die=die)
             except Exception as E:
-                errormsg = 'WARNING, migrating "%s" from %6s -> %6s failed:\n%s' % (project.name, currentversion, newversion, repr(E))
+                errormsg = 'WARNING, migrating "%s" from %6s -> %6s failed:\n%s' % (project.name, currentversion, nextversion, repr(E))
                 if not hasattr(project, 'failedmigrations'): project.failedmigrations = [] # Create if it doesn't already exist
                 project.failedmigrations.append(errormsg)
                 if die: raise op.OptimaException(errormsg)
@@ -1526,7 +1651,7 @@ def migrate(project, verbose=2, die=False):
                 return project # Abort, if haven't died already
 
         # Update project info
-        project.version = newversion # Update the version info
+        project.version = nextversion # Update the version info
 
     # Restore links just in case
     project.restorelinks()
@@ -1541,22 +1666,99 @@ def migrate(project, verbose=2, die=False):
     op.printv('Migration successful!', 3, verbose)
     return project
 
+def migraterevisionfunc(project, migraterevision=True, verbose=2, die=False):
+    revmigrations = setrevisionmigrations()  # Get the migrations to run
+    if not hasattr(project, 'revision'): project.revision = '0'  ## TODO-kelvin int or string? - --- is this the place for this? Really would need a proper migration but we would need a revision for that
 
-def loadproj(filename=None, folder=None, verbose=2, die=False, fromdb=False, domigrate=True, updatefilename=True):
-    ''' Load a saved project file -- wrapper for loadobj using legacy classes '''
-    
+    if not migraterevision: # If we don't want to migrate
+        return project
+
+    if migraterevision == True or migraterevision == 'latest':
+        newrevision = op.revision
+    else: # A specific revision
+        newrevision = migraterevision
+
+    while str(project.revision) != str(newrevision):
+        currentrevision = str(project.revision)
+
+        # Check that the migration exists
+        if not currentrevision in revmigrations:
+            if op.compareversions(currentrevision, newrevision)<0: # We aren't yet where we want
+                errormsg = "WARNING, migrating %s to revision %s failed: no migration exists from revision %s" % (project.name, newrevision, currentrevision)
+            elif op.compareversions(currentrevision, newrevision)>0: # We are further where we want
+                errormsg = "WARNING, migrating %s failed: project revision %s more recent than desired revision %s, current Optima revision (%s)" % (project.name, currentrevision, newrevision, op.revision)
+            if die: raise op.OptimaException(errormsg)
+            else:   op.printv(errormsg, 1, verbose)
+            return project # Abort, if haven't died already
+
+        # Do the migration
+        nextrevision,currentdate,migrator,msg = revmigrations[currentrevision] # Get the details of the current migration -- newrevision, date, function ("migrator"), and message
+        op.printv('Migrating revision "%s" from %6s -> %s' % (project.name, currentrevision, nextrevision), 2, verbose)
+        if migrator is not None: # Sometimes there is no upgrader
+            try:
+                migrator(project, verbose=verbose, die=die)
+            except Exception as E:
+                errormsg = 'WARNING, migrating revision "%s" from %6s -> %6s failed:\n%s' % (project.name, currentrevision, nextrevision, repr(E))
+                if not hasattr(project, 'failedmigrations'): project.failedmigrations = [] # Create if it doesn't already exist
+                project.failedmigrations.append(errormsg)
+                if die: raise op.OptimaException(errormsg)
+                else:   op.printv(errormsg, 1, verbose)
+                return project # Abort, if haven't died already
+
+        # Update project info
+        project.revision = nextrevision # Update the revision info
+
+    # Restore links just in case
+    project.restorelinks()
+
+    # If any warnings were generated during the migration, print them now
+    warnings = project.getwarnings()
+    if warnings and die:
+        errormsg = 'WARNING, Please resolve warnings in projects before continuing'
+        if die: raise op.OptimaException(errormsg)
+        else:   op.printv(errormsg+'\n'+warnings, 1, verbose)
+
+    op.printv('Migration successful!', 3, verbose)
+    return project
+
+def loadproj(filename=None, folder=None, verbose=2, die=None, fromdb=False, migrateversion='supported', migraterevision='latest', updatefilename=True):
+    ''' Load a saved project file -- wrapper for loadobj using legacy classes
+        migrateversion: 'supported' = up to the first supported version (default),
+                        False = do not migrate at all (which prints a warning if the project version is not supported)
+                        'minor' = migrate 2.a.b to 2.a.c with c as large as it can be within supported versions (minor calibration changes likely)
+                        'major' = 'latest' = migrate 2.a.b to 2.x.y the latest version within supported versions (possible major calibration changes / databook changes)
+        migraterevision='latest'=True, False, or a specific revision (only latest is supported)
+    '''
     if fromdb:    origP = op.loadstr(filename) # Load from database
-    else:         origP = op.loadobj(filename=filename, folder=folder, verbose=verbose) # Normal usage case: load from file
+    else:         origP = op.loadobj(filename=filename, folder=folder, verbose=(True if verbose>2 else None if verbose>0 else False)) # Normal usage case: load from file
 
-    if domigrate: 
-        try: 
-            P = migrate(origP, verbose=verbose, die=die)
-            if not fromdb and updatefilename: P.filename = filename # Update filename if not being loaded from a database
+
+    if migrateversion:
+        try:
+            P = migrate(origP, migrateversion=migrateversion, verbose=verbose, die=die)
         except Exception as E:
             if die: raise E
             else:   P = origP # Fail: return unmigrated version
     else: P = origP # Don't migrate
-    
+
+    if P.version not in op.supported_versions:
+        errmsg = f'P.version={P.version} of this project "{P.name}" is not supported: {op.supported_versions} and you have set migrateversion={migrateversion}. '
+        if die: raise OptimaException(errmsg)
+        else: print('WARNING!: ' + errmsg + f'\n\tThis will likely cause problems until it is updated to one of the supported versions: {op.supported_versions}')
+
+    try: # Note we don't have a `if migraterevsion` check, since we need to call migraterevisionfunc which adds P.revision if it needs it
+        P = migraterevisionfunc(origP, migraterevision=migraterevision, verbose=verbose, die=die)
+    except Exception as E:
+        if die: raise E
+        else: print(f'WARNING: Error when trying to update project "{P.name}" to revision {op.revision} from revision {P.revision}:\n'+str(E))
+
+    if str(P.revision) != str(op.revision):
+        errmsg = f'P.revision={P.revision} of this project "{P.name}" is not supported (only {op.revision}) and you have set migraterevision={migraterevision}. '
+        if die: raise OptimaException(errmsg)
+        else: print('WARNING!: ' + errmsg + f'\n\tThis will likely cause problems until it is updated to the latest revision {op.revision}')
+
+    if not fromdb and updatefilename: P.filename = filename  # Update filename if not being loaded from a database - note this used to be in the `if migrateversion` block, not sure why?
+
     return P
 
 
@@ -1595,11 +1797,11 @@ def migrateportfolio(portfolio=None, verbose=2, die=True):
     
     # Update version number to the latest -- no other changes  should be necessary
     if op.compareversions(portfolio.version, '2.9.0')>=0:
-        portfolio.version = op.version
+        portfolio.version = op.supported_versions[-1]
     
     # Check to make sure it's the latest version -- should not happen, but just in case!
-    if portfolio.version != op.version:
-        errormsg = "No portfolio migration exists from version %s to the latest version (%s)" % (portfolio.version, op.version)
+    if portfolio.version != op.supported_versions[-1]:
+        errormsg = "No portfolio migration exists from version %s to the latest version (%s)" % (portfolio.version, op.supported_versions[-1])
         if die: raise op.OptimaException(errormsg)
         else:   op.printv(errormsg, 1, verbose)
     
@@ -1608,7 +1810,7 @@ def migrateportfolio(portfolio=None, verbose=2, die=True):
 
 def loadportfolio(filename=None, folder=None, verbose=2):
     ''' Load a saved portfolio, migrating constituent projects -- NB, portfolio itself is not migrated (no need yet), only the projects '''
-    
+
     op.printv('Loading portfolio %s...' % filename, 2, verbose)
     portfolio = op.loadobj(filename=filename, folder=folder, verbose=verbose) # Load portfolio
     portfolio = migrateportfolio(portfolio)
@@ -1616,6 +1818,7 @@ def loadportfolio(filename=None, folder=None, verbose=2):
     for i in range(len(portfolio.projects)): # Migrate projects one by one
         op.printv('Loading project %s...' % portfolio.projects[i].name, 3, verbose)
         portfolio.projects[i] = migrate(portfolio.projects[i], verbose=verbose)
+        portfolio.projects[i] = migraterevisionfunc(portfolio.projects[i], verbose=verbose)
     
     portfolio.filename = filename # Update filename
     
