@@ -114,8 +114,9 @@ define([
                 });
                 reader.readAsText(rejection.data);
                 console.log('outside', out)
-                rejection.data = out;
-                errorText = rejection.data.message || rejection.data.exception || rejection.data.reason || 'Unknown error when downloading project.\n' + JSON.stringify(rejection, null, 2);
+//                rejection.data = out;
+//                errorText = rejection.data.message || rejection.data.exception || rejection.data.reason || 'Unknown error when downloading project.\n' + JSON.stringify(rejection, null, 2);
+                errorText = 'Unknown error when downloading project.\n' + JSON.stringify(rejection, null, 2);
               } else {
                 errorText = 'Unknown error, check Internet connection and try again.\n' + JSON.stringify(rejection, null, 2);
               }
