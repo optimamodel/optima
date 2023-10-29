@@ -106,12 +106,14 @@ define([
               if (rejection.data && (rejection.data.message || rejection.data.exception || rejection.data.reason)) {
                 errorText = rejection.data.message || rejection.data.exception || rejection.data.reason;
               } else if (isJsonBlob(rejection.data)) {
-                out = null;
+                var out = null;
                 reader = new FileReader();
                 reader.addEventListener('loadend', function(e) {
                   out = JSON.parse(e.srcElement['result']);
+                  console.log('inside', out)
                 });
                 reader.readAsText(rejection.data);
+                console.log('outside', out)
                 rejection.data = out;
                 errorText = rejection.data.message || rejection.data.exception || rejection.data.reason || 'Unknown error when downloading project.\n' + JSON.stringify(rejection, null, 2);
               } else {
