@@ -106,16 +106,17 @@ define([
               if (rejection.data && (rejection.data.message || rejection.data.exception || rejection.data.reason)) {
                 errorText = rejection.data.message || rejection.data.exception || rejection.data.reason;
               } else if (isJsonBlob(rejection.data)) {
-                reader = new FileReader();
-                reader.addEventListener('loadend', function(e) {
-                  return console.log(JSON.parse(e.srcElement['result']));
-                });
-                rejection.data = reader.readAsText(rejection.data);
+//                out = null;
+//                reader = new FileReader();
+//                reader.addEventListener('loadend', function(e) {
+//                  out = JSON.parse(e.srcElement['result']);
+//                });
+//                rejection.data = reader.readAsText(rejection.data);
 //                const responseData = isJsonBlob(response.data) ? (response.data).text() : response.data || {};
 //                const responseJson = (typeof responseData === "string") ? JSON.parse(responseData) : responseData;
 //                response.data = responseJson
-                errorText = rejection.data.message || rejection.data.exception || rejection.data.reason;
-//                errorText = 'Unknown error, when downloading.\n' + JSON.stringify(rejection, null, 2);
+//                errorText = rejection.data.message || rejection.data.exception || rejection.data.reason;
+                errorText = 'Unknown error, when downloading.\n' + JSON.stringify(rejection, null, 2);
               } else {
                 errorText = 'Unknown error, check Internet connection and try again.\n' + JSON.stringify(rejection, null, 2);
               }
