@@ -105,22 +105,28 @@ define([
 
               errorText = null;
               getRejectionMessagePromise = function(rejection) {
-                  return new Promise(function (resolve, reject) {
+                return new Promise(function (resolve, reject) {
+                  if (rejection.data && (rejection.data.message || rejection.data.exception || rejection.data.reason)) {
+                    errorText = rejection.data.message || rejection.data.exception || rejection.data.reason;
+                  } else if (isJsonBlob(rejection.data)) {
+                      const responseData = isJsonBlob(response.data) ? (response.data).text() : response.data || {};
+                      const responseJson = (typeof responseData === "string") ? JSON.parse(responseData) : responseData;
+                      resolve(responseJson);
+                  } else {
+                    errorText = 'Unknown error, check Internet connection and try again.\n' + JSON.stringify(rejection, null, 2);
+                  }
+                  resolve(errorText);
 
-                    if (rejection.data && (rejection.data.message || rejection.data.exception || rejection.data.reason)) {
-                      errorText = rejection.data.message || rejection.data.exception || rejection.data.reason;
-                    } else if (isJsonBlob(rejection.data)) {
-                      errorText = 'Unknown error when downloading project.\n' + JSON.stringify(rejection, null, 2);
-                    } else {
-                      errorText = 'Unknown error, check Internet connection and try again.\n' + JSON.stringify(rejection, null, 2);
-                    }
-                    resolve(errorText);
-
-                  });
+                });
               }
 
               getRejectionMessagePromise(rejection)
-              .then(function(errorText) {
+              .then(function(response) {
+                console.log('inside', response, errorText);
+                if (response !== errorText) {
+                  const responseJson = (typeof responseData === "string") ? JSON.parse(responseData) : responseData;
+                  errorText = responseJson.exception;
+                }
                 message = 'We are very sorry, but it seems an error has occurred. Please contact us (info@optimamodel.com). In your email, copy and paste the error message below, and please also provide the date and time, your user name, the project you were working on (if applicable), and as much detail as possible about the steps leading up to the error. We apologize for the inconvenience.';
                 var modalService = $injector.get('modalService');
                 modalService.inform(angular.noop, 'Okay', message, 'Server Error', errorText);
