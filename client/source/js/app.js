@@ -98,6 +98,12 @@ define([
               // is stored in a data.message | data.reason property
               var message, errorText;
               console.log('catching error', rejection);
+
+              isJsonBlob = function(data) {
+                return data instanceof Blob && data.type === "application/json";
+              }
+              console.log('catching error2', isJsonBlob(rejection.data));
+
               if (rejection.data && (rejection.data.message || rejection.data.exception || rejection.data.reason)) {
                 errorText = rejection.data.message || rejection.data.exception || rejection.data.reason;
               } else {
