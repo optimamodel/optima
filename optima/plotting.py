@@ -13,7 +13,7 @@ Version: 2017jun03
 
 from optima import OptimaException, Resultset, Multiresultset, Parameterset, Settings, ICER, odict, printv, gridcolors, vectocolor, alpinecolormap, makefilepath, sigfig, dcp, findinds, findnearest, promotetolist, saveobj, promotetoodict, promotetoarray, boxoff, getvalidinds
 from optima import setylim, commaticks, SIticks
-from numpy import array, ndim, maximum, arange, zeros, mean, shape, isnan, linspace, minimum, concatenate,invert, swapaxes, flip, abs,cumsum, logical_and, newaxis # Numeric functions
+from numpy import array, ndim, maximum, arange, zeros, mean, shape, isnan, linspace, minimum, concatenate,invert, swapaxes, flip, abs,cumsum, logical_and, isfinite, newaxis # Numeric functions
 from pylab import gcf, get_fignums, close, ion, ioff, isinteractive, figure # Plotting functions
 from matplotlib.backends.backend_agg import new_figure_manager_given_figure as nfmgf # Warning -- assumes user has agg on their system, but should be ok. Use agg since doesn't require an X server
 from matplotlib.figure import Figure # This is the non-interactive version
@@ -777,10 +777,12 @@ def plotepi(results, toplot=None, uncertainty=True, die=True, showdata=True, ver
                     
                 # Plot data points with uncertainty -- for total or perpop plots, but not if multisim
                 if not ismultisim and databest is not None and showdata:
-                    for y in range(len(results.datayears)):
-                        ydata = factor*array([datalow[i][y], datahigh[i][y]])
-                        allydata.append(ydata)
-                        ax.plot(results.datayears[y]*array([1,1]), ydata, c=datacolor, lw=1)
+                    ydataexists = logical_and(isfinite(datalow[i]),isfinite(datahigh[i]))
+                    ydata = factor*array([datalow[i], datahigh[i]])[:,ydataexists]
+                    xdata = array([results.datayears, results.datayears])[:,ydataexists]
+                    allydata.extend(ydata[0])
+                    allydata.extend(ydata[1])
+                    ax.plot(xdata, ydata, c=datacolor, lw=1)
                     ax.scatter(results.datayears, factor*databest[i], color=realdatacolor, s=dotsize, lw=0, zorder=datazorder) # Without zorder, renders behind the graph
                     if isestimate: # This is stupid, but since IE can't handle linewidths sensibly, plot a new point smaller than the other one
                         ydata = factor*databest[i]
@@ -797,8 +799,8 @@ def plotepi(results, toplot=None, uncertainty=True, die=True, showdata=True, ver
                 # General configuration
                 boxoff(ax)
                 ax.yaxis.label.set_fontsize(labelsize)
-                for item in ax.get_xticklabels() + ax.get_yticklabels(): item.set_fontsize(ticksize)
-    
+                ax.tick_params(axis='both', which='major', labelsize=ticksize)
+
                 # Configure plot specifics
                 legendsettings = {'loc':'upper left', 'bbox_to_anchor':(1,1), 'fontsize':legendsize, 'title':'', 'frameon':False, 'borderaxespad':2}
                 plottitle = resultsmaindatatype.name
@@ -875,8 +877,8 @@ def plotimprovement(results=None, figsize=globalfigsize, lw=2, titlesize=globalt
     boxoff(ax)
     ax.title.set_fontsize(titlesize)
     ax.xaxis.label.set_fontsize(labelsize)
-    for item in ax.get_xticklabels() + ax.get_yticklabels(): item.set_fontsize(ticksize)
-    
+    ax.tick_params(axis='both', which='major', labelsize=ticksize)
+
     # Configure plot
     ax.set_xlabel('Iteration')
     abschange = sigfig(mean(absimprove), sigfigs)
@@ -1354,7 +1356,7 @@ def plotcascade(results=None, aspercentage=False, cascadecolors=None, figsize=gl
         ax.title.set_fontsize(titlesize)
         ax.xaxis.label.set_fontsize(labelsize)
         ax.yaxis.label.set_fontsize(labelsize)
-        for item in ax.get_xticklabels() + ax.get_yticklabels(): item.set_fontsize(ticksize)
+        ax.tick_params(axis='both', which='major', labelsize=ticksize)
         
         # Configure legend
         legendsettings = {'loc':'upper left', 'bbox_to_anchor':(1.05, 1), 'fontsize':legendsize, 'title':'', 'frameon':False, 'scatterpoints':1}
@@ -1709,10 +1711,12 @@ def plotstackedabovestackedbelow(results, toplot=None, stackedabove=None, stacke
                     datax = xdata if len(xdata)==len(databest) else results.datayears
                 ## Plot data points with uncertainty -- for total or perpop plots, but not if multisim
                 if not ismultisim and databest is not None and showdata:
-                    for y in range(len(datax)): # WARNING: hope that the data has the same years as the graph does
-                        ydata = factor*array([datalow[y], datahigh[y]])
-                        allydata.append(ydata)
-                        ax.plot(datax[y]*array([1,1]), ydata, c=datacolor, lw=1)
+                    ydataexists = logical_and(isfinite(datalow),isfinite(datahigh))
+                    ydata = factor*array([datalow, datahigh])[:,ydataexists]
+                    xdata = array([datax, datax])[:,ydataexists] # WARNING: hope that the data has the same years as the graph does
+                    allydata.extend(ydata[0])
+                    allydata.extend(ydata[1])
+                    ax.plot(xdata, ydata, c=datacolor, lw=1)
                     ax.scatter(datax, factor*databest, color=realdatacolor, s=dotsize, lw=0, zorder=datazorder) # Without zorder, renders behind the graph
                     if dataisestimate: # This is stupid, but since IE can't handle linewidths sensibly, plot a new point smaller than the other one
                         ydata = factor*databest
@@ -1727,7 +1731,7 @@ def plotstackedabovestackedbelow(results, toplot=None, stackedabove=None, stacke
                 # General configuration
                 boxoff(ax)
                 ax.yaxis.label.set_fontsize(labelsize)
-                for item in ax.get_xticklabels() + ax.get_yticklabels(): item.set_fontsize(ticksize)
+                ax.tick_params(axis='both', which='major', labelsize=ticksize)
 
                 # Configure plot specifics
                 legendsettings = {'loc': 'upper left', 'bbox_to_anchor': (1, 1), 'fontsize': legendsize, 'title': '',
@@ -2045,10 +2049,12 @@ def plotbymethod(results, toplot=None, uncertainty=True, die=True, showdata=True
 
                 # Plot data points with uncertainty -- for total or perpop plots, but not if multisim
                 if not ismultisim and databest is not None and showdata:
-                    for y in range(len(results.datayears)):
-                        ydata = factor * array([datalow[i][y], datahigh[i][y]])
-                        allydata.append(ydata)
-                        ax.plot(results.datayears[y] * array([1, 1]), ydata, c=datacolor, lw=1)
+                    ydataexists = logical_and(isfinite(datalow[i]),isfinite(datahigh[i]))
+                    ydata = factor*array([datalow[i], datahigh[i]])[:,ydataexists]
+                    xdata = array([results.datayears, results.datayears])[:,ydataexists]
+                    allydata.extend(ydata[0])
+                    allydata.extend(ydata[1])
+                    ax.plot(xdata, ydata, c=datacolor, lw=1)
                     ax.scatter(results.datayears, factor * databest[i], color=realdatacolor, s=dotsize, lw=0,
                                zorder=datazorder)  # Without zorder, renders behind the graph
                     if isestimate:  # This is stupid, but since IE can't handle linewidths sensibly, plot a new point smaller than the other one
@@ -2064,7 +2070,7 @@ def plotbymethod(results, toplot=None, uncertainty=True, die=True, showdata=True
                 # General configuration
                 boxoff(ax)
                 ax.yaxis.label.set_fontsize(labelsize)
-                for item in ax.get_xticklabels() + ax.get_yticklabels(): item.set_fontsize(ticksize)
+                ax.tick_params(axis='both', which='major', labelsize=ticksize)
 
                 # Configure plot specifics
                 legendsettings = {'loc': 'upper left', 'bbox_to_anchor': (1, 1), 'fontsize': legendsize, 'title': '',
@@ -2157,7 +2163,7 @@ def plotbycd4(results=None, whattoplot='people', figsize=globalfigsize, lw=2, ti
         boxoff(ax[-1])
         ax[-1].title.set_fontsize(titlesize)
         ax[-1].xaxis.label.set_fontsize(labelsize)
-        for item in ax[-1].get_xticklabels() + ax[-1].get_yticklabels(): item.set_fontsize(ticksize)
+        ax[-1].tick_params(axis='both', which='major', labelsize=ticksize)
 
         # Configure plot specifics
         legendsettings = {'loc':'upper left', 'bbox_to_anchor':(1.05, 1), 'fontsize':legendsize, 'title':'',
@@ -2236,7 +2242,7 @@ def ploticers(results=None, figsize=globalfigsize, lw=2, dotsize=30, titlesize=g
     boxoff(ax)
     ax.title.set_fontsize(titlesize)
     ax.xaxis.label.set_fontsize(labelsize)
-    for item in ax.get_xticklabels() + ax.get_yticklabels(): item.set_fontsize(ticksize)
+    ax[-1].tick_params(axis='both', which='major', labelsize=ticksize)
 
     # Configure plot specifics
     ax.set_title('ICERs')

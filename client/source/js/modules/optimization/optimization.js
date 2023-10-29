@@ -71,20 +71,16 @@ define(['angular', 'ui.router'], function (angular) {
 
           if (!$scope.isMissingData && $scope.anyOptimizable) {
 
-            rpcService
-              .rpcRun(
-                'load_progset_summaries', [$scope.state.project.id])
+            rpcService.rpcRun('load_progset_summaries', [$scope.state.project.id])
               .then(function(response) {
                 $scope.state.progsets = response.data.progsets;
-
-                return rpcService.rpcRun('load_parset_summaries', [$scope.state.project.id]);
-              })
+              });
+            rpcService.rpcRun('load_parset_summaries', [$scope.state.project.id])
               .then(function(response) {
                 console.log('reloadActiveProject parsets', response);
                 $scope.state.parsets = response.data.parsets;
-
-                return rpcService.rpcRun('load_optimization_summaries', [$scope.state.project.id]);
-              })
+              });
+            rpcService.rpcRun('load_optimization_summaries', [$scope.state.project.id])
               .then(function(response) {
                 console.log('reloadActiveProject optims', response.data);
                 var data = response.data;
