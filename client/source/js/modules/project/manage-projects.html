@@ -107,7 +107,7 @@
         <td>
           {{ ::project.version }}
           <icon ng-show="project.warning" action="error" errormsg="{{project.warningMessage}}" click=""/>
-          <span ng-show="project.canMigrate">&nbsp;&nbsp;<button class="btn" ng-click="updateProjectVersion(project)">Upgrade</button></span>
+          <span ng-show="project.canMigrate">&nbsp;&nbsp;<button class="btn" ng-click="updateProjectVersion(project)">Update</button></span>
         </td>
         <td style="white-space: nowrap">
           <button class="btn" ng-click="copy(project.name, project.id)">Copy</button>
@@ -133,4 +133,3 @@
   </div>
 
 </div>
-

@@ -147,8 +147,11 @@ def loadspreadsheet(filename=None, folder=None, verbose=2, projectversion=None):
         for row in range(commentrow-1, instructionssheet.nrows):
             comment = instructionssheet.cell_value(row, 0) # Hardcoded comment cell in A14
             data['meta']['datacomments'].append(comment) # Store the data comment entered on the instructions sheet
-    versioncell = instructionssheet.cell_value(versionrow, 0)
-    versionstr = versioncell.split()[-1] # Last bit should be the version
+    try:
+        versioncell = instructionssheet.cell_value(versionrow, 0)
+        versionstr = versioncell.split()[-1] # Last bit should be the version
+    except:
+        versionstr = '0.0.0' #may have error if not specified - in very old versions, so treat as 0.0.0
     data['meta']['databookversion'] = versionstr
     if compatibledatabookversion(versionstr) is None:
         raise OptimaException(f'Cannot load incompatible databook with version {versionstr} it needs to be updated to at least {versions_different_databook[0]}: review user guide for changes or create a new project and copy data.')
