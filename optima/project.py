@@ -1090,7 +1090,7 @@ class Project(object):
         # Set defaults
         if sc.isnumber(mc): mc = (1,0,mc)
         elif mc is None or sum(mc) == 0: mc = (3,0,0)
-        if ncpus is None: ncpus = int(ceil( sc.cpu_count()/2 ))
+        if ncpus is None: ncpus = int(ceil( cpu_count()/2 ))
 
         defaultbudget = self.progsets[progsetname].getdefaultbudget()
         
