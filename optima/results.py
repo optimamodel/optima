@@ -1241,7 +1241,7 @@ def exporttoexcel(filename=None, outdict=None):
     Little function to format an output results string nicely for Excel
     Expects an odict of output strings.
     """
-    workbook = Workbook(filename)
+    workbook = Workbook(filename, options={'nan_inf_to_errors': True})
     sheetnames = [] # Store existing sheet names to avoid collisions
     collisions = 0 # Keep track of the number of collisions between worksheet names
     maxlength = 31 # Excel's limitation of sheet name length
