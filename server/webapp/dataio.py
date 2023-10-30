@@ -591,7 +591,7 @@ def download_data_spreadsheet(project_id, is_blank=True):
     new_project_template = secure_filename(
         "{}.xlsx".format(project_summary['name']))
     path = templatepath(new_project_template)
-    if is_blank or len(project.data.keys()) == 1:  # Only has project.data['pops']
+    if is_blank or len(project.data.keys()) <= 1:  # Only has project.data['pops']
         path = op.makespreadsheet(
             path,
             pops=project_summary['populations'],
