@@ -942,7 +942,7 @@ def download_project_object(project_id, obj_type, obj_id):
 
     basename = "%s-%s.%s" % (project.name, obj.name, ext)
     filename = get_server_filename(basename)
-    op.saveobj(filename, obj)
+    filename = op.saveobj(filename, obj)
     return filename
 
 
