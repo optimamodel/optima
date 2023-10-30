@@ -82,14 +82,16 @@ define(['angular', 'underscore'], function(angular, _) {
         };
 
         $scope.addAllPrograms = function(yearEntry) {
+        console.log('$scope.state.programs', $scope.state.programs)
           for (newProg in $scope.state.programs) {
             var newProgram = {
               short: newProg.short,
               value: null
             };
+            console.log('newProg', newProg, 'yearEntry', yearEntry)
             $scope.selectProgram(yearEntry, newProgram);
             yearEntry.programs.push(newProgram);
-            console.log(yearEntry.programs)
+            console.log('programs', yearEntry.programs)
           }
         };
 
