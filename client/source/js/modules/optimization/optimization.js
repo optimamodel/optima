@@ -235,7 +235,7 @@ define(['angular', 'ui.router'], function (angular) {
 
     $scope.uploadOptimization = function(optimization) {
       rpcService
-        .rpcUpload(
+        .rpcUploadSerial(
           'upload_project_object', [projectService.project.id, 'optimization'], {}, '.opt')
         .then(function(response) {
 			if (response.data.name == 'BadFileFormatError') {

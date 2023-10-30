@@ -118,7 +118,7 @@ define([
 
     $scope.uploadScenario = function(scenario) {
       rpcService
-        .rpcUpload(
+        .rpcUploadSerial(
           'upload_project_object', [projectService.project.id, 'scenario'], {}, '.scn')
         .then(function(response) {
 		  if (response.data.name == 'BadFileFormatError') {

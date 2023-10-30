@@ -1373,6 +1373,8 @@ def parse_constraints(constraints, project=None, progsetname=None):
     entries = []
     if constraints is None:
         constraints = op.defaultconstraints(project=project, progsetname=None)
+    if constraints is None:
+        return None
     for key, value in constraints['name'].items():
         entries.append({
             'key': key,
@@ -1405,7 +1407,7 @@ def get_default_optimization_summaries(project):
     for progsetkey,progset in project.progsets.items():
         progset_id = progset.uid
         default = {
-            'proporigconstraints': parse_constraints(op.defaultconstraints(project=project, progsetname=progsetkey)),
+            'proporigconstraints': parse_constraints(project=project, constraints=op.defaultconstraints(project=project, progsetname=progsetkey)),
             'objectives': {},
             'tvsettings': normalize_obj(op.defaulttvsettings())
         }

@@ -212,6 +212,7 @@ def get_remote_file():
     full_filename = fn(*args, **kwargs)
 
     dirname, filename = os.path.split(full_filename)
+    print(f' > get_remote_file {fn_name} filenames: {full_filename} = {dirname} {filename}')
 
     response = helpers.send_from_directory(
         dirname,
@@ -234,6 +235,7 @@ def receive_uploaded_file():
         'kwargs': dictionary of named parameters for the function
     """
     file = request.files['file']
+    print("> receive_uploaded_file file %s" % (file))
     filename = secure_filename(file.filename)
     dirname = app.config['UPLOAD_FOLDER']
     if not (os.path.exists(dirname)):

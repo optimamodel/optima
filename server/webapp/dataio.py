@@ -545,6 +545,9 @@ def create_project(user_id, project_summary):
     db.session.flush()
 
     project = op.Project(name=project_summary["name"])
+    project.settings.start = project_summary["startYear"]
+    project.settings.end   = project_summary["endYear"]
+    project.data["pops"]   = parse.revert_populations_to_pop(project_summary["populations"])
     project.uid = project_entry.id
     save_project(project)
 
@@ -582,20 +585,20 @@ def update_project_from_summary(project_summary, is_delete_data=False):
 
 
 def download_data_spreadsheet(project_id, is_blank=True):
-    print(">> download_data_spreadsheet init")
+    print(">> download_data_spreadsheet init: is_blank:", is_blank)
     project = load_project(project_id)
     project_summary = parse.get_project_summary_from_project(project)
     new_project_template = secure_filename(
         "{}.xlsx".format(project_summary['name']))
     path = templatepath(new_project_template)
-    if is_blank:
-        op.makespreadsheet(
+    if is_blank or len(project.data.keys()) <= 1:  # Only has project.data['pops']
+        path = op.makespreadsheet(
             path,
             pops=project_summary['populations'],
             datastart=project_summary["startYear"],
             dataend=project_summary["endYear"])
     else:
-        project.makespreadsheet(filename=path)
+        path = project.makespreadsheet(filename=path)
     return path
 
 
@@ -942,7 +945,7 @@ def download_project_object(project_id, obj_type, obj_id):
 
     basename = "%s-%s.%s" % (project.name, obj.name, ext)
     filename = get_server_filename(basename)
-    op.saveobj(filename, obj)
+    filename = op.saveobj(filename, obj)
     return filename
 
 
@@ -962,6 +965,7 @@ def upload_project_object(filename, project_id, obj_type):
     except Exception:
         return { 'name': 'BadFileFormatError' }
     try:
+        obj.uid = op.uuid()  # So we don't add a parset with a different name but same uuid causing a conflict
         if obj_type == "parset":
             project.addparset(parset=obj, overwrite=True)
         elif obj_type == "progset":
