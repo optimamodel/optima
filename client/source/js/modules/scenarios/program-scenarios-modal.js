@@ -72,7 +72,8 @@ define(['angular', 'underscore'], function(angular, _) {
           });
         };
 
-        $scope.addProgram = function(yearEntry, progNumber=0) {
+        $scope.addProgram = function(yearEntry, progNumber) {
+          if (progNumber === undefined) {progNumber = 0;}
           var newProgram = {
             short: $scope.state.programs[progNumber].short,
             value: null
