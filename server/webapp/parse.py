@@ -1401,6 +1401,7 @@ def revert_constraints(entries, project=None, progsetname=None):
 
 
 def get_default_optimization_summaries(project):
+    print(' > get_default_optimization_summaries project ', project)
     defaults_by_progset_id = {}
     for progsetkey,progset in project.progsets.items():
         progset_id = progset.uid
