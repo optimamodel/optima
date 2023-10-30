@@ -110,7 +110,7 @@ class ProjectDb(db.Model):
         project = self.load()
         filename = os.path.join(loaddir, project.name + ".prj")
         filename = op.saveobj(filename, project)
-        return filename
+        return os.path.basename(filename)
 
     def delete_dependent_objects(self, synchronize_session=False):
         str_project_id = str(self.id)        
