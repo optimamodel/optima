@@ -235,6 +235,7 @@ def receive_uploaded_file():
         'kwargs': dictionary of named parameters for the function
     """
     file = request.files['file']
+    print("> receive_uploaded_file file %s" % (file))
     filename = secure_filename(file.filename)
     dirname = app.config['UPLOAD_FOLDER']
     if not (os.path.exists(dirname)):
