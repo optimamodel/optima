@@ -212,6 +212,7 @@ def get_remote_file():
     full_filename = fn(*args, **kwargs)
 
     dirname, filename = os.path.split(full_filename)
+    print(f' > get_remote_file {fn_name} filenames: {full_filename} = {dirname} {filename}')
 
     response = helpers.send_from_directory(
         dirname,
