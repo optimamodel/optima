@@ -962,6 +962,7 @@ def upload_project_object(filename, project_id, obj_type):
     except Exception:
         return { 'name': 'BadFileFormatError' }
     try:
+        obj.uid = op.uuid()  # So we don't add a parset with a different name but same uuid causing a conflict
         if obj_type == "parset":
             project.addparset(parset=obj, overwrite=True)
         elif obj_type == "progset":
