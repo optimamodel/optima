@@ -113,12 +113,49 @@ define(['angular' ], function (angular) {
         angular
           .element(tag)
           .change(function(event) {
+            for (var i = 0; i < this.files.length; i++) {
+              var currentFile = this.files[i];
+              $upload
+                .upload({
+                  url: '/api/upload',
+                  fields: {
+                    name: name,
+                    args: JSON.stringify(args),
+                    kwargs: JSON.stringify(kwargs)
+                  },
+                  file: currentFile
+                })
+                .then(
+                  function(response) {
+                    deferred.resolve(response);
+                  },
+                  function(response) {
+                    deferred.reject(response);
+                  }
+                );
+            }
+          })
+          .click();
+        return deferred.promise;
+      }
+
+      function rpcUploadSerial(name, args, kwargs, fileType) {
+        consoleLogCommand("upload", name, args, kwargs, fileType);
+        var tag = '<input type="file" ';
+        if (fileType) {
+          tag += 'accept="' + fileType + '" '
+        }
+        tag += " multiple>";
+        var deferred = $q.defer();
+        angular
+          .element(tag)
+          .change(function(event) {
             promise = new Promise(function (resolve, reject) {resolve('');});
 
-            consoleLogCommand("upload-files", name, "files:", this.files);
+            console.log("upload-files", name, "files:", this.files);
+
             for (var i = 0; i < this.files.length; i++) {
               const currentFile = this.files[i];
-              console.log("upload-files-this", i, currentFile, name, args, kwargs);
               promise = promise.then(
                 function(response) {
                   return $upload.upload({
@@ -165,6 +202,7 @@ define(['angular' ], function (angular) {
         rpcAsyncRun: rpcAsyncRun,
         rpcDownload: rpcDownload,
         rpcUpload: rpcUpload,
+        rpcUploadSerial: rpcUploadSerial,
         getUniqueName: getUniqueName
       };
 

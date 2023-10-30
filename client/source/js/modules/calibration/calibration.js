@@ -362,7 +362,7 @@ define(['angular', 'underscore'], function (angular, _) {
     $scope.uploadParameterSet = function () {
       console.log('uploadParameterSet');
       rpcService
-          .rpcUpload(
+          .rpcUploadSerial(
               'upload_project_object', [$scope.project.id, 'parset'], {}, '.par')
           .then(function (response) {
             if (response.data.name == 'BadFileFormatError') {
