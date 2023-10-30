@@ -409,7 +409,6 @@ define(['angular', 'underscore'], function (angular, _) {
             .rpcRun(
                 'refresh_parset', [projectService.project.id, $scope.state.parset.id, initialprev])
             .then(function (response) {
-              $scope.state.parset.name = name;
               toastr.success('Parameter set refreshed from data');
               $scope.getCalibrationGraphs();
               rpcService
