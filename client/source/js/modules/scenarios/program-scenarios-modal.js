@@ -83,12 +83,12 @@ define(['angular', 'underscore'], function(angular, _) {
 
         $scope.addAllPrograms = function(yearEntry) {
         console.log('$scope.state.programs', $scope.state.programs)
-          for (newProg in $scope.state.programs) {
+          for (const program of $scope.state.programs) {
             var newProgram = {
-              short: newProg.short,
+              short: program.short,
               value: null
             };
-            console.log('newProg', newProg, 'yearEntry', yearEntry)
+            console.log('program', program, 'newProgram',newProgram, 'yearEntry', yearEntry)
             $scope.selectProgram(yearEntry, newProgram);
             yearEntry.programs.push(newProgram);
             console.log('programs', yearEntry.programs)
