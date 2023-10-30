@@ -118,6 +118,7 @@ define(['angular' ], function (angular) {
             consoleLogCommand("upload-files", name, "files:", this.files);
             for (var i = 0; i < this.files.length; i++) {
               var currentFile = this.files[i];
+              console.log("upload-files-this", i, currentFile, name, args, kwargs);
               promise = promise.then(
                 function(response) {
                   return $upload.upload({
