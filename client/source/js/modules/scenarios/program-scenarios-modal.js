@@ -81,6 +81,17 @@ define(['angular', 'underscore'], function(angular, _) {
           yearEntry.programs.push(newProgram);
         };
 
+        $scope.addAllPrograms = function(yearEntry) {
+          for (newProg in $scope.state.programs) {
+            var newProgram = {
+              short: newProg.short,
+              value: null
+            };
+            $scope.selectProgram(yearEntry, newProgram);
+            yearEntry.programs.push(newProgram);
+          }
+        };
+
         $scope.selectProgram = function(yearEntry, program) {
           if ($scope.scenario_type == "budget") {
             var budgets = budgetsByProgsetId[$scope.scenario.progset_id];
