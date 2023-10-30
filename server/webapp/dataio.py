@@ -588,7 +588,7 @@ def download_data_spreadsheet(project_id, is_blank=True):
     new_project_template = secure_filename(
         "{}.xlsx".format(project_summary['name']))
     path = templatepath(new_project_template)
-    if is_blank:
+    if is_blank or project.data == op.odict():
         op.makespreadsheet(
             path,
             pops=project_summary['populations'],
