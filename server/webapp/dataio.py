@@ -545,6 +545,9 @@ def create_project(user_id, project_summary):
     db.session.flush()
 
     project = op.Project(name=project_summary["name"])
+    project.settings.start = project_summary["startYear"]
+    project.settings.end   = project_summary["endYear"]
+    project.data["pops"]   = parse.revert_populations_to_pop(project_summary["populations"])
     project.uid = project_entry.id
     save_project(project)
 
@@ -588,7 +591,7 @@ def download_data_spreadsheet(project_id, is_blank=True):
     new_project_template = secure_filename(
         "{}.xlsx".format(project_summary['name']))
     path = templatepath(new_project_template)
-    if is_blank or project.data == op.odict():
+    if is_blank or len(project.data.keys()) == 1:  # Only has project.data['pops']
         path = op.makespreadsheet(
             path,
             pops=project_summary['populations'],
