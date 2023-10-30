@@ -89,6 +89,7 @@ define(['angular', 'underscore'], function(angular, _) {
             };
             $scope.selectProgram(yearEntry, newProgram);
             yearEntry.programs.push(newProgram);
+            console.log(yearEntry.programs)
           }
         };
 
