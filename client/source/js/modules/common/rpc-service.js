@@ -113,6 +113,7 @@ define(['angular' ], function (angular) {
         angular
           .element(tag)
           .change(function(event) {
+            consoleLogCommand("upload-files", name, "files:", this.files);
             for (var i = 0; i < this.files.length; i++) {
               var currentFile = this.files[i];
               $upload
