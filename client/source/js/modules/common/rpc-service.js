@@ -113,28 +113,37 @@ define(['angular' ], function (angular) {
         angular
           .element(tag)
           .change(function(event) {
+            promise = new Promise(function (resolve, reject) {resolve('');});
+
             consoleLogCommand("upload-files", name, "files:", this.files);
             for (var i = 0; i < this.files.length; i++) {
               var currentFile = this.files[i];
-              $upload
-                .upload({
-                  url: '/api/upload',
-                  fields: {
-                    name: name,
-                    args: JSON.stringify(args),
-                    kwargs: JSON.stringify(kwargs)
-                  },
-                  file: currentFile
-                })
-                .then(
-                  function(response) {
-                    deferred.resolve(response);
-                  },
-                  function(response) {
-                    deferred.reject(response);
-                  }
-                );
+              promise = promise.then(
+                function(response) {
+                  return $upload.upload({
+                    url: '/api/upload',
+                    fields: {
+                      name: name,
+                      args: JSON.stringify(args),
+                      kwargs: JSON.stringify(kwargs)
+                    },
+                    file: currentFile
+                  });
+                },
+                function (response) {
+                  deferred.reject(response);
+                }
+              );
             }
+
+            promise.then(
+              function(response) {
+                deferred.resolve(response);
+              },
+              function(response) {
+                deferred.reject(response);
+              }
+            );
           })
           .click();
         return deferred.promise;
