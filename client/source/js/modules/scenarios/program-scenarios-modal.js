@@ -83,7 +83,7 @@ define(['angular', 'underscore'], function(angular, _) {
 
         $scope.addAllPrograms = function(yearEntry) {
         console.log('$scope.state.programs', $scope.state.programs)
-          for (const program of $scope.state.programs) {
+          for (program of $scope.state.programs) {
             var newProgram = {
               short: program.short,
               value: null
