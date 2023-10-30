@@ -582,7 +582,7 @@ def update_project_from_summary(project_summary, is_delete_data=False):
 
 
 def download_data_spreadsheet(project_id, is_blank=True):
-    print(">> download_data_spreadsheet init")
+    print(">> download_data_spreadsheet init: is_blank:", is_blank)
     project = load_project(project_id)
     project_summary = parse.get_project_summary_from_project(project)
     new_project_template = secure_filename(
