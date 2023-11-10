@@ -1744,7 +1744,6 @@ def migrate(project, migrateversion='supported', verbose=2, die=None):
             try:
                 migrator(project, verbose=verbose, die=die)
             except Exception as E:
-                raise E
                 errormsg = 'WARNING, migrating "%s" from %6s -> %6s failed:\n%s' % (project.name, currentversion, nextversion, repr(E))
                 if not hasattr(project, 'failedmigrations'): project.failedmigrations = [] # Create if it doesn't already exist
                 project.failedmigrations.append(errormsg)
