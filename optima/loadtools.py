@@ -264,12 +264,12 @@ def addparameter(project=None, copyfrom=None, short=None, type='time', **kwargs)
                 for kwargkey,kwargval in kwargs.items():
                     setattr(ps.pars[i][short], kwargkey, kwargval)
 
-    which = 2
-
-    if which == 1:
-        addblankdata1(project=project, short=short, **kwargs)
-    elif which == 2:
-        addblankdata2(project=project, short=short, copyfrom=copyfrom, type=type, **kwargs)
+    if copyfrom in project.data:
+        which = 2
+        if which == 1:
+            addblankdata1(project=project, short=short, **kwargs)
+        elif which == 2:
+            addblankdata2(project=project, short=short, copyfrom=copyfrom, type=type, **kwargs)
 
     return None
 
