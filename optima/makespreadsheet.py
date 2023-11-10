@@ -9,7 +9,7 @@ Version: 2017feb10
 import xlsxwriter
 from xlsxwriter.utility import xl_rowcol_to_cell
 from numpy import isnan
-from optima import printv, isnumber, supported_versions, versions_different_databook, compareversions, odict, getdate, today, loaddatapars, Settings, promotetolist
+from optima import printv, isnumber, supported_versions, versions_different_databook, compareversions, odict, getdate, today, loaddatapars, Settings, promotetolist, OptimaException
 
 
 settings = Settings()
