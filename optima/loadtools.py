@@ -1,5 +1,6 @@
 import optima as op
-from numpy import nan, isnan, mean, concatenate as cat, array, exp, append
+from numpy import nan, isnan, mean, concatenate as cat, array, exp, append, all
+from sciris import checktype
 
 __all__ = [
     'migrate',
@@ -8,6 +9,8 @@ __all__ = [
     'optimaversion',
     'migraterevisionfunc',
 ]
+
+_pardefinitions = None # Store the pardefinitions so we don't have to load multiple times
 
 ##########################################################################################
 ### MIGRATION DEFINITIONS
@@ -242,10 +245,11 @@ def optimaversion(filename=None, version=None, branch=None, sha=None, verbose=Fa
     return None
 
 
-def addparameter(project=None, copyfrom=None, short=None, **kwargs):
+def addparameter(project=None, copyfrom=None, short=None, type='time', **kwargs):
     ''' 
     Function for adding a new parameter to a project -- used by several migrations.
     Use kwargs to arbitrarily specify the new parameter's properties.
+    type is used to create the blank data, and should correspond to the type column in model-inputs.xlsx:Data inputs
     '''
     for ps in project.parsets.values():
         if op.compareversions(project.version, '2.2')>=0: # Newer project, pars is dict
@@ -259,9 +263,106 @@ def addparameter(project=None, copyfrom=None, short=None, **kwargs):
                 ps.pars[i][short].short = short
                 for kwargkey,kwargval in kwargs.items():
                     setattr(ps.pars[i][short], kwargkey, kwargval)
-    project.data[short] = [[nan]*len(project.data['years'])]
+
+    which = 2
+
+    if which == 1:
+        addblankdata1(project=project, short=short, **kwargs)
+    elif which == 2:
+        addblankdata2(project=project, short=short, copyfrom=copyfrom, type=type, **kwargs)
+
     return None
 
+
+def addblankdata2(project=None, short=None, copyfrom=None, type='time', verbose=2, die=False, **kwargs):
+    ''' Note that this assumes certain type of shapes, and simply fills in constants with nan'''
+
+    errmsg = None
+    knowntypes = ['key', 'time', 'matrix', 'constant']
+    if type not in knowntypes:
+        errmsg = f"Cannot create blank data using type={type} in addblankdata2, need to pass a known type: {knowntypes}"
+    if copyfrom is None or copyfrom in ['meta', 'pops', 'pships', 'years', 'npops']:
+        errmsg = f'Cannot copy data using copyfrom={copyfrom} in addblankdata2, need to pass a (better) parameter to copyfrom'
+    if errmsg:
+        if die: raise op.OptimaException(errmsg)
+        else: print('WARNING: '+errmsg)
+        return
+
+    copyfromdata = project.data[copyfrom]
+
+    if type == 'constant': # This is a constant with shape (3,)
+        project.data[short] = [nan, nan, nan]
+
+    elif type == 'time': # This is a parameter with shape (x, npts)
+        x    = len(copyfromdata)
+        npts = len(project.data['years'])  # P.data[copyfrom] could be (x, 1) if it is only assumptions
+
+        project.data[short] = [[nan] * npts] * x
+
+    elif type == 'matrix': # matrix with shape (x,y)
+        x = len(copyfromdata)
+        y = len(copyfromdata[0])
+        project.data[short] = [[0] * y] * x
+
+    elif type == 'key': # This is a 'key' parameter (popsize, hivprev) with shape (3, x, npts)
+        x    = len(copyfromdata[0])
+        npts = len(project.data['years'])  # P.data[copyfrom] could be (3, x, 1) if it is only assumptions
+
+        project.data[short] = [ [[nan]*npts] * x ] * 3
+
+    else:
+        raise op.OptimaException(f'Cannot copy data from parameter "{copyfrom}" as it has an unknown type: {type}')
+
+    return
+
+def addblankdata1(project=None, short=None, verbose=2, die=False, **kwargs):
+    if project.data is None or 'pops' not in project.data:
+        errmsg = f'Cannot add blank data for input: "{short}" since project.data is missing population definitions'
+        if die: raise op.OptimaException(errmsg)
+        else: print(errmsg)
+        return
+
+    global _pardefinitions  # The reason we can save this globally is that op.loaddatapars will always return the same thing
+    if _pardefinitions is None:
+        _pardefinitions = op.loaddatapars(verbose=verbose)
+
+    datainputs    = {d['short']:d for d in _pardefinitions['Data inputs']}
+    dataconstants = {d['short']:d for d in _pardefinitions['Data constants']}
+
+    if short in datainputs.keys():
+        definition = datainputs[short]
+        npops = len(getpopsfromrangename(project.data, definition['rownames'], **kwargs))
+        npts  = len(project.data['years'])
+
+        if definition['type'] == 'key':
+            project.data[short] = [ [[nan]*npts] * npops ] * 3  # (3, npops, npts) = empty data
+        elif definition['type'] == 'matrix':
+            project.data[short] = [ [0] * npops ] * npops  # (npops, npops) = empty matrix
+        else: # definition['type'] == 'time':
+            project.data[short] = [[nan]*npts] * npops    # (npops, npts) = empty data
+
+    elif short in dataconstants.keys():
+        definition = dataconstants[short]
+        project.data[short] = [definition['best'], definition['low'], definition['high']]
+
+    else: # Not in current data inputs or constants, assume it is removed in this version - or it's something like meta, pops, pships, years, npops
+        return
+
+
+def getpopsfromrangename(data, rangename, **kwargs):
+    # Based off OptimaSpreadsheet.getrange()
+    if    rangename=='allpops':  return data['pops']['short']
+    elif  rangename=='females':  return [data['pops']['short'][i] for i, female in enumerate(data['pops']['female']) if female]
+    elif  rangename=='males':    return [data['pops']['short'][i] for i, male in enumerate(data['pops']['male']) if male]
+    elif  rangename=='children': return [data['pops']['short'][i] for i, age in enumerate(data['pops']['age']) if age[0]==0]
+    elif  rangename=='average':  return ['Average']
+    elif  rangename=='total':    return ['Total']
+    elif  rangename=='hbl':      return ['high','best','low']
+    elif  rangename=='.':        return None
+    else:
+        errormsg = 'Range name %s not found' % rangename
+        raise Exception(errormsg)
+    return None
 
 def removeparameter(project=None, short=None, datashort=None, verbose=False, die=False, **kwargs):
     ''' 
