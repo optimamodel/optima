@@ -777,13 +777,13 @@ class Project(object):
     def runbudget(self, name=None, budget=None, budgetyears=None, progsetname=None, parsetname='default', verbose=2):
         ''' Function to run the model for a given budget, years, programset and parameterset '''
         if name        is None: name        = 'runbudget'
-        if budget      is None: budget      = self.progset().getdefaultbudget()
         if budgetyears is None: budgetyears = self.settings.now
         if progsetname is None:
             try:
                 progsetname = self.progsets[0].name
                 printv('No program set entered to runbudget, using stored program set "%s"' % (self.progsets[0].name), 1, self.settings.verbose)
-            except: raise OptimaException("No program set entered, and there are none stored in the project") 
+            except: raise OptimaException("No program set entered, and there are none stored in the project")
+        if budget is None: budget = self.progsets[progsetname].getdefaultbudget()
         coverage = self.progsets[progsetname].getprogcoverage(budget=budget, t=budgetyears, parset=self.parsets[parsetname])
         progpars = self.progsets[progsetname].getpars(coverage=coverage,t=budgetyears, parset=self.parsets[parsetname])
         results = self.runsim(pars=progpars, parsetname=parsetname, progsetname=progsetname, budget=budget, budgetyears=budgetyears, coverage=coverage, label=self.name+'-runbudget')
