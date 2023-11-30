@@ -43,6 +43,6 @@ setup(
         'numpy>=1.10.1',
         'xlrd==1.2.0', #WARNING temporary to read xlsx files and needs to to be replaced with a migration to openpyxl
         'xlsxwriter',
-        'sciris',
+        'sciris>=3.0.0',
     ],
 )

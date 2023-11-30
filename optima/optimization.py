@@ -6,7 +6,7 @@ Version: 2019dec02
 
 from optima import OptimaException, Link, Multiresultset, ICER, asd, getresults # Main functions
 from optima import printv, dcp, odict, findinds, today, getdate, uuid, objrepr, promotetoarray, findnearest, sanitize, \
-    inclusiverange, sigfig, compareversions # Utilities
+    inclusiverange, sigfig, compareversions, cpu_count # Utilities
 
 from numpy import zeros, ones, empty, arange, array, inf, isfinite, argmin, argsort, nan, floor, concatenate, exp, sqrt, logical_and, ceil
 from numpy.random import random, seed, randint
@@ -809,7 +809,7 @@ def optimize(optim=None, maxiters=None, maxtime=None, finishtime=None, verbose=2
     # Set defaults
     if sc.isnumber(mc): mc = (1,0,mc)
     elif mc is None or sum(mc) == 0: mc = (1,0,0) # Default to just running from Optimization baseline
-    if ncpus is None: ncpus = int(ceil( sc.cpu_count()/2 ))
+    if ncpus is None: ncpus = int(ceil( cpu_count()/2 ))
 
     # Optim structure validation
     progset = project.progsets[optim.progsetname] # Link to the original parameter set
@@ -887,7 +887,7 @@ def multioptimize(optim=None, nchains=None, nblocks=None, blockiters=None, mc=No
     if maxiters is None: maxiters = 5000
     if sc.isnumber(mc): mc = (1,0,mc)
     elif mc is None or sum(mc) == 0: mc = (1,0,0) # Default to just running from Optimization baseline
-    if ncpus is None:    ncpus    = int(ceil( sc.cpu_count()/2 ))
+    if ncpus is None:    ncpus    = int(ceil( cpu_count()/2 ))
     if parallel is None: parallel = True  # The individual chains should also run in parallel if there are enough cpus
     chaincpus = int(ceil( ncpus/nchains ))
 
@@ -1019,7 +1019,7 @@ def tvoptimize(project=None, optim=None, tvec=None, verbose=None, maxtime=None, 
     # Set defaults
     if sc.isnumber(mc): mc = (1,0,mc)
     elif mc is None or sum(mc) == 0: mc = (1,0,0) # Default to just running from Optimization baseline
-    if ncpus is None: ncpus = int(ceil( sc.cpu_count()/2 ))
+    if ncpus is None: ncpus = int(ceil( cpu_count()/2 ))
 
     # Do a preliminary non-time-varying optimization
     optim.tvsettings['timevarying'] = False # Turn off for the first run
@@ -1155,7 +1155,7 @@ def minoutcomes(project=None, optim=None, tvec=None, absconstraints=None, verbos
     if project is None or optim is None: raise OptimaException('An optimization requires both a project and an optimization object to run')
     if randseed is None: randseed = randint(2**31)
     if absconstraints is None: absconstraints = optim.getabsconstraints()
-    if ncpus is None: ncpus = int(ceil( sc.cpu_count()/2 ))
+    if ncpus is None: ncpus = int(ceil( cpu_count()/2 ))
     if not parallel: ncpus = 1
     if sc.isnumber(mc): mc = (1,0,mc)
     elif mc is None or sum(mc) == 0: mc = (1,0,0) # Default to just running from Optimization baseline
@@ -1499,7 +1499,7 @@ def minmoney(project=None, optim=None, tvec=None, verbose=None, maxtime=None, fi
     if n_success is None: n_success = max(200 ,nprogs*20) # The number of successes needed to terminate the throws
     if n_refine  is None: n_refine  = 2000  # The maximum number of refinement steps to take
     if schedule  is None: schedule  = [0.3, 0.6, 0.8, 0.9, 1.0] # The budget amounts to allocate on each round
-    if ncpus     is None: ncpus     = int(ceil(sc.cpu_count() / 2))
+    if ncpus     is None: ncpus     = int(ceil(cpu_count() / 2))
     search_step  = 2.0 # The size of the steps to establish the upper/lower limits for the binary search
     search_tol   = 0.01 # Tolerance of the binary search (maximum difference between upper and lower limits)
     refine_steps = [0.0, 0.5, 0.8, 0.9, 0.95, 0.99]  # During refinement, factor by which to scale programs

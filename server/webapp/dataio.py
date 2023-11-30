@@ -316,6 +316,7 @@ def report_exception_decorator(api_call):
             return api_call(*args, **kwargs)
         except Exception as e:
             exception = traceback.format_exc()
+            if not isinstance(e, op.OptimaException): exception = exception+op.debuginfo(dooutput=True)
             # limiting the exception information to 10000 characters maximum
             # (to prevent monstrous sqlalchemy outputs)
             current_app.logger.error("Exception during request %s: %.10000s" % (request, exception))
@@ -425,11 +426,9 @@ def save_project(project, db_session=None, is_skip_result=False):
     if db_session is None:
         db_session = db.session
     project_record = load_project_record(project.uid, db_session=db_session)
-    # Copy the project, only save what we want...
-    new_project = op.dcp(project)
-    new_project.spreadsheet = None
-    if is_skip_result:
-        new_project.results = op.odict()
+    if is_skip_result: # Copy the project, only save what we want...
+        project = op.dcp(project)
+        project.results = op.odict()
     project_record.save_obj(project)
     db_session.add(project_record)
     db_session.commit()
@@ -471,6 +470,16 @@ def update_project_with_fn(project_id, update_project_fn, db_session=None):
     update_project_fn(project)
     project.modified = op.today()
     save_project(project, db_session=db_session)
+
+
+def update_project_version(project_id, db_session=None):
+    if db_session is None:
+        db_session = db.session
+    project = load_project(project_id, db_session=db_session)
+    project = op.migrate(project, migrateversion='latest', die=True) # die=True so we know on the FE
+    project.modified = op.today()
+    save_project(project, db_session=db_session)
+    return {'version': project.version}
 
 
 def load_project_summary_from_project_record(project_record):
@@ -536,6 +545,9 @@ def create_project(user_id, project_summary):
     db.session.flush()
 
     project = op.Project(name=project_summary["name"])
+    project.settings.start = project_summary["startYear"]
+    project.settings.end   = project_summary["endYear"]
+    project.data["pops"]   = parse.revert_populations_to_pop(project_summary["populations"])
     project.uid = project_entry.id
     save_project(project)
 
@@ -573,20 +585,20 @@ def update_project_from_summary(project_summary, is_delete_data=False):
 
 
 def download_data_spreadsheet(project_id, is_blank=True):
-    print(">> download_data_spreadsheet init")
+    print(">> download_data_spreadsheet init: is_blank:", is_blank)
     project = load_project(project_id)
     project_summary = parse.get_project_summary_from_project(project)
     new_project_template = secure_filename(
         "{}.xlsx".format(project_summary['name']))
     path = templatepath(new_project_template)
-    if is_blank:
-        op.makespreadsheet(
+    if is_blank or len(project.data.keys()) <= 1:  # Only has project.data['pops']
+        path = op.makespreadsheet(
             path,
             pops=project_summary['populations'],
             datastart=project_summary["startYear"],
             dataend=project_summary["endYear"])
     else:
-        project.makespreadsheet(filename=path)
+        path = project.makespreadsheet(filename=path)
     return path
 
 
@@ -933,7 +945,7 @@ def download_project_object(project_id, obj_type, obj_id):
 
     basename = "%s-%s.%s" % (project.name, obj.name, ext)
     filename = get_server_filename(basename)
-    op.saveobj(filename, obj)
+    filename = op.saveobj(filename, obj)
     return filename
 
 
@@ -950,6 +962,10 @@ def upload_project_object(filename, project_id, obj_type):
     project = load_project(project_id)
     try:
         obj = op.loadobj(filename)
+    except Exception:
+        return { 'name': 'BadFileFormatError' }
+    try:
+        obj.uid = op.uuid()  # So we don't add a parset with a different name but same uuid causing a conflict
         if obj_type == "parset":
             project.addparset(parset=obj, overwrite=True)
         elif obj_type == "progset":
@@ -959,7 +975,7 @@ def upload_project_object(filename, project_id, obj_type):
         elif obj_type == "optimization":
             project.addoptim(optim=obj, overwrite=True)
     except Exception:
-        return { 'name': 'BadFileFormatError' }
+        raise
     save_project(project)
     return { 'name': obj.name }
 
