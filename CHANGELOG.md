@@ -22,7 +22,7 @@ Migration to a new version is done on load `P = get_latest_project("example", mi
  - When loading a spreadsheet, the matrices get their dimensions checked properly
  - Speed up plotting by ~30-50% (only plot actual data points not `nan` and faster way of setting axis label fontsize)
  - `runscenarios` can be run in parallel (creates a copy of the project for each scenario with only the parset and progset it needs)
-
+ - `addblankdata` in `loadtools.py` now adds the correctly shaped blank data to `P.data` for new parameters, fixing an error downloading spreadsheets of migrated projects
 
 
 

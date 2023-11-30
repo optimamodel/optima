@@ -246,7 +246,8 @@ def optimaversion(filename=None, version=None, branch=None, sha=None, verbose=Fa
 
 
 def addparameter(project=None, copyfrom=None, short=None, type='time', **kwargs):
-    ''' 
+    '''
+    DO SUPPLY THE CORRECT TYPE - SEE KNOWNTYPES in addblankdata
     Function for adding a new parameter to a project -- used by several migrations.
     Use kwargs to arbitrarily specify the new parameter's properties.
     type is used to create the blank data, and should correspond to the type column in model-inputs.xlsx:Data inputs
@@ -265,17 +266,17 @@ def addparameter(project=None, copyfrom=None, short=None, type='time', **kwargs)
                     setattr(ps.pars[i][short], kwargkey, kwargval)
 
     if copyfrom in project.data:
-        which = 2
-        if which == 1:
-            addblankdata1(project=project, short=short, **kwargs)
-        elif which == 2:
-            addblankdata2(project=project, short=short, copyfrom=copyfrom, type=type, **kwargs)
+        # addblankdata1(project=project, short=short, **kwargs)
+        addblankdata(project=project, short=short, copyfrom=copyfrom, type=type, **kwargs)
 
     return None
 
 
-def addblankdata2(project=None, short=None, copyfrom=None, type='time', verbose=2, die=False, **kwargs):
-    ''' Note that this assumes certain type of shapes, and simply fills in constants with nan'''
+def addblankdata(project=None, short=None, copyfrom=None, type='time', verbose=2, die=False, **kwargs):
+    '''
+    DO SUPPLY THE CORRECT TYPE - SEE KNOWNTYPES
+    Note that this assumes certain type of shapes, and simply fills in constants with nan
+    '''
 
     errmsg = None
     knowntypes = ['key', 'time', 'matrix', 'constant']
@@ -315,38 +316,40 @@ def addblankdata2(project=None, short=None, copyfrom=None, type='time', verbose=
 
     return
 
-def addblankdata1(project=None, short=None, verbose=2, die=False, **kwargs):
-    if project.data is None or 'pops' not in project.data:
-        errmsg = f'Cannot add blank data for input: "{short}" since project.data is missing population definitions'
-        if die: raise op.OptimaException(errmsg)
-        else: print(errmsg)
-        return
-
-    global _pardefinitions  # The reason we can save this globally is that op.loaddatapars will always return the same thing
-    if _pardefinitions is None:
-        _pardefinitions = op.loaddatapars(verbose=verbose)
-
-    datainputs    = {d['short']:d for d in _pardefinitions['Data inputs']}
-    dataconstants = {d['short']:d for d in _pardefinitions['Data constants']}
-
-    if short in datainputs.keys():
-        definition = datainputs[short]
-        npops = len(getpopsfromrangename(project.data, definition['rownames'], **kwargs))
-        npts  = len(project.data['years'])
-
-        if definition['type'] == 'key':
-            project.data[short] = [ [[nan]*npts] * npops ] * 3  # (3, npops, npts) = empty data
-        elif definition['type'] == 'matrix':
-            project.data[short] = [ [0] * npops ] * npops  # (npops, npops) = empty matrix
-        else: # definition['type'] == 'time':
-            project.data[short] = [[nan]*npts] * npops    # (npops, npts) = empty data
-
-    elif short in dataconstants.keys():
-        definition = dataconstants[short]
-        project.data[short] = [definition['best'], definition['low'], definition['high']]
-
-    else: # Not in current data inputs or constants, assume it is removed in this version - or it's something like meta, pops, pships, years, npops
-        return
+### This version is different in that it loads in what the new parameter is supposed to be (which takes a little bit of time) and uses that,
+### rather than type being an input
+# def addblankdata2(project=None, short=None, verbose=2, die=False, **kwargs):
+#     if project.data is None or 'pops' not in project.data:
+#         errmsg = f'Cannot add blank data for input: "{short}" since project.data is missing population definitions'
+#         if die: raise op.OptimaException(errmsg)
+#         else: print(errmsg)
+#         return
+#
+#     global _pardefinitions  # The reason we can save this globally is that op.loaddatapars will always return the same thing
+#     if _pardefinitions is None:
+#         _pardefinitions = op.loaddatapars(verbose=verbose)
+#
+#     datainputs    = {d['short']:d for d in _pardefinitions['Data inputs']}
+#     dataconstants = {d['short']:d for d in _pardefinitions['Data constants']}
+#
+#     if short in datainputs.keys():
+#         definition = datainputs[short]
+#         npops = len(getpopsfromrangename(project.data, definition['rownames'], **kwargs))
+#         npts  = len(project.data['years'])
+#
+#         if definition['type'] == 'key':
+#             project.data[short] = [ [[nan]*npts] * npops ] * 3  # (3, npops, npts) = empty data
+#         elif definition['type'] == 'matrix':
+#             project.data[short] = [ [0] * npops ] * npops  # (npops, npops) = empty matrix
+#         else: # definition['type'] == 'time':
+#             project.data[short] = [[nan]*npts] * npops    # (npops, npts) = empty data
+#
+#     elif short in dataconstants.keys():
+#         definition = dataconstants[short]
+#         project.data[short] = [definition['best'], definition['low'], definition['high']]
+#
+#     else: # Not in current data inputs or constants, assume it is removed in this version - or it's something like meta, pops, pships, years, npops
+#         return
 
 
 def getpopsfromrangename(data, rangename, **kwargs):
