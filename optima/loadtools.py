@@ -1,6 +1,5 @@
 import optima as op
 from numpy import nan, isnan, mean, concatenate as cat, array, exp, append, all
-from sciris import checktype
 
 __all__ = [
     'migrate',
