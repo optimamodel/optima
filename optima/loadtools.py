@@ -350,22 +350,21 @@ def addblankdata(project=None, short=None, copyfrom=None, type='time', verbose=2
 #
 #     else: # Not in current data inputs or constants, assume it is removed in this version - or it's something like meta, pops, pships, years, npops
 #         return
-
-
-def getpopsfromrangename(data, rangename, **kwargs):
-    # Based off OptimaSpreadsheet.getrange()
-    if    rangename=='allpops':  return data['pops']['short']
-    elif  rangename=='females':  return [data['pops']['short'][i] for i, female in enumerate(data['pops']['female']) if female]
-    elif  rangename=='males':    return [data['pops']['short'][i] for i, male in enumerate(data['pops']['male']) if male]
-    elif  rangename=='children': return [data['pops']['short'][i] for i, age in enumerate(data['pops']['age']) if age[0]==0]
-    elif  rangename=='average':  return ['Average']
-    elif  rangename=='total':    return ['Total']
-    elif  rangename=='hbl':      return ['high','best','low']
-    elif  rangename=='.':        return None
-    else:
-        errormsg = 'Range name %s not found' % rangename
-        raise Exception(errormsg)
-    return None
+#
+# def getpopsfromrangename(data, rangename, **kwargs):
+#     # Based off OptimaSpreadsheet.getrange()
+#     if    rangename=='allpops':  return data['pops']['short']
+#     elif  rangename=='females':  return [data['pops']['short'][i] for i, female in enumerate(data['pops']['female']) if female]
+#     elif  rangename=='males':    return [data['pops']['short'][i] for i, male in enumerate(data['pops']['male']) if male]
+#     elif  rangename=='children': return [data['pops']['short'][i] for i, age in enumerate(data['pops']['age']) if age[0]==0]
+#     elif  rangename=='average':  return ['Average']
+#     elif  rangename=='total':    return ['Total']
+#     elif  rangename=='hbl':      return ['high','best','low']
+#     elif  rangename=='.':        return None
+#     else:
+#         errormsg = 'Range name %s not found' % rangename
+#         raise Exception(errormsg)
+#     return None
 
 def removeparameter(project=None, short=None, datashort=None, verbose=False, die=False, **kwargs):
     ''' 
