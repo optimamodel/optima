@@ -247,7 +247,7 @@ def optimaversion(filename=None, version=None, branch=None, sha=None, verbose=Fa
 
 def addparameter(project=None, copyfrom=None, short=None, type='time', **kwargs):
     '''
-    DO SUPPLY THE CORRECT TYPE - SEE KNOWNTYPES in addblankdata
+    DO SUPPLY THE CORRECT TYPE - SEE KNOWNTYPES in addblankdata() - it should match the model-inputs.xlsx | Data inputs | type column
     Function for adding a new parameter to a project -- used by several migrations.
     Use kwargs to arbitrarily specify the new parameter's properties.
     type is used to create the blank data, and should correspond to the type column in model-inputs.xlsx:Data inputs
@@ -274,7 +274,7 @@ def addparameter(project=None, copyfrom=None, short=None, type='time', **kwargs)
 
 def addblankdata(project=None, short=None, copyfrom=None, type='time', verbose=2, die=False, **kwargs):
     '''
-    DO SUPPLY THE CORRECT TYPE - SEE KNOWNTYPES
+    DO SUPPLY THE CORRECT TYPE - SEE KNOWNTYPES - it should match the model-inputs.xlsx | Data inputs | type column
     Note that this assumes certain type of shapes, and simply fills in constants with nan
     '''
 
