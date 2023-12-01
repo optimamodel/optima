@@ -1101,7 +1101,7 @@ def download_result_data(result_id):
     if not dirname:
         dirname = TEMPLATEDIR
     result = load_result_by_id(result_id)
-    return result.export(folder=dirname, sigfigs=3)
+    return result.export(folder=dirname)
 
 
 def load_result_by_optimization(project, optimization):
