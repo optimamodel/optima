@@ -1,9 +1,8 @@
 # Optima Changelog
 
-Projects before `2.11.4` should be able to be migrated to version `2.11.4` without changing the calibration. Versions `2.12.0` and `2.12.1` both change the calibration (sometimes only slightly).
+Projects before `2.11.4` should be able to be migrated to version `2.11.4` without changing the calibration. Versions `2.12.0` and `2.12.1` (planned) both change the calibration (sometimes only slightly).
 
-Versions `2.11.4` and later all can be run using the branch `EECA-training-2022` (currently on `2.11.4`) or `updates-june-2022` (currently on `2.12.0`). These branches have the same code except for `version.py` which changes the behaviour.
-To use a different version, change it without committing in `optima/version.py`.
+Versions `2.11.4`, `2.12.0` and later all can be run using the branch `main`. A project will automatically update to the earliest supported version (currently `2.11.4`), but updating a project to the latest version can be done using the FE or `op.migrate(P, 'latest')`
 
 ## Revision 1
 Can run multiple different supported versions with the same branch! Currently supported: `[2.11.4, 2.12.0]`
