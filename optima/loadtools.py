@@ -135,7 +135,8 @@ def setrevisionmigrations(which='migrations'):
 
     migrations = op.odict([
         # Orig     New       Date         Migration           Description
-        ('0',   ('1', '2023-10-17', parsandprograms_odictcustom,   'Add P.revision, change Parameterset.pars and Programset.programs from odict to odict_custom and link them')),
+        ('0',   ('1', '2023-10-17', parsandprograms_odictcustom,    'Add P.revision, change Parameterset.pars and Programset.programs from odict to odict_custom and link them')),
+        ('1',   ('2', '2023-12-04', None,                           'Fix bug when deep-copying a `Parameterset`, the `pars` from a different `Parameterset` would get copied in certain cases')),
         ])
 
 

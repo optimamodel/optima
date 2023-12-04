@@ -593,7 +593,7 @@ class Resultset(object):
 
         return None
 
-    def export(self, filename=None, folder=None, bypop=True, sep=',', ind=None, key=None, sigfigs=3, writetofile=True, asexcel=True, verbose=2):
+    def export(self, filename=None, folder=None, bypop=True, sep=',', ind=None, key=None, sigfigs=None, writetofile=True, asexcel=True, verbose=2):
         """ Method for exporting results to an Excel or CSV file """
 
         # Handle export by either index or key -- WARNING, still inelegant at best! Accepts key or ind, not both
