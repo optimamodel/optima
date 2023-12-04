@@ -1484,7 +1484,7 @@ def standard_cp(obj):
     obj.__copy__    = obj._cp
     return output
 
-def standard_dcp(obj, memodict={}):
+def standard_dcp(obj, memodict):
     ''' Function that stores the __deepcopy__ so that we can use the standard
         copy.deepcopy() to copy it and return to the original __deepcopy__
         NOT THE SAME AS DCP since that will use the __deepcopy__ of the object (as intended)
@@ -2493,7 +2493,7 @@ class odict_custom(odict):
         self._func = self.func
         self.func = None
 
-        copy = standard_dcp(self)
+        copy = standard_dcp(self, memodict)
 
         self.func = self._func
         del self._func
