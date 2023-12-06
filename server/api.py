@@ -38,8 +38,9 @@ optima.debuginfo()
 
 # Load the database
 from server.webapp import dbconn
+import scirisweb as sw
 dbconn.db = SQLAlchemy(app)
-dbconn.redis = redis.StrictRedis.from_url(app.config["REDIS_URL"])
+dbconn.datastore = sw.make_datastore(app.config["DATASTORE_URL"])
 
 from server.webapp.dbmodels import UserDb
 

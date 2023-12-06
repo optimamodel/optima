@@ -4,7 +4,7 @@ from sqlalchemy import text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.dialects.postgresql import JSON
 import optima as op
-from .dbconn import db, redis
+from .dbconn import db, datastore
 
 
 #@swagger.model
@@ -61,7 +61,7 @@ class PyObjectDb(db.Model):
 
     def load(self):
         print(">> PyObjectDb.load " + self.id.hex)
-        redis_entry = redis.get(self.id.hex)
+        redis_entry = datastore._get(self.id.hex)
         print(redis_entry)
         if redis_entry is None:
             print('WARNING, object %s not found' % self.id.hex) 
@@ -71,11 +71,11 @@ class PyObjectDb(db.Model):
 
     def save_obj(self, obj):
         print(">> PyObjectDb.save " + self.id.hex)
-        redis.set(self.id.hex, op.dumpstr(obj))
+        datastore._set(self.id.hex, op.dumpstr(obj))
 
     def cleanup(self):
         print(">> PyObjectDb.cleanup " + self.id.hex)
-        redis.delete(self.id.hex)
+        datastore._delete(self.id.hex)
     
     def as_portfolio_file(self, loaddir, filename=None):
         portfolio = self.load()
@@ -98,13 +98,13 @@ class ProjectDb(db.Model):
 
     def load(self):
         print(">> ProjectDb.load " + self.id.hex)
-        redis_entry = redis.get(self.id.hex)
+        redis_entry = datastore._get(self.id.hex)
         project = op.loadproj(redis_entry, fromdb=True)
         return project
 
     def save_obj(self, obj):
         print(">> ProjectDb.save " + self.id.hex)
-        redis.set(self.id.hex, op.dumpstr(obj))
+        datastore._set(self.id.hex, op.dumpstr(obj))
 
     def as_file(self, loaddir, filename=None):
         project = self.load()
@@ -166,15 +166,15 @@ class ResultsDb(db.Model):
 
     def load(self):
         print(">> ResultsDb.load result-" + self.id.hex)
-        return op.loadstr(redis.get("result-" + self.id.hex))
+        return op.loadstr(datastore._get("result-" + self.id.hex))
 
     def save_obj(self, obj):
         print(">> ResultsDb.save result-" + self.id.hex)
-        redis.set("result-" + self.id.hex, op.dumpstr(obj))
+        datastore._set("result-" + self.id.hex, op.dumpstr(obj))
 
     def cleanup(self):
         print(">> ResultsDb.cleanup result-" + self.id.hex)
-        redis.delete("result-" + self.id.hex)
+        datastore._delete("result-" + self.id.hex)
 
 
 class WorkLogDb(db.Model):  # pylint: disable=R0903
@@ -202,12 +202,12 @@ class UndoStackDb(db.Model):
 
     def load(self):
         print(">> UndoStackDb.load undo-stack-" + self.id.hex)
-        return op.loadstr(redis.get("undo-stack-" + self.id.hex))
+        return op.loadstr(datastore._get("undo-stack-" + self.id.hex))
 
     def save_obj(self, obj):
         print(">> UndoStackDb.save undo-stack-" + self.id.hex)
-        redis.set("undo-stack-" + self.id.hex, op.dumpstr(obj))
+        datastore._set("undo-stack-" + self.id.hex, op.dumpstr(obj))
 
     def cleanup(self):
         print(">> UndoStackDb.cleanup undo-stack-" + self.id.hex)
-        redis.delete("undo-stack-" + self.id.hex)
+        datastore._delete("undo-stack-" + self.id.hex)
