@@ -2,4 +2,4 @@
 # that is initialized in api.py
 
 db = None
-redis = None
+datastore = None
