@@ -1833,7 +1833,7 @@ def loadproj(filename=None, folder=None, verbose=2, die=None, fromdb=False, migr
         migraterevision='latest'=True, False, or a specific revision (only latest is supported)
     '''
     if fromdb:    origP = op.loadstr(filename) # Load from database
-    else:         origP = op.loadobj(filename=filename, folder=folder, verbose=(True if verbose>2 else None if verbose>0 else False)) # Normal usage case: load from file
+    else:         origP = op.loadobj(filename=filename, folder=folder, verbose=(True if verbose>2 else None if verbose>0 else False), die=die) # Normal usage case: load from file
 
 
     if migrateversion:
