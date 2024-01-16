@@ -486,6 +486,7 @@ def update_project_version(project_id, db_session=None):
 
 def load_project_summary_from_project_record(project_record):
     project = load_project_from_record(project_record)
+    print('PROJCET4', project)
     project_summary = parse.get_project_summary_from_project(project)
     project_summary['id'] = project_record.id
     project_summary['userId'] = project_record.user_id
