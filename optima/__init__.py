@@ -101,12 +101,14 @@ def optimapath(subdir=None, trailingsep=True):
 
 # Debugging information
 def debuginfo(dooutput=False):
+    from sciris import __version__ as sc_version
     output = '\nOptima debugging info:\n'
     output += '   Versions: %s\n' % supported_versions
     output += '   Revision: %s\n' % revision
-    output += '   Branch:  %s\n' % gitinfo()[0]
-    output += '   SHA:     %s\n' % gitinfo()[1][:7]
-    output += '   Path:    %s\n' % optimapath()
+    output += '   Branch:   %s\n' % gitinfo()[0]
+    output += '   SHA:      %s\n' % gitinfo()[1][:7]
+    output += '   Path:     %s\n' % optimapath()
+    output += '   Sciris:   %s\n' % sc_version
     if dooutput:
         return output
     else:
