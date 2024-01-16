@@ -432,6 +432,8 @@ def save_project(project, db_session=None, is_skip_result=False):
     project_record.save_obj(project)
     db_session.add(project_record)
     db_session.commit()
+    print('PROJCET2,', project)
+    print('PROJCET3,', load_project_from_record(project_record))
 
 
 def load_project_from_record(project_record):
