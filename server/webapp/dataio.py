@@ -755,6 +755,7 @@ def create_project_from_prj_file(prj_filename, user_id, other_names):
         raise e
         return { 'projectId': 'BadFileFormatError' }
     project.name = get_unique_name(project.name, other_names)
+    print('PROJCET', project)
     save_project_as_new(project, user_id)
     return { 'projectId': str(project.uid) }
 
