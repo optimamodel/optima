@@ -74,6 +74,11 @@ else:
     from sciris import cpu_count
 del sc_version; del sc_versiondate
 
+# Some pickled projects expect there to be a function sc.sc_fileio._unpickleMethod
+def blank_function(a,b,c): pass # raise Exception('sc.sc_fileio._unpickleMethod is gone, don\'t try to use it')
+sc.sc_fileio._unpickleMethod = blank_function
+del blank_function
+
 # Color definitions
 from .colortools import *
 
