@@ -432,8 +432,6 @@ def save_project(project, db_session=None, is_skip_result=False):
     project_record.save_obj(project)
     db_session.add(project_record)
     db_session.commit()
-    print('PROJCET2,', project.progsets[0])
-    print('PROJCET3,', load_project_from_record(project_record).progsets[0])
 
 
 def load_project_from_record(project_record):
@@ -486,7 +484,6 @@ def update_project_version(project_id, db_session=None):
 
 def load_project_summary_from_project_record(project_record):
     project = load_project_from_record(project_record)
-    print('PROJCET4', project.progsets[0])
     project_summary = parse.get_project_summary_from_project(project)
     project_summary['id'] = project_record.id
     project_summary['userId'] = project_record.user_id
@@ -754,11 +751,9 @@ def create_project_from_prj_file(prj_filename, user_id, other_names):
     print(">> create_project_from_prj_file '%s'" % prj_filename)
     try:
         project = op.loadproj(prj_filename, die=True)
-    except Exception as e:
-        raise e
+    except Exception:
         return { 'projectId': 'BadFileFormatError' }
     project.name = get_unique_name(project.name, other_names)
-    print('PROJCET', project.progsets[0])
     save_project_as_new(project, user_id)
     return { 'projectId': str(project.uid) }
 
