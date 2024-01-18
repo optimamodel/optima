@@ -137,6 +137,7 @@ def setrevisionmigrations(which='migrations'):
         # Orig     New       Date         Migration           Description
         ('0',   ('1', '2023-10-17', parsandprograms_odictcustom,    'Add P.revision, change Parameterset.pars and Programset.programs from odict to odict_custom and link them')),
         ('1',   ('2', '2023-12-04', None,                           'Fix bug when deep-copying a `Parameterset`, the `pars` from a different `Parameterset` would get copied in certain cases')),
+        ('2',   ('3', '2024-01-18', None,                           'Fix small unpickling bug and FE raises BadFileFormatError when uploading project that it cannot unpickle')),
         ])
 
 
@@ -1833,7 +1834,7 @@ def loadproj(filename=None, folder=None, verbose=2, die=None, fromdb=False, migr
         migraterevision='latest'=True, False, or a specific revision (only latest is supported)
     '''
     if fromdb:    origP = op.loadstr(filename) # Load from database
-    else:         origP = op.loadobj(filename=filename, folder=folder, verbose=(True if verbose>2 else None if verbose>0 else False)) # Normal usage case: load from file
+    else:         origP = op.loadobj(filename=filename, folder=folder, verbose=(True if verbose>2 else None if verbose>0 else False), die=die) # Normal usage case: load from file
 
 
     if migrateversion:
