@@ -3,6 +3,8 @@ from sciris import __version__ as sc_version, parallelize as sc_parallelize
 if six.PY3:
 	basestring = str
 	unicode = str
+from copy import deepcopy, copy
+import types
 
 __all__ = [
 'CancelException',
@@ -12,6 +14,7 @@ __all__ = [
 'odict', 'percentcomplete', 'perturb', 'printarr', 'pd', 'printdr', 'printv', 'printvars', 'printtologfile', 'promotetoarray',
 'promotetolist', 'promotetoodict', 'quantile', 'runcommand', 'sanitize', 'sanitizefilename', 'savetext', 'scaleratio', 'setylim',
 'sigfig', 'SItickformatter', 'SIticks', 'slacknotification', 'smoothinterp', 'tic', 'toc', 'today', 'vec2obj', 'parallelize',
+'PersistentLink', 'standard_dcp', 'standard_cp', 'odict_custom'
 ]
 
 ##############################################################################
@@ -107,20 +110,22 @@ def objrepr(obj, showid=True, showmeth=True, showatt=True):
     return output
 
 
-def defaultrepr(obj, maxlen=None):
+def defaultrepr(obj, maxlen=None, printattrvals=True):
     ''' Prints out the default representation of an object -- all attributes, plust methods and ID '''
     if maxlen is None: maxlen = 300
-    keys = sorted(obj.__dict__.keys()) # Get the attribute keys
+    keys = obj.__dict__.keys() # Get the attribute keys
+    keys = sorted([key for key in keys if not isinstance(getattr(obj,key), types.MethodType)]) # Exclude methods
     maxkeylen = max([len(key) for key in keys]) # Find the maximum length of the attribute keys
     if maxkeylen<maxlen: maxlen = maxlen - maxkeylen # Shorten the amount of data shown if the keys are long
     formatstr = '%'+ '%i'%maxkeylen + 's' # Assemble the format string for the keys, e.g. '%21s'
-    output  = objrepr(obj, showatt=False) # Get the methods
-    for key in keys: # Loop over each attribute
-        thisattr = flexstr(getattr(obj, key)) # Get the string representation of the attribute
-        if len(thisattr)>maxlen: thisattr = thisattr[:maxlen] + ' [...]' # Shorten it
-        prefix = formatstr%key + ': ' # The format key
-        output += indent(prefix, thisattr)
-    output += '============================================================\n'
+    output  = objrepr(obj, showatt=(not printattrvals)) # Get the methods
+    if printattrvals:
+        for key in keys: # Loop over each attribute
+            thisattr = flexstr(getattr(obj, key)) # Get the string representation of the attribute
+            if len(thisattr)>maxlen: thisattr = thisattr[:maxlen] + ' [...]' # Shorten it
+            prefix = formatstr%key + ': ' # The format key
+            output += indent(prefix, thisattr)
+        output += '============================================================\n'
 
     return output
 
@@ -1500,6 +1505,34 @@ def savetext(filename=None, string=None):
     with open(filename, 'w') as f: f.write(string)
     return None
 
+def standard_cp(obj):
+    ''' Same idea as standard_dcp
+    Don't use unless you understand it
+    '''
+    obj._cp = obj.__copy__  # Save __copy__ for later
+    obj.__copy__ = None  # Setting to None means that copy.copy will use the default copier
+
+    output = copy(obj)
+
+    output.__copy__ = output._cp
+    obj.__copy__    = obj._cp
+    return output
+
+def standard_dcp(obj, memodict):
+    ''' Function that stores the __deepcopy__ so that we can use the standard
+        copy.deepcopy() to copy it and return to the original __deepcopy__
+        NOT THE SAME AS DCP since that will use the __deepcopy__ of the object (as intended)
+        In general don't use this unless you understand it
+    '''
+    obj._dcp = obj.__deepcopy__  # Save __deepcopy__ for later
+    obj.__deepcopy__ = None  # Setting to None means that copy.deepcopy will use the default copier
+
+    output = deepcopy(obj, memodict)
+
+    output.__deepcopy__ = output._dcp
+    obj.__deepcopy__    = obj._dcp
+    return output
+
 ##############################################################################
 ### NESTED DICTIONARY FUNCTIONS
 ##############################################################################
@@ -2359,13 +2392,147 @@ class odict(OrderedDict):
         def iteritems(self):
             """ Method to generate an item iterator as in Python 2. """
             return list(OrderedDict.items(self))
-        
-        
-        
-        
-        
 
         
+# class odict_linked(odict):
+#     '''
+#     A version of the odict where each of the values (value) has:
+#         value.linkname = Link(objlinkto)
+#     and each time you set a value it sets this link
+#     '''
+#
+#     def __init__(self, *args, objlinkto=None, linkname=None, **kwargs):
+#         if linkname is None:
+#             raise Exception('Cannot create a odict_linked with linkname being None')
+#
+#         self.linkname = None # Set to None for initial filling in of dict
+#         odict.__init__(self, *args, **kwargs)  # Standard init
+#
+#         self.objlinkto = objlinkto
+#         self.linkname = linkname
+#         self.relink()
+#
+#     def relink(self, objlinkto=None, linkname=None):
+#         if linkname is not None:  self.linkname  = linkname
+#         if objlinkto is not None: self.objlinkto = objlinkto
+#
+#         for val in OrderedDict.values(self):
+#             self._linkval(val)
+#
+#     #def unlinkalllinks(self):
+#
+#     def _linkval(self, value):
+#         # pass
+#         if not hasattr(value, self.linkname):
+#             return
+#         if getattr(value, self.linkname) is not None and not isinstance(getattr(value, self.linkname).obj, LinkException) and getattr(value, self.linkname)() == self.objlinkto:
+#             return
+#         setattr(value, self.linkname, Link(self.objlinkto))
+#         # except: raise
+#
+#             # # In the future remove this warning I think
+#             # print('Warning: odict_linked could not link:')
+#             # import traceback
+#             # traceback.print_exc()
+#
+#     def __setitem__(self, key, value):
+#         out = odict.__setitem__(self, key, value)
+#         if self.linkname is not None: self.relink()
+#
+#     def __copy__(self):
+#         ''' Do NOT automatically copy link objects!! '''
+#         return odict_linked(self, linkname=self.linkname, objlinkto=LinkException('odict_link object copied but link not yet repaired'))
+#
+#
+#     def __deepcopy__(self, memo):
+#         ''' Same as copy '''
+#         result = odict_linked(dcp(dict(self)), linkname=self.linkname, objlinkto=LinkException('odict_link object copied but link not yet repaired'))
+#         memo[id(self)] = result
+#         return result
+
+
+
+class odict_custom(odict):
+    '''
+    A version of the odict where you have a custom function: `func(keys, values)`
+    that gets called after the keys and values get set in the odict
+    '''
+
+    def __init__(self, *args, func=None, **kwargs):
+        self.func = None
+        odict.__init__(self, *args, **kwargs)  # Standard init
+        self.func = func
+        if len(self.keys()) and self.func is not None: # func gets called after we insert the initial keys and values
+            self.func(self, self.keys(), self.values())
+
+    def __is_odict_iterable(self, key):
+        ''' Check to see whether the "key" is actually an iterable '''
+        output = type(key)==list or type(key)==type(array([])) # Do *not* include dict, since that would be recursive
+        return output
+
+    def _get_keys_vals(self, key, value):
+        ''' Copied from odict.__setitem__ to map the key, value to keys, values either list or single value '''
+        if isinstance(key, (str, tuple)):  # single key
+            this_keys = key
+            this_vals = value
+
+        elif isinstance(key, Number):  # single number: convert to key
+            this_keys = list(self.keys())[int(key)]
+            this_vals = value
+
+        elif type(key) == slice:
+            this_keys = list(self.keys())[key]
+            if hasattr(value, '__len__'):
+                this_vals = list(value) # don't have to check they are the same length because __setitem__ has done that already
+            else:  # eg. odict[:] = 4
+                this_vals = [value] * len(this_keys)
+
+        elif self.__is_odict_iterable(key) and hasattr(value, '__len__'):  # Iterate over items
+            this_keys = [None] * len(key)
+            this_vals = [None] * len(this_keys)
+
+            for ind, thiskey in enumerate(key):
+                this_keys[ind], this_vals[ind] = self._get_keys_vals(thiskey, value[ind])
+
+        else:
+            this_keys = key
+            this_vals = val
+
+        return this_keys, this_vals
+
+
+    def __setitem__(self, key, value):
+        if self.func is not None: # If this is the parent call
+            self._func = self.func
+            self.func = None
+
+            try: out = super().__setitem__(key, value)
+            finally:
+                self.func = self._func
+                del self._func
+
+            if self.func is not None:
+                keys, vals = self._get_keys_vals(key, value)
+                self.func(self, keys, vals)
+        else:  # The child call doesn't call the func
+            out = super().__setitem__(key, value)
+        return out
+
+    def __copy__(self):
+        ''' Doesn't keep the function as it is probably linked to the parent object'''
+        return odict_custom(self, func=None)
+
+    def __deepcopy__(self, memodict={}):
+        ''' Doesn't keep the function as it is probably linked to the parent object'''
+        self._func = self.func
+        self.func = None
+
+        copy = standard_dcp(self, memodict)
+
+        self.func = self._func
+        del self._func
+        if hasattr(copy, '_func'): del copy._func
+        return copy
 
 
 
@@ -2705,14 +2872,19 @@ class Link(object):
     
     def __repr__(self):
         ''' Just use default '''
-        output  = defaultrepr(self)
+        output = objectid(self)
+        output += '=========================================================\n'
+        output += 'Links to obj=' + objectid(self.obj)
+        if hasattr(self.obj, 'name'):
+            output = output.rstrip() + f' obj.name={self.obj.name}\n'
+        output += '========================================================='
         return output
     
     def __call__(self, obj=None):
         ''' If called with no argument, return the stored object; if called with argument, update object '''
         if obj is None:
             if type(self.obj)==LinkException: # If the link is broken, raise it now
-                raise self.obj 
+                raise self.obj
             return self.obj
         else:
             self.__init__(obj)
@@ -2721,9 +2893,18 @@ class Link(object):
     def __copy__(self, *args, **kwargs):
         ''' Do NOT automatically copy link objects!! '''
         return Link(LinkException('Link object copied but not yet repaired'))
-    
+
     def __deepcopy__(self, *args, **kwargs):
         ''' Same as copy '''
+        return self.__copy__(self, *args, **kwargs)
+
+class PersistentLink(Link):
+    def __copy__(self, *args, **kwargs):
+        ''' Note we don't copy self.obj '''
+        return Link(self.obj)
+
+    def __deepcopy__(self, *args, **kwargs):
+        ''' Despite deepcopy we again don't copy self.obj '''
         return self.__copy__(self, *args, **kwargs)
 
 class CancelException(Exception):

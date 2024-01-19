@@ -198,7 +198,7 @@ define(['angular', 'ui.router', './program-modal'], function (angular) {
 
     $scope.uploadProgramSet = function() {
       rpcService
-        .rpcUpload(
+        .rpcUploadSerial(
           'upload_project_object', [projectService.project.id, 'progset'], {}, '.prg')
         .then(function(response) {
 		  if (response.data.name == 'BadFileFormatError') {

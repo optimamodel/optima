@@ -126,6 +126,7 @@ app.register_blueprint(api_blueprint, url_prefix='')
 # rpcUpload will send a file to the webserver, the target function
 # will receive the filename of the saved file as the first arg, and
 # the args from the function after, as well as kwargs
+import sciris as sc
 
 @app.route('/api/procedure', methods=['POST'])
 @report_exception_decorator
@@ -137,6 +138,8 @@ def run_remote_procedure():
         'args': list of arguments for the function
         'kwargs': dictionary of named parameters for the function
     """
+    print('> run_remote_procedure start')
+    start = sc.tic()
     json = get_post_data_json()
 
     fn_name = json['name']
@@ -150,6 +153,7 @@ def run_remote_procedure():
         result = ''
     else:
         result = jsonify(normalize_obj(result))
+    print(f'> run_remote_procedure returning times {fn_name} {sc.toc(start=start, output=True, doprint=False)}')
     return result
 
 
@@ -208,6 +212,7 @@ def get_remote_file():
     full_filename = fn(*args, **kwargs)
 
     dirname, filename = os.path.split(full_filename)
+    print(f' > get_remote_file {fn_name} filenames: {full_filename} = {dirname} {filename}')
 
     response = helpers.send_from_directory(
         dirname,
@@ -230,6 +235,7 @@ def receive_uploaded_file():
         'kwargs': dictionary of named parameters for the function
     """
     file = request.files['file']
+    print("> receive_uploaded_file file %s" % (file))
     filename = secure_filename(file.filename)
     dirname = app.config['UPLOAD_FOLDER']
     if not (os.path.exists(dirname)):

@@ -1,8 +1,8 @@
 from optima import OptimaException, Settings, Parameterset, Programset, Resultset, BOC, Parscen, Budgetscen, Coveragescen, Progscen, Optim, Link # Import classes
-from optima import odict, getdate, today, uuid, dcp, makefilepath, objrepr, printv, isnumber, saveobj, promotetolist, promotetoodict, sigfig # Import utilities
+from optima import odict, odict_custom, standard_dcp, standard_cp, getdate, today, uuid, dcp, makefilepath, objrepr, printv, isnumber, saveobj, promotetolist, promotetoodict, sigfig # Import utilities
 from optima import loadspreadsheet, model, gitinfo, defaultscenarios, makesimpars, makespreadsheet
 from optima import defaultobjectives, autofit, runscenarios, optimize, multioptimize, tvoptimize, outcomecalc, icers # Import functions
-from optima import version, cpu_count # Get current version
+from optima import supported_versions, revision, cpu_count # Get current version
 from numpy import argmin, argsort, nan, ceil
 from numpy.random import seed, randint
 from time import time
@@ -51,12 +51,12 @@ class Project(object):
     ### Built-in methods -- initialization, and the thing to print if you call a project
     #######################################################################################################
 
-    def __init__(self, name='default', spreadsheet=None, dorun=True, makedefaults=True, verbose=2, **kwargs):
+    def __init__(self, name='default', spreadsheet=None, dorun=True, makedefaults=True, verbose=2, version=None, **kwargs):
         ''' Initialize the project '''
 
         ## Define the structure sets
-        self.parsets  = odict()
-        self.progsets = odict()
+        self.parsets  = odict_custom(func=self.checkpropagateversionlink)
+        self.progsets = odict_custom(func=self.checkpropagateversionlink)
         self.scens    = odict()
         self.optims   = odict()
         self.results  = odict()
@@ -71,7 +71,10 @@ class Project(object):
         self.created = today()
         self.modified = today()
         self.spreadsheetdate = 'Spreadsheet never loaded'
-        self.version = version
+        if version is not None and version not in supported_versions:
+            raise OptimaException(f'Version {version} for Project is not one of the currently supported versions {supported_versions}')
+        self.version = version if version is not None else supported_versions[-1]  # Default to the most recent version supported
+        self.revision = revision # Always uses the current op.revision
         self.gitbranch, self.gitversion = gitinfo()
         self.filename = None # File path, only present if self.save() is used
         self.warnings = None # Place to store information about warnings (mostly used during migrations)
@@ -81,6 +84,38 @@ class Project(object):
             self.loadspreadsheet(spreadsheet, dorun=dorun, makedefaults=makedefaults, verbose=verbose, **kwargs)
 
         return None
+
+    def __setattr__(self, name, value):
+        super(Project, self).__setattr__(name, value)
+        if name == 'version':
+            self.propagateversion(None, None, 'all')
+
+    def propagateversion(self, odict, keys, vals):
+        if vals == 'all':
+            vals = []
+            if self.parsets  is not None: vals.extend(self.parsets.values())
+            if self.progsets is not None: vals.extend(self.progsets.values())
+        vals = promotetolist(vals)
+        for val in vals:
+            val.projectversion = self.version
+
+    def checkversion(self, odict, keys, values):
+        values = promotetolist(values)
+        for val in values:
+            if not hasattr(val, 'projectversion'):
+                raise OptimaException(f'Cannot add {type(val)} "{val.name if hasattr(val, "name") else None}" to Project "{self.name}" because it is '
+                                      f'missing a projectversion so it might not be compatible with Project.version={self.version}')
+            if val.projectversion is not None and val.projectversion != self.version:
+                raise OptimaException(f'Cannot add {type(val)} "{val.name if hasattr(val, "name") else None}" to project "{self.name}" because it has '
+                                      f'a different version {val.projectversion} than the project {self.version}')
+
+    def checkpropagateversionlink(self, odict, keys, vals):
+        vals = promotetolist(vals)
+
+        self.checkversion(odict, keys, vals)
+        self.propagateversion(odict, keys, vals)
+        for val in vals:
+            val.projectref = Link(self)
 
 
     def __repr__(self):
@@ -94,7 +129,7 @@ class Project(object):
         output += '     Optimizations: %i\n'    % len(self.optims)
         output += '      Results sets: %i\n'    % len(self.results)
         output += '\n'
-        output += '    Optima version: %s\n'    % self.version
+        output += '   Project version: %s (%s)\n'% (self.version, self.revision)
         output += '      Date created: %s\n'    % getdate(self.created)
         output += '     Date modified: %s\n'    % getdate(self.modified)
         output += 'Spreadsheet loaded: %s\n'    % getdate(self.spreadsheetdate)
@@ -104,12 +139,23 @@ class Project(object):
         output += '============================================================\n'
         output += self.getwarnings(doprint=False) # Don't print since print later
         return output
-    
+
+    def __copy__(self):
+        print('WARNING: copying a Project will make it so that the parsets[:].projectref point to the new Project, not the old one which they are still included in. '
+              'It is recommended to deepcopy the project instead.')
+        copy = standard_cp(self)
+        copy.restorelinks()
+        return copy
+
+    def __deepcopy__(self, memodict={}):
+        copy = standard_dcp(self, memodict)
+        copy.restorelinks()
+        return copy
     
     def getinfo(self):
         ''' Return an odict with basic information about the project -- used in resultsets '''
         info = odict()
-        for attr in ['name', 'version', 'created', 'modified', 'spreadsheetdate', 'gitbranch', 'gitversion', 'uid']:
+        for attr in ['name', 'version', 'revision', 'created', 'modified', 'spreadsheetdate', 'gitbranch', 'gitversion', 'uid']:
             info[attr] = getattr(self, attr) # Populate the dictionary
         info['parsetkeys'] = self.parsets.keys()
         info['progsetkeys'] = self.progsets.keys()
@@ -147,7 +193,7 @@ class Project(object):
         :param refreshparsets: Boolean for whether to update with the new data. Happens AFTER creating new parset if requested (may refresh the same parset!)
         '''
         ## Load spreadsheet and update metadata
-        newdata = loadspreadsheet(filename=filename, folder=folder, verbose=self.settings.verbose) # Do the hard work of actually loading the spreadsheet
+        newdata = loadspreadsheet(filename=filename, folder=folder, verbose=self.settings.verbose, projectversion=self.version) # Do the hard work of actually loading the spreadsheet
         firstbook = True if self.data==odict() else False #is this the first time a databook has ever been loaded to the project?
         if refreshparsets is None:
             refreshparsets = False if firstbook else True #Generally True unless making a first parset in which case no need to refresh it immediately
@@ -187,7 +233,7 @@ class Project(object):
         if dataend is None:   
             try:    dataend = self.data['years'][-1]
             except: dataend = self.settings.dataend
-        makespreadsheet(filename=fullpath, pops=pops, data=self.data, datastart=datastart, dataend=dataend)
+        makespreadsheet(filename=fullpath, pops=pops, data=self.data, datastart=datastart, dataend=dataend, version=self.version)
         return fullpath
 
 
@@ -540,6 +586,8 @@ class Project(object):
         for item in self.parsets.values()+self.progsets.values()+self.scens.values()+self.optims.values()+self.results.values():
             if hasattr(item, 'projectref'):
                 item.projectref = Link(self)
+            if hasattr(item, 'restorelinks'):
+                item.restorelinks()
         return None
 
 
@@ -639,7 +687,7 @@ class Project(object):
             for i in range(n):
                 maxint = 2**31-1 # See https://en.wikipedia.org/wiki/2147483647_(number)
                 sampleseed = randint(0,maxint) if sample is not None else None
-                simparslist.append(makesimpars(pars, start=start, end=end, dt=dt, tvec=tvec, settings=self.settings, name=parsetname, sample=sample, tosample=tosample, randseed=sampleseed, smoothness=smoothness))
+                simparslist.append(makesimpars(pars, projectversion=self.version, start=start, end=end, dt=dt, tvec=tvec, settings=self.settings, name=parsetname, sample=sample, tosample=tosample, randseed=sampleseed, smoothness=smoothness))
         else:
             simparslist = promotetolist(simpars)
 
@@ -647,17 +695,19 @@ class Project(object):
         rawlist = []
         if n == 1 or (not parallel): # Run single simulation as quick as possible (or just not in parallel)
             for ind,simpars in enumerate(simparslist):
-                raw = model(simpars, self.settings, die=die, debug=debug, verbose=verbose, label=self.name, advancedtracking=advancedtracking, **kwargs) # ACTUALLY RUN THE MODEL
+                raw = model(simpars=simpars, settings=self.settings, version=self.version, die=die, debug=debug, verbose=verbose,
+                            label=self.name, advancedtracking=advancedtracking, **kwargs) # ACTUALLY RUN THE MODEL
                 rawlist.append(raw)
 
         else: # Run in parallel
-            all_kwargs = {'settings':self.settings, 'die':die, 'debug':debug, 'verbose':verbose, 'label':self.name, 'advancedtracking':advancedtracking, **kwargs}
+            all_kwargs = {'settings':self.settings, 'version':self.version, 'die':die, 'debug':debug, 'verbose':verbose, 'label':self.name, 'advancedtracking':advancedtracking, **kwargs}
             try: rawlist = parallelize(model, iterarg=simparslist, kwargs=all_kwargs, ncpus=ncpus) # ACTUALLY RUN THE MODEL
             except:
                 printv('\nWARNING: Could not run in parallel probably because this process is already running in parallel. Trying in serial...', 1, verbose)
                 rawlist = []
                 for ind,simpars in enumerate(simparslist):
-                    raw = model(simpars, self.settings, die=die, debug=debug, verbose=verbose, label=self.name, advancedtracking=advancedtracking, **kwargs) # ACTUALLY RUN THE MODEL
+                    raw = model(simpars=simpars, settings=self.settings, version=self.version, die=die, debug=debug, verbose=verbose,
+                                label=self.name, advancedtracking=advancedtracking, **kwargs) # ACTUALLY RUN THE MODEL
                     rawlist.append(raw)
 
         # Store results if required
@@ -727,13 +777,13 @@ class Project(object):
     def runbudget(self, name=None, budget=None, budgetyears=None, progsetname=None, parsetname='default', verbose=2):
         ''' Function to run the model for a given budget, years, programset and parameterset '''
         if name        is None: name        = 'runbudget'
-        if budget      is None: budget      = self.progset().getdefaultbudget()
         if budgetyears is None: budgetyears = self.settings.now
         if progsetname is None:
             try:
                 progsetname = self.progsets[0].name
                 printv('No program set entered to runbudget, using stored program set "%s"' % (self.progsets[0].name), 1, self.settings.verbose)
-            except: raise OptimaException("No program set entered, and there are none stored in the project") 
+            except: raise OptimaException("No program set entered, and there are none stored in the project")
+        if budget is None: budget = self.progsets[progsetname].getdefaultbudget()
         coverage = self.progsets[progsetname].getprogcoverage(budget=budget, t=budgetyears, parset=self.parsets[parsetname])
         progpars = self.progsets[progsetname].getpars(coverage=coverage,t=budgetyears, parset=self.parsets[parsetname])
         results = self.runsim(pars=progpars, parsetname=parsetname, progsetname=progsetname, budget=budget, budgetyears=budgetyears, coverage=coverage, label=self.name+'-runbudget')
@@ -1040,7 +1090,7 @@ class Project(object):
         # Set defaults
         if sc.isnumber(mc): mc = (1,0,mc)
         elif mc is None or sum(mc) == 0: mc = (3,0,0)
-        if ncpus is None: ncpus = int(ceil( sc.cpu_count()/2 ))
+        if ncpus is None: ncpus = int(ceil( cpu_count()/2 ))
 
         defaultbudget = self.progsets[progsetname].getdefaultbudget()
         

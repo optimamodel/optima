@@ -39,7 +39,7 @@ Version: 2019jan09
 from .version import *
 
 # Print the license
-optimalicense = 'Optima HIV %s (%s) -- (c) Optima Consortium' % (version, versiondate)
+optimalicense = f'Optima HIV {"/".join(supported_versions)} ({revision}) {revisiondate} -- (c) Optima Consortium'
 print(optimalicense)
 
 # Create an empty list to stored failed imports
@@ -74,6 +74,12 @@ else:
     from sciris import cpu_count
 del sc_version; del sc_versiondate
 
+# Some pickled projects expect there to be a function sc.sc_fileio._unpickleMethod
+def blank_function(a,b,c): pass # raise Exception('sc.sc_fileio._unpickleMethod is gone, don\'t try to use it')
+from sciris import sc_fileio
+sc_fileio._unpickleMethod = blank_function
+del blank_function, sc_fileio
+
 # Color definitions
 from .colortools import *
 
@@ -101,11 +107,14 @@ def optimapath(subdir=None, trailingsep=True):
 
 # Debugging information
 def debuginfo(dooutput=False):
+    from sciris import __version__ as sc_version
     output = '\nOptima debugging info:\n'
-    output += '   Version: %s\n' % version
-    output += '   Branch:  %s\n' % gitinfo()[0]
-    output += '   SHA:     %s\n' % gitinfo()[1][:7]
-    output += '   Path:    %s\n' % optimapath()
+    output += '   Versions: %s\n' % supported_versions
+    output += '   Revision: %s\n' % revision
+    output += '   Branch:   %s\n' % gitinfo()[0]
+    output += '   SHA:      %s\n' % gitinfo()[1][:7]
+    output += '   Path:     %s\n' % optimapath()
+    output += '   Sciris:   %s\n' % sc_version
     if dooutput:
         return output
     else:
@@ -125,7 +134,7 @@ class OptimaException(Exception):
 #####################################################################################################################
 
 # File I/O
-from sciris  import loadobj, saveobj, loadstr, dumpstr # Insist sciris is installed
+from sciris  import loadobj, saveobj #, loadstr, dumpstr # Insist sciris is installed
 from .fileio import * # CK: may want to tidy up
 
 # Project settings
@@ -170,6 +179,7 @@ except Exception as E: _failed.append('plotting: %s' % repr(E))
 # Load the code to load projects and portfolios (before defining them, oddly!)
 from .loadtools import *
 changelog = loadtools.setmigrations('changelog')
+revisionchangelog = loadtools.setrevisionmigrations('changelog')
 
 # Load batch functions (has to load projects, so has to come after migration)
 from .batchtools import *

@@ -1,10 +1,11 @@
 ## Imports
 from numpy import zeros, exp, maximum, minimum, inf, array, isnan, einsum, floor, ones, power as npow, concatenate as cat, interp, nan, squeeze, isinf, isfinite, argsort, take_along_axis, put_along_axis, expand_dims, ix_, tile, arange, swapaxes, errstate, where
-from optima import OptimaException, printv, dcp, odict, findinds, compareversions, version, sanitize
+from optima import OptimaException, printv, dcp, odict, findinds, compareversions, sanitize
 
 __all__ = ['model']
 
-def model(simpars=None, settings=None, initpeople=None, initprops=None, verbose=None, die=False, debug=False, label=None, startind=None, advancedtracking=False):
+def model(simpars=None, settings=None, version=None, initpeople=None, initprops=None, verbose=None, die=False, debug=False,
+          label=None, startind=None, advancedtracking=False):
     """
     Runs Optima's epidemiological model.
 
@@ -22,6 +23,7 @@ def model(simpars=None, settings=None, initpeople=None, initprops=None, verbose=
     if startind is None: startind = 0 # Point to start from -- used with non-empty initpeople
     if simpars is None:  raise OptimaException(label+'model() requires simpars as an input')
     if settings is None: raise OptimaException(label+'model() requires settings as an input')
+    if version is None:  raise OptimaException(label+'model() requires version as an input')
     if verbose is None:  verbose = settings.verbose  # Verbosity of output
     printv('Running model...', 1, verbose)
 
