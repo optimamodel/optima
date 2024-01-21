@@ -907,13 +907,13 @@ def optimize(optim=None, maxiters=None, maxtime=None, finishtime=None, verbose=2
                                mc=mc, label=label, parallel=parallel, ncpus=ncpus,die=die, stoppingfunc=stoppingfunc, **kwargs)
 
     # Run money minimization
-    elif which=='money' and False:
+    elif which=='money':
         multires = minmoney(project=project, optim=optim, tvec=tvec, verbose=verbose, maxtime=maxtime, finishtime=finishtime,
                             maxiters=maxiters, fundingchange=1.2, randseed=randseed, stoppingfunc=stoppingfunc,absconstraints=absconstraints,
                             parallel=parallel, ncpus=ncpus, **kwargs)
 
     # Run money2 minimization
-    elif which=='money' or which=='money2':
+    elif which=='money2':
         multires = minmoney2(project=project, optim=optim, tvec=tvec, verbose=verbose, maxtime=maxtime, finishtime=finishtime,
                                maxiters=maxiters, absconstraints=absconstraints, origbudget=origbudget, randseed=randseed,
                                mc=mc, label=label, parallel=parallel, ncpus=ncpus,die=die, stoppingfunc=stoppingfunc,
@@ -1505,7 +1505,7 @@ def minoutcomes(project=None, optim=None, tvec=None, absconstraints=None, verbos
 
 def minmoney(project=None, optim=None, tvec=None, verbose=None, maxtime=None, finishtime=None, maxiters=1000, absconstraints=None,
              fundingchange=1.2, tolerance=1e-2, ccsample='best', randseed=None, keepraw=False, die=False, keepzeroinfresults=False,
-             n_throws=None, n_success=None, n_refine=None, schedule=None, refine_steps=None, parallel=True, ncpus=None, stoppingfunc=None, **kwargs):
+             n_throws=None, n_success=None, n_refine=None, schedule=None, parallel=True, ncpus=None, stoppingfunc=None, **kwargs):
     '''
     A function to minimize money for a fixed objective.
     Note: maxtime and finishtime does nothing at the moment.
@@ -1559,7 +1559,7 @@ def minmoney(project=None, optim=None, tvec=None, verbose=None, maxtime=None, fi
     if ncpus     is None: ncpus     = int(ceil(cpu_count() / 2))
     search_step  = 2.0 # The size of the steps to establish the upper/lower limits for the binary search
     search_tol   = 0.01 # Tolerance of the binary search (maximum difference between upper and lower limits)
-    if refine_steps is None: refine_steps = [0.0, 0.5, 0.8, 0.9, 0.95, 0.99]  # During refinement, factor by which to scale programs
+    refine_steps = [0.0, 0.5, 0.8, 0.9, 0.95, 0.99]  # During refinement, factor by which to scale programs
     refine_keep  = 0.5 # During refinement, proportion of difference to reallocate to other programs
     factor       = 1e6 # Units to scale printed out budget numbers
     animate      = False # Whether or not to animate at the end
@@ -2200,31 +2200,14 @@ def minmoney2(project=None, optim=None, tvec=None, absconstraints=None, verbose=
 
     # Checks didn't fail, DO THE ALGORITHM:
     else:
-        # ## Increase/decrease current budget until targets met
-        # totalbudget,_,_ = binary_search(budgetvec=budgetvec, totalbudget=origtotalbudget, args=args, curr_met=bool(dists['curr'] == 0))
-        # ULB = totalbudget
-        # args.update({'ULB':ULB,'k_penalty':k_penalty,'ZB':ZB,'outZB':outZB})
-        #
-        # ULB_results = op.outcomecalc(budgetvec, totalbudget=totalbudget, outputresults=True, scaleupmethod='add', **args)
-        # ULB_budget = ULB_results.budget
-        # ULB_budgetvec = ULB_budget[optimkeys]
-
-
-        first_res = minmoney(project=project, optim=optim, tvec=tvec, verbose=verbose, maxtime=maxtime, finishtime=finishtime, maxiters=maxiters,
-                 absconstraints=absconstraints,
-                 ccsample=ccsample, randseed=randseed,
-                 n_throws=max(20, nprogs*2), n_success=max(20, nprogs*2), n_refine=max(20, nprogs*2), schedule=[1.0], refine_steps=[0.0, 0.5, 0.9],
-                 parallel=parallel, ncpus=ncpus,
-                 stoppingfunc=stoppingfunc,
-                 keepraw=False, die=True, **kwargs)
-
-        print('first_res', first_res)
-
-        ULB_budget = first_res.budgets['Optimized']
-        ULB_budgetvec = ULB_budget[optimkeys]
-        ULB_results = op.outcomecalc(ULB_budgetvec, totalbudget=totalbudget, outputresults=True, scaleupmethod='add', **args)
-        ULB = ULB_budgetvec.sum()
+        ## Increase/decrease current budget until targets met
+        totalbudget,_,_ = binary_search(budgetvec=budgetvec, totalbudget=origtotalbudget, args=args, curr_met=bool(dists['curr'] == 0))
+        ULB = totalbudget
         args.update({'ULB':ULB,'k_penalty':k_penalty,'ZB':ZB,'outZB':outZB})
+
+        ULB_results = op.outcomecalc(budgetvec, totalbudget=totalbudget, outputresults=True, scaleupmethod='add', **args)
+        ULB_budget = ULB_results.budget
+        ULB_budgetvec = ULB_budget[optimkeys]
 
         ## mc setup
         maxseed = 2**32
@@ -2356,18 +2339,13 @@ def get_progbaseline_budgets(optimbudget, args, optimkeys, optiminds, nprogs, nu
     if numone or either:
         oneprogbudgets  = odict()
         oneprogoutcomes = odict()
-        this_args = odict()
         for p,prog in zip(optiminds, optimkeys):
             oneprogbudgets[prog] = zeros(nprogs)
             oneprogbudgets[prog][p] = optimbudget
 
             printv(f'    Running scenario: "{prog}"',2,verbose)
-            this_args[prog] = dict(budgetvec=oneprogbudgets[prog][optiminds], outputresults=True, printdone=f'    Ran scenario: "{prog}"', **args)
-            # res = op.outcomecalc(oneprogbudgets[prog][optiminds], outputresults=True, **args)
-            # oneprogoutcomes[prog] = res.rawoutcome # should be same order as outcome
-        results = op.parallelize(op.outcomecalc, parallel=True, iterkwargs=this_args.values())
-        for prog, res in zip(this_args.keys(), results):
-            oneprogoutcomes[prog] = res.rawoutcome
+            res = op.outcomecalc(oneprogbudgets[prog][optiminds], outputresults=True, **args)
+            oneprogoutcomes[prog] = res.rawoutcome # should be same order as outcome
 
         besttoworstinds = argsort(oneprogoutcomes[:])
         besttoworstkeys = array(oneprogoutcomes.keys())[besttoworstinds]
@@ -2380,7 +2358,6 @@ def get_progbaseline_budgets(optimbudget, args, optimkeys, optiminds, nprogs, nu
     if numtwo or either:
         twoprogbudgets  = odict()
         twoprogoutcomes = odict()
-        this_args = odict()
         for p1,proga in zip(optiminds, optimkeys):
             for p2, progb in zip(optiminds[p1+1:], optimkeys[p1+1:]):
                 key = f'{proga} && {progb}'
@@ -2389,12 +2366,8 @@ def get_progbaseline_budgets(optimbudget, args, optimkeys, optiminds, nprogs, nu
                 twoprogbudgets[key][p2] = optimbudget/2
 
                 printv(f'    Running scenario: "{key}"',2,verbose)
-                this_args[key] = dict(budgetvec=twoprogbudgets[key][optiminds], outputresults=True, printdone=f'    Ran scenario: "{key}"', **args)
-                # res = op.outcomecalc(twoprogbudgets[key][optiminds], outputresults=True, **args)
-                # twoprogoutcomes[key] = res.rawoutcome # should be same order as outcome
-        results = op.parallelize(op.outcomecalc, parallel=True, iterkwargs=this_args.values())
-        for key, res in zip(this_args.keys(), results):
-            twoprogoutcomes[key] = res.rawoutcome
+                res = op.outcomecalc(twoprogbudgets[key][optiminds], outputresults=True, **args)
+                twoprogoutcomes[key] = res.rawoutcome # should be same order as outcome
 
         besttoworstinds = argsort(twoprogoutcomes[:])
         besttoworstkeys = array(twoprogoutcomes.keys())[besttoworstinds]
