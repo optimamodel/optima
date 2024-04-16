@@ -138,7 +138,7 @@ def setrevisionmigrations(which='migrations'):
         ('0',   ('1', '2023-10-17', parsandprograms_odictcustom,    'Add P.revision, change Parameterset.pars and Programset.programs from odict to odict_custom and link them')),
         ('1',   ('2', '2023-12-04', None,                           'Fix bug when deep-copying a `Parameterset`, the `pars` from a different `Parameterset` would get copied in certain cases')),
         ('2',   ('3', '2024-01-18', None,                           'Fix small unpickling bug and FE raises BadFileFormatError when uploading project that it cannot unpickle')),
-        ('3',   ('4', '2024-01-18', updatemethodsettings,           '')),
+        ('3',   ('4', '2024-01-18', updatemethodsettings,           'Update methods to split by regular, casual, commercial')),
         ])
 
 
@@ -1645,23 +1645,22 @@ def parsandprograms_odictcustom(project=None, **kwargs):
             progset.programs = op.odict_custom(progset.programs, func=progset.propagateversion)
             progset.programs.func = progset.checkpropagateversion
 
-def fixmigrationdataassumptions(project=None, **kwargs):
-    '''
-        Migration between revision 3 and 4
-    '''
-    return
-    if project is not None:
-        for key in ['propemigrate', 'numimmigrate', 'immihivprev', 'immipropdiag']:
-            if key in project.data.keys():
-                if len(project.data[key]) != project.data['npops']:
-                    migrationmigration(project=project, **kwargs)
+# def fixmigrationdataassumptions(project=None, **kwargs):
+#     '''
+#         Migration between revision 3 and 4
+#     '''
+#     return
+#     if project is not None:
+#         for key in ['propemigrate', 'numimmigrate', 'immihivprev', 'immipropdiag']:
+#             if key in project.data.keys():
+#                 if len(project.data[key]) != project.data['npops']:
+#                     migrationmigration(project=project, **kwargs)
 
 def updatemethodsettings(project=None, **kwargs):
     '''
         Migration between revision 3 and 4,
 
     '''
-    return
     if project is not None:
         settings = project.settings
         settings.inj = 0            # Injection, don't change number

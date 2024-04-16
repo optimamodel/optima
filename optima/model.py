@@ -474,9 +474,10 @@ def model(simpars=None, settings=None, version=None, initpeople=None, initprops=
 
     transsexarr     = zeros((nallsexacts, npts))
     condarr         = zeros((nallsexacts, npts))
+
     sexpartnerarr   = zeros((nallsexacts, 2), dtype=int)
-    sexpartnermask  = zeros((nallsexacts, npops, npops)).astype(bool)
     methodsexpartnerarr = zeros((nallsexacts, 3), dtype=int)
+
     homopartnerarr  = set()
     heteropartnerarr = set()
     fracactssexarr  = zeros((nallsexacts, npts))
@@ -485,12 +486,9 @@ def model(simpars=None, settings=None, version=None, initpeople=None, initprops=
     fracactsinjarr  = zeros((ninjacts, npts))
     wholeactsinjarr = zeros((ninjacts, npts))
 
-    acttypeinds = [arange(sum(nsexacts[:i]),sum(nsexacts[:i+1])) for i in range(len(nsexacts))]
-    methodmask = zeros((nallsexacts, nmethods)).astype(bool)
-
     # Sex
     j = 0
-    for actind, (act, methodinds) in enumerate(zip(['reg','cas','com'], [settings.regular, settings.casual, settings.commercial])):
+    for actind, act in enumerate(['reg','cas','com']):
         for i,key in enumerate(sorted(allsexkeys[act])):
             pop1 = popkeys.index(key[0])
             pop2 = popkeys.index(key[1])
@@ -519,20 +517,16 @@ def model(simpars=None, settings=None, version=None, initpeople=None, initprops=
             condarr[j,:] = 1.0 - condkey*effcondom
 
             sexpartnerarr[j,:] = [pop1, pop2]
-            sexpartnermask[j,pop1,pop2] = True
 
 
             if     male[pop1] and   male[pop2]:
                 methodind = homosexsex[actind]
-                methodmask[j, homosexsex[actind]] = True
                 trans = (insertiveacts*simpars['transmmi'] + receptiveacts*simpars['transmmr']) / totalacts
             elif   male[pop1] and female[pop2]:
                 methodind = heterosexsex[actind]
-                methodmask[j, heterosexsex[actind]] = True
                 trans = simpars['transmfi']*ones(len(totalacts))
             elif female[pop1] and   male[pop2]:
                 methodind = heterosexsex[actind]
-                methodmask[j, heterosexsex[actind]] = True
                 trans = simpars['transmfr']*ones(len(totalacts))
             else:
                 methodind = heterosexsex[actind]
@@ -693,7 +687,7 @@ def model(simpars=None, settings=None, version=None, initpeople=None, initprops=
                             (wholeactssexarr[:,t].astype(int) != 0) ), wholeactssexarr[:,t].astype(int))  # If wholeacts[t] == 0, then this will equal one so will not change forceinffull
 
         for methodinds in (settings.regular, settings.casual, settings.commercial):
-            inds = isin(methodsexpartnerarr[:,0], methodind)
+            inds = isin(methodsexpartnerarr[:,0], methodinds)
             forceinffull[:,pop1[inds],:,pop2[inds]] *= swapaxes(swapaxes(forceinffullsex[:,:,inds],1,2),0,1)  # Slicing a more than 2d array puts the pop1,pop2 in the first dimension
 
 
