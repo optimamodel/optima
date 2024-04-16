@@ -76,11 +76,17 @@ class Settings(object):
 
         # Infection methods
         self.inj = 0            # Injection, don't change number
-        self.heterosexsex = 1   # Homosexual sexual transmission, don't change number
-        self.homosexsex = 2     # Heterosexual sexual transmission, don't change number
-        self.mtct = 3           # MTCT
-        self.nmethods = 4       # 4 methods of transmission
-        self.methodnames = ['Injection','Heterosexual sex','Homosexual sex','MTCT']
+        self.heterosexsex = [1, 2, 3]   # Homosexual sexual transmission, don't change number
+        self.homosexsex   = [4, 5, 6]     # Heterosexual sexual transmission, don't change number
+        self.mtct = 7           # MTCT
+        self.nmethods = 8       # 8 methods of transmission
+        self.regular    = [1, 4]
+        self.casual     = [2, 5]
+        self.commercial = [3, 6]
+        self.methodnames = ['Injection',
+                            'Heterosexual sex (regular)','Heterosexual sex (casual)','Heterosexual sex (commercial)',
+                            'Homosexual sex (regular)',  'Homosexual sex (casual)',  'Homosexual sex (commercial)',
+                            'MTCT']
 
         self.advancedtracking = False # Try to always set to False to save time when running model
         
