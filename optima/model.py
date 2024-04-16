@@ -690,36 +690,11 @@ def model(simpars=None, settings=None, version=None, initpeople=None, initprops=
             inds = isin(methodsexpartnerarr[:,0], methodinds)
             forceinffull[:,pop1[inds],:,pop2[inds]] *= swapaxes(swapaxes(forceinffullsex[:,:,inds],1,2),0,1)  # Slicing a more than 2d array puts the pop1,pop2 in the first dimension
 
+        if advancedtracking:
+            forceinffullsexinj = ones((nmethods-1, len(sus), npops, nstates, npops)) #!! remove hardcoding # -1 is for MTCT # First dimension is method of transmission, everything else moves over one dimension.
+            forceinffullsexinj[methodsexpartnerarr[:,0],:,methodsexpartnerarr[:,1],:,methodsexpartnerarr[:,0]] \
+                = swapaxes(swapaxes(forceinffullsex,1,2),0,1)
 
-        # print('pop1,',list(zip(pop1,pop2)))
-
-        # if False:
-        #     forceinffullmethods = ones((nmethods, len(sus), npops, nstates, npops)) #!! remove hardcoding # First dimension is method of transmission, everything else moves over one dimension.
-        #
-        #     forceinffullsex = ones((len(sus), nstates, nallsexacts))
-        #     # only effallprev[:,:] is time dependent
-        #     # forceinffullsexinj[:,:,:,:,:] *= 1 - einsum('mj,m,m,m,mi,km->jikm', methodmask, fracactssexarr[:,t], transsexarr[:,t],
-        #     #                                     condarr[:,t], alleff[:,t,:][pop1,:], effallprev[:,pop2])
-        #     forceinffullsex[:,:,:] *= 1 - einsum('m,m,m,mi,km->ikm', fracactssexarr[:,t], transsexarr[:,t],
-        #                                         condarr[:,t], alleff[:,t,:][pop1,:], effallprev[:,pop2])
-        #
-        #     forceinffullsex[:,:,:] *= npow(1 - einsum('m,m,mi,km,m->ikm', transsexarr[:,t], condarr[:,t], alleff[pop1,t,:], effallprev[:,pop2],
-        #                         (wholeactssexarr[:,t].astype(int) != 0) ), wholeactssexarr[:,t].astype(int))  # If wholeacts[t] == 0, then this will equal one so will not change forceinffull
-        #
-        #     pop1mask = sexpartnermask.any(axis=2)
-        #     sexpartnermask2 = dcp(sexpartnermask)
-        #     np.nan_to_num([1, np.nan, np.inf, -np.inf], posinf=np.inf, neginf=-np.inf)
-        #     sexpartnermask2[sexpartnermask2 == 0] = np.nan
-        #     temp = einsum('abc,cde->abcde', forceinffullsex, sexpartnermask2)
-        #     temp[isnan(temp)] = 1
-        #     specific_force = prod(temp, axis=2)
-        #
-        #     forceinffull[:,pop1,:,pop2] *= swapaxes(swapaxes(forceinffullsex[:,:,:],1,2),0,1)  # Slicing a more than 2d array puts the pop1,pop2 in the first dimension
-
-
-        if False:
-            forceinffullsexinj[homosexsex,:,homopartnerarr[:,0],:,homopartnerarr[:,1]] = forceinffull[:,homopartnerarr[:,0],:,homopartnerarr[:,1]]
-            forceinffullsexinj[heterosexsex,:,heteropartnerarr[:,0],:,heteropartnerarr[:,1]] = forceinffull[:,heteropartnerarr[:,0],:,heteropartnerarr[:,1]]
 
         if debug and ( not((forceinffull[:,:,:,:]>=0).all()) or not((forceinffull[:,:,:,:]<=1).all()) ):
             for m,(pop1, pop2) in enumerate(sexpartnerarr):
@@ -744,7 +719,7 @@ def model(simpars=None, settings=None, version=None, initpeople=None, initprops=
 
         forceinffull[:,pop1,:,pop2] *= swapaxes(swapaxes(forceinffullinj[:,:,:],1,2),0,1)  # Slicing a more than 2d array puts the pop1,pop2 in the first dimension
 
-        if False:
+        if advancedtracking:
             forceinffullsexinj[inj,:,:,:,:][:,pop1,:,pop2] = swapaxes(swapaxes(forceinffullinj[:,:,:],1,2),0,1)
 
         if debug and ( not((forceinffull[:,:,:,:]>=0).all()) or not((forceinffull[:,:,:,:]<=1).all()) ):
@@ -774,7 +749,7 @@ def model(simpars=None, settings=None, version=None, initpeople=None, initprops=
         raw_inci[:,t]               = einsum('ij,ijkl->j', people[sus,:,t], forceinffull)/dt
         raw_incibypop[:,:,t]        = einsum('ij,ijkl->kl', people[sus,:,t], forceinffull)/dt
 
-        if False:
+        if advancedtracking:
             # Some people (although small) will have gotten infected from both sex and injections, we assign these people to the higher probability (higher risk) method. Because the probabilities are all small, it probably would still be a good approximation without this correction
             forceinffullsexinj = 1 - forceinffullsexinj
             if (forceinffullsexinj > 0.02).any(): # If any force is over 0.02 in a timestep, then force(sex)*force(inj) could be more than 0.001 therefore our probabilities are no longer a <0.1% error estimate
@@ -793,7 +768,8 @@ def model(simpars=None, settings=None, version=None, initpeople=None, initprops=
             # Probability of getting infected by each method is probsexinjsortindices times any scaling factors, !! copied from above !!
             forceinffullcauses = einsum('mijkl,j,j,j->mijkl', forceinffullsexinj, force, inhomo, (1.-background[:,t]))
 
-            nonmtctmethods = [heterosexsex,homosexsex,inj]
+            nonmtctmethods = heterosexsex + homosexsex + [inj]
+            raw_incionpopbypopmethods[nonmtctmethods,:,:,:,t]
             raw_incionpopbypopmethods[nonmtctmethods,:,:,:,t] = einsum('ij,mijkl->mjkl', people[sus,:,t], forceinffullcauses[nonmtctmethods,:,:,:,:])/dt
             # raw_incionpopbypop[:,:,:,t] = einsum('ij,ijkl->jkl', people[sus,:,t], forceinffull)/dt
 
