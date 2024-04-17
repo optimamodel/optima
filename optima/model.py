@@ -1,5 +1,5 @@
 ## Imports
-from numpy import zeros, exp, maximum, minimum, inf, array, isnan, einsum, floor, ones, power as npow, concatenate as cat, interp, nan, squeeze, isinf, isfinite, argsort, take_along_axis, put_along_axis, expand_dims, ix_, tile, arange, swapaxes, errstate, where, prod, isin
+from numpy import zeros, exp, maximum, minimum, inf, array, isnan, einsum, floor, ones, power as npow, concatenate as cat, interp, nan, squeeze, isinf, isfinite, argsort, take_along_axis, put_along_axis, expand_dims, ix_, tile, arange, swapaxes, errstate, where, prod, isin, unique
 from optima import OptimaException, printv, dcp, odict, findinds, compareversions, sanitize
 
 __all__ = ['model']
@@ -688,13 +688,20 @@ def model(simpars=None, settings=None, version=None, initpeople=None, initprops=
         forceinffullsex[:,:,:] *= npow(1 - einsum('m,m,mi,km,m->ikm', transsexarr[:,t], condarr[:,t], alleff[pop1,t,:], effallprev[:,pop2],
                             (wholeactssexarr[:,t].astype(int) != 0) ), wholeactssexarr[:,t].astype(int))  # If wholeacts[t] == 0, then this will equal one so will not change forceinffull
 
-        for inds in regularityinds:  # Loops over the indices of acts for regular, casual, commercial so we don't overlap with pop1,pop2 pairs
+        # forceinffullsex[:,:,1:] = 1
+
+        for i, inds in enumerate(regularityinds):  # Loops over the indices of acts for regular, casual, commercial so we don't overlap with pop1,pop2 pairs
+            # if i in [0, 1, 2]:
+            #     forceinffullsex[:, :, inds] = 1
             forceinffull[:,pop1[inds],:,pop2[inds]] *= swapaxes(swapaxes(forceinffullsex[:,:,inds],1,2),0,1)  # Slicing a more than 2d array puts the pop1,pop2 in the first dimension
 
         if advancedtracking:
+            # homopartnerarr = unique(methodsexpartnerarr[isin(methodsexpartnerarr[:, 0], homosexsex), 1:], axis=0)
+
             forceinffullsexinj = ones((len(nonmtctmethods), len(sus), npops, nstates, npops)) #!! remove hardcoding # -1 is for MTCT # First dimension is method of transmission, everything else moves over one dimension.
             forceinffullsexinj[methodsexpartnerarr[:,0],:,methodsexpartnerarr[:,1],:,methodsexpartnerarr[:,2]] \
                 = swapaxes(swapaxes(forceinffullsex,1,2),0,1)
+            print(t, forceinffullsexinj.prod())
 
             # The following line could replace the "for inds in regularityinds" loop above but easier to keep the main code separate from the advancedtracking
             # forceinffull[:,methodsexpartnerarr[:,1],:,methodsexpartnerarr[:,2]] = prod(forceinffullsexinj[:,:,methodsexpartnerarr[:,1],:,methodsexpartnerarr[:,2]], axis=1)
@@ -891,6 +898,9 @@ def model(simpars=None, settings=None, version=None, initpeople=None, initprops=
         numpotmothers = zeros((npops,5))
         numpotmothers[:,_all]      = people[:,:,t].sum(axis=0)
 
+
+        totalbirthrate = totalbirthrate*0
+
         if compareversions(version, "2.12.0") >= 0: # New behaviour
             numpotmothers[:,_allplhiv] = people[alldx,:,t].sum(axis=0) * relhivbirth + people[undx,:,t].sum(axis=0)
             numpotmothers[:,_undx] = people[undx, :,t].sum(axis=0)
@@ -974,6 +984,7 @@ def model(simpars=None, settings=None, version=None, initpeople=None, initprops=
         # Calculate actual births, MTCT, and PMTCT
         if len(motherpops) and len(childpops):
             thisbirthrates = birthratesarr[:,:,t][ix_(motherpops,childpops)]
+            thisbirthrates *= 0
             popbirths      = einsum('ij,i->ij', thisbirthrates, numpotmothers[motherpops, _all])
             hivposbirths   = einsum('ij,i->ij', thisbirthrates, numpotmothers[motherpops, _allplhiv])
             mtctundx       = einsum('ij,i->ij', thisbirthrates, numpotmothers[motherpops, _undx]) * effmtct[t] # Births to undiagnosed mothers
@@ -1251,6 +1262,8 @@ def model(simpars=None, settings=None, version=None, initpeople=None, initprops=
         raw['incimethods']    = raw_incionpopbypopmethods
         raw['transitpopbypop']= raw_transitpopbypop
         raw['props']          = raw_propsarr
+        print('BOB', [raw_incionpopbypopmethods[inds,...].sum() for inds in (inj, heterosexsex,homosexsex, mtct)], raw_incionpopbypopmethods.sum(), raw_inci.sum())
+
 
     checkfornegativepeople(people) # Check only once for negative people, right before finishing
 
