@@ -134,6 +134,7 @@ def model(simpars=None, settings=None, version=None, initpeople=None, initprops=
     homosexsex      = settings.homosexsex           # Infection via homosexual sex
     inj             = settings.inj                  # Infection via injection
     mtct            = settings.mtct                 # Infection via MTCT
+    nonmtctmethods  = heterosexsex + homosexsex + [inj]
     nmethods        = settings.nmethods
 
     allcd4          = [acute,gt500,gt350,gt200,gt50,lt50]
@@ -550,6 +551,7 @@ def model(simpars=None, settings=None, version=None, initpeople=None, initprops=
 
             j += 1
 
+    regularityinds = [isin(methodsexpartnerarr[:,0], methodinds) for methodinds in (settings.regular, settings.casual, settings.commercial)]
     homopartnerarr = array(list(homopartnerarr))
     heteropartnerarr = array(list(heteropartnerarr))
 
@@ -686,15 +688,16 @@ def model(simpars=None, settings=None, version=None, initpeople=None, initprops=
         forceinffullsex[:,:,:] *= npow(1 - einsum('m,m,mi,km,m->ikm', transsexarr[:,t], condarr[:,t], alleff[pop1,t,:], effallprev[:,pop2],
                             (wholeactssexarr[:,t].astype(int) != 0) ), wholeactssexarr[:,t].astype(int))  # If wholeacts[t] == 0, then this will equal one so will not change forceinffull
 
-        for methodinds in (settings.regular, settings.casual, settings.commercial):
-            inds = isin(methodsexpartnerarr[:,0], methodinds)
+        for inds in regularityinds:  # Loops over the indices of acts for regular, casual, commercial so we don't overlap with pop1,pop2 pairs
             forceinffull[:,pop1[inds],:,pop2[inds]] *= swapaxes(swapaxes(forceinffullsex[:,:,inds],1,2),0,1)  # Slicing a more than 2d array puts the pop1,pop2 in the first dimension
 
         if advancedtracking:
-            forceinffullsexinj = ones((nmethods-1, len(sus), npops, nstates, npops)) #!! remove hardcoding # -1 is for MTCT # First dimension is method of transmission, everything else moves over one dimension.
-            forceinffullsexinj[methodsexpartnerarr[:,0],:,methodsexpartnerarr[:,1],:,methodsexpartnerarr[:,0]] \
+            forceinffullsexinj = ones((len(nonmtctmethods), len(sus), npops, nstates, npops)) #!! remove hardcoding # -1 is for MTCT # First dimension is method of transmission, everything else moves over one dimension.
+            forceinffullsexinj[methodsexpartnerarr[:,0],:,methodsexpartnerarr[:,1],:,methodsexpartnerarr[:,2]] \
                 = swapaxes(swapaxes(forceinffullsex,1,2),0,1)
 
+            # The following line could replace the "for inds in regularityinds" loop above but easier to keep the main code separate from the advancedtracking
+            # forceinffull[:,methodsexpartnerarr[:,1],:,methodsexpartnerarr[:,2]] = prod(forceinffullsexinj[:,:,methodsexpartnerarr[:,1],:,methodsexpartnerarr[:,2]], axis=1)
 
         if debug and ( not((forceinffull[:,:,:,:]>=0).all()) or not((forceinffull[:,:,:,:]<=1).all()) ):
             for m,(pop1, pop2) in enumerate(sexpartnerarr):
@@ -766,12 +769,8 @@ def model(simpars=None, settings=None, version=None, initpeople=None, initprops=
                 put_along_axis(forceinffullsexinj, probmiddlelocations, middleprob - middleprob * largestprob, axis=0) # The assumption that the two infection events are independent, same assumption as above
 
             # Probability of getting infected by each method is probsexinjsortindices times any scaling factors, !! copied from above !!
-            forceinffullcauses = einsum('mijkl,j,j,j->mijkl', forceinffullsexinj, force, inhomo, (1.-background[:,t]))
+            raw_incionpopbypopmethods[nonmtctmethods,:,:,:,t] = einsum('ij,mijkl,j,j,j->mjkl', people[sus,:,t], forceinffullsexinj, force, inhomo, (1.-background[:,t]))/dt
 
-            nonmtctmethods = heterosexsex + homosexsex + [inj]
-            raw_incionpopbypopmethods[nonmtctmethods,:,:,:,t]
-            raw_incionpopbypopmethods[nonmtctmethods,:,:,:,t] = einsum('ij,mijkl->mjkl', people[sus,:,t], forceinffullcauses[nonmtctmethods,:,:,:,:])/dt
-            # raw_incionpopbypop[:,:,:,t] = einsum('ij,ijkl->jkl', people[sus,:,t], forceinffull)/dt
 
         ##############################################################################################################
         ### Calculate deaths
