@@ -755,6 +755,7 @@ def model(simpars=None, settings=None, version=None, initpeople=None, initprops=
         if advancedtracking:
             # Some people (although small) will have gotten infected from both sex and injections, we assign these people to the higher probability (higher risk) method. Because the probabilities are all small, it probably would still be a good approximation without this correction
             forceinffullsexinj = 1 - forceinffullsexinj
+            print(t, forceinffullsexinj.sum())
             if (forceinffullsexinj > 0.02).any(): # If any force is over 0.02 in a timestep, then force(sex)*force(inj) could be more than 0.001 therefore our probabilities are no longer a <0.1% error estimate
                 probsexinjsortindices = argsort(forceinffullsexinj,axis=0)
                 probsmallestlocations  = expand_dims(probsexinjsortindices[0,:,:,:,:], axis=0)
@@ -1251,6 +1252,7 @@ def model(simpars=None, settings=None, version=None, initpeople=None, initprops=
         raw['incimethods']    = raw_incionpopbypopmethods
         raw['transitpopbypop']= raw_transitpopbypop
         raw['props']          = raw_propsarr
+        print('BOB', [raw_incionpopbypopmethods[inds,...].sum() for inds in (inj, heterosexsex,homosexsex, mtct)])
 
     checkfornegativepeople(people) # Check only once for negative people, right before finishing
 
