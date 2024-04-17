@@ -774,7 +774,7 @@ class Project(object):
         return output
     
 
-    def runbudget(self, name=None, budget=None, budgetyears=None, progsetname=None, parsetname='default', verbose=2):
+    def runbudget(self, name=None, budget=None, budgetyears=None, progsetname=None, parsetname='default', verbose=2, **kwargs):
         ''' Function to run the model for a given budget, years, programset and parameterset '''
         if name        is None: name        = 'runbudget'
         if budgetyears is None: budgetyears = self.settings.now
@@ -786,7 +786,7 @@ class Project(object):
         if budget is None: budget = self.progsets[progsetname].getdefaultbudget()
         coverage = self.progsets[progsetname].getprogcoverage(budget=budget, t=budgetyears, parset=self.parsets[parsetname])
         progpars = self.progsets[progsetname].getpars(coverage=coverage,t=budgetyears, parset=self.parsets[parsetname])
-        results = self.runsim(pars=progpars, parsetname=parsetname, progsetname=progsetname, budget=budget, budgetyears=budgetyears, coverage=coverage, label=self.name+'-runbudget')
+        results = self.runsim(pars=progpars, parsetname=parsetname, progsetname=progsetname, budget=budget, budgetyears=budgetyears, coverage=coverage, label=self.name+'-runbudget', **kwargs)
         return results
     
     
