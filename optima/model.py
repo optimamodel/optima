@@ -134,7 +134,7 @@ def model(simpars=None, settings=None, version=None, initpeople=None, initprops=
     homosexsex      = settings.homosexsex           # Infection via homosexual sex
     inj             = settings.inj                  # Infection via injection
     mtct            = settings.mtct                 # Infection via MTCT
-    nonmtctmethods  = heterosexsex + homosexsex + [inj]
+    nonmtctmethods  = [inj] + heterosexsex + homosexsex
     nmethods        = settings.nmethods
 
     allcd4          = [acute,gt500,gt350,gt200,gt50,lt50]
@@ -769,7 +769,7 @@ def model(simpars=None, settings=None, version=None, initpeople=None, initprops=
                 put_along_axis(forceinffullsexinj, probmiddlelocations, middleprob - middleprob * largestprob, axis=0) # The assumption that the two infection events are independent, same assumption as above
 
             # Probability of getting infected by each method is probsexinjsortindices times any scaling factors, !! copied from above !!
-            raw_incionpopbypopmethods[nonmtctmethods,:,:,:,t] = einsum('ij,mijkl,j,j,j->mjkl', people[sus,:,t], forceinffullsexinj, force, inhomo, (1.-background[:,t]))/dt
+            raw_incionpopbypopmethods[nonmtctmethods,:,:,:,t] = einsum('ij,mijkl,j,j,j->mjkl', people[sus,:,t], forceinffullsexinj[nonmtctmethods,...], force, inhomo, (1.-background[:,t]))/dt
 
 
         ##############################################################################################################
