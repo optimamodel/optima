@@ -753,23 +753,21 @@ def model(simpars=None, settings=None, version=None, initpeople=None, initprops=
         raw_incibypop[:,:,t]        = einsum('ij,ijkl->kl', people[sus,:,t], forceinffull)/dt
 
         if advancedtracking:
-            # Some people (although small) will have gotten infected from both sex and injections, we assign these people to the higher probability (higher risk) method. Because the probabilities are all small, it probably would still be a good approximation without this correction
-            forceinffullsexinj = 1 - forceinffullsexinj
-            if (forceinffullsexinj > 0.02).any(): # If any force is over 0.02 in a timestep, then force(sex)*force(inj) could be more than 0.001 therefore our probabilities are no longer a <0.1% error estimate
-                probsexinjsortindices = argsort(forceinffullsexinj,axis=0)
-                probsmallestlocations  = expand_dims(probsexinjsortindices[0,:,:,:,:], axis=0)
-                probmiddlelocations = expand_dims(probsexinjsortindices[1, :, :, :, :], axis=0)
-                probbiggestlocations   = expand_dims(probsexinjsortindices[2,:,:,:,:], axis=0)
+            # Some people (although small) will have gotten infected from both sex and injections, we have to split these intersections. Because the probabilities are all small, it probably would still be a good approximation without this correction
+            forceinffullsexinj = einsum('mijkl,j,j,j->mijkl', 1-forceinffullsexinj, force, inhomo, (1.-background[:,t]))
 
-                smallestprob = take_along_axis(forceinffullsexinj, probsmallestlocations, axis=0)
-                middleprob  = take_along_axis(forceinffullsexinj, probmiddlelocations, axis=0)
-                largestprob  = take_along_axis(forceinffullsexinj, probbiggestlocations, axis=0)
-                #inclusion exclusion but the intersections are distributed to the larger probabilities
-                put_along_axis(forceinffullsexinj, probsmallestlocations, smallestprob - smallestprob * largestprob - smallestprob * middleprob + smallestprob * middleprob * largestprob, axis=0) # The assumption that the two infection events are independent, same assumption as above
-                put_along_axis(forceinffullsexinj, probmiddlelocations, middleprob - middleprob * largestprob, axis=0) # The assumption that the two infection events are independent, same assumption as above
+            # Now since for independent events Pr(A) + Pr(B) + Pr(C) =/= Pr(A ∪ B ∪ C) we need to adjust the probabilities so that they total the same as the forceinffull
+            # The way we estimate this is to take set Pr(A first) = Pr(A only) + Pr(all the intersections) * Pr(A) / sum(Pr(i)) that is split the intersections proportionally to the original probabilities
+            # forceinffullsexinj[:,inds[0],inds[1],inds[2],inds[3]] *= forceinffull[inds] / forceinffullsexinj[:,inds[0],inds[1],inds[2],inds[3]].sum(axis=0)
+
+            inds = where(forceinffull > 1e-6)
+            methodsprob = forceinffullsexinj[:,inds[0],inds[1],inds[2],inds[3]]
+            singlemethodonlyprob = methodsprob * (1-methodsprob).prod(axis=0) / (1-methodsprob)
+            distributedmethodsprob = singlemethodonlyprob + (forceinffull[inds] - singlemethodonlyprob.sum(axis=0)) * methodsprob / methodsprob.sum(axis=0)
+            forceinffullsexinj[:,inds[0],inds[1],inds[2],inds[3]] = distributedmethodsprob
 
             # Probability of getting infected by each method is probsexinjsortindices times any scaling factors, !! copied from above !!
-            raw_incionpopbypopmethods[nonmtctmethods,:,:,:,t] = einsum('ij,mijkl,j,j,j->mjkl', people[sus,:,t], forceinffullsexinj[nonmtctmethods,...], force, inhomo, (1.-background[:,t]))/dt
+            raw_incionpopbypopmethods[nonmtctmethods,:,:,:,t] = einsum('ij,mijkl->mjkl', people[sus,:,t], forceinffullsexinj[nonmtctmethods,...])/dt
 
 
         ##############################################################################################################
