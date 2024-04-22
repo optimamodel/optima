@@ -74,6 +74,12 @@ else:
     from sciris import cpu_count
 del sc_version; del sc_versiondate
 
+# Some pickled projects expect there to be a function sc.sc_fileio._unpickleMethod
+def blank_function(a,b,c): pass # raise Exception('sc.sc_fileio._unpickleMethod is gone, don\'t try to use it')
+from sciris import sc_fileio
+sc_fileio._unpickleMethod = blank_function
+del blank_function, sc_fileio
+
 # Color definitions
 from .colortools import *
 
@@ -101,12 +107,14 @@ def optimapath(subdir=None, trailingsep=True):
 
 # Debugging information
 def debuginfo(dooutput=False):
+    from sciris import __version__ as sc_version
     output = '\nOptima debugging info:\n'
     output += '   Versions: %s\n' % supported_versions
     output += '   Revision: %s\n' % revision
-    output += '   Branch:  %s\n' % gitinfo()[0]
-    output += '   SHA:     %s\n' % gitinfo()[1][:7]
-    output += '   Path:    %s\n' % optimapath()
+    output += '   Branch:   %s\n' % gitinfo()[0]
+    output += '   SHA:      %s\n' % gitinfo()[1][:7]
+    output += '   Path:     %s\n' % optimapath()
+    output += '   Sciris:   %s\n' % sc_version
     if dooutput:
         return output
     else:

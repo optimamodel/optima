@@ -750,7 +750,7 @@ def create_project_from_prj_file(prj_filename, user_id, other_names):
     """
     print(">> create_project_from_prj_file '%s'" % prj_filename)
     try:
-        project = op.loadproj(prj_filename)
+        project = op.loadproj(prj_filename, die=True)
     except Exception:
         return { 'projectId': 'BadFileFormatError' }
     project.name = get_unique_name(project.name, other_names)
