@@ -19,12 +19,21 @@ Version: 2018apr24
 dobenchmark = True
 doprofile = True
 
+advancedtracking = False
+
 n_benchmark = 10  # Number of times to run the cpu benchmark
 n_runsim = 1     # Number of times to run the model
 
 # If running profiling, choose which function to line profile.
 functiontoprofile = 'model' # Choices are: model, runsim, makesimpars, interp
 tobenchmark = 'runsim' # Choices are 'runsim' or 'runbudget'
+
+# from hiv_utils import *
+# P = get_latest_project('Kyrgyzstan')
+
+from optima import demo
+P = demo(doplot=False, dorun=False)
+
 
 
 ############################################################################################################################
@@ -49,13 +58,13 @@ if dobenchmark:
         return performance
 
     # Prelminaries
-    P = demo(doplot=False, dorun=False)
+    # P = demo(doplot=False, dorun=False)
     performance1 = cpubenchmark()
 
     elapsed = 0
     # Run the model
     if   tobenchmark == 'runsim':
-        elapsed = timeit.timeit(lambda: P.runsim(), number=n_runsim)
+        elapsed = timeit.timeit(lambda: P.runsim(advancedtracking=advancedtracking), number=n_runsim)
     elif tobenchmark == 'runbudget':
         elapsed = timeit.timeit(lambda: P.runbudget(), number=n_runsim)
     else: raise Exception('tobenchmark "%s" not recognized' % tobenchmark)
@@ -96,8 +105,8 @@ except:
 if doprofile:
     from line_profiler import LineProfiler
     from optima import Project, model, makesimpars, applylimits # analysis:ignore -- called by eval() function
-    P = Project(spreadsheet='generalized.xlsx', dorun=False)
-    runsim = P.runsim # analysis:ignore
+    import functools
+    runsim = functools.partial(P.runsim, advancedtracking=advancedtracking) # analysis:ignore
     interp = P.pars()['hivtest'].interp
 
     def profile():
@@ -122,7 +131,7 @@ if doprofile:
 
         @do_profile(follow=[eval(functiontoprofile)]) # Add decorator to runmodel function
         def runsimwrapper():
-            P.runsim()
+            P.runsim(advancedtracking=advancedtracking)
         runsimwrapper()
 
         print('Done.')
