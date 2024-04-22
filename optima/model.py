@@ -134,8 +134,7 @@ def model(simpars=None, settings=None, version=None, initpeople=None, initprops=
     homosexsex      = settings.homosexsex           # Infection via homosexual sex
     inj             = settings.inj                  # Infection via injection
     mtct            = settings.mtct                 # Infection via MTCT
-    unknown         = settings.unknownmethods
-    nonmtctmethods  = sorted(settings.nonmtctmethods)
+    nonmtctmethods  = settings.nonmtctmethods
     nmethods        = settings.nmethods
 
     allcd4          = [acute,gt500,gt350,gt200,gt50,lt50]
@@ -526,7 +525,7 @@ def model(simpars=None, settings=None, version=None, initpeople=None, initprops=
             else:
                 errormsg = label + 'Not able to figure out the sex of "%s" and "%s"' % (key[0], key[1])
                 printv(errormsg, 3, verbose)
-                methodind = unknown[actind]
+                methodind = heterosexsex[actind]
                 trans = (simpars['transmmi'] + simpars['transmmr'] + simpars['transmfi'] + simpars['transmfr'])/4.0 # May as well just assume all transmissions apply equally - will undersestimate if pop is predominantly biologically male and oversestimate if pop is predominantly biologically female
 
             methodsexpartnerarr[j,:] = [methodind, pop1, pop2]
@@ -753,7 +752,7 @@ def model(simpars=None, settings=None, version=None, initpeople=None, initprops=
             forceinffullsexinj[:,inds[0],inds[1],inds[2],inds[3]] = distributedmethodsprob
 
             # Probability of getting infected by each method is probsexinjsortindices times any scaling factors, !! copied from above !!
-            raw_incionpopbypopmethods[nonmtctmethods,:,:,:,t] = einsum('ij,mijkl->mjkl', people[sus,:,t], forceinffullsexinj)/dt
+            raw_incionpopbypopmethods[nonmtctmethods,:,:,:,t] = einsum('ij,mijkl->mjkl', people[sus,:,t], forceinffullsexinj[nonmtctmethods,...])/dt
 
 
         ##############################################################################################################
