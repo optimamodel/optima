@@ -134,7 +134,7 @@ def model(simpars=None, settings=None, version=None, initpeople=None, initprops=
     homosexsex      = settings.homosexsex           # Infection via homosexual sex
     inj             = settings.inj                  # Infection via injection
     mtct            = settings.mtct                 # Infection via MTCT
-    nonmtctmethods  = [inj] + heterosexsex + homosexsex
+    nonmtctmethods  = settings.nonmtctmethods
     nmethods        = settings.nmethods
 
     allcd4          = [acute,gt500,gt350,gt200,gt50,lt50]
@@ -475,12 +475,7 @@ def model(simpars=None, settings=None, version=None, initpeople=None, initprops=
 
     transsexarr     = zeros((nallsexacts, npts))
     condarr         = zeros((nallsexacts, npts))
-
-    sexpartnerarr   = zeros((nallsexacts, 2), dtype=int)
     methodsexpartnerarr = zeros((nallsexacts, 3), dtype=int)
-
-    homopartnerarr  = set()
-    heteropartnerarr = set()
     fracactssexarr  = zeros((nallsexacts, npts))
     wholeactssexarr = zeros((nallsexacts, npts))
     injpartnerarr   = zeros((ninjacts, 2), dtype=int)
@@ -517,10 +512,8 @@ def model(simpars=None, settings=None, version=None, initpeople=None, initprops=
                 condkey = 0.0
             condarr[j,:] = 1.0 - condkey*effcondom
 
-            sexpartnerarr[j,:] = [pop1, pop2]
-
-
-            if     male[pop1] and   male[pop2]:
+            ## WARNING: the following lines don't check that pop1 isn't both M and F (and the same for pop2)
+            if     male[pop1] and   male[pop2]:  ## So if pop1=MF, pop2=MF then they will get this high MM risk, etc
                 methodind = homosexsex[actind]
                 trans = (insertiveacts*simpars['transmmi'] + receptiveacts*simpars['transmmr']) / totalacts
             elif   male[pop1] and female[pop2]:
@@ -530,16 +523,13 @@ def model(simpars=None, settings=None, version=None, initpeople=None, initprops=
                 methodind = heterosexsex[actind]
                 trans = simpars['transmfr']*ones(len(totalacts))
             else:
-                methodind = heterosexsex[actind]
                 errormsg = label + 'Not able to figure out the sex of "%s" and "%s"' % (key[0], key[1])
                 printv(errormsg, 3, verbose)
+                methodind = heterosexsex[actind]
                 trans = (simpars['transmmi'] + simpars['transmmr'] + simpars['transmfi'] + simpars['transmfr'])/4.0 # May as well just assume all transmissions apply equally - will undersestimate if pop is predominantly biologically male and oversestimate if pop is predominantly biologically female
 
-            methodsexpartnerarr[j, :] = [methodind, pop1, pop2]
+            methodsexpartnerarr[j,:] = [methodind, pop1, pop2]
             transsexarr[j,:] = trans
-
-            if male[pop1] and male[pop2]: homopartnerarr.add((pop1, pop2))
-            else: heteropartnerarr.add((pop1, pop2))  # If a population is both male and female default to heterosexual
 
             if debug:
                 for k,arr in {'wholeacts':wholeactssexarr[j,:],'fracacts':fracactssexarr[j,:],'cond':condarr[j,:]}.items():
@@ -548,14 +538,9 @@ def model(simpars=None, settings=None, version=None, initpeople=None, initprops=
                         if die: raise OptimaException(errormsg)
                         else:   printv(errormsg, 1, verbose)
                         arr[arr<0] = 0.0 # Reset values
-
             j += 1
 
     regularityinds = [isin(methodsexpartnerarr[:,0], methodinds) for methodinds in (settings.regular, settings.casual, settings.commercial)]
-    homopartnerarr = array(list(homopartnerarr))
-    heteropartnerarr = array(list(heteropartnerarr))
-
-    # print('methodsexpartnerarr', methodsexpartnerarr)
 
     # Injection
     for i,key in enumerate(simpars['actsinj']):
@@ -677,8 +662,8 @@ def model(simpars=None, settings=None, version=None, initpeople=None, initprops=
         forceinffull  = ones((len(sus), npops, nstates, npops))
 
         ## Sexual infections
-        pop1 = sexpartnerarr[:,0]
-        pop2 = sexpartnerarr[:,1]
+        pop1 = methodsexpartnerarr[:,1]
+        pop2 = methodsexpartnerarr[:,2]
 
         forceinffullsex = ones((len(sus), nstates, nallsexacts))
         # only effallprev[:,:] is time dependent
@@ -700,11 +685,11 @@ def model(simpars=None, settings=None, version=None, initpeople=None, initprops=
             # forceinffull[:,methodsexpartnerarr[:,1],:,methodsexpartnerarr[:,2]] = prod(forceinffullsexinj[:,:,methodsexpartnerarr[:,1],:,methodsexpartnerarr[:,2]], axis=1)
 
         if debug and ( not((forceinffull[:,:,:,:]>=0).all()) or not((forceinffull[:,:,:,:]<=1).all()) ):
-            for m,(pop1, pop2) in enumerate(sexpartnerarr):
+            for m,(_, pop1, pop2) in enumerate(methodsexpartnerarr):
                 if not ( not((forceinffull[:,pop1,:,pop2]>=0).all()) or not((forceinffull[:,pop1,:,pop2]<=1).all()) ):
                     errormsg = label + 'Sexual force-of-infection is invalid between populations %s and %s, time %0.1f, FOI:\n%s)' % (
                         popkeys[pop1], popkeys[pop2], tvec[t], forceinffull[:,pop1,:,pop2])
-                    for var in ['i','m','transsexarr[i][m,t]','condarr[i][m,t]','alleff[pop1,t,:]','effallprev[:,pop2]','fracactssexarr[i][m,t]','wholeactssexarr[i][m,t]']:
+                    for var in ['m','transsexarr[m,t]','condarr[m,t]','alleff[pop1,t,:]','effallprev[:,pop2]','fracactssexarr[m,t]','wholeactssexarr[m,t]']:
                         errormsg += '\n%20s = %f' % (var, eval(var))  # Print out extra debugging information
                     raise OptimaException(errormsg)
 

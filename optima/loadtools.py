@@ -1645,16 +1645,6 @@ def parsandprograms_odictcustom(project=None, **kwargs):
             progset.programs = op.odict_custom(progset.programs, func=progset.propagateversion)
             progset.programs.func = progset.checkpropagateversion
 
-# def fixmigrationdataassumptions(project=None, **kwargs):
-#     '''
-#         Migration between revision 3 and 4
-#     '''
-#     return
-#     if project is not None:
-#         for key in ['propemigrate', 'numimmigrate', 'immihivprev', 'immipropdiag']:
-#             if key in project.data.keys():
-#                 if len(project.data[key]) != project.data['npops']:
-#                     migrationmigration(project=project, **kwargs)
 
 def updatemethodsettings(project=None, **kwargs):
     '''
@@ -1664,17 +1654,17 @@ def updatemethodsettings(project=None, **kwargs):
     if project is not None:
         settings = project.settings
         settings.inj = 0            # Injection, don't change number
-        settings.heterosexsex = [1,2,3]   # Homosexual sexual transmission, don't change number
-        settings.homosexsex = [4,5,6]     # Heterosexual sexual transmission, don't change number
+        settings.heterosexsex = [1, 2, 3]   # Homosexual sexual transmission, don't change number
+        settings.homosexsex   = [4, 5, 6]     # Heterosexual sexual transmission, don't change number
         settings.mtct = 7           # MTCT
         settings.nmethods = 8       # 8 methods of transmission
-        settings.regular = [1, 4]
-        settings.casual = [2, 5]
+        settings.regular    = [1, 4]
+        settings.casual     = [2, 5]
         settings.commercial = [3, 6]
         settings.methodnames = ['Injection',
-                            'Heterosexual sex (regular)','Heterosexual sex (casual)','Heterosexual sex (commercial)',
-                            'Homosexual sex (regular)',  'Homosexual sex (casual)',  'Homosexual sex (commercial)',
-                            'MTCT']
+                                'Heterosexual sex (regular)','Heterosexual sex (casual)','Heterosexual sex (commercial)',
+                                'Homosexual sex (regular)',  'Homosexual sex (casual)',  'Homosexual sex (commercial)',
+                                'MTCT']
 
 
 ##########################################################################################
@@ -1834,7 +1824,6 @@ def migraterevisionfunc(project, migraterevision=True, verbose=2, die=False):
             try:
                 migrator(project, verbose=verbose, die=die)
             except Exception as E:
-                raise E
                 errormsg = 'WARNING, migrating revision "%s" from %6s -> %6s failed:\n%s' % (project.name, currentrevision, nextrevision, repr(E))
                 if not hasattr(project, 'failedmigrations'): project.failedmigrations = [] # Create if it doesn't already exist
                 project.failedmigrations.append(errormsg)
@@ -1886,7 +1875,6 @@ def loadproj(filename=None, folder=None, verbose=2, die=None, fromdb=False, migr
     try: # Note we don't have a `if migraterevsion` check, since we need to call migraterevisionfunc which adds P.revision if it needs it
         P = migraterevisionfunc(origP, migraterevision=migraterevision, verbose=verbose, die=die)
     except Exception as E:
-        raise E
         if die: raise E
         else: print(f'WARNING: Error when trying to update project "{P.name}" to revision {op.revision} from revision {P.revision}:\n'+str(E))
 

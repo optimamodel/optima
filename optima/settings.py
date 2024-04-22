@@ -80,6 +80,7 @@ class Settings(object):
         self.homosexsex   = [4, 5, 6]     # Heterosexual sexual transmission, don't change number
         self.mtct = 7           # MTCT
         self.nmethods = 8       # 8 methods of transmission
+        self.nonmtctmethods = [self.inj] + self.heterosexsex + self.homosexsex
         self.regular    = [1, 4]
         self.casual     = [2, 5]
         self.commercial = [3, 6]
