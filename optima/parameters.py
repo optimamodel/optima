@@ -1449,7 +1449,7 @@ def makepars(data=None, verbose=2, die=True, fixprops=None, parset=None, project
                                     store_key1, store_key2 = key1, key2
                                 elif key1 in fpopkeys and key2 in mpopkeys: #  Prefer M,F.
                                     store_key1, store_key2 = key2, key1
-                                else: # M,M just sort them by name
+                                else: # M,M or other just sort them by name
                                     store_key1, store_key2 = tuple(sorted((key1,key2)))
                                 pars[condname].y[(store_key1,store_key2)] = array(tmpcond[act])[i,j,:]
                                 pars[condname].t[(store_key1,store_key2)] = array(tmpcondpts[act])
