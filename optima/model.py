@@ -134,7 +134,7 @@ def model(simpars=None, settings=None, version=None, initpeople=None, initprops=
     homosexsex      = settings.homosexsex           # Infection via homosexual sex
     inj             = settings.inj                  # Infection via injection
     mtct            = settings.mtct                 # Infection via MTCT
-    nonmtctmethods  = settings.nonmtctmethods
+    nonmtctmethods  = sorted(settings.nonmtctmethods)
     nmethods        = settings.nmethods
 
     allcd4          = [acute,gt500,gt350,gt200,gt50,lt50]
@@ -752,7 +752,7 @@ def model(simpars=None, settings=None, version=None, initpeople=None, initprops=
             forceinffullsexinj[:,inds[0],inds[1],inds[2],inds[3]] = distributedmethodsprob
 
             # Probability of getting infected by each method is probsexinjsortindices times any scaling factors, !! copied from above !!
-            raw_incionpopbypopmethods[nonmtctmethods,:,:,:,t] = einsum('ij,mijkl->mjkl', people[sus,:,t], forceinffullsexinj[nonmtctmethods,...])/dt
+            raw_incionpopbypopmethods[nonmtctmethods,:,:,:,t] = einsum('ij,mijkl->mjkl', people[sus,:,t], forceinffullsexinj)/dt
 
 
         ##############################################################################################################
