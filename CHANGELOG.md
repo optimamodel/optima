@@ -7,6 +7,7 @@ Versions `2.11.4`, `2.12.0` and later all can be run using the branch `main`. A 
 ## Revision 2
 Fix bug when deep-copying a `Parameterset`, the `pars` from a different `Parameterset` would get copied in certain cases (make sure to pass `memodict` along when deep-copying).
 
+
 ## Revision 1
 Can run multiple different supported versions with the same branch! Currently supported: `[2.11.4, 2.12.0]`
 
