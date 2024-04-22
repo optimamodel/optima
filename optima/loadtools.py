@@ -1657,14 +1657,17 @@ def updatemethodsettings(project=None, **kwargs):
         settings.heterosexsex = [1, 2, 3]   # Homosexual sexual transmission, don't change number
         settings.homosexsex   = [4, 5, 6]     # Heterosexual sexual transmission, don't change number
         settings.mtct = 7           # MTCT
-        settings.nmethods = 8       # 8 methods of transmission
-        settings.regular    = [1, 4]
-        settings.casual     = [2, 5]
-        settings.commercial = [3, 6]
+        settings.unknownmethods = [8, 9, 10]
+        settings.nmethods = 11       # 8 methods of transmission
+        settings.nonmtctmethods = [settings.inj] + settings.heterosexsex + settings.homosexsex + settings.unknownmethods
+        settings.regular    = [1, 4, 8]
+        settings.casual     = [2, 5, 9]
+        settings.commercial = [3, 6, 10]
         settings.methodnames = ['Injection',
-                                'Heterosexual sex (regular)','Heterosexual sex (casual)','Heterosexual sex (commercial)',
-                                'Homosexual sex (regular)',  'Homosexual sex (casual)',  'Homosexual sex (commercial)',
-                                'MTCT']
+                            'Heterosexual sex (regular)','Heterosexual sex (casual)','Heterosexual sex (commercial)',
+                            'Homosexual sex (regular)',  'Homosexual sex (casual)',  'Homosexual sex (commercial)',
+                            'MTCT',
+                            'Unknown sex (regular)', 'Unknown (casual)', 'Unknown (commercial)',]
 
 
 ##########################################################################################

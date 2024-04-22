@@ -79,15 +79,17 @@ class Settings(object):
         self.heterosexsex = [1, 2, 3]   # Homosexual sexual transmission, don't change number
         self.homosexsex   = [4, 5, 6]     # Heterosexual sexual transmission, don't change number
         self.mtct = 7           # MTCT
-        self.nmethods = 8       # 8 methods of transmission
-        self.nonmtctmethods = [self.inj] + self.heterosexsex + self.homosexsex
-        self.regular    = [1, 4]
-        self.casual     = [2, 5]
-        self.commercial = [3, 6]
+        self.unknownmethods = [8, 9, 10]
+        self.nmethods = 11       # 8 methods of transmission
+        self.nonmtctmethods = [self.inj] + self.heterosexsex + self.homosexsex + self.unknownmethods
+        self.regular    = [1, 4, 8]
+        self.casual     = [2, 5, 9]
+        self.commercial = [3, 6, 10]
         self.methodnames = ['Injection',
                             'Heterosexual sex (regular)','Heterosexual sex (casual)','Heterosexual sex (commercial)',
                             'Homosexual sex (regular)',  'Homosexual sex (casual)',  'Homosexual sex (commercial)',
-                            'MTCT']
+                            'MTCT',
+                            'Unknown sex (regular)', 'Unknown (casual)', 'Unknown (commercial)',]
 
         self.advancedtracking = False # Try to always set to False to save time when running model
         
