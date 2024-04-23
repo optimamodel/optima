@@ -1666,7 +1666,8 @@ def updatemethodsettings(project=None, **kwargs):
                                 'Heterosexual sex (regular)','Heterosexual sex (casual)','Heterosexual sex (commercial)',
                                 'Homosexual sex (regular)',  'Homosexual sex (casual)',  'Homosexual sex (commercial)',
                                 'MTCT']
-
+        settings.groupedmethods = [[settings.inj], settings.heterosexsex, settings.homosexsex, [settings.mtct]]
+        settings.groupedmethodnames = ['Injection', 'Heterosexual sex', 'Homosexual sex', 'MTCT']
 
 ##########################################################################################
 ### CORE MIGRATION FUNCTIONS

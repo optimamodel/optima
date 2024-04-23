@@ -88,6 +88,8 @@ class Settings(object):
                             'Heterosexual sex (regular)','Heterosexual sex (casual)','Heterosexual sex (commercial)',
                             'Homosexual sex (regular)',  'Homosexual sex (casual)',  'Homosexual sex (commercial)',
                             'MTCT']
+        self.groupedmethods = [[self.inj], self.heterosexsex, self.homosexsex, [self.mtct]]
+        self.groupedmethodnames = ['Injection', 'Heterosexual sex', 'Homosexual sex', 'MTCT']
 
         self.advancedtracking = False # Try to always set to False to save time when running model
         
