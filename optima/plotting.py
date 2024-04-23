@@ -349,12 +349,23 @@ def makeplots(results=None, toplot=None, die=False, verbose=2, plotstartyear=Non
         allplots.update(plots)
 
     ## Plot infections by method of transmission, and by population
-    for key in ['numincimethods', 'numincimethods-population+stacked', 'numincimethods-stacked', 'numinciallmethods', 'numinciallmethods-population+stacked', 'numinciallmethods-stacked',]:
-        if key in toplot:
-            toplot.remove(key)  # Because everything else is passed to plotepi()
-            plots = plotbymethod(results, toplot=key, die=die, fig=fig, plotstartyear=plotstartyear,
-                                 plotendyear=plotendyear, **kwargs)
-            allplots.update(plots)
+    if 'numincimethods' in toplot:
+        toplot.remove('numincimethods')  # Because everything else is passed to plotepi()
+        plots = plotbymethod(results, toplot='numincimethods', die=die, fig=fig, plotstartyear=plotstartyear,
+                             plotendyear=plotendyear, **kwargs)
+        allplots.update(plots)
+    if 'numincimethods-population+stacked' in toplot:
+        toplot.remove('numincimethods-population+stacked')  # Because everything else is passed to plotepi()
+        plots = plotbymethod(results, toplot='numincimethods-population+stacked', die=die, fig=fig,
+                             plotstartyear=plotstartyear, plotendyear=plotendyear, **kwargs)
+        allplots.update(plots)
+    if 'numincimethods-stacked' in toplot:
+        toplot.remove('numincimethods-stacked')  # Because everything else is passed to plotepi()
+        plots = plotbymethod(results, toplot='numincimethods-stacked', die=die, fig=fig, plotstartyear=plotstartyear,
+                             plotendyear=plotendyear, **kwargs)
+        allplots.update(plots)
+
+
 
     ## Add epi plots -- WARNING, I hope this preserves the order! ...It should...
     epiplots = plotepi(results, toplot=toplot, die=die, plotstartyear=plotstartyear, plotendyear=plotendyear, fig=fig, **kwargs)
@@ -1806,10 +1817,8 @@ def plotbymethod(results, toplot=None, uncertainty=True, die=True, showdata=True
         colorsarg = dcp(colors)  # This is annoying, but it gets overwritten later and need to preserve it here
 
         ## Validate plot keys
-        valid_plotkeys = ['numincimethods', 'numinciallmethods']  # only allow selected things
+        valid_plotkeys = ['numincimethods']  # only allow selected things
         valid_plottypes = ['population+stacked','stacked'] # only allow population+stacked
-        labeldict = {'numincimethods':    results.settings.groupedmethodnames,
-                     'numinciallmethods': results.settings.methodnames}
         for pk, plotkeys in enumerate(toplot):
             epikey = None  # By default, don't make any assumptions
             plottype = 'population+stacked'  # Assume population+stacked by default
@@ -1967,7 +1976,7 @@ def plotbymethod(results, toplot=None, uncertainty=True, die=True, showdata=True
                 plotordermethod = nlinesperplot - 1 - origordermethod
                 # if reorder: plotordermethod = [reorder[k] for k in plotorder]
 
-                labels = labeldict[datatype]
+                labels = results.settings.methodnames
 
                 # # e.g. single simulation, prev-tot: single line, single plot
                 # if not ismultisim and istotal:
