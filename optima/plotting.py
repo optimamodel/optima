@@ -1810,8 +1810,8 @@ def plotbymethod(results, toplot=None, uncertainty=True, die=True, showdata=True
         ## Validate plot keys
         valid_plotkeys = ['numincimethods', 'numinciallmethods']  # only allow selected things
         valid_plottypes = ['population+stacked','stacked'] # only allow population+stacked
-        labeldict = {'numincimethods':    results.settings.groupedmethodnames,
-                     'numinciallmethods': results.settings.methodnames}
+        labeldict = {'numincimethods':    results.settings.methodnames,
+                     'numinciallmethods': results.settings.allmethodnames}
         for pk, plotkeys in enumerate(toplot):
             epikey = None  # By default, don't make any assumptions
             plottype = 'population+stacked'  # Assume population+stacked by default

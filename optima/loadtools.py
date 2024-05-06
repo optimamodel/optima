@@ -1664,12 +1664,12 @@ def updatemethodsettings(project=None, **kwargs):
         settings.regular    = [1, 4]
         settings.casual     = [2, 5]
         settings.commercial = [3, 6]
-        settings.methodnames = ['Injection',
-                                'Heterosexual sex (regular)','Heterosexual sex (casual)','Heterosexual sex (commercial)',
-                                'Homosexual sex (regular)',  'Homosexual sex (casual)',  'Homosexual sex (commercial)',
-                                'MTCT']
-        settings.groupedmethods = [[settings.inj], settings.heterosexsex, settings.homosexsex, [settings.mtct]]
-        settings.groupedmethodnames = ['Injection', 'Heterosexual sex', 'Homosexual sex', 'MTCT']
+        settings.allmethodnames = ['Injection',
+                               'Heterosexual sex (regular)','Heterosexual sex (casual)','Heterosexual sex (commercial)',
+                               'Homosexual sex (regular)',  'Homosexual sex (casual)',  'Homosexual sex (commercial)',
+                               'MTCT']
+        settings.methodindsgroups = [[settings.inj], settings.heterosexsex, settings.homosexsex, [settings.mtct]]
+        settings.methodnames = ['Injection', 'Heterosexual sex', 'Homosexual sex', 'MTCT']
 
 ##########################################################################################
 ### CORE MIGRATION FUNCTIONS
