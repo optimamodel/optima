@@ -196,12 +196,12 @@ class Parameterset(object):
         self.popkeys = dcp(self.pars['popkeys']) # Store population keys more accessibly
         if start is None: self.start = data['years'][0] # Store the start year -- if not supplied, use beginning of data
         else:             self.start = start
-        if end is None:   self.end   = Settings().endyear # Store the end year -- if not supplied, use default
+        if end is None:   self.end   = Settings().end # Store the end year -- if not supplied, use default
         else:             self.end   = end
         return None
 
 
-    def interp(self, keys=None, start=None, end=2030, dt=0.2, tvec=None, smoothness=20, asarray=True, samples=None, verbose=2, projectversion=None):
+    def interp(self, keys=None, start=None, end=2040, dt=0.2, tvec=None, smoothness=20, asarray=True, samples=None, verbose=2, projectversion=None):
         """ Prepares model parameters to run the simulation. """
         printv('Making model parameters...', 1, verbose),
         

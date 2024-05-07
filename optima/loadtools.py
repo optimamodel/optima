@@ -1671,6 +1671,9 @@ def updatemethodsettings(project=None, **kwargs):
         settings.methodindsgroups = [[settings.inj], settings.heterosexsex, settings.homosexsex, [settings.mtct]]
         settings.methodnames = ['Injection', 'Heterosexual sex', 'Homosexual sex', 'MTCT']
 
+        settings.now = 2023.0  # Default current year
+        settings.dataend = 2040.0  # Default end year for data entry
+
 ##########################################################################################
 ### CORE MIGRATION FUNCTIONS
 ##########################################################################################

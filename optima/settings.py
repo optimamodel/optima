@@ -27,8 +27,8 @@ class Settings(object):
     def __init__(self, verbose=2):
         self.dt = 0.2 # Timestep
         self.start = 2000.0 # Default start year
-        self.now = 2022.0 # Default current year
-        self.dataend = 2030.0 # Default end year for data entry
+        self.now = 2023.0 # Default current year
+        self.dataend = 2040.0 # Default end year for data entry
         self.end = 2040.0 # Default end year for projections
         self.hivstates = ['acute', 'gt500', 'gt350', 'gt200', 'gt50', 'lt50']   # Be careful changing this, check settings.aidsind and where aidsind is used too
         self.healthstates = ['susreg', 'progcirc', 'undx', 'dx', 'care', 'lost', 'usvl', 'svl']
@@ -207,7 +207,7 @@ def convertlimits(limits=None, tvec=None, dt=None, safetymargin=None, settings=N
     maxduration = 1000.
     maxmeta = 1000.0
     maxacts = 5000.0
-    maxyear = settings.end if settings is not None else 2030. # Set to a default maximum year
+    maxyear = settings.end if settings is not None else Settings().end # Set to a default maximum year
     
     # It's a single number: just return it
     if isnumber(limits): return limits
