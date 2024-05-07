@@ -196,12 +196,10 @@ def getadvancedtrackingplotselections(results=None,advanced=False):
     if advanced: # These plots are only available in advanced plots
         plotkeys = ['changeinplhivallsources-population+stacked',
                      'numincimethods-stacked',
-                     'numincimethods-population+stacked',
-                     'numinciallmethods-stacked']
+                     'numincimethods-population+stacked']
         plotnames = ['Change in PLHIV - population+stacked',
                     'Number of infections by method - stacked',
-                    'Number of infections by method - population+stacked',
-                    'Number of infections by method (all) - stacked',]
+                    'Number of infections by method - population+stacked']
         return plotkeys,plotnames
     return [],[]
 
