@@ -8,8 +8,10 @@ Versions `2.11.4`, `2.12.0` and later all can be run using the branch `main`. A 
  - Update methods of transmission tracking (`advancedtracking=True`) so `numinciallmethods` is split by regular, casual, commercial acts. `numincimethods` remains the same.
    - This causes `advancedtracking=True` to run ~20-25% slower as there is now 8 methods of transmission instead of 4.
    - `numincimethods` now more accurately sums to `numinci` (tested to be less than 1 part in 1 million total error)
-   - The intersection of multiple methods per transmission is estimated differently: instead of considering intersections as being a part of the higher probability method, all the intersections are now split according to the ratio of the method probabilities.
- 
+   - The intersection of multiple methods per transmission is estimated differently: instead of considering intersections as being a part of the higher probability method, all the intersections are now split according to the ratio of the method probabilities. 
+ - `P.makespreadsheet()` can now take different `datastart, dataend` than the current data to extend or shrink the databook years.
+ - Updated defaults `settings.now = 2023.0` and `settings.dataend = 2040.0`
+
 ## Revision 3
 Fix small unpickling bug and FE raises BadFileFormatError when uploading project that it cannot unpickle.
 
