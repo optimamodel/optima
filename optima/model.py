@@ -1,5 +1,5 @@
 ## Imports
-from numpy import zeros, exp, maximum, minimum, inf, array, isnan, einsum, floor, ones, power as npow, concatenate as cat, interp, nan, squeeze, isinf, isfinite, argsort, take_along_axis, put_along_axis, expand_dims, ix_, tile, arange, swapaxes, errstate, where
+from numpy import zeros, exp, maximum, minimum, inf, array, isnan, einsum, floor, ones, power as npow, concatenate as cat, interp, nan, squeeze, isinf, isfinite, argsort, take_along_axis, put_along_axis, expand_dims, ix_, tile, arange, swapaxes, errstate, where, prod, isin
 from optima import OptimaException, printv, dcp, odict, findinds, compareversions, sanitize
 
 __all__ = ['model']
@@ -134,6 +134,9 @@ def model(simpars=None, settings=None, version=None, initpeople=None, initprops=
     homosexsex      = settings.homosexsex           # Infection via homosexual sex
     inj             = settings.inj                  # Infection via injection
     mtct            = settings.mtct                 # Infection via MTCT
+    nonmtctmethods  = sorted(settings.nonmtctmethods)
+    nmethods        = settings.nmethods
+
     allcd4          = [acute,gt500,gt350,gt200,gt50,lt50]
 
     if debug and len(sus)!=2:
@@ -468,18 +471,19 @@ def model(simpars=None, settings=None, version=None, initpeople=None, initprops=
     for key in simpars['actsinj']:
         ninjacts += 1
 
-    transsexarr     = [zeros((nsexacts[i], npts)) for i in range(3)]
-    condarr         = [zeros((nsexacts[i], npts)) for i in range(3)]
-    sexpartnerarr   = [zeros((nsexacts[i], 2), dtype=int) for i in range(3)]
-    homopartnerarr  = set()
-    heteropartnerarr = set()
-    fracactssexarr  = [zeros((nsexacts[i], npts)) for i in range(3)]
-    wholeactssexarr = [zeros((nsexacts[i], npts)) for i in range(3)]
+    nallsexacts = sum(nsexacts)
+
+    transsexarr     = zeros((nallsexacts, npts))
+    condarr         = zeros((nallsexacts, npts))
+    methodsexpartnerarr = zeros((nallsexacts, 3), dtype=int)
+    fracactssexarr  = zeros((nallsexacts, npts))
+    wholeactssexarr = zeros((nallsexacts, npts))
     injpartnerarr   = zeros((ninjacts, 2), dtype=int)
     fracactsinjarr  = zeros((ninjacts, npts))
     wholeactsinjarr = zeros((ninjacts, npts))
 
     # Sex
+    j = 0
     for actind, act in enumerate(['reg','cas','com']):
         for i,key in enumerate(sorted(allsexkeys[act])):
             pop1 = popkeys.index(key[0])
@@ -494,8 +498,8 @@ def model(simpars=None, settings=None, version=None, initpeople=None, initprops=
                 if male[pop1] and male[pop2]: insertiveacts, receptiveacts = totalacts/2, totalacts/2
 
 
-            wholeactssexarr[actind][i,:] = floor(dt*totalacts)
-            fracactssexarr[actind][i,:]  = dt*totalacts - wholeactssexarr[actind][i,:] # Probability of an additional act
+            wholeactssexarr[j,:] = floor(dt*totalacts)
+            fracactssexarr[j,:]  = dt*totalacts - wholeactssexarr[j,:] # Probability of an additional act
 
             if simpars['cond'+act].get(key) is not None:
                 condkey = simpars['cond'+act][key]
@@ -506,32 +510,37 @@ def model(simpars=None, settings=None, version=None, initpeople=None, initprops=
                 if die: raise OptimaException(errormsg)
                 else:   printv(errormsg, 1, verbose)
                 condkey = 0.0
-            condarr[actind][i,:] = 1.0 - condkey*effcondom
+            condarr[j,:] = 1.0 - condkey*effcondom
 
-            sexpartnerarr[actind][i,:] = [pop1, pop2]
-            if     male[pop1] and   male[pop2]: trans = (insertiveacts*simpars['transmmi'] + receptiveacts*simpars['transmmr']) / totalacts
-            elif   male[pop1] and female[pop2]: trans = simpars['transmfi']*ones(len(totalacts))
-            elif female[pop1] and   male[pop2]: trans = simpars['transmfr']*ones(len(totalacts))
+            ## WARNING: the following lines don't check that pop1 isn't both M and F (and the same for pop2)
+            if     male[pop1] and   male[pop2]:  ## So if pop1=MF, pop2=MF then they will get this high MM risk, etc
+                methodind = homosexsex[actind]
+                trans = (insertiveacts*simpars['transmmi'] + receptiveacts*simpars['transmmr']) / totalacts
+            elif   male[pop1] and female[pop2]:
+                methodind = heterosexsex[actind]
+                trans = simpars['transmfi']*ones(len(totalacts))
+            elif female[pop1] and   male[pop2]:
+                methodind = heterosexsex[actind]
+                trans = simpars['transmfr']*ones(len(totalacts))
             else:
                 errormsg = label + 'Not able to figure out the sex of "%s" and "%s"' % (key[0], key[1])
                 printv(errormsg, 3, verbose)
+                methodind = heterosexsex[actind]
                 trans = (simpars['transmmi'] + simpars['transmmr'] + simpars['transmfi'] + simpars['transmfr'])/4.0 # May as well just assume all transmissions apply equally - will undersestimate if pop is predominantly biologically male and oversestimate if pop is predominantly biologically female
 
-            transsexarr[actind][i,:] = trans
-
-            if male[pop1] and male[pop2]: homopartnerarr.add((pop1, pop2))
-            else: heteropartnerarr.add((pop1, pop2))  # If a population is both male and female default to heterosexual
+            methodsexpartnerarr[j,:] = [methodind, pop1, pop2]
+            transsexarr[j,:] = trans
 
             if debug:
-                for k,arr in {'wholeacts':wholeactssexarr[actind][i,:],'fracacts':fracactssexarr[actind][i,:],'cond':condarr[actind][i,:]}.items():
+                for k,arr in {'wholeacts':wholeactssexarr[j,:],'fracacts':fracactssexarr[j,:],'cond':condarr[j,:]}.items():
                     if not(all(arr>=0)):
                         errormsg = label + f'Invalid sexual behavior parameter "{k}" for "{act}" acts for populations {key}: values are:\n{arr}'
                         if die: raise OptimaException(errormsg)
                         else:   printv(errormsg, 1, verbose)
                         arr[arr<0] = 0.0 # Reset values
+            j += 1
 
-    homopartnerarr = array(list(homopartnerarr))
-    heteropartnerarr = array(list(heteropartnerarr))
+    regularityinds = [isin(methodsexpartnerarr[:,0], methodinds) for methodinds in (settings.regular, settings.casual, settings.commercial)]
 
     # Injection
     for i,key in enumerate(simpars['actsinj']):
@@ -646,38 +655,43 @@ def model(simpars=None, settings=None, version=None, initpeople=None, initprops=
         ###############################################################################
 
         # Probability of getting infected. In the first stage of construction, we actually store this as the probability of NOT getting infected
-        # First dimension: infection acquired by (circumcision status). Second dimension:  infection acquired by (pop). Third dimension: infection caused by (pop). Fourth dimension: infection caused by (health/treatment state)
-
+        # First dimension: infection acquired by (circumcision status). Second dimension:  infection acquired by (pop). Third dimension: infection caused by (health/treatment state). Fourth dimension: infection caused by (pop)
+        # forceinffull is the one used to actually calculate infections from both sexual and injection transmission
+        # raw_incionpopbypopmethods is the output for advanced tracking
+        # all the others are temporary
         forceinffull  = ones((len(sus), npops, nstates, npops))
-        if advancedtracking:
-            forceinffullsexinj = ones((3, len(sus), npops, nstates, npops)) #!! remove hardcoding # First dimension is method of transmission, everything else moves over one dimension.
 
         ## Sexual infections
-        for i in range(3):  # reg, cas, com #!! remove hardcoding
-            pop1 = sexpartnerarr[i][:,0]
-            pop2 = sexpartnerarr[i][:,1]
-            forceinffullsex = ones((len(sus), nstates, len(pop1)))
-            # only effallprev[:,:] is time dependent
-            forceinffullsex[:,:,:] *= 1 - einsum('m,m,m,mi,km->ikm', fracactssexarr[i][:,t], transsexarr[i][:,t],
-                                                condarr[i][:,t], alleff[:,t,:][pop1,:], effallprev[:,pop2])
+        pop1 = methodsexpartnerarr[:,1]
+        pop2 = methodsexpartnerarr[:,2]
 
-            forceinffullsex[:,:,:] *= npow(1 - einsum('m,m,mi,km,m->ikm', transsexarr[i][:,t], condarr[i][:,t], alleff[pop1,t,:], effallprev[:,pop2],
-                                (wholeactssexarr[i][:,t].astype(int) != 0) ), wholeactssexarr[i][:,t].astype(int))  # If wholeacts[t] == 0, then this will equal one so will not change forceinffull
-            forceinffull[:,pop1,:,pop2] *= swapaxes(swapaxes(forceinffullsex[:,:,:],1,2),0,1)  # Slicing a more than 2d array puts the pop1,pop2 in the first dimension
+        forceinffullsex = ones((len(sus), nstates, nallsexacts))
+        # only effallprev[:,:] is time dependent
+        forceinffullsex[:,:,:] *= 1 - einsum('m,m,m,mi,km->ikm', fracactssexarr[:,t], transsexarr[:,t],
+                                            condarr[:,t], alleff[:,t,:][pop1,:], effallprev[:,pop2])
+
+        forceinffullsex[:,:,:] *= npow(1 - einsum('m,m,mi,km,m->ikm', transsexarr[:,t], condarr[:,t], alleff[pop1,t,:], effallprev[:,pop2],
+                            (wholeactssexarr[:,t].astype(int) != 0) ), wholeactssexarr[:,t].astype(int))  # If wholeacts[t] == 0, then this will equal one so will not change forceinffull
+
+        for inds in regularityinds:  # Loops over the indices of acts for regular, casual, commercial so we don't overlap with pop1,pop2 pairs
+            forceinffull[:,pop1[inds],:,pop2[inds]] *= swapaxes(swapaxes(forceinffullsex[:,:,inds],1,2),0,1)  # Slicing a more than 2d array puts the pop1,pop2 in the first dimension
 
         if advancedtracking:
-            forceinffullsexinj[homosexsex,:,homopartnerarr[:,0],:,homopartnerarr[:,1]] = forceinffull[:,homopartnerarr[:,0],:,homopartnerarr[:,1]]
-            forceinffullsexinj[heterosexsex,:,heteropartnerarr[:,0],:,heteropartnerarr[:,1]] = forceinffull[:,heteropartnerarr[:,0],:,heteropartnerarr[:,1]]
+            forceinffullsexinj = ones((len(nonmtctmethods), len(sus), npops, nstates, npops)) #!! remove hardcoding # -1 is for MTCT # First dimension is method of transmission, everything else moves over one dimension.
+            forceinffullsexinj[methodsexpartnerarr[:,0],:,methodsexpartnerarr[:,1],:,methodsexpartnerarr[:,2]] \
+                = swapaxes(swapaxes(forceinffullsex,1,2),0,1)
+
+            # The following line could replace the "for inds in regularityinds" loop above but easier to keep the main code separate from the advancedtracking
+            # forceinffull[:,methodsexpartnerarr[:,1],:,methodsexpartnerarr[:,2]] = prod(forceinffullsexinj[:,:,methodsexpartnerarr[:,1],:,methodsexpartnerarr[:,2]], axis=1)
 
         if debug and ( not((forceinffull[:,:,:,:]>=0).all()) or not((forceinffull[:,:,:,:]<=1).all()) ):
-            for i,arr in enumerate(sexpartnerarr):
-                for m,(pop1, pop2) in enumerate(arr):
-                    if not ( not((forceinffull[:,pop1,:,pop2]>=0).all()) or not((forceinffull[:,pop1,:,pop2]<=1).all()) ):
-                        errormsg = label + 'Sexual force-of-infection is invalid between populations %s and %s, time %0.1f, FOI:\n%s)' % (
-                            popkeys[pop1], popkeys[pop2], tvec[t], forceinffull[:,pop1,:,pop2])
-                        for var in ['i','m','transsexarr[i][m,t]','condarr[i][m,t]','alleff[pop1,t,:]','effallprev[:,pop2]','fracactssexarr[i][m,t]','wholeactssexarr[i][m,t]']:
-                            errormsg += '\n%20s = %f' % (var, eval(var))  # Print out extra debugging information
-                        raise OptimaException(errormsg)
+            for m,(_, pop1, pop2) in enumerate(methodsexpartnerarr):
+                if not ( not((forceinffull[:,pop1,:,pop2]>=0).all()) or not((forceinffull[:,pop1,:,pop2]<=1).all()) ):
+                    errormsg = label + 'Sexual force-of-infection is invalid between populations %s and %s, time %0.1f, FOI:\n%s)' % (
+                        popkeys[pop1], popkeys[pop2], tvec[t], forceinffull[:,pop1,:,pop2])
+                    for var in ['m','transsexarr[m,t]','condarr[m,t]','alleff[pop1,t,:]','effallprev[:,pop2]','fracactssexarr[m,t]','wholeactssexarr[m,t]']:
+                        errormsg += '\n%20s = %f' % (var, eval(var))  # Print out extra debugging information
+                    raise OptimaException(errormsg)
 
         ## Injection-related infections
         pop1 = injpartnerarr[:, 0]
@@ -724,27 +738,22 @@ def model(simpars=None, settings=None, version=None, initpeople=None, initprops=
         raw_incibypop[:,:,t]        = einsum('ij,ijkl->kl', people[sus,:,t], forceinffull)/dt
 
         if advancedtracking:
-            # Some people (although small) will have gotten infected from both sex and injections, we assign these people to the higher probability (higher risk) method. Because the probabilities are all small, it probably would still be a good approximation without this correction
-            forceinffullsexinj = 1 - forceinffullsexinj
-            if (forceinffullsexinj > 0.02).any(): # If any force is over 0.02 in a timestep, then force(sex)*force(inj) could be more than 0.001 therefore our probabilities are no longer a <0.1% error estimate
-                probsexinjsortindices = argsort(forceinffullsexinj,axis=0)
-                probsmallestlocations  = expand_dims(probsexinjsortindices[0,:,:,:,:], axis=0)
-                probmiddlelocations = expand_dims(probsexinjsortindices[1, :, :, :, :], axis=0)
-                probbiggestlocations   = expand_dims(probsexinjsortindices[2,:,:,:,:], axis=0)
+            # Some people (although small) will have gotten infected from both sex and injections, we have to split these intersections. Because the probabilities are all small, it probably would still be a good approximation without this correction
+            forceinffullsexinj = einsum('mijkl,j,j,j->mijkl', 1-forceinffullsexinj, force, inhomo, (1.-background[:,t]))
 
-                smallestprob = take_along_axis(forceinffullsexinj, probsmallestlocations, axis=0)
-                middleprob  = take_along_axis(forceinffullsexinj, probmiddlelocations, axis=0)
-                largestprob  = take_along_axis(forceinffullsexinj, probbiggestlocations, axis=0)
-                #inclusion exclusion but the intersections are distributed to the larger probabilities
-                put_along_axis(forceinffullsexinj, probsmallestlocations, smallestprob - smallestprob * largestprob - smallestprob * middleprob + smallestprob * middleprob * largestprob, axis=0) # The assumption that the two infection events are independent, same assumption as above
-                put_along_axis(forceinffullsexinj, probmiddlelocations, middleprob - middleprob * largestprob, axis=0) # The assumption that the two infection events are independent, same assumption as above
+            # Now since for independent events Pr(A) + Pr(B) + Pr(C) =/= Pr(A ∪ B ∪ C) we need to adjust the probabilities so that they total the same as the forceinffull
+            # The way we estimate this is to take set Pr(A first) = Pr(A only) + Pr(all the intersections) * Pr(A) / sum(Pr(i)) that is split the intersections proportionally to the original probabilities
+            # forceinffullsexinj[:,inds[0],inds[1],inds[2],inds[3]] *= forceinffull[inds] / forceinffullsexinj[:,inds[0],inds[1],inds[2],inds[3]].sum(axis=0)
+
+            inds = where(forceinffull > 1e-6)
+            methodsprob = forceinffullsexinj[:,inds[0],inds[1],inds[2],inds[3]]
+            singlemethodonlyprob = methodsprob * (1-methodsprob).prod(axis=0) / (1-methodsprob)
+            distributedmethodsprob = singlemethodonlyprob + (forceinffull[inds] - singlemethodonlyprob.sum(axis=0)) * methodsprob / methodsprob.sum(axis=0)
+            forceinffullsexinj[:,inds[0],inds[1],inds[2],inds[3]] = distributedmethodsprob
 
             # Probability of getting infected by each method is probsexinjsortindices times any scaling factors, !! copied from above !!
-            forceinffullcauses = einsum('mijkl,j,j,j->mijkl', forceinffullsexinj, force, inhomo, (1.-background[:,t]))
+            raw_incionpopbypopmethods[nonmtctmethods,:,:,:,t] = einsum('ij,mijkl->mjkl', people[sus,:,t], forceinffullsexinj)/dt
 
-            nonmtctmethods = [heterosexsex,homosexsex,inj]
-            raw_incionpopbypopmethods[nonmtctmethods,:,:,:,t] = einsum('ij,mijkl->mjkl', people[sus,:,t], forceinffullcauses[nonmtctmethods,:,:,:,:])/dt
-            # raw_incionpopbypop[:,:,:,t] = einsum('ij,ijkl->jkl', people[sus,:,t], forceinffull)/dt
 
         ##############################################################################################################
         ### Calculate deaths

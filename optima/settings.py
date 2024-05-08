@@ -27,8 +27,8 @@ class Settings(object):
     def __init__(self, verbose=2):
         self.dt = 0.2 # Timestep
         self.start = 2000.0 # Default start year
-        self.now = 2022.0 # Default current year
-        self.dataend = 2030.0 # Default end year for data entry
+        self.now = 2023.0 # Default current year
+        self.dataend = 2040.0 # Default end year for data entry
         self.end = 2040.0 # Default end year for projections
         self.hivstates = ['acute', 'gt500', 'gt350', 'gt200', 'gt50', 'lt50']   # Be careful changing this, check settings.aidsind and where aidsind is used too
         self.healthstates = ['susreg', 'progcirc', 'undx', 'dx', 'care', 'lost', 'usvl', 'svl']
@@ -76,11 +76,20 @@ class Settings(object):
 
         # Infection methods
         self.inj = 0            # Injection, don't change number
-        self.heterosexsex = 1   # Homosexual sexual transmission, don't change number
-        self.homosexsex = 2     # Heterosexual sexual transmission, don't change number
-        self.mtct = 3           # MTCT
-        self.nmethods = 4       # 4 methods of transmission
-        self.methodnames = ['Injection','Heterosexual sex','Homosexual sex','MTCT']
+        self.heterosexsex = [1, 2, 3]   # Homosexual sexual transmission, don't change number
+        self.homosexsex   = [4, 5, 6]     # Heterosexual sexual transmission, don't change number
+        self.mtct = 7           # MTCT
+        self.nmethods = 8       # 8 methods of transmission
+        self.nonmtctmethods = [self.inj] + self.heterosexsex + self.homosexsex
+        self.regular    = [1, 4]
+        self.casual     = [2, 5]
+        self.commercial = [3, 6]
+        self.allmethodnames = ['Injection',
+                               'Heterosexual sex (regular)','Heterosexual sex (casual)','Heterosexual sex (commercial)',
+                               'Homosexual sex (regular)',  'Homosexual sex (casual)',  'Homosexual sex (commercial)',
+                               'MTCT']
+        self.methodindsgroups = [[self.inj], self.heterosexsex, self.homosexsex, [self.mtct]]
+        self.methodnames = ['Injection', 'Heterosexual sex', 'Homosexual sex', 'MTCT']
 
         self.advancedtracking = False # Try to always set to False to save time when running model
         
@@ -198,7 +207,7 @@ def convertlimits(limits=None, tvec=None, dt=None, safetymargin=None, settings=N
     maxduration = 1000.
     maxmeta = 1000.0
     maxacts = 5000.0
-    maxyear = settings.end if settings is not None else 2030. # Set to a default maximum year
+    maxyear = settings.end if settings is not None else Settings().end # Set to a default maximum year
     
     # It's a single number: just return it
     if isnumber(limits): return limits

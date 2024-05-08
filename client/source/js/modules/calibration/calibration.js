@@ -28,7 +28,7 @@ define(['angular', 'underscore'], function (angular, _) {
         isRunning: false,
         parset: undefined,
         startYear: 1900,
-        endYear: 2020,
+        endYear: 2030,
         graphs: undefined,
         advancedPars: false,
         timer: null,

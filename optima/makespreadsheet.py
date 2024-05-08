@@ -8,7 +8,7 @@ Version: 2017feb10
 
 import xlsxwriter
 from xlsxwriter.utility import xl_rowcol_to_cell
-from numpy import isnan
+from numpy import isnan, nan, pad
 from optima import printv, isnumber, supported_versions, versions_different_databook, compareversions, odict, getdate, today, loaddatapars, Settings, promotetolist, OptimaException
 
 
@@ -213,6 +213,44 @@ def nan2blank(thesedata):
 def zero2blank(thesedata):
     ''' Convert a nan entry to a blank entry'''
     return list(map(lambda val: '' if val==0 else val, thesedata))
+
+def getyearindspads(datayears, startyear, endyear):
+    padstartyears = 0
+    if startyear < datayears[0]:
+        startind = 0
+        padstartyears = round(datayears[0] - startyear)
+    elif startyear not in datayears:
+        raise OptimaException(f'Cannot start spreadsheet at year {startyear} because the data has years {datayears}')
+    else:
+        startind = list(datayears).index(startyear)
+
+    padendyears = 0
+    if endyear > datayears[-1]:
+        endind = len(datayears)
+        padendyears = round(endyear - datayears[-1])
+    elif endyear not in datayears:
+        raise OptimaException(f'Cannot stop spreadsheet at year {endyear} because the data has years {datayears}')
+    else:
+        endind = list(datayears).index(endyear)
+
+    return startind, padstartyears, endind, padendyears
+
+def padunpad(name, datarow, datayears, startyear, endyear):
+    startind, padstartyears, endind, padendyears = getyearindspads(datayears, startyear, endyear)
+
+    if not all(isnan(datarow[:startind])):
+        raise OptimaException(f'Cannot start spreadsheet at year {startyear} because there is non-empty data in parameter {name} before then: {list(zip(datayears[:startind],datarow[:startind]))}')
+    if not all(isnan(datarow[endind+1:])):
+        raise OptimaException(f'Cannot stop spreadsheet at year {endyear} because there is non-empty data in parameter {name} after then: {list(zip(datayears[endind+1:],datarow[endind+1:]))}')
+
+    newdatarow = pad(datarow[startind:endind+1], (padstartyears, padendyears), mode='constant', constant_values=(nan, nan))
+
+    if len(newdatarow) != round(endyear - startyear) + 1:
+        raise OptimaException(f'Could not properly pad parameter, had length {len(newdatarow)} expected {round(startyear - endyear) + 1}. input: {dict(name=name, datarow=datarow, datayears=datayears, startyear=startyear, endyear=endyear)}')
+
+    return newdatarow
+
+
 
 class OptimaFormats:
     """ the formats used in the spreadsheet """
@@ -480,8 +518,8 @@ class OptimaSpreadsheet:
                         if len(data[est][pop])==1: # It's an assumption
                             newdata.append(['']*npts)
                             assumption.append(data[est][pop])
-                        elif len(data[est][pop])==npts: # It's data
-                            newdata.append(nan2blank(data[est][pop]))
+                        elif len(data[est][pop]) > 1: # It's data
+                            newdata.append(nan2blank(padunpad(name=parname, datarow=data[est][pop], datayears=self.data['years'], startyear=self.data_start, endyear=self.data_end)))
                             assumption.append('')
                 return (newdata, assumption)
         return (None, None) # By default, return None
@@ -499,8 +537,8 @@ class OptimaSpreadsheet:
                     if len(data[pop])==1: # It's an assumption
                         newdata.append(['']*npts)
                         assumption.append(nan2blank(data[pop])[0])
-                    elif len(data[pop])==npts: # It's data
-                        newdata.append(nan2blank(data[pop]))                
+                    elif len(data[pop]) > 1: # It's data
+                        newdata.append(nan2blank(padunpad(name=parname, datarow=data[pop], datayears=self.data['years'], startyear=self.data_start, endyear=self.data_end)))
                         assumption.append('')
                 return (newdata, assumption)
         return (None, None) # By default, return None

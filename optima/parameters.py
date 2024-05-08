@@ -196,12 +196,12 @@ class Parameterset(object):
         self.popkeys = dcp(self.pars['popkeys']) # Store population keys more accessibly
         if start is None: self.start = data['years'][0] # Store the start year -- if not supplied, use beginning of data
         else:             self.start = start
-        if end is None:   self.end   = Settings().endyear # Store the end year -- if not supplied, use default
+        if end is None:   self.end   = Settings().end # Store the end year -- if not supplied, use default
         else:             self.end   = end
         return None
 
 
-    def interp(self, keys=None, start=None, end=2030, dt=0.2, tvec=None, smoothness=20, asarray=True, samples=None, verbose=2, projectversion=None):
+    def interp(self, keys=None, start=None, end=2040, dt=0.2, tvec=None, smoothness=20, asarray=True, samples=None, verbose=2, projectversion=None):
         """ Prepares model parameters to run the simulation. """
         printv('Making model parameters...', 1, verbose),
         
@@ -1449,7 +1449,7 @@ def makepars(data=None, verbose=2, die=True, fixprops=None, parset=None, project
                                     store_key1, store_key2 = key1, key2
                                 elif key1 in fpopkeys and key2 in mpopkeys: #  Prefer M,F.
                                     store_key1, store_key2 = key2, key1
-                                else: # M,M just sort them by name
+                                else: # M,M or other just sort them by name
                                     store_key1, store_key2 = tuple(sorted((key1,key2)))
                                 pars[condname].y[(store_key1,store_key2)] = array(tmpcond[act])[i,j,:]
                                 pars[condname].t[(store_key1,store_key2)] = array(tmpcondpts[act])
