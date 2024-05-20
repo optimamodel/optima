@@ -232,7 +232,7 @@
 
 <br><br>
 
-<div ng-if="state.optimization.constraints" class="section">
+<div ng-if="state.optimization.proporigconstraints" class="section">
 
   <h3>
     Spending constraints
@@ -266,7 +266,7 @@
     </tr>
     <tr style="justify-content: space-around"
         class="option"
-        ng-repeat="constraint in state.optimization.constraints track by $index">
+        ng-repeat="constraint in state.optimization.proporigconstraints track by $index">
       <td style="width: 60%">
         {{constraint.name}}
       </td>

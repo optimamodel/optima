@@ -96,7 +96,7 @@ if 'modalities' in tests:
                                       'unitcost': (15,25)})
     
     # Combine the 3 program together in a program set
-    R = Programset(programs=[HTC_clinics,HTC_outreach,HTC_hometest])
+    R = Programset(programs=[HTC_clinics,HTC_outreach,HTC_hometest], project=P)
     
     # Add parameters for the coverage-outcome functions
     R.covout['hivtest']['F 15-49'].addccopar({'intercept': (0.25,0.35),

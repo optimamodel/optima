@@ -13,7 +13,7 @@ If you have any questions, please email us at info@optimamodel.com.
 This section describes the steps involved in installing and running Optima. Follow the instructions in this section.
 
 1. Download and install Anaconda, using default options (https://store.continuum.io/cshop/anaconda/).  
- **Make sure you download Python 2.7, not 3.6.**
+ **Make sure you download Python 3.7+**
 
 2. Sign up for an account on GitHub (http://github.com) with a free plan.
 

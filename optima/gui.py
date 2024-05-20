@@ -29,6 +29,10 @@ def importpyqt():
     
 pyqt = importpyqt()
 
+__all__ = [
+    'plotresults', 'pygui', 'plotpeople', 'plotpars', 'manualfit', 'showplots', 'loadplot', 'geogui'
+]
+
 
 ##############################################################################
 ### USER-VISIBLE FUNCTIONS

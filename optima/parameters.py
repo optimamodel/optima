@@ -6,16 +6,48 @@ parameters, the Parameterset class.
 Version: 2.1 (2017apr04)
 """
 
-from numpy import array, nan, isnan, isfinite, zeros, argmax, mean, log, polyfit, exp, maximum, minimum, Inf, linspace, median, shape
+from numpy import array, nan, isnan, isfinite, zeros, ones, argmax, mean, log, polyfit, exp, maximum, minimum, Inf, linspace, median, shape, append, logical_and, isin, multiply
 from numpy.random import uniform, normal, seed
-from optima import OptimaException, Link, odict, dataframe, printv, sanitize, uuid, today, getdate, makefilepath, smoothinterp, dcp, defaultrepr, isnumber, findinds, getvaliddata, promotetoarray, promotetolist, inclusiverange # Utilities 
+from optima import OptimaException, compareversions, Link, LinkException, standard_dcp, odict, odict_custom, dataframe, printv, sanitize, uuid, today, getdate, makefilepath, smoothinterp, dcp, defaultrepr, isnumber, findinds, findnearest, getvaliddata, promotetoarray, promotetolist, inclusiverange # Utilities
 from optima import Settings, getresults, convertlimits, gettvecdt, loadpartable, loadtranstable # Heftier functions
 import optima as op
+from sciris import cp
 
 defaultsmoothness = 1.0 # The number of years of smoothing to do by default
 generalkeys = ['male', 'female', 'popkeys', 'injects', 'fromto', 'transmatrix'] # General parameter keys that are just copied
 staticmatrixkeys = ['birthtransit','agetransit','risktransit'] # Static keys that are also copied, but differently :)
 
+# WARNING: the parameters that override one another are hardcoded here.
+# If more parameters are added that override others or if model.py is changed, they should be added here
+overridingpars = odict([('propdx',['hivtest','aidstest']),
+                        ('propcare',['linktocare','aidslinktocare','leavecare','aidsleavecare','returntocare','aidstest']),
+                        ('proptx',['numtx']),
+                        ('propsupp',['treatfail','regainvs','numvlmon']),
+                        ('proppmtct',['numpmtct']),
+                        ('fixpropdx',['hivtest','aidstest']),
+                        ('fixpropcare',['linktocare','aidslinktocare','leavecare','aidsleavecare','returntocare','aidstest']),
+                        ('fixproptx',['numtx']),
+                        ('fixpropsupp',['treatfail','regainvs','numvlmon']),
+                        ('fixproppmtct',['numpmtct']) ])
+
+__all__ = [
+    'Par',
+    'Dist',
+    'Constant',
+    'Metapar',
+    'Timepar',
+    'Popsizepar',
+    'Yearpar',
+    'Parameterset',
+    'makepars',
+    'makesimpars',
+    'applylimits',
+    'comparepars',
+    'comparesimpars',
+    'sanitycheck',
+    'checkifparsoverridepars',
+    'createwarningforoverride'
+]
 
 #################################################################################################################################
 ### Define the parameter set
@@ -30,6 +62,7 @@ class Parameterset(object):
         self.name = name # Name of the parameter set, e.g. 'default'
         self.uid = uuid() # ID
         self.projectref = Link(project) # Store pointer for the project, if available
+        self.projectversion = project.version if hasattr(project, 'version') else None
         self.created = today() # Date created
         self.modified = today() # Date modified
         self.pars = None
@@ -41,8 +74,62 @@ class Parameterset(object):
         self.start = start # Store the startyear of the parset
         self.end = end # Store the endyear of the parset
         self.isfixed = None # Store whether props are fixed or not
-        
-    
+
+    def __copy__(self):
+        print('WARNING: copying a Parameterset will make it so that the pars[:].projectversion will get updated by this new parset, not the old one which they are still included in. '
+              'It is recommended to deepcopy the parset instead.')
+        copy = standard_cp(self)
+        if isinstance(copy.pars, odict_custom): copy.pars.func = copy.checkpropagateversion
+        return copy
+
+    def __deepcopy__(self, memodict={}):
+        copy = standard_dcp(self, memodict)
+        if isinstance(copy.pars, odict_custom): copy.pars.func = copy.checkpropagateversion
+        return copy
+
+    def __setattr__(self, name, value):
+        if name == 'pars':
+            if not isinstance(value, odict_custom):
+                value = odict_custom(value, func=self.checkpropagateversion)
+            value.func = self.checkpropagateversion
+
+        super(Parameterset, self).__setattr__(name, value)
+
+        if name == 'pars': # If we are adding pars, make sure they match the projectversion of the parset
+            self.checkpropagateversion(None, None, self.pars.values())
+        if name == 'projectversion' and hasattr(self, 'pars') and self.pars is not None:
+            self.propagateversion(None, None, self.pars.values())
+
+    def propagateversion(self, odict, keys, values, die=True):
+        ''' Only adds to Pars'''
+        values = promotetolist(values)
+        for val in values:
+            if not isinstance(val, Par): continue
+            try: val.projectversion = self.projectversion
+            except:
+                if die: raise
+
+    def checkversion(self, odict, keys, values):
+        ''' Only checks Pars'''
+        if self.projectversion is None:
+            return
+        values = promotetolist(values)
+        for val in values:
+            if not isinstance(val, Par): continue
+            if not hasattr(val, 'projectversion'):
+                raise OptimaException(f'Cannot add {type(val)} "{val.name}" to Parameterset "{self.name}" because it is '
+                                      f'missing a projectversion so it might not be compatible with Parameterset.projectversion={self.projectversion}')
+            if self.projectversion is not None and val.projectversion is not None and val.projectversion != self.projectversion:
+                raise OptimaException(f'Cannot add {type(val)} "{val.name}" to Parameterset "{self.name}" because it has '
+                                      f'a different projectversion={val.projectversion} than the Parameterset.projectversion={self.projectversion}')
+
+    def checkpropagateversion(self, odict, keys, values):
+        values = promotetolist(values)
+
+        if hasattr(self, 'projectversion') and self.projectversion is not None:
+            self.checkversion(odict, keys, values)
+            self.propagateversion(odict, keys, values)
+
     def __repr__(self):
         ''' Print out useful information when called'''
         output  = defaultrepr(self)
@@ -52,6 +139,22 @@ class Parameterset(object):
         output += '               UID: %s\n'    % self.uid
         output += '============================================================\n'
         return output
+
+    def getprojectversion(self, projectversion=None, die=False):
+        if projectversion is None: projectversion = self.projectversion
+        if projectversion is not None:  # We have a version, check that it matches projectref().version
+            if isinstance(self.projectref.obj, op.Project) and self.projectref().version != projectversion:
+                err = f'Parset "{self.name}" was provided the projectversion={projectversion} which conflicts with the projectref().version={self.projectref().version}. Using {projectversion}'
+                if die: raise OptimaException(err)
+                else: print('WARNING: '+err)
+            return projectversion
+        # not provided with a version, get it from the project
+        if self.projectref is None or not isinstance(self.projectref.obj, op.Project): # Missing both projectversion and projectref().version
+            err = f'Parset "{self.name}" is missing a link to its project and therefore cannot get the project.version'
+            if die: raise OptimaException(err)
+            else: print('WARNING: '+err)
+            return None
+        return self.projectref().version
     
     
     def getresults(self, die=True):
@@ -82,30 +185,35 @@ class Parameterset(object):
             if issubclass(type(par), Par):
                 parslist.append(key)
         return parslist
+
+    def restorelinks(self, project=None):
+        if project is not None:
+            self.projectref = Link(project)
     
-    
-    def makepars(self, data=None, fix=True, verbose=2, start=None, end=None):
-        self.pars = makepars(data=data, verbose=verbose) # Initialize as list with single entry
+    def makepars(self, data=None, fix=True, verbose=2, start=None, end=None, projectversion=None):
+        self.pars = makepars(data=data, verbose=verbose, parset=self, projectversion=self.getprojectversion(projectversion)) # Initialize as list with single entry
         self.fixprops(fix=fix)
         self.popkeys = dcp(self.pars['popkeys']) # Store population keys more accessibly
         if start is None: self.start = data['years'][0] # Store the start year -- if not supplied, use beginning of data
         else:             self.start = start
-        if end is None:   self.end   = Settings().endyear # Store the end year -- if not supplied, use default
+        if end is None:   self.end   = Settings().end # Store the end year -- if not supplied, use default
         else:             self.end   = end
         return None
 
 
-    def interp(self, keys=None, start=None, end=2030, dt=0.2, tvec=None, smoothness=20, asarray=True, samples=None, verbose=2):
+    def interp(self, keys=None, start=None, end=2040, dt=0.2, tvec=None, smoothness=20, asarray=True, samples=None, verbose=2, projectversion=None):
         """ Prepares model parameters to run the simulation. """
         printv('Making model parameters...', 1, verbose),
         
         if start is None: start = self.start
+        projectversion = self.getprojectversion(projectversion)
 
         simparslist = []
         if isnumber(tvec): tvec = array([tvec]) # Convert to 1-element array -- WARNING, not sure if this is necessary or should be handled lower down
         if samples is None: samples = [None]
         for sample in samples:
-            simpars = makesimpars(pars=self.pars, name=self.name, keys=keys, start=start, end=end, dt=dt, tvec=tvec, smoothness=smoothness, asarray=asarray, sample=sample, verbose=verbose)
+            simpars = makesimpars(pars=self.pars, name=self.name, keys=keys, start=start, end=end, dt=dt, tvec=tvec, smoothness=smoothness,
+                                  asarray=asarray, sample=sample, verbose=verbose, projectversion=projectversion)
             simparslist.append(simpars) # Wrap up
         
         return simparslist
@@ -126,21 +234,23 @@ class Parameterset(object):
         To unfix: P.parset().fixprops(False)
         
         You can also specify a start year. "which" can be a string
-        or a list of strings, to specify which of ['dx', 'tx', 'supp']
+        or a list of strings, to specify which of ['dx','tx','supp','pmtct','care']
         you want to fix.
         '''
         if fix is None:
             fix = True # By default, do fix
         self.isfixed = fix # Store fixed status
-        if   which is None:  which = ['tx','supp']
-        elif which is 'all': which = ['dx','tx','supp']
+        if   which is None:  which = ['tx','supp','pmtct']
+        elif which == 'all': which = ['dx','tx','supp','pmtct','care']
         else:                which = promotetolist(which)
         if startyear is None:
             if fix:  startyear = self.pars['numtx'].t['tot'][-1]
             else:    startyear = 2100
-        if 'dx'   in which: self.pars['fixpropdx'].t   = startyear
-        if 'tx'   in which: self.pars['fixproptx'].t   = startyear
-        if 'supp' in which: self.pars['fixpropsupp'].t = startyear # Doesn't make sense to assume proportion on treatment without assuming proportion suppressed....also, crashes otherwise :)
+        if 'dx'    in which: self.pars['fixpropdx'].t    = startyear
+        if 'tx'    in which: self.pars['fixproptx'].t    = startyear
+        if 'supp'  in which: self.pars['fixpropsupp'].t  = startyear # Doesn't make sense to assume proportion on treatment without assuming proportion suppressed....also, crashes otherwise :)
+        if 'pmtct' in which: self.pars['fixproppmtct'].t = startyear
+        if 'care'  in which: self.pars['fixpropcare'].t  = startyear
         return None
         
     
@@ -155,7 +265,7 @@ class Parameterset(object):
         '''
         if use is None: use = True # By default, use the data
         if   which is None:  which = ['supp'] # By default, only use the indicator on the proportion suppressed
-        elif which is 'all': which = ['dx','tx','supp']
+        elif which == 'all': which = ['dx','tx','supp']
         else:                which = promotetolist(which)
         
         data = self.projectref().data
@@ -313,7 +423,7 @@ class Parameterset(object):
                         keylist.append(key)
                         subkeylist.append(subkey)
                         typelist.append('exp')
-                        valuelist.append(par.i[subkey])
+                        valuelist.append(par.y[subkey][0]) #Initial population size - editing exponent would be more useful but runs into negative numbers that the FE doesn't like as they're outside of the parameter bounds
                         labellist.append('%s: %s' % (par.name, str(subkey)))
                 else:
                     print('Parameter type "%s" not implemented!' % par.manual)
@@ -343,8 +453,8 @@ class Parameterset(object):
                 tmppars[key].y[subkey] = float(value)
                 printv('%s.y[%s] = %s' % (key, subkey, value), 4, verbose)
             elif ptype=='exp':  # Population growth
-                tmppars[key].i[subkey] = float(value)
-                printv('%s.i[%s] = %s' % (key, subkey, value), 4, verbose)
+                tmppars[key].y[subkey] = float(value)
+                printv('%s.y[%s] = %s' % (key, subkey, value), 4, verbose)
             elif ptype in ['const', 'advanced']:  # Constants
                 tmppars[key].y = float(value)
                 printv('%s.y = %s' % (key, value), 4, verbose)
@@ -402,12 +512,13 @@ class Parameterset(object):
                     prefix = "pars['%s'].m = " % parname
                     if cpars is not None: cvalues = cpars[parname].m
                 elif par.manual=='exp':
-                    values  = par.i[:].tolist()
+                    values = par.y[:].tolist()
+                    prefix = "pars['%s'].y[:] = " % parname
+                    
                     values2 = par.e[:].tolist()
-                    prefix  = "pars['%s'].i[:] = " % parname
                     prefix2 = "pars['%s'].e[:] = " % parname
                     if cpars is not None: 
-                        cvalues  = cpars[parname].i[:].tolist()
+                        cvalues  = cpars[parname].y[:].tolist()
                         cvalues2 = cpars[parname].e[:].tolist()
                 elif par.manual=='no':
                     values = None
@@ -451,8 +562,8 @@ class Par(object):
     These four thus have different structures (where [] denotes dict):
         * Constants   have y, ysample
         * Metapars    have y[], ysample[], m, msample
-        * Timepars    have y[], m, msample
-        * Popsizepars have i[], e[], m, msample
+        * Timepars    have y[], t[], m, msample
+        * Popsizepars have y[], t[], start[], e[], m, msample
         * Yearpars    have t
     
     Consequently, some of them have different sample(), updateprior(), and interp() methods; in brief:
@@ -464,7 +575,8 @@ class Par(object):
     
     Version: 2016nov06 
     '''
-    def __init__(self, short=None, name=None, limits=(0.,1.), by=None, manual='', fromdata=None, m=1.0, progdefault=None, prior=None, verbose=None, **defaultargs): # "type" data needed for parameter table, but doesn't need to be stored
+    def __init__(self, short=None, name=None, limits=(0.,1.), by=None, manual='', fromdata=None, m=1.0, progdefault=None,
+                 prior=None, verbose=None, projectversion=None, **defaultargs): # "type" data needed for parameter table, but doesn't need to be stored
         ''' To initialize with a prior, prior should be a dict with keys 'dist' and 'pars' '''
         self.short = short # The short name, e.g. "hivtest"
         self.name = name # The full name, e.g. "HIV testing rate"
@@ -474,19 +586,29 @@ class Par(object):
         self.fromdata = fromdata # Whether or not the parameter is made from data
         self.progdefault = progdefault # Whether or not the parameter has a default value when not targeted by programs
         self.m = m # Multiplicative metaparameter, e.g. 1
-        self.msample = None # The latest sampled version of the metaparameter -- None unless uncertainty has been run, and only used for uncertainty runs 
+        self.msample = None # The latest sampled version of the metaparameter -- None unless uncertainty has been run, and only used for uncertainty runs
         if prior is None:             self.prior = Dist() # Not supplied, create default distribution
         elif isinstance(prior, dict): self.prior = Dist(**prior) # Supplied as a dict, use it to create a distribution
         elif isinstance(prior, Dist): self.prior = prior # Supplied as a distribution, use directly
         else:
             errormsg = 'Prior must either be None, a Dist, or a dict with keys "dist" and "pars", not %s' % type(prior)
             raise OptimaException(errormsg)
+        self.projectversion = projectversion
     
     def __repr__(self):
         ''' Print out useful information when called'''
         output = defaultrepr(self)
         return output
-    
+
+    def getprojectversion(self, projectversion=None, die=False):
+        if projectversion is None: projectversion = self.projectversion
+        if projectversion is None:
+            err = f'Par "{self.short}" is missing its projectversion'
+            if die: raise OptimaException(err)
+            else: print('WARNING: '+err)
+            return None
+        return projectversion
+
     def iscoveragepar(self):
         ''' Determine whether it's a coverage parameter'''
         return True if self.limits[1] == 'maxpopsize' else False
@@ -519,14 +641,15 @@ class Constant(Par):
         ''' Update the prior parameters to match the metaparameter, so e.g. can recalibrate and then do uncertainty '''
         if self.prior.dist=='uniform':
             tmppars = array(self.prior.pars) # Convert to array for numerical magic
-            self.prior.pars = tuple(self.y*tmppars/tmppars.mean()) # Recenter the limits around the mean
+            priorrange = array((0.9, 1.1)) if (tmppars == (0., 0.)).all() else tmppars/(tmppars.mean())
+            self.prior.pars = tuple(self.y*priorrange) # Recenter the limits around the mean
             printv('Priors updated for %s' % self.short, 3, verbose)
         else:
             errormsg = 'Distribution "%s" not defined; available choices are: uniform or bust, bro!' % self.dist
             raise OptimaException(errormsg)
         return None
     
-    def interp(self, tvec=None, dt=None, smoothness=None, asarray=True, sample=False, randseed=None, usemeta=True, popkeys=None): # Keyword arguments are for consistency but not actually used
+    def interp(self, tvec=None, dt=None, smoothness=None, asarray=True, sample=False, randseed=None, usemeta=True, popkeys=None, projectversion=None): # Keyword arguments are for consistency but not actually used
         """
         Take parameters and turn them into model parameters -- here, just return a constant value at every time point
         
@@ -583,14 +706,15 @@ class Metapar(Par):
         for key in self.keys():
             if self.prior[key].dist=='uniform':
                 tmppars = array(self.prior[key].pars) # Convert to array for numerical magic
-                self.prior[key].pars = tuple(self.y[key]*tmppars/tmppars.mean()) # Recenter the limits around the mean
+                priorrange = array((0.9, 1.1)) if (tmppars == (0., 0.)).all() else tmppars/(tmppars.mean())
+                self.prior[key].pars = tuple(self.y[key]*priorrange) # Recenter the limits around the mean
                 printv('Priors updated for %s' % self.short, 3, verbose)
             else:
                 errormsg = 'Distribution "%s" not defined; available choices are: uniform or bust, bro!' % self.dist
                 raise OptimaException(errormsg)
         return None
     
-    def interp(self, tvec=None, dt=None, smoothness=None, asarray=True, sample=None, randseed=None, usemeta=True, popkeys=None): # Keyword arguments are for consistency but not actually used
+    def interp(self, tvec=None, dt=None, smoothness=None, asarray=True, sample=None, randseed=None, usemeta=True, popkeys=None, projectversion=None): # Keyword arguments are for consistency but not actually used
         """ Take parameters and turn them into model parameters -- here, just return a constant value at every time point """
         
         # Figure out sample
@@ -667,7 +791,7 @@ class Timepar(Par):
             raise OptimaException(errormsg)
         return None
     
-    def interp(self, tvec=None, dt=None, smoothness=None, asarray=True, sample=None, randseed=None, usemeta=True, popkeys=None):
+    def interp(self, tvec=None, dt=None, smoothness=None, asarray=True, sample=None, randseed=None, usemeta=True, popkeys=None, projectversion=None):
         """ Take parameters and turn them into model parameters """
         
         # Validate input
@@ -710,18 +834,21 @@ class Timepar(Par):
 class Popsizepar(Par):
     ''' The definition of the population size parameter '''
     
-    def __init__(self, i=None, e=None, m=1.0, start=2000., **defaultargs):
+    def __init__(self, e=None, m=1.0, start=None, t=None, y=None, **defaultargs):
         Par.__init__(self, **defaultargs)
-        if i is None: i = odict()
         if e is None: e = odict()
-        self.i = i # Exponential fit intercept, e.g. 3.4e6
+        if t is None: t = odict()
+        if y is None: y = odict()
+        if start is None: start = odict()
         self.e = e # Exponential fit exponent, e.g. 0.03
         self.m = m # Multiplicative metaparameter, e.g. 1
-        self.start = start # Year for which population growth start is calibrated to
+        self.start = start # Year for which population growth start is calibrated : this is the year that exponential population growth starts; before this exact (interpolated) data values are assumed to be correct
+        self.t = t # Time data, e.g. [2002, 2008]
+        self.y = y # Population sizes, e.g. [2002, 2008]
     
     def keys(self):
         ''' Return the valid keys for using with this parameter '''
-        return self.i.keys()
+        return self.y.keys()
     
     def sample(self, randseed=None):
         ''' Recalculate msample -- same as Timepar'''
@@ -739,11 +866,14 @@ class Popsizepar(Par):
             raise OptimaException(errormsg)
         return None
 
-    def interp(self, tvec=None, dt=None, smoothness=None, asarray=True, sample=None, randseed=None, usemeta=True, popkeys=None): # WARNING: smoothness isn't used, but kept for consistency with other methods...
+    def interp(self, tvec=None, dt=None, smoothness=None, asarray=True, sample=None, randseed=None, usemeta=True, popkeys=None, projectversion=None): # WARNING: smoothness isn't used, but kept for consistency with other methods...
         """ Take population size parameter and turn it into a model parameters """
-        
+
         # Validate input
-        if tvec is None: 
+        projectversion = self.getprojectversion(projectversion)
+        if projectversion is None:
+            raise OptimaException('Must pass projectversion to Popsizepar.interp as the behaviour is version-dependent')
+        if tvec is None: #Warning, may be able to send an empty list/array here instead?
             errormsg = 'Cannot interpolate parameter "%s" with no time vector specified' % self.name
             raise OptimaException(errormsg)
         tvec, dt = gettvecdt(tvec=tvec, dt=dt) # Method for getting these as best possible
@@ -758,19 +888,40 @@ class Popsizepar(Par):
             else:
                 if sample=='new' or self.msample is None: self.sample(randseed=randseed) # msample doesn't exist, make it
                 meta = self.msample
-
+                
+                
         # Do interpolation
         npops = len(outkeys)
         if asarray: output = zeros((npops,len(tvec)))
         else: output = odict()
         for pop,key in enumerate(outkeys):
+            if min(tvec) != self.start[key]:
+                localtvec = linspace(self.t[key][0], max(tvec), (int(max(tvec)/dt)-int(self.t[key][0]/dt))+1) #TODO all populations should be precalculated somewhere else, going to be slow to keep regenerating this?
+            else:
+                localtvec = tvec
+            
             if key in self.keys():
-                yinterp = meta * self.i[key] * grow(self.e[key], array(tvec)-self.start)
+                # if self.start[key] == tvec[0]: #just apply the pure exponential growth
+                #     yinterp= meta * self.y[key][0] * grow(self.e[key], array(tvec)-self.start[key]) 
+                # else:
+                #1. Linear interpolation between data points to tvec until self.forcegrowth[key]
+                yinterp = meta * smoothinterp(localtvec, self.t[key], self.y[key], smoothness=0) # Use interpolation without smoothness so that it aligns exactly with a starting point for 
+                #2. Replace linear interpolation after self.start
+                expstartind = findnearest(localtvec, self.start[key])
+                if compareversions(projectversion, "2.12.0") < 0:  # old behaviour, the exponential is applied unnecessarily if only one t value is given
+                    yinterp[expstartind:] = yinterp[expstartind] * grow(self.e[key], array(localtvec[expstartind:])-self.start[key]) #don't apply meta again (it's already factored into the linear part)
+                else:  # New behaviour, exponential applied at the proper timestep
+                    if abs(localtvec[expstartind] - self.start[key]) < dt: # Check localtvec[expstartind] is close enough to self.start[key], otherwise self.start[key] is not in localtvec
+                        yinterp[expstartind:] = yinterp[expstartind] * grow(self.e[key], array(localtvec[expstartind:])-self.start[key]) #don't apply meta again (it's already factored into the linear part)
+                #3. Apply limits
                 yinterp = applylimits(par=self, y=yinterp, limits=self.limits, dt=dt)
             else:
                 yinterp = zeros(len(tvec))
-            if asarray: output[pop,:] = yinterp
-            else:       output[key] = yinterp
+
+            yinterpreturn = yinterp[isin(localtvec,tvec)]
+            
+            if asarray: output[pop,:] = yinterpreturn
+            else:       output[key] = yinterpreturn
         return output
 
 
@@ -796,7 +947,7 @@ class Yearpar(Par):
         '''No prior, so return nothing'''
         return None
     
-    def interp(self, tvec=None, dt=None, smoothness=None, sample=None, randseed=None, asarray=True, usemeta=True, popkeys=None): # Keyword arguments are for consistency but not actually used
+    def interp(self, tvec=None, dt=None, smoothness=None, sample=None, randseed=None, asarray=True, usemeta=True, popkeys=None, projectversion=None): # Keyword arguments are for consistency but not actually used
         '''No interpolation, so simply return the value'''
         return self.t
 
@@ -856,9 +1007,9 @@ def getvalidyears(years, validdata, defaultind=0):
 
 
 
-def data2prev(data=None, keys=None, index=0, blh=0, **defaultargs): # WARNING, "blh" means "best low high", currently upper and lower limits are being thrown away, which is OK here...?
+def data2prev(data=None, keys=None, index=0, blh=0, projectversion=None, **defaultargs): # WARNING, "blh" means "best low high", currently upper and lower limits are being thrown away, which is OK here...?
     """ Take an array of data return either the first or last (...or some other) non-NaN entry -- used for initial HIV prevalence only so far... """
-    par = Metapar(y=odict([(key,None) for key in keys]), **defaultargs) # Create structure -- need key:None for prior
+    par = Metapar(y=odict([(key,None) for key in keys]), projectversion=projectversion, **defaultargs) # Create structure -- need key:None for prior
     for row,key in enumerate(keys):
         par.y[key] = sanitize(data['hivprev'][blh][row])[index] # Return the specified index -- usually either the first [0] or last [-1]
         par.prior[key].pars *= par.y[key] # Get prior in right range
@@ -866,9 +1017,9 @@ def data2prev(data=None, keys=None, index=0, blh=0, **defaultargs): # WARNING, "
 
 
 
-def data2popsize(data=None, keys=None, blh=0, uniformgrowth=False, doplot=False, **defaultargs):
+def data2popsize(data=None, keys=None, blh=0, uniformgrowth=False, doplot=False, projectversion=None, **defaultargs):
     ''' Convert population size data into population size parameters '''
-    par = Popsizepar(m=1, **defaultargs)
+    par = Popsizepar(m=1, projectversion=projectversion, **defaultargs)
     
     # Parse data into consistent form
     sanitizedy = odict() # Initialize to be empty
@@ -876,6 +1027,9 @@ def data2popsize(data=None, keys=None, blh=0, uniformgrowth=False, doplot=False,
     for row,key in enumerate(keys):
         sanitizedy[key] = sanitize(data['popsize'][blh][row]) # Store each extant value
         sanitizedt[key] = array(data['years'])[~isnan(data['popsize'][blh][row])] # Store each year
+
+        par.y[key] = sanitizedy[key]
+        par.t[key] = sanitizedt[key]
     
     # Store a list of population sizes that have at least 2 data points
     atleast2datapoints = [] 
@@ -891,15 +1045,23 @@ def data2popsize(data=None, keys=None, blh=0, uniformgrowth=False, doplot=False,
     
     # Perform 2-parameter exponential fit to data
     startyear = data['years'][0]
-    par.start = data['years'][0]
+    par.start = odict({pop: data['years'][0] for pop in keys})
     tdata = odict()
     ydata = odict()
     for key in atleast2datapoints:
         tdata[key] = sanitizedt[key]-startyear
         ydata[key] = log(sanitizedy[key])
         try:
-            fitpars = polyfit(tdata[key], ydata[key], 1)
-            par.i[key] = exp(fitpars[1]) # Intercept/initial value
+            w = ones(shape(ydata[key])) #weighting for the data points
+            if startyear in par.t[key] and par.t[key][0] == startyear: #we have a population size specified in the first year of data, so fit exponential growth from that
+                ind = findnearest(par.t[key], startyear)    
+                w[ind] = 100000
+            
+            fitpars = polyfit(tdata[key], ydata[key], 1, w=w)
+            if not startyear in par.t[key]:
+                par.t[key] = append([startyear], par.t[key])
+                par.y[key] = append([exp(fitpars[1])], par.y[key]) # Intercept/initial value
+            
             par.e[key] = fitpars[0] # Exponent
         except:
             errormsg = 'Fitting population size data for population "%s" failed' % key
@@ -910,7 +1072,7 @@ def data2popsize(data=None, keys=None, blh=0, uniformgrowth=False, doplot=False,
     thisyear = odict()
     thispopsize = odict()
     for key in only1datapoint:
-        largest_i = par.i[largestpopkey] # Get the parameters from the largest population
+        largest_i = par.y[largestpopkey][0] # Get the parameters from the largest population
         largest_e = par.e[largestpopkey]
         if len(sanitizedt[key]) != 1:
             errormsg = 'Error interpreting population size for population "%s"\n' % key
@@ -919,9 +1081,11 @@ def data2popsize(data=None, keys=None, blh=0, uniformgrowth=False, doplot=False,
         thisyear[key] = sanitizedt[key][0]
         thispopsize[key] = sanitizedy[key][0]
         largestthatyear = largest_i*grow(largest_e, thisyear[key]-startyear)
-        par.i[key] = largest_i*thispopsize[key]/largestthatyear # Scale population size
+        par.y[key] = array([largest_i*thispopsize[key]/largestthatyear]) # Scale population size)
+        par.t[key] = array([startyear])
         par.e[key] = largest_e # Copy exponent
-    par.i.sort(keys) # Sort to regain the original key order -- WARNING, causes horrendous problems later if this isn't done!
+    par.y.sort(keys) # Sort to regain the original key order -- WARNING, causes horrendous problems later if this isn't done!
+    par.t.sort(keys)
     par.e.sort(keys)
     
     if uniformgrowth:
@@ -929,17 +1093,18 @@ def data2popsize(data=None, keys=None, blh=0, uniformgrowth=False, doplot=False,
             par.e[key] = par.e[largestpopkey] # Reset exponent to match the largest population
             meanpopulationsize = mean(sanitizedy[key]) # Calculate the mean of all the data
             weightedyear = mean(sanitizedy[key][:]*sanitizedt[key][:])/meanpopulationsize # Calculate the "mean year"
-            par.i[key] = meanpopulationsize*(1+par.e[key])**(startyear-weightedyear) # Project backwards to starting population size
+            par.y[key] = array([meanpopulationsize*(1+par.e[key])**(startyear-weightedyear)]) # Project backwards to starting population size
+            par.t[key] = array([startyear])
     
     for key in keys:
-        par.i[key] = round(par.i[key]) # Fractional people look weird
+        par.y[key][0] = round(par.y[key][0]) # Fractional people look weird
         
     if doplot:
         from pylab import figure, subplot, plot, scatter, arange, show, title
         nplots = len(par.keys())
         figure()
         tvec = arange(data['years'][0], data['years'][-1]+1)
-        yvec = par.interp(tvec=tvec)
+        yvec = par.interp(tvec=tvec, projectversion=projectversion)
         for k,key in enumerate(par.keys()):
             subplot(nplots,1,k+1)
             if key in atleast2datapoints: scatter(tdata[key]+startyear, exp(ydata[key]))
@@ -947,14 +1112,14 @@ def data2popsize(data=None, keys=None, blh=0, uniformgrowth=False, doplot=False,
             else: raise OptimaException('This population is nonexistent')
             plot(tvec, yvec[k])
             title('Pop size: ' + key)
-            print([par.i[key], par.e[key]])
+            print([par.y[key][0], par.e[key]])
             show()
     
     return par
 
 
 
-def data2timepar(data=None, years=None, keys=None, defaultind=0, verbose=2, **defaultargs):
+def data2timepar(data=None, years=None, keys=None, defaultind=0, verbose=2, projectversion=None, **defaultargs):
     """ Take an array of data and turn it into default parameters -- here, just take the means """
     # Check that at minimum, name and short were specified, since can't proceed otherwise
     try: 
@@ -970,7 +1135,7 @@ def data2timepar(data=None, years=None, keys=None, defaultind=0, verbose=2, **de
     elif isinstance(data,list): # Just the relevant entry has been passed
         thisdata = data
         
-    par = Timepar(m=1.0, y=odict(), t=odict(), **defaultargs) # Create structure
+    par = Timepar(m=1.0, y=odict(), t=odict(), projectversion=projectversion, **defaultargs) # Create structure
     for row,key in enumerate(keys):
         try:
             validdata = ~isnan(thisdata[row]) # WARNING, this could all be greatly simplified!!!! Shouldn't need to call this and sanitize()
@@ -990,14 +1155,17 @@ def data2timepar(data=None, years=None, keys=None, defaultind=0, verbose=2, **de
 
 
 ## Acts
-def balance(act=None, which=None, data=None, popkeys=None, limits=None, popsizepar=None, eps=None):
+def balance(act=None, which=None, data=None, popkeys=None, fpopkeys=None, mpopkeys=None, limits=None, popsizepar=None, eps=None, projectversion=None):
     ''' 
     Combine the different estimates for the number of acts or condom use and return the "average" value.
     
     Set which='numacts' to compute for number of acts, which='condom' to compute for condom.
     '''
-    if eps is None: eps = Settings().eps   # If not supplied (it won't be), get from default settings  
-    
+    if eps is None: eps = Settings().eps   # If not supplied (it won't be), get from default settings
+    if projectversion is None:
+        try: projectversion = popsizepar.getprojectversion(die=True)
+        except Exception as e: raise OptimaException('Must pass projectversion or popsizepar to balance() as the behaviour is version-dependent') from e
+
     if which not in ['numacts','condom']: raise OptimaException('Can only balance numacts or condom, not "%s"' % which)
     mixmatrix = array(data['part'+act]) # Get the partnerships matrix
     npops = len(popkeys) # Figure out the number of populations
@@ -1006,7 +1174,17 @@ def balance(act=None, which=None, data=None, popkeys=None, limits=None, popsizep
         for pop2 in range(npops):
             if which=='numacts': symmetricmatrix[pop1,pop2] = symmetricmatrix[pop1,pop2] + (mixmatrix[pop1,pop2] + mixmatrix[pop2,pop1]) / float(eps+((mixmatrix[pop1,pop2]>0)+(mixmatrix[pop2,pop1]>0)))
             if which=='condom': symmetricmatrix[pop1,pop2] = bool(symmetricmatrix[pop1,pop2] + mixmatrix[pop1,pop2] + mixmatrix[pop2,pop1])
-        
+
+    if which == 'numacts' and act != 'inj': # Check for F->M acts and F->F acts
+        for pop1 in range(npops):
+            for pop2 in range(npops):
+                if mixmatrix[pop1,pop2] > 0 and popkeys[pop1] in fpopkeys:
+                    actname = 'Regular' if act == 'reg' else 'Casual' if act == 'cas' else 'Commercial'
+                    pop2type = 'M' if popkeys[pop2] in mpopkeys else 'F'
+                    print(f'\nWARNING!!: In the Partnerships & transitions sheet in the databook, there is a F->{pop2type} insertive partnership in the {actname} acts matrix from {popkeys[pop1]} to {popkeys[pop2]}')
+                    if pop2type == 'M': print(f'This should normally go the other way around. So move the {mixmatrix[pop1, pop2]} from the ({popkeys[pop1]} row, {popkeys[pop2]} column) into the ({popkeys[pop2]} row, {popkeys[pop1]} column)')
+                    print('If you don\'t adjust this, the model may not work properly!!\n')
+
     # Decide which years to use -- use the earliest year, the latest year, and the most time points available
     yearstouse = []    
     for row in range(npops): yearstouse.append(getvaliddata(data['years'], data[which+act][row]))
@@ -1023,8 +1201,8 @@ def balance(act=None, which=None, data=None, popkeys=None, limits=None, popsizep
     
     # Interpolate over population acts data for each year
     tmppar = data2timepar(name='tmp', short=which+act, limits=(0,'maxacts'), data=data[which+act], years=data['years'], keys=popkeys, by='pop', verbose=0) # Temporary parameter for storing acts
-    tmpsim = tmppar.interp(tvec=ctrlpts)
-    if which=='numacts': popsize = popsizepar.interp(tvec=ctrlpts)
+    tmpsim = tmppar.interp(tvec=ctrlpts, projectversion=projectversion)
+    if which=='numacts': popsize = popsizepar.interp(tvec=ctrlpts, projectversion=projectversion)
     npts = len(ctrlpts)
     
     # Compute the balanced acts
@@ -1034,21 +1212,40 @@ def balance(act=None, which=None, data=None, popkeys=None, limits=None, popsizep
             smatrix = dcp(symmetricmatrix) # Initialize
             psize = popsize[:,t]
             popacts = tmpsim[:,t]
+
+            ## The below commented out code makes it so that the numbers in the Partnership matrices in the databook
+            ## don't get multiplied by popsizes before being balanced
+            # popsize_div_mean_2d = psize[:,None] / psize.max() # divide by max is just so numbers don't blow up / shrink causing roundoff errors
+            # smatrix = smatrix / multiply(popsize_div_mean_2d,popsize_div_mean_2d.T) # divide the partnership a,b by the product of the popsizes a,b
+
             for pop1 in range(npops): smatrix[pop1,:] = smatrix[pop1,:]*psize[pop1] # Yes, this needs to be separate! Don't try to put in the next for loop, the indices are opposite!
             for pop1 in range(npops): smatrix[:,pop1] = psize[pop1]*popacts[pop1]*smatrix[:,pop1] / float(eps+sum(smatrix[:,pop1])) # Divide by the sum of the column to normalize the probability, then multiply by the number of acts and population size to get total number of acts
         
         # Reconcile different estimates of number of acts, which must balance
+        balancedmatrix = zeros((npops, npops))
+        proportioninsertive = zeros((npops, npops))
         thispoint = zeros((npops,npops));
         for pop1 in range(npops):
             for pop2 in range(npops):
-                if which=='numacts':
-                    balanced = (smatrix[pop1,pop2] * psize[pop1] + smatrix[pop2,pop1] * psize[pop2])/(psize[pop1]+psize[pop2]) # here are two estimates for each interaction; reconcile them here
-                    thispoint[pop2,pop1] = balanced/psize[pop2] # Divide by population size to get per-person estimate
-                    thispoint[pop1,pop2] = balanced/psize[pop1] # ...and for the other population
+                if compareversions(projectversion,"2.12.0") >= 0: # New behaviour
+                    if which=='numacts' and act != 'inj': # The total number of acts = insertive + receptive, we only keep insertive in actsreg etc
+                        balancedmatrix[pop1,pop2] = (smatrix[pop1,pop2] * psize[pop1] + smatrix[pop2,pop1] * psize[pop2])/(psize[pop1]+psize[pop2]) # here are two estimates for each interaction; reconcile them here
+                        proportioninsertive[pop1,pop2] = mixmatrix[pop1,pop2] / (mixmatrix[pop1,pop2] + mixmatrix[pop2,pop1]) \
+                                                                if (mixmatrix[pop1,pop2] + mixmatrix[pop2,pop1]) > 0 else 1.
+                        thispoint[pop1,pop2] = balancedmatrix[pop1,pop2] * proportioninsertive[pop1,pop2] / psize[pop1]
+                    if which=='numacts' and act == 'inj': # We want the total number of acts = total number of injections, so we keep all
+                        balanced = (smatrix[pop1,pop2] * psize[pop1] + smatrix[pop2,pop1] * psize[pop2])/(psize[pop1]+psize[pop2]) # here are two estimates for each interaction; reconcile them here
+                        thispoint[pop1,pop2] = balanced/psize[pop1]
+                else: # Old behaviour
+                    if which=='numacts':
+                        balanced = (smatrix[pop1,pop2] * psize[pop1] + smatrix[pop2,pop1] * psize[pop2])/(psize[pop1]+psize[pop2]) # here are two estimates for each interaction; reconcile them here
+                        thispoint[pop2,pop1] = balanced/psize[pop2] # Divide by population size to get per-person estimate
+                        thispoint[pop1,pop2] = balanced/psize[pop1] # ...and for the other population
+
                 if which=='condom':
                     thispoint[pop1,pop2] = (tmpsim[pop1,t]+tmpsim[pop2,t])/2.0
                     thispoint[pop2,pop1] = thispoint[pop1,pop2]
-    
+
         output[:,:,t] = thispoint
     
     return output, ctrlpts
@@ -1060,7 +1257,7 @@ def balance(act=None, which=None, data=None, popkeys=None, limits=None, popsizep
 
 
 
-def makepars(data=None, verbose=2, die=True, fixprops=None):
+def makepars(data=None, verbose=2, die=True, fixprops=None, parset=None, projectversion=None):
     """
     Translates the raw data (which were read from the spreadsheet) into
     parameters that can be used in the model. These data are then used to update 
@@ -1069,15 +1266,18 @@ def makepars(data=None, verbose=2, die=True, fixprops=None):
     
     Version: 2017jun03
     """
-    
+    if projectversion is None:
+        try: projectversion = parset.getprojectversion(die=True)
+        except Exception as e: raise OptimaException('Must pass parset or projectversion to makepars() as the behaviour is version-dependent') from e
+
     printv('Converting data to parameters...', 1, verbose)
     
     ###############################################################################
     ## Loop over quantities
     ###############################################################################
     
-    pars = odict()
-    
+    pars = odict_custom(func=(parset.checkpropagateversion if parset is not None else None))
+
     # Shorten information on which populations are male, which are female, which inject, which provide commercial sex
     pars['male'] = array(data['pops']['male']).astype(bool) # Male populations 
     pars['female'] = array(data['pops']['female']).astype(bool) # Female populations
@@ -1111,7 +1311,8 @@ def makepars(data=None, verbose=2, die=True, fixprops=None):
             by = rawpar['by']
             fromdata = rawpar['fromdata']
             rawpar['verbose'] = verbose # Easiest way to pass it in
-            rawpar['progdefault'] = None if rawpar['progdefault'] is '' else rawpar['progdefault']
+            rawpar['progdefault'] = None if rawpar['progdefault'] == '' else rawpar['progdefault']
+            rawpar['projectversion'] = projectversion
 
             # Decide what the keys are
             if   by=='tot' : keys = totkey
@@ -1124,7 +1325,7 @@ def makepars(data=None, verbose=2, die=True, fixprops=None):
             if partype=='initprev': # Initialize prevalence only
                 pars['initprev'] = data2prev(data=data, keys=keys, **rawpar) # Pull out first available HIV prevalence point
             
-            elif partype=='popsize': # Population size only
+            elif partype=='popsize': # Population size 
                 pars['popsize'] = data2popsize(data=data, keys=keys, **rawpar)
             
             elif partype=='timepar': # Otherwise it's a regular time par, made from data
@@ -1170,14 +1371,14 @@ def makepars(data=None, verbose=2, die=True, fixprops=None):
             c += 1
     pars['birthtransit'] = birthtransit 
 
-    # Aging transitions - these are time-constant
+    # Aging transitions - these are stored as the proportion of transitions, which is constant, and is multiplied by time-varying age rates in model.py
     agetransit = zeros((npopkeys,npopkeys))
-    duration = array([age[1]-age[0]+1.0 for age in data['pops']['age']])
-    for rowno,row in enumerate(data['agetransit']):
-        if sum(row):
-            for colno,colval in enumerate(row):
-                if colval:
-                    agetransit[rowno,colno] = sum(row)*duration[rowno]/colval
+    c = 0
+    for pkno,popkey in enumerate(popkeys):
+        for colno,col in enumerate(data['agetransit'][c]):
+            if sum(data['agetransit'][c]):
+                agetransit[pkno,colno] = col/sum(data['agetransit'][c])
+        c += 1    
     pars['agetransit'] = agetransit
 
     # Risk transitions - these are time-constant
@@ -1194,12 +1395,22 @@ def makepars(data=None, verbose=2, die=True, fixprops=None):
     # Set the values of parameters that aren't from data
     pars['transnorm'].y = 0.43 # See analyses/misc/calculatecd4transnorm.py for calculation
     pars['transnorm'].prior.pars *= pars['transnorm'].y # Scale default range
+    
+    pars['forcepopsize'].y = 0 # Whether or not to force the population size to match the parameters
+    pars['allcd4eligibletx'].t = 2100. # Whether or not to preferentially put people on treatment from lower CD4 counts - the final year of this
+    pars['initcd4weight'].y = 1. # How to initialize the epidemic weighting either toward lower (with <1 values) or higher (with >1 values) CD4 counts based on the maturity of the epidemic
+    pars['relhivbirth'].y = 1. # Relative likelihood that females with HIV give birth (relative to the overall birth rate)
+
+    pars['rrcomorbiditydeathtx'].prior.pars = array([1.0, 1.0]) #Don't sample
+    pars['forcepopsize'].prior.pars = array([0.0, 0.0]) #Don't sample
+    
     for key in popkeys: # Define values for each population
         pars['force'].y[key] = 1.0
         pars['hivdeath'].y[key] = 1.0
         pars['inhomo'].y[key] = 0.0
         pars['inhomo'].prior[key].pars = array([0.0, 0.3]) # Arbitrary
-    
+        pars['rrcomorbiditydeathtx'].y[key] = 1.0
+        
     # Impose limits on force and transnorm so their values don't get too extreme (note, force.m functions identically to transnorm.y, but use the latter)
     for foipar in ['force','transnorm']:
         pars[foipar].limits = (0.05, 50) # Arbitrary
@@ -1212,10 +1423,10 @@ def makepars(data=None, verbose=2, die=True, fixprops=None):
     tmpcondpts = odict()
     for act in ['reg','cas','com', 'inj']: # Number of acts
         actsname = 'acts'+act
-        tmpacts[act], tmpactspts[act] = balance(act=act, which='numacts', data=data, popkeys=popkeys, popsizepar=pars['popsize'])
+        tmpacts[act], tmpactspts[act] = balance(act=act, which='numacts', data=data, popkeys=popkeys, fpopkeys=fpopkeys, mpopkeys=mpopkeys, popsizepar=pars['popsize'], projectversion=projectversion)
     for act in ['reg','cas','com']: # Condom use
         condname = 'cond'+act
-        tmpcond[act], tmpcondpts[act] = balance(act=act, which='condom', data=data, popkeys=popkeys)
+        tmpcond[act], tmpcondpts[act] = balance(act=act, which='condom', data=data, popkeys=popkeys, fpopkeys=fpopkeys, mpopkeys=mpopkeys, popsizepar=pars['popsize'], projectversion=projectversion)
         
     # Convert matrices to lists of of population-pair keys
     for act in ['reg', 'cas', 'com', 'inj']: # Will probably include birth matrices in here too...
@@ -1227,18 +1438,54 @@ def makepars(data=None, verbose=2, die=True, fixprops=None):
                     pars[actsname].y[(key1,key2)] = array(tmpacts[act])[i,j,:]
                     pars[actsname].t[(key1,key2)] = array(tmpactspts[act])
                     if act!='inj':
-                        if key1 in mpopkeys or key1 not in fpopkeys: # For condom use, only store one of the pair -- and store male first -- WARNING, would this fail with multiple MSM populations?
-                            pars[condname].y[(key1,key2)] = array(tmpcond[act])[i,j,:]
-                            pars[condname].t[(key1,key2)] = array(tmpcondpts[act])
-    
+                        if compareversions(projectversion, '2.12.0') < 0: # Old behaviour which would incorrectly add both (MSM1,MSM2) and (MSM2,MSM1)
+                            if key1 in mpopkeys or key1 not in fpopkeys: # For condom use, only store one of the pair -- and store male first -- WARNING, would this fail with multiple MSM populations?
+                                pars[condname].y[(key1,key2)] = array(tmpcond[act])[i,j,:]
+                                pars[condname].t[(key1,key2)] = array(tmpcondpts[act])
+                        else: # New behaviour
+                            if (key2, key1) not in pars[condname].y.keys() and (key1, key2) not in pars[condname].y.keys(): # For condom use, only store one of the pair
+                                # We can store it either (key1, key2) or (key2, key1) but we have the below conventions
+                                if   key1 in mpopkeys and key2 in fpopkeys: #  Prefer M,F
+                                    store_key1, store_key2 = key1, key2
+                                elif key1 in fpopkeys and key2 in mpopkeys: #  Prefer M,F.
+                                    store_key1, store_key2 = key2, key1
+                                else: # M,M or other just sort them by name
+                                    store_key1, store_key2 = tuple(sorted((key1,key2)))
+                                pars[condname].y[(store_key1,store_key2)] = array(tmpcond[act])[i,j,:]
+                                pars[condname].t[(store_key1,store_key2)] = array(tmpcondpts[act])
+
+    insertiveonly = True if compareversions(projectversion,"2.12.0") >= 0 else False
+    for act in ['reg', 'cas', 'com']:
+        pars['acts'+act].insertiveonly = insertiveonly # So that the model knows whether or not to use the new behaviour
+
     # Store information about injecting populations -- needs to be here since relies on other calculations
     pars['injects'] = array([pop in [pop1 for (pop1,pop2) in pars['actsinj'].keys()] for pop in pars['popkeys']])
     
     return pars
 
+def getreceptiveactsfrominsertive(insertivepar, popsizetimes, popsizeinterped, popkeys):
+    receptivepar = cp(insertivepar)
+    receptivepar.t = odict()
+    receptivepar.y = odict()
+
+    timeindsdict = {time:ind for ind, time in enumerate(popsizetimes)}
+
+    for partnership, times in insertivepar.t.items():
+        timeinds = [timeindsdict[time] for time in times]
+        popsizeA = popsizeinterped[popkeys.index(partnership[0])][timeinds]
+        popsizeB = popsizeinterped[popkeys.index(partnership[1])][timeinds]
+
+        receptiveactsperB = insertivepar.y[partnership] * popsizeA / popsizeB
+        reversedpartnership = (partnership[1], partnership[0])
+        receptivepar.t[reversedpartnership] = times
+        receptivepar.y[reversedpartnership] = receptiveactsperB
+
+    return receptivepar
 
 
-def makesimpars(pars, name=None, keys=None, start=None, end=None, dt=None, tvec=None, settings=None, smoothness=None, asarray=True, sample=None, tosample=None, randseed=None, verbose=2):
+
+def makesimpars(pars, name=None, keys=None, start=None, end=None, dt=None, tvec=None, settings=None, smoothness=None, asarray=True,
+                sample=None, tosample=None, randseed=None, verbose=2, projectversion=None):
     ''' 
     A function for taking a single set of parameters and returning the interpolated versions -- used
     very directly in Parameterset.
@@ -1259,22 +1506,72 @@ def makesimpars(pars, name=None, keys=None, start=None, end=None, dt=None, tvec=
     if smoothness is None: smoothness = int(defaultsmoothness/dt)
     tosample = promotetolist(tosample) # Convert to list
     popkeys = pars['popkeys'] # Used for interpolation
-    
+    if projectversion is None: # If not provided, get from one of the pars
+        try: projectversion = pars['popsize'].getprojectversion(die=True)
+        except Exception as e: raise OptimaException('Must pass projectversion to makesimpars() as the behaviour is version-dependent') from e
+
     # Copy default keys by default
     for key in generalkeys: simpars[key] = dcp(pars[key])
     for key in staticmatrixkeys: simpars[key] = dcp(array(pars[key]))
 
     # Loop over requested keys
     for key in keys: # Loop over all keys
+        if compareversions(projectversion, "2.12.0") >= 0 and key in ['actsreg', 'actscas', 'actscom', 'actsreginsertive', 'actscasinsertive', 'actscominsertive', 'actsregreceptive', 'actscasreceptive', 'actscomreceptive']:
+            par = pars[key[0:7]]
+            if hasattr(par, 'insertiveonly') and par.insertiveonly:
+                continue  # New behaviour, the insertiveonly pars are handled in the next loop
         if isinstance(pars[key], Par): # Check that it is actually a parameter -- it could be the popkeys odict, for example
             thissample = sample # Make a copy of it to check it against the list of things we are sampling
             if tosample and tosample[0] is not None and key not in tosample: thissample = False # Don't sample from unselected parameters -- tosample[0] since it's been promoted to a list
             try:
-                simpars[key] = pars[key].interp(tvec=simpars['tvec'], dt=dt, popkeys=popkeys, smoothness=smoothness, asarray=asarray, sample=thissample, randseed=randseed)
-            except OptimaException as E: 
+                simpars[key] = pars[key].interp(tvec=simpars['tvec'], dt=dt, popkeys=popkeys, smoothness=smoothness, asarray=asarray, sample=thissample, randseed=randseed, projectversion=projectversion)
+            except OptimaException as E:
                 errormsg = 'Could not figure out how to interpolate parameter "%s"' % key
                 errormsg += 'Error: "%s"' % repr(E)
                 raise OptimaException(errormsg)
+
+    if compareversions(projectversion,"2.12.0") >= 0:
+        # Special treatment for actsreg, actscas, actscom because they contain only insertive acts and so we need to calculate the receptive acts
+        # Get the popsize at the times when the acts are set. Need the popsize for the receptive act calculation
+        alltimes = set()
+        for key in ['actsreg', 'actscas', 'actscom']:
+            for times in pars[key].t.values():
+                alltimes.update(set(times))
+        list_times = linspace(min(alltimes), max(alltimes),num=(int(max(alltimes)/dt)-int(min(alltimes)/dt)+1))
+
+        popsizesample = sample
+        if tosample and tosample[0] is not None and 'popsize' not in tosample: popsizesample = False
+
+        if len(alltimes):
+            popsizeinterped = pars['popsize'].interp(tvec=list_times, dt=dt, popkeys=popkeys, smoothness=smoothness, asarray=True, sample=popsizesample, randseed=randseed, projectversion=projectversion)
+        else: popsizeinterped = None
+
+        for key in keys:
+            if key in ['actsreg', 'actscas', 'actscom', 'actsreginsertive', 'actscasinsertive', 'actscominsertive', 'actsregreceptive', 'actscasreceptive', 'actscomreceptive']:
+                if not (hasattr(pars[key], 'insertiveonly') and pars[key].insertiveonly):
+                    print(f'WARNING: Acts "{key}" are not "insertiveonly" so these sexual acts will have the old (v2.11.4) non-directional behaviour!')
+                    continue
+                key = key[0:7]
+
+                insertivepar = pars[key]  # actsreg only contains insertive acts, eg. actsreg[(popA, popB)] = c is c insertive acts for each person in popA
+                receptivepar = getreceptiveactsfrominsertive(insertivepar, list_times, popsizeinterped, popkeys=popkeys)
+
+                insertivekey = key + 'insertive'
+                receptivekey = key + 'receptive'
+
+                insertivesample, receptivesample = sample, sample
+                if tosample and tosample[0] is not None: # We have a list of keys to check
+                    thissample = key in tosample
+                    insertivesample = thissample or insertivekey in tosample
+                    receptivesample = thissample or receptivekey in tosample
+
+                try:
+                    simpars[insertivekey] = insertivepar.interp(sample=insertivesample, tvec=simpars['tvec'], dt=dt, popkeys=popkeys, smoothness=smoothness, asarray=asarray, randseed=randseed, projectversion=projectversion)
+                    simpars[receptivekey] = receptivepar.interp(sample=receptivesample, tvec=simpars['tvec'], dt=dt, popkeys=popkeys, smoothness=smoothness, asarray=asarray, randseed=randseed, projectversion=projectversion)
+                except OptimaException as E:
+                    errormsg = 'Could not figure out how to interpolate parameter "%s"' % key
+                    errormsg += 'Error: "%s"' % repr(E)
+                    raise OptimaException(errormsg)
 
 
     return simpars
@@ -1322,7 +1619,7 @@ def applylimits(y, par=None, limits=None, dt=None, warn=True, verbose=2):
         newy[newy<limits[0]] = limits[0]
         newy[newy>limits[1]] = limits[1]
         newy[infiniteinds] = infinitevals # And stick them back in
-        if warn and any(newy!=array(y)):
+        if warn and any(newy!=array(y)) and verbose >= 3:
             printv('Note, parameter "%s" value reset from:\n%s\nto:\n%s' % (parname, y, newy), 3, verbose)
     else:
         if warn: raise OptimaException('Data type "%s" not understood for applying limits for parameter "%s"' % (type(y), parname))
@@ -1492,14 +1789,133 @@ def sanitycheck(simpars=None, showdiff=True, threshold=0.1, eps=1e-6):
     print(outstr)
     return outstr
 
+def checkifparsoverridepars(origpars, targetpars, progstartyear=None, progendyear=None):
+    '''
+    Checks if the original parset has parameters that override parameters that
+    are being targeted (by programs or by a parameter scenario).
+    Args:
+        origpars: odict of Par objects from the parset being used
+        targetpars: list of short names of pars that are being changed or targeted (by a progset)
+        progstartyear: time that the programs or optimization starts
+        progendyear: time that the programs or optimization finishes (note orig pars can still affect the program even
+                     if orig pars is only set after the program finishes because makesimpars extends it earlier).
+                     Defaults to 2100
+    Returns:
+        An odict with keys that are the overriding parameters in origpars,
+        and the values are the list of targetpars that each par overrides.
+        eg: origpars['fixpropcare'] = 2022, targetpars = ['linktocare','returntocare','numpmtct'], progendyear = 2030
+        returns: warning=True, outdict = {'fixpropdx':['linktocare','returntocare']},
+                 times = {'fixpropdx':2022.}, vals = {'fixpropdx': 'fixed'}
+    '''
+    if progendyear is None: progendyear = 2100
+    if progstartyear is None: progstartyear = progendyear # the function should still work with the start year = end year
+    warning = False
+    outdict, times, vals = odict(), odict(), odict()
+    targetparsset = set(targetpars)
+    for overriding, affectedpars in overridingpars.items():
+        overridingpar = origpars[overriding]  # (overriding)pars, progendyear, (overriden)targetpartypes
+        willoverride = False
+        if isinstance(overridingpar, Timepar):
+            tvals = array(overridingpar.t['tot'])
+            yvals = array(overridingpar.y['tot'])
+            timesset = tvals[~isnan(yvals)]
+            timesnan = tvals[isnan(yvals)]
+            if len(timesset) == 0: continue
+            maxtimesetbefore = max(append(timesset[timesset<progstartyear], -1))
+            mintimesetafter  = min(append(timesset[timesset>=progendyear], Inf))
+            if logical_and(timesset>=progstartyear, timesset<progendyear).any(): # proportion is set during the programs
+                willoverride = True
+            elif maxtimesetbefore>=0 or isfinite(mintimesetafter): # the prop is set either before or after programs
+                if not logical_and(maxtimesetbefore < timesnan, timesnan < mintimesetafter).any(): # need a nan after prop set before, or nan before prop set after
+                    willoverride = True
+        elif isinstance(overridingpar, Yearpar):
+            tvals = overridingpar.t
+            yvals = '"Fixed"' ### WARNING not really a value
+            willoverride = overridingpar.t < progendyear
+
+        if willoverride:  # the proportion is actually set so now we check if the programset targets any of the overriden parameters
+            targetparsaffected = list(filter(lambda par: par in targetparsset, affectedpars))
+            if len(targetparsaffected) > 0:
+                warning = True
+                outdict[overriding] = targetparsaffected
+                times[overriding] = tvals
+                vals[overriding] = yvals
+    return warning, outdict, times, vals
 
 
+def createwarningforoverride(origpars, warning, parsoverridingparsdict, overridetimes, overridevals, fortype='Progscen', formatfor='console',
+                             progsetname=None, parsetname=None, progsbytargetpartype=None, progendyear=2100,
+                             warningmessage=None, warningmessageplural=None,
+                             recommendmessagefixed=None,recommendmessageprop=None):
+    """
+    A helper function that will take the output from checkifparsoverridepars(), plus the original pars, and create
+    a warning message(s) for any parameters that are getting overriden.
+    Can be used both for an Optimization (fortype='Progscen'), Budget Scenario (fortype='Progscen'), Coverage Scenario
+    (fortype='Progscen'), or Parameter Scenario (fortype='Parscen').
+    Args:
+        origpars: odict of Par objects from the original parset being used:
+        warning, parsoverridingparsdict, overridetimes, overridevals: the outputs from checkifparsoverridepars
+        fortype: type of scenario this will be used for see above. (changes the default messages)
+        formatfor: 'html' or 'console': html uses <p> ... </p><br><p>... to format the warning message, console uses \n
+        progsetname: name of the progset that wants to target parameters that could be getting overridden.
+        parsetname: name of the parset that may be overriding the progset.
+        progsbytargetpartype: the output of Programset.progs_by_targetpartype(), make sure to call progset.gettargetpars()
+                              and progset.gettargetpartypes(), before progset.progs_by_targetpartype()
+        progendyear: the year the scenario / optimization ends.
+    Returns:
+        warning: whether or not there is a warning (same as the input warning)
+        combinedwarningmsg: a string message of all the combined messages
+        warningmessages: a warning message for each parameter that is overriden, made up of warningmessage + recommendmessage.
+                         See the default formats below.
 
+    """
+    if not warning: return warning, '', []
 
+    if formatfor == 'html': sep = '</p><p>'
+    else: sep = '\n'
 
+    warningmessages = []
+    if warningmessage is None:
+        if fortype == 'Parscen': warningmessage = 'Warning: This scenario trying to set "{affectedparname}" but the parameter set "{parsetname}" has "{overridingparname}" set to {valstr}'
+        else:                    warningmessage = 'Warning: The program \'{programsnames}\' in program set "{progsetname}" targets the "{affectedparname}" but the parameter set "{parsetname}" has "{overridingparname}" set to {valstr} which is before the program ends in {progendyear} so this program will likely have no affect.'
 
+    if warningmessageplural is None:  warningmessageplural  = 'Warning: The programs {programsnames} in program set "{progsetname}" target the "{affectedparname}" but the parameter set "{parsetname}" has "{overridingparname}" set to {valstr} which is before the programs end in {progendyear} so these programs will likely have no effect.'
+    if recommendmessagefixed is None: recommendmessagefixed = 'It is recommended to make another parameter set that has "{overridingparname}" set to 2100.'
+    if recommendmessageprop is None:  recommendmessageprop  = 'It is recommended to make another parameter set that doesn\'t have "{overridingparname}" set.'
 
+    for overriding, affectedpars in parsoverridingparsdict.items():
+        overridingpar = origpars[overriding]
+        if isinstance(overridingpar, Yearpar):
+            valstr = f"{overridetimes[overriding]}"
+            recommendmessage = recommendmessagefixed
+        elif isinstance(overridingpar, Timepar):
+            tvals = overridingpar.t['tot']
+            yvals = array(overridingpar.y['tot'])
+            valstr = f"{yvals} in {tvals}"
+            recommendmessage = recommendmessageprop
+        for affected in affectedpars:
+            if fortype == 'Parscen':
+                warningmessages.append(warningmessage)
+                progsaffectednames = ['Not a program'] # Kludgy, so that later doesn't produce an error, but this won't be used anyway
+            else:
+                progsaffectednames = [prog.short for prog in progsbytargetpartype[affected]]
+                warningmessages.append(warningmessage if len(progsaffectednames) == 1 else warningmessageplural)
+            warningmessages[-1] = warningmessages[-1] + sep + recommendmessage
+            warningmessages[-1] = warningmessages[-1].format(programsnames=progsaffectednames if len(progsaffectednames)>1 else progsaffectednames[0],
+                                                       progsetname=progsetname,
+                                                       affectedparname=origpars[affected].name,
+                                                       parsetname=parsetname,
+                                                       overridingparname=overridingpar.name,
+                                                       valstr=valstr,
+                                                       progendyear=progendyear)
 
+    if formatfor == 'html':
+        warningmessages = ['<p>' + msg.replace('"','&quot;') + '</p>' for msg in warningmessages]
+        combinedwarningmsg = '<br>'.join(warningmessages)  # Note that this defaults to '' if warningmessages is empty
+    else:
+        combinedwarningmsg = (sep+sep).join(warningmessages)  # Note that this defaults to '' if warningmessages is empty
+
+    return warning, combinedwarningmsg, warningmessages
 
 
 

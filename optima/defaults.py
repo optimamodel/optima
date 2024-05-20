@@ -7,11 +7,17 @@ Version: 2016jan28
 from numpy import array, nan
 from optima import OptimaException, Project, Program, Programset, printv, odict, optimafolder
 
+__all__ = [
+    'defaultproject',
+    'defaultprogset',
+    'defaultprograms',
+    'demo'
+]
 
-
-def defaultprograms(project, addcostcovpars=False, addcostcovdata=False, filterprograms=None):
+def defaultprograms(project, addcostcovpars=False, addcostcovdata=False, filterprograms=None, projectversion=None):
     ''' Make some default programs'''
-    
+
+    if projectversion is None: projectversion = project.version
     # Shorten variable names
     pops = project.pars()['popkeys']
     hivstates = project.settings.hivstates
@@ -92,7 +98,7 @@ def defaultprograms(project, addcostcovpars=False, addcostcovdata=False, filterp
                   category='Prevention',
                   targetpars=[{'param': 'numcirc', 'pop': male} for male in malelist],
                   targetpops=malelist,
-                  criteria = {'hivstatus': 'allstates', 'pregnant': False})              
+                  criteria = {'hivstatus': 'allstates', 'pregnant': False})
                   
     FSW_programs = Program(short='FSW programs',
                   name='Programs for female sex workers',
@@ -181,7 +187,7 @@ def defaultprograms(project, addcostcovpars=False, addcostcovdata=False, filterp
     Tracing = Program(short='Tracing',
                   name='Pre-ART tracing',
                   category='Care and treatment',
-                  targetpars=[{'param': 'linktocare', 'pop': pop} for pop in pops],# for pop in pops],
+                  targetpars=[{'param': 'linktocare', 'pop': pop} for pop in pops] + [{'param': 'returntocare', 'pop': pop} for pop in pops],# for pop in pops],
                   targetpops=pops,
                   criteria = {'hivstatus': hivstates, 'pregnant': False})
     
@@ -229,7 +235,10 @@ def defaultprograms(project, addcostcovpars=False, addcostcovdata=False, filterp
     Other = Program(short='Other',
                     name='Other',
                     category='Other')
-                  
+
+    allprograms = [Condoms, SBCC, STI, VMMC, FSW_programs, MSM_programs, PWID_programs, OST, NSP, Cash, PrEP, PEP, HTS, ART, Lab, Adherence, Tracing, PMTCT, OVC, Other_care, MGMT, HR, ENV, SP, ME, INFR, Other]
+    for prog in allprograms: prog.projectversion = projectversion
+
     if addcostcovpars: # WARNING, does not include popfactors except as an example -- assumed to be 1
         Condoms.costcovfn.addccopar({'saturation': (0.75,0.75),
                                  't': 2016.0,
@@ -329,8 +338,6 @@ def defaultprograms(project, addcostcovpars=False, addcostcovdata=False, filterp
         ME.addcostcovdatum({'t':2014,'cost':1e7,'coverage':None})
         INFR.addcostcovdatum({'t':2014,'cost':1e7,'coverage':None})
         Other.addcostcovdatum({'t':2014,'cost':5e5,'coverage':None})
-        
-    allprograms = [Condoms, SBCC, STI, VMMC, FSW_programs, MSM_programs, PWID_programs, OST, NSP, Cash, PrEP, PEP, HTS, ART, Lab, Adherence, Tracing, PMTCT, OVC, Other_care, MGMT, HR, ENV, SP, ME, INFR, Other]
 
     if filterprograms: # Only select those programs in filterprograms
         finalprograms = [program for program in allprograms if program.short in filterprograms]
@@ -341,7 +348,7 @@ def defaultprograms(project, addcostcovpars=False, addcostcovdata=False, filterp
 
 def defaultprogset(P, addcostcovpars=False, addcostcovdata=False, filterprograms=None, verbose=2):
     ''' Make a default programset (for testing optimisations)'''
-    programs = defaultprograms(P, addcostcovpars=addcostcovpars, addcostcovdata=addcostcovdata, filterprograms=filterprograms)
+    programs = defaultprograms(P, addcostcovpars=addcostcovpars, addcostcovdata=addcostcovdata, filterprograms=filterprograms, projectversion=P.version)
     R = Programset(programs=programs, project=P)   
     return R
 
@@ -430,7 +437,7 @@ def defaultproject(which='best', addprogset=True, addcostcovdata=True, usestanda
             R.covout['condcas'][('Clients','F 15+')].addccopar({'intercept': (0.25,0.3), 't': 2016.0, 'Condoms':(0.85,0.95)})
             R.covout['condcas'][('M 15+', 'FSW')].addccopar({'intercept':    (0.2,0.35), 't': 2016.0, 'Condoms':(0.4,0.5), 'FSW programs':(0.8,0.9)})
             R.covout['condcas'][('M 15+','F 15+')].addccopar({'intercept':  (0.15,0.25), 't': 2016.0, 'Condoms':(0.4,0.5)})
-            R.covout['condcas'][('PWID','F 15+')].addccopar({'intercept':   (0.1,0.2), 't': 2016.0, 'Condoms':(0.35,0.45)})
+            R.covout['condcas'][('F 15+','PWID')].addccopar({'intercept':   (0.1,0.2), 't': 2016.0, 'Condoms':(0.35,0.45)})
             R.covout['condcas'][('MSM', 'MSM')].addccopar({'intercept': (0.05,0.15), 't': 2016.0, 'Condoms':(0.2,0.3), 'MSM programs':(0.8,0.9)})
 
             R.covout['condcom'][('Clients', 'FSW')].addccopar({'intercept': (0.18,0.25), 't': 2016.0, 'FSW programs':(0.85,0.95)})
@@ -458,6 +465,13 @@ def defaultproject(which='best', addprogset=True, addcostcovdata=True, usestanda
             R.covout['linktocare']['F 15+'].addccopar({'intercept': (1.40,1.60), 't': 2016.0, 'Tracing': (0.1,0.3)})
             R.covout['linktocare']['PWID'].addccopar({'intercept': (1.40,1.60), 't': 2016.0, 'Tracing': (0.1,0.3)})
             R.covout['linktocare']['MSM'].addccopar({'intercept': (1.40,1.60), 't': 2016.0, 'Tracing': (0.1,0.3)})
+            
+            R.covout['returntocare']['FSW'].addccopar({'intercept': (0.625,0.715), 't': 2016.0, 'Tracing': (3.,5.)})
+            R.covout['returntocare']['Clients'].addccopar({'intercept': (0.625,0.715), 't': 2016.0, 'Tracing': (3.,5.)})
+            R.covout['returntocare']['M 15+'].addccopar({'intercept': (0.625,0.715), 't': 2016.0, 'Tracing': (3.,5.)})
+            R.covout['returntocare']['F 15+'].addccopar({'intercept': (0.625,0.715), 't': 2016.0, 'Tracing': (3.,5.)})
+            R.covout['returntocare']['PWID'].addccopar({'intercept': (0.625,0.715), 't': 2016.0, 'Tracing': (3.,5.)})
+            R.covout['returntocare']['MSM'].addccopar({'intercept': (0.625,0.715), 't': 2016.0, 'Tracing': (3.,5.)})
 
             # Store this program set in the project
             P.addprogset(R)

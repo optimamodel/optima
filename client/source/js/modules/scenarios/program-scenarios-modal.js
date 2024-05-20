@@ -72,13 +72,20 @@ define(['angular', 'underscore'], function(angular, _) {
           });
         };
 
-        $scope.addProgram = function(yearEntry) {
+        $scope.addProgram = function(yearEntry, progNumber) {
+          if (progNumber === undefined) {progNumber = 0;}
           var newProgram = {
-            short: $scope.state.programs[0].short,
+            short: $scope.state.programs[progNumber].short,
             value: null
           };
           $scope.selectProgram(yearEntry, newProgram);
           yearEntry.programs.push(newProgram);
+        };
+
+        $scope.addAllPrograms = function(yearEntry) {
+          for (var i = 0; i < $scope.state.programs.length; i++) {
+            $scope.addProgram(yearEntry, i);
+          }
         };
 
         $scope.selectProgram = function(yearEntry, program) {

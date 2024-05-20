@@ -6,8 +6,24 @@ Version: 2017jun03
 
 ## Imports
 from numpy import append, array, inf
-from optima import OptimaException, Link, Multiresultset # Core classes/functions
-from optima import dcp, today, odict, printv, findinds, defaultrepr, getresults, vec2obj, isnumber, uuid, promotetoarray # Utilities
+from optima import OptimaException, Link, Multiresultset, Timepar, Popsizepar # Core classes/functions
+from optima import dcp, today, odict, printv, findinds, defaultrepr, getresults, vec2obj, isnumber, uuid, promotetoarray, cpu_count # Utilities
+from optima import checkifparsetoverridesprogset, checkifparsoverridepars, createwarningforoverride # From programs.py and parameters.py for warning
+from sciris import parallelize
+from numpy import ceil
+
+__all__ = [
+    'Parscen',
+    'Budgetscen',
+    'Coveragescen',
+    'Progscen',
+    'runscenarios',
+    'makescenarios',
+    'baselinescenario',
+    'setparscenvalues',
+    'defaultscenarios',
+    'checkifparsetoverridesscenario'
+]
 
 class Scen(object):
     ''' The scenario base class -- not to be used directly, instead use Parscen or Progscen '''
@@ -65,8 +81,12 @@ class Coveragescen(Progscen):
         Progscen.__init__(self, **defaultargs)
         self.coverage = coverage
 
+def runsim_wrapper(project, print_label, verbose=2, **kwargs):
+    printv(print_label, 2, verbose)
+    return project.runsim(verbose=0, **kwargs)
 
-def runscenarios(project=None, verbose=2, name=None, defaultparset=-1, debug=False, nruns=None, base=None, ccsample=None, randseed=None, **kwargs):
+def runscenarios(project=None, verbose=2, name=None, defaultparset=-1, debug=False, nruns=None, base=None, ccsample=None,
+                 randseed=None, parallel=False, ncpus=None, **kwargs):
     """
     Run all the scenarios.
     Version: 2017aug15
@@ -86,17 +106,25 @@ def runscenarios(project=None, verbose=2, name=None, defaultparset=-1, debug=Fal
     if ccsample is None: ccsample = 'best' 
     if nruns is None:    nruns = 1
     if base is None:     base = 0
-    
+    if ncpus is None:    ncpus = int(ceil( cpu_count()/2 ))
+    # We run in a parallel here if the number of scenarios is more than the number of runs per scenario (nruns)
+    this_parallel = True if (parallel and nscens > nruns) else False
+    parallel = parallel and (not this_parallel)  # Allowed to run in parallel and we are not running here in parallel
+
+    if this_parallel:
+        project_copy = dcp(project)
+        project_copy.parsets  = odict()
+        project_copy.progsets = odict()
+        project_copy.optims   = odict()
+
     # Convert the list of scenarios to the actual parameters to use in the model
     scenparsets = makescenarios(project=project, scenlist=scenlist, ccsample=ccsample, randseed=randseed, verbose=verbose)        
 
     # Run scenarios
-    allresults = []
+    all_kwargs = [None] * nscens
     for scenno, scen in enumerate(scenparsets):
-        printv('Running scenario "%s" (%i/%i)...' % (scen, scenno+1, nscens), 2, verbose)
         scenparset = scenparsets[scen]
         project.scens[scenno].scenparset = scenparset # Copy into scenarios objects
-        
 
         # Items specific to program (budget or coverage) scenarios
         budget = scenlist[scenno].budget if isinstance(scenlist[scenno], Progscen) else None
@@ -104,13 +132,30 @@ def runscenarios(project=None, verbose=2, name=None, defaultparset=-1, debug=Fal
         budgetyears = scenlist[scenno].t if isinstance(scenlist[scenno], Progscen) else None
         progsetname = scenlist[scenno].progsetname if isinstance(scenlist[scenno], Progscen) else None
 
-        # Run model and add results
-        result = project.runsim(pars=scenparset.pars, name=scenlist[scenno].parsetname, progsetname=progsetname, budget=budget, coverage=coverage, budgetyears=budgetyears, verbose=0, debug=debug, resultname=project.name+'-scenarios', addresult=False, n=nruns, **kwargs)
+        if this_parallel: # Create a specific copy that only has the one parset and progset, simply for speed of pickling which is part of the process running in parallel.
+            this_project = dcp(project_copy)
+            this_project.addparset(project.parsets[scenlist[scenno].parsetname])
+            if progsetname: this_project.addprogset(project.parsets[progsetname])
+        else:
+            this_project = project
 
+        # Run model and add results
+        all_kwargs[scenno] = {'project': this_project, 'pars': scenparset.pars, 'name': scenlist[scenno].parsetname, 'progsetname': progsetname,
+                              'print_label': f'Running scenario "{scen}" ({scenno+1}/{nscens})...',
+                              'budget': budget, 'coverage': coverage, 'budgetyears': budgetyears, 'verbose': verbose, 'parallel': parallel,
+                              'debug': debug, 'resultname': project.name+'-scenarios', 'addresult': False, 'n': nruns, **kwargs}
+
+    # We need the runsim_wrapper instead of project.runsim because we need different projects in parallel
+    allresults = parallelize(runsim_wrapper, iterkwargs=all_kwargs, serial=(not this_parallel), parallelizer='fast', ncpus=ncpus)
+
+    for scenno, result in enumerate(allresults):
         result.name = scenlist[scenno].name # Give a name to these results so can be accessed for the plot legend
-        allresults.append(result) 
-        printv('... completed scenario: %i/%i' % (scenno+1, nscens), 3, verbose)
-    
+        # Make sure all results refer to the same project
+        if this_parallel:
+            result.projectref  = Link(project)
+            result.projectinfo = project.getinfo()
+            result.settings    = project.settings
+
     if name is None: name='scenarios'
 
     multires = Multiresultset(resultsetlist=allresults, name=name)
@@ -123,16 +168,23 @@ def runscenarios(project=None, verbose=2, name=None, defaultparset=-1, debug=Fal
 
 
 
-def makescenarios(project=None, scenlist=None, verbose=2, ccsample=False, randseed=None):
+def makescenarios(project=None, scenlist=None, verbose=2, ccsample=None, randseed=None):
     """ Convert dictionary of scenario parameters into parset to model parameters """
+    if ccsample is None: ccsample = 'best'
+
+    if scenlist is None and project is not None and hasattr(project,'scens'):
+        scenlist = [scen for scen in project.scens.values()]  # Default to making all the scenarios in the project if none are given
 
     scenparsets = odict()
     for scenno, scen in enumerate(scenlist):
-        
-        try: 
+        try:
+            if scen.parsetname not in project.parsets.keys() and len(project.parsets)==1: #if there is only 1 parset, then just update the scenarios
+                scen.parsetname = project.parsets.keys()[0]
+            
             thisparset = dcp(project.parsets[scen.parsetname])
             thisparset.projectref = Link(project) # Replace copy of project with pointer -- TODO: improve logic
-        except: raise OptimaException('Failed to extract parset "%s" from this project:\n%s' % (scen.parsetname, project))
+        except: 
+            raise OptimaException('Failed to extract parset "%s" from this project:\n%s' % (scen.parsetname, project))
         npops = len(thisparset.popkeys)
 
         if isinstance(scen,Parscen):
@@ -141,6 +193,15 @@ def makescenarios(project=None, scenlist=None, verbose=2, ccsample=False, randse
 
                 # Get the parameter object
                 thispar = thisparset.pars[scenpar['name']]
+
+                if isinstance(thispar, Timepar): # Sometimes Timepar.t = dict accidentally, which causes issues in this code (maybe elsewhere too)
+                    if type(thispar.t) != odict: thispar.t = odict(thispar.t) # Ugly fix...
+                    if type(thispar.y) != odict: thispar.y = odict(thispar.y)
+                if isinstance(thispar, Popsizepar): # Similarly for Popsizepar
+                    if type(thispar.t) != odict: thispar.t = odict(thispar.t)
+                    if type(thispar.y) != odict: thispar.y = odict(thispar.y)
+                    if type(thispar.e) != odict: thispar.e = odict(thispar.e)
+                    if type(thispar.start) != odict: thispar.start = odict(thispar.start)
 
                 # Parse inputs to figure out which population(s) are affected
                 if type(scenpar['for'])==tuple: # If it's a partnership...
@@ -215,7 +276,9 @@ def makescenarios(project=None, scenlist=None, verbose=2, ccsample=False, randse
             except: results = None
 
             scen.t = promotetoarray(scen.t)
-            
+            if not len(scen.t):
+                raise OptimaException(f'Scenario "{scen.name}" does not have a year specified - this is necessary to determine when programs start applying.')
+
             if isinstance(scen, Budgetscen):
                 
                 # If the budget has been passed in as a vector, convert it to an odict & sort by program names
@@ -230,7 +293,7 @@ def makescenarios(project=None, scenlist=None, verbose=2, ccsample=False, randse
                 scen.budget = tmpbudget
                 
                 # Ensure budget values are lists
-                for budgetkey, budgetentry in scen.budget.iteritems():
+                for budgetkey, budgetentry in scen.budget.items():
                     if isnumber(budgetentry):
                         scen.budget[budgetkey] = [budgetentry]
                 
@@ -253,7 +316,7 @@ def makescenarios(project=None, scenlist=None, verbose=2, ccsample=False, randse
                 scen.coverage = tmpcoverage
 
                 # Ensure coverage level values are lists
-                for covkey, coventry in scen.coverage.iteritems():
+                for covkey, coventry in scen.coverage.items():
                     if isnumber(coventry):
                         scen.coverage[covkey] = [coventry]
 
@@ -313,7 +376,7 @@ def setparscenvalues(parset=None, parname=None, forwhom=None, startyear=None, ve
 
 
 
-def defaultscenarios(project=None, which=None, startyear=2020, endyear=2025, parset=-1, progset=-1, dorun=True, doplot=True, **kwargs):
+def defaultscenarios(project=None, which=None, startyear=2023, endyear=2025, parset=-1, progset=-1, dorun=True, doplot=True, **kwargs):
     '''
     Add default scenarios to a project...examples include min-max budgets and 90-90-90.
     Keyword arguments are passed to runscenarios().
@@ -323,16 +386,19 @@ def defaultscenarios(project=None, which=None, startyear=2020, endyear=2025, par
     if which is None: which = 'budgets'
     
     if which=='budgets':
-        parsetname = 'default-scenarios'
+        parsetname = 'default-scens'
+        parsetnamefixed = 'default-scens-fixed-tx-supp-pmtct'
         project.copyparset(orig=parset, new=parsetname)
-        project.parsets['default-scenarios'].fixprops(False) # Ensure they're not fixed
+        project.copyparset(orig=parset, new=parsetnamefixed)
+        project.parsets[parsetname].fixprops(False, which='all')  # For budget scenarios, want unfixed proportions
+        project.parsets[parsetnamefixed].fixprops(True)           # For baseline, fix proptx, propsupp, and proppmtct
         defaultbudget = project.progsets[progset].getdefaultbudget()
         maxbudget = dcp(defaultbudget)
         nobudget = dcp(defaultbudget)
         for key in maxbudget: maxbudget[key] += project.settings.infmoney
         for key in nobudget: nobudget[key] *= 1e-6
         scenlist = [
-            Parscen(   name='Baseline',         parsetname=parsetname, pars=[]),
+            Parscen(   name='Baseline',         parsetname=parsetnamefixed, pars=[]),
             Budgetscen(name='Zero budget',      parsetname=parsetname, progsetname=0, t=[startyear], budget=nobudget),
             Budgetscen(name='Baseline budget',  parsetname=parsetname, progsetname=0, t=[startyear], budget=defaultbudget),
             Budgetscen(name='Unlimited budget', parsetname=parsetname, progsetname=0, t=[startyear], budget=maxbudget),
@@ -381,3 +447,64 @@ def defaultscenarios(project=None, which=None, startyear=2020, endyear=2025, par
         from optima import pygui
         pygui(project)
     return None # Can get it from project.scens
+
+
+def checkifparsetoverridesscenario(project, parset, scen, progset=None, progendyear=None, formatfor='console', createmessages=True, die=False, verbose=2):
+    """
+        A function that sets up the inputs to see if the current parset contains any parameters that
+        override the parameters that a (parameter or program) scenario is trying to target.
+        If any conflicts are found, the warning message(s) can
+        be created with createmessages=True, otherwise combinedwarningmsg, warningmessages will both be None
+        Args:
+            project: the project (to get the parset from if it is not provided)
+            parset: the associated parset to the scen
+            scen: a single Scen object (any type is fine)
+            progendyear: year the progset is starting
+            formatfor: 'console' with \n linebreaks, or 'html' with <p> and <br> elements.
+            createmessages: True to get combinedwarningmsg, warningmessages from createwarningforoverride()
+        Returns:
+            warning, parsoverridingparsdict, overridetimes, overridevals, combinedwarningmsg, warningmessages
+            See checkifparsoverridepars and createwarningforoverride for information about the outputs
+        """
+    if isinstance(scen, Progscen):
+        if progset is None:
+            try: progset = project.progsets[scen.progsetname]
+            except:
+                errmsg = f'Warning could not get progset with name "{scen.progsetname}" for scenario "{scen.name}" from project "{project.name}" to check if any parameters override it.'
+                if die: raise OptimaException(errmsg)
+                else:
+                    printv(errmsg, 2, verbose=verbose)
+                    # warning, parsoverridingparsdict, overridetimes, overridevals, combinedwarningmsg, warningmessages
+                    return False, odict(), odict(), odict(), '', []
+
+        progstartyear = scen.t
+
+        # warning, parsoverridingparsdict, overridetimes, overridevals, combinedwarningmsg, warningmessages = \
+        return checkifparsetoverridesprogset(progset=progset, parset=parset, progendyear=progendyear, progstartyear=progstartyear, formatfor=formatfor, createmessages=createmessages)
+    elif isinstance(scen, Parscen):
+        origpars = parset.pars
+        targetpars = scen.pars
+        if len(targetpars) == 0: return False, odict(), odict(), odict(), '', []
+
+        targetparsnames = [par['name'] for par in targetpars]
+        targetparsstart = [par['startyear'] for par in targetpars]
+        targetparsend = [par['endyear'] for par in targetpars]
+
+        warning, parsoverridingparsdict, overridetimes, overridevals = \
+            checkifparsoverridepars(origpars,
+                                    targetparsnames,
+                                    progstartyear=min(targetparsstart),
+                                    progendyear=max(targetparsend)) # note that assumes that all Pars are set starting in the same year, and ending in the same year but this is good enough? for a warning
+
+        combinedwarningmsg, warningmessages = None, None
+        if createmessages:
+            warning, combinedwarningmsg, warningmessages = createwarningforoverride(origpars, warning,
+                                                                                    parsoverridingparsdict,
+                                                                                    overridetimes, overridevals,
+                                                                                    fortype='Parscen',
+                                                                                    parsetname=parset.name,
+                                                                                    progendyear=progendyear,
+                                                                                    formatfor=formatfor)
+        # warning, parsoverridingparsdict, overridetimes, overridevals, combinedwarningmsg, warningmessages
+        return warning, parsoverridingparsdict, overridetimes, overridevals, combinedwarningmsg, warningmessages
+

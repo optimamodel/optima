@@ -80,8 +80,8 @@ class PyObjectDb(db.Model):
     def as_portfolio_file(self, loaddir, filename=None):
         portfolio = self.load()
         filename = os.path.join(loaddir, portfolio.name + ".prt")
-        op.saveobj(filename, portfolio)
-        return portfolio.name + ".prt"
+        filename = op.saveobj(filename, portfolio)
+        return filename
 
 
 #@swagger.model
@@ -109,8 +109,8 @@ class ProjectDb(db.Model):
     def as_file(self, loaddir, filename=None):
         project = self.load()
         filename = os.path.join(loaddir, project.name + ".prj")
-        op.saveobj(filename, project)
-        return project.name + ".prj"
+        filename = op.saveobj(filename, project)
+        return os.path.basename(filename)
 
     def delete_dependent_objects(self, synchronize_session=False):
         str_project_id = str(self.id)        

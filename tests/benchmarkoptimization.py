@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 """
-BENCHMARKMODEL
+BENCHMARKOPTIMIZATION
 
-Check how long a single iteration of model.py takes, and store
-to a log file so changes that affect how long the model takes
-to run can be easily pinpointed. 
+Copied from benchmarkmodel.py
+
+Mainly used for the line profiling because don't have a demo project with programs
 
 Now also does profiling! See: https://zapier.com/engineering/profiling-python-boss/
 
@@ -16,24 +16,17 @@ or:
 Version: 2018apr24
 """
 
-dobenchmark = True
+dobenchmark = True  # Just benchmarks the model itself
 doprofile = True
-
-advancedtracking = False
 
 n_benchmark = 10  # Number of times to run the cpu benchmark
 n_runsim = 1     # Number of times to run the model
 
 # If running profiling, choose which function to line profile.
-functiontoprofile = 'model' # Choices are: model, runsim, makesimpars, interp
+functiontoprofile = 'makesimpars' # Choices are: P_optimize, optimize, minoutcomes, outcomecalc, runsim, makesimpars, getpars, getouctomes, progs_by_targetpar
 tobenchmark = 'runsim' # Choices are 'runsim' or 'runbudget'
 
-# from hiv_utils import *
-# P = get_latest_project('Kyrgyzstan')
-
-from optima import demo
-P = demo(doplot=False, dorun=False)
-
+args = {'multi':False,'maxtime':10,'randseed':5,'parallel':False}
 
 
 ############################################################################################################################
@@ -58,13 +51,16 @@ if dobenchmark:
         return performance
 
     # Prelminaries
-    # P = demo(doplot=False, dorun=False)
+    from hiv_utils import *
+    P = get_latest_project('Sri Lanka')
     performance1 = cpubenchmark()
 
     elapsed = 0
     # Run the model
     if   tobenchmark == 'runsim':
-        elapsed = timeit.timeit(lambda: P.runsim(advancedtracking=advancedtracking), number=n_runsim)
+        elapsed = timeit.timeit(lambda: P.runsim(), number=n_runsim)
+    # elif   tobenchmark == 'optimize':
+    #     elapsed = timeit.timeit(lambda: P.optimize(**args), number=n_runsim)
     elif tobenchmark == 'runbudget':
         elapsed = timeit.timeit(lambda: P.runbudget(), number=n_runsim)
     else: raise Exception('tobenchmark "%s" not recognized' % tobenchmark)
@@ -104,9 +100,24 @@ except:
 
 if doprofile:
     from line_profiler import LineProfiler
-    from optima import Project, model, makesimpars, applylimits # analysis:ignore -- called by eval() function
-    import functools
-    runsim = functools.partial(P.runsim, advancedtracking=advancedtracking) # analysis:ignore
+    from optima.optimization import minoutcomes
+    from optima import Project, Optim, optimize,model,makesimpars, applylimits,asd,outcomecalc,Programset,Program,convertlimits, smoothinterp# analysis:ignore -- called by eval() function
+    from optima.parameters import getreceptiveactsfrominsertive
+    # P = Project(spreadsheet='generalized.xlsx', dorun=False)
+
+    from hiv_utils import *
+    P = get_latest_project('Sri Lanka')
+
+    getpars = Programset.getpars
+    getoutcomes = Programset.getoutcomes
+    gettargetpopsize = Program.gettargetpopsize
+    progs_by_targetpar = Programset.progs_by_targetpar
+    progs_by_targetpartype = Programset.progs_by_targetpartype
+    gettargetpopsizes = Programset.gettargetpopsizes
+    getprogcoverage = Programset.getprogcoverage
+    getcoverage = Program.getcoverage
+    P_optimize = P.optimize
+    runsim = P.runsim # analysis:ignore
     interp = P.pars()['hivtest'].interp
 
     def profile():
@@ -130,9 +141,9 @@ if doprofile:
 
 
         @do_profile(follow=[eval(functiontoprofile)]) # Add decorator to runmodel function
-        def runsimwrapper():
-            P.runsim(advancedtracking=advancedtracking)
-        runsimwrapper()
+        def optimizewrapper():
+            P.optimize(**args)
+        optimizewrapper()
 
         print('Done.')
 

@@ -23,6 +23,7 @@ define(['angular', 'ui.router'], function (angular) {
         $scope.sortType = 'name'; // set the default sort type
         $scope.sortReverse = false;  // set the default sort order
         $scope.projectService = projectService;
+        projectService.getOptimaDemoProjectList();
         // Set up a watcher to check when the projectService has things loaded in
         // and when it is, select the first project for the select list.
         $scope.$watch('projectService.optimademoprojects[0]', function() {
@@ -149,6 +150,41 @@ define(['angular', 'ui.router'], function (angular) {
             toastr.success('Uploaded spreadsheet for project');
           });
       };
+      
+      $scope.uploadSpreadsheet = function(projectName, projectId) {
+          function upss(updatepars) {
+            rpcService
+              .rpcUpload(
+                'update_project_from_uploaded_spreadsheet', [projectId, updatepars])
+              .then(function(response) {
+                toastr.success('Uploaded spreadsheet for project');
+              });
+          }
+    
+          // Because passing arguments is too hard -- to supply the options for the choice below
+          function refreshexisting() {
+            upss(true);
+          }
+    
+          function addnewdefault() {
+            upss(false);
+          }
+    
+          modalService.choice(
+              refreshexisting,
+              addnewdefault,
+              'Refresh old parsets with new data',
+              'Keep old parsets and add/overwrite "default" from new data',
+              'How would you like to update the project parameter sets with the new databook? If you choose "keep old parsets" then parsets can be refreshed individually from the calibration tab later.',
+              'Uploading new databook to existing project'
+          );
+        };
+      
+      
+      
+      
+      
+      
 
       $scope.editProjectName = function(project) {
         modalService.rename(
@@ -166,6 +202,27 @@ define(['angular', 'ui.router'], function (angular) {
           project.name,
           "Name already exists",
           _.without(getProjectNames(), project.name));
+      };
+
+      $scope.updateProjectVersion = function(project) {
+        modalService.confirm(
+        function() {
+          rpcService
+            .rpcRun('update_project_version', [project.id])
+            .then(function(response) {
+              project.canMigrate = false;
+              console.log('update_project_version response', response)
+              project.version = response.data.version
+              toastr.success('Project upgraded!');
+              $state.reload();
+            });
+        },
+        undefined,
+        'Yes, upgrade',
+        'Cancel',
+        project.migrateMessage,
+        'Migrate project'
+      );
       };
 
       $scope.downloadProject = function (name, id) {

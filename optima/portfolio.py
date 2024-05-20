@@ -6,6 +6,12 @@ from xlsxwriter.utility import xl_rowcol_to_cell as rc
 from xlrd import open_workbook
 import re
 
+__all__ = [
+    'Portfolio',
+    'makegeospreadsheet',
+    'makegeoprojects'
+]
+
 #######################################################################################################
 ## Portfolio class
 #######################################################################################################
@@ -96,22 +102,24 @@ class Portfolio(object):
         
         
     
-    def save(self, filename=None, folder=None, saveresults=True, verbose=2):
+    def save(self, filename=None, folder=None, saveresults=True, verbose=2, cleanparsfromscens=None):
         ''' Save the current portfolio, by default using its name, and without results '''
+        if cleanparsfromscens is None: cleanparsfromscens = not saveresults  # Default to cleaning if we are not saving results
         fullpath = makefilepath(filename=filename, folder=folder, default=[self.filename, self.name], ext='prt', sanitize=True)
         self.filename = fullpath # Store file path
         printv('Saving portfolio to %s...' % self.filename, 2, verbose)
         
         # Easy -- just save the whole thing
-        if saveresults:
+        if saveresults and not cleanparsfromscens:
             saveobj(fullpath, self, verbose=verbose)
         
         # Hard -- have to make a copy, remove results, and restore links
         else:
             tmpportfolio = dcp(self) # Need to do this so we don't clobber the existing results
             for P in self.projects.values():
-                P.cleanresults() # Get rid of all results
-                P.restorelinks() # Restore links in projects
+                if not saveresults:    P.cleanresults()       # Get rid of all results
+                if cleanparsfromscens: P.cleanparsfromscens() # Get rid of pars and scenparsets from scenarios which are not needed
+                P.restorelinks()  # Restore links in projects
             if tmpportfolio.results: # Restore project links in results, but only iterate over it if it's populated
                 for key,resultpair in tmpportfolio.results.items():
                     for result in resultpair.values():
@@ -128,9 +136,10 @@ class Portfolio(object):
     ## Methods to perform major tasks
     #######################################################################################################
     
-    def genBOCs(self, budgetratios=None, name=None, parsetname=None, progsetname=None, objectives=None, 
-             constraints=None,  maxiters=200, maxtime=None, verbose=2, stoppingfunc=None, 
-             maxload=0.5, interval=None, prerun=True, batch=True, mc=3, die=False, recalculate=True, strict=True, randseed=None):
+    def genBOCs(self, budgetratios=None, name=None, parsetname=None, progsetname=None, objectives=None, constraints=None,
+            absconstraints=None, proporigconstraints=None, maxiters=200, maxtime=None, verbose=2, stoppingfunc=None,
+            maxload=0.5, interval=None, prerun=True, batch=True, mc=3, die=False, recalculate=True, strict=True, randseed=None,
+            parallel=None, ncpus=None, finishtime=None):
         '''
         Just like genBOC, but run on each of the projects in the portfolio. See batchBOC() for explanation
         of kwargs.
@@ -142,9 +151,11 @@ class Portfolio(object):
         if objectives is None: objectives = self.objectives
         
         # All we need to do is run batchBOC on the portfolio's odict of projects
-        self.projects = batchBOC(projects=self.projects, budgetratios=budgetratios, name=name, parsetname=parsetname, progsetname=progsetname, objectives=objectives, 
-             constraints=constraints, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, 
-             maxload=maxload, interval=interval, prerun=prerun, batch=batch, mc=mc, die=die, recalculate=recalculate, strict=strict, randseed=randseed)
+        self.projects = batchBOC(projects=self.projects, budgetratios=budgetratios, name=name, parsetname=parsetname, progsetname=progsetname,
+            objectives=objectives, constraints=constraints, absconstraints=absconstraints, proporigconstraints=proporigconstraints,
+            maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, maxload=maxload, interval=interval,
+            prerun=prerun, batch=batch, mc=mc, die=die, recalculate=recalculate, strict=strict, randseed=randseed, parallel=parallel,
+            ncpus=ncpus, finishtime=finishtime)
              
         return None
         
@@ -796,7 +807,7 @@ def makegeoprojects(project=None, spreadsheetpath=None, destination=None, dosave
         newproject.data['numost'] = [[y*plhivratio['tot'][c] for y in x] for x in newproject.data['numost']]
         
         # Scale calibration
-        newproject.parsets[-1].pars['popsize'].i[:]  *= popratio[popname][c]
+        newproject.parsets[-1].pars['popsize'].m  *= popratio[popname][c] #TODO check change from ['popsize'].i[:] was appropriate
         newproject.parsets[-1].pars['initprev'].y[:] *= prevfactors[popname][c]
         newproject.parsets[-1].pars['numcirc'].y[:]  *= plhivratio['tot'][c]
         newproject.parsets[-1].pars['numtx'].y[:]    *= plhivratio['tot'][c]

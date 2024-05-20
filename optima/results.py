@@ -7,7 +7,7 @@ Version: 2018nov19
 from optima import OptimaException, Link, Settings, odict, pchip, plotpchip, sigfig # Classes/functions
 from optima import uuid, today, makefilepath, getdate, printv, dcp, objrepr, defaultrepr, sanitizefilename, sanitize # Printing/file utilities
 from optima import quantile, findinds, findnearest, promotetolist, promotetoarray, checktype # Numeric utilities
-from numpy import array, nan, zeros, arange, shape, maximum, log
+from numpy import array, nan, zeros, arange, shape, maximum, log, swapaxes
 from numbers import Number
 from xlsxwriter import Workbook
 
@@ -20,6 +20,15 @@ if six.PY3:
 prcstr = '!PERC'  # included as string in cells that should be formatted as percent
 condstr = '!COND'  # included as string in cells that should be coloured conditionally
 epsbudcov = 0.1 # The minimum budget or coverage amount to consider to be nonzero -- only used for budget comparisons
+
+__all__ = [
+    'Result',
+    'Resultset',
+    'Multiresultset',
+    'BOC',
+    'ICER',
+    'getresults'
+]
 
 
 class Result(object):
@@ -43,7 +52,7 @@ class Result(object):
 
 class Resultset(object):
     ''' Structure to hold results '''
-    def __init__(self, raw=None, name=None, pars=None, simpars=None, project=None, settings=None, data=None, parsetname=None, progsetname=None, budget=None, coverage=None, budgetyears=None, domake=True, quantiles=None, keepraw=False, verbose=2, doround=True):
+    def __init__(self, raw=None, name=None, pars=None, simpars=None, project=None, settings=None, data=None, parsetname=None, parsetuid=None, progsetname=None, budget=None, coverage=None, budgetyears=None, domake=True, quantiles=None, keepraw=False, verbose=2, doround=False, advancedtracking=False):
         # Basic info
         self.uid = uuid()
         self.created = today()
@@ -52,8 +61,10 @@ class Resultset(object):
         self.other = odict() # For storing other results -- not available in the interface
         self.keys = [0] # Used for comparison with multiresultsets -- 0 corresponds to e.g. self.main[<key>].tot[0]
         self.parsetname = parsetname
+        self.parsetuid = parsetuid
         self.progsetname = progsetname
-        
+        self.advancedtracking = advancedtracking
+
         # Turn inputs into lists if not already
         if raw is None: raise OptimaException('To generate results, you must feed in model output: none provided')
         simpars = promotetolist(simpars) # Force into being a list
@@ -63,7 +74,7 @@ class Resultset(object):
         if project is not None:
             if data is None: data = project.data # Copy data if not supplied -- DO worry if data don't exist!
             if settings is None: settings = project.settings
-        
+
         # Fundamental quantities -- populated by project.runsim()
         if keepraw: self.raw = raw # Keep raw, but only if asked
         if keepraw: self.simpars = simpars # ...likewise sim parameters
@@ -84,45 +95,65 @@ class Resultset(object):
         self.settings = settings if settings is not None else Settings()
         
         # Main results -- time series, by population
-        self.main['numinci']        = Result('New HIV infections')
-        self.main['numdeath']       = Result('HIV-related deaths')
-        self.main['numincibypop']   = Result('New HIV infections caused')
+        self.main['numinci']            = Result('New HIV infections')
+        self.main['numdeath']           = Result('HIV-related deaths')
+        self.main['numincibypop']       = Result('New HIV infections caused')
         
-        self.main['numplhiv']       = Result('PLHIV')
-        self.main['numaids']        = Result('People with AIDS')
-        self.main['numdiag']        = Result('Diagnosed PLHIV')
-        self.main['numevercare']    = Result('PLHIV initially linked to care')
-        self.main['numincare']      = Result('PLHIV in care')
-        self.main['numtreat']       = Result('PLHIV on treatment')
-        self.main['numsuppressed']  = Result('Virally suppressed PLHIV')
+        self.main['numplhiv']           = Result('PLHIV')
+        self.main['numaids']            = Result('People with AIDS')
+        self.main['numdiag']            = Result('Diagnosed PLHIV')
+        self.main['numevercare']        = Result('PLHIV initially linked to care')
+        self.main['numincare']          = Result('PLHIV in care')
+        self.main['numtreat']           = Result('PLHIV on treatment')
+        self.main['numsuppressed']      = Result('Virally suppressed PLHIV')
         
-        self.main['propdiag']       = Result('Diagnosed PLHIV (%)',                      ispercentage=True, defaultplot='total')
-        self.main['propplhivtreat'] = Result('Treated PLHIV (%)',                        ispercentage=True, defaultplot='total')
-        self.main['propplhivsupp']  = Result('Virally suppressed PLHIV (%)',             ispercentage=True, defaultplot='total')
-        self.main['propevercare']   = Result('Diagnosed PLHIV linked to care (%)',       ispercentage=True, defaultplot='total')
-        self.main['propincare']     = Result('Diagnosed PLHIV retained in care (%)',     ispercentage=True, defaultplot='total')
-        self.main['proptreat']      = Result('Diagnosed PLHIV on treatment (%)',         ispercentage=True, defaultplot='total')
-        self.main['propsuppressed'] = Result('Treated PLHIV with viral suppression (%)', ispercentage=True, defaultplot='total')
+        self.main['propdiag']           = Result('Diagnosed PLHIV (%)',                      ispercentage=True, defaultplot='total')
+        self.main['propplhivtreat']     = Result('Treated PLHIV (%)',                        ispercentage=True, defaultplot='total')
+        self.main['propplhivsupp']      = Result('Virally suppressed PLHIV (%)',             ispercentage=True, defaultplot='total')
+        self.main['propevercare']       = Result('Diagnosed PLHIV linked to care (%)',       ispercentage=True, defaultplot='total')
+        self.main['propincare']         = Result('Diagnosed PLHIV retained in care (%)',     ispercentage=True, defaultplot='total')
+        self.main['proptreat']          = Result('Diagnosed PLHIV on treatment (%)',         ispercentage=True, defaultplot='total')
+        self.main['propsuppressed']     = Result('Treated PLHIV with viral suppression (%)', ispercentage=True, defaultplot='total')
+        self.main['proppmtct']          = Result('HIV+ pregnant women receiving PMTCT (%)',  ispercentage=True, defaultplot='total')
         
-        self.main['prev']           = Result('HIV prevalence (%)',       ispercentage=True, defaultplot='population')
-        self.main['force']          = Result('HIV incidence (per 100 p.y.)', ispercentage=True, defaultplot='population')
-        self.main['numnewdiag']     = Result('New HIV diagnoses')
-        self.main['nummtct']        = Result('HIV+ births')
-        self.main['numhivbirths']   = Result('Births to HIV+ women')
-        self.main['numpmtct']       = Result('HIV+ women receiving PMTCT')
-        self.main['popsize']        = Result('Population size')
-        self.main['numdaly']        = Result('HIV-related DALYs')
+        self.main['prev']               = Result('HIV prevalence (%)',       ispercentage=True, defaultplot='population')
+        self.main['force']              = Result('HIV incidence (per 100 p.y.)', ispercentage=True, defaultplot='population')
+        self.main['numnewdiag']         = Result('New HIV diagnoses')
+        self.main['nummtct']            = Result('HIV+ births')
+        self.main['numhivbirths']       = Result('Births to HIV+ women')
+        self.main['numpmtct']           = Result('HIV+ women receiving PMTCT')
+        self.main['popsize']            = Result('Population size')
+        self.main['numdaly']            = Result('HIV-related DALYs')
 
-        self.other['adultprev']     = Result('Adult HIV prevalence (%)', ispercentage=True)
-        self.other['childprev']     = Result('Child HIV prevalence (%)', ispercentage=True)
-        self.other['numotherdeath'] = Result('Non-HIV-related deaths)')
-        self.other['numbirths']     = Result('Total births)')
-        
+        # numdiagpmtct and propdiagpmtct will only be non-zero for Optima version 2.12.0 and up
+        self.other['numdiagpmtct']       = Result('Number of diagnoses from ANC', defaultplot='stacked')
+        self.other['propdiagpmtct']      = Result('Proportion of diagnoses from ANC (%)', ispercentage=True, defaultplot='total')
+
+        self.other['numyll']            = Result('HIV-related YLL')
+        self.other['numyld']            = Result('HIV-related YLD')
+
+        self.other['adultprev']         = Result('Adult HIV prevalence (%)', ispercentage=True)
+        self.other['childprev']         = Result('Child HIV prevalence (%)', ispercentage=True)
+        self.other['numotherdeath']     = Result('Non-HIV-related deaths)')
+        self.other['numbirths']         = Result('Total births)')
+        self.other['numimmi']           = Result('New immigrants')
+        self.other['numimmiplhiv']      = Result('New PLHIV immigrants')
+        self.other['numemi']            = Result('New emigrants')
+        self.other['numemiplhiv']       = Result('New PLHIV emigrants')
+        if advancedtracking:
+            self.other['numnewdiagcd4']      = Result('New HIV diagnoses by CD4 count', defaultplot='stacked')
+            self.other['proplatediag']       = Result('Proportion of new HIV diagnoses with CD4<200 (%)', ispercentage=True, defaultplot='total')
+            self.other['propundxcd4lt200']   = Result('Proportion of undiagnosed PLHIV with CD4<200 (%)', ispercentage=True, defaultplot='total')
+            self.other['numincionpopbypop']  = Result('New HIV infections acquired from pop', defaultplot='population+stacked')
+            self.other['numtransitpopbypop'] = Result('HIV infections transitioned from pop', defaultplot='population+stacked')
+            self.other['numincimethods']     = Result('New HIV infections by method of transmission', defaultplot='population+stacked')
+            self.other['numinciallmethods']  = Result('New HIV infections by method of transmission (all)', defaultplot='population+stacked')
+
         # Add all health states
         for healthkey,healthname in zip(self.settings.healthstates, self.settings.healthstatesfull): # Health keys: ['susreg', 'progcirc', 'undx', 'dx', 'care', 'lost', 'usvl', 'svl']
             self.other['only'+healthkey]   = Result(healthname) # Pick out only people in these health states
             
-        if domake: self.make(raw, verbose=verbose, quantiles=quantiles, doround=doround)
+        if domake: self.make(raw, verbose=verbose, quantiles=quantiles, doround=doround, advancedtracking=advancedtracking)
     
     
     def __repr__(self):
@@ -216,7 +247,7 @@ class Resultset(object):
         return R
             
         
-    def make(self, raw, quantiles=None, annual=True, verbose=2, doround=True, lifeexpectancy=None, discountrate=None):
+    def make(self, raw, quantiles=None, annual=True, verbose=2, doround=False, lifeexpectancy=None, discountrate=None, yllconstrained=None, advancedtracking=False):
         """
         Gather standard results into a form suitable for plotting with uncertainties.
         Life expectancy is measured in years, and the discount rate is in absolute
@@ -230,6 +261,8 @@ class Resultset(object):
         if quantiles      is None: quantiles      = [0.5, 0.25, 0.75] # Can't be a kwarg since mutable
         if lifeexpectancy is None: lifeexpectancy = 80 # 80 year life expectancy
         if discountrate   is None: discountrate   = 0.03 # Discounting of 3% for YLL only
+        if yllconstrained is None: yllconstrained = False # False by default (count all YLL for deaths incurred during model run), True = count only YLL within the timeframe of the model run, to be used with care if at all
+        
         tvec = dcp(raw[0]['tvec'])
         eps = self.settings.eps
         if annual is False: # Decide what to do with the time vector
@@ -265,7 +298,7 @@ class Resultset(object):
                 low = dcp(rawdata)
                 high = dcp(rawdata)
             for thisdata in [best, low, high]: # Combine in loop, but actual operate on these -- thanks, pass-by-reference!
-                for p in range(len(array(thisdata))):
+                for p in range(len(array(thisdata, dtype=object))):
                     if len(array(thisdata[p]))!=len(self.datayears):
                         thisdata[p] = nan+zeros(len(self.datayears)) # Replace with NaN if an assumption
             processed = array([best, low, high]) # For plotting uncertainties
@@ -299,19 +332,29 @@ class Resultset(object):
         alldeaths    = assemble('death')
         otherdeaths  = assemble('otherdeath') 
         alldiag      = assemble('diag')
+        alldiagpmtct = assemble('diagpmtct')
         allmtct      = assemble('mtct')
         allhivbirths = assemble('hivbirths')
         allbirths    = assemble('births')
         allpmtct     = assemble('pmtct')
+        allimmi      = assemble('immi')
+        allemi       = assemble('emigration')
         allplhiv     = self.settings.allplhiv
         allsus       = self.settings.sus
         allaids      = self.settings.allaids
         alldx        = self.settings.alldx
+        undx         = self.settings.undx
         allevercare  = self.settings.allevercare
         allcare      = self.settings.allcare
         alltx        = self.settings.alltx
         svl          = self.settings.svl
+        aidsind      = self.settings.aidsind
         data         = self.data
+        if advancedtracking:
+            alldiagcd4         = assemble('diagcd4')
+            alltransitpopbypop = assemble('transitpopbypop')
+            allincionpopbypop  = assemble('incionpopbypop')
+            allincimethods     = assemble('incimethods')
 
         # Actually do calculations
         self.main['prev'].pops = process(allpeople[:,allplhiv,:,:][:,:,:,indices].sum(axis=1) / (eps+allpeople[:,:,:,indices].sum(axis=1)), percent=True) # Axis 1 is health state
@@ -329,8 +372,8 @@ class Resultset(object):
             self.main['numinci'].datatot = processdata(data['optnuminfect'], uncertainty=True)
             self.main['numinci'].estimate = True # It's not real data, just an estimate
         
-        self.main['numincibypop'].pops = process(allincibypop[:,:,indices])
-        self.main['numincibypop'].tot  = process(allincibypop[:,:,indices].sum(axis=1)) # Axis 1 is populations
+        self.main['numincibypop'].pops = process(allincibypop[:,:,:,indices].sum(axis=1)) # Axis 1 is health state
+        self.main['numincibypop'].tot  = process(allincibypop[:,:,:,indices].sum(axis=(1,2))) # Axis 2 is populations
         if data is not None: 
             self.main['numincibypop'].datatot = processdata(data['optnuminfect'], uncertainty=True)
             self.main['numincibypop'].estimate = True # It's not real data, just an estimate
@@ -343,6 +386,9 @@ class Resultset(object):
 
         self.main['numpmtct'].pops = process(allpmtct[:,:,indices])
         self.main['numpmtct'].tot  = process(allpmtct[:,:,indices].sum(axis=1))
+        if data is not None:
+            self.main['numpmtct'].datatot = processdata(data['numpmtct'], uncertainty=False)
+            self.main['numpmtct'].estimate = False # It's real data, not just an estimate
 
         self.main['numnewdiag'].pops = process(alldiag[:,:,indices])
         self.main['numnewdiag'].tot  = process(alldiag[:,:,indices].sum(axis=1)) # Axis 1 is populations
@@ -350,8 +396,8 @@ class Resultset(object):
             self.main['numnewdiag'].datatot = processdata(data['optnumdiag'], uncertainty=True)
             self.main['numnewdiag'].estimate = False # It's real data, not just an estimate
         
-        self.main['numdeath'].pops = process(alldeaths[:,:,:,indices].sum(axis=1))
-        self.main['numdeath'].tot  = process(alldeaths[:,:,:,indices].sum(axis=(1,2))) # Axis 1 is populations
+        self.main['numdeath'].pops = process(alldeaths[:,:,:,indices].sum(axis=1))  # Axis 1 is health state
+        self.main['numdeath'].tot  = process(alldeaths[:,:,:,indices].sum(axis=(1,2))) # Axis 2 is populations
         if data is not None: 
             self.main['numdeath'].datatot = processdata(data['optdeath'], uncertainty=True)
             self.main['numdeath'].estimate = True # It's not real data, just an estimate
@@ -406,13 +452,17 @@ class Resultset(object):
         self.main['propplhivsupp'].pops = process(allpeople[:,svl,:,:][:,:,:,indices].sum(axis=1)/maximum(allpeople[:,allplhiv,:,:][:,:,:,indices].sum(axis=1),eps), percent=True) 
         self.main['propplhivsupp'].tot = process(allpeople[:,svl,:,:][:,:,:,indices].sum(axis=(1,2))/maximum(allpeople[:,allplhiv,:,:][:,:,:,indices].sum(axis=(1,2)),eps), percent=True) # Axis 1 is populations
 
+        self.main['proppmtct'].pops = process(allpmtct[:,:,indices]/maximum(allhivbirths[:,:,indices],eps), percent=True)
+        self.main['proppmtct'].tot  = process(allpmtct[:,:,indices].sum(axis=1)/maximum(allhivbirths[:,:,indices].sum(axis=1),eps), percent=True) # Axis 1 is populations
+
         self.main['popsize'].pops = process(allpeople[:,:,:,indices].sum(axis=1))
         self.main['popsize'].tot = process(allpeople[:,:,:,indices].sum(axis=(1,2)))
         if data is not None: 
             self.main['popsize'].datatot  = processtotalpopsizedata(self, data['popsize'])
             self.main['popsize'].datapops = processdata(data['popsize'], uncertainty=True, bypop=True)
 
-        
+
+
         # Calculate DALYs
         
         ## Years of life lost
@@ -420,15 +470,30 @@ class Resultset(object):
         for pk,popkey in enumerate(self.popkeys): # Loop over each population
             meanage = self.pars['age'][pk].mean()
             potentialyearslost = max(0,lifeexpectancy-meanage) # Don't let this go negative!
-            if discountrate>0 and discountrate<1: # Make sure it has reasonable bounds
-                denominator = log(1-discountrate) # Start calculating the integral of (1-discountrate)**potentialyearslost
-                numerator = (1-discountrate)**potentialyearslost - 1 # Minus 1 for t=0
-                discountedyearslost = numerator/denominator # See https://en.wikipedia.org/wiki/Lists_of_integrals#Exponential_functions
-            elif discountrate==0: # Nothing to discount
-                discountedyearslost = potentialyearslost
+            
+            if yllconstrained:
+                numtimes = len(alldeaths[0][0][0]) #number of timesteps in the raw results
+                raw_dt = 1./int((numtimes-1)/(len(self.tvec)-1)) #TODO replace this
+                potentialyearslost_array = [min(potentialyearslost, (numtimes-timestep)*raw_dt) for timestep in range(0, numtimes)]
+                if discountrate>0 and discountrate<1: # Make sure it has reasonable bounds
+                    discountedyearslost_array = [((1-discountrate)**pyl - 1)/log(1-discountrate) for pyl in potentialyearslost_array]
+                elif discountrate==0: # Nothing to discount
+                    discountedyearslost_array = potentialyearslost_array
+                else:
+                    raise OptimaException('Invalid discount rate (%s)' % discountrate)
+                yllpops[:,pk,:] *= discountedyearslost_array # Multiply by the number of potential years of life lost which can be different in each timestep.
+                
             else:
-                raise OptimaException('Invalid discount rate (%s)' % discountrate)
-            yllpops[:,pk,:] *= discountedyearslost # Multiply by the number of potential years of life lost
+                if discountrate>0 and discountrate<1: # Make sure it has reasonable bounds
+                    denominator = log(1-discountrate) # Start calculating the integral of (1-discountrate)**potentialyearslost
+                    numerator = (1-discountrate)**potentialyearslost - 1 # Minus 1 for t=0
+                    discountedyearslost = numerator/denominator # See https://en.wikipedia.org/wiki/Lists_of_integrals#Exponential_functions
+                elif discountrate==0: # Nothing to discount
+                    discountedyearslost = potentialyearslost
+                else:
+                    raise OptimaException('Invalid discount rate (%s)' % discountrate)
+                yllpops[:,pk,:] *= discountedyearslost # Multiply by the number of potential years of life lost
+            
         ylltot = yllpops.sum(axis=1) # Sum over populations
         
         ## Years lived with disability
@@ -449,6 +514,11 @@ class Resultset(object):
         self.main['numdaly'].pops = process(dalypops[:,:,indices])
         self.main['numdaly'].tot  = process(dalytot[:,indices])
         
+        self.other['numyll'].pops = process(yllpops[:,:,indices])
+        self.other['numyld'].pops = process(yldpops[:,:,indices])
+        self.other['numyll'].tot  = process(ylltot[:,indices])
+        self.other['numyld'].tot  = process(yldtot[:,indices])
+        
         
         ## Other indicators
         upperagelims = self.pars['age'][:,1] # All populations, but upper range
@@ -466,7 +536,59 @@ class Resultset(object):
         
         self.other['numbirths'].pops = process(allbirths[:,:,indices])
         self.other['numbirths'].tot = process(allbirths[:,:,indices].sum(axis=1))
-        
+
+        self.other['numimmi'].pops = process(allimmi[:,:,:,indices].sum(axis=1))  # Axis 1 is health state
+        self.other['numimmi'].tot  = process(allimmi[:,:,:,indices].sum(axis=(1,2)))  # Axis 2 is population
+
+        self.other['numemi'].pops = process(allemi[:,:,:,indices].sum(axis=1))  # Axis 1 is health state
+        self.other['numemi'].tot  = process(allemi[:,:,:,indices].sum(axis=(1,2)))  # Axis 2 is population
+
+        self.other['numimmiplhiv'].pops = process(allimmi[:,allplhiv,:,:][:,:,:,indices].sum(axis=1))  # Axis 1 is health state
+        self.other['numimmiplhiv'].tot  = process(allimmi[:,allplhiv,:,:][:,:,:,indices].sum(axis=(1, 2)))   # Axis 2 is population
+
+        self.other['numemiplhiv'].pops = process(allemi[:,allplhiv,:,:][:,:,:,indices].sum(axis=1))  # Axis 1 is health state
+        self.other['numemiplhiv'].tot  = process(allemi[:,allplhiv,:,:][:,:,:,indices].sum(axis=(1, 2)))   # Axis 2 is population
+
+        self.other['numdiagpmtct'].pops = process(alldiagpmtct[:,:,indices])
+        self.other['numdiagpmtct'].tot  = process(alldiagpmtct[:,:,indices].sum(axis=1))  # Axis 1 is populations
+
+        self.other['propdiagpmtct'].pops = process(alldiagpmtct[:,:,indices]/maximum(alldiag[:,:,indices],eps))
+        self.other['propdiagpmtct'].tot  = process(alldiagpmtct[:,:,indices].sum(axis=1)/maximum(alldiag[:,:,indices].sum(axis=1),eps))  # Axis 1 is populations
+
+        if advancedtracking:
+            self.other['numnewdiagcd4'].pops = process(swapaxes(alldiagcd4[:,:,:,indices],1,2)) # In alldiagcd4, axis 1 is CD4 count, so we make axis 1 population, axis 2 CD4 count
+            self.other['numnewdiagcd4'].tot  = process(alldiagcd4[:,:,:,indices].sum(axis=2)) # Sum over populations
+            if data is not None:
+                self.other['numnewdiagcd4'].datatot = processdata(data['optnumdiag'], uncertainty=True)
+                self.other['numnewdiagcd4'].estimate = False  # It's real data, not just an estimate
+
+            # Assume CD4<200 is anything after aidsind (aidsind = location of 'gt50' = 50<CD4<200)
+            self.other['proplatediag'].pops = process(alldiagcd4[:,aidsind:,:,:][:,:,:,indices].sum(axis=1)/maximum(alldiag[:,:,indices],eps)) # Axis 1 is cd4 state
+            self.other['proplatediag'].tot  = process(alldiagcd4[:,aidsind:,:,:][:,:,:,indices].sum(axis=(1,2))/maximum(alldiag[:,:,indices].sum(axis=1),eps))  # Axis 1 is populations
+
+            undxcd4lt200 = array(undx)[aidsind:] # Assume anything after aidsind (aidsind = location of 'gt50' = 50<CD4<200)
+            self.other['propundxcd4lt200'].pops = process(allpeople[:,undxcd4lt200,:,:][:,:,:,indices].sum(axis=1)/maximum(allpeople[:,undx,:,:][:,:,:,indices].sum(axis=1),eps))
+            self.other['propundxcd4lt200'].tot  = process(allpeople[:,undxcd4lt200,:,:][:,:,:,indices].sum(axis=(1,2))/maximum(allpeople[:,undx,:,:][:,:,:,indices].sum(axis=(1,2)),eps))
+
+            self.other['numincionpopbypop'].pops = process(allincionpopbypop[:, :, :, :, indices].sum(axis=2))  # Axis 2 is health state of causers
+            self.other['numincionpopbypop'].tot  = process(allincionpopbypop[:, :, :, :, indices].sum(axis=(2, 3)))  # Axis 3 is causer populations
+            # Uncomment the lines below to check that numincionpopbypop is being calculated properly compared with numinci - it will show as data on the plots
+            # self.other['numincionpopbypop'].datatot = process(array([allinci[:,:,indices],allinci[:,:,indices],allinci[:,:,indices]])) # summing over both causing state and population gives total per acquired population
+            # self.other['numincionpopbypop'].estimate = False  # Not an estimate because the model produced the "data" - should match up
+
+            self.other['numinciallmethods'].pops = process(swapaxes(allincimethods[:,:,:,:,:,indices].sum(axis=(3,4)),1,2))  # Axis 3 is health state of causers, axis 4 is causer population
+                                                                    # put population acquired into axis 1, method into axis 2
+            self.other['numinciallmethods'].tot  = process(allincimethods[:,:,:,:,:,indices].sum(axis=(2,3,4)))  # Sum over everything except, axis 0:scenario, axis 1:method, axis 5:time
+
+            self.other['numincimethods'].pops = process(swapaxes(swapaxes(array([self.other['numinciallmethods'].pops[:,:,methodinds,:].sum(axis=2) for methodinds in self.settings.methodindsgroups]),0,1),1,2))
+            self.other['numincimethods'].tot  = process(swapaxes(         array([self.other['numinciallmethods'].tot[:,methodinds,:].sum(axis=1) for methodinds in self.settings.methodindsgroups])   ,0,1))
+            # Uncomment the lines below to check that numincimethods is being calculated properly compared with numinci - it will show as data on the plots
+            # self.other['numincimethods'].datatot = process(array([allinci[:,:,indices],allinci[:,:,indices],allinci[:,:,indices]])) # summing over both causing state and population gives total per acquired population
+            # self.other['numincimethods'].estimate = False  # Not an estimate because the model produced the "data" - should match up
+
+            self.other['numtransitpopbypop'].pops = process(alltransitpopbypop[:,:,:,:,indices].sum(axis=2))  # Axis 2 is health state of causers
+            self.other['numtransitpopbypop'].tot  = process(alltransitpopbypop[:,:,:,:,indices].sum(axis=(2, 3)))  # Axis 3 is causer populations
+
         # Add in each health state
         for healthkey in self.settings.healthstates: # Health keys: ['susreg', 'progcirc', 'undx', 'dx', 'care', 'lost', 'usvl', 'svl']
             healthinds = getattr(self.settings, healthkey)
@@ -475,7 +597,7 @@ class Resultset(object):
 
         return None
 
-    def export(self, filename=None, folder=None, bypop=True, sep=',', ind=None, key=None, sigfigs=3, writetofile=True, asexcel=True, verbose=2):
+    def export(self, filename=None, folder=None, bypop=True, sep=',', ind=None, key=None, sigfigs=None, writetofile=True, asexcel=True, verbose=2):
         """ Method for exporting results to an Excel or CSV file """
 
         # Handle export by either index or key -- WARNING, still inelegant at best! Accepts key or ind, not both
@@ -503,7 +625,7 @@ class Resultset(object):
                 for t in range(npts):
                     if '(per 100 p.y.)' in self.main[mainkey].name: outputstr += ('%s' + sep) % sigfig(100 * data[t], sigfigs=sigfigs)
                     elif self.main[mainkey].ispercentage:           outputstr += ('%s'+prcstr+sep) % sigfig(data[t], sigfigs=sigfigs)
-                    else:                                           outputstr += ('%i'+sep) % data[t]
+                    else:                                           outputstr += ('%s'+sep) % sigfig(data[t], sigfigs=sigfigs)
 
         # Handle budget and coverage
         thisbudget = []
@@ -788,7 +910,7 @@ class Multiresultset(Resultset):
                         missingattrs[rsetattr] = [i] # It doesn't exist: create a list of indices to loop over
                     else:
                         missingattrs[rsetattr].append(i) # It exists already: append this index
-        for attr,indlist in missingattrs.iteritems(): # Loop over all of the attributes identified as missing
+        for attr,indlist in missingattrs.items(): # Loop over all of the attributes identified as missing
             if attr not in ['budget','coverage']: # Don't add the single budgets and coverages (WARNING, COULD DO THIS BETTER)
                 setattr(self, attr, odict()) # Create a new odict -- e.g. self.rawoutcomes = odict()
                 for ind in indlist: # Loop over each of the stored indices
@@ -863,9 +985,9 @@ class Multiresultset(Resultset):
                 outputstr += thisoutput
                 outputstr += '\n'*5
 
-        if asexcel and hasattr(self, 'optim'): # Only produce a comparsion if it's an optimization and it's for Excel
+        if asexcel and (hasattr(self, 'optim') or self.name == 'scenarios'): # Only produce a comparsion if it's an optimization or scenarios and it's for Excel
             thisoutput = self.comparebudgets()
-            outputdict['Comparison'] = thisoutput
+            if thisoutput is not None: outputdict['Comparison'] = thisoutput
         
         if writetofile: 
             ext = 'xlsx' if asexcel else 'csv'
@@ -884,43 +1006,80 @@ class Multiresultset(Resultset):
         
         
     def comparebudgets(self, sep=',', sigfigs=3):
-        """ Make a separate sheet in the workbook with a comparison of budget and coverage for an optimization """
-        outputstr = sep.join(['Programs', 'Baseline budget', '% baseline budget', 
-                              'Optimized budget', '% optimized budget', '% budget change',
-                              'Baseline coverage', 'Optimized coverage', '% coverage change'])  # Create headers
-        baselinetotal = sum(self.budgets.findbykey('Base').values())
-        optimtotal    = sum(self.budgets.findbykey('Optim').values())
-        for prog, baselinebud in self.budgets.findbykey('Base').items():
+        """ Make a separate sheet in the workbook with a comparison of budget and coverage for an optimization or scenarios """
+        def select_zeroth(possible_list):
+            if checktype(possible_list, 'arraylike'):
+                return possible_list[0]  # Only pull out the first element if it's an array/list
+            return possible_list
+
+        scen_keys = self.budgets.keys()  # Only include scenarios/results with budgets ie no parameter scenarios
+        if len(scen_keys) == 0:
+            return None ### Don't put anything if there is no budget scenarios
+        scen_keys = sorted(scen_keys) # sort alphabetically since baseline < optimization baselin < optimized
+
+        baseline_key = self.budgets.findkeys('aseline')  ### Baseline scenario looks for "aseline"
+        baseline_key = sorted(baseline_key)[0] if len(baseline_key) > 0 else 0
+
+        # Get all the program names as different results might have different program
+        all_progs = set(self.budgets[0].keys())
+        for scen_key in scen_keys:
+            all_progs = all_progs.union(self.budgets[scen_key].keys())
+        all_progs = sorted(all_progs) # Sort in alphabetical order
+
+        # Make the output
+        outputstr = sep.join(['Output', 'Programs'] + list(scen_keys))  # Create headers
+        outputstr += '\n'+'\n'
+        # Budgets first
+        for prog in all_progs:
+            prog_budgets = [select_zeroth(self.budgets[scen_key][prog]) for scen_key in scen_keys]
+            outputstr += sep.join(['Budget', prog]) + sep
+            outputstr += sep.join(map(str,prog_budgets))
             outputstr += '\n'
+        total_budgets = {scen_key: select_zeroth(self.budgets[scen_key][:].sum(axis=0)) for scen_key in scen_keys}
+        outputstr += sep.join(['Budget', 'TOTAL']) + sep
+        outputstr += sep.join(map(str, total_budgets.values()))
+        outputstr += '\n'+'\n'
 
-            optimbud = self.budgets.findbykey('Optim')[prog]
-            baselinecov = self.coverages.findbykey('Base')[prog]
-            if checktype(baselinecov, 'arraylike'):
-                baselinecov = baselinecov[0]  # Only pull out the first element if it's an array/list
-            if baselinecov is None: baselinecov = 0  # Just reset
-            optimcov = self.coverages.findbykey('Optim')[prog]
-            if checktype(optimcov, 'arraylike'):
-                optimcov = optimcov[0]  # Only pull out the first element if it's an array/list
-            if optimcov is None: optimcov = 0  # Just reset
-
-            budchange = 0.0  # By default, assume no change
-            covchange = 0.0
-            if baselinebud > epsbudcov: budchange = (optimbud - baselinebud) / baselinebud  # Ensure budget to divide by is large enough
-            if baselinecov > epsbudcov: covchange = (optimcov - baselinecov) / baselinecov
-            baselinetotalstr = '%f' % (baselinebud/baselinetotal)
-            optimtotalstr    = '%f' % (optimbud/optimtotal)
-            covchangestr     = '%f' % covchange
-            budchangestr     = '%f' % budchange
-            outputstr += sanitizeseps(prog) + sep + str(baselinebud) + sep + \
-                         baselinetotalstr + prcstr + sep + \
-                         str(optimbud) + sep + \
-                         optimtotalstr + prcstr + sep + \
-                         budchangestr + prcstr + condstr + sep + \
-                         str(baselinecov) + sep + \
-                         str(optimcov) + sep + \
-                         covchangestr + prcstr + condstr
+        # % of budget
+        for prog in all_progs:
+            prog_budgets_percent = [select_zeroth(self.budgets[scen_key][prog]) / total_budgets[scen_key] if total_budgets[scen_key] >0 else ""
+                                        for scen_key in scen_keys]
+            outputstr += sep.join(['% of budget', prog]) + sep
+            outputstr += sep.join([str(out)+prcstr for out in prog_budgets_percent])
+            outputstr += '\n'
         outputstr += '\n'
-        outputstr += sep.join(['Total', str(baselinetotal), '', str(optimtotal), '', '', '', '', ''])
+
+        # % budget change from baseline
+        for prog in all_progs:
+            baseline_prog_budget = select_zeroth(self.budgets[baseline_key][prog])
+            prog_budgets_percent_change = [select_zeroth(self.budgets[scen_key][prog]-baseline_prog_budget) / baseline_prog_budget if baseline_prog_budget > 0 else nan
+                                    for scen_key in scen_keys]
+            outputstr += sep.join(['% budget change from baseline', prog]) + sep
+            outputstr += sep.join([str(out)+prcstr+condstr for out in prog_budgets_percent_change])
+            outputstr += '\n'
+        total_budget_changes = [(total_budgets[scen_key] - total_budgets[baseline_key]) / total_budgets[baseline_key]  if total_budgets[baseline_key] > 0 else nan
+                                   for scen_key in scen_keys]
+        outputstr += sep.join(['% budget change from baseline', 'TOTAL']) + sep
+        outputstr += sep.join([str(out)+prcstr+condstr for out in total_budget_changes])
+        outputstr += '\n'+'\n'
+
+        # coverage
+        for prog in all_progs:
+            prog_coverages = [select_zeroth(self.coverages[scen_key][prog]) for scen_key in scen_keys]
+            outputstr += sep.join(['Coverage', prog]) + sep
+            outputstr += sep.join(map(str, prog_coverages))
+            outputstr += '\n'
+        outputstr += '\n'
+
+        # % coverage change from baseline
+        for prog in all_progs:
+            baseline_prog_coverage = select_zeroth(self.coverages[baseline_key][prog])
+            prog_coverages_percent_change = [select_zeroth(self.coverages[scen_key][prog]-baseline_prog_coverage) / baseline_prog_coverage if baseline_prog_coverage > 0 else nan
+                                    for scen_key in scen_keys]
+            outputstr += sep.join(['% coverage change from baseline', prog]) + sep
+            outputstr += sep.join([str(out)+prcstr+condstr for out in prog_coverages_percent_change])
+            outputstr += '\n'
+        outputstr += '\n'
 
         return outputstr
 
@@ -928,7 +1087,7 @@ class Multiresultset(Resultset):
 class BOC(object):
     ''' Structure to hold a budget and outcome array for geospatial analysis'''
     
-    def __init__(self, name='boc', x=None, y=None, budgets=None, defaultbudget=None, objectives=None, constraints=None, parsetname=None, progsetname=None):
+    def __init__(self, name='boc', x=None, y=None, budgets=None, defaultbudget=None, objectives=None, constraints=None, absconstraints=None, proporigconstraints=None, parsetname=None, progsetname=None):
         self.uid = uuid()
         self.created = today()
         self.x = x if x else [] # A list of budget totals
@@ -944,7 +1103,9 @@ class BOC(object):
         self.regionoptimbudget = None # The region-optimized budget, pre-GA
         self.gaoptimbudget = None # The optimized budget, assigned by GA
         self.objectives = objectives # Specification for what outcome y represents (objectives['budget'] excluded)
-        self.constraints = constraints # Likewise...
+        self.constraints = constraints # We don't need to give default constraints since we just pass them to the optim anyway
+        self.absconstraints = absconstraints
+        self.proporigconstraints = proporigconstraints
         self.name = name # Required by rmresult in Project.
 
     def __repr__(self):
@@ -1084,7 +1245,7 @@ def exporttoexcel(filename=None, outdict=None):
     Little function to format an output results string nicely for Excel
     Expects an odict of output strings.
     """
-    workbook = Workbook(filename)
+    workbook = Workbook(filename, options={'nan_inf_to_errors': True})
     sheetnames = [] # Store existing sheet names to avoid collisions
     collisions = 0 # Keep track of the number of collisions between worksheet names
     maxlength = 31 # Excel's limitation of sheet name length
@@ -1097,7 +1258,8 @@ def exporttoexcel(filename=None, outdict=None):
             sheetname = sheetname[:maxlength-1] + '~'
         if sheetname in sheetnames:
             collisions += 1
-            sheetname = sheetname[:-3] + '~%0.2i' % collisions
+            collisionchars = 4 if collisions >= 100 else 3
+            sheetname = sheetname[:-collisionchars] + '~%0.2i' % collisions
         sheetnames.append(sheetname) # Store final sheetname
 
         worksheet = workbook.add_worksheet(sheetname)  # A valid filename should also be a valid Excel key
@@ -1110,7 +1272,7 @@ def exporttoexcel(filename=None, outdict=None):
         formats = dict()
         formats['plain'] = workbook.add_format({})
         formats['bold'] = workbook.add_format({'bg_color': colors['edgyblue'], 'bold': True})
-        formats['number'] = workbook.add_format({'bg_color': colors['fadedstrawberry'], 'num_format': 0x04})
+        formats['number'] = workbook.add_format({'bg_color': colors['fadedstrawberry'], 'num_format': 0x00})
         formats['percent'] = workbook.add_format({'bg_color': colors['fadedstrawberry'], 'num_format': 0x09})
         formats['header'] = workbook.add_format({'bg_color': colors['gentlegreen'], 'color': colors['white'], 'bold': True})
         formats['increase'] = workbook.add_format({'bg_color': colors['increasegreen'], 'num_format': 0x09})

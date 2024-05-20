@@ -37,7 +37,13 @@ define(
       text = val2str(val, 1E9, 'b')
     } else if (val >= 1E6) {
       text = val2str(val, 1E6, 'm')
-    } else if (val >= 3E3) {
+    } else if (val >= 3E3) {  // 3000 so years like 2022 don't get turned into 2k
+      text = val2str(val, 1E3, 'k')
+    } else if (val <= -1E9) {
+      text = val2str(val, 1E9, 'b')
+    } else if (val <= -1E6) {
+      text = val2str(val, 1E6, 'm')
+    } else if (val <= -1E3) {
       text = val2str(val, 1E3, 'k')
     }
     return text;
@@ -50,6 +56,12 @@ define(
     } else if (val >= 1E6) {
       text = val2str(val, 1E6, 'm')
     } else if (val >= 1E3) {
+      text = val2str(val, 1E3, 'k')
+    } else if (val <= -1E9) {
+      text = val2str(val, 1E9, 'b')
+    } else if (val <= -1E6) {
+      text = val2str(val, 1E6, 'm')
+    } else if (val <= -1E3) {
       text = val2str(val, 1E3, 'k')
     }
     return text;
@@ -88,7 +100,7 @@ define(
     }
   }
 
-  function reformatMpld3FigsInElement($element, nLegend) {
+  function reformatMpld3FigsInElement($element, nLegend, xlabels, ylabels) {
 
     $element.find('svg.mpld3-figure').each(function () {
       // Match the size of the figure to the wrapping svg element
@@ -116,24 +128,75 @@ define(
       addLineToLegendLabel($svgFigure, nLegend);
     });
 
+    function isNumeric(a) {
+      return !isNaN(a) && // use type coercion to parse the _entirety_ of the string (`parseFloat` alone does not do this)...
+             !isNaN(parseFloat(a)) // ...and ensure strings of whitespace fail
+    }
+
+    var useBEylabels = false;
+    $.each(ylabels, function (i, ylabel) {
+        var textBE = ylabel.replace(/k|m|b|,/g, '');
+        if (!isNumeric(textBE)) {   // We choose the BE labels if any one of them is not a number
+            useBEylabels = true;
+        }
+    });
+    var useBExlabels = false;
+    $.each(xlabels, function (i, xlabel) {
+        var textBE = xlabel.replace(/k|m|b|,/g, '');
+        if (!isNumeric(textBE)) {   // We choose the BE labels if any one of them is not a number
+            useBExlabels = true;
+        }
+    });
+
     // reformat y-ticks
     var $yaxis = $element.find('.mpld3-yaxis');
     var $labels = $yaxis.find('g.tick > text');
+
+    var i = 0;
     $labels.each(function () {
       var $label = $(this);
-      var text = $label.text().replace(/,/g, '');
-      var newText = reformatYTickStr(text);
-      $label.text(newText);
+      if (useBEylabels) {
+        if (i < ylabels.length) {
+            var textBE = ylabels[i].replace(/,/g, '');
+            newTextBE = reformatYTickStr(textBE);
+            $label.text(newTextBE);
+        } else {
+            useBEylabels = false
+            console.log('WARNING: FE has length ' + ($labels.length) + ' ylabels but BE has length ' + (ylabels.length));
+            console.log({'FE':$labels,'BE':ylabels});
+        }
+      }
+      if (!useBEylabels) {
+        var textorig = $label.text().replace(/,/g, '');
+        newTextorig = reformatYTickStr(textorig);
+        $label.text(newTextorig);
+      }
+      i = i + 1;
     });
 
     // reformat x-ticks
     var $xaxis = $element.find('.mpld3-xaxis');
     var $labels = $xaxis.find('g.tick > text');
+    var i = 0;
     $labels.each(function () {
       var $label = $(this);
-      var text = $label.text().replace(/,/g, '');
-      var newText = reformatXTickStr(text);
-      $label.text(newText);
+      if (useBExlabels) {
+        if (i < xlabels.length) {
+            var textBE = xlabels[i].replace(/,/g, '');
+            newTextBE = reformatXTickStr(textBE);
+            $label.text(newTextBE);
+        } else {
+            useBExlabels = false
+            console.log('WARNING: FE has length ' + ($labels.length) + ' xlabels but BE has length ' + (xlabels.length));
+            console.log({'FE':$labels,'BE':xlabels});
+        }
+      }
+      if (!useBExlabels) {
+        var textorig = $label.text().replace(/,/g, '');
+        newTextorig = reformatXTickStr(textorig);
+        $label.text(newTextorig);
+      }
+      i = i + 1;
     });
   }
 
@@ -269,7 +332,7 @@ define(
             }
 
             mpld3.draw_figure(attrs.chartId, figure);
-            reformatMpld3FigsInElement($element, nLegend);
+            reformatMpld3FigsInElement($element, nLegend, figure.xlabels, figure.ylabels);  // Very hacky replacement of the ylabels that got lost in the translation in the BE (see comments !~! in the BE)
 
             if (!_.isUndefined(initWidth)) {
               changeWidthOfSvg($element.find('svg'), initWidth);
@@ -288,7 +351,7 @@ define(
     };
   });
 
-  module.directive('optimaGraphs', function (toastr, rpcService, RzSliderOptions) {
+  module.directive('optimaGraphs', function (toastr, rpcService, RzSliderOptions, projectService) {
     return {
       scope: { 'graphs':'=' },
       templateUrl: './js/modules/charts/optima-graphs.html?cacheBust=xxx',
@@ -300,7 +363,7 @@ define(
 
           scope.state = {
             slider1: {
-              value: 0.48,
+              value: projectService.getGraphSettings().figwidth,
               options: {
                 floor: 0.1,
                 ceil: 1,
@@ -310,8 +373,8 @@ define(
               }
             },
               slider2: {
-                value: 0.8,
-                currentValue: 0.8, // To look at changes
+                value: projectService.getGraphSettings().fontsize,
+                currentValue: projectService.getGraphSettings().fontsize, // To look at changes
                 options: {
                   floor: 0.1,
                   ceil: 1,
@@ -484,12 +547,18 @@ define(
             .each(function(i, svg) {
               changeWidthOfSvg(svg, width);
             });
+          settings = projectService.getGraphSettings();
+          settings.figwidth = scope.state.slider1.value;
+          projectService.setGraphSettings(settings);
         };
 
         // Update the grahps, but only if the font size has actually changed -- called by the "Font" slider
         scope.changeFontSize = function() {
           if (scope.state.slider2.currentValue !== scope.state.slider2.value) {
             scope.state.slider2.currentValue = scope.state.slider2.value;
+            settings = projectService.getGraphSettings();
+            settings.fontsize = scope.state.slider2.currentValue;
+            projectService.setGraphSettings(settings);
             scope.updateGraphs();
           }
 

@@ -87,11 +87,12 @@ if 'parametercheck' in tests:
     
     parsonly = set([
     'actscas', 'actscom', 'actsinj', 'actsreg', 'age', 'transnorm',
-    'condcas', 'condcom', 'condreg', 'numcirc',
+    'condcas', 'condcom', 'condreg',
     'female', 'force', 'inhomo', 'initprev','hivdeath', 
     'propdx','propcare','proptx','propsupp','proppmtct',
     'injects', 'male', 'popkeys', 'fromto', 'transmatrix',
-    'fixproppmtct', 'fixpropsupp', 'fixpropdx', 'fixpropcare', 'fixproptx'])
+    'fixproppmtct', 'fixpropsupp', 'fixpropdx', 'fixpropcare', 'fixproptx',
+    'relhivbirth', 'forcepopsize', 'initcd4weight', 'allcd4eligibletx', 'rrcomorbiditydeathtx'])
     
     dataminuspars = set(datakeys) - set(parkeys)
     parsminusdata = set(parkeys) - set(datakeys)

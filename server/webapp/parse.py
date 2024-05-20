@@ -14,6 +14,7 @@ There should be no references to the database or web-handlers.
 from collections import defaultdict, OrderedDict
 from pprint import pformat
 from uuid import UUID
+from traceback import print_exc
 
 import numpy as np
 import optima as op
@@ -74,7 +75,7 @@ def normalize_obj(obj):
 
     if isinstance(obj, list) or isinstance(obj, tuple):
         return [normalize_obj(p) for p in list(obj)]
-    
+
     if isinstance(obj, np.ndarray):
         if obj.shape: # Handle most cases, incluing e.g. array([5])
             return [normalize_obj(p) for p in list(obj)]
@@ -93,17 +94,25 @@ def normalize_obj(obj):
     if isinstance(obj, np.bool_):
         return bool(obj)
 
+    #WARNING below looks more generalizable, but results in no checkboxes in the FE working, minimum changes to add int32 as well as int64 instead seem okay
+    # if op.isnumber(obj): # It's a number
+    #     if np.isnan(obj): # It's nan, so return None
+    #         return None
+    #     else:
+    #         if isinstance(obj, (int, np.int64)):
+    #             return int(obj) # It's an integer
+    #         else:
+    #             return float(obj)# It's something else, treat it as a float
+    
     if isinstance(obj, float):
         if np.isnan(obj):
             return None
-
     if isinstance(obj, np.float64):
         if np.isnan(obj):
             return None
         else:
             return float(obj)
-
-    if isinstance(obj, np.int64):
+    if isinstance(obj, (np.int32, np.int64)):
         return int(obj)
 
     if isinstance(obj, unicode):
@@ -292,11 +301,11 @@ def is_progset_optimizable(progset):
 
 
 def get_project_summary_from_project(project):
-    
+
     try:
         start_year = project.settings.start
         end_year = project.settings.end
-    
+
         calibrationOK = len(project.parsets)>0
         progsets = project.progsets.values()
         if len(progsets):
@@ -305,7 +314,23 @@ def get_project_summary_from_project(project):
         else:
             programsOK = False
             costFuncsOK = False
-    
+
+        warning = False
+        warningMessage = ''
+        if project.version not in op.supported_versions:
+            warning = True
+            warningMessage = f'Warning: This version is not supported, must be one of: {op.supported_versions}'
+            print(' > get_project_summary_from_project warning', warning, warningMessage)
+
+        canMigrate = False
+        migrateMessage = f'Are you sure you want to migrate this project "{project.name}" from version {project.version} to {op.supported_versions[-1]}?' \
+                         f'\n\nNote, this will likely change the calibration and results. It is an irreversible process. Download a copy before upgrading if you need it.'
+        if op.compareversions(project.version, op.supported_versions[-1]) < 0:
+            canMigrate = True
+            if op.compareversions(op.compatibledatabookversion(project.version), op.compatibledatabookversion(op.supported_versions[-1])) != 0:
+                migrateMessage += f'\n\nWARNING: Upgrading to this version will mean that you need to update your databook. This change occured in version {op.compatibledatabookversion(op.supported_versions[-1])}, so you will have to update your databook to this version or later. You can do this by downloading the new Data spreadsheet after upgrading the project and editing that one.'
+
+
         project_summary = {
             'id':            project.uid,
             'name':          project.name,
@@ -319,8 +344,13 @@ def get_project_summary_from_project(project):
             'calibrationOK': calibrationOK,
             'programsOK':    programsOK,
             'costFuncsOK':   costFuncsOK,
+            'warning':       warning,
+            'warningMessage':warningMessage,
+            'canMigrate':     canMigrate,
+            'migrateMessage': migrateMessage,
         }
     except:
+        print_exc()
         project_summary = {
             'id':            '000000',
             'name':          'Load failed',
@@ -405,8 +435,8 @@ def set_parameters_on_parset(parameters, parset):
             pars[key].m = value
         elif par_type in ['pop', 'pship']:  # Populations or partnerships
             pars[key].y[subkey] = value
-        elif par_type == 'exp':  # Population growth
-            pars[key].i[subkey] = value
+        elif par_type == 'exp':  # Population growth (initial population size)
+            pars[key].y[subkey][0] = value
         elif par_type == 'const':
             pars[key].y = value
         elif par_type == 'year':
@@ -449,7 +479,7 @@ def get_parameters_for_scenarios(project):
         pars = []
         result[parset_id] = pars
         for par in parset.pars.values():
-            if isinstance(par, op.Timepar): # Targetable parameters are timepars
+            if isinstance(par, op.Timepar) and par.short not in get_disallowed_parameters_for_program(): # Targetable parameters are timepars
                 for pop in par.keys():
                     pars.append({
                         'name': par.name,
@@ -481,9 +511,10 @@ def get_startval_for_parameter(project, parset_id, par_short, pop, year):
     return None
 
 def get_parameters_for_edit_program(project):
+    disallowed_parameters = get_disallowed_parameters_for_program()
     parameters = []
     added_par_keys = set()
-    default_par_keys = [par['short'] for par in op.loadpartable()]
+    default_par_keys = [par['short'] for par in op.loadpartable() if par['short'] not in disallowed_parameters]
     for parset in project.parsets.values():
         pars = parset.pars
         for par_key in default_par_keys:
@@ -499,11 +530,15 @@ def get_parameters_for_edit_program(project):
                     added_par_keys.add(par_key)
     return parameters
 
+def get_disallowed_parameters_for_program():
+    ''' Returns a list of short names of parameters that programs and parameter scenarios cannot affect
+        WARNING used by the FE and hardcoded here.'''
+    return ['agerate']
 
 def get_parameters_for_outcomes(project, progset_id, parset_id):
     progset = get_progset_from_project(project, progset_id)
     parset = get_parset_from_project(project, parset_id)
-    
+
     print(">> get_parameters_for_outcomes '%s'" % progset.name)
 
     progset.gettargetpops()
@@ -534,7 +569,7 @@ def get_parameters_for_outcomes(project, progset_id, parset_id):
         }
         for par_short in target_par_shorts
     ]
-    
+
     return {'parameters': parameters}
 
 
@@ -571,13 +606,16 @@ def get_coverages_for_scenarios(project, year=None):
         for progset in project.progsets.values():
             progset_id = str(progset.uid)
             result[parset_id][progset_id] = {}
-            for year in years:
-                try:
-                    coverage = progset.getdefaultcoverage(t=year, parset=parset)
-                    coverage = normalize_obj(coverage)
-                except:
-                    coverage = None
-                result[parset_id][progset_id][year] = coverage
+            try:
+                coverage = progset.getdefaultcoverage(t=list(years), parset=parset)
+                # Now we swap from an odict of arrays, with a key per program, to an odict of odicts, with a key per year
+                prog_list = coverage.keys()
+                coverage = np.column_stack(coverage.values())
+                for yrno,year in enumerate(years):
+                    result[parset_id][progset_id][year] = normalize_obj(op.odict(zip(prog_list,coverage[yrno,:])))
+            except:
+                for year in years:
+                    result[parset_id][progset_id][year] = None
     return result
 
 
@@ -879,9 +917,9 @@ def set_outcome_summaries_on_progset(outcomes, progset):
             poptuple = tuple(outcome['pop']) if islist else outcome['pop']
             if poptuple in covout_by_poptuple:
                 covout_by_poptuple[poptuple].addccopar(ccopar, overwrite=True)
-            
+
             covout_by_poptuple[poptuple].interaction = outcome['interact']
-    
+
     progset.updateprogset()
     return None
 
@@ -921,7 +959,7 @@ def get_progset_summary(project, progset_name):
                     program_summary['name'] = default_program_summary['name']
                 program_summary['category'] = default_program_summary['category']
             loaded_program_shorts.append(short)
-    
+
         # append any default programs as inactive if not already in project
         for program_summary in default_program_summaries:
             if program_summary['short'] not in loaded_program_shorts:
@@ -1147,7 +1185,7 @@ def revert_scenario_pars(pars):
 
 def convert_program_list(program_list):
     items = program_list.items()
-    return [{"program": x, "values": y} for x, y in items]
+    return [{"program": x, "values": op.promotetoarray(y) if y is not None else y} for x, y in items]
 
 
 def revert_program_list(program_list):
@@ -1214,19 +1252,24 @@ def get_scenario_summary(project, scenario):
         scenario_type = "budget"
         variant_data["budget"] = convert_program_list(scenario.budget)
 
-    try:    
+    try:
         parset_id = project.parsets[scenario.parsetname].uid
-    except: 
+        parset    = project.parsets[scenario.parsetname]
+    except:
         print('>> Warning, scenario parset "%s" not in project parsets: %s; reverting to default "%s"' % (scenario.parsetname, project.parsets.keys(), project.parset().name))
         parset_id = project.parset().uid
-    if hasattr(scenario, "progsetname"):
-        try:    
-            print('>> Warning, scenario progset "%s" not in project progset: %s; reverting to default "%s"' % (scenario.progsetname, project.progsets.keys(), project.progset().name))
+        parset    = project.parset()
+    if hasattr(scenario, "progsetname") and not isinstance(scenario, op.Parscen):
+        try:
             progset_id = project.progsets[scenario.progsetname].uid
-        except: 
+            progset    = project.progsets[scenario.progsetname]
+        except:
+            print('>> Warning, scenario progset "%s" not in project progset: %s; reverting to default "%s"' % (scenario.progsetname, project.progsets.keys(), project.progset().name))
             progset_id = project.progset().uid
+            progset    = project.progset()
     else:
         progset_id = None
+        progset = None
 
     if hasattr(scenario, "uid"):
         scenario_id = scenario.uid
@@ -1234,6 +1277,12 @@ def get_scenario_summary(project, scenario):
         scenario_id = scenario.uuid
     else:
         scenario_id = op.uuid()
+
+    warning, _,_,_, combinedwarningmsg, warningmessages = \
+        op.checkifparsetoverridesscenario(project=project, parset=parset,progset=progset, scen=scenario, formatfor='html', createmessages=True)
+
+    # The FE has problems if the time the scenario starts isn't in an array
+    if scenario.t is not None: scenario.t = op.promotetoarray(scenario.t)
 
     result = {
         'id': scenario_id,
@@ -1243,6 +1292,8 @@ def get_scenario_summary(project, scenario):
         'name': scenario.name,
         'years': scenario.t,
         'parset_id': parset_id,
+        'warning': warning,
+        'warningmessage': combinedwarningmsg,
     }
     result.update(variant_data)
     return result
@@ -1322,6 +1373,8 @@ def parse_constraints(constraints, project=None, progsetname=None):
     entries = []
     if constraints is None:
         constraints = op.defaultconstraints(project=project, progsetname=None)
+    if constraints is None:
+        return None
     for key, value in constraints['name'].items():
         entries.append({
             'key': key,
@@ -1354,7 +1407,7 @@ def get_default_optimization_summaries(project):
     for progsetkey,progset in project.progsets.items():
         progset_id = progset.uid
         default = {
-            'constraints': parse_constraints(op.defaultconstraints(project=project, progsetname=progsetkey)),
+            'proporigconstraints': parse_constraints(project=project, constraints=op.defaultconstraints(project=project, progsetname=progsetkey)),
             'objectives': {},
             'tvsettings': normalize_obj(op.defaulttvsettings())
         }
@@ -1386,7 +1439,7 @@ def get_optimization_summaries(project):
             parset_id: af6847d6-466b-4fc7-9e41-1347c053a0c2,
             progset_id: cfa49dcc-2b8b-11e6-8a08-57d606501764,
             constraints:
-                - 
+                -
                     key: ART
                     max: None
                     mi: 1
@@ -1420,32 +1473,53 @@ def get_optimization_summaries(project):
     optim_summaries = []
 
     for optim in project.optims.values():
+        try:
+            parset_id = project.parsets[optim.parsetname].uid # Try to extract the
+            parset    = project.parsets[optim.parsetname]
+        except:
+            print('>> Warning, optimization parset "%s" not in project parsets: %s; reverting to default "%s"' % (optim.parsetname, project.parsets.keys(), project.parset().name))
+            parset_id = project.parset().uid # Just get the default
+            parset    = project.parset()
+            optim.parsetname = parset.name
+
+        try:
+            progset_id = project.progsets[optim.progsetname].uid # Try to extract the
+            progset    = project.progsets[optim.progsetname]
+        except:
+            print('>> Warning, optimization progset "%s" not in project progsets: %s; reverting to default "%s"' % (optim.progsetname, project.progsets.keys(), project.progset().name))
+            progset_id = project.progset().uid # Just get the default
+            progset    = project.progset()
+            optim.progsetname = progset.name
+
+        # FE only uses proporigconstraints, so get them for the FE to display
+        # However, this version of the optim doesn't get saved unless "Save" is clicked in the FE, so the optim doesn't get modified until then.
+        # Once we click "Save", that will remove the absconstraints and the constraints
+        # So, we call this every time since there may be absconstraints that are overriding the proporigconstraints
+        optim.proporigconstraints = optim.getproporigconstraints()
 
         optim_summary = {
             "id": str(optim.uid),
             "name": str(optim.name),
             "objectives": normalize_obj(optim.objectives),
-            "constraints": parse_constraints(optim.constraints, project=project, progsetname=optim.progsetname),
+            "proporigconstraints": parse_constraints(optim.proporigconstraints, project=project, progsetname=optim.progsetname),
             "tvsettings": normalize_obj(optim.tvsettings),
         }
 
+        if optim.constraints is not None:
+            optim_summary["constraints"]    = parse_constraints(optim.constraints, project=project, progsetname=optim.progsetname)
+        if optim.absconstraints is not None:
+            optim_summary["absconstraints"] = parse_constraints(optim.absconstraints, project=project, progsetname=optim.progsetname)
+
         optim_summary["which"] = str(optim.objectives["which"])
-        
-        try:
-            parset_id = project.parsets[optim.parsetname].uid # Try to extract the 
-        except:
-            print('>> Warning, optimization parset "%s" not in project parsets: %s; reverting to default "%s"' % (optim.parsetname, project.parsets.keys(), project.parset().name))
-            parset_id = project.parset().uid # Just get the default
-        
-        try:
-            progset_id = project.progsets[optim.progsetname].uid # Try to extract the 
-        except:
-            print('>> Warning, optimization progset "%s" not in project progsets: %s; reverting to default "%s"' % (optim.progsetname, project.progsets.keys(), project.progset().name))
-            progset_id = project.progset().uid # Just get the default
-        
+
         optim_summary["parset_id"]   = parset_id
         optim_summary["progset_id"] = progset_id
-        
+        warning, _, _, _, combinedwarningmsg, warningmessages = \
+            op.checkifparsetoverridesprogset(progset=progset, parset=parset, progendyear=optim.objectives['end'],
+                                          progstartyear=optim.objectives['start'], formatfor='html', createmessages=True)
+        optim_summary["warning"] = warning
+        optim_summary["warningmessage"] = combinedwarningmsg
+
         optim_summaries.append(optim_summary)
 
     # as some values given can be NaN
@@ -1456,7 +1530,7 @@ def get_optimization_summaries(project):
 
 
 def set_optimization_summaries_on_project(project, optimization_summaries):
-    
+
     new_optims = op.odict()
 
     for summary in optimization_summaries:
@@ -1479,9 +1553,19 @@ def set_optimization_summaries_on_project(project, optimization_summaries):
                 optim.objectives[objkey] = summary["objectives"][objkey]
         optim.objectives["which"] = summary["which"]
 
+        if "proporigconstraints" in summary:
+            optim.proporigconstraints = revert_constraints(summary['proporigconstraints'], project=project, progsetname=optim.progsetname)
+
+        if "absconstraints" in summary:
+            optim.absconstraints = revert_constraints(summary['absconstraints'], project=project, progsetname=optim.progsetname)
+        else: # Must have deleted from FE so delete here too
+            optim.absconstraints = None
+
         if "constraints" in summary:
             optim.constraints = revert_constraints(summary['constraints'], project=project, progsetname=optim.progsetname)
-        
+        else: # Must have deleted from FE so delete here too
+            optim.constraints = None
+
         for tvkey in optim.tvsettings.keys():
             optim.tvsettings[tvkey] = summary["tvsettings"][tvkey]
 
@@ -1563,7 +1647,7 @@ def set_portfolio_summary_on_portfolio(portfolio, summary):
     a list of project_ids of projects that are not in the portfolio
     """
     portfolio.objectives = op.odict(summary['objectives']) # Note, this destroys order
-    
+
     print("> set_portfolio_summary_on_portfolio")
     project_ids = [s["id"] for s in summary["projects"]]
 
@@ -1580,5 +1664,3 @@ def set_portfolio_summary_on_portfolio(portfolio, summary):
 
 
     return new_project_ids
-
-

@@ -1,6 +1,15 @@
 import optima as op
-from numpy import nan, isnan, concatenate as cat, array
+from numpy import nan, isnan, mean, concatenate as cat, array, exp, append, all
 
+__all__ = [
+    'migrate',
+    'loadproj',
+    'loadportfolio',
+    'optimaversion',
+    'migraterevisionfunc',
+]
+
+_pardefinitions = None # Store the pardefinitions so we don't have to load multiple times
 
 ##########################################################################################
 ### MIGRATION DEFINITIONS
@@ -77,6 +86,29 @@ def setmigrations(which='migrations'):
         ('2.9.1', ('2.9.2', '2019-12-04', None,              'Add PrEP for injection-related infections')),
         ('2.9.2', ('2.9.3', '2020-02-24', None,              'Improves scenario export, changes district budget allocation algorithm, and contains frontend fixes')),
         ('2.9.3', ('2.9.4', '2020-02-25', addprogdefault,    'Add default values for parameters in absence of programs')),
+        ('2.9.4', ('2.10.0','2021-02-09', addpepreturntocare,'Add PEP parameters, rename PrEP parameters, and add a return to care parameter distinct from link to care')),
+        ('2.10.0',('2.10.1','2021-02-09', updatedisutilities,'Update disutility weights for HIV to match GBD 2019')),
+        ('2.10.1',('2.10.2','2022-01-28', updateprepconstants,'Update constants for PrEP, PEP, and ART efficacy for all parsets')),
+        ('2.10.2',('2.10.3','2022-07-11', addageingrates,    'Update ageing to allow non-uniform age rates')),
+        ('2.10.3',('2.10.4','2022-07-12', partlinearccopars, 'Update cost-coverage curves to be linear to saturation_low then non-linear to saturation high')),
+        ('2.10.4',('2.10.5','2022-07-13', None ,             'Rename optional indicators in the databook to align with UNAIDS terminology')),
+        ('2.10.5',('2.10.6','2022-07-14', removerequiredvl,  'Remove the required VL parameter to better capture treatment failure identification')),
+        ('2.10.6',('2.10.7','2022-07-17', addmetapars,       'Add/change meta parameters for forcepopsize, allcd4eligibletx, initcd4weight, rrcomorbiditydeathtx, relhivbirth')),
+        ('2.10.7',('2.10.8','2022-07-20', adjustreturnpar,   'Change return to care to be a rate instead of a duration')),
+        ('2.10.8',('2.10.9','2022-07-20', None,              'Make popfactor apply directly to target population size, instead of the function for coverage')),
+        ('2.10.9',('2.10.10','2022-08-09',None,              'Compatibility and FE updates')),
+        ('2.10.10',('2.10.11','2022-08-09',fixmanfitsettings,'Fix manual fit settings (which impact on FE display)')),
+        ('2.10.11',('2.10.12','2022-08-31',popgrowthoptions, 'Change forcepopsize to be forcepopgrowth by population and impact differently on key pops without inflows')),
+        ('2.10.12',('2.10.13','2022-09-01',migrationmigration,'Add migration parameters and modeling')),
+        ('2.10.13',('2.10.14','2022-09-06',addsexinjmtctsettings,'Add sex, inj, and mtct indices to settings')),
+        ('2.10.14',('2.10.15','2022-09-13',fixmoremanfitsettings,'Fix more manual fit settings (which impact on FE display)')),
+        ('2.10.15',('2.10.16','2022-09-15',clearuntrackedresults,'Clear results if they did not have tracking')),
+        ('2.10.16',('2.11.0', '2022-09-17', None,            'Version update for updated GUI launch')),
+        ('2.11.0', ('2.11.1', '2022-10-06', None,            'Major bug fixes, FE updates, fixproppmtct now fixes proportion of diagnosed women on PMTCT and propcare brings people from dx and lost')),
+        ('2.11.1', ('2.11.2', '2022-10-10', None,            'Big model speed ups (about 25%) and split diagnoses by CD4 count')),
+        ('2.11.2', ('2.11.3', '2022-11-02', None,            'Annual data takes precedence over assumption when loading databook, bug fixes, FE Scenario tab add stacked for one scenario + other things.')),
+        ('2.11.3', ('2.11.4', '2023-02-07',addallconstraintsoptim, 'Adds absconstraints and proporigconstraints to Optim, model works with initpeople and optimization improvements')),
+        ('2.11.4', ('2.12.0', '2023-03-10',addinsertonlyacts,'Adds ANC testing to diagnose mothers to put onto PMTCT, actsreg etc only contain insertive acts, and relhivbirth only reduces birth rate of diagnosed HIV+ potential mothers.')),
         ])
     
     
@@ -90,14 +122,40 @@ def setmigrations(which='migrations'):
     else:                  return migrations
 
 
+def setrevisionmigrations(which='migrations'):
+    '''
+    Define the migrations -- format is
+        'current_version': ('new_version', function, 'date', 'string description of change')
 
+    If "which" is anything other than "changelog", then return the list of migrations.
+    Otherwise, return the changelog (just the new version and message).
+
+    Version: 2017may23
+    '''
+
+    migrations = op.odict([
+        # Orig     New       Date         Migration           Description
+        ('0',   ('1', '2023-10-17', parsandprograms_odictcustom,    'Add P.revision, change Parameterset.pars and Programset.programs from odict to odict_custom and link them')),
+        ('1',   ('2', '2023-12-04', None,                           'Fix bug when deep-copying a `Parameterset`, the `pars` from a different `Parameterset` would get copied in certain cases')),
+        ('2',   ('3', '2024-01-18', None,                           'Fix small unpickling bug and FE raises BadFileFormatError when uploading project that it cannot unpickle')),
+        ('3',   ('4', '2024-01-18', updatemethodsettings,           'Update methods so `numinciallmethods` is split by regular, casual, commercial')),
+        ])
+
+
+    # Define changelog
+    changelog = op.odict()
+    for ver,date,migrator,msg in migrations.values():
+        changelog[ver] = date+' | '+msg
+
+    # Return the migrations structure, unless the changelog is specifically requested
+    if which=='changelog': return changelog
+    else:                  return migrations
 
 
 
 ##########################################################################################
 ### MIGRATION UTILITIES
 ##########################################################################################
-
 
 def optimaversion(filename=None, version=None, branch=None, sha=None, verbose=False, die=False):
     '''
@@ -124,9 +182,9 @@ def optimaversion(filename=None, version=None, branch=None, sha=None, verbose=Fa
         errormsg = 'Please call this function like this: optimaversion(__file__)'
         if die: raise op.OptimaException(errormsg)
         else: print(errormsg); return None
-    currversion = op.version # Get Optima version info
+    currversion = op.supported_versions # Get Optima version info
     currbranch,currsha = op.gitinfo(die=die) # Get git info, dying on failure if requested
-    if version is not None and version!=currversion: # Optionally check that versions match
+    if version is not None and version not in currversion: # Optionally check that versions match
         errormsg = 'Actual version does not match requested version (%s vs. %s)' % (currversion, version)
         raise op.OptimaException(errormsg)
     if branch is not None and branch!=currbranch: # Optionally check that versions match
@@ -137,7 +195,7 @@ def optimaversion(filename=None, version=None, branch=None, sha=None, verbose=Fa
         if sha[:validshalength+1]!=currsha[:validshalength+1]: # Optionally check that versions match
             errormsg = 'Actual SHA does not match requested SHA (%s vs. %s)' % (currsha[:validshalength+1], sha[:validshalength+1])
             raise op.OptimaException(errormsg)
-    versionstring = ' # Version: %s | Branch: %s | SHA: %s\n' % (currversion, currbranch, currsha[:shalength+1]) # Create string to write
+    versionstring = ' # Version: %s (%s) | Branch: %s | SHA: %s\n' % (currversion, op.revision, currbranch, currsha[:shalength+1]) # Create string to write
     strtofind = 'optimaversion(' # String to look for -- note, must exactly match function call!
 
     # Read script file
@@ -189,10 +247,12 @@ def optimaversion(filename=None, version=None, branch=None, sha=None, verbose=Fa
     return None
 
 
-def addparameter(project=None, copyfrom=None, short=None, **kwargs):
-    ''' 
+def addparameter(project=None, copyfrom=None, short=None, type='time', **kwargs):
+    '''
+    DO SUPPLY THE CORRECT TYPE - SEE KNOWNTYPES in addblankdata() - it should match the model-inputs.xlsx | Data inputs | type column
     Function for adding a new parameter to a project -- used by several migrations.
     Use kwargs to arbitrarily specify the new parameter's properties.
+    type is used to create the blank data, and should correspond to the type column in model-inputs.xlsx:Data inputs
     '''
     for ps in project.parsets.values():
         if op.compareversions(project.version, '2.2')>=0: # Newer project, pars is dict
@@ -206,9 +266,107 @@ def addparameter(project=None, copyfrom=None, short=None, **kwargs):
                 ps.pars[i][short].short = short
                 for kwargkey,kwargval in kwargs.items():
                     setattr(ps.pars[i][short], kwargkey, kwargval)
-    project.data[short] = [[nan]*len(project.data['years'])]
+
+    if copyfrom in project.data:
+        # addblankdata1(project=project, short=short, **kwargs)
+        addblankdata(project=project, short=short, copyfrom=copyfrom, type=type, **kwargs)
+
     return None
 
+
+def addblankdata(project=None, short=None, copyfrom=None, type='time', verbose=2, die=False, **kwargs):
+    '''
+    DO SUPPLY THE CORRECT TYPE - SEE KNOWNTYPES - it should match the model-inputs.xlsx | Data inputs | type column
+    Note that this assumes certain type of shapes, and simply fills in constants with nan
+    '''
+
+    errmsg = None
+    knowntypes = ['key', 'time', 'matrix', 'constant']
+    if type not in knowntypes:
+        errmsg = f"Cannot create blank data using type={type} in addblankdata2, need to pass a known type: {knowntypes}"
+    if copyfrom is None or copyfrom in ['meta', 'pops', 'pships', 'years', 'npops']:
+        errmsg = f'Cannot copy data using copyfrom={copyfrom} in addblankdata2, need to pass a (better) parameter to copyfrom'
+    if errmsg:
+        if die: raise op.OptimaException(errmsg)
+        else: print('WARNING: '+errmsg)
+        return
+
+    copyfromdata = project.data[copyfrom]
+
+    if type == 'constant': # This is a constant with shape (3,)
+        project.data[short] = [nan, nan, nan]
+
+    elif type == 'time': # This is a parameter with shape (x, npts)
+        x    = len(copyfromdata)
+        npts = len(project.data['years'])  # P.data[copyfrom] could be (x, 1) if it is only assumptions
+
+        project.data[short] = [[nan] * npts] * x
+
+    elif type == 'matrix': # matrix with shape (x,y)
+        x = len(copyfromdata)
+        y = len(copyfromdata[0])
+        project.data[short] = [[0] * y] * x
+
+    elif type == 'key': # This is a 'key' parameter (popsize, hivprev) with shape (3, x, npts)
+        x    = len(copyfromdata[0])
+        npts = len(project.data['years'])  # P.data[copyfrom] could be (3, x, 1) if it is only assumptions
+
+        project.data[short] = [ [[nan]*npts] * x ] * 3
+
+    else:
+        raise op.OptimaException(f'Cannot copy data from parameter "{copyfrom}" as it has an unknown type: {type}')
+
+    return
+
+### This version is different in that it loads in what the new parameter is supposed to be (which takes a little bit of time) and uses that,
+### rather than type being an input
+# def addblankdata2(project=None, short=None, verbose=2, die=False, **kwargs):
+#     if project.data is None or 'pops' not in project.data:
+#         errmsg = f'Cannot add blank data for input: "{short}" since project.data is missing population definitions'
+#         if die: raise op.OptimaException(errmsg)
+#         else: print(errmsg)
+#         return
+#
+#     global _pardefinitions  # The reason we can save this globally is that op.loaddatapars will always return the same thing
+#     if _pardefinitions is None:
+#         _pardefinitions = op.loaddatapars(verbose=verbose)
+#
+#     datainputs    = {d['short']:d for d in _pardefinitions['Data inputs']}
+#     dataconstants = {d['short']:d for d in _pardefinitions['Data constants']}
+#
+#     if short in datainputs.keys():
+#         definition = datainputs[short]
+#         npops = len(getpopsfromrangename(project.data, definition['rownames'], **kwargs))
+#         npts  = len(project.data['years'])
+#
+#         if definition['type'] == 'key':
+#             project.data[short] = [ [[nan]*npts] * npops ] * 3  # (3, npops, npts) = empty data
+#         elif definition['type'] == 'matrix':
+#             project.data[short] = [ [0] * npops ] * npops  # (npops, npops) = empty matrix
+#         else: # definition['type'] == 'time':
+#             project.data[short] = [[nan]*npts] * npops    # (npops, npts) = empty data
+#
+#     elif short in dataconstants.keys():
+#         definition = dataconstants[short]
+#         project.data[short] = [definition['best'], definition['low'], definition['high']]
+#
+#     else: # Not in current data inputs or constants, assume it is removed in this version - or it's something like meta, pops, pships, years, npops
+#         return
+#
+# def getpopsfromrangename(data, rangename, **kwargs):
+#     # Based off OptimaSpreadsheet.getrange()
+#     if    rangename=='allpops':  return data['pops']['short']
+#     elif  rangename=='females':  return [data['pops']['short'][i] for i, female in enumerate(data['pops']['female']) if female]
+#     elif  rangename=='males':    return [data['pops']['short'][i] for i, male in enumerate(data['pops']['male']) if male]
+#     elif  rangename=='children': return [data['pops']['short'][i] for i, age in enumerate(data['pops']['age']) if age[0]==0]
+#     elif  rangename=='average':  return ['Average']
+#     elif  rangename=='total':    return ['Total']
+#     elif  rangename=='hbl':      return ['high','best','low']
+#     elif  rangename=='.':        return None
+#     else:
+#         errormsg = 'Range name %s not found' % rangename
+#         raise Exception(errormsg)
+#     return None
 
 def removeparameter(project=None, short=None, datashort=None, verbose=False, die=False, **kwargs):
     ''' 
@@ -623,7 +781,7 @@ def redoparameters(project, die=True, **kwargs):
                         newpars[parname].prior[popkey] = op.Dist() # Initialise with defaults
                         newpars[parname].prior[popkey].pars *= newpars[parname].y[popkey]
                 if isinstance(newpars[parname], op.Constant): # Get priors right, if required
-                    if all(newpars['treatvs'].prior.pars==op.Dist().pars): # See if defaults are used
+                    if all(newpars[parname].prior.pars==op.Dist().pars): # See if defaults are used
                         newpars[parname].prior.pars *= newpars[parname].y # If so, rescale
                 elif isinstance(newpars[parname], op.Popsizepar): # Messy -- rearrange object
                     newpars['popsize'].i = op.odict()
@@ -948,8 +1106,7 @@ def addcascadeopt(project=None, portfolio=None, **kwargs):
         objectives['propdiag']       = 0
         objectives['proptreat']      = 0
         objectives['propsuppressed'] = 0
-        if 'keylabels' in objectives.keys():
-            objectives.pop('keylabels') # Never used
+#        objectives.pop('keylabels') # Never used
     return None
 
 
@@ -992,78 +1149,749 @@ def addprogdefault(project=None, **kwargs):
     return None
 
 
+def addpepreturntocare(project=None, **kwargs):
+    '''
+    Migration between Optima 2.9.4 and 2.10.0 -- Add PEP parameters, rename PrEP parameters, and add a return to care parameter distinct from link to care
+    '''
+    if project is not None:
+        #rename prep pars
+        # Rename PrEP
+        #rename and re-add circumcision parameters
+        for ps in project.parsets.values():
+            ps.pars['prep'].name    = 'Proportion of exposure events covered by ARV-based pre-exposure prophylaxis'
+            ps.pars['effprep'].name = 'Efficacy of ARV-based pre-exposure prophylaxis'
+            ps.pars['propcirc'].name = 'Percentage of males who have been traditionally circumcised'
+            ps.pars['numcirc'].name = 'Number of voluntary medical male circumcisions'
+        #add PEP pars
+        short = 'pep'
+        copyfrom = 'prep'
+        kwargs['by'] = 'pop'
+        kwargs['name'] = 'Proportion of exposure events covered by ARV-based post-exposure prophylaxis'
+        kwargs['dataname'] = 'Proportion of exposure events covered by ARV-based post-exposure prophylaxis'
+        kwargs['datashort'] = 'pep'
+        kwargs['t'] = op.odict([(pop,array([2000.])) for pop in ps.popkeys])
+        kwargs['y'] = op.odict([(pop,array([0.00])) for pop in ps.popkeys])
+        addparameter(project=project, copyfrom=copyfrom, short=short, **kwargs)
+        
+        short = 'effpep'
+        copyfrom = 'effprep'
+        kwargs['by'] = 'tot'
+        kwargs['name'] = 'Efficacy of ARV-based post-exposure prophylaxis'
+        kwargs['dataname'] = 'Efficacy of ARV-based post-exposure prophylaxis'
+        kwargs['datashort'] = 'effpep'
+        if 't' in kwargs.keys(): kwargs.pop('t')
+        kwargs['y'] = 0.73 #default efficacy value of ARV-based prophylaxis combining PrEP and PEP use, not the updated values for either to maintain project consistency
+        addparameter(project=project, copyfrom=copyfrom, short=short, **kwargs)
+        
+        #add return to care par - all values should be copied from link to care to maintain consistency
+        short = 'returntocare'
+        copyfrom = 'linktocare'
+        kwargs['by'] = 'pop'
+        kwargs['name'] = 'Average time taken to be returned to care after loss to follow-up (years)'
+        kwargs['dataname'] = 'Average time taken to be returned to care after loss to follow-up (years)'
+        kwargs['datashort'] = 'returntocare'
+        if 't' in kwargs.keys(): kwargs.pop('t')
+        if 'y' in kwargs.keys(): kwargs.pop('y')
+        addparameter(project=project, copyfrom=copyfrom, short=short, **kwargs)
+        
+        
+        #add data for PEP, PrEP, and return to care
+        project.data['meta']['sheets']['Sexual behavior'].append('numcirc')
+        project.data['numcirc'] = [[nan]*len(project.data['years']) for _ in range(project.data['npops'])]
+        project.data['meta']['sheets']['Constants'].append('effpep')
+        project.data['effpep'] = [0.73, 0.65, 0.80] #default efficacy value of ARV-based prophylaxis combining PrEP and PEP use, not the updated values for either to maintain project consistency
+        project.data['meta']['sheets']['Testing & treatment'].append('pep')
+        project.data['pep'] = [[nan]*len(project.data['years']) for _ in range(project.data['npops'])]
+        project.data['meta']['sheets']['Cascade'].append('returntocare')
+        project.data['returntocare'] = [[nan]*len(project.data['years']) for _ in range(project.data['npops'])]
+        
+        
+        #Rename year to fix parameters to clarify their use
+        for ps in project.parsets.values():
+            ps.pars['fixpropdx'].name    = 'Year to fix proportion of PLHIV aware of their status'
+            ps.pars['fixpropcare'].name  = 'Year to fix proportion of diagnosed PLHIV in care'
+            ps.pars['fixproptx'].name    = 'Year to fix proportion of PLHIV in care on treatment'
+            ps.pars['fixpropsupp'].name  = 'Year to fix proportion of people on ART with viral suppression'
+            ps.pars['fixproppmtct'].name = 'Year to fix proportion of pregnant women and mothers on PMTCT'
+        
+    else:
+        raise Exception('Must supply a project')
+    return None
 
+
+def updatedisutilities(project=None, **kwargs):
+    '''
+    Migration between Optima 2.10.0 and 2.10.1 -- Update disutility weights for DALYs from GBD 2010 to GBD 2019
+    '''
+    if project is not None:
+        #update disutility weights in the data
+        project.data['disutilacute'] = [0.181, 0.121, 0.249]
+        project.data['disutilgt500'] = [0.010, 0.007, 0.014]
+        project.data['disutilgt350'] = [0.025, 0.017, 0.035]
+        project.data['disutilgt200'] = [0.081, 0.055, 0.107]
+        project.data['disutilgt50']  = [0.289, 0.128, 0.499]
+        project.data['disutillt50']  = [0.582, 0.406, 0.743]
+        project.data['disutiltx']    = [0.078, 0.052, 0.111]
+        
+        #update disutility weights in each parset - both the parset value and the prior for uncertainty
+        for ps in project.parsets.values():
+            for parname in ['disutilacute', 'disutilgt500', 'disutilgt350', 'disutilgt200', 'disutilgt50', 'disutillt50', 'disutiltx']:
+                ps.pars[parname].y = project.data[parname][0]
+                ps.pars[parname].prior.pars[0] = project.data[parname][1]
+                ps.pars[parname].prior.pars[1] = project.data[parname][2]
+            
+    else:
+        raise Exception('Must supply a project')
+    return None
+
+
+def updateprepconstants(project=None, **kwargs):
+    '''
+    Migration between Optima 2.10.1 and 2.10.2 -- Actually force prep/pep constants to be updated
+    WARNING: this will likely change calibration restults as the result of changing treatment efficacy as well as prep/pep
+    '''
+    if project is not None:
+        #update data values
+        project.data['effpep'] = [0.73, 0.65, 0.80] #default efficacy value of ARV-based prophylaxis combining PrEP and PEP use, not the updated values for either to maintain project consistency
+        project.data['effprep'] = [0.95, 0.92, 0.97] #default efficacy value of ARV-based prophylaxis combining PrEP and PEP use, not the updated values for either to maintain project consistency
+        project.data['efftxsupp'] = [1.0, 0.92, 1.0] #default efficacy value of ARV-based prophylaxis combining PrEP and PEP use, not the updated values for either to maintain project consistency
+        
+        #Update parameter values in each parset
+        for ps in project.parsets.values():
+            ps.pars['effpep'].y   = 0.73
+            ps.pars['effpep'].prior.pars = array([0.65, 0.80])
+            ps.pars['effprep'].y  = 0.95
+            ps.pars['effprep'].prior.pars = array([0.92, 0.97])
+            ps.pars['efftxsupp'].y  = 1.0
+            ps.pars['efftxsupp'].prior.pars = array([0.92, 1.0])
+        
+    else:
+        raise Exception('Must supply a project')
+    return None
+
+
+def addageingrates(project=None, **kwargs):
+    '''
+    Migration between Optima 2.10.2 and 2.10.3
+    -- Add an ageing table to allow ageing to occur by year to reflect non-uniform population distributions
+    '''
+    if project is not None:
+        #update data values
+        for ps in project.parsets.values():
+            #add a parameter for ageing rate
+            short = 'agerate'
+            copyfrom = 'death'
+            kwargs['by'] = 'pop'
+            kwargs['name'] = 'Percentage of people who age into the next age category per year'
+            kwargs['dataname'] = 'Ageing rate (per year)'
+            kwargs['datashort'] = 'agerate'
+            kwargs['t'] = op.odict([(pop,array([2000.])) for pop in ps.popkeys])
+            kwargs['y'] = op.odict([(pop,array([1./(popages[1]-popages[0]+1)])) for pop, popages in zip(ps.popkeys, ps.pars['age'])])
+            addparameter(project=project, copyfrom=copyfrom, short=short, **kwargs)
+
+            #Also neeed to adjust the agetransit parameter to be proportions rather than absolute value
+            for rn, row in enumerate(ps.pars['agetransit']):
+                if sum(ps.pars['agetransit'][rn])>0:
+                    ps.pars['agetransit'][rn] = ps.pars['agetransit'][rn]/sum(ps.pars['agetransit'][rn])
+        
+        #add data for PEP, PrEP, and return to care
+        project.data['meta']['sheets']['Other epidemiology'].append('agerate')
+        project.data['agerate'] = [[1./(popages[1]-popages[0]+1)] for popages in project.data['pops']['age']]
+        
+    else:
+        raise Exception('Must supply a project')
+    return None
+
+
+def partlinearccopars(project=None, **kwargs):
+    '''
+    Migration between Optima 2.10.3 and 2.10.4
+    -- Update cost-coverage curves to be linear to saturation_low then non-linear to saturation high
+    '''
+    if project is not None:
+        for ps in project.progsets.values():
+            for prog in ps.programs.values():
+                #for each program convert saturation values (lower, upper) to (0, average(lower, upper)) to maintain consistent results with partially linear cost-coverage curves
+                if prog.costcovfn.ccopars:
+                        prog.costcovfn.ccopars['saturation'] = [(0., mean(sat)) for sat in prog.costcovfn.ccopars['saturation']]
+    else:
+        raise Exception('Must supply a project')
+    return None
+
+# def renameunaidspars(project=None, **kwawrgs):
+#     '''
+#     Migration between Optima 2.10.4 and 2.10.5
+#     -- Rename optional indicators to align with UNAIDS terminology
+#     -	PLHIV aware of their status (%)  -> Percent of people living with HIV who know their status
+#     -	Diagnosed PLHIV in care (%)  -> Percent of people who know their status who are retained in care
+#     -	PLHIV in care on treatment (%) -> Percent of people who know their status who are on ART (note this was always used in model output comparisons as % diagnosed/%treated, so this renaming is an actual correction!)
+#     -	Pregnant women on PMTCT (%) -> Coverage of pregnant women who receive ARV for PMTCT
+#     -	People on ART with viral suppression (%)  -> Percent of people on ART who achieve viral suppression
+#     '''
+#     if project is not None:
+#         #No need to rename anything in data (never saved!)
+#         #May need to rename the output/results long names in all result sets, might have other side effects though?            
+#     else:
+#         raise Exception('Must supply a project')
+#     return None
+    
+#     return None
+
+def removerequiredvl(project=None, **kwwargs):
+    '''
+    Migration between Optima 2.10.5 and 2.10.6 -- remove the "required VL tests" parameter - as the implementation doesn't match the interpretation
+    The model uses this to determine the proportion of treatment failures identified every timestep, so this should be hardcoded as 1/dt instead
+    It has been appropriate to adjust this to reflect better targeting of limited viral load testing to those most at risk of treatment failure in many countries,
+    but that would be better achieved through adjustment of the metaparameter for 'numvlmon' instead, with the same overall impact.
+    '''
+    if project is not None:
+        #First adjust the metaparameter for number of viral load tests given to account for better targeting of viral load tests
+        for ps in project.parsets.values():
+            ps.pars['numvlmon'].m *= (1./project.settings.dt) / ps.pars['requiredvl'].y
+        #Then remove the parameter from all parsets
+        removeparameter(project=project, short='requiredvl', data='requiredvl')
+    else:
+        raise Exception('Must supply a project')
+    return None
+
+def addmetapars(project=None, **kwargs):
+    '''
+    Migration between Optima 2.10.6 and 2.10.7 
+    
+    First fix where legacy projects have some priors as dicts instead of op.Dists and that causes errors (e.g. with updatepriors) - do that here
+    
+    -- Add meta parameter initcd4weight to weight initialization toward earlier/later stage infections
+        This setting has a default value of 1. which will initialize based on average duration in each stage of infection
+        Values <1 mean the initialization will be weighted toward high CD4 counts and especially acute infections for people who are not on treatment [early stage epidemics]
+        Values >1 mean the initialization will be weighted toward low CD4 counts and especially CD4<50 infections for people who are not on treatment [early stage epidemics]
+    -- Migrate binary project setting forcepopsize to a parameter
+    -- Migrate binary project setting treatbycd4 to a parameter representing year in which treatment prioritization changes from by cd4 count to eligibility for all
+    -- Add meta parameter 'rrcomorbiditydeathtx' (by time and population) to modify relative death rates for people on ART (e.g. improved treatment of comorbidities)
+    -- Add meta parameter 'relhivbirth' to capture the relative likelihood that a female with HIV gives birth relative to the overall birth rate
+    '''
+    if project is not None:
+        #Calculate what the new paramater values should be consistent with as previously defined
+        if hasattr(project.settings, 'forcepopsize'):
+            forcepopsize = 1 if project.settings.forcepopsize else 0
+            delattr(project.settings, 'forcepopsize')
+        else:
+            forcepopsize = 0 #default
+        if hasattr(project.settings, 'treatbycd4'):
+            allcd4eligibletx = 2100 if project.settings.treatbycd4 else 1900
+            delattr(project.settings, 'treatbycd4')
+        else:
+            allcd4eligibletx = 1900 #default (all CD4 equally eligible for treatment all years
+        
+        newpars = {'forcepopsize':     {'copyfrom': 'transnorm', 'name': 'Force all population sizes to match initial value with exponential growth curve',
+                                        'y': forcepopsize, 'limits': (0,1)},
+                   'allcd4eligibletx': {'copyfrom': 'fixpropdx', 'name': 'Return to care rate (per year)', 
+                                        't': allcd4eligibletx, 'limits': (0, 'maxyear')},
+                   'initcd4weight':    {'copyfrom': 'transnorm', 'name': 'Weighting for initialization where low values represent early stage epidemics', 
+                                        'y': 1., 'limits': (0, 'maxmeta')},
+                   'rrcomorbiditydeathtx':     {'copyfrom': 'death', 'name': 'Relative risk of death rate on ART (unitless, time-based adjustment for treatment of comorbidities)', 
+                                        'limits': (0, 'maxmeta')}, #set y values below
+                   'relhivbirth':      {'copyfrom': 'transnorm', 'name': 'Relative likelihood that females with HIV give birth', 
+                                        'y': 1, 'limits': (0,'maxmeta')},
+                   }
+        
+        #Fix any outdated priors that were defined as dicts instead of Dists in the project before copying parameters
+        for ps in project.parsets.values():
+            for par in ps.pars.values():
+                # Handle specific changes
+                if isinstance(par, op.Metapar): # Should be a dict of Dists (one per population)
+                    for popkey in par.keys():
+                        if isinstance(par.prior[popkey], dict): 
+                            par.prior[popkey] = op.Dist(**par.prior[popkey])
+                elif isinstance(par, (op.Constant, op.Timepar, op.Popsizepar)): # Should be a single Dist
+                    if isinstance(par.prior, dict):
+                        par.prior = op.Dist(**par.prior)
+                
+                if hasattr(par, 'prior'): #update all priors while there?
+                    par.updateprior()
+        
+        #Now actually add the new parameters
+        for parname, parkwargs in newpars.items():
+
+            addparameter(project=project, short=parname, **parkwargs)
+            par = ps.pars[parname]
+            for ps in project.parsets.values():               
+                if parname == 'rrcomorbiditydeathtx':
+                    for pop in par.y.keys():
+                        par.y[pop] = array([1.])
+                
+                #We don't actually want to sample these by default: set the priors to have no sampling range
+                if isinstance(par, op.Metapar): # Should be a dict of Dists (one per population)
+                    for popkey in par.keys():
+                        par.prior[popkey].pars = (par.y[popkey], par.y[popkey])
+                elif isinstance(par, (op.Constant, op.Timepar, op.Popsizepar)): # Should be a single Dist
+                    par.prior.pars = (par.y, par.y)
+                        
+    else:
+        raise Exception('Must supply a project')
+    return None
+
+def adjustreturnpar(project=None, **kwargs):
+    '''
+    Migration between Optima 2.10.7 and 2.10.8 
+    
+    - Make return to care a rate instead of a duration to facilitate more accurate program impacts
+    - Includes simplification of program coverage logic
+    '''
+    if project is not None:
+        dt = project.settings.dt
+        eps = project.settings.eps
+        for ps in project.parsets.values():
+            ps.pars['returntocare'].name = 'Return to care rate (per year)'
+            ps.pars['returntocare'].dataname = 'Percentage of people lost to follow-up who are returned to care per year (%/year)'
+            for popkey in ps.pars['returntocare'].y.keys():
+                ps.pars['returntocare'].y[popkey] = array([(1-exp(-dt/max(eps, yrval)))/dt for yrval in ps.pars['returntocare'].y[popkey]])
+            ps.pars['returntocare'].updateprior()
+            
+        #also need to invert values in any covouts for returntocare
+        for pg in project.progsets.values():
+            if 'returntocare' in pg.covout.keys():
+                for pop in pg.covout['returntocare'].keys():
+                    for impact in pg.covout['returntocare'][pop].ccopars.keys():
+                        if impact != 't': #impact includes 'intercept' and all populations, but not t!
+                            pg.covout['returntocare'][pop].ccopars[impact] = [((1-exp(-dt/max(eps, high)))/dt, (1-exp(-dt/max(eps, low)))/dt) for low, high in pg.covout['returntocare'][pop].ccopars[impact]]                          
+            
+    return None
+
+def fixmanfitsettings(project=None, **kwargs):
+    '''
+    Migration between Optima 2.10.10 and 2.10.11 
+    
+    - Adjust manual calibration flags for added parameters
+    '''
+    if project is not None:            
+        for ps in project.parsets.values():
+            ps.pars['allcd4eligibletx'].manual = 'year'
+            ps.pars['initcd4weight'].manual    = 'const'
+            ps.pars['forcepopsize'].manual     = 'const'
+            ps.pars['relhivbirth'].manual      = 'const'
+            ps.pars['rrcomorbiditydeathtx'].manual = 'no'
+    return None
+
+def popgrowthoptions(project=None, **kwargs):
+    '''
+    Migration between Optima 2.10.11 and 2.10.12 
+    
+    - Add extra attributes to Popsizepar parameters to capture the full data values
+    - Before .start year use interpolated pop sizes from the databook
+    - From .start year use exponential growth from the last data pop size
+    '''
+    if project is not None:        
+        for ps in project.parsets.values():
+            par = ps.pars['popsize']
+            
+            par.y = op.odict()
+            par.t = op.odict() 
+            par.start = op.odict()
+            for popind, pop in enumerate(par.e.keys()):
+                #as if loading data into y and t values
+                blh = 0 #best-low-high = 0-1-2
+                par.start[pop] = op.dcp(ps.start)
+                
+                popsizedata = project.data['popsize'][blh][popind]
+                if len(popsizedata)==1: #it's an assumption (very uncommon)
+                    popsizedata = array(popsizedata*len(project.data['years']))
+                    
+                par.y[pop] = op.sanitize(popsizedata) # Store each extant value
+                par.t[pop] = array(project.data['years'])[~isnan(popsizedata)] # Store each year
+                
+                #check if a start year value exists
+                if not ps.start in par.t[pop]: #add an initial value dummy 'data' point
+                    par.y[pop] = append([par.i[pop]], par.y[pop])
+                    par.t[pop] = append([ps.start], par.t[pop])
+                else: #reset the first value to the previous .i value for consistency
+                    par.y[pop][0] = array([par.i[pop]])
+                    
+            del(ps.pars['popsize'].i)
+    return None
+
+def migrationmigration(project=None, **kwargs):
+    '''
+    Migration between Optima 2.10.12 and 2.10.13 
+    
+    This migration adds migration parameters (all of which are Timepars per population)
+    - propemigrate, numimmigrate, immihivprev, immipropdiag
+    Also included with this version update are changes to the model code to implement migration
+    '''
+    if project is not None:        
+        for ps in project.parsets.values():
+            
+            newpars = {'propemigrate': {'copyfrom': 'death', 'name': 'Percentage of people who emigrate per year',
+                                        'limits': (0,'maxrate')},
+                   'numimmigrate': {'copyfrom': 'death', 'name': 'Number of people who immigrate into population per year', 
+                                        'limits': (0, 'maxpopsize')},
+                   'immihivprev':  {'copyfrom': 'stiprev', 'name': 'HIV prevalence of immigrants into population per year', 
+                                        'limits': (0, 1)},
+                   'immipropdiag': {'copyfrom': 'stiprev', 'name': 'Proportion of people living with HIV who immigrate who are diagnosed prior to arrival', 
+                                        'limits': (0, 1)},
+                   }
+            
+            #Now actually add the new parameters
+            for parname, parkwargs in newpars.items():
+                addparameter(project=project, short=parname, **parkwargs)
+                par = ps.pars[parname]
+                for ps in project.parsets.values():
+                    for pop in par.y.keys():
+                        par.t[pop] = array([ps.start])
+                        par.y[pop] = array([0.])
+            
+    return None
+
+
+def addsexinjmtctsettings(project=None, **kwargs):
+    '''
+    Migration between Optima 2.10.13 and 2.10.14
+
+    This migration adds settings: sex, inj and mtct which are the indices of these methods of transmission
+    in a causes matrix, as well as the names of and number of methods of transmission
+    
+    Warning: breaks saved results (fixed in 2.10.6 migration)
+    '''
+    if project is not None and project.settings is not None:
+        base_settings = op.Settings()
+        project.settings.heterosexsex = base_settings.heterosexsex
+        project.settings.homosexsex = base_settings.homosexsex
+        project.settings.inj = base_settings.inj
+        project.settings.mtct = base_settings.mtct
+        project.settings.nmethods = base_settings.nmethods
+        project.settings.methodnames = base_settings.methodnames
+        project.settings.advancedtracking = base_settings.advancedtracking
+    return None
+
+def fixmoremanfitsettings(project=None, **kwargs):
+    '''
+    Migration between Optima 2.10.14 and 2.10.15 
+    
+    - Adjust manual calibration flags for added parameters
+    '''
+    if project is not None:            
+        for ps in project.parsets.values():
+            ps.pars['propemigrate'].manual = 'meta'
+            ps.pars['numimmigrate'].manual = 'meta'
+            ps.pars['immihivprev'].manual  = 'meta'
+            ps.pars['immipropdiag'].manual = 'meta'
+    return None
+
+def clearuntrackedresults(project=None, **kwargs):
+    '''
+    Migration between Optima 2.10.15 and 2.10.16 
+    
+    - If results were not updated a couple of migrations previously then remove them now and need to rerun
+    - This update also includes adding advanced tracking plots to the FE
+    '''
+    if project is not None:
+        for res in project.results.values():
+            if not hasattr(res, 'advancedtracking'): #if anything wasn't migrated previously just clear the result and user will rerun, migration is complex otherwise
+                project.results = op.odict()
+                break
+    return None
+
+def addallconstraintsoptim(project=None, **kwargs):
+    '''
+    Migration between Optima 2.11.3 and 2.11.4
+    - Add proporigconstraints and absconstraints to the Optims in the project
+    '''
+    if project is not None:
+        for optim in project.optims.values():
+            if not hasattr(optim, 'constraints'):         optim.constraints         = None  # Should already have constraints but check anyway
+            if not hasattr(optim, 'proporigconstraints'): optim.proporigconstraints = None
+            if not hasattr(optim, 'absconstraints'):      optim.absconstraints      = None
+    return None
+
+def addinsertonlyacts(project=None, **kwargs):
+    '''
+    Migration between Optima 2.11.4 and 2.12.0
+    - actsreg, actscas, actscom are now only insertive acts, so we add a attribute insertiveonly to pars['actsreg'] etc
+    '''
+    if project is not None:
+        for parset in project.parsets.values():
+            for parname in ['actsreg', 'actscas', 'actscom']:
+                par = parset.pars[parname]
+                if not hasattr(par, 'insertiveonly'):
+                    par.insertiveonly = False  # Previously generated parsets don't have insertive only
+    return None
+
+
+##########################################################################################
+### REVISION MIGRATION FUNCTIONS
+##########################################################################################
+
+def parsandprograms_odictcustom(project=None, **kwargs):
+    '''
+        Migration between revision 0 and 1
+        Convert Parameterset.pars and Programset.programs to be odict_custom, which links back to the
+        Parameterset and Programset respectively
+    '''
+    if project is not None:
+        # propagate version, then we make sure that any new parsets we add have projectversion == version
+        project.parsets = op.odict_custom(project.parsets, func=project.propagateversion)
+        project.parsets.func = project.checkpropagateversionlink
+        project.parsets.func(project.parsets, project.parsets.keys(), project.parsets.values()) # run it once to link
+
+        for parset in project.parsets.values():
+            parset.pars = op.odict_custom(parset.pars, func=parset.propagateversion)
+            parset.pars.func = parset.checkpropagateversion
+
+        # propagate version, then we make sure that any new parsets we add have projectversion == version
+        project.progsets = op.odict_custom(project.progsets, func=project.propagateversion)
+        project.progsets.func = project.checkpropagateversionlink
+        project.progsets.func(project.progsets, project.progsets.keys(), project.progsets.values())  # run it once to link
+
+        for progset in project.progsets.values():
+            progset.programs = op.odict_custom(progset.programs, func=progset.propagateversion)
+            progset.programs.func = progset.checkpropagateversion
+
+
+def updatemethodsettings(project=None, **kwargs):
+    '''
+        Migration between revision 3 and 4,
+        Clears results and sets the new settings for methods of transmission
+    '''
+    if project is not None:
+        project.results = op.odict()
+
+        settings = project.settings
+        settings.inj = 0            # Injection, don't change number
+        settings.heterosexsex = [1, 2, 3]   # Homosexual sexual transmission, don't change number
+        settings.homosexsex   = [4, 5, 6]     # Heterosexual sexual transmission, don't change number
+        settings.mtct = 7           # MTCT
+        settings.nmethods = 8       # 8 methods of transmission
+        settings.nonmtctmethods = [settings.inj] + settings.heterosexsex + settings.homosexsex
+        settings.regular    = [1, 4]
+        settings.casual     = [2, 5]
+        settings.commercial = [3, 6]
+        settings.allmethodnames = ['Injection',
+                               'Heterosexual sex (regular)','Heterosexual sex (casual)','Heterosexual sex (commercial)',
+                               'Homosexual sex (regular)',  'Homosexual sex (casual)',  'Homosexual sex (commercial)',
+                               'MTCT']
+        settings.methodindsgroups = [[settings.inj], settings.heterosexsex, settings.homosexsex, [settings.mtct]]
+        settings.methodnames = ['Injection', 'Heterosexual sex', 'Homosexual sex', 'MTCT']
+
+        settings.now = 2023.0  # Default current year
+        settings.dataend = 2040.0  # Default end year for data entry
 
 ##########################################################################################
 ### CORE MIGRATION FUNCTIONS
 ##########################################################################################
+def versiontomigrateto(project, migrateversion='supported'):
+    """
+        migrateversion: 'supported' = up to the first supported version (default),
+                    False = do not migrate at all (which prints a warning if the project version is not supported)
+                    'minor' = migrate 2.a.b to 2.a.c with c as large as it can be within supported versions (minor calibration changes likely)
+                    'major' = 'latest' = True = migrate 2.a.b to 2.x.y the latest version within supported versions (possible major calibration changes / databook changes)
+                    or a specific version
+    Returns:
+        versiontomigrateto: either a version, False (don't migrate) or None which means couldn't find a version to migrate to
+    """
+    def versiontoint(version):  # only works up to 999,999 versions for each x.y.z
+        split = version.split('.')
+        return 1000000000000 * int(split[0]) + 1000000 * int(split[1]) + int(split[2])
+    supported_versions = sorted(op.supported_versions, key=versiontoint)
 
-def migrate(project, verbose=2, die=False):
+    if not migrateversion: # Takes care of migrateversion = False
+       return False
+
+    if migrateversion == 'supported':
+        # Need to migrate
+        newversion = None
+        for version in reversed(supported_versions):
+            if op.compareversions(project.version, version) <= 0:
+                newversion = version
+        return newversion
+    if migrateversion == 'minor':
+        # Assuming x.y.z
+        newversion = None
+        version_split = project.version.split('.')
+        for version in supported_versions: # find x.y.B that matches x.y.z
+            new_version_split = version.split('.')
+            if version_split[0] == new_version_split[0] and version_split[1] == new_version_split[1]:
+                newversion = version
+        return newversion
+    if migrateversion == 'latest' or migrateversion == 'major' or migrateversion == True:
+        return supported_versions[-1]
+
+    # If it wasn't one of the above then migrateversion is a specific version
+    import packaging
+    if type(packaging.version.parse(migrateversion)) == packaging.version.Version: # check it is a valid version string
+        requestversion_split = migrateversion.split('.')
+        if len(requestversion_split) < 2: # '2' Warning: won't work with 3.x.y
+            return supported_versions[-1] # latest
+        if len(requestversion_split) == 2: # '2.12'
+            newversion = None
+            for version in supported_versions:  # find x.y.B that matches x.y.z
+                version_split = version.split('.')
+                if version_split[0] == requestversion_split[0] and version_split[1] == requestversion_split[1]:
+                    newversion = version
+            return newversion
+        # '2.12.2' or some other exact version: note gets cut off after x.y.z
+        return f'{requestversion_split[0]}.{requestversion_split[1]}.{requestversion_split[2]}'
+    else:
+        raise op.OptimaException(f'Could not parse migrateversion="{migrateversion}"')
+
+
+def migrate(project, migrateversion='supported', verbose=2, die=None):
     """
     Migrate an Optima Project by inspecting the version and working its way up.
+    migrateversion: 'supported' = up to the first supported version (default),
+                    False = do not migrate at all (which prints a warning if the project version is not supported)
+                    'minor' = migrate 2.a.b to 2.a.c with c as large as it can be within supported versions (minor calibration changes likely)
+                    'major' = 'latest' = True = migrate 2.a.b to 2.x.y the latest version within supported versions (possible major calibration changes / databook changes)
+                    or a specific version
     """
-    
-    migrations = setmigrations() # Get the migrations to run
+    if die is None: die = migrateversion !='supported' # supported is the default so don't die, but die otherwise
 
-    while str(project.version) != str(op.version):
+    migrations = setmigrations() # Get the migrations to run
+    newversion = versiontomigrateto(project, migrateversion)
+
+    if newversion is None:
+        errormsg = f'WARNING: Could not find a version for project "{project.name}" to migrate to from version {project.version} using migrateversion={migrateversion}'
+        if die: raise op.OptimaException(errormsg)
+        else: print(errormsg)
+        return project
+    elif newversion == False:
+        return project
+
+
+    while str(project.version) != str(newversion):
         currentversion = str(project.version)
-        
+
         # Check that the migration exists
         if not currentversion in migrations:
-            if op.compareversions(currentversion, op.version)<0:
-                errormsg = "WARNING, migrating %s failed: no migration exists from version %s to the current version (%s)" % (project.name, currentversion, op.version)
-            elif op.compareversions(currentversion, op.version)>0:
-                errormsg = "WARNING, migrating %s failed: project version %s more recent than current Optima version (%s)" % (project.name, currentversion, op.version)
+            if op.compareversions(currentversion, newversion)<0:
+                errormsg = "WARNING, migrating %s failed: no migration exists from version %s to the desired version (%s)" % (project.name, currentversion, newversion)
+            elif op.compareversions(currentversion, newversion)>0:
+                errormsg = "WARNING, migrating %s failed: project version %s more recent than desired Optima version (%s)" % (project.name, currentversion, newversion)
             if die: raise op.OptimaException(errormsg)
             else:   op.printv(errormsg, 1, verbose)
             return project # Abort, if haven't died already
 
         # Do the migration
-        newversion,currentdate,migrator,msg = migrations[currentversion] # Get the details of the current migration -- version, date, function ("migrator"), and message
-        op.printv('Migrating "%s" from %6s -> %s' % (project.name, currentversion, newversion), 2, verbose)
-        if migrator is not None: 
-            try: 
-                migrator(project, verbose=verbose, die=die) # Sometimes there is no upgrader
+        nextversion,currentdate,migrator,msg = migrations[currentversion] # Get the details of the current migration -- version, date, function ("migrator"), and message
+        op.printv('Migrating "%s" from %6s -> %s' % (project.name, currentversion, nextversion), 2, verbose)
+        if migrator is not None: # Sometimes there is no upgrader
+            try:
+                migrator(project, verbose=verbose, die=die)
             except Exception as E:
-                errormsg = 'WARNING, migrating "%s" from %6s -> %6s failed:\n%s' % (project.name, currentversion, newversion, repr(E))
+                errormsg = 'WARNING, migrating "%s" from %6s -> %6s failed:\n%s' % (project.name, currentversion, nextversion, repr(E))
                 if not hasattr(project, 'failedmigrations'): project.failedmigrations = [] # Create if it doesn't already exist
                 project.failedmigrations.append(errormsg)
                 if die: raise op.OptimaException(errormsg)
                 else:   op.printv(errormsg, 1, verbose)
                 return project # Abort, if haven't died already
-        
+
         # Update project info
-        project.version = newversion # Update the version info
-    
+        project.version = nextversion # Update the version info
+
     # Restore links just in case
     project.restorelinks()
-    
+
     # If any warnings were generated during the migration, print them now
     warnings = project.getwarnings()
-    if warnings and die: 
+    if warnings and die:
         errormsg = 'WARNING, Please resolve warnings in projects before continuing'
         if die: raise op.OptimaException(errormsg)
         else:   op.printv(errormsg+'\n'+warnings, 1, verbose)
-    
+
     op.printv('Migration successful!', 3, verbose)
     return project
 
+def migraterevisionfunc(project, migraterevision=True, verbose=2, die=False):
+    revmigrations = setrevisionmigrations()  # Get the migrations to run
+    if not hasattr(project, 'revision'): project.revision = '0'  ## TODO-kelvin int or string? - --- is this the place for this? Really would need a proper migration but we would need a revision for that
 
-def loadproj(filename=None, folder=None, verbose=2, die=False, fromdb=False, domigrate=True, updatefilename=True):
-    ''' Load a saved project file -- wrapper for loadobj using legacy classes '''
-    
+    if not migraterevision: # If we don't want to migrate
+        return project
+
+    if migraterevision == True or migraterevision == 'latest':
+        newrevision = op.revision
+    else: # A specific revision
+        newrevision = migraterevision
+
+    while str(project.revision) != str(newrevision):
+        currentrevision = str(project.revision)
+
+        # Check that the migration exists
+        if not currentrevision in revmigrations:
+            if op.compareversions(currentrevision, newrevision)<0: # We aren't yet where we want
+                errormsg = "WARNING, migrating %s to revision %s failed: no migration exists from revision %s" % (project.name, newrevision, currentrevision)
+            elif op.compareversions(currentrevision, newrevision)>0: # We are further where we want
+                errormsg = "WARNING, migrating %s failed: project revision %s more recent than desired revision %s, current Optima revision (%s)" % (project.name, currentrevision, newrevision, op.revision)
+            if die: raise op.OptimaException(errormsg)
+            else:   op.printv(errormsg, 1, verbose)
+            return project # Abort, if haven't died already
+
+        # Do the migration
+        nextrevision,currentdate,migrator,msg = revmigrations[currentrevision] # Get the details of the current migration -- newrevision, date, function ("migrator"), and message
+        op.printv('Migrating revision "%s" from %6s -> %s' % (project.name, currentrevision, nextrevision), 2, verbose)
+        if migrator is not None: # Sometimes there is no upgrader
+            try:
+                migrator(project, verbose=verbose, die=die)
+            except Exception as E:
+                errormsg = 'WARNING, migrating revision "%s" from %6s -> %6s failed:\n%s' % (project.name, currentrevision, nextrevision, repr(E))
+                if not hasattr(project, 'failedmigrations'): project.failedmigrations = [] # Create if it doesn't already exist
+                project.failedmigrations.append(errormsg)
+                if die: raise op.OptimaException(errormsg)
+                else:   op.printv(errormsg, 1, verbose)
+                return project # Abort, if haven't died already
+
+        # Update project info
+        project.revision = nextrevision # Update the revision info
+
+    # Restore links just in case
+    project.restorelinks()
+
+    # If any warnings were generated during the migration, print them now
+    warnings = project.getwarnings()
+    if warnings and die:
+        errormsg = 'WARNING, Please resolve warnings in projects before continuing'
+        if die: raise op.OptimaException(errormsg)
+        else:   op.printv(errormsg+'\n'+warnings, 1, verbose)
+
+    op.printv('Migration successful!', 3, verbose)
+    return project
+
+def loadproj(filename=None, folder=None, verbose=2, die=None, fromdb=False, migrateversion='supported', migraterevision='latest', updatefilename=True):
+    ''' Load a saved project file -- wrapper for loadobj using legacy classes
+        migrateversion: 'supported' = up to the first supported version (default),
+                        False = do not migrate at all (which prints a warning if the project version is not supported)
+                        'minor' = migrate 2.a.b to 2.a.c with c as large as it can be within supported versions (minor calibration changes likely)
+                        'major' = 'latest' = migrate 2.a.b to 2.x.y the latest version within supported versions (possible major calibration changes / databook changes)
+        migraterevision='latest'=True, False, or a specific revision (only latest is supported)
+    '''
     if fromdb:    origP = op.loadstr(filename) # Load from database
-    else:         origP = op.loadobj(filename=filename, folder=folder, verbose=verbose) # Normal usage case: load from file
+    else:         origP = op.loadobj(filename=filename, folder=folder, verbose=(True if verbose>2 else None if verbose>0 else False), die=die) # Normal usage case: load from file
 
-    if domigrate: 
-        try: 
-            P = migrate(origP, verbose=verbose, die=die)
-            if not fromdb and updatefilename: P.filename = filename # Update filename if not being loaded from a database
+
+    if migrateversion:
+        try:
+            P = migrate(origP, migrateversion=migrateversion, verbose=verbose, die=die)
         except Exception as E:
             if die: raise E
             else:   P = origP # Fail: return unmigrated version
     else: P = origP # Don't migrate
-    
+
+    if P.version not in op.supported_versions:
+        errmsg = f'P.version={P.version} of this project "{P.name}" is not supported: {op.supported_versions} and you have set migrateversion={migrateversion}. '
+        if die: raise OptimaException(errmsg)
+        else: print('WARNING!: ' + errmsg + f'\n\tThis will likely cause problems until it is updated to one of the supported versions: {op.supported_versions}')
+
+    try: # Note we don't have a `if migraterevsion` check, since we need to call migraterevisionfunc which adds P.revision if it needs it
+        P = migraterevisionfunc(origP, migraterevision=migraterevision, verbose=verbose, die=die)
+    except Exception as E:
+        if die: raise E
+        else: print(f'WARNING: Error when trying to update project "{P.name}" to revision {op.revision} from revision {P.revision}:\n'+str(E))
+
+    if str(P.revision) != str(op.revision):
+        errmsg = f'P.revision={P.revision} of this project "{P.name}" is not supported (only {op.revision}) and you have set migraterevision={migraterevision}. '
+        if die: raise OptimaException(errmsg)
+        else: print('WARNING!: ' + errmsg + f'\n\tThis will likely cause problems until it is updated to the latest revision {op.revision}')
+
+    if not fromdb and updatefilename: P.filename = filename  # Update filename if not being loaded from a database - note this used to be in the `if migrateversion` block, not sure why?
+
     return P
 
 
@@ -1102,11 +1930,11 @@ def migrateportfolio(portfolio=None, verbose=2, die=True):
     
     # Update version number to the latest -- no other changes  should be necessary
     if op.compareversions(portfolio.version, '2.9.0')>=0:
-        portfolio.version = op.version
+        portfolio.version = op.supported_versions[-1]
     
     # Check to make sure it's the latest version -- should not happen, but just in case!
-    if portfolio.version != op.version:
-        errormsg = "No portfolio migration exists from version %s to the latest version (%s)" % (portfolio.version, op.version)
+    if portfolio.version != op.supported_versions[-1]:
+        errormsg = "No portfolio migration exists from version %s to the latest version (%s)" % (portfolio.version, op.supported_versions[-1])
         if die: raise op.OptimaException(errormsg)
         else:   op.printv(errormsg, 1, verbose)
     
@@ -1115,7 +1943,7 @@ def migrateportfolio(portfolio=None, verbose=2, die=True):
 
 def loadportfolio(filename=None, folder=None, verbose=2):
     ''' Load a saved portfolio, migrating constituent projects -- NB, portfolio itself is not migrated (no need yet), only the projects '''
-    
+
     op.printv('Loading portfolio %s...' % filename, 2, verbose)
     portfolio = op.loadobj(filename=filename, folder=folder, verbose=verbose) # Load portfolio
     portfolio = migrateportfolio(portfolio)
@@ -1123,6 +1951,7 @@ def loadportfolio(filename=None, folder=None, verbose=2):
     for i in range(len(portfolio.projects)): # Migrate projects one by one
         op.printv('Loading project %s...' % portfolio.projects[i].name, 3, verbose)
         portfolio.projects[i] = migrate(portfolio.projects[i], verbose=verbose)
+        portfolio.projects[i] = migraterevisionfunc(portfolio.projects[i], verbose=verbose)
     
     portfolio.filename = filename # Update filename
     

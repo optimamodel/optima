@@ -2,11 +2,15 @@
 ## Preliminaries
 ###########################################################################
 
-from optima import OptimaException, loaddatapars, odict, printv, today, isnumber, makefilepath, version, compareversions, dcp
+from optima import OptimaException, loaddatapars, odict, printv, today, isnumber, makefilepath, compatibledatabookversion, versions_different_databook, compareversions, dcp
 from numpy import nan, isnan, array, shape # For reading in empty values
 from xlrd import open_workbook, colname # For opening Excel workbooks
-versioncheck = '\n(spreadsheet version not available)' # To be filled once the version is checked below
+versioncheck = '\n(spreadsheet or project version not available)' # To be filled once the version is checked below
 
+__all__ = [
+    'loadspreadsheet',
+    'loadprogramspreadsheet'
+]
 
 def forcebool(entry, location=''):
     ''' Convert an entry to be Boolean '''
@@ -68,13 +72,12 @@ def getyears(sheetdata):
             years.append(float(thiscell)) # Add this year
     
     return lastdatacol, years
-    
+
 
 ###########################################################################################################
 ## Define the workbook and parameter names -- should match makespreadsheet.py and partable in parameters.py
 ###########################################################################################################
-        
-def loadspreadsheet(filename=None, folder=None, verbose=2):
+def loadspreadsheet(filename=None, folder=None, verbose=2, projectversion=None):
     '''
     Loads the spreadsheet (i.e. reads its contents into the data).
     This data sheet is used in the next step to update the corresponding model.
@@ -144,14 +147,34 @@ def loadspreadsheet(filename=None, folder=None, verbose=2):
         for row in range(commentrow-1, instructionssheet.nrows):
             comment = instructionssheet.cell_value(row, 0) # Hardcoded comment cell in A14
             data['meta']['datacomments'].append(comment) # Store the data comment entered on the instructions sheet
-    versioncell = instructionssheet.cell_value(versionrow, 0)
-    versionstr = versioncell.split()[-1] # Last bit should be the version
-    if compareversions(versionstr, version) != 0:
-        versioncheck = '\nNote: spreadsheet version does not match Optima version: %s vs. %s' % (versionstr, version)
-        printv(versioncheck, 1, verbose)
-    else:
-        versioncheck = '\nHowever, spreadsheet and Optima versions match (%s = %s)' % (versionstr, version)
+    try:
+        versioncell = instructionssheet.cell_value(versionrow, 0)
+        versionstr = versioncell.split()[-1] # Last bit should be the version
+    except:
+        versionstr = '0.0.0' #may have error if not specified - in very old versions, so treat as 0.0.0
+    data['meta']['databookversion'] = versionstr
+    if compatibledatabookversion(versionstr) is None:
+        raise OptimaException(f'Cannot load incompatible databook with version {versionstr} it needs to be updated to at least {versions_different_databook[0]}: review user guide for changes or create a new project and copy data.')
+
+    if projectversion is None:
+        firstcompatible = compatibledatabookversion(versionstr)
+        lastcompatible  = 'latest' if versions_different_databook.index(firstcompatible) == len(versions_different_databook) \
+                                    else '<' + versions_different_databook[versions_different_databook.index(firstcompatible) + 1]
+        print(f'Warning: loadspreadsheet was not given the projectversion, so check the P.version is compatible with the databook version: {versionstr} which is compatible with versions {firstcompatible} to {lastcompatible}')
+    else: # projectversion was given so check it is compatible
     
+        if compareversions(versionstr, projectversion) != 0:
+            if compareversions(compatibledatabookversion(versionstr), compatibledatabookversion(projectversion)) != 0: #then it's not compatible
+                raise OptimaException(f'Optima version of project {projectversion}, cannot load incompatible databook with version {versionstr} (databook needs to be updated to at least {compatibledatabookversion(projectversion)}: review user guide for changes or create a new project and copy data).')
+            else:
+                versioncheck = f'\nNote: databook version {versionstr} does not match project version {projectversion}, although they are intended to be compatible'
+        else:
+            versioncheck = f'\nHowever, databook and Optima version of project match ({versionstr} == {projectversion})' #This only gets printed after an error if one occurs on load, hence "however"
+            
+
+
+    load_version = compatibledatabookversion(versionstr) # Use corresponding functions to this version
+
     ## Load population data
     printv('Loading populations...', 3, verbose)
     popssheet = workbook.sheet_by_name('Populations')
@@ -201,8 +224,11 @@ def loadspreadsheet(filename=None, folder=None, verbose=2):
                     if len(data[thispar])==0: 
                         data[thispar] = [[] for z in range(3)] # Create new variable for best, low, high
                     thesedata = blank2nan(sheetdata.row_values(row, start_colx=startcol, end_colx=lastdatacol)) # Data starts in 4th column -- need room for high/best/low
+                    validatedata(thesedata, sheetname, thispar, row, checkblank=False, checkupper=checkupper[thispar], startcol=startcol) # Don't check for blank yet, do that after trying the assumption
+                    dataallnan = isnan(thesedata).all() # the above line makes sure the data is all numbers and throws an error if not - so this line shouldn't throw a hard to diagnose error
                     assumptiondata = sheetdata.cell_value(row, assumptioncol)
-                    if assumptiondata != '': thesedata = [assumptiondata] # Replace the (presumably blank) data if a non-blank assumption has been entered
+                    if assumptiondata != '' and dataallnan: # There's an assumption entered and no yearly data - Defaults to using yearly data if it is there
+                        thesedata = [assumptiondata] # Replace the blank data if a non-blank assumption has been entered
                     blh = sheetdata.cell_value(row, 2) # Read in whether indicator is best, low, or high
                     data[thispar][blhindices[blh]].append(thesedata) # Actually append the data
                     validatedata(thesedata, sheetname, thispar, row, checkblank=(blh=='best'), checkupper=checkupper[thispar], startcol=startcol)  # Make sure at least the best estimate isn't blank
@@ -211,9 +237,11 @@ def loadspreadsheet(filename=None, folder=None, verbose=2):
                 elif sheettype=='time': 
                     startcol = 2
                     thesedata = blank2nan(sheetdata.row_values(row, start_colx=startcol, end_colx=lastdatacol-1)) # Data starts in 3rd column, and ends lastdatacol-1
+                    validatedata(thesedata, sheetname, thispar, row, checkblank=False, checkupper=checkupper[thispar], startcol=startcol) # Don't check for blank yet, do that after trying the assumption
+                    dataallnan = isnan(thesedata).all() # the above line makes sure the data is all numbers and throws an error if not - so this line shouldn't throw a hard to diagnose error
                     assumptiondata = sheetdata.cell_value(row, assumptioncol-1)
-                    if assumptiondata != '': # There's an assumption entered
-                        thesedata = [assumptiondata] # Replace the (presumably blank) data if a non-blank assumption has been entered
+                    if assumptiondata != '' and dataallnan: # There's an assumption entered and no yearly data - Defaults to using yearly data if it is there
+                        thesedata = [assumptiondata] # Replace the blank data if a non-blank assumption has been entered
                     data[thispar].append(thesedata) # Store data
                     checkblank = False if sheetname in skipblanksheets or thispar in skipblankpars else True # Don't check optional indicators, check everything else
                     validatedata(thesedata, sheetname, thispar, row, checkblank=checkblank, checkupper=checkupper[thispar], startcol=startcol)
@@ -248,7 +276,7 @@ def loadspreadsheet(filename=None, folder=None, verbose=2):
     
     # Check that matrices have correct shape
     data['npops'] = len(data['pops']['short'])
-    for key in sheets['Partnerships & transitions']:
+    for key in data['meta']['sheets']['Partnerships & transitions']:  # Have to use data['meta']['sheets'] since the sheets has all the parameters popped with thispar = subparlist.pop(0)
         thesedata = data[key]
         matrixshape = shape(array(thesedata))
         correctfirstdim = data['npops'] if key!='birthtransit' else sum(data['pops']['female'])
@@ -347,9 +375,11 @@ def loadprogramspreadsheet(filename='testprogramdata.xlsx', verbose=2):
 
         elif progname != '': # The first column is blank: it's time for the data
             thesedata = blank2nan(sheetdata.row_values(row, start_colx=3, end_colx=lastdatacol)) # Data starts in 3rd column, and ends lastdatacol-1
+            validatedata(thesedata, sheetname, thisvar, row, checkblank=False) # Don't check for blank yet, do that after trying the assumption
+            dataallnan = isnan(thesedata).all() # the above line makes sure the data is all numbers and throws an error if not - so this line shouldn't throw a hard to diagnose error
             assumptiondata = sheetdata.cell_value(row, assumptioncol)
-            if assumptiondata != '': # There's an assumption entered
-                thesedata = [assumptiondata] # Replace the (presumably blank) data if a non-blank assumption has been entered
+            if assumptiondata != '' and dataallnan: # There's an assumption entered and no yearly data entered - Default to using yearly data over assumption
+                thesedata = [assumptiondata] # Replace blank data if a non-blank assumption has been entered
             if sheetdata.cell_value(row, 2) in namemap.keys(): # It's a regular variable without ranges
                 thisvar = namemap[sheetdata.cell_value(row, 2)]  # Get the name of the indicator
                 printv('Program: %s, indicator %s' % (progname, thisvar), 4, verbose)

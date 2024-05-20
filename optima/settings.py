@@ -16,15 +16,21 @@ Version: 2016oct05
 from numpy import arange, array, concatenate as cat, shape
 from optima import OptimaException, defaultrepr, printv, dcp, isnumber, inclusiverange
 
+__all__ = [
+    'Settings',
+    'convertlimits',
+    'gettvecdt'
+]
+
 
 class Settings(object):
     def __init__(self, verbose=2):
         self.dt = 0.2 # Timestep
         self.start = 2000.0 # Default start year
-        self.now = 2017.0 # Default current year
-        self.dataend = 2020.0 # Default end year for data entry
-        self.end = 2030.0 # Default end year for projections
-        self.hivstates = ['acute', 'gt500', 'gt350', 'gt200', 'gt50', 'lt50']
+        self.now = 2023.0 # Default current year
+        self.dataend = 2040.0 # Default end year for data entry
+        self.end = 2040.0 # Default end year for projections
+        self.hivstates = ['acute', 'gt500', 'gt350', 'gt200', 'gt50', 'lt50']   # Be careful changing this, check settings.aidsind and where aidsind is used too
         self.healthstates = ['susreg', 'progcirc', 'undx', 'dx', 'care', 'lost', 'usvl', 'svl']
         self.ncd4 = len(self.hivstates)
         self.nhealth = len(self.healthstates)
@@ -67,6 +73,25 @@ class Settings(object):
         self.allaids        = cat([self.lt50, self.gt50]) # All people with AIDS
         self.allstates      = cat([self.sus, self.allplhiv]) # All states
         self.nstates        = len(self.allstates) # Total number of states
+
+        # Infection methods
+        self.inj = 0            # Injection, don't change number
+        self.heterosexsex = [1, 2, 3]   # Homosexual sexual transmission, don't change number
+        self.homosexsex   = [4, 5, 6]     # Heterosexual sexual transmission, don't change number
+        self.mtct = 7           # MTCT
+        self.nmethods = 8       # 8 methods of transmission
+        self.nonmtctmethods = [self.inj] + self.heterosexsex + self.homosexsex
+        self.regular    = [1, 4]
+        self.casual     = [2, 5]
+        self.commercial = [3, 6]
+        self.allmethodnames = ['Injection',
+                               'Heterosexual sex (regular)','Heterosexual sex (casual)','Heterosexual sex (commercial)',
+                               'Homosexual sex (regular)',  'Homosexual sex (casual)',  'Homosexual sex (commercial)',
+                               'MTCT']
+        self.methodindsgroups = [[self.inj], self.heterosexsex, self.homosexsex, [self.mtct]]
+        self.methodnames = ['Injection', 'Heterosexual sex', 'Homosexual sex', 'MTCT']
+
+        self.advancedtracking = False # Try to always set to False to save time when running model
         
         # Set labels for each health state
         thesestates = dcp(self.healthstates)
@@ -91,8 +116,6 @@ class Settings(object):
         self.safetymargin = 0.5 # Do not move more than this fraction of people on a single timestep
         self.eps = 1e-3 # Must be small enough to be applied to prevalence, which might be ~0.1% or less
         self.infmoney = 1e10 # A lot of money
-        self.forcepopsize = False # Whether or not to force the population size to match the parameters
-        self.treatbycd4 = True # Whether or not to preferentially put people on treatment from lower CD4 counts
         printv('Initialized settings', 4, self.verbose) # And show how verbose is used
     
     
@@ -184,7 +207,7 @@ def convertlimits(limits=None, tvec=None, dt=None, safetymargin=None, settings=N
     maxduration = 1000.
     maxmeta = 1000.0
     maxacts = 5000.0
-    maxyear = settings.end if settings is not None else 2030. # Set to a default maximum year
+    maxyear = settings.end if settings is not None else Settings().end # Set to a default maximum year
     
     # It's a single number: just return it
     if isnumber(limits): return limits

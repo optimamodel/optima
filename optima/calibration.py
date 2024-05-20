@@ -11,6 +11,7 @@ import six
 if six.PY3:
     unicode = str
 
+__all__ = ['autofit']
 
 def autofit(project=None, name=None, fitwhat=None, fitto=None, method='wape', maxtime=None, maxiters=1000, verbose=2, doplot=False, randseed=None, **kwargs):
     ''' 
@@ -124,8 +125,8 @@ def convert(pars, parlist, parvec=None):
             if tv: parvec[i] = pars[thisname].y[thisind]
             else:  pars[thisname].y[thisind] = parvec[i]
         elif thistype=='exp': 
-            if tv: parvec[i] = pars[thisname].i[thisind] # Don't change growth rates, just intercept i
-            else:  pars[thisname].i[thisind] = parvec[i]
+            if tv: parvec[i] = pars[thisname].m # Don't change growth rates, change metaparameter instead (mostly influencing first data point)
+            else:  pars[thisname].m = parvec[i]
         elif thistype=='meta': 
             if tv: parvec[i] = pars[thisname].m
             else:  pars[thisname].m = parvec[i]

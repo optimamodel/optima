@@ -6,13 +6,19 @@ set of programs, respectively.
 Version: 2019jan09
 """
 
-from optima import OptimaException, Link, printv, uuid, today, sigfig, getdate, dcp, smoothinterp, findinds, odict, Settings, sanitize, defaultrepr, isnumber, promotetoarray, vec2obj, asd, convertlimits
+from optima import OptimaException, Link, printv, uuid, today, sigfig, getdate, dcp, promotetolist, smoothinterp, findinds, odict, Settings, sanitize, defaultrepr, isnumber, promotetoarray, vec2obj, asd, convertlimits, Timepar, Yearpar, checkifparsoverridepars, createwarningforoverride, standard_dcp, standard_cp, odict_custom
 from numpy import ones, prod, array, zeros, exp, log, append, nan, isnan, maximum, minimum, sort, concatenate as cat, transpose, mean, argsort
 from random import uniform
 import six
 if six.PY3:
 	basestring = str
 	unicode = str
+
+__all__ = [
+    'Program',
+    'Programset',
+    'checkifparsetoverridesprogset'
+]
 
 class Programset(object):
 
@@ -21,8 +27,9 @@ class Programset(object):
         self.name = name
         self.uid = uuid()
         self.default_interaction = default_interaction
-        self.programs = odict()
+        self.programs = odict_custom(func=self.checkpropagateversion)
         self.projectref = Link(project) # Store pointer for the project, if available
+        self.projectversion = project.version if hasattr(project, 'version') else None
         if programs is not None: self.addprograms(programs)
         else: self.updateprogset()
         self.defaultbudget = odict()
@@ -41,6 +48,58 @@ class Programset(object):
         output += '============================================================\n'
         
         return output
+
+    def __copy__(self):
+        print('WARNING: copying a Programset will make it so that the programs[:].projectversion will get updated by this new progset, not the old one which they are still included in. '
+              'It is recommended to deepcopy the progset instead.')
+        copy = standard_cp(self)
+        if isinstance(copy.programs, odict_custom): copy.programs.func = copy.checkpropagateversion
+        return copy
+
+    def __deepcopy__(self, memodict={}):
+        copy = standard_dcp(self, memodict)
+        if isinstance(copy.programs, odict_custom): copy.programs.func = copy.checkpropagateversion
+        return copy
+
+    def __setattr__(self, name, value):
+        if name == 'programs':
+            if not isinstance(value, odict_custom):
+                value = odict_custom(value, func=self.checkpropagateversion)
+            value.func = self.checkpropagateversion
+
+        super(Programset, self).__setattr__(name, value)
+
+        if name == 'programs': # If we are adding programs, make sure they match the projectversion of the parset
+            self.checkpropagateversion(None, None, self.programs.values())
+        if name == 'projectversion' and hasattr(self, 'programs') and self.programs is not None:
+            self.propagateversion(None, None, self.programs.values())
+
+    def propagateversion(self, odict, keys, values, die=True):
+        ''' Dies because it should be able to add .projectversion to a Program'''
+        values = promotetolist(values)
+        for val in values:
+            try: val.projectversion = self.projectversion
+            except: # try to add projectversion but don't stress if it doesn't work
+                if die: raise
+
+    def checkversion(self, odict, keys, values):
+        if self.projectversion is None:
+            return
+        values = promotetolist(values)
+        for val in values:
+            if not hasattr(val, 'projectversion'):
+                raise OptimaException(f'Cannot add {type(val)} "{val.name}" to Programset "{self.name}" because it is '
+                                      f'missing a projectversion so it might not be compatible with Programset.projectversion={self.projectversion}')
+            if self.projectversion is not None and val.projectversion is not None and val.projectversion != self.projectversion:
+                raise OptimaException(f'Cannot add {type(val)} "{val.name}" to Programset "{self.name}" because it has '
+                                      f'a different projectversion={val.projectversion} than the Programset.projectversion={self.projectversion}')
+
+    def checkpropagateversion(self, odict, keys, values):
+        values = promotetolist(values)
+
+        if hasattr(self, 'projectversion') and self.projectversion is not None:
+            self.checkversion(odict, keys, values)
+            self.propagateversion(odict, keys, values)
 
     def getsettings(self, project=None, parset=None, results=None):
         ''' Try to get the freshest settings available '''
@@ -87,7 +146,7 @@ class Programset(object):
         progdefaultpars = self.projectref().parset().getprogdefaultpars() # Get list of parameters that have default values under zero program coverage
 
         for targetpartype in self.targetpartypes: # Loop over parameter types
-            if not self.covout.get(targetpartype): self.covout[targetpartype] = odict() # Initialize if it's not there already
+            if not self.covout.get(targetpartype): self.covout[targetpartype] = odict() # Initialize if it's not there already HERE could be linked
             for thispop in self.progs_by_targetpar(targetpartype).keys(): # Loop over populations
                 if self.covout[targetpartype].get(thispop): # Take the pre-existing one if it's there... 
                     ccopars = self.covout[targetpartype][thispop].ccopars 
@@ -124,6 +183,8 @@ class Programset(object):
 
     def updateprogset(self, verbose=2):
         ''' Update (run this is you change something... )'''
+        if self.programs is not None and not isinstance(self.programs, odict_custom):
+            self.programs = odict_custom(self.programs, func=self.checkpropagateversion)
         self.gettargetpars()
         self.gettargetpartypes()
         self.gettargetpops()
@@ -135,7 +196,7 @@ class Programset(object):
         ''' Add new programs'''
         if type(newprograms)==Program: newprograms = [newprograms]
         if type(newprograms)==list:
-            for newprogram in newprograms: 
+            for newprogram in newprograms:
                 if newprogram not in self.programs.values():
                     self.programs[newprogram.short] = newprogram
                     printv('\nAdded program "%s" to programset "%s". \nPrograms in this programset are: %s' % (newprogram.short, self.name, [thisprog.short for thisprog in self.programs.values()]), 3, verbose)
@@ -153,6 +214,28 @@ class Programset(object):
             self.programs.pop(program)
             self.updateprogset()
             printv('\nRemoved program "%s" from programset "%s". \nPrograms in this programset are: %s' % (program, self.name, [thisprog.short for thisprog in self.programs.values()]), 4, verbose)
+
+    def reorderprograms(self,desiredorder,verbose=2):
+        ''' Reorder the odict of programs. Expects desiredorder to be a list of Program or list of str'''
+        if not (len(desiredorder) == len(self.programs)):
+            raise OptimaException(f'You have asked to reorder the programs {[thisprog for thisprog in self.programs]} of programset {self.name} into order {desiredorder}, but the desired order only has {len(desiredorder)} programs not {len(self.programs)}.')
+
+        for i,program in enumerate(desiredorder):
+            if not type(program) == str: desiredorder[i] = program.short  # If not str, assume Program and get it's short name
+
+        if desiredorder == list(self.programs.keys()): return # Same order so don't need to continue
+        if not (set(desiredorder) == set(self.programs.keys())):   # desiredorder is a list of str, self.programs is an odict
+            raise OptimaException(f'You have asked to reorder the programs {[thisprog for thisprog in self.programs]} of programset {self.name} into order {desiredorder}, but the desired order does not have all of the programs.')
+
+        originalprograms = dcp(self.programs)
+        self.programs = odict_custom(func=self.checkpropagateversion)
+        for i,program in enumerate(desiredorder):
+            if program not in originalprograms:
+                raise OptimaException(f'You have asked to reorder the program "{program}" to position {i} in programset {self.name}, but there is no program by this name. Available programs are {[thisprog for thisprog in self.programs]}')
+            else:
+                self.programs[program] = originalprograms[program]  # ordering an odict is done by the order of insertion
+        self.updateprogset()
+        printv(f'\nReordered the programs in programset: {self.name}.\nThe old order was: {[key for key in originalprograms.keys()]} and the new order is {[key for key in self.programs.keys()]}.')
 
     def optimizable(self):
         return [True if prog.optimizable() else False for prog in self.programs.values()]
@@ -205,12 +288,27 @@ class Programset(object):
         for key,prog in self.optimizableprograms().items():
             printv('Checking %s program' % key, 4, verbose)
             unitcost = prog.costcovfn.ccopars.get('unitcost', None)
-            if not(unitcost) and unitcost!=0:
+            if not(unitcost) and unitcost!=0  or (isinstance(unitcost, list) and isnan(unitcost).all()):
                 printv('WARNING: %s unit cost is none' % key, 4, verbose)
                 details.append(prog.name)
                 result = False
             else:
                 printv('%s unit cost is %s' % (key, unitcost), 4, verbose)
+            saturation = prog.costcovfn.ccopars.get('saturation', None)
+            if not(saturation) and saturation!=0 or (isinstance(saturation, list) and isnan(saturation).all()):
+                printv('WARNING: %s saturation is none' % key, 4, verbose)
+                details.append(prog.name)
+                result = False
+            else:
+                printv('%s saturation is %s' % (key, saturation), 4, verbose)
+            popfactor = prog.costcovfn.ccopars.get('popfactor', None)
+            if not(popfactor) and popfactor!=0  or (isinstance(popfactor, list) and isnan(popfactor).all()):
+                printv('WARNING: %s popfactor is none' % key, 4, verbose)
+                details.append(prog.name)
+                result = False
+            else:
+                printv('%s popfactor is %s' % (key, popfactor), 4, verbose)
+                
             totalcost = prog.costcovdata.get('cost',None) 
             if totalcost is None or totalcost==[]:
                 printv('WARNING: %s total cost is none' % key, 4, verbose)
@@ -288,7 +386,7 @@ class Programset(object):
                     
         # Change name in covout objects
         for covoutpar in self.covout.keys():
-            self.covout[covoutpar] = odict((changepopobj(k, oldname=oldname, newname=newname) if oldname in k else k, v) for k, v in self.covout[covoutpar].iteritems())
+            self.covout[covoutpar] = odict((changepopobj(k, oldname=oldname, newname=newname) if oldname in k else k, v) for k, v in self.covout[covoutpar].items())
         
         # Update WARNING IS THIS REQUIRED?
         self.updateprogset()
@@ -329,9 +427,10 @@ class Programset(object):
              keys: all populations targeted by programs
              values: programs targeting that population '''
         progs_by_targetpar = odict()
+        progs_by_targetpartype = self.progs_by_targetpartype()
         for thispartype in self.targetpartypes:
             progs_by_targetpar[thispartype] = odict()
-            for prog in self.progs_by_targetpartype(thispartype):
+            for prog in progs_by_targetpartype[thispartype]:
                 targetpars = prog.targetpars if prog.targetpars else None
                 for targetpar in targetpars:
                     if thispartype == targetpar['param']:
@@ -344,7 +443,7 @@ class Programset(object):
 
     def getdefaultbudget(self, t=None, verbose=2, optimizable=None):
         ''' Extract the budget if cost data has been provided; if optimizable is True, then only return optimizable programs '''
-        
+
         # Initialise outputs
         totalbudget, lastbudget, selectbudget = odict(), odict(), odict()
 
@@ -354,9 +453,9 @@ class Programset(object):
 
         # Set up internal variables
         settings = self.getsettings()
-        tvec = settings.maketvec() 
+        tvec = settings.maketvec()
         emptyarray = array([nan]*len(tvec))
-        
+
         # Get cost data for each program in each year that it exists
         for program in self.programs:
             totalbudget[program] = dcp(emptyarray)
@@ -368,15 +467,15 @@ class Programset(object):
                 lastbudget[program] = sanitize(totalbudget[program])[-1]
             except:
                 lastbudget[program] = nan # Initialize, to overwrite if there's data
-            if isnan(lastbudget[program]): 
+            if isnan(lastbudget[program]):
                 printv('WARNING: no cost data defined for program "%s"...' % program, 1, verbose)
-                
-            # Extract cost data for particular years, if requested 
+
+            # Extract cost data for particular years, if requested
             if t is not None:
                 for yr in t:
                     yrindex = findinds(tvec,yr)
                     selectbudget[program].append(totalbudget[program][yrindex][0])
-                    
+
         # Store default budget as an attribute
         self.defaultbudget = lastbudget
         if t is None:   thisbudget = dcp(lastbudget)
@@ -387,18 +486,32 @@ class Programset(object):
 
     def getdefaultcoverage(self, t=None, parset=None, results=None, verbose=2, sample='best', proportion=False):
         ''' Extract the coverage levels corresponding to the default budget'''
+        if t is not None: t = promotetoarray(t)
         defaultbudget = self.getdefaultbudget() # WARNING: should be passing t here, but this causes interpolation issues
+        if t is not None:
+            for prog,budget in defaultbudget.items():
+                defaultbudget[prog] = budget*ones(len(t))
         defaultcoverage = self.getprogcoverage(budget=defaultbudget, t=t, parset=parset, results=results, proportion=proportion, sample=sample)
-        for progno in range(len(defaultcoverage)):
-            defaultcoverage[progno] = defaultcoverage[progno][0] if defaultcoverage[progno] else nan    
+        if t is None or len(list(t)) <= 1:
+            for progno in range(len(defaultcoverage)):
+                # This does two this, selects the 0th entry from the list, turning it from a odict of lists, into odict of nums, and turns Nones into nans
+                defaultcoverage[progno] = defaultcoverage[progno][0] if defaultcoverage[progno] else nan
         return defaultcoverage
 
 
     def gettargetpopsizes(self, t=None, parset=None, results=None, verbose=2):
         ''' Extract a disctionary of target pop sizes'''
+        # Validate inputs
+        if isnumber(t): t = array([t])
+        elif isinstance(t, (range, list)): t = array(t)
+        if parset is None:
+            if results and results.parset: parset = results.parset
+            else: raise OptimaException('Please provide either a parset or a resultset that contains a parset')
+        defaultinitpopsizes = parset.pars['popsize'].interp(tvec=t)
+
         targetpopsizes = odict()
-        for pn,prog in self.programs.iteritems():
-            targetpopsizes[prog.short] = self.programs[pn].gettargetpopsize(t=t, parset=parset)
+        for pn,prog in self.programs.items():
+            targetpopsizes[prog.short] = self.programs[pn].gettargetpopsize(t=t, parset=parset, defaultinitpopsizes=defaultinitpopsizes)
         return targetpopsizes
 
 
@@ -414,6 +527,10 @@ class Programset(object):
             budget = vec2obj(orig=self.getdefaultbudget(), newvec=budget) # It seems to be a vector: convert to odict
         if type(budget)==dict: budget = odict(budget) # Convert to odict
         budget.sort([p.short for p in self.programs.values()])
+        if parset is None:
+            if results and results.parset: parset = results.parset
+            else: raise OptimaException('Please provide either a parset or a resultset that contains a parset')
+        defaultinitpopsizes = parset.pars['popsize'].interp(tvec=t)
 
         # Get program-level coverage for each program
         for thisprog in self.programs.keys():
@@ -423,7 +540,7 @@ class Programset(object):
                     coverage[thisprog] = None
                 else:
                     spending = budget[thisprog] # Get the amount of money spent on this program
-                    coverage[thisprog] = self.programs[thisprog].getcoverage(x=spending, t=t, parset=parset, results=results, proportion=proportion, sample=sample)
+                    coverage[thisprog] = self.programs[thisprog].getcoverage(x=spending, t=t, parset=parset, results=results, proportion=proportion, sample=sample, defaultinitpopsizes=defaultinitpopsizes)
             else: coverage[thisprog] = None
 
         return coverage
@@ -496,13 +613,14 @@ class Programset(object):
                 except: raise OptimaException('Please provide either a parset or a resultset that contains a parset')
         if coverage is None:
             coverage = self.getdefaultcoverage(t=t, parset=parset, results=results, sample=sample, proportion=False)
-        for covkey, coventry in coverage.iteritems(): # Ensure coverage level values are lists
+        for covkey, coventry in coverage.items(): # Ensure coverage level values are lists
             if isnumber(coventry): coverage[covkey] = [coventry]
 
         # Set up internal variables
         nyrs = len(t)
         coveragepars = parset.getcovpars() # Get list of coverage-only parameters
         targetpopsizes = self.gettargetpopsizes(t=t, parset=parset)
+        progs_by_targetpar = self.progs_by_targetpar()
         propcovered = odict()
         for pn in coverage.keys():
             if coverage[pn] is not None: propcovered[pn] = coverage[pn]/targetpopsizes[pn]
@@ -512,12 +630,12 @@ class Programset(object):
             outcomes[thispartype] = odict()
             
             # Loop over populations relevant for this parameter type
-            for popno, thispop in enumerate(self.progs_by_targetpar(thispartype).keys()):
+            for popno, thispop in enumerate(progs_by_targetpar[thispartype].keys()):
 
                 # If it's a coverage parameter, you are done
                 if thispartype in coveragepars:
                     outcomes[thispartype][thispop] = array(self.covout[thispartype][thispop].getccopar(t=t, sample=sample)['intercept'])
-                    for thisprog in self.progs_by_targetpar(thispartype)[thispop]: # Loop over the programs that target this parameter/population combo
+                    for thisprog in progs_by_targetpar[thispartype][thispop]: # Loop over the programs that target this parameter/population combo
                         if thispop == 'tot':
                             popcoverage = coverage[thisprog.short]
                         else: popcoverage = coverage[thisprog.short]*thisprog.gettargetcomposition(t=t, parset=parset, results=results)[thispop]
@@ -525,86 +643,49 @@ class Programset(object):
 
                 # If it's an outcome parameter, need to get outcomes
                 else:
-                    
                     delta, thiscov = odict(), odict()
-    
+                    ccopar = self.covout[thispartype][thispop].getccopar(t=t, sample=sample)
+
                     # Loop over the programs that target this parameter/population combo
-                    for thisprog in self.progs_by_targetpar(thispartype)[thispop]: 
+                    for thisprog in progs_by_targetpar[thispartype][thispop]:
                         if not self.covout[thispartype][thispop].ccopars[thisprog.short]:
                             print('WARNING: no coverage-outcome function defined for optimizable program  "%s", skipping over... ' % (thisprog.short))
                             outcomes[thispartype][thispop] = None
                         else:
-                            outcomes[thispartype][thispop] = self.covout[thispartype][thispop].getccopar(t=t, sample=sample)['intercept']
+                            outcomes[thispartype][thispop] = ccopar['intercept']
                             thiscov[thisprog.short] = propcovered[thisprog.short]
-                            delta[thisprog.short] = [self.covout[thispartype][thispop].getccopar(t=t, sample=sample)[thisprog.short][j] - outcomes[thispartype][thispop][j] for j in range(nyrs)]
-                            
-                    # ADDITIVE CALCULATION
-                    # NB, if there's only one program targeting this parameter, just do simple additive calc
-                    if self.covout[thispartype][thispop].interaction == 'additive' or len(self.progs_by_targetpar(thispartype)[thispop])==1:
-                        # Outcome += c1*delta_out1 + c2*delta_out2
-                        for thisprog in self.progs_by_targetpar(thispartype)[thispop]:
-                            if not self.covout[thispartype][thispop].ccopars[thisprog.short]:
-                                print('WARNING: no coverage-outcome parameters defined for program  "%s", population "%s" and parameter "%s". Skipping over... ' % (thisprog.short, thispop, thispartype))
-                                outcomes[thispartype][thispop] = None
-                            else: 
-                                outcomes[thispartype][thispop] += thiscov[thisprog.short]*delta[thisprog.short]
-                            
-                    # NESTED CALCULATION
-                    elif self.covout[thispartype][thispop].interaction == 'nested':
-                        # Outcome += c3*max(delta_out1,delta_out2,delta_out3) + (c2-c3)*max(delta_out1,delta_out2) + (c1 -c2)*delta_out1, where c3<c2<c1.
-                        for yr in range(nyrs):
-                            cov,delt = [],[]
-                            for thisprog in thiscov.keys():
-                                cov.append(thiscov[thisprog][yr])
-                                delt.append(delta[thisprog][yr])
-                            cov_tuple = sorted(zip(cov,delt)) # A tuple storing the coverage and delta out, ordered by coverage
-                            for j in range(len(cov_tuple)): # For each entry in here
-                                if j == 0: c1 = cov_tuple[j][0]
-                                else: c1 = cov_tuple[j][0]-cov_tuple[j-1][0]
-                                outcomes[thispartype][thispop][yr] += c1*max([ct[1] for ct in cov_tuple[j:]])                
-                
-                    # RANDOM CALCULATION
-                    elif self.covout[thispartype][thispop].interaction == 'random':
-                        # Outcome += c1(1-c2)* delta_out1 + c2(1-c1)*delta_out2 + c1c2* max(delta_out1,delta_out2)
-    
-                        for prog1 in thiscov.keys():
-                            product = ones(thiscov[prog1].shape)
-                            for prog2 in thiscov.keys():
-                                if prog1 != prog2:
-                                    product *= (1-thiscov[prog2])
-            
-                            outcomes[thispartype][thispop] += delta[prog1]*thiscov[prog1]*product 
-    
-                        # Recursion over overlap levels
-                        def overlap_calc(indexes,target_depth):
-                            if len(indexes) < target_depth:
-                                accum = 0
-                                for j in range(indexes[-1]+1,len(thiscov)):
-                                    accum += overlap_calc(indexes+[j],target_depth)
-                                output = list(thiscov.values())[indexes[-1]]*accum
-                                return output
-                            else:
-                                deltalist = list(delta.values())
-                                output = list(thiscov.values())[indexes[-1]]* max(deltalist[0][0],0) # TODO WARNING, consider replacing with output = thiscov.values()[indexes[-1]] * max(delta.values()[0], 0)
-                                return output
-    
-                        # Iterate over overlap levels
-                        for i in range(2,len(thiscov)): # Iterate over numbers of overlapping programs
-                            for j in range(0,len(thiscov)-1): # Iterate over the index of the first program in the sum
-                                outcomes[thispartype][thispop] += overlap_calc([j],i)[0]
-
-                        # All programs together
-                        outcomes[thispartype][thispop] += prod(array(list(thiscov.values())),0)*[max([c[j] for c in list(delta.values())]) for j in range(nyrs)]
+                            delta[thisprog.short] = [ccopar[thisprog.short][j] - outcomes[thispartype][thispop][j] for j in range(nyrs)]
                     
-
-                    else: raise OptimaException('Unknown reachability type "%s"',self.covout[thispartype][thispop].interaction)
+                    if outcomes[thispartype][thispop] is not None:
+                        for yr in range(nyrs):
+                            delt, cov = [],[]
+                            for thisprog in thiscov.keys():
+                                delt.append(delta[thisprog][yr])
+                                cov.append(thiscov[thisprog][yr])
+                            # A tuple storing the coverage and delta out, ordered descending by absolute value of delta change, e.g. most impactful program first
+                            cov_tuple = sorted(zip(delt,cov), key= lambda x: abs(x[0]), reverse=True)  
+                            
+                            cumulative_covered = 0. #make sure we can't have more than 100% coverage
+                            #By sorting in descending order of program impact, and assuming that each person is only reached by the one most impactful program that they are reached by, we simplify the results.
+                            for delt, cov in cov_tuple:
+                                #Coverage determined by interaction type
+                                #WARNING: a parameter with 'nested' or 'random' coverage and strong negative and strong positive deltas could get strange flipping results, but that's probably a problem with program definitions
+                                if self.covout[thispartype][thispop].interaction == 'additive' or len(progs_by_targetpar[thispartype][thispop])==1:
+                                    this_cov = min(1-cumulative_covered, cov) #e.g. full coverage unless exceeding 100%
+                                elif self.covout[thispartype][thispop].interaction == 'nested':
+                                    this_cov = max(cov - cumulative_covered, 0) #e.g. only anything overlapping outside the circle of coverage from more impactful programs
+                                elif self.covout[thispartype][thispop].interaction == 'random':
+                                    this_cov = (1 - cumulative_covered) * cov  #e.g. a proportional random amount of coverage outside of what has been covered by more impactful programs 
+                                else:
+                                    raise OptimaException('Unknown reachability type "%s"',self.covout[thispartype][thispop].interaction)
+                                outcomes[thispartype][thispop][yr] += this_cov*delt
+                                cumulative_covered += this_cov                      
         
         # Validate
         for outcome in outcomes.keys():
             for key in outcomes[outcome].keys():
                 if outcomes[outcome][key] is not None and len(outcomes[outcome][key])!=nyrs:
                     raise OptimaException('Parameter lengths must match (len(outcome)=%i, nyrs=%i)' % (len(outcomes[outcome][key]), nyrs))
-
         return outcomes
         
         
@@ -638,7 +719,7 @@ class Programset(object):
             last_y = thispar.interp(tvec=last_t, dt=settings.dt, asarray=False, usemeta=False) # Find what the model would get for this value
             
             for pop in outcomes[outcome].keys(): # WARNING, 'pop' should be renamed 'key' or something for e.g. partnerships
-                
+
                 # Validate outcome
                 thisoutcome = outcomes[outcome][pop] # Shorten
                 lower = float(thispar.limits[0]) # Lower limit, cast to float just to be sure (is probably int)
@@ -817,6 +898,43 @@ def costfuncobjectivecalc(parmeans=None, pardict=None, progset=None, parset=None
 
 
 
+
+def checkifparsetoverridesprogset(progset=None, parset=None, progendyear=None, progstartyear=None, formatfor='console', createmessages=True):
+    """
+    A function that sets up the inputs to call checkifparsoverridepars() to see if the parset contains any parameters that
+    override the parameters that a progset is trying to target. If any conflicts are found, the warning message(s) can
+    be created with createmessages=True, otherwise combinedwarningmsg, warningmessages will both be None
+    Args:
+        progset: a Programset object
+        parset: a Parameterset object that may override the progset's target parameters
+        progendyear: year the progset is starting
+        progstartyear: year the progset is ending
+        formatfor: 'console' with \n linebreaks, or 'html' with <p> and <br> elements.
+        createmessages: True to get combinedwarningmsg, warningmessages from createwarningforoverride()
+    Returns:
+        warning, parsoverridingparsdict, overridetimes, overridevals, combinedwarningmsg, warningmessages
+        See checkifparsoverridepars and createwarningforoverride for information about the outputs
+    """
+    if progset is None or parset is None or parset.pars is None:
+        raise OptimaException('checkifparsetoverridesprogset() must be provided with both a progset and a parset, but at least one of them was none.')
+    if progendyear is None: progendyear = 2100
+    progset.gettargetpars()
+    progset.gettargetpartypes()
+    progtargetpartypes = progset.targetpartypes
+    origpars = parset.pars
+    # Returns
+    warning, parsoverridingparsdict, overridetimes, overridevals = checkifparsoverridepars(origpars=origpars, targetpars=progtargetpartypes, progstartyear=progstartyear, progendyear=progendyear)
+
+    combinedwarningmsg, warningmessages = None, None
+    if createmessages:
+        progsbytargetpartype = progset.progs_by_targetpartype()
+        warning, combinedwarningmsg, warningmessages = createwarningforoverride(origpars, warning, parsoverridingparsdict, overridetimes, overridevals, fortype='Progscen',
+                                 progsetname=progset.name, parsetname=parset.name, progsbytargetpartype=progsbytargetpartype, progendyear=progendyear,
+                                 formatfor=formatfor)
+    return warning, parsoverridingparsdict, overridetimes, overridevals, combinedwarningmsg, warningmessages
+
+
+
 class Program(object):
     '''
     Defines a single program. 
@@ -827,7 +945,7 @@ class Program(object):
     '''
 
     def __init__(self, short, targetpars=None, targetpops=None, ccopars=None, costcovdata=None, nonhivdalys=0,
-        category='No category', name='', criteria=None, targetcomposition=None):
+        category='No category', name='', criteria=None, targetcomposition=None, projectversion=None):
         '''Initialize'''
         self.short = short
         self.name = name
@@ -846,6 +964,7 @@ class Program(object):
         self.category = category
         self.criteria = criteria if criteria else {'hivstatus': 'allstates', 'pregnant': False}
         self.targetcomposition = targetcomposition
+        self.projectversion = projectversion
 
 
     def __repr__(self):
@@ -857,6 +976,14 @@ class Program(object):
         output += '\n'
         return output
 
+    def getprojectversion(self, projectversion=None, die=False):
+        if projectversion is None: projectversion = self.projectversion
+        if projectversion is None:
+            err = f'Program "{self.short}" is missing its projectversion'
+            if die: raise OptimaException(err)
+            else: print('WARNING: '+err)
+            return None
+        return projectversion
 
     def optimizable(self):
         return True if self.targetpars else False # and self.hasbudget()
@@ -893,7 +1020,7 @@ class Program(object):
         if costcovdatum['t'] not in self.costcovdata['t']:
             self.costcovdata['t'].append(costcovdatum['t'])
             self.costcovdata['cost'].append(costcovdatum['cost'])
-            if costcovdatum.get('coverage'):
+            if costcovdatum.get('coverage') or ('coverage' in costcovdatum.keys() and costcovdatum.get('coverage') == 0):
                 self.costcovdata['coverage'].append(costcovdatum['coverage'])
             else:
                 self.costcovdata['coverage'].append(None)
@@ -932,12 +1059,14 @@ class Program(object):
         return None
 
 
-    def gettargetpopsize(self, t, parset=None, results=None, total=True, useelig=False, die=False):
-        '''Returns target population size in a given year for a given spending amount.'''
+    def gettargetpopsize(self, t, parset=None, results=None, total=True, useelig=False, die=False, defaultinitpopsizes=None):
+        '''Returns target population size in a given year (either total or by population).
+        Target population size is adjusted according to the population factor for the program.
+        '''
 
         # Validate inputs
         if isnumber(t): t = array([t])
-        elif type(t)==list: t = array(t)
+        elif isinstance(t, (range, list)): t = array(t)
         if parset is None:
             if results and results.parset: parset = results.parset
             else: raise OptimaException('Please provide either a parset or a resultset that contains a parset')
@@ -945,7 +1074,8 @@ class Program(object):
         # Initialise outputs
         popsizes = odict()
         targetpopsize = odict()
-        defaultinitpopsizes = parset.pars['popsize'].interp(tvec=t)
+        if defaultinitpopsizes is None: defaultinitpopsizes = parset.pars['popsize'].interp(tvec=t)
+        else: defaultinitpopsizes = dcp(defaultinitpopsizes)
         
         # If we are ignoring eligibility, just sum the popsizes...
         if not useelig:
@@ -997,11 +1127,19 @@ class Program(object):
                             initpopsizes = defaultinitpopsizes
         for popno, pop in enumerate(parset.pars['popkeys']):
             popsizes[pop] = initpopsizes[popno,:]
+        
+        if self.costcovfn.ccopars:
+            popfactor = promotetoarray(self.costcovfn.getccopar(t=t)['popfactor'])
+        else:
+            popfactor = array([1.])
+            
         for targetpop in self.targetpops:
             if targetpop.lower() in ['total','tot','all']:
                 targetpopsize[targetpop] = sum(list(popsizes.values()))
             else:
                 targetpopsize[targetpop] = popsizes[targetpop]
+            #Adjust by population factor for the program
+            targetpopsize[targetpop] *= popfactor
                 
         finalpopsize = array([sum(list(targetpopsize.values()))]) if isnumber(sum(list(targetpopsize.values()))) else sum(list(targetpopsize.values()))
                     
@@ -1021,14 +1159,14 @@ class Program(object):
         return targetcomposition
 
 
-    def getcoverage(self, x, t, parset=None, results=None, total=True, proportion=False, toplot=False, sample='best'):
+    def getcoverage(self, x, t, parset=None, results=None, total=True, proportion=False, toplot=False, sample='best', defaultinitpopsizes=None):
         '''Returns coverage for a time/spending vector'''
 
         # Validate inputs
         x = promotetoarray(x)
         t = promotetoarray(t)
 
-        poptargeted = self.gettargetpopsize(t=t, parset=parset, results=results, total=False)
+        poptargeted = self.gettargetpopsize(t=t, parset=parset, results=results, total=False, defaultinitpopsizes=defaultinitpopsizes)
 
         totaltargeted = sum(list(poptargeted.values()))
         totalreached = self.costcovfn.evaluate(x=x, popsize=totaltargeted, t=t, toplot=toplot, sample=sample)
@@ -1038,7 +1176,7 @@ class Program(object):
             else:          output = totalreached
         else:
             popreached = odict()
-            targetcomposition = self.targetcomposition if self.targetcomposition else self.gettargetcomposition(t=t,parset=parset) 
+            targetcomposition = self.targetcomposition if self.targetcomposition else self.gettargetcomposition(t=t,parset=parset)
             for targetpop in self.targetpops:
                 popreached[targetpop] = totalreached*targetcomposition[targetpop]
                 if proportion: popreached[targetpop] /= poptargeted[targetpop]
@@ -1147,9 +1285,9 @@ class CCOF(object):
         nyrs = len(t)
         
         # Get the appropriate sample type
-        for parname, parvalue in self.ccopars.iteritems():
+        for parname, parvalue in self.ccopars.items():
             parvalue = promotetoarray(parvalue)
-            if parname is not 't' and len(parvalue):
+            if parname != 't' and len(parvalue):
                 ccopars_sample[parname] = zeros(len(parvalue))
                 for j in range(len(parvalue)):
                     thisval = parvalue[j]
@@ -1172,14 +1310,14 @@ class CCOF(object):
         # Calculate interpolated parameters
         for j,param in enumerate(ccopars_sample.keys()): 
             knownparam = array([ccopartuple[j+1] for ccopartuple in ccopartuples])
-            allparams = smoothinterp(t, knownt, knownparam, smoothness=1)
+            allparams = smoothinterp(t, knownt, knownparam, smoothness=0)
             ccopar[param] = zeros(nyrs)
             for yr in range(nyrs):
                 ccopar[param][yr] = allparams[yr]
             if isinstance(t,list): ccopar[param] = ccopar[param].tolist()
 
         ccopar['t'] = t
-        printv('\nCalculated CCO parameters in year(s) %s to be %s' % (t, ccopar), 4, verbose)
+        if verbose>=4: printv('\nCalculated CCO parameters in year(s) %s to be %s' % (t, ccopar), 4, verbose)
         return ccopar
 
     def evaluate(self, x, popsize, t, toplot, inverse=False, sample='best', verbose=2):
@@ -1193,9 +1331,12 @@ class CCOF(object):
                 x = array([0]) # WARNING, this should maybe not be here, or should be handled with kwargs
                 t = array([2015])
             printv('x needs to be the same length as t, we assume one spending amount per time point.', 1, verbose)
-        ccopar = self.getccopar(t=t,sample=sample)
-        if not inverse: return self.function(x=x,ccopar=ccopar,popsize=popsize)
-        else: return self.inversefunction(x=x,ccopar=ccopar,popsize=popsize)
+        ccopar  = self.getccopar(t=t,sample=sample)
+        saturationlower = self.getccopar(t=t,sample='lower')['saturation']
+        saturationupper = self.getccopar(t=t,sample='upper')['saturation']
+        
+        if not inverse: return self.function(x=x,ccopar=ccopar,popsize=popsize, saturationlower=saturationlower, saturationupper=saturationupper)
+        else: return self.inversefunction(x=x,ccopar=ccopar,popsize=popsize, saturationlower=saturationlower, saturationupper=saturationupper)
 
     def function(self, x, ccopar, popsize):
         pass
@@ -1254,8 +1395,10 @@ class Costcov(CCOF):
 
     '''
 
-    def function(self, x, ccopar, popsize, eps=None):
-        '''Returns coverage in a given year for a given spending amount.'''
+    def function(self, x, ccopar, popsize, eps=None, saturationlower=None, saturationupper=None):
+        '''Returns coverage in a given year for a given spending amount.
+        Linear coverage up to saturationlower, scaling non-linearly to saturationupper
+        popsize should have been adjusted by population factor if appropriate before reaching this function'''
         
         if eps is None: eps = Settings().eps # Warning, this uses project-nonspecific eps
 
@@ -1266,16 +1409,49 @@ class Costcov(CCOF):
         popsize = promotetoarray(popsize)
         
         nyrs,npts = len(u),len(x)
+        
+        #if saturationlowwer andd saturationupper are not specified, default to previous behaviour using fully non-linear scaling to the median saturation value
+        if saturationlower is None:
+            saturationlower = zeros(npts)
+        if saturationupper is None:
+            saturationupper = maximum(saturationlower, s)
+        
         eps = array([eps]*npts)
-        if nyrs==npts: return maximum((2*s/(1+exp(-2*x/(popsize*pf*s*u)))-s)*popsize*pf,eps)
+        
+        if nyrs==npts:
+            naivey = x/maximum(eps, popsize*u) #naive coverage (just total spend/unit cost as a proportion of the population)
+            liny  = minimum(naivey, saturationlower) #linear component of coverage (naive cover, or lower saturation limit if that's lower)
+            
+            covscale = maximum((1.-saturationlower), eps) #this is the remaining proportion of the coverage space that needs to be scaled nonlinearly
+            sa      = maximum((saturationupper - saturationlower)/covscale, eps)  #saturation as a proportion of remaining space
+            nlinnaivey = (naivey - liny) / covscale #Naively covered proportion of the remaining space
+
+            nliny = maximum(2*sa/(1+exp(-2*nlinnaivey/sa))-sa, 0)*covscale #nonlinear component of coverage, needs to be scaled back by covscale 
+            
+            y = (liny + nliny)*popsize
+            # y = (2*s/(1+exp(-2*x/(popsize*s*u)))-s)*popsize
         else:
+            if (len(saturationlower)!=nyrs or len(saturationupper)!=nyrs):
+                raise OptimaException('If passing multiple year arguments at once, must also pass multiple saturation arguments') 
             y = zeros((nyrs,npts))
             for yr in range(nyrs):
-                y[yr,:] = maximum((2*s[yr]/(1+exp(-2*x/(popsize[yr]*pf[yr]*s[yr]*u[yr])))-s[yr])*popsize[yr]*pf[yr],eps)
-            return y
+                naivey = x/maximum(eps, popsize[yr]*u[yr]) #naive coverage (just total spend/unit cost as a proportion of the population)
+                liny  = minimum(naivey, saturationlower[yr]) #linear component of coverage (naive cover, or lower saturation limit if that's lower)
+                
+                covscale = maximum((1.-saturationlower[yr]), eps) #this is the remaining proportion of the coverage space that needs to be scaled nonlinearly
+                sa      = maximum((saturationupper[yr] - saturationlower[yr])/covscale, eps)  #saturation as a proportion of remaining space
+                nlinnaivey = (naivey - liny) / covscale #Naively covered proportion of the remaining space
+        
+                nliny = maximum(2*sa/(1+exp(-2*nlinnaivey/sa))-sa, 0)*covscale #nonlinear component of coverage, needs to be scaled back by covscale 
+                
+                y[yr,:] = (liny + nliny)*popsize[yr]
+                # y[yr,:] = (2*s[yr]/(1+exp(-2*x/(popsize[yr]*s[yr]*u[yr])))-s[yr])*popsize[yr]
+            
+        return maximum(y, eps)
 
-    def inversefunction(self, x, ccopar, popsize, eps=None):
-        '''Returns coverage in a given year for a given spending amount.'''
+    def inversefunction(self, x, ccopar, popsize, eps=None, saturationlower=None, saturationupper=None):
+        '''Returns spending in a given year for a given coverage amount.
+        Linear coverage up to saturationlower, scaling non-linearly to saturationupper'''
         
         if eps is None: eps = Settings().eps # Warning, use project-nonspecific eps
 
@@ -1285,14 +1461,46 @@ class Costcov(CCOF):
         pf = promotetoarray(ccopar['popfactor'])
         popsize = promotetoarray(popsize)
 
-        nyrs,npts = len(u),len(x)
+        nyrs,npts = len(u),len(x)             
+        
+        #if saturationlowwer and saturationupper are not specified, default to previous behaviour using fully non-linear scaling to the median saturation value
+        if saturationlower is None:
+            saturationlower = zeros(npts)
+        if saturationupper is None:
+            saturationupper = maximum(saturationlower, s)
+            
         eps = array([eps]*npts)
-        if nyrs==npts: return maximum(-0.5*popsize*pf*s*u*log(maximum(s*popsize*pf-x,0)/(s*popsize*pf+x)),eps)
+        
+        if nyrs==npts:
+            linx  = minimum(x/popsize, saturationlower)*popsize #NUMBER of coverage that would have been achieved with linear cost-coverage (everything below saturationlower)
+            nlinx = maximum(x/popsize - saturationlower, 0)*popsize #NUMBER of coverage that needs to be costed based on non-linear cost-coverage (everything above saturationlower and below saturationupper)
+
+            liny = linx*u #proportion of linear spending = number of people covered * unit cost
+            
+            satnumber = popsize * (saturationupper - saturationlower) #The number of people that would be covered by the nonlinear scaling if fully saturated
+            
+            nliny = -0.5*satnumber*u*log(maximum(satnumber-nlinx,eps)/maximum((satnumber+nlinx), eps)) #proportion of spending at non-linear scaling
+            
+            y = liny + nliny
+            # y = -0.5*popsize*s*u*log(maximum(s*popsize-x,0)/(s*popsize+x))
         else:
+            if (len(saturationlower)!=nyrs or len(saturationupper)!=nyrs):
+                raise OptimaException('If passing multiple year arguments at once, must also pass multiple saturation arguments')
             y = zeros((nyrs,npts))
             for yr in range(nyrs):
-                y[yr,:] = maximum(-0.5*popsize[yr]*pf[yr]*s[yr]*u[yr]*log(maximum(s[yr]*popsize[yr]*pf[yr]-x,0)/(s[yr]*popsize[yr]*pf[yr]+x)),eps)
-            return y
+                linx  = minimum(x/popsize[yr], saturationlower[yr])*popsize[yr] #NUMBER of coverage that would have been achieved with linear cost-coverage (everything below saturationlower)
+                nlinx = maximum(x/popsize[yr] - saturationlower[yr], 0)*popsize[yr] #NUMBER of coverage that needs to be costed based on non-linear cost-coverage (everything above saturationlower and below saturationupper)
+        
+                liny = linx*u[yr] #proportion of linear spending = number of people covered * unit cost
+                
+                satnumber = popsize[yr] * (saturationupper[yr] - saturationlower[yr]) #The number of people that would be covered by the nonlinear scaling if fully saturated
+                
+                nliny = -0.5*satnumber*u[yr]*log(maximum(satnumber-nlinx,eps)/maximum((satnumber+nlinx), eps)) #proportion of spending at non-linear scaling
+                
+                y[yr,:] = liny + nliny
+                # y[yr,:] = -0.5*popsize[yr]*s[yr]*u[yr]*log(maximum(s[yr]*popsize[yr]-x,0)/(s[yr]*popsize[yr]+x))
+        
+        return maximum(y, eps)
             
 
 ########################################################

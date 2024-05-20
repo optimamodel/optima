@@ -8,15 +8,37 @@ Version: 2017feb10
 
 import xlsxwriter
 from xlsxwriter.utility import xl_rowcol_to_cell
-from numpy import isnan
-from optima import printv, isnumber, version, odict, getdate, today, loaddatapars, Settings
+from numpy import isnan, nan, pad
+from optima import printv, isnumber, supported_versions, versions_different_databook, compareversions, odict, getdate, today, loaddatapars, Settings, promotetolist, OptimaException
 
 
 settings = Settings()
 default_datastart = settings.start
 default_dataend    = settings.dataend
 
-def makespreadsheet(filename=None, pops=None, datastart=None, dataend=None, data=None, verbose=2):
+__all__ = [
+    'makespreadsheet',
+    'makeprogramspreadsheet',
+    'default_datastart',
+    'default_dataend',
+    'compatibledatabookversion',
+]
+
+def compatibledatabookversion(projectversions):
+    def versiontoint(version):
+        split = version.split('.')
+        return 1000000000000 * int(split[0]) + 1000000 * int(split[1]) + int(split[2])
+
+    thisprojectversions = promotetolist(projectversions)
+    databookversions = [None] * len(thisprojectversions)
+    for i, projectversion in enumerate(thisprojectversions):
+        for databookversion in sorted(versions_different_databook, key=versiontoint):
+            if compareversions(projectversion, databookversion) >= 0:
+                databookversions[i] = databookversion
+    return databookversions[0] if type(projectversions) == str else databookversions
+
+
+def makespreadsheet(filename=None, pops=None, datastart=None, dataend=None, data=None, verbose=2, version=None):
     """
     Generate the Optima spreadsheet. pops can be supplied as a number of populations, 
     or as a list of dictionaries with keys 'short', 'name', 'male', 'female', 'age_from', 'age_to'.
@@ -51,7 +73,7 @@ def makespreadsheet(filename=None, pops=None, datastart=None, dataend=None, data
     
     printv('Generating spreadsheet: pops=%i, datastart=%s, dataend=%s' % (len(pops), datastart, dataend), 1, verbose)
 
-    book = OptimaSpreadsheet(filename, pops, datastart, dataend, data=data, verbose=verbose)
+    book = OptimaSpreadsheet(filename, pops, datastart, dataend, data=data, verbose=verbose, version=version)
     book.create(filename)
 
     printv('  ...done making spreadsheet %s.' % filename, 2, verbose)
@@ -191,6 +213,44 @@ def nan2blank(thesedata):
 def zero2blank(thesedata):
     ''' Convert a nan entry to a blank entry'''
     return list(map(lambda val: '' if val==0 else val, thesedata))
+
+def getyearindspads(datayears, startyear, endyear):
+    padstartyears = 0
+    if startyear < datayears[0]:
+        startind = 0
+        padstartyears = round(datayears[0] - startyear)
+    elif startyear not in datayears:
+        raise OptimaException(f'Cannot start spreadsheet at year {startyear} because the data has years {datayears}')
+    else:
+        startind = list(datayears).index(startyear)
+
+    padendyears = 0
+    if endyear > datayears[-1]:
+        endind = len(datayears)
+        padendyears = round(endyear - datayears[-1])
+    elif endyear not in datayears:
+        raise OptimaException(f'Cannot stop spreadsheet at year {endyear} because the data has years {datayears}')
+    else:
+        endind = list(datayears).index(endyear)
+
+    return startind, padstartyears, endind, padendyears
+
+def padunpad(name, datarow, datayears, startyear, endyear):
+    startind, padstartyears, endind, padendyears = getyearindspads(datayears, startyear, endyear)
+
+    if not all(isnan(datarow[:startind])):
+        raise OptimaException(f'Cannot start spreadsheet at year {startyear} because there is non-empty data in parameter {name} before then: {list(zip(datayears[:startind],datarow[:startind]))}')
+    if not all(isnan(datarow[endind+1:])):
+        raise OptimaException(f'Cannot stop spreadsheet at year {endyear} because there is non-empty data in parameter {name} after then: {list(zip(datayears[endind+1:],datarow[endind+1:]))}')
+
+    newdatarow = pad(datarow[startind:endind+1], (padstartyears, padendyears), mode='constant', constant_values=(nan, nan))
+
+    if len(newdatarow) != round(endyear - startyear) + 1:
+        raise OptimaException(f'Could not properly pad parameter, had length {len(newdatarow)} expected {round(startyear - endyear) + 1}. input: {dict(name=name, datarow=datarow, datayears=datayears, startyear=startyear, endyear=endyear)}')
+
+    return newdatarow
+
+
 
 class OptimaFormats:
     """ the formats used in the spreadsheet """
@@ -388,7 +448,7 @@ class TitledRange(object):
 
 
 class OptimaSpreadsheet:
-    def __init__(self, name, pops, data_start=None, data_end=None, data=None, verbose=0):
+    def __init__(self, name, pops, data_start=None, data_end=None, data=None, verbose=0, version=None):
         self.name = name
         self.pops = pops
         self.data_start = data_start
@@ -403,6 +463,12 @@ class OptimaSpreadsheet:
         self.ref_pop_range = None
         self.years_range = range(self.data_start, self.data_end+1)
         self.npops = len(pops)
+        if version is None:
+            version = supported_versions[-1]
+            print(f'Warning: Creating a spreadsheet without a given version so defaulting to the latest version {version} which is compatible back to version {compatibledatabookversion(version)}')
+        if compatibledatabookversion(version) is None:
+            raise OptimaException(f'Cannot create an OptimaSpreadsheet with incompatible version {version}. Must be version {versions_different_databook[0]} or later.')
+        self.version = version
             
     #############################################################################################################################
     ### Helper methods
@@ -452,8 +518,8 @@ class OptimaSpreadsheet:
                         if len(data[est][pop])==1: # It's an assumption
                             newdata.append(['']*npts)
                             assumption.append(data[est][pop])
-                        elif len(data[est][pop])==npts: # It's data
-                            newdata.append(nan2blank(data[est][pop]))
+                        elif len(data[est][pop]) > 1: # It's data
+                            newdata.append(nan2blank(padunpad(name=parname, datarow=data[est][pop], datayears=self.data['years'], startyear=self.data_start, endyear=self.data_end)))
                             assumption.append('')
                 return (newdata, assumption)
         return (None, None) # By default, return None
@@ -471,8 +537,8 @@ class OptimaSpreadsheet:
                     if len(data[pop])==1: # It's an assumption
                         newdata.append(['']*npts)
                         assumption.append(nan2blank(data[pop])[0])
-                    elif len(data[pop])==npts: # It's data
-                        newdata.append(nan2blank(data[pop]))                
+                    elif len(data[pop]) > 1: # It's data
+                        newdata.append(nan2blank(padunpad(name=parname, datarow=data[pop], datayears=self.data['years'], startyear=self.data_start, endyear=self.data_end)))
                         assumption.append('')
                 return (newdata, assumption)
         return (None, None) # By default, return None
@@ -515,7 +581,7 @@ class OptimaSpreadsheet:
         current_row = self.formats.writeline(self.current_sheet, current_row)
         current_row = self.formats.writeblock(self.current_sheet, current_row, row_height=30, text='Welcome to the Optima HIV data entry spreadsheet. This is where all data for the model will be entered. Please ask someone from the Optima development team if you need help, or use the default contact (info@optimamodel.com).')
         current_row = self.formats.writeblock(self.current_sheet, current_row, text='For further details please visit: http://optimamodel.com/indicator-guide')
-        current_row = self.formats.writeblock(self.current_sheet, current_row, text='Spreadsheet created with Optima version %s' % version)
+        current_row = self.formats.writeblock(self.current_sheet, current_row, text='Spreadsheet created with Optima version %s' % self.version)
         current_row = self.formats.writeblock(self.current_sheet, current_row, text='Date created: %s' % getdate(today()))
         current_row = self.formats.writeblock(self.current_sheet, current_row, row_height=80, add_line=False, text='After you upload this spreadsheet to your Optima HIV project, your data will be stored in the project but any comments you make on individual cells will NOT be stored. You are therefore encouraged to enter any specific comments that you would like to make about this data spreadsheet in the shaded cells below. These comments will be stored. We recommend that you insert a link to the project logbook in one of these cells.')
         current_row = self.formats.writeline(self.current_sheet, current_row, row_format='bold')

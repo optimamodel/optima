@@ -1,11 +1,18 @@
 from optima import OptimaException, Settings, Parameterset, Programset, Resultset, BOC, Parscen, Budgetscen, Coveragescen, Progscen, Optim, Link # Import classes
-from optima import odict, getdate, today, uuid, dcp, makefilepath, objrepr, printv, isnumber, saveobj, promotetolist, promotetoodict, sigfig # Import utilities
+from optima import odict, odict_custom, standard_dcp, standard_cp, getdate, today, uuid, dcp, makefilepath, objrepr, printv, isnumber, saveobj, promotetolist, promotetoodict, sigfig # Import utilities
 from optima import loadspreadsheet, model, gitinfo, defaultscenarios, makesimpars, makespreadsheet
 from optima import defaultobjectives, autofit, runscenarios, optimize, multioptimize, tvoptimize, outcomecalc, icers # Import functions
-from optima import version # Get current version
-from numpy import argmin, argsort, nan
+from optima import supported_versions, revision, cpu_count # Get current version
+from numpy import argmin, argsort, nan, ceil
 from numpy.random import seed, randint
+from time import time
+from sciris import parallelize
+
 import os
+
+__all__ = [
+    'Project'
+]
 
 #######################################################################################################
 ## Project class -- this contains everything else!
@@ -44,12 +51,12 @@ class Project(object):
     ### Built-in methods -- initialization, and the thing to print if you call a project
     #######################################################################################################
 
-    def __init__(self, name='default', spreadsheet=None, dorun=True, makedefaults=True, verbose=2, **kwargs):
+    def __init__(self, name='default', spreadsheet=None, dorun=True, makedefaults=True, verbose=2, version=None, **kwargs):
         ''' Initialize the project '''
 
         ## Define the structure sets
-        self.parsets  = odict()
-        self.progsets = odict()
+        self.parsets  = odict_custom(func=self.checkpropagateversionlink)
+        self.progsets = odict_custom(func=self.checkpropagateversionlink)
         self.scens    = odict()
         self.optims   = odict()
         self.results  = odict()
@@ -64,7 +71,10 @@ class Project(object):
         self.created = today()
         self.modified = today()
         self.spreadsheetdate = 'Spreadsheet never loaded'
-        self.version = version
+        if version is not None and version not in supported_versions:
+            raise OptimaException(f'Version {version} for Project is not one of the currently supported versions {supported_versions}')
+        self.version = version if version is not None else supported_versions[-1]  # Default to the most recent version supported
+        self.revision = revision # Always uses the current op.revision
         self.gitbranch, self.gitversion = gitinfo()
         self.filename = None # File path, only present if self.save() is used
         self.warnings = None # Place to store information about warnings (mostly used during migrations)
@@ -74,6 +84,38 @@ class Project(object):
             self.loadspreadsheet(spreadsheet, dorun=dorun, makedefaults=makedefaults, verbose=verbose, **kwargs)
 
         return None
+
+    def __setattr__(self, name, value):
+        super(Project, self).__setattr__(name, value)
+        if name == 'version':
+            self.propagateversion(None, None, 'all')
+
+    def propagateversion(self, odict, keys, vals):
+        if vals == 'all':
+            vals = []
+            if self.parsets  is not None: vals.extend(self.parsets.values())
+            if self.progsets is not None: vals.extend(self.progsets.values())
+        vals = promotetolist(vals)
+        for val in vals:
+            val.projectversion = self.version
+
+    def checkversion(self, odict, keys, values):
+        values = promotetolist(values)
+        for val in values:
+            if not hasattr(val, 'projectversion'):
+                raise OptimaException(f'Cannot add {type(val)} "{val.name if hasattr(val, "name") else None}" to Project "{self.name}" because it is '
+                                      f'missing a projectversion so it might not be compatible with Project.version={self.version}')
+            if val.projectversion is not None and val.projectversion != self.version:
+                raise OptimaException(f'Cannot add {type(val)} "{val.name if hasattr(val, "name") else None}" to project "{self.name}" because it has '
+                                      f'a different version {val.projectversion} than the project {self.version}')
+
+    def checkpropagateversionlink(self, odict, keys, vals):
+        vals = promotetolist(vals)
+
+        self.checkversion(odict, keys, vals)
+        self.propagateversion(odict, keys, vals)
+        for val in vals:
+            val.projectref = Link(self)
 
 
     def __repr__(self):
@@ -87,7 +129,7 @@ class Project(object):
         output += '     Optimizations: %i\n'    % len(self.optims)
         output += '      Results sets: %i\n'    % len(self.results)
         output += '\n'
-        output += '    Optima version: %s\n'    % self.version
+        output += '   Project version: %s (%s)\n'% (self.version, self.revision)
         output += '      Date created: %s\n'    % getdate(self.created)
         output += '     Date modified: %s\n'    % getdate(self.modified)
         output += 'Spreadsheet loaded: %s\n'    % getdate(self.spreadsheetdate)
@@ -97,12 +139,23 @@ class Project(object):
         output += '============================================================\n'
         output += self.getwarnings(doprint=False) # Don't print since print later
         return output
-    
+
+    def __copy__(self):
+        print('WARNING: copying a Project will make it so that the parsets[:].projectref point to the new Project, not the old one which they are still included in. '
+              'It is recommended to deepcopy the project instead.')
+        copy = standard_cp(self)
+        copy.restorelinks()
+        return copy
+
+    def __deepcopy__(self, memodict={}):
+        copy = standard_dcp(self, memodict)
+        copy.restorelinks()
+        return copy
     
     def getinfo(self):
         ''' Return an odict with basic information about the project -- used in resultsets '''
         info = odict()
-        for attr in ['name', 'version', 'created', 'modified', 'spreadsheetdate', 'gitbranch', 'gitversion', 'uid']:
+        for attr in ['name', 'version', 'revision', 'created', 'modified', 'spreadsheetdate', 'gitbranch', 'gitversion', 'uid']:
             info[attr] = getattr(self, attr) # Populate the dictionary
         info['parsetkeys'] = self.parsets.keys()
         info['progsetkeys'] = self.progsets.keys()
@@ -133,15 +186,38 @@ class Project(object):
     ### Methods for I/O and spreadsheet loading
     #######################################################################################################
 
-    def loadspreadsheet(self, filename=None, folder=None, name=None, overwrite=False, makedefaults=True, dorun=True, **kwargs):
-        ''' Load a data spreadsheet -- enormous, ugly function so located in its own file '''
+    def loadspreadsheet(self, filename=None, folder=None, name=None, overwrite=True, makedefaults=None, refreshparsets=None, dorun=True, **kwargs):
+        ''' Load a data spreadsheet -- enormous, ugly function so located in its own file
+        :param overwrite: whether to replace an existing spreadsheet if it has the same name as specified
+        :param makedefaults: whether to add a default parset, progset, scenario, and optimization to the project.
+        :param refreshparsets: Boolean for whether to update with the new data. Happens AFTER creating new parset if requested (may refresh the same parset!)
+        '''
         ## Load spreadsheet and update metadata
-        self.data = loadspreadsheet(filename=filename, folder=folder, verbose=self.settings.verbose) # Do the hard work of actually loading the spreadsheet
+        newdata = loadspreadsheet(filename=filename, folder=folder, verbose=self.settings.verbose, projectversion=self.version) # Do the hard work of actually loading the spreadsheet
+        firstbook = True if self.data==odict() else False #is this the first time a databook has ever been loaded to the project?
+        if refreshparsets is None:
+            refreshparsets = False if firstbook else True #Generally True unless making a first parset in which case no need to refresh it immediately
+        if makedefaults is None:
+            makedefaults = True if firstbook else False #Probably don't want defaults if there was already some data (unless parset/progset are entirely missing but that's handled below)
+        
+        if (not firstbook) and newdata['pops']['short'] != self.data['pops']['short']:
+            raise OptimaException('Loading a databook with different population short names to the existing project is not allowed: create a new project instead.')
+        self.data = newdata
         self.spreadsheetdate = today() # Update date when spreadsheet was last loaded
         self.modified = today()
-        if name is None: name = 'default'
-        self.makeparset(name=name, overwrite=overwrite)
-        if makedefaults: self.makedefaults(name)
+        
+        
+        if makedefaults or self.parsets==odict(): #always make a new parset if there isn't one
+            if name is None: name = 'default'
+            self.makeparset(name=name, overwrite=overwrite)
+        else:
+            if name is None: name = self.parsets[-1].name #Use the most recent parset if not creating a new one.
+        if makedefaults or self.progsets==odict(): #always make a new progset (and default scenario/opt) if there isn't one
+            self.makedefaults(name)
+        
+        if refreshparsets:
+            self.refreshparset(name=None, orig=None, resetprevalence=False) #name=None means refresh ALL parsets, orig=None means from data, resetprevalence means don't update initprev
+        
         self.settings.start = self.data['years'][0] # Reset the default simulation start to initial year of data
         if dorun: self.runsim(name, addresult=True, **kwargs) # Pass all kwargs to runsim as well
         if self.name == 'default' and filename.endswith('.xlsx'): self.name = os.path.basename(filename)[:-5] # If no project filename is given, reset it to match the uploaded spreadsheet, assuming .xlsx extension
@@ -157,7 +233,7 @@ class Project(object):
         if dataend is None:   
             try:    dataend = self.data['years'][-1]
             except: dataend = self.settings.dataend
-        makespreadsheet(filename=fullpath, pops=pops, data=self.data, datastart=datastart, dataend=dataend)
+        makespreadsheet(filename=fullpath, pops=pops, data=self.data, datastart=datastart, dataend=dataend, version=self.version)
         return fullpath
 
 
@@ -414,19 +490,33 @@ class Project(object):
         for key,result in self.results.items():
             if type(result)!=BOC: self.results.pop(key)
         return None
+
+    def cleanparsfromscens(self):
+        ''' Remove the scenparset from Scen objects and pars too if it is a Progscen.
+            These are not needed to re-run the Scenarios and take up space if saving to .prj.
+        '''
+        for scen in self.scens.values():
+            if isinstance(scen,Progscen):
+                if hasattr(scen,'pars'):   del scen.pars  # pars of a Progscen get re-generated when run, only needed in a Parscen
+            if hasattr(scen,'scenparset'): scen.scenparset = None  # scenparset always gets re-generated
     
-    def save(self, filename=None, folder=None, saveresults=False, verbose=2):
+    def save(self, filename=None, folder=None, saveresults=False, verbose=2, advancedtracking=False, cleanparsfromscens=None):
         ''' Save the current project, by default using its name, and without results '''
+        if cleanparsfromscens is None: cleanparsfromscens = not saveresults  # Default to cleaning if we are not saving results
+        origadvancedtracking = self.settings.advancedtracking
+        self.settings.advancedtracking = advancedtracking # Default to turning advancedtracking off
         fullpath = makefilepath(filename=filename, folder=folder, default=[self.filename, self.name], ext='prj', sanitize=True)
         self.filename = fullpath # Store file path
-        if saveresults:
-            saveobj(fullpath, self, verbose=verbose)
+        if saveresults and not cleanparsfromscens:
+            fullpath = saveobj(fullpath, self, verbose=verbose)
         else:
             tmpproject = dcp(self) # Need to do this so we don't clobber the existing results
             tmpproject.restorelinks() # Make sure links are restored
-            tmpproject.cleanresults() # Get rid of all results
-            saveobj(fullpath, tmpproject, verbose=verbose) # Save it to file
+            if not saveresults:    tmpproject.cleanresults()       # Get rid of all results
+            if cleanparsfromscens: tmpproject.cleanparsfromscens() # Get rid of (unnecessary) parameters from scenarios
+            fullpath = saveobj(fullpath, tmpproject, verbose=verbose) # Save it to file
             del tmpproject # Don't need it hanging around any more
+        self.settings.advancedtracking = origadvancedtracking
         return fullpath
 
 
@@ -462,6 +552,7 @@ class Project(object):
                     if key!='initprev' or resetprevalence: # Initial prevalence is a special case: the only user-edited parameter that is also a data parameter
                         if hasattr(parset.pars[key],'y'): parset.pars[key].y = origparset.pars[key].y # Reset y (value) variable, if it exists
                         if hasattr(parset.pars[key],'t'): parset.pars[key].t = origparset.pars[key].t # Reset t (time) variable, if it exists
+                        if hasattr(parset.pars[key],'insertiveonly'): parset.pars[key].insertiveonly = origparset.pars[key].insertiveonly # Special to actsreg, actscas, actscom
                 # Reset transition matrices
                 if key in ['birthtransit','agetransit','risktransit']: 
                     parset.pars[key] = dcp(origparset.pars[key])
@@ -495,6 +586,8 @@ class Project(object):
         for item in self.parsets.values()+self.progsets.values()+self.scens.values()+self.optims.values()+self.results.values():
             if hasattr(item, 'projectref'):
                 item.projectref = Link(self)
+            if hasattr(item, 'restorelinks'):
+                item.restorelinks()
         return None
 
 
@@ -541,8 +634,9 @@ class Project(object):
 
     def runsim(self, name=None, pars=None, simpars=None, start=None, end=None, dt=None, tvec=None, 
                budget=None, coverage=None, budgetyears=None, data=None, n=1, sample=None, tosample=None, randseed=None,
-               addresult=True, overwrite=True, keepraw=False, doround=True, die=True, debug=False, verbose=None, 
-               parsetname=None, progsetname=None, resultname=None, label=None, **kwargs):
+               addresult=True, overwrite=True, keepraw=False, doround=False, die=True, debug=False, verbose=None,
+               parsetname=None, progsetname=None, resultname=None, label=None, smoothness=None,
+               advancedtracking=None, parallel=False, ncpus=None, **kwargs):
         ''' 
         This function runs a single simulation, or multiple simulations if n>1. This is the
         core function for actually running the model!!!!!!
@@ -551,24 +645,30 @@ class Project(object):
         '''
         if dt      is None: dt      = self.settings.dt # Specify the timestep
         if verbose is None: verbose = self.settings.verbose
-        
+        if advancedtracking is None: advancedtracking = self.settings.advancedtracking # settings.advancedtracking defaults to False
+        if ncpus is not None: ncpus = int(ncpus)
+
         # Extract parameters either from a parset stored in project or from input
         if parsetname is None:
             if name is not None: parsetname = name # This is mostly for backwards compatibility -- allow the first argument to set the parset
             else:                parsetname = -1 # Set default name
             if pars is None:
                 pars = self.parsets[parsetname].pars
+                parsetuid = self.parsets[parsetname].uid
                 resultname = 'parset-'+self.parsets[parsetname].name
             else:
                 printv('Model was given a pardict and a parsetname, defaulting to use pardict input', 3, self.settings.verbose)
                 if resultname is None: resultname = 'pardict'
+                parsetuid = None
         else:
             if pars is not None:
                 printv('Model was given a pardict and a parsetname, defaulting to use pardict input', 3, self.settings.verbose)
                 if resultname is None: resultname = 'pardict'
+                parsetuid = None
             else:
                 if resultname is None: resultname = 'parset-'+self.parsets[parsetname].name
                 pars = self.parsets[parsetname].pars
+                parsetuid = self.parsets[parsetname].uid
         if label is None: # Define the label
             if name is None: label = '%s' % parsetname
             else:            label = name
@@ -586,19 +686,32 @@ class Project(object):
                 except: end   = self.settings.end # Ditto
             for i in range(n):
                 maxint = 2**31-1 # See https://en.wikipedia.org/wiki/2147483647_(number)
-                sampleseed = randint(0,maxint) 
-                simparslist.append(makesimpars(pars, start=start, end=end, dt=dt, tvec=tvec, settings=self.settings, name=parsetname, sample=sample, tosample=tosample, randseed=sampleseed))
+                sampleseed = randint(0,maxint) if sample is not None else None
+                simparslist.append(makesimpars(pars, projectversion=self.version, start=start, end=end, dt=dt, tvec=tvec, settings=self.settings, name=parsetname, sample=sample, tosample=tosample, randseed=sampleseed, smoothness=smoothness))
         else:
             simparslist = promotetolist(simpars)
 
         # Run the model!
         rawlist = []
-        for ind,simpars in enumerate(simparslist):
-            raw = model(simpars, self.settings, die=die, debug=debug, verbose=verbose, label=self.name, **kwargs) # ACTUALLY RUN THE MODEL
-            rawlist.append(raw)
+        if n == 1 or (not parallel): # Run single simulation as quick as possible (or just not in parallel)
+            for ind,simpars in enumerate(simparslist):
+                raw = model(simpars=simpars, settings=self.settings, version=self.version, die=die, debug=debug, verbose=verbose,
+                            label=self.name, advancedtracking=advancedtracking, **kwargs) # ACTUALLY RUN THE MODEL
+                rawlist.append(raw)
+
+        else: # Run in parallel
+            all_kwargs = {'settings':self.settings, 'version':self.version, 'die':die, 'debug':debug, 'verbose':verbose, 'label':self.name, 'advancedtracking':advancedtracking, **kwargs}
+            try: rawlist = parallelize(model, iterarg=simparslist, kwargs=all_kwargs, ncpus=ncpus) # ACTUALLY RUN THE MODEL
+            except:
+                printv('\nWARNING: Could not run in parallel probably because this process is already running in parallel. Trying in serial...', 1, verbose)
+                rawlist = []
+                for ind,simpars in enumerate(simparslist):
+                    raw = model(simpars=simpars, settings=self.settings, version=self.version, die=die, debug=debug, verbose=verbose,
+                                label=self.name, advancedtracking=advancedtracking, **kwargs) # ACTUALLY RUN THE MODEL
+                    rawlist.append(raw)
 
         # Store results if required
-        results = Resultset(name=resultname, pars=pars, parsetname=parsetname, progsetname=progsetname, raw=rawlist, simpars=simparslist, budget=budget, coverage=coverage, budgetyears=budgetyears, project=self, keepraw=keepraw, doround=doround, data=data, verbose=verbose) # Create structure for storing results
+        results = Resultset(name=resultname, pars=pars, parsetname=parsetname, parsetuid=parsetuid, progsetname=progsetname, raw=rawlist, simpars=simparslist, budget=budget, coverage=coverage, budgetyears=budgetyears, project=self, keepraw=keepraw, doround=doround, data=data, verbose=verbose, advancedtracking=advancedtracking) # Create structure for storing results
         if addresult:
             keyname = self.addresult(result=results, overwrite=overwrite)
             if parsetname is not None:
@@ -661,24 +774,24 @@ class Project(object):
         return output
     
 
-    def runbudget(self, name=None, budget=None, budgetyears=None, progsetname=None, parsetname='default', verbose=2):
+    def runbudget(self, name=None, budget=None, budgetyears=None, progsetname=None, parsetname='default', verbose=2, **kwargs):
         ''' Function to run the model for a given budget, years, programset and parameterset '''
         if name        is None: name        = 'runbudget'
-        if budget      is None: budget      = self.progset().getdefaultbudget()
         if budgetyears is None: budgetyears = self.settings.now
         if progsetname is None:
             try:
                 progsetname = self.progsets[0].name
                 printv('No program set entered to runbudget, using stored program set "%s"' % (self.progsets[0].name), 1, self.settings.verbose)
-            except: raise OptimaException("No program set entered, and there are none stored in the project") 
+            except: raise OptimaException("No program set entered, and there are none stored in the project")
+        if budget is None: budget = self.progsets[progsetname].getdefaultbudget()
         coverage = self.progsets[progsetname].getprogcoverage(budget=budget, t=budgetyears, parset=self.parsets[parsetname])
         progpars = self.progsets[progsetname].getpars(coverage=coverage,t=budgetyears, parset=self.parsets[parsetname])
-        results = self.runsim(pars=progpars, parsetname=parsetname, progsetname=progsetname, budget=budget, budgetyears=budgetyears, coverage=coverage, label=self.name+'-runbudget')
+        results = self.runsim(pars=progpars, parsetname=parsetname, progsetname=progsetname, budget=budget, budgetyears=budgetyears, coverage=coverage, label=self.name+'-runbudget', **kwargs)
         return results
     
     
     def outcomecalc(self, name=None, budget=None, optim=None, optimname=None, parsetname=None, progsetname=None, 
-                objectives=None, constraints=None, origbudget=None, verbose=2, doconstrainbudget=False):
+                objectives=None, absconstraints=None, origbudget=None, verbose=2, doconstrainbudget=False):
         '''
         Calculate the outcome for a given budget -- a substep of optimize(); similar to runbudget().
         
@@ -704,16 +817,16 @@ class Project(object):
         # Check inputs
         if name is None: name = 'outcomecalc'
         if optim is None:
-            if len(self.optims) and all([arg is None for arg in [objectives, constraints, parsetname, progsetname, optimname]]):
+            if len(self.optims) and all([arg is None for arg in [objectives, absconstraints, parsetname, progsetname, optimname]]):
                 optimname = -1 # No arguments supplied but optims exist, use most recent optim to run
             if optimname is not None: # Get the optimization by name if supplied
                 optim = self.optims[optimname] 
             else: # If neither an optim nor an optimname is supplied, create one
-                optim = Optim(project=self, name=name, objectives=objectives, constraints=constraints, parsetname=parsetname, progsetname=progsetname)
+                optim = Optim(project=self, name=name, objectives=objectives, absconstraints=absconstraints, parsetname=parsetname, progsetname=progsetname)
 
         # Run outcome calculation        
         results = outcomecalc(budgetvec=budget, which='outcomes', project=self, parsetname=optim.parsetname, 
-                              progsetname=optim.progsetname, objectives=optim.objectives, constraints=optim.constraints, 
+                              progsetname=optim.progsetname, objectives=optim.objectives, absconstraints=optim.absconstraints,
                               origbudget=origbudget, outputresults=True, verbose=verbose, doconstrainbudget=doconstrainbudget)
         # Add results
         results.name = name
@@ -739,60 +852,113 @@ class Project(object):
         return results
 
 
-    def optimize(self, name=None, parsetname=None, progsetname=None, objectives=None, constraints=None, maxiters=None, maxtime=None, 
+    def optimize(self, name=None, parsetname=None, progsetname=None, objectives=None, constraints=None, absconstraints=None, proporigconstraints=None, maxiters=None, maxtime=None,
                  verbose=2, stoppingfunc=None, die=False, origbudget=None, randseed=None, mc=None, optim=None, optimname=None, multi=False, 
-                 nchains=None, nblocks=None, blockiters=None, batch=None, timevarying=None, tvsettings=None, tvconstrain=None, which=None, **kwargs):
+                 nchains=None, nblocks=None, blockiters=None, ncpus=None, parallel=None, timevarying=None, tvsettings=None, tvconstrain=None, which=None,
+                 makescenarios=True, **kwargs):
         '''
         Function to minimize outcomes or money.
         
         Usage examples:
             P = op.demo(0); P.parset().fixprops(False) # Initialize project so ART has an effect
-            
             P.optimize() # Use defaults
-            P.optimize(maxiters=5, mc=0) # Do a very simple run
-            P.optimize(parsetname=0, progsetname=0) # Use first parset and progset
-            P.optimize(optim=P.optims[-1]) # Use a pre-existing optim
-            P.optimize(optimname=-1) # Same as previous
-            P.optimize(multi=True) # Do a multi-chain optimization
-            P.optimize(multi=True, nchains=8, nblocks=10, blockiters=50) # Do a very large multi-chain optimization
-            P.optimize(timevarying=True, mc=0, maxiters=30) # Do a short time-varying optimization
-            P.optimize(timevarying=True, mc=0, maxiters=200, tvconstrain=False, randseed=1) # Do a time-varying optimization, allowing total annual budget to vary
-            
             pygui(P) # To plot results
+
+        Suggested inputs are: parsetname, progsetname, objectives, proporigconstraints, maxtime, ncpus, randseed
+            (or constraints or absconstraints, but proporigconstraints also work the best in the FE)
+
+        maxtime <= 60 is a test run, maxtime > 60 is a proper run (generally 1000), maxtime = None runs the most thorough optimization
+        !! Be careful in the code, maxtime for this function refers to the entire optimization time, whereas outside this
+        function it refers to how long a single call of asd will last. That is why we have finishtime !!
+
+        ncpus is the max number of threads to use: sc.cpu_count()/2 won't slow your computer down,
+            sc.cpu_count()-2 might be faster, sc.cpu_count() if you're a madman
+
+        To customize behaviour, generally use maxtime but:
+            mc: minoutcomes starts optimizations from different starting budgets, either (baselines, randoms, progbaselines). See minoutcomes
+            parallel: whether minoutcomes or minmoney should run in parallel (generally True)
+            maxiters: the max iterations each optimization will stop at (generally None, limited by time or convergence instead)
+            nchains: how many chains multioptimize should run in parallel, NOTE that each chain will run with mc. (generally 1 when using mc)
+            nblocks: runs nchains, then updates origbudget from the best chain and reoptimizes. Repeats this nblocks times (generally 1 or 2)
+            multi: !! This input gets ignored since this function interprets whether or not multioptimize needs to be used now !!
+            blockiters !! This input gets ignored now since it is the same as maxiters !!
+            origbudget: if you want to customize the "Optimization baseline", which is the optimization's starting point
         '''
+        
+        if parsetname  is None or parsetname == -1:  parsetname  = self.parsets.keys()[-1]  #use the real name instead of -1
+        if progsetname is None or progsetname == -1: progsetname = self.progsets.keys()[-1] #use the real name instead of -1
 
         # Check inputs
         if name is None: name = 'default'
         if optim is None:
-            if len(self.optims) and all([arg is None for arg in [objectives, constraints, parsetname, progsetname, optimname, which]]):
+            if len(self.optims) and all([arg is None for arg in [objectives, parsetname, progsetname, optimname, which]]):
                 optimname = -1 # No arguments supplied but optims exist, use most recent optim to run
             if optimname is not None: # Get the optimization by name if supplied
                 optim = self.optims[optimname] 
             else: # If neither an optim nor an optimname is supplied, create one
-                optim = Optim(project=self, name=name, objectives=objectives, constraints=constraints, parsetname=parsetname, progsetname=progsetname, timevarying=timevarying, tvsettings=tvsettings, which=which)
+                optim = Optim(project=self, name=name, objectives=objectives, constraints=constraints, absconstraints=absconstraints, proporigconstraints=proporigconstraints,
+                              parsetname=parsetname, progsetname=progsetname, timevarying=timevarying, tvsettings=tvsettings, which=which)
         if objectives  is not None: optim.objectives  = objectives # Update optim structure with inputs
-        if constraints is not None: optim.constraints = constraints
         if tvsettings  is not None: optim.tvsettings  = tvsettings
         if timevarying is not None: optim.tvsettings['timevarying'] = timevarying # Set time-varying optimization
         if tvconstrain is not None: optim.tvsettings['tvconstrain'] = tvconstrain # Set whether programs should be constrained to their time-varying values
-        
+        if absconstraints is not None:      optim.absconstraints = absconstraints
+        if constraints is not None:         optim.constraints = constraints
+        if proporigconstraints is not None: optim.proporigconstraints = proporigconstraints
+
+        if maxiters is None: maxiters = blockiters  # blockiters and maxiters are the same and will be called maxiters from here on out
+        settings = {'maxtime':maxtime,'maxiters':maxiters, 'parallel':parallel, 'ncpus': ncpus, 'nchains':nchains, 'nblocks':nblocks, 'mc':mc}
+        if maxtime is None:  # Unlimited time so run the most thorough optimization
+            defaultsettings = {'maxiters':None, 'parallel':True, 'nchains':1, 'nblocks':10, 'mc':(24,12,12), 'ncpus':ceil(cpu_count()/2)}
+        elif maxtime <= 60:  # 1 min or less, so run a test optimization
+            defaultsettings = {'maxiters':None, 'parallel':True, 'nchains':1, 'nblocks':1,  'mc':( 2, 0, 0), 'ncpus':ceil(cpu_count()/2)}
+        else:                # Longer than 1 minute, but not unlimited so run the most "efficient" optimization
+            defaultsettings = {'maxiters':None, 'parallel':True, 'nchains':1, 'nblocks':1,  'mc':(12, 6, 6), 'ncpus':ceil(cpu_count()/2)}
+        for key in defaultsettings.keys():
+            if settings[key] is None: settings[key] = defaultsettings[key]  # Only overwrite Nones with the default
+
+        multi = settings['nchains'] > 1 or settings['nblocks'] > 1    # Need to run with multioptimize if you have nchains or nblocks
+        if settings['maxtime'] is not None: settings['finishtime'] = time() + settings['maxtime'] # START THE TIMER
+        # Note we still pass maxtime into the functions, even though it will reach finishtime before maxtime, so that it saves maxtime
+
         # Run the optimization
         if optim.tvsettings['timevarying']: # Call time-varying optimization
-            multires = tvoptimize(optim=optim, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, 
-                                     die=die, origbudget=origbudget, randseed=randseed, mc=mc, **kwargs)
+            for key in ['nchains','nblocks']: settings.pop(key)
+            multires = tvoptimize(optim=optim, verbose=verbose, stoppingfunc=stoppingfunc, die=die, origbudget=origbudget,
+                                  randseed=randseed, **settings, **kwargs)
         elif multi and not optim.objectives['which']=='money': # It's a multi-run objectives optimization
-            multires = multioptimize(optim=optim, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, 
-                                     die=die, origbudget=origbudget, randseed=randseed, mc=mc, nchains=nchains, nblocks=nblocks, 
-                                     blockiters=blockiters, batch=batch, **kwargs)      
-        else: # Neither special case
-            multires = optimize(optim=optim, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, 
-                                die=die, origbudget=origbudget, randseed=randseed, mc=mc, multi=multi, nchains=nchains, **kwargs)
+            multires = multioptimize(optim=optim, verbose=verbose, stoppingfunc=stoppingfunc, die=die, origbudget=origbudget,
+                                     randseed=randseed, **settings, **kwargs)
+        else: # Neither special case, so minoutcomes or minmoney
+            multires = optimize(optim=optim, verbose=verbose, stoppingfunc=stoppingfunc, die=die, origbudget=origbudget,
+                                randseed=randseed, **settings, **kwargs)
         
         # Tidy up
         optim.resultsref = multires.name
         self.addoptim(optim=optim)
         self.addresult(result=multires)
         self.modified = today()
+
+        try:
+            optbudget = multires.budgets['Optimized']
+            if hasattr(multires,'improvement'):
+                  printv(f'\nOptimization "{name}" finished with outcomes: Original: {multires.improvement[0][0]}, Best: {multires.improvement[0][-1]}!\n',2,verbose)
+            else: printv(f'\nOptimization "{name}" finished with budgets: Original: {sum(multires.budgets["Baseline"])}, Best: {sum(optbudget)}!\n')
+        except:   printv(f'\nOptimization "{name}" unsuccessful!\n',2,verbose)
+
+        if makescenarios: #Make a new budget scenario out of each optimized result
+            budgetscens = []            
+            for resname in multires.resultsetnames:
+                optscenname = multires.optim.name + '_' + resname
+                optbudget = dcp(multires.budgets[resname])
+                for prog in optbudget.keys():
+                    optbudget[prog] = promotetolist(optbudget[prog])
+                optt = promotetolist(multires.budgetyears[resname])
+                
+                budgetscens.append(Budgetscen(name = optscenname, t=optt, budget=optbudget,
+                                              parsetname=parsetname, progsetname=progsetname))
+            self.addscens(budgetscens, overwrite=False)
+        
         return multires
     
     
@@ -830,7 +996,7 @@ class Project(object):
         output += "if 'calibrate' in torun:\n"
         output += "    defaultps = dcp(P.parsets[0]) # Copy the default parset\n"
         output += "    P.rmparset(0) # Remove the default parset\n\n"
-        for psn,ps in self.parsets.iteritems():
+        for psn,ps in self.parsets.items():
             output += "    parset = dcp(defaultps)\n"
             output += "    parset.name = '"+psn+"'\n"
             output += "    pars = parset.pars\n"
@@ -839,10 +1005,10 @@ class Project(object):
         output += "### Make programs\n" 
         output += "if 'makeprograms' in torun:\n"
         output += "    P.rmprogset(0) # Remove the default progset\n\n"
-        for prn,pr in self.progsets.iteritems():
+        for prn,pr in self.progsets.items():
             pi = 0
             plist = "["
-            for pn,p in pr.programs.iteritems():
+            for pn,p in pr.programs.items():
                 output += "    p"+str(pi)+" = Program(short='"+p.short+"',name='"+p.name+"',targetpars="+str(p.targetpars)+",targetpops="+str(p.targetpops)+")\n"
                 output += "    p"+str(pi)+".costcovfn.ccopars = "+p.costcovfn.ccopars.export(doprint=False)+"\n"
                 output += "    p"+str(pi)+".costcovdata = "+promotetoodict(p.costcovdata).export(doprint=False)+"\n\n"
@@ -861,7 +1027,7 @@ class Project(object):
         output += "### Scenarios\n" 
         output += "if 'scens' in torun:\n"
         slist = "["
-        for sn,s in self.scens.iteritems():
+        for sn,s in self.scens.items():
             parsetname = "'"+s.parsetname+"'" if isinstance(s.parsetname,str) else str(s.parsetname)
             if isinstance(s,Parscen):
                 scentoadd = "Parscen(name='"+s.name+"',parsetname="+parsetname+",pars="+str(s.pars)+")"
@@ -880,10 +1046,10 @@ class Project(object):
 
         output += "### Optimizations\n" 
         output += "if 'optims' in torun:\n"
-        for on,o in self.optims.iteritems():
+        for on,o in self.optims.items():
             parsetname = "'"+o.parsetname+"'" if isinstance(o.parsetname,str) else str(o.parsetname)
             progsetname = "'"+o.progsetname+"'" if isinstance(o.progsetname,str) else str(o.progsetname)
-            constraints = promotetoodict(o.constraints).export(doprint=False) if o.constraints is not None else 'None'
+            constraints = promotetoodict(o.proporigconstraints).export(doprint=False) if o.proporigconstraints is not None else 'None'
             output += "    P.addoptim(name='"+on+"',\n               optim=Optim(project=P,\n                           parsetname="+parsetname+",\n                           progsetname="+progsetname+",\n                           objectives="+promotetoodict(o.objectives).export(doprint=False)+",\n                           constraints="+constraints+"))\n\n"
 
         output += "    if dorun: P.optimize() # Run the most recent optimization\n\n\n"
@@ -903,17 +1069,15 @@ class Project(object):
     ## Methods to handle tasks for geospatial analysis
     #######################################################################################################
         
-    def genBOC(self, budgetratios=None, name=None, parsetname=None, progsetname=None, objectives=None, constraints=None, maxiters=1000, 
-               maxtime=None, verbose=2, stoppingfunc=None, mc=3, die=False, randseed=None, origbudget=None, **kwargs):
+    def genBOC(self, budgetratios=None, name=None, parsetname=None, progsetname=None, objectives=None, constraints=None, absconstraints=None, proporigconstraints=None,
+               maxiters=1000, maxtime=None, verbose=2, stoppingfunc=None, mc=None, parallel=True, finishtime=None, ncpus=None, die=False, randseed=None, origbudget=None, **kwargs):
         ''' Function to generate project-specific budget-outcome curve for geospatial analysis '''
         if name is None:
             name = 'BOC ' + self.name
-        boc = BOC(name=name)
         if objectives is None:
             printv('Warning, genBOC "%s" did not get objectives, using defaults...' % (self.name), 2, verbose)
             objectives = defaultobjectives(project=self, progsetname=progsetname)
-        boc.objectives = objectives
-        boc.constraints = constraints
+        boc = BOC(name=name,objectives=objectives,constraints=constraints,absconstraints=absconstraints,proporigconstraints=proporigconstraints)
         
         if parsetname is None:
             printv('Warning, using default parset', 3, verbose)
@@ -922,7 +1086,12 @@ class Project(object):
         if progsetname is None:
             printv('Warning, using default progset', 3, verbose)
             progsetname = -1
-        
+
+        # Set defaults
+        if sc.isnumber(mc): mc = (1,0,mc)
+        elif mc is None or sum(mc) == 0: mc = (3,0,0)
+        if ncpus is None: ncpus = int(ceil( cpu_count()/2 ))
+
         defaultbudget = self.progsets[progsetname].getdefaultbudget()
         
         if budgetratios is None:
@@ -960,23 +1129,25 @@ class Project(object):
             totalcount = len(budgetdict)+sum(counts[:])-1
             printv('Running budget %i/%i ($%0.0f)' % (thiscount, totalcount, budget), 2, verbose)
             objectives['budget'] = budget
-            optim = Optim(project=self, name=name, objectives=objectives, constraints=constraints, parsetname=parsetname, progsetname=progsetname)
+            optim = Optim(project=self, name=name, constraints=constraints,absconstraints=absconstraints,proporigconstraints=proporigconstraints,
+                          objectives=objectives, parsetname=parsetname, progsetname=progsetname)
             
             # All subsequent genBOC steps use the allocation of the previous step as its initial budget, scaled up internally within optimization.py of course.
             if len(tmptotals):
                 closest = argmin(abs(tmptotals[:]-budget)) # Find closest budget
                 origbudget = tmpallocs[closest]
             label = self.name+' $%sm (%i/%i)' % (sigfig(budget/1e6, sigfigs=3), thiscount, totalcount)
-            
+
+            if finishtime is None and maxtime is not None: finishtime = time() + maxtime  # Each optimization gets its own maxtime
             # Actually run
-            results = optimize(optim=optim, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, origbudget=origbudget, label=label, mc=mc, die=die, randseed=randseed, **kwargs)
+            results = optimize(optim=optim, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, origbudget=origbudget, label=label, mc=mc, finishtime=finishtime, parallel=parallel, ncpus=ncpus, die=die, randseed=randseed, **kwargs)
             tmptotals[key] = budget
             tmpallocs[key] = dcp(results.budgets.findbykey('Optim'))
             tmpx[key] = budget # Used to be append, but can't use lists since can iterate multiple times over a single budget
             tmpy[key] = results.outcome
             boc.budgets[key] = tmpallocs[-1]
             if ratio==1.0: # Check if ratio is 1, and if so, store the baseline
-                ybaseline = results.extremeoutcomes.findbykey('Base') # Store baseline result, but also not part of the BOC
+                ybaseline = results.outcomes.findbykey('Base') # Store baseline result, but also not part of the BOC
                 yregionoptim = results.outcome
                 regionoptimbudget = budget
             

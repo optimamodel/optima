@@ -71,20 +71,16 @@ define(['angular', 'ui.router'], function (angular) {
 
           if (!$scope.isMissingData && $scope.anyOptimizable) {
 
-            rpcService
-              .rpcRun(
-                'load_progset_summaries', [$scope.state.project.id])
+            rpcService.rpcRun('load_progset_summaries', [$scope.state.project.id])
               .then(function(response) {
                 $scope.state.progsets = response.data.progsets;
-
-                return rpcService.rpcRun('load_parset_summaries', [$scope.state.project.id]);
-              })
+              });
+            rpcService.rpcRun('load_parset_summaries', [$scope.state.project.id])
               .then(function(response) {
                 console.log('reloadActiveProject parsets', response);
                 $scope.state.parsets = response.data.parsets;
-
-                return rpcService.rpcRun('load_optimization_summaries', [$scope.state.project.id]);
-              })
+              });
+            rpcService.rpcRun('load_optimization_summaries', [$scope.state.project.id])
               .then(function(response) {
                 console.log('reloadActiveProject optims', response.data);
                 var data = response.data;
@@ -239,7 +235,7 @@ define(['angular', 'ui.router'], function (angular) {
 
     $scope.uploadOptimization = function(optimization) {
       rpcService
-        .rpcUpload(
+        .rpcUploadSerial(
           'upload_project_object', [projectService.project.id, 'optimization'], {}, '.opt')
         .then(function(response) {
 			if (response.data.name == 'BadFileFormatError') {
@@ -263,7 +259,7 @@ define(['angular', 'ui.router'], function (angular) {
     $scope.startOptimization = function() {
       $scope.state.isRunnable = false;
       $scope.state.isRunning = true;
-      console.log('startOptimization');
+      console.log('startOptimization',$scope.state.optimization);
       rpcService
         .rpcAsyncRun(
           'launch_task', [
@@ -475,9 +471,9 @@ define(['angular', 'ui.router'], function (angular) {
         function selectProgset(doscale) {
           var progsetId = $scope.state.optimization.progset_id;
           $scope.defaultConstraints = deepCopyJson(
-            optimsScope.defaultOptimizationsByProgsetId[progsetId].constraints);
+            optimsScope.defaultOptimizationsByProgsetId[progsetId].proporigconstraints);
 
-          var constraints = $scope.state.optimization.constraints;
+          var constraints = $scope.state.optimization.proporigconstraints;
           var defaultKeys = _.pluck($scope.defaultConstraints, 'key');
           var constraints = _.filter(
             constraints, function(c) {
@@ -492,8 +488,8 @@ define(['angular', 'ui.router'], function (angular) {
           if (doscale) {
             scaleConstraints(constraints, 100.0);
           }
-          $scope.state.optimization.constraints = constraints;
-          console.log("selectProgset constraints", $scope.state.optimization.constraints);
+          $scope.state.optimization.proporigconstraints = constraints;
+          console.log("selectProgset constraints", $scope.state.optimization.proporigconstraints);
         }
 
         function cancel() {
@@ -501,7 +497,7 @@ define(['angular', 'ui.router'], function (angular) {
         }
 
         function save() {
-          scaleConstraints($scope.state.optimization.constraints, 0.01);
+          scaleConstraints($scope.state.optimization.proporigconstraints, 0.01);
           $modalInstance.close($scope.state.optimization);
         }
 
@@ -523,6 +519,10 @@ define(['angular', 'ui.router'], function (angular) {
         })
         .result
         .then(function(optimization) {
+          // Here is where we delete constraints and absconstraints from the optimization object in the FE
+          console.log('deleting absconstraints and contraints from optimization', optimization);
+          delete optimization.constraints;
+          delete optimization.absconstraints;
           console.log('save optimization', optimization);
           saveOptimization(optimization);
           $scope.state.optimization = optimization;
@@ -534,7 +534,7 @@ define(['angular', 'ui.router'], function (angular) {
       var newOptimization = {
         name: rpcService.getUniqueName('Optimization', otherNames),
         which: which,
-        constraints: {},
+        proporigconstraints: {},
       };
       selectDefaultProgsetAndParset(newOptimization);
 

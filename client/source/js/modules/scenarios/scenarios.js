@@ -40,7 +40,7 @@ define([
     }
 
     function reloadActiveProject() {
-      projectService
+      promise = projectService
         .getActiveProject()
         .then(function(response) {
           $scope.project = response.data;
@@ -51,28 +51,38 @@ define([
           $scope.years = _.range($scope.project.startYear, $scope.project.endYear+21);
           $scope.isMissingData = !$scope.project.calibrationOK;
 
+          return new Promise(function(resolve, reject) {resolve('bob');})
+        });
+
+        promise.then(function(emptyresponse) {
           return rpcService.rpcRun('load_parset_summaries', [$scope.project.id]);
         })
-        .then(function(parsetResponse) {
-          $scope.parsets = parsetResponse.data.parsets;
+          .then(function(parsetResponse) {
+            $scope.parsets = parsetResponse.data.parsets;
+          });
 
+        promise.then(function(emptyresponse) {
           return rpcService.rpcRun('load_progset_summaries', [$scope.project.id]);
         })
-        .then(function(progsetsResponse) {
-          $scope.progsets = progsetsResponse.data.progsets;
-          $scope.anyOptimizable = $scope.project.costFuncsOK;
-        })
-        .then(function () {
+          .then(function(progsetsResponse) {
+            $scope.progsets = progsetsResponse.data.progsets;
+            $scope.anyOptimizable = $scope.project.costFuncsOK;
+          });
+
+        promise.then(function(emptyresponse) {
           return rpcService.rpcRun('load_scenario_summaries', [$scope.project.id]);
         })
-        .then(function(scenariosResponse) {
-          console.log("scenarios response", scenariosResponse.data);
-          $scope.parametersByParsetId = scenariosResponse.data.ykeysByParsetId;
-          $scope.budgetsByProgsetId = scenariosResponse.data.defaultBudgetsByProgsetId;
-          $scope.defaultCoveragesByParsetIdyProgsetId = scenariosResponse.data.defaultCoveragesByParsetIdyProgsetId;
-          loadScenarios(scenariosResponse.data.scenarios);
+          .then(function(scenariosResponse) {
+            console.log("scenarios response", scenariosResponse.data);
+            $scope.parametersByParsetId = scenariosResponse.data.ykeysByParsetId;
+            $scope.budgetsByProgsetId = scenariosResponse.data.defaultBudgetsByProgsetId;
+            $scope.defaultCoveragesByParsetIdyProgsetId = scenariosResponse.data.defaultCoveragesByParsetIdyProgsetId;
+            loadScenarios(scenariosResponse.data.scenarios);
+          });
+
+        promise.then(function(emptyresponse) {
           $scope.graphScenarios(false);
-        });
+        })
     }
 
     function loadScenarios(scenarios) {
@@ -108,7 +118,7 @@ define([
 
     $scope.uploadScenario = function(scenario) {
       rpcService
-        .rpcUpload(
+        .rpcUploadSerial(
           'upload_project_object', [projectService.project.id, 'scenario'], {}, '.scn')
         .then(function(response) {
 		  if (response.data.name == 'BadFileFormatError') {

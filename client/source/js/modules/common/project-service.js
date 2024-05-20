@@ -36,10 +36,31 @@ define(['angular', '../common/local-storage-polyfill'], function (angular) {
       return 'activeProjectFor:' + userId;
     }
 
+    function makeUserSettingsKey(userId) {
+      return 'settingsForUser:' + userId;
+    }
+
     function setActiveProjectId(projectId) {
       projectService.project.id = projectId;
       var projectStr = JSON.stringify(projectService.project);
       localStorage[makeUserKey(userManager.user.id)] = projectStr;
+    }
+
+    function setGraphSettings(settings) {
+        var settingsStr = JSON.stringify(settings);
+        localStorage[makeUserSettingsKey(userManager.user.id)] = settingsStr;
+    }
+
+    function getGraphSettings() {
+        var settingsStr = localStorage[makeUserSettingsKey(userManager.user.id)];
+        if (settingsStr == null || settingsStr == undefined) {
+          return {'figwidth':0.48, 'fontsize':0.8}
+        }
+        try {
+          return JSON.parse(settingsStr);
+        } catch (exception) {
+          return {'figwidth':0.48, 'fontsize':0.8}
+        }
     }
 
     function loadActiveProject() {
@@ -205,7 +226,7 @@ define(['angular', '../common/local-storage-polyfill'], function (angular) {
           function(response) {
 			if (response.data.projectId == 'BadFileFormatError') {
 			  deferred.reject(response);
-            } else {			  
+            } else {
               getProjectAndMakeActive(response.data.projectId)
                 .then(
                   function(response) { deferred.resolve(response); },
@@ -299,7 +320,7 @@ define(['angular', '../common/local-storage-polyfill'], function (angular) {
     }
 
       getProjectList();
-      getOptimaDemoProjectList();
+//      getOptimaDemoProjectList(); Note that this now happens in projects.js: initialize()
 
       function getActiveProject() {
         var projectId = projectService.project.id;
@@ -324,6 +345,8 @@ define(['angular', '../common/local-storage-polyfill'], function (angular) {
       uploadProject: uploadProject,
       uploadProjectFromSpreadsheet: uploadProjectFromSpreadsheet,
       getActiveProject: getActiveProject,
+      setGraphSettings: setGraphSettings,
+      getGraphSettings: getGraphSettings,
       downloadSelectedProjects: function (projectIds) {
         return rpcService.rpcDownload('load_zip_of_prj_files', [projectIds]);
       },
