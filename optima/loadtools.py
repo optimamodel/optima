@@ -1626,7 +1626,7 @@ def fixzeronumcircparset(project=None, **kwargs):
         # Based on makepars()
         orignumcirc = project.parset().pars['numcirc']
         orignumcircdict = op.dcp(orignumcirc.__dict__)
-        for key in ['m', 't', 'y', 'projectversion']: orignumcircdict.pop(key)
+        for key in ['m', 't', 'y', 'projectversion']: orignumcircdict.pop(key, None)
 
         mpopkeys = [popkey for popno, popkey in enumerate(project.data['pops']['short']) if project.data['pops']['male'][popno]]
 
