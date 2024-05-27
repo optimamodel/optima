@@ -1622,18 +1622,20 @@ def fixzeronumcircparset(project=None, **kwargs):
     Migration between Optima 2.12.0 and 2.12.1
     This undos the parset.pars['numcirc'].y[key] = array([0.0]) that used to set `numcirc` to 0
     '''
-    if project is not None:
-        dataparset = op.Parameterset(name='NewParsetFromData', project=project)
-        dataparset.projectversion = '2.12.1'
-        dataparset.makepars(project.data, start=project.data['years'][0], end=project.data['years'][-1], projectversion='2.12.1', verbose=0)  # Create parameters from data correctly, not setting numcirc to 0
-        replacementnumcirc = dataparset.pars['numcirc']
-        replacementnumcirc.projectversion = '2.12.0'
+    if project is not None and project.data is not None and project.parsets.keys():
+        # Based on makepars()
+        orignumcirc = project.parset().pars['numcirc']
+        orignumcircdict = op.dcp(orignumcirc.__dict__)
+        for key in ['m', 't', 'y', 'projectversion']: orignumcircdict.pop(key)
+
+        mpopkeys = [popkey for popno, popkey in enumerate(project.data['pops']['short']) if project.data['pops']['male'][popno]]
+
+        replacementnumcirc = op.parameters.data2timepar(data=project.data, keys=mpopkeys, **orignumcircdict)
 
         for parset in project.parsets.values():
             allzero = all(parset.pars['numcirc'].y.values() == array([0]))
             if allzero:
                 parset.pars['numcirc'] = replacementnumcirc
-        raise Exception('bob')
     return None
 
 ##########################################################################################
