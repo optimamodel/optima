@@ -1,6 +1,6 @@
 # Optima Changelog
 
-Projects before `2.11.4` should be able to be migrated to version `2.11.4` without changing the calibration. Versions `2.12.0` and `2.12.1` (planned) both change the calibration (sometimes only slightly).
+Projects before `2.11.4` should be able to be migrated to version `2.11.4` without changing the calibration. Versions `2.12.0` and `2.12.1` both change the calibration (sometimes only slightly).
 
 Versions `2.11.4`, `2.12.0` and later all can be run using the branch `main`. A project will automatically update to the earliest supported version (currently `2.11.4`), but updating a project to the latest version can be done using the FE or `op.migrate(P, 'latest')`
 
@@ -55,14 +55,17 @@ Migration to a new version is done on load `P = get_latest_project("example", mi
  - The Optimization constraints are now proportional to the default budget (latest) for that progset (`proporigconstraints`). This means a 100% min constraint actually means the min budget is the latest budget - as opposed to having to scale it up or down depending on the total budget. If an Optim also has `contraints` and `absconstraints` those will also be followed and reflected in the constraints shown. But if you change the optimization then the `constraints` and `absconstraints` will be removed.
 
 ## [2.12.2] - 
+ALL PLANNED / TODO:
+ - !! TB/HIV co-infection mortality
+ - Change acts to be better balanced
+ - Change acts to either be 0%, 50% or 100% insertive or receptive for a population, not based on the numbers in the Partnerships tab - these numbers are used to calibrate the split of a population's acts with the other populations, not the relative insertive/receptive split.
+ - `Multiresultset.parsetname` and `Multiresultset.progsetname` is now an odict, with a key and value for each result.
  - Change `forcepopsize` to not affect the number of PLHIV. The previous assumption was to remove (or add) people from (or into) the susceptible and the "not on ART" states. Now people only are removed from (or added into) the susceptible states.
 
 
-## [2.12.1] - 2023
-ALL PLANNED / TODO:
- - !! TB/HIV co-infection mortality
- - Change acts to either be 0%, 50% or 100% insertive or receptive for a population, not based on the numbers in the Partnerships tab - these numbers are used to calibrate the split of a population's acts with the other populations, not the relative insertive/receptive split.
- - `Multiresultset.parsetname` and `Multiresultset.progsetname` is now an odict, with a key and value for each result.
+## [2.12.1] - 2024-05-27
+ - Fix `numcirc` being set to 0 in the `Parameterset` upon loading from data - meaning running with just a parset had no VMMC. Running scenarios or programs affecting `numcirc` (eg. with VMMC program) were still working, just not the calibration.
+   - The migration reloads the `numcirc` in every `parset` from the `P.data` which is from the latest loaded spreadsheet (for the parsets that have `numcirc.y = 0`).
 
 
 ## [2.12.0] - 2023-
