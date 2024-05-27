@@ -1383,10 +1383,11 @@ def makepars(data=None, verbose=2, die=True, fixprops=None, parset=None, project
 
     # Risk transitions - these are time-constant
     pars['risktransit'] = array(data['risktransit'])
-    
-    # Circumcision
-    for key in pars['numcirc'].keys():
-        pars['numcirc'].y[key] = array([0.0]) # Set to 0 for all populations, since program parameter only
+
+    if compareversions(projectversion, "2.12.1") < 0: # Pre-2.12.1 the numcirc data didn't make it to the parset
+        # Circumcision
+        for key in pars['numcirc'].keys():
+            pars['numcirc'].y[key] = array([0.0]) # Set to 0 for all populations, since program parameter only
     
     # Fix treatment from final data year
     for key in ['fixproptx', 'fixpropsupp', 'fixpropdx', 'fixpropcare', 'fixproppmtct']:
