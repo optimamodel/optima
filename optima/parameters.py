@@ -140,19 +140,19 @@ class Parameterset(object):
         output += '============================================================\n'
         return output
 
-    def getprojectversion(self, projectversion=None, die=False):
+    def getprojectversion(self, projectversion=None, die=False, verbose=2):
         if projectversion is None: projectversion = self.projectversion
         if projectversion is not None:  # We have a version, check that it matches projectref().version
             if isinstance(self.projectref.obj, op.Project) and self.projectref().version != projectversion:
                 err = f'Parset "{self.name}" was provided the projectversion={projectversion} which conflicts with the projectref().version={self.projectref().version}. Using {projectversion}'
                 if die: raise OptimaException(err)
-                else: print('WARNING: '+err)
+                else: printv('WARNING: '+err, 1, verbose)
             return projectversion
         # not provided with a version, get it from the project
         if self.projectref is None or not isinstance(self.projectref.obj, op.Project): # Missing both projectversion and projectref().version
             err = f'Parset "{self.name}" is missing a link to its project and therefore cannot get the project.version'
             if die: raise OptimaException(err)
-            else: print('WARNING: '+err)
+            else: printv('WARNING: '+err, 1, verbose)
             return None
         return self.projectref().version
     
@@ -191,7 +191,8 @@ class Parameterset(object):
             self.projectref = Link(project)
     
     def makepars(self, data=None, fix=True, verbose=2, start=None, end=None, projectversion=None):
-        self.pars = makepars(data=data, verbose=verbose, parset=self, projectversion=self.getprojectversion(projectversion)) # Initialize as list with single entry
+        self.pars = makepars(data=data, verbose=verbose, parset=self, # Initialize as list with single entry
+                             projectversion=self.getprojectversion(projectversion, verbose=verbose, die=False)) # Don't die here if we conflict
         self.fixprops(fix=fix)
         self.popkeys = dcp(self.pars['popkeys']) # Store population keys more accessibly
         if start is None: self.start = data['years'][0] # Store the start year -- if not supplied, use beginning of data
@@ -1267,7 +1268,7 @@ def makepars(data=None, verbose=2, die=True, fixprops=None, parset=None, project
     Version: 2017jun03
     """
     if projectversion is None:
-        try: projectversion = parset.getprojectversion(die=True)
+        try: projectversion = parset.getprojectversion(die=True, verbose=verbose)
         except Exception as e: raise OptimaException('Must pass parset or projectversion to makepars() as the behaviour is version-dependent') from e
 
     printv('Converting data to parameters...', 1, verbose)
