@@ -109,6 +109,7 @@ def setmigrations(which='migrations'):
         ('2.11.2', ('2.11.3', '2022-11-02', None,            'Annual data takes precedence over assumption when loading databook, bug fixes, FE Scenario tab add stacked for one scenario + other things.')),
         ('2.11.3', ('2.11.4', '2023-02-07',addallconstraintsoptim, 'Adds absconstraints and proporigconstraints to Optim, model works with initpeople and optimization improvements')),
         ('2.11.4', ('2.12.0', '2023-03-10',addinsertonlyacts,'Adds ANC testing to diagnose mothers to put onto PMTCT, actsreg etc only contain insertive acts, and relhivbirth only reduces birth rate of diagnosed HIV+ potential mothers.')),
+        ('2.12.0', ('2.12.1', '2024-05-27',fixzeronumcircparset,'Reloads numcirc "Number of voluntary medical male circumcisions" from data - was previously overriden to be zero')),
         ])
     
     
@@ -1616,6 +1617,27 @@ def addinsertonlyacts(project=None, **kwargs):
     return None
 
 
+def fixzeronumcircparset(project=None, **kwargs):
+    '''
+    Migration between Optima 2.12.0 and 2.12.1
+    This undos the parset.pars['numcirc'].y[key] = array([0.0]) that used to set `numcirc` to 0
+    '''
+    if project is not None and project.data is not None and project.parsets.keys():
+        # Based on makepars()
+        orignumcirc = project.parset().pars['numcirc']
+        orignumcircdict = op.dcp(orignumcirc.__dict__)
+        for key in ['m', 't', 'y', 'projectversion']: orignumcircdict.pop(key, None)
+
+        mpopkeys = [popkey for popno, popkey in enumerate(project.data['pops']['short']) if project.data['pops']['male'][popno]]
+
+        replacementnumcirc = op.parameters.data2timepar(data=project.data, keys=mpopkeys, **orignumcircdict)
+
+        for parset in project.parsets.values():
+            allzero = all(parset.pars['numcirc'].y.values() == array([0]))
+            if allzero:
+                parset.pars['numcirc'] = replacementnumcirc
+    return None
+
 ##########################################################################################
 ### REVISION MIGRATION FUNCTIONS
 ##########################################################################################
@@ -1871,7 +1893,9 @@ def loadproj(filename=None, folder=None, verbose=2, die=None, fromdb=False, migr
             P = migrate(origP, migrateversion=migrateversion, verbose=verbose, die=die)
         except Exception as E:
             if die: raise E
-            else:   P = origP # Fail: return unmigrated version
+            else:
+                P = origP # Fail: return unmigrated version
+                print(f'WARNING: Error when trying to update project "{P.name}" from version {P.version}:\n'+str(E))
     else: P = origP # Don't migrate
 
     if P.version not in op.supported_versions:
