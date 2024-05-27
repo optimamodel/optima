@@ -1871,7 +1871,9 @@ def loadproj(filename=None, folder=None, verbose=2, die=None, fromdb=False, migr
             P = migrate(origP, migrateversion=migrateversion, verbose=verbose, die=die)
         except Exception as E:
             if die: raise E
-            else:   P = origP # Fail: return unmigrated version
+            else:
+                P = origP # Fail: return unmigrated version
+                print(f'WARNING: Error when trying to update project "{P.name}" from version {P.version}:\n'+str(E))
     else: P = origP # Don't migrate
 
     if P.version not in op.supported_versions:
