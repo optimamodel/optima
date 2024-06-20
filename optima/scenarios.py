@@ -135,7 +135,7 @@ def runscenarios(project=None, verbose=2, name=None, defaultparset=-1, debug=Fal
         if this_parallel: # Create a specific copy that only has the one parset and progset, simply for speed of pickling which is part of the process running in parallel.
             this_project = dcp(project_copy)
             this_project.addparset(project.parsets[scenlist[scenno].parsetname])
-            if progsetname: this_project.addprogset(project.parsets[progsetname])
+            if progsetname: this_project.addprogset(project.progsets[progsetname])
         else:
             this_project = project
 
