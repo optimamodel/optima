@@ -13,6 +13,8 @@ from optima import Settings, getresults, convertlimits, gettvecdt, loadpartable,
 import optima as op
 from sciris import cp
 
+MAXSEED = 2**31-1
+
 defaultsmoothness = 1.0 # The number of years of smoothing to do by default
 generalkeys = ['male', 'female', 'popkeys', 'injects', 'fromto', 'transmatrix'] # General parameter keys that are just copied
 staticmatrixkeys = ['birthtransit','agetransit','risktransit'] # Static keys that are also copied, but differently :)
@@ -635,7 +637,7 @@ class Constant(Par):
     
     def sample(self, randseed=None):
         ''' Recalculate ysample '''
-        self.ysample = self.prior.sample(n=1, randseed=randseed)[0]
+        self.ysample = self.prior.sample(n=1, randseed=randseed, hashval=hash(self.short))[0]
         return None
     
     def updateprior(self, verbose=2):
@@ -699,7 +701,7 @@ class Metapar(Par):
         ''' Recalculate ysample '''
         self.ysample = odict()
         for key in self.keys():
-            self.ysample[key] = self.prior[key].sample(randseed=randseed)[0]
+            self.ysample[key] = self.prior[key].sample(randseed=randseed, hashval=hash(self.short+key))[0]
         return None
     
     def updateprior(self, verbose=2):
@@ -778,7 +780,7 @@ class Timepar(Par):
     
     def sample(self, randseed=None):
         ''' Recalculate msample '''
-        self.msample = self.prior.sample(n=1, randseed=randseed)[0]
+        self.msample = self.prior.sample(n=1, randseed=randseed, hashval=hash(self.short))[0]
         return None
     
     def updateprior(self, verbose=2):
@@ -853,7 +855,7 @@ class Popsizepar(Par):
     
     def sample(self, randseed=None):
         ''' Recalculate msample -- same as Timepar'''
-        self.msample = self.prior.sample(n=1, randseed=randseed)[0]
+        self.msample = self.prior.sample(n=1, randseed=randseed, hashval=hash(self.short))[0]
         return None
     
     def updateprior(self, verbose=2):
@@ -965,9 +967,9 @@ class Dist(object):
         output = defaultrepr(self)
         return output
     
-    def sample(self, n=1, randseed=None):
+    def sample(self, n=1, randseed=None, hashval=0):
         ''' Draw random samples from the specified distribution '''
-        if randseed is not None: seed(randseed) # Reset the random seed, if specified
+        if randseed is not None: seed((randseed+hashval) % MAXSEED) # Reset the random seed, if specified
         if self.dist=='uniform':
             samples = uniform(low=self.pars[0], high=self.pars[1], size=n)
             return samples
