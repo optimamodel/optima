@@ -636,7 +636,7 @@ class Project(object):
                budget=None, coverage=None, budgetyears=None, data=None, n=1, sample=None, tosample=None, randseed=None,
                addresult=True, overwrite=True, keepraw=False, doround=False, die=True, debug=False, verbose=None,
                parsetname=None, progsetname=None, resultname=None, label=None, smoothness=None,
-               advancedtracking=None, parallel=False, ncpus=None, **kwargs):
+               advancedtracking=None, parallel=False, ncpus=None, quantiles=None, **kwargs):
         ''' 
         This function runs a single simulation, or multiple simulations if n>1. This is the
         core function for actually running the model!!!!!!
@@ -711,7 +711,9 @@ class Project(object):
                     rawlist.append(raw)
 
         # Store results if required
-        results = Resultset(name=resultname, pars=pars, parsetname=parsetname, parsetuid=parsetuid, progsetname=progsetname, raw=rawlist, simpars=simparslist, budget=budget, coverage=coverage, budgetyears=budgetyears, project=self, keepraw=keepraw, doround=doround, data=data, verbose=verbose, advancedtracking=advancedtracking) # Create structure for storing results
+        results = Resultset(name=resultname, pars=pars, parsetname=parsetname, parsetuid=parsetuid, progsetname=progsetname, raw=rawlist, simpars=simparslist,
+                            budget=budget, coverage=coverage, budgetyears=budgetyears, project=self, keepraw=keepraw, doround=doround, data=data,
+                            verbose=verbose, advancedtracking=advancedtracking, quantiles=quantiles) # Create structure for storing results
         if addresult:
             keyname = self.addresult(result=results, overwrite=overwrite)
             if parsetname is not None:
