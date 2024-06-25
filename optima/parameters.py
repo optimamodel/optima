@@ -7,13 +7,11 @@ Version: 2.1 (2017apr04)
 """
 
 from numpy import array, nan, isnan, isfinite, zeros, ones, argmax, mean, log, polyfit, exp, maximum, minimum, Inf, linspace, median, shape, append, logical_and, isin, multiply
-from numpy.random import uniform, normal, seed
+from numpy.random import uniform, normal, seed, default_rng
 from optima import OptimaException, compareversions, Link, LinkException, standard_dcp, odict, odict_custom, dataframe, printv, sanitize, uuid, today, getdate, makefilepath, smoothinterp, dcp, defaultrepr, isnumber, findinds, findnearest, getvaliddata, promotetoarray, promotetolist, inclusiverange # Utilities
 from optima import Settings, getresults, convertlimits, gettvecdt, loadpartable, loadtranstable # Heftier functions
 import optima as op
 from sciris import cp
-
-MAXSEED = 2**31-1
 
 defaultsmoothness = 1.0 # The number of years of smoothing to do by default
 generalkeys = ['male', 'female', 'popkeys', 'injects', 'fromto', 'transmatrix'] # General parameter keys that are just copied
@@ -635,9 +633,9 @@ class Constant(Par):
         ''' Constants don't have any keys '''
         return None 
     
-    def sample(self, randseed=None):
+    def sample(self, rng_sampler=None):
         ''' Recalculate ysample '''
-        self.ysample = self.prior.sample(n=1, randseed=randseed, hashval=hash(self.short))[0]
+        self.ysample = self.prior.sample(n=1, rng_sampler=rng_sampler)[0]
         return None
     
     def updateprior(self, verbose=2):
@@ -652,7 +650,7 @@ class Constant(Par):
             raise OptimaException(errormsg)
         return None
     
-    def interp(self, tvec=None, dt=None, smoothness=None, asarray=True, sample=False, randseed=None, usemeta=True, popkeys=None, projectversion=None): # Keyword arguments are for consistency but not actually used
+    def interp(self, tvec=None, dt=None, smoothness=None, asarray=True, sample=False, rng_sampler=None, usemeta=True, popkeys=None, projectversion=None): # Keyword arguments are for consistency but not actually used
         """
         Take parameters and turn them into model parameters -- here, just return a constant value at every time point
         
@@ -665,7 +663,7 @@ class Constant(Par):
         if not sample: 
             y = self.y
         else:
-            if sample=='new' or self.ysample is None: self.sample(randseed=randseed) # msample doesn't exist, make it
+            if sample=='new' or self.ysample is None: self.sample(rng_sampler=rng_sampler) # msample doesn't exist, make it
             y = self.ysample
             
         # Do interpolation
@@ -697,11 +695,11 @@ class Metapar(Par):
         ''' Return the valid keys for using with this parameter '''
         return self.y.keys()
     
-    def sample(self, randseed=None):
+    def sample(self, rng_sampler=None):
         ''' Recalculate ysample '''
         self.ysample = odict()
         for key in self.keys():
-            self.ysample[key] = self.prior[key].sample(randseed=randseed, hashval=hash(self.short+key))[0]
+            self.ysample[key] = self.prior[key].sample(rng_sampler=rng_sampler)[0]
         return None
     
     def updateprior(self, verbose=2):
@@ -717,14 +715,14 @@ class Metapar(Par):
                 raise OptimaException(errormsg)
         return None
     
-    def interp(self, tvec=None, dt=None, smoothness=None, asarray=True, sample=None, randseed=None, usemeta=True, popkeys=None, projectversion=None): # Keyword arguments are for consistency but not actually used
+    def interp(self, tvec=None, dt=None, smoothness=None, asarray=True, sample=None, rng_sampler=None, usemeta=True, popkeys=None, projectversion=None): # Keyword arguments are for consistency but not actually used
         """ Take parameters and turn them into model parameters -- here, just return a constant value at every time point """
         
         # Figure out sample
         if not sample: 
             y = self.y
         else:
-            if sample=='new' or self.ysample is None: self.sample(randseed=randseed) # msample doesn't exist, make it
+            if sample=='new' or self.ysample is None: self.sample(rng_sampler=rng_sampler) # msample doesn't exist, make it
             y = self.ysample
                 
         dt = gettvecdt(tvec=tvec, dt=dt, justdt=True) # Method for getting dt
@@ -778,9 +776,9 @@ class Timepar(Par):
         else:
             return output
     
-    def sample(self, randseed=None):
+    def sample(self, rng_sampler=None):
         ''' Recalculate msample '''
-        self.msample = self.prior.sample(n=1, randseed=randseed, hashval=hash(self.short))[0]
+        self.msample = self.prior.sample(n=1, rng_sampler=rng_sampler)[0]
         return None
     
     def updateprior(self, verbose=2):
@@ -794,7 +792,7 @@ class Timepar(Par):
             raise OptimaException(errormsg)
         return None
     
-    def interp(self, tvec=None, dt=None, smoothness=None, asarray=True, sample=None, randseed=None, usemeta=True, popkeys=None, projectversion=None):
+    def interp(self, tvec=None, dt=None, smoothness=None, asarray=True, sample=None, rng_sampler=None, usemeta=True, popkeys=None, projectversion=None):
         """ Take parameters and turn them into model parameters """
         
         # Validate input
@@ -812,7 +810,7 @@ class Timepar(Par):
             if not sample:
                 meta = self.m
             else:
-                if sample=='new' or self.msample is None: self.sample(randseed=randseed) # msample doesn't exist, make it
+                if sample=='new' or self.msample is None: self.sample(rng_sampler=rng_sampler) # msample doesn't exist, make it
                 meta = self.msample
         
         # Set things up and do the interpolation
@@ -853,9 +851,9 @@ class Popsizepar(Par):
         ''' Return the valid keys for using with this parameter '''
         return self.y.keys()
     
-    def sample(self, randseed=None):
+    def sample(self, rng_sampler=None):
         ''' Recalculate msample -- same as Timepar'''
-        self.msample = self.prior.sample(n=1, randseed=randseed, hashval=hash(self.short))[0]
+        self.msample = self.prior.sample(n=1, rng_sampler=rng_sampler)[0]
         return None
     
     def updateprior(self, verbose=2):
@@ -869,7 +867,7 @@ class Popsizepar(Par):
             raise OptimaException(errormsg)
         return None
 
-    def interp(self, tvec=None, dt=None, smoothness=None, asarray=True, sample=None, randseed=None, usemeta=True, popkeys=None, projectversion=None): # WARNING: smoothness isn't used, but kept for consistency with other methods...
+    def interp(self, tvec=None, dt=None, smoothness=None, asarray=True, sample=None, rng_sampler=None, usemeta=True, popkeys=None, projectversion=None): # WARNING: smoothness isn't used, but kept for consistency with other methods...
         """ Take population size parameter and turn it into a model parameters """
 
         # Validate input
@@ -889,7 +887,7 @@ class Popsizepar(Par):
             if not sample:
                 meta = self.m
             else:
-                if sample=='new' or self.msample is None: self.sample(randseed=randseed) # msample doesn't exist, make it
+                if sample=='new' or self.msample is None: self.sample(rng_sampler=rng_sampler) # msample doesn't exist, make it
                 meta = self.msample
                 
                 
@@ -942,7 +940,7 @@ class Yearpar(Par):
     def keys(self):
         return None 
     
-    def sample(self, randseed=None):
+    def sample(self, rng_sampler=None):
         ''' No sampling, so simply return the value '''
         return self.t
     
@@ -950,7 +948,7 @@ class Yearpar(Par):
         '''No prior, so return nothing'''
         return None
     
-    def interp(self, tvec=None, dt=None, smoothness=None, sample=None, randseed=None, asarray=True, usemeta=True, popkeys=None, projectversion=None): # Keyword arguments are for consistency but not actually used
+    def interp(self, tvec=None, dt=None, smoothness=None, sample=None, rng_sampler=None, asarray=True, usemeta=True, popkeys=None, projectversion=None): # Keyword arguments are for consistency but not actually used
         '''No interpolation, so simply return the value'''
         return self.t
 
@@ -967,14 +965,19 @@ class Dist(object):
         output = defaultrepr(self)
         return output
     
-    def sample(self, n=1, randseed=None, hashval=0):
+    def sample(self, n=1, rng_sampler=None):
         ''' Draw random samples from the specified distribution '''
-        if randseed is not None: seed((randseed+hashval) % MAXSEED) # Reset the random seed, if specified
         if self.dist=='uniform':
-            samples = uniform(low=self.pars[0], high=self.pars[1], size=n)
+            if rng_sampler is None:
+                samples = uniform(low=self.pars[0], high=self.pars[1], size=n)
+            else:
+                samples = rng_sampler.uniform(low=self.pars[0], high=self.pars[1], size=n)
             return samples
         if self.dist=='normal':
-            return normal(loc=self.pars[0], scale=self.pars[1], size=n)
+            if rng_sampler is None:
+                return normal(loc=self.pars[0], scale=self.pars[1], size=n)
+            else:
+                return rng_sampler.normal(loc=self.pars[0], scale=self.pars[1], size=n)
         else:
             errormsg = 'Distribution "%s" not defined; available choices are: uniform, normal' % self.dist
             raise OptimaException(errormsg)
@@ -1514,6 +1517,9 @@ def makesimpars(pars, name=None, keys=None, start=None, end=None, dt=None, tvec=
         try: projectversion = pars['popsize'].getprojectversion(die=True)
         except Exception as e: raise OptimaException('Must pass projectversion to makesimpars() as the behaviour is version-dependent') from e
 
+    rng_sampler = default_rng(randseed)
+
+
     # Copy default keys by default
     for key in generalkeys: simpars[key] = dcp(pars[key])
     for key in staticmatrixkeys: simpars[key] = dcp(array(pars[key]))
@@ -1528,7 +1534,7 @@ def makesimpars(pars, name=None, keys=None, start=None, end=None, dt=None, tvec=
             thissample = sample # Make a copy of it to check it against the list of things we are sampling
             if tosample and tosample[0] is not None and key not in tosample: thissample = False # Don't sample from unselected parameters -- tosample[0] since it's been promoted to a list
             try:
-                simpars[key] = pars[key].interp(tvec=simpars['tvec'], dt=dt, popkeys=popkeys, smoothness=smoothness, asarray=asarray, sample=thissample, randseed=randseed, projectversion=projectversion)
+                simpars[key] = pars[key].interp(tvec=simpars['tvec'], dt=dt, popkeys=popkeys, smoothness=smoothness, asarray=asarray, sample=thissample, rng_sampler=rng_sampler, projectversion=projectversion)
             except OptimaException as E:
                 errormsg = 'Could not figure out how to interpolate parameter "%s"' % key
                 errormsg += 'Error: "%s"' % repr(E)
@@ -1547,7 +1553,7 @@ def makesimpars(pars, name=None, keys=None, start=None, end=None, dt=None, tvec=
         if tosample and tosample[0] is not None and 'popsize' not in tosample: popsizesample = False
 
         if len(alltimes):
-            popsizeinterped = pars['popsize'].interp(tvec=list_times, dt=dt, popkeys=popkeys, smoothness=smoothness, asarray=True, sample=popsizesample, randseed=randseed, projectversion=projectversion)
+            popsizeinterped = pars['popsize'].interp(tvec=list_times, dt=dt, popkeys=popkeys, smoothness=smoothness, asarray=True, sample=popsizesample, rng_sampler=rng_sampler, projectversion=projectversion)
         else: popsizeinterped = None
 
         for key in keys:
@@ -1570,8 +1576,8 @@ def makesimpars(pars, name=None, keys=None, start=None, end=None, dt=None, tvec=
                     receptivesample = thissample or receptivekey in tosample
 
                 try:
-                    simpars[insertivekey] = insertivepar.interp(sample=insertivesample, tvec=simpars['tvec'], dt=dt, popkeys=popkeys, smoothness=smoothness, asarray=asarray, randseed=randseed, projectversion=projectversion)
-                    simpars[receptivekey] = receptivepar.interp(sample=receptivesample, tvec=simpars['tvec'], dt=dt, popkeys=popkeys, smoothness=smoothness, asarray=asarray, randseed=randseed, projectversion=projectversion)
+                    simpars[insertivekey] = insertivepar.interp(sample=insertivesample, tvec=simpars['tvec'], dt=dt, popkeys=popkeys, smoothness=smoothness, asarray=asarray, rng_sampler=rng_sampler, projectversion=projectversion)
+                    simpars[receptivekey] = receptivepar.interp(sample=receptivesample, tvec=simpars['tvec'], dt=dt, popkeys=popkeys, smoothness=smoothness, asarray=asarray, rng_sampler=rng_sampler, projectversion=projectversion)
                 except OptimaException as E:
                     errormsg = 'Could not figure out how to interpolate parameter "%s"' % key
                     errormsg += 'Error: "%s"' % repr(E)
