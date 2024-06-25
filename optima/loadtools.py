@@ -140,6 +140,7 @@ def setrevisionmigrations(which='migrations'):
         ('1',   ('2', '2023-12-04', None,                           'Fix bug when deep-copying a `Parameterset`, the `pars` from a different `Parameterset` would get copied in certain cases')),
         ('2',   ('3', '2024-01-18', None,                           'Fix small unpickling bug and FE raises BadFileFormatError when uploading project that it cannot unpickle')),
         ('3',   ('4', '2024-01-18', updatemethodsettings,           'Update methods so `numinciallmethods` is split by regular, casual, commercial')),
+        ('4',   ('5', '2024-06-26', None,                           'Update sampling of parameters to use default_rng to sample more randomly between parameters')),
         ])
 
 
