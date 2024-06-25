@@ -1517,8 +1517,7 @@ def makesimpars(pars, name=None, keys=None, start=None, end=None, dt=None, tvec=
         try: projectversion = pars['popsize'].getprojectversion(die=True)
         except Exception as e: raise OptimaException('Must pass projectversion to makesimpars() as the behaviour is version-dependent') from e
 
-    rng_sampler = default_rng(randseed)
-
+    rng_sampler = default_rng(randseed) #a single random nummber generator to pass through to all parameters that need sampling for reproducibility if seeded
 
     # Copy default keys by default
     for key in generalkeys: simpars[key] = dcp(pars[key])
