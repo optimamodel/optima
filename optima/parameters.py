@@ -983,8 +983,10 @@ class Dist(object):
             #Take a normal distribution centered on the best value assuming the low and high values represent a 95% confidence interval but rejecting samples outside of this range (to avoid model errors)
             normal_samples = truncnorm.rvs(a=-2, b=2, loc=0, scale=0.5, size=n, random_state=rng_sampler) #+-2 standard deviations = 95% confidence interval
             #rescale to the best/low/high
-            rescaling_factors = array([(best-self.pars[0]) if sample<0 else self.pars[1]-best for sample in normal_samples])
-            return best + normal_samples*rescaling_factors 
+            normal_samples[normal_samples < 0] *= (best - self.pars[0])
+            normal_samples[normal_samples > 0] *= (self.pars[1] - best)
+            normal_samples += best
+            return normal_samples
         else:
             errormsg = 'Distribution "%s" not defined; available choices are: uniform, normal' % self.dist
             raise OptimaException(errormsg)
