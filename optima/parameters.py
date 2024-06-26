@@ -6,12 +6,13 @@ parameters, the Parameterset class.
 Version: 2.1 (2017apr04)
 """
 
-from numpy import array, nan, isnan, isfinite, zeros, ones, argmax, mean, log, polyfit, exp, maximum, minimum, Inf, linspace, median, shape, append, logical_and, isin, multiply
+from numpy import array, nan, isnan, isfinite, zeros, ones, argmax, mean, log, polyfit, exp, maximum, minimum, Inf, linspace, median, shape, append, logical_and, isin, multiply, frombuffer
 from numpy.random import uniform, normal, seed, default_rng
 from optima import OptimaException, compareversions, Link, LinkException, standard_dcp, odict, odict_custom, dataframe, printv, sanitize, uuid, today, getdate, makefilepath, smoothinterp, dcp, defaultrepr, isnumber, findinds, findnearest, getvaliddata, promotetoarray, promotetolist, inclusiverange # Utilities
 from optima import Settings, getresults, convertlimits, gettvecdt, loadpartable, loadtranstable # Heftier functions
 import optima as op
 from sciris import cp
+import hashlib
 
 defaultsmoothness = 1.0 # The number of years of smoothing to do by default
 generalkeys = ['male', 'female', 'popkeys', 'injects', 'fromto', 'transmatrix'] # General parameter keys that are just copied
@@ -1517,11 +1518,15 @@ def makesimpars(pars, name=None, keys=None, start=None, end=None, dt=None, tvec=
         try: projectversion = pars['popsize'].getprojectversion(die=True)
         except Exception as e: raise OptimaException('Must pass projectversion to makesimpars() as the behaviour is version-dependent') from e
 
-    rng_sampler = default_rng(randseed) #a single random nummber generator to pass through to all parameters that need sampling for reproducibility if seeded
-
     # Copy default keys by default
     for key in generalkeys: simpars[key] = dcp(pars[key])
     for key in staticmatrixkeys: simpars[key] = dcp(array(pars[key]))
+
+    if randseed is None: randseed = default_rng(None).integers(2**31-1)  # Make a random seed
+
+    def rng(seed, string):
+        thishash = hashlib.sha256(f'{seed}_{string}'.encode('utf-8'))
+        return default_rng(frombuffer(thishash.digest(), dtype='uint32'))
 
     # Loop over requested keys
     for key in keys: # Loop over all keys
@@ -1533,7 +1538,7 @@ def makesimpars(pars, name=None, keys=None, start=None, end=None, dt=None, tvec=
             thissample = sample # Make a copy of it to check it against the list of things we are sampling
             if tosample and tosample[0] is not None and key not in tosample: thissample = False # Don't sample from unselected parameters -- tosample[0] since it's been promoted to a list
             try:
-                simpars[key] = pars[key].interp(tvec=simpars['tvec'], dt=dt, popkeys=popkeys, smoothness=smoothness, asarray=asarray, sample=thissample, rng_sampler=rng_sampler, projectversion=projectversion)
+                simpars[key] = pars[key].interp(tvec=simpars['tvec'], dt=dt, popkeys=popkeys, smoothness=smoothness, asarray=asarray, sample=thissample, rng_sampler=rng(randseed, key), projectversion=projectversion)
             except OptimaException as E:
                 errormsg = 'Could not figure out how to interpolate parameter "%s"' % key
                 errormsg += 'Error: "%s"' % repr(E)
@@ -1552,7 +1557,7 @@ def makesimpars(pars, name=None, keys=None, start=None, end=None, dt=None, tvec=
         if tosample and tosample[0] is not None and 'popsize' not in tosample: popsizesample = False
 
         if len(alltimes):
-            popsizeinterped = pars['popsize'].interp(tvec=list_times, dt=dt, popkeys=popkeys, smoothness=smoothness, asarray=True, sample=popsizesample, rng_sampler=rng_sampler, projectversion=projectversion)
+            popsizeinterped = pars['popsize'].interp(tvec=list_times, dt=dt, popkeys=popkeys, smoothness=smoothness, asarray=True, sample=popsizesample, rng_sampler=rng(randseed, 'popsize'), projectversion=projectversion)
         else: popsizeinterped = None
 
         for key in keys:
@@ -1575,8 +1580,8 @@ def makesimpars(pars, name=None, keys=None, start=None, end=None, dt=None, tvec=
                     receptivesample = thissample or receptivekey in tosample
 
                 try:
-                    simpars[insertivekey] = insertivepar.interp(sample=insertivesample, tvec=simpars['tvec'], dt=dt, popkeys=popkeys, smoothness=smoothness, asarray=asarray, rng_sampler=rng_sampler, projectversion=projectversion)
-                    simpars[receptivekey] = receptivepar.interp(sample=receptivesample, tvec=simpars['tvec'], dt=dt, popkeys=popkeys, smoothness=smoothness, asarray=asarray, rng_sampler=rng_sampler, projectversion=projectversion)
+                    simpars[insertivekey] = insertivepar.interp(sample=insertivesample, tvec=simpars['tvec'], dt=dt, popkeys=popkeys, smoothness=smoothness, asarray=asarray, rng_sampler=rng(randseed, insertivekey), projectversion=projectversion)
+                    simpars[receptivekey] = receptivepar.interp(sample=receptivesample, tvec=simpars['tvec'], dt=dt, popkeys=popkeys, smoothness=smoothness, asarray=asarray, rng_sampler=rng(randseed, receptivekey), projectversion=projectversion)
                 except OptimaException as E:
                     errormsg = 'Could not figure out how to interpolate parameter "%s"' % key
                     errormsg += 'Error: "%s"' % repr(E)
