@@ -4,7 +4,7 @@ from optima import loadspreadsheet, model, gitinfo, defaultscenarios, makesimpar
 from optima import defaultobjectives, autofit, runscenarios, optimize, multioptimize, tvoptimize, outcomecalc, icers # Import functions
 from optima import supported_versions, revision, cpu_count # Get current version
 from numpy import argmin, argsort, nan, ceil
-from numpy.random import seed, randint
+from numpy.random import seed, randint, default_rng
 from time import time
 from sciris import parallelize
 
@@ -677,16 +677,16 @@ class Project(object):
         if simpars is None: # Optionally run with a precreated simpars instead
             simparslist = [] # Needs to be a list
             if n>1 and sample is None: sample = 'new' # No point drawing more than one sample unless you're going to use uncertainty
-            if randseed is not None: seed(randseed) # Reset the random seed, if specified
+            rng_sampler = default_rng(randseed)
             if start is None: 
                 try:    start = self.parsets[parsetname].start # Try to get start from parameter set, but don't worry if it doesn't exist
                 except: start = self.settings.start # Else, specify the start year from the project
             if end is None: 
                 try:    end   = self.parsets[parsetname].end # Ditto
                 except: end   = self.settings.end # Ditto
-            for i in range(n):
-                maxint = 2**31-1 # See https://en.wikipedia.org/wiki/2147483647_(number)
-                sampleseed = randint(0,maxint) if sample is not None else None
+            maxint = 2**31-1 # See https://en.wikipedia.org/wiki/2147483647_(number)
+            sampleseeds = rng_sampler.integers(0, maxint, n)
+            for sampleseed in sampleseeds:
                 simparslist.append(makesimpars(pars, projectversion=self.version, start=start, end=end, dt=dt, tvec=tvec, settings=self.settings, name=parsetname, sample=sample, tosample=tosample, randseed=sampleseed, smoothness=smoothness))
         else:
             simparslist = promotetolist(simpars)
