@@ -130,6 +130,7 @@ def model(simpars=None, settings=None, version=None, initpeople=None, initprops=
     mtct            = settings.mtct                 # Infection via MTCT
     nonmtctmethods  = sorted(settings.nonmtctmethods)
     nmethods        = settings.nmethods
+    dxnottx         = [state for state in alldx if state not in alltx]
 
     allcd4          = [acute,gt500,gt350,gt200,gt50,lt50]
 
@@ -852,7 +853,7 @@ def model(simpars=None, settings=None, version=None, initpeople=None, initprops=
         ### Calculate births
         ##############################################################################################################
 
-        undxhivbirths, dxhivbirths, thisproppmtct = do_births(t, npts, dt, eps, birthratesarr, relhivbirth, people, npops, version, undx, dx, alldx, alltx, allplhiv, sus,
+        undxhivbirths, dxhivbirths, thisproppmtct = do_births(t, npts, dt, eps, birthratesarr, relhivbirth, people, npops, version, undx, dx, alldx, alltx, allplhiv, sus, dxnottx,
               motherpops, childpops, notmotherpops, effmtct, pmtcteff, plhivmap, advancedtracking, settings,
               numpmtct, proppmtct, raw_inci, raw_incibypop, raw_diagcd4, raw_incionpopbypopmethods, raw_mtct,
               raw_births, raw_hivbirths, raw_dxforpmtct, raw_receivepmtct, debug)
@@ -1110,7 +1111,7 @@ def model(simpars=None, settings=None, version=None, initpeople=None, initprops=
     return raw # Return raw results
 
 
-def do_births(t, npts, dt, eps, birthratesarr, relhivbirth, people, npops, version, undx, dx, alldx, alltx, allplhiv, sus,
+def do_births(t, npts, dt, eps, birthratesarr, relhivbirth, people, npops, version, undx, dx, alldx, alltx, allplhiv, sus, dxnottx,
               motherpops, childpops, notmotherpops, effmtct, pmtcteff, plhivmap, advancedtracking, settings,
               numpmtct, proppmtct, raw_inci, raw_incibypop, raw_diagcd4, raw_incionpopbypopmethods, raw_mtct,
               raw_births, raw_hivbirths, raw_dxforpmtct, raw_receivepmtct, debug):
@@ -1141,10 +1142,11 @@ def do_births(t, npts, dt, eps, birthratesarr, relhivbirth, people, npops, versi
     _sus,_undx,_dxnottx,_alltx = range(4) # Start with underscore to not override other variables
     nummothers = zeros((len(motherpops),4)) # nummothers is mothers in this timestep since birthratesarr is per timestep since # birth = simpars['birth']*dt
 
-    nummothers[:,_sus]    = people[ix_(sus, motherpops, [t])].sum(axis=(0,2))   * birthratesarr[motherpops,:,t].sum(axis=1)
-    nummothers[:,_undx]   = people[ix_(undx, motherpops, [t])].sum(axis=(0,2))  * birthratesarr[motherpops,:,t].sum(axis=1)  # THIS LINE
-    nummothers[:,_dxnottx]= people[ix_(alldx, motherpops, [t])].sum(axis=(0,2)) * birthratesarr[motherpops,:,t].sum(axis=1) * relhivbirth  # THIS LINE
-    nummothers[:,_alltx]  = people[ix_(alltx, motherpops, [t])].sum(axis=(0,2)) * birthratesarr[motherpops,:,t].sum(axis=1) * relhivbirth  # THIS LINE
+
+    nummothers[:,_sus]    = people[ix_(sus, motherpops, [t])].sum(axis=(0,2))     * birthratesarr[motherpops,:,t].sum(axis=1)
+    nummothers[:,_undx]   = people[ix_(undx, motherpops, [t])].sum(axis=(0,2))    * birthratesarr[motherpops,:,t].sum(axis=1)  # THIS LINE
+    nummothers[:,_dxnottx]= people[ix_(dxnottx, motherpops, [t])].sum(axis=(0,2)) * birthratesarr[motherpops,:,t].sum(axis=1) * relhivbirth  # THIS LINE
+    nummothers[:,_alltx]  = people[ix_(alltx, motherpops, [t])].sum(axis=(0,2))   * birthratesarr[motherpops,:,t].sum(axis=1) * relhivbirth  # THIS LINE
 
     nummothers_allplhiv = lambda _nummothers: _nummothers[:, _undx] + _nummothers[:, _dxnottx] + _nummothers[:, _alltx]
     nummothers_alldx    = lambda _nummothers:                         _nummothers[:, _dxnottx] + _nummothers[:, _alltx]
@@ -1398,6 +1400,6 @@ def deprecated_births(t, npts, dt, eps, birthratesarr, relhivbirth, people, npop
         raw_hivbirths[motherpops, t] += hivposbirths.sum(axis=1) /dt
 
         raw_inci[:,t] += raw_mtct[:,t] # Update infections acquired based on PMTCT calculation
-        raw_incibypop[:,:,t] += raw_mtctfrom # Update infections caused based on PMTCT
+        raw_incibypop[:,motherpops,t] += raw_mtctfrom # Update infections caused based on PMTCT
 
     return undxhivbirths, dxhivbirths, thisproppmtct
