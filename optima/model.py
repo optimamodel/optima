@@ -667,11 +667,11 @@ def model(simpars=None, settings=None, version=None, initpeople=None, initprops=
 
         forceinffullsex = ones((len(sus), nstates, nallsexacts))
         # only effallprev[:,:] is time dependent
-        forceinffullsex[:,:,:] *= 1 - einsum('m,m,m,mi,km->ikm', fracactssexarr[:,t], transsexarr[:,t],
-                                            condarr[:,t], alleff[:,t,:][pop1,:], effallprev[:,pop2])
+        forceinffullsex[:,:,:] *= 1 - minimum(einsum('m,m,m,mi,km->ikm', fracactssexarr[:,t], transsexarr[:,t],
+                                            condarr[:,t], alleff[:,t,:][pop1,:], effallprev[:,pop2]), 1)
 
-        forceinffullsex[:,:,:] *= npow(1 - einsum('m,m,mi,km,m->ikm', transsexarr[:,t], condarr[:,t], alleff[pop1,t,:], effallprev[:,pop2],
-                            (wholeactssexarr[:,t].astype(int) != 0) ), wholeactssexarr[:,t].astype(int))  # If wholeacts[t] == 0, then this will equal one so will not change forceinffull
+        forceinffullsex[:,:,:] *= npow(1 - minimum(einsum('m,m,mi,km,m->ikm', transsexarr[:,t], condarr[:,t], alleff[pop1,t,:], effallprev[:,pop2],
+                            (wholeactssexarr[:,t].astype(int) != 0) ),1), wholeactssexarr[:,t].astype(int))  # If wholeacts[t] == 0, then this will equal one so will not change forceinffull
 
         for inds in regularityinds:  # Loops over the indices of acts for regular, casual, commercial so we don't overlap with pop1,pop2 pairs
             forceinffull[:,pop1[inds],:,pop2[inds]] *= swapaxes(swapaxes(forceinffullsex[:,:,inds],1,2),0,1)  # Slicing a more than 2d array puts the pop1,pop2 in the first dimension
@@ -698,11 +698,11 @@ def model(simpars=None, settings=None, version=None, initpeople=None, initprops=
         pop2 = injpartnerarr[:, 1]
         forceinffullinj = ones((len(sus), nstates, len(pop1)))
 
-        forceinffullinj[:,:,:] *= 1 - einsum(',,m,m,m,km,i->ikm',transinj, osteff[t], sharing[pop1,t], prepeff[pop1,t],
-                                              fracactsinjarr[:,t], effallprev[:,pop2], [1,1]) # The [1,1] applies the same risk to both circs and uncircs, as it does not matter
+        forceinffullinj[:,:,:] *= 1 - minimum(einsum(',,m,m,m,km,i->ikm',transinj, osteff[t], sharing[pop1,t], prepeff[pop1,t],
+                                              fracactsinjarr[:,t], effallprev[:,pop2], [1,1]),1) # The [1,1] applies the same risk to both circs and uncircs, as it does not matter
 
-        forceinffullinj[:,:,:] *= npow(1 - einsum(',,m,m,km,i,m->ikm',transinj, osteff[t], sharing[pop1,t], prepeff[pop1,t],
-                                                      effallprev[:,pop2], [1,1], (wholeactsinjarr[:,t].astype(int) != 0) ),
+        forceinffullinj[:,:,:] *= npow(1 - minimum(einsum(',,m,m,km,i,m->ikm',transinj, osteff[t], sharing[pop1,t], prepeff[pop1,t],
+                                                      effallprev[:,pop2], [1,1], (wholeactsinjarr[:,t].astype(int) != 0) ),1),
                                         wholeactsinjarr[:,t].astype(int))   # If wholeacts[t] == 0, then this will equal one so will not change forceinffull
 
         forceinffull[:,pop1,:,pop2] *= swapaxes(swapaxes(forceinffullinj[:,:,:],1,2),0,1)  # Slicing a more than 2d array puts the pop1,pop2 in the first dimension
