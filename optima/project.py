@@ -4,7 +4,7 @@ from optima import loadspreadsheet, model, gitinfo, defaultscenarios, makesimpar
 from optima import defaultobjectives, autofit, runscenarios, optimize, multioptimize, tvoptimize, outcomecalc, icers # Import functions
 from optima import supported_versions, revision, cpu_count # Get current version
 from numpy import argmin, argsort, nan, ceil
-from numpy.random import seed, randint
+from numpy.random import seed, randint, default_rng
 from time import time
 from sciris import parallelize
 
@@ -636,7 +636,7 @@ class Project(object):
                budget=None, coverage=None, budgetyears=None, data=None, n=1, sample=None, tosample=None, randseed=None,
                addresult=True, overwrite=True, keepraw=False, doround=False, die=True, debug=False, verbose=None,
                parsetname=None, progsetname=None, resultname=None, label=None, smoothness=None,
-               advancedtracking=None, parallel=False, ncpus=None, **kwargs):
+               advancedtracking=None, parallel=False, ncpus=None, quantiles=None, **kwargs):
         ''' 
         This function runs a single simulation, or multiple simulations if n>1. This is the
         core function for actually running the model!!!!!!
@@ -677,16 +677,16 @@ class Project(object):
         if simpars is None: # Optionally run with a precreated simpars instead
             simparslist = [] # Needs to be a list
             if n>1 and sample is None: sample = 'new' # No point drawing more than one sample unless you're going to use uncertainty
-            if randseed is not None: seed(randseed) # Reset the random seed, if specified
+            rng_sampler = default_rng(randseed)
             if start is None: 
                 try:    start = self.parsets[parsetname].start # Try to get start from parameter set, but don't worry if it doesn't exist
                 except: start = self.settings.start # Else, specify the start year from the project
             if end is None: 
                 try:    end   = self.parsets[parsetname].end # Ditto
                 except: end   = self.settings.end # Ditto
-            for i in range(n):
-                maxint = 2**31-1 # See https://en.wikipedia.org/wiki/2147483647_(number)
-                sampleseed = randint(0,maxint) if sample is not None else None
+            maxint = 2**31-1 # See https://en.wikipedia.org/wiki/2147483647_(number)
+            sampleseeds = rng_sampler.integers(0, maxint, n)
+            for sampleseed in sampleseeds:
                 simparslist.append(makesimpars(pars, projectversion=self.version, start=start, end=end, dt=dt, tvec=tvec, settings=self.settings, name=parsetname, sample=sample, tosample=tosample, randseed=sampleseed, smoothness=smoothness))
         else:
             simparslist = promotetolist(simpars)
@@ -711,7 +711,9 @@ class Project(object):
                     rawlist.append(raw)
 
         # Store results if required
-        results = Resultset(name=resultname, pars=pars, parsetname=parsetname, parsetuid=parsetuid, progsetname=progsetname, raw=rawlist, simpars=simparslist, budget=budget, coverage=coverage, budgetyears=budgetyears, project=self, keepraw=keepraw, doround=doround, data=data, verbose=verbose, advancedtracking=advancedtracking) # Create structure for storing results
+        results = Resultset(name=resultname, pars=pars, parsetname=parsetname, parsetuid=parsetuid, progsetname=progsetname, raw=rawlist, simpars=simparslist,
+                            budget=budget, coverage=coverage, budgetyears=budgetyears, project=self, keepraw=keepraw, doround=doround, data=data,
+                            verbose=verbose, advancedtracking=advancedtracking, quantiles=quantiles) # Create structure for storing results
         if addresult:
             keyname = self.addresult(result=results, overwrite=overwrite)
             if parsetname is not None:
