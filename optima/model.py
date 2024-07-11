@@ -32,10 +32,6 @@ def model(simpars=None, settings=None, version=None, initpeople=None, initprops=
 
     # PMTCT behaviour
     oldbehaviour = compareversions(version,"2.12.0") < 0 # Remove new pmtct behaviour from 2.11.x versions and before
-    if oldbehaviour: diagnosemothersforpmtct = False  # Diagnosing mothers breaks calibrations somewhat depending on MTCT levels
-    else:            diagnosemothersforpmtct = True
-    putinstantlyontopmtct = True  # Should be True, since we are only considering mothers to be preg when they are giving birth - otherwise we get too many diagnosed by ANC
-    printpmtctinformation = False
 
     # Extract key items
     popkeys         = simpars['popkeys']
@@ -67,8 +63,6 @@ def model(simpars=None, settings=None, version=None, initpeople=None, initprops=
     raw_incionpopbypopmethods = zeros((settings.nmethods, npops, nstates, npops, npts))  # Total incidence in each population caused by each population and each state, 1st axis is method of transmission, 2nd axis is acquired population. 3rd axis is caused state, 4th axis is caused population
     raw_births          = zeros((npops, npts))                 # Total number of births to each population
     raw_mtct            = zeros((npops, npts))                 # Number of mother-to-child transmissions to each population
-    raw_mtctfrom        = zeros((nstates, npops, npts))        # Number of mother-to-child transmissions from each population and each state
-    raw_mtcttoandfrom   = zeros((npops, nstates, npops, npts)) # Number of mother-to-child transmissions to each population and from each population and each state, similar to raw_incionpopbypop
     raw_hivbirths       = zeros((npops, npts))                 # Number of births to HIV+ pregnant women
     raw_receivepmtct    = zeros((npops, npts))                 # Initialise a place to store the number of people in each population receiving PMTCT
     raw_diagcd4         = zeros((ncd4, npops, npts))           # Number diagnosed by CD4 per timestep
@@ -157,7 +151,7 @@ def model(simpars=None, settings=None, version=None, initpeople=None, initprops=
     immipropdiag    = simpars['immipropdiag']       #Proportion of immigrants with HIV who are already diagnosed (will be assumed linked to care but not on treatment)
 
     # Shorten to lists of key tuples so don't have to iterate over every population twice for every timestep
-    if oldbehaviour:
+    if compareversions(version,"2.12.0") < 0:
         risktransitlist,agetransitlist = [],[]
         for p1 in range(npops):
             for p2 in range(npops):
@@ -165,7 +159,7 @@ def model(simpars=None, settings=None, version=None, initpeople=None, initprops=
                     agetransitlist.append((p1,p2, (1.-exp(-dt/agetransit[p1,p2]))))
                 if risktransit[p1,p2]:  risktransitlist.append((p1,p2, (1.-exp(-dt/risktransit[p1,p2]))))
 
-    with errstate(divide='ignore'): # If risktransit[p1,p2] = 0 then -dt/risktransit[:,:] is inf, but it is ok, we sanitize
+    with errstate(divide='ignore', invalid='ignore'): # If risktransit[p1,p2] = 0 then -dt/risktransit[:,:] is inf, but it is ok, we sanitize
         risktransit = array(risktransit, dtype=float)
         risktransitarr = 1.-exp(-dt/risktransit[:,:])
         risktransitarr[isnan(risktransitarr)] = 0
@@ -575,7 +569,7 @@ def model(simpars=None, settings=None, version=None, initpeople=None, initprops=
     ### Age precalculation
     ##############################################################################################################
 
-    if oldbehaviour:
+    if compareversions(version,"2.12.0") < 0:
         agelist = dict()
         for p1 in range(npops):
             agelist[p1] = dict()
@@ -735,7 +729,7 @@ def model(simpars=None, settings=None, version=None, initpeople=None, initprops=
 
         # Calculate infections acquired and transmitted
         raw_inci[:,t]               = einsum('ij,ijkl->j', people[sus,:,t], forceinffull)/dt
-        raw_incibypop[:,:,t]        = einsum('ij,ijkl->kl', people[sus,:,t], forceinffull)/dt
+        raw_incibypop[:,:,t]        = einsum('ij,ijkl->kl',people[sus,:,t], forceinffull)/dt
 
         if advancedtracking:
             # Some people (although small) will have gotten infected from both sex and injections, we have to split these intersections. Because the probabilities are all small, it probably would still be a good approximation without this correction
@@ -858,134 +852,10 @@ def model(simpars=None, settings=None, version=None, initpeople=None, initprops=
         ### Calculate births
         ##############################################################################################################
 
-        # Precalculate proportion on PMTCT, whether numpmtct or proppmtct is used
-        # Now:
-        # numpotmothers = numinpop * relhivbirth (ie the number of women who may get pregnant)
-        # numhivpospregwomen = numpotmothers * totalbirthrate (ie the num of women giving birth in this time step) !! we only consider people pregnant if they are giving birth in this time step
-        # thisnumpmtct  = numpmtct / timestepsonpmtct (ie the number of people giving birth who are on pmtct)
-        # calcproppmtct = thisnumpmtct / numdxhivpospregwomen (the proportion of diagnosed women giving birth who are on pmtct)
-        # thisproppmtct = (old behaviour) calcproppmtct           (the proportion of diagnosed women giving birth who are on pmtct)
-        #               = (new) thisnumpmtct / numhivpospregwomen (the proportion of total women giving birth who are on pmtct)
-        # thisproppmtct is what simpars['proppmtct'] and 'fixproppmtct' control
-
-        timestepsonpmtct = 1./dt # Specify the number of timesteps on which mothers are on PMTCT -- # WARNING: remove hard-coding
-        totalbirthrate = birthratesarr[:,:,t].sum(axis=1)
-        _all,_allplhiv,_undx,_alldx,_alltx = range(5) # Start with underscore to not override other variables
-        numpotmothers = zeros((npops,5))
-        numpotmothers[:,_all]      = people[:,:,t].sum(axis=0)
-
-        if compareversions(version, "2.12.0") >= 0: # New behaviour
-            numpotmothers[:,_allplhiv] = people[alldx,:,t].sum(axis=0) * relhivbirth + people[undx,:,t].sum(axis=0)
-            numpotmothers[:,_undx] = people[undx, :,t].sum(axis=0)
-        else:  # Old behaviour
-            numpotmothers[:,_allplhiv] = people[allplhiv,:,t].sum(axis=0) * relhivbirth
-            numpotmothers[:,_undx] = people[undx, :,t].sum(axis=0)   * relhivbirth
-
-        numpotmothers[:,_alldx]    = people[alldx,:,t].sum(axis=0)   * relhivbirth
-        numpotmothers[:,_alltx]    = people[alltx,:,t].sum(axis=0)   * relhivbirth
-        numpotmothers[notmotherpops,:] = 0
-
-        numhivpospregwomen     = numpotmothers[:,_allplhiv] * totalbirthrate
-        numdxhivpospregwomen   = numpotmothers[:,_alldx]    * totalbirthrate
-        numundxhivpospregwomen = numpotmothers[:, _undx]    * totalbirthrate
-
-        if oldbehaviour:  # old behaviour is calcproppmtct = numpmtct / dxpregwomen, and proppmtct = numpmtct / dxpregwomen
-            if isnan(proppmtct[t]): thisnumpmtct = numpmtct[t] / timestepsonpmtct
-            else:                   thisnumpmtct = proppmtct[t]*(eps*dt+numdxhivpospregwomen.sum())
-        else:            # New behaviour calcproppmtct = numpmtct / dxpregwomen, whereas proppmtct = numpmtct / allhiv+pregwomen
-            if isnan(proppmtct[t]): thisnumpmtct = numpmtct[t] / timestepsonpmtct            # Proportion on PMTCT is not specified: use number
-            else:                   thisnumpmtct = proppmtct[t] * numhivpospregwomen.sum()  # Else, just use the proportion specified
-
-        calcproppmtct = thisnumpmtct / (eps*dt+numdxhivpospregwomen.sum()) # eps*dt to make sure that backwards compatible
-
-        if calcproppmtct > 1 and diagnosemothersforpmtct: # Need more on PMTCT than we have available diagnosed
-            calcproppmtct = 1
-            numtobedx = thisnumpmtct - calcproppmtct * numdxhivpospregwomen.sum()
-            thisnumpmtct = calcproppmtct * (eps*dt + numdxhivpospregwomen.sum()) # put all dx people onto pmtct
-
-            proptobedx = min(numtobedx / (eps+numundxhivpospregwomen.sum()), 1-eps)  # Can only diagnose 99.9% of preg women (not 100% to avoid roundoff errors giving negative people)
-            numwillbedx = proptobedx*numundxhivpospregwomen.sum()
-            initrawdiag = raw_diagcd4[:,:,t].sum(axis=(0,1))
-
-            numdxforpmtct = 0 #total
-            if compareversions(version, "2.12.0") >= 0:  # New behaviour
-                thispoptobedx = einsum('ij,j->ij',people[undx,:,t], totalbirthrate) * proptobedx # this is split by cd4 state
-            else:  # Old behaviour
-                thispoptobedx = einsum('ij,j->ij',people[undx, :, t],totalbirthrate) * relhivbirth * proptobedx # this is split by cd4 state
-            if t<npts-1:
-                people[undx, :, t+1] -= thispoptobedx
-                people[dx,   :, t+1] += thispoptobedx
-            raw_diagcd4[:,:,t]  += thispoptobedx /dt  # annualise
-            thispoptobedx        = thispoptobedx.sum(axis=0)  # from here on, only split by population, not state
-            raw_dxforpmtct[:,t] += thispoptobedx /dt  # annualise
-            numdxforpmtct       += thispoptobedx.sum(axis=0)  # in this timestep aka not annualised
-            if putinstantlyontopmtct:
-                numundxhivpospregwomen[:] -= thispoptobedx
-                numdxhivpospregwomen[:]   += thispoptobedx
-                # The below code looks weird but is right - in order to match the changes to the num giving birth (numundxhivpospregwomen) this is saying that we diagnose more mothers than we actually did.
-                # However, this does give the right number of people on PMTCT - otherwise only a small percentage of them will actually go onto PMTCT. And we don't actually put them into the diagnosed class
-                numpotmothers[:, _undx]   -= thispoptobedx / (totalbirthrate + eps*eps) # assuming all diagnosed by ANC will go onto PMTCT
-                numpotmothers[:, _alldx]  += thispoptobedx / (totalbirthrate + eps*eps) # eps not small enough
-                thisnumpmtct              += thispoptobedx.sum(axis=0)
-
-            if t < npts-1:
-                if (people[undx,:,t+1] < 0).any():
-                    print(f"WARNING: Tried to diagnose {thispoptobedx} pregnant HIV+ women from population {popkeys[p1]} but this made the people negative:{people[undx,p1,t+1]}")
-            if printpmtctinformation:
-                totalbirthrate = array(totalbirthrate)
-                avbirthrate = sum(totalbirthrate[totalbirthrate!=0]) / sum(totalbirthrate!=0)
-                propnexttime = avbirthrate * relhivbirth * timestepsonpmtct
-                if proptobedx > 0.01: print(f'INFO: {tvec[t]}: Diagnosing {numdxforpmtct:.2f}={proptobedx * 100:.2f}% (wanted {numtobedx:.2f}) of pregnant undiagnosed HIV+ women. Only approx {propnexttime*100:.2f}% of these will be pregnant next time step')
-                propnewdiag = raw_diagcd4[:,:,t].sum(axis=(0,1))/(initrawdiag+eps)-1
-                if propnewdiag > 0.01: print(f'INFO: {tvec[t]}: Increasing number diagnosed this year from {initrawdiag:.3f} to {raw_diag[:,t].sum():.3f} (up {propnewdiag*100:.2f}%)')
-                if abs(numwillbedx - numdxforpmtct) > eps:
-                    print(f"WARNING: Tried to diagnose {numwillbedx} out of {numundxhivpospregwomen.sum()} undiagnosed pregnant women but instead diagnosed {numdxforpmtct} at time {tvec[t]}")
-        elif calcproppmtct > 1:
-            calcproppmtct = 1
-            thisnumpmtct = calcproppmtct * (eps*dt+numdxhivpospregwomen.sum())  # put all dx people onto pmtct
-
-        # New behaviour calcproppmtct = numpmtct / dxpregwomen, whereas thisproppmtct = numpmtct /  allhiv+pregwomen
-        calcproppmtct = thisnumpmtct / (eps*dt+numdxhivpospregwomen.sum()) # eps*dt to make sure that backwards compatible
-        calcproppmtct = minimum(calcproppmtct,1)
-        if oldbehaviour: thisproppmtct = calcproppmtct  # old behaviour is calcproppmtct = numpmtct / dxpregwomen, and thisproppmtct = numpmtct / dxpregwomen
-        else:            thisproppmtct = thisnumpmtct / (eps+numhivpospregwomen.sum())
-        thisproppmtct = minimum(thisproppmtct, 1)
-
-        undxhivbirths = zeros(npops) # Store undiagnosed HIV+ births for this timestep
-        dxhivbirths = zeros(npops) # Store diagnosed HIV+ births for this timestep
-
-        # Calculate actual births, MTCT, and PMTCT
-        if len(motherpops) and len(childpops):
-            thisbirthrates = birthratesarr[:,:,t][ix_(motherpops,childpops)]
-            popbirths      = einsum('ij,i->ij', thisbirthrates, numpotmothers[motherpops, _all])
-            hivposbirths   = einsum('ij,i->ij', thisbirthrates, numpotmothers[motherpops, _allplhiv])
-            mtctundx       = einsum('ij,i->ij', thisbirthrates, numpotmothers[motherpops, _undx]) * effmtct[t] # Births to undiagnosed mothers
-            mtcttx         = einsum('ij,i->ij', thisbirthrates, numpotmothers[motherpops, _alltx]) * pmtcteff[t] # Births to mothers on treatment
-            thiseligbirths = einsum('ij,i->ij', thisbirthrates, numpotmothers[motherpops, _alldx]) # Births to diagnosed mothers eligible for PMTCT
-
-            thisreceivepmtct =  thiseligbirths * calcproppmtct
-            mtctpmtct        = (thiseligbirths * calcproppmtct)     * pmtcteff[t] # MTCT from those receiving PMTCT
-            mtctdx           = (thiseligbirths * (1-calcproppmtct)) * effmtct[t]  # MTCT from those diagnosed not receiving PMTCT
-
-            thispopmtct = mtctundx + mtctdx + mtcttx + mtctpmtct  # Total MTCT, adding up all components
-            undxhivbirths[childpops] += mtctundx.sum(axis=0)  # Births to add to undx
-            dxhivbirths[childpops]   += (mtctdx + mtcttx + mtctpmtct).sum(axis=0)  # Births add to dx
-
-            raw_receivepmtct[motherpops, t] += (thisreceivepmtct * timestepsonpmtct).sum(axis=1)  # annualise / convert from births to preg women
-            raw_mtct[childpops, t] += thispopmtct.sum(axis=0)/dt
-            state_distribution_plhiv_from = einsum('ij,i->ij', people[:,motherpops,t], plhivmap)
-
-            raw_mtctfrom[:, motherpops, t] += einsum('j,ij,j->ij', thispopmtct.sum(axis=1)/dt, state_distribution_plhiv_from, 1/(state_distribution_plhiv_from.sum(axis=0)+eps) ) #WARNING: not accurate based on differential diagnosis by state potentially, but the best that's feasible
-            if advancedtracking:
-                childpopsblankmotherpopst = ix_([mtct],childpops,arange(nstates),motherpops,[t])
-                raw_incionpopbypopmethods[childpopsblankmotherpopst] += \
-                    expand_dims(einsum('ij,ki,i->jki',thispopmtct/dt, state_distribution_plhiv_from, 1/(state_distribution_plhiv_from.sum(axis=0)+eps)), axis=(0,-1)) #WARNING: same warning as above, but I'm not 100% sure this is correct
-            raw_births[childpops, t]     += popbirths.sum(axis=0)    /dt
-            raw_hivbirths[motherpops, t] += hivposbirths.sum(axis=1) /dt
-
-            raw_inci[:,t] += raw_mtct[:,t] # Update infections acquired based on PMTCT calculation
-            raw_incibypop[:,:,t] += raw_mtctfrom[:,:,t] # Update infections caused based on PMTCT
-
+        undxhivbirths, dxhivbirths, thisproppmtct = do_births(t, npts, dt, eps, birthratesarr, relhivbirth, people, npops, version, undx, dx, alldx, alltx, allplhiv, sus,
+              motherpops, childpops, notmotherpops, effmtct, pmtcteff, plhivmap, advancedtracking, settings,
+              numpmtct, proppmtct, raw_inci, raw_incibypop, raw_diagcd4, raw_incionpopbypopmethods, raw_mtct,
+              raw_births, raw_hivbirths, raw_dxforpmtct, raw_receivepmtct, debug)
 
 
         ##############################################################################################################
@@ -1015,7 +885,7 @@ def model(simpars=None, settings=None, version=None, initpeople=None, initprops=
             people[progcirc,:,t+1] += circppl
 
             # The old model here had a small bug: people are moved into the next class, and then some of those will move into the next class, skipping an age group
-            if oldbehaviour:  # This code is kept in to not change the calibrations for versions 2.11.x and below
+            if compareversions(version,"2.12.0") < 0:  # This code is kept in to not change the calibrations for versions 2.11.x and below
                 ## Age-related transitions
                 for p1,p2,thisagetransprob in agetransitlist:
                     thisagerate = agelist[p1][p2][t]
@@ -1238,3 +1108,296 @@ def model(simpars=None, settings=None, version=None, initpeople=None, initprops=
     checkfornegativepeople(people) # Check only once for negative people, right before finishing
 
     return raw # Return raw results
+
+
+def do_births(t, npts, dt, eps, birthratesarr, relhivbirth, people, npops, version, undx, dx, alldx, alltx, allplhiv, sus,
+              motherpops, childpops, notmotherpops, effmtct, pmtcteff, plhivmap, advancedtracking, settings,
+              numpmtct, proppmtct, raw_inci, raw_incibypop, raw_diagcd4, raw_incionpopbypopmethods, raw_mtct,
+              raw_births, raw_hivbirths, raw_dxforpmtct, raw_receivepmtct, debug):
+
+    if compareversions(version, "2.12.2") < 0: # before 2.12.2
+        undxhivbirths, dxhivbirths, proppmtctofplhiv = deprecated_births(t, npts, dt, eps, birthratesarr, relhivbirth, people, npops, version, undx, dx, alldx, alltx, allplhiv, sus,
+                      motherpops, childpops, notmotherpops, effmtct, pmtcteff, plhivmap, advancedtracking,
+                      numpmtct, proppmtct, raw_inci, raw_incibypop, raw_diagcd4, raw_incionpopbypopmethods, raw_mtct,
+                      raw_births, raw_hivbirths, raw_dxforpmtct, raw_receivepmtct, debug)
+        return undxhivbirths, dxhivbirths, proppmtctofplhiv
+
+
+    # Calculate proportion on PMTCT, whether numpmtct or proppmtct is used
+    # Now:
+    # nummothers = numinpop * birthrate * (relhivbirth) (ie the number of women who are pregnant in this timestep)
+    # thisnumpmtct  = numpmtct / timestepsonpmtct (ie the number of people giving birth who are on pmtct)
+    # proppmtctofdx = thisnumpmtct / numdxhivpospregwomen        (the proportion of diagnosed women giving birth who are on pmtct)
+    # proppmtctofplhiv = (old behaviour) proppmtctofdx           (the proportion of diagnosed women giving birth who are on pmtct)
+    #                  = (new) thisnumpmtct / numhivpospregwomen (the proportion of total women giving birth who are on pmtct)
+    # proppmtctofplhiv is what simpars['proppmtct'] and 'fixproppmtct' control
+
+    undxhivbirths = zeros(npops) # Store undiagnosed HIV+ births for this timestep
+    dxhivbirths = zeros(npops) # Store diagnosed HIV+ births for this timestep
+    if not (len(motherpops) and len(childpops)):
+        return undxhivbirths, dxhivbirths, 0.0
+
+    timestepsonpmtct = 1./dt # Specify the number of timesteps on which mothers are on PMTCT -- # WARNING: remove hard-coding
+    _sus,_undx,_dxnottx,_alltx = range(4) # Start with underscore to not override other variables
+    nummothers = zeros((len(motherpops),4)) # nummothers is mothers in this timestep since birthratesarr is per timestep since # birth = simpars['birth']*dt
+
+    nummothers[:,_sus]    = people[ix_(sus, motherpops, [t])].sum(axis=(0,2))   * birthratesarr[motherpops,:,t].sum(axis=1)
+    nummothers[:,_undx]   = people[ix_(undx, motherpops, [t])].sum(axis=(0,2))  * birthratesarr[motherpops,:,t].sum(axis=1)  # THIS LINE
+    nummothers[:,_dxnottx]= people[ix_(alldx, motherpops, [t])].sum(axis=(0,2)) * birthratesarr[motherpops,:,t].sum(axis=1) * relhivbirth  # THIS LINE
+    nummothers[:,_alltx]  = people[ix_(alltx, motherpops, [t])].sum(axis=(0,2)) * birthratesarr[motherpops,:,t].sum(axis=1) * relhivbirth  # THIS LINE
+
+    nummothers_allplhiv = lambda _nummothers: _nummothers[:, _undx] + _nummothers[:, _dxnottx] + _nummothers[:, _alltx]
+    nummothers_alldx    = lambda _nummothers:                         _nummothers[:, _dxnottx] + _nummothers[:, _alltx]
+    nummothers_all      = lambda _nummothers: _nummothers[:,_sus] + nummothers_allplhiv(_nummothers)
+
+    # old behaviour is proppmtctofdx =  numpmtct/ dxpregwomen, and proppmtct = numpmtct / dxpregwomen
+    # New behaviour proppmtctofdx = numpmtct / dxpregwomen, whereas proppmtct = numpmtct / allhiv+pregwomen
+    if isnan(proppmtct[t]): thisnumpmtct = numpmtct[t] / timestepsonpmtct            # Proportion on PMTCT is not specified: use number, numpmtct[t] is per year so we convert to per this timestep
+    else:                   thisnumpmtct = proppmtct[t] * nummothers_allplhiv(nummothers).sum()  # Else, just use the proportion specified
+
+    proppmtctofdx = thisnumpmtct / (eps*dt + nummothers_alldx(nummothers).sum()) # eps*dt to make sure that backwards compatible
+
+    diagnosemothersforpmtct = True
+    if proppmtctofdx > 1 and diagnosemothersforpmtct: # Need more on PMTCT than we have available diagnosed
+        proppmtctofdx = 1
+        numtobedx = thisnumpmtct - nummothers_alldx(nummothers).sum()   # We are going to put all alldx on pmtct so how many more we need
+        thisnumpmtct = (eps*dt + nummothers_alldx(nummothers).sum()) # put all dx people onto pmtct
+
+        proptobedx = min(numtobedx / (eps+nummothers[:,_undx].sum()), 1-eps)  # Can only diagnose 99.9% of preg women (not 100% to avoid roundoff errors giving negative people)
+        numwillbedx = proptobedx * nummothers[:,_undx].sum()
+
+        # Move people
+        # Old behaviour:   thispoptobedx = einsum('ij,j->ij',people[undx, :, t],totalbirthrate) * relhivbirth * proptobedx # this is split by cd4 state
+        thispoptobedx = einsum('ijl,jk->ij', people[ix_(undx,motherpops,[t])], birthratesarr[motherpops,:,t]) * proptobedx # this is split by cd4 state
+        if t<npts-1:
+            people[:, motherpops, t+1][undx, :] -= thispoptobedx
+            people[:, motherpops, t+1][dx, :]   += thispoptobedx
+
+        if debug:
+            initrawdiag = raw_diagcd4[:,:,t].sum(axis=(0,1))
+            numdxforpmtct += thispoptobedx.sum()  # in this timestep aka not annualised
+
+        # Update outputs
+        raw_diagcd4[:,motherpops,t]  += thispoptobedx             /dt  # annualise
+        raw_dxforpmtct[motherpops,t] += thispoptobedx.sum(axis=0) /dt  # annualise and not split by cd4
+
+        putinstantlyontopmtct = True
+        if putinstantlyontopmtct:
+            nummothers[:, _undx]     -= thispoptobedx.sum(axis=0) # assuming all diagnosed by ANC will go onto PMTCT
+            nummothers[:, _dxnottx]  += thispoptobedx.sum(axis=0) # eps not small enough
+            thisnumpmtct             += thispoptobedx.sum()
+
+        if debug and t < npts-1:
+            if (people[undx,:,t+1] < 0).any():
+                print(f"WARNING: Tried to diagnose {thispoptobedx} pregnant HIV+ women from populations {motherpops} but this made the people negative:{people[undx,p1,t+1]}")
+        if debug:
+            totalbirthrate = array(totalbirthrate)
+            avbirthrate = sum(totalbirthrate[totalbirthrate!=0]) / sum(totalbirthrate!=0)
+            propnexttime = avbirthrate * relhivbirth * timestepsonpmtct
+            if proptobedx > 0.01: print(f'INFO: {tvec[t]}: Diagnosing {numdxforpmtct:.2f}={proptobedx * 100:.2f}% (wanted {numtobedx:.2f}) of pregnant undiagnosed HIV+ women. Only approx {propnexttime*100:.2f}% of these will be pregnant next time step')
+            propnewdiag = raw_diagcd4[:,:,t].sum(axis=(0,1))/(initrawdiag+eps)-1
+            if propnewdiag > 0.01: print(f'INFO: {tvec[t]}: Increasing number diagnosed this year from {initrawdiag:.3f} to {raw_diag[:,t].sum():.3f} (up {propnewdiag*100:.2f}%)')
+            if abs(numwillbedx - numdxforpmtct) > eps:
+                print(f"WARNING: Tried to diagnose {numwillbedx} out of {numundxhivpospregwomen.sum()} undiagnosed pregnant women but instead diagnosed {numdxforpmtct} at time {tvec[t]}")
+    elif proppmtctofdx > 1:
+        proppmtctofdx = 1
+        thisnumpmtct = proppmtctofdx * (eps*dt + nummothers_alldx(nummothers).sum())  # put all dx people onto pmtct
+
+    # New behaviour proppmtctofdx = numpmtct / dxpregwomen, whereas proppmtctofplhiv = numpmtct /  allhiv+pregwomen
+    proppmtctofdx = min(thisnumpmtct / (eps*dt + nummothers_alldx(nummothers).sum()), 1) # eps*dt to make sure that backwards compatible
+    #if oldbehaviour: proppmtctofplhiv = proppmtctofdx  # old behaviour is proppmtctofdx = numpmtct / dxpregwomen, and proppmtctofplhiv = numpmtct / dxpregwomen
+    proppmtctofplhiv = min(thisnumpmtct / (eps + nummothers_allplhiv(nummothers).sum()), 1)
+
+
+
+    # Calculate actual births, MTCT, and PMTCT
+    if len(motherpops) and len(childpops):
+        thisbirthrates = birthratesarr[:,:,t][ix_(motherpops,childpops)]
+        thisbirthrates = thisbirthrates / thisbirthrates.sum(axis=1)[:,None]  # We already have the birthrates taken care of, just split into child population
+
+        births = zeros((10, len(motherpops),len(childpops)))
+        _allbirths, _fromhivpos, _fromundx, _fromdxnottx, _fromalltx, mtct_fromundx, mtct_fromdxnottx, mtct_fromalltx, pmtct_received, mtct_fromonpmtct = range(10)
+
+        births[_allbirths]   = einsum('ij,i->ij', thisbirthrates, nummothers_all(nummothers))
+        births[_fromhivpos]  = einsum('ij,i->ij', thisbirthrates, nummothers_allplhiv(nummothers))
+        # _fromundx + _fromdxnottx + _fromalltx = _fromhivpos
+        births[_fromundx]    = einsum('ij,i->ij', thisbirthrates, nummothers[:,_undx])
+        births[_fromdxnottx] = einsum('ij,i->ij', thisbirthrates, nummothers[:,_dxnottx])
+        births[_fromalltx]   = einsum('ij,i->ij', thisbirthrates, nummothers[:,_alltx])
+
+        # These 3 add to total mtct births
+        births[mtct_fromundx]    = births[_fromundx] * effmtct[t]
+        births[mtct_fromdxnottx] = births[_fromdxnottx] * (proppmtctofdx*pmtcteff[t] + (1-proppmtctofdx)*effmtct[t])
+        births[mtct_fromalltx]   = births[_fromalltx] * pmtcteff[t] # (proppmtctofdx*pmtcteff[t] + (1-proppmtctofdx)*pmtcteff[t])  # People on pmtct get pmtcteff[t], and people on art only also get pmtcteff[t] probability
+
+        # Don't include this in total, this would double up on dx, tx pmtct births
+        births[pmtct_received]   = (births[_fromdxnottx] + births[_fromalltx]) * proppmtctofdx
+        births[mtct_fromonpmtct] = (births[_fromdxnottx] + births[_fromalltx]) * proppmtctofdx * pmtcteff[t]
+
+        # Outputs and update raw_s
+        undxhivbirths[childpops] = births[mtct_fromundx].sum(axis=0)
+        dxhivbirths[childpops]   = (births[mtct_fromdxnottx] + births[mtct_fromalltx]).sum(axis=0)  # Births to add to dx
+
+        raw_births[childpops, t]     = births[_allbirths].sum(axis=0)    /dt
+        raw_hivbirths[motherpops, t] = births[_fromhivpos].sum(axis=0)    /dt
+        raw_receivepmtct[motherpops, t] = births[pmtct_received].sum(axis=1) * timestepsonpmtct # annualise / convert from births to preg women
+        raw_mtct[childpops, t] += (births[mtct_fromundx] + births[mtct_fromdxnottx] + births[mtct_fromalltx]).sum(axis=0)/dt
+        raw_inci[childpops,t] += raw_mtct[childpops,t]  # already annualised
+
+        state_distribution_plhiv_from = array([array([people[ix_([state], motherpops, [t])].sum(axis=(0,2)) if state in group else [0.]*len(motherpops) for state in settings.allstates]) for group in (undx, alldx, alltx)])
+        with errstate(divide='ignore', invalid='ignore'):
+            state_distribution_plhiv_from = state_distribution_plhiv_from / state_distribution_plhiv_from.sum(axis=1)[:,None,:]
+            state_distribution_plhiv_from[isnan(state_distribution_plhiv_from)] = 0
+        raw_incibypop[:,motherpops,t] += einsum('ilj,ikj->kj', births[[mtct_fromundx, mtct_fromdxnottx, mtct_fromalltx]],
+                                                state_distribution_plhiv_from)  / dt
+
+        if advancedtracking:
+            childpopsblankmotherpopst = ix_([settings.mtct],childpops,arange(settings.nstates),motherpops,[t])
+            raw_incionpopbypopmethods[childpopsblankmotherpopst] = \
+                expand_dims(einsum('ijl,ikj->lkj', births[[mtct_fromundx, mtct_fromdxnottx, mtct_fromalltx]], state_distribution_plhiv_from), axis=(0,-1)) #WARNING: same warning as above, but I'm not 100% sure this is correct
+
+    return undxhivbirths, dxhivbirths, proppmtctofplhiv
+
+
+
+def deprecated_births(t, npts, dt, eps, birthratesarr, relhivbirth, people, npops, version, undx, dx, alldx, alltx, allplhiv, sus,
+                      motherpops, childpops, notmotherpops, effmtct, pmtcteff, plhivmap, advancedtracking,
+                      numpmtct, proppmtct, raw_inci, raw_incibypop, raw_diagcd4, raw_incionpopbypopmethods, raw_mtct,
+                      raw_births, raw_hivbirths, raw_dxforpmtct, raw_receivepmtct, debug):
+
+    # Precalculate proportion on PMTCT, whether numpmtct or proppmtct is used
+    # Now:
+    # numpotmothers = numinpop * relhivbirth (ie the number of women who may get pregnant)
+    # numhivpospregwomen = numpotmothers * totalbirthrate (ie the num of women giving birth in this time step) !! we only consider people pregnant if they are giving birth in this time step
+    # thisnumpmtct  = numpmtct / timestepsonpmtct (ie the number of people giving birth who are on pmtct)
+    # calcproppmtct = thisnumpmtct / numdxhivpospregwomen (the proportion of diagnosed women giving birth who are on pmtct)
+    # thisproppmtct = (old behaviour) calcproppmtct           (the proportion of diagnosed women giving birth who are on pmtct)
+    #               = (new) thisnumpmtct / numhivpospregwomen (the proportion of total women giving birth who are on pmtct)
+    # thisproppmtct is what simpars['proppmtct'] and 'fixproppmtct' control
+
+    oldbehaviour = compareversions(version,"2.12.0") < 0 # Remove new pmtct behaviour from 2.11.x versions and before
+    if oldbehaviour: diagnosemothersforpmtct = False  # Diagnosing mothers breaks calibrations somewhat depending on MTCT levels
+    else:            diagnosemothersforpmtct = True
+
+
+    timestepsonpmtct = 1./dt # Specify the number of timesteps on which mothers are on PMTCT -- # WARNING: remove hard-coding
+    totalbirthrate = birthratesarr[:,:,t].sum(axis=1)
+    _all,_allplhiv,_undx,_alldx,_alltx = range(5) # Start with underscore to not override other variables
+    numpotmothers = zeros((npops,5))
+    numpotmothers[:,_all]      = people[:,:,t].sum(axis=0)
+
+    if compareversions(version, "2.12.0") >= 0: # New behaviour
+        numpotmothers[:,_allplhiv] = people[alldx,:,t].sum(axis=0) * relhivbirth + people[undx,:,t].sum(axis=0)
+        numpotmothers[:,_undx] = people[undx, :,t].sum(axis=0)
+    else:  # Old behaviour
+        numpotmothers[:,_allplhiv] = people[allplhiv,:,t].sum(axis=0) * relhivbirth
+        numpotmothers[:,_undx] = people[undx, :,t].sum(axis=0)   * relhivbirth
+
+    numpotmothers[:,_alldx]    = people[alldx,:,t].sum(axis=0)   * relhivbirth
+    numpotmothers[:,_alltx]    = people[alltx,:,t].sum(axis=0)   * relhivbirth
+    numpotmothers[notmotherpops,:] = 0
+
+    numhivpospregwomen     = numpotmothers[:,_allplhiv] * totalbirthrate
+    numdxhivpospregwomen   = numpotmothers[:,_alldx]    * totalbirthrate
+    numundxhivpospregwomen = numpotmothers[:, _undx]    * totalbirthrate
+
+    if oldbehaviour:  # old behaviour is calcproppmtct = numpmtct / dxpregwomen, and proppmtct = numpmtct / dxpregwomen
+        if isnan(proppmtct[t]): thisnumpmtct = numpmtct[t] / timestepsonpmtct
+        else:                   thisnumpmtct = proppmtct[t]*(eps*dt+numdxhivpospregwomen.sum())
+    else:            # New behaviour calcproppmtct = numpmtct / dxpregwomen, whereas proppmtct = numpmtct / allhiv+pregwomen
+        if isnan(proppmtct[t]): thisnumpmtct = numpmtct[t] / timestepsonpmtct            # Proportion on PMTCT is not specified: use number
+        else:                   thisnumpmtct = proppmtct[t] * numhivpospregwomen.sum()  # Else, just use the proportion specified
+
+    calcproppmtct = thisnumpmtct / (eps*dt+numdxhivpospregwomen.sum()) # eps*dt to make sure that backwards compatible
+
+    if calcproppmtct > 1 and diagnosemothersforpmtct: # Need more on PMTCT than we have available diagnosed
+        calcproppmtct = 1
+        numtobedx = thisnumpmtct - calcproppmtct * numdxhivpospregwomen.sum()
+        thisnumpmtct = calcproppmtct * (eps*dt + numdxhivpospregwomen.sum()) # put all dx people onto pmtct
+
+        proptobedx = min(numtobedx / (eps+numundxhivpospregwomen.sum()), 1-eps)  # Can only diagnose 99.9% of preg women (not 100% to avoid roundoff errors giving negative people)
+        numwillbedx = proptobedx*numundxhivpospregwomen.sum()
+        initrawdiag = raw_diagcd4[:,:,t].sum(axis=(0,1))
+
+        numdxforpmtct = 0 #total
+        if compareversions(version, "2.12.0") >= 0:  # New behaviour
+            thispoptobedx = einsum('ij,j->ij',people[undx,:,t], totalbirthrate) * proptobedx # this is split by cd4 state
+        else:  # Old behaviour
+            thispoptobedx = einsum('ij,j->ij',people[undx, :, t],totalbirthrate) * relhivbirth * proptobedx # this is split by cd4 state
+        if t<npts-1:
+            people[undx, :, t+1] -= thispoptobedx
+            people[dx,   :, t+1] += thispoptobedx
+        raw_diagcd4[:,:,t]  += thispoptobedx /dt  # annualise
+        thispoptobedx        = thispoptobedx.sum(axis=0)  # from here on, only split by population, not state
+        raw_dxforpmtct[:,t] += thispoptobedx /dt  # annualise
+        numdxforpmtct       += thispoptobedx.sum(axis=0)  # in this timestep aka not annualised
+        if True:
+            numundxhivpospregwomen[:] -= thispoptobedx
+            numdxhivpospregwomen[:]   += thispoptobedx
+            # The below code looks weird but is right - in order to match the changes to the num giving birth (numundxhivpospregwomen) this is saying that we diagnose more mothers than we actually did.
+            # However, this does give the right number of people on PMTCT - otherwise only a small percentage of them will actually go onto PMTCT. And we don't actually put them into the diagnosed class
+            numpotmothers[:, _undx]   -= thispoptobedx / (totalbirthrate + eps*eps) # assuming all diagnosed by ANC will go onto PMTCT
+            numpotmothers[:, _alldx]  += thispoptobedx / (totalbirthrate + eps*eps) # eps not small enough
+            thisnumpmtct              += thispoptobedx.sum(axis=0)
+
+        if t < npts-1:
+            if (people[undx,:,t+1] < 0).any():
+                print(f"WARNING: Tried to diagnose {thispoptobedx} pregnant HIV+ women from population {popkeys[p1]} but this made the people negative:{people[undx,p1,t+1]}")
+        if debug:
+            totalbirthrate = array(totalbirthrate)
+            avbirthrate = sum(totalbirthrate[totalbirthrate!=0]) / sum(totalbirthrate!=0)
+            propnexttime = avbirthrate * relhivbirth * timestepsonpmtct
+            if proptobedx > 0.01: print(f'INFO: {tvec[t]}: Diagnosing {numdxforpmtct:.2f}={proptobedx * 100:.2f}% (wanted {numtobedx:.2f}) of pregnant undiagnosed HIV+ women. Only approx {propnexttime*100:.2f}% of these will be pregnant next time step')
+            propnewdiag = raw_diagcd4[:,:,t].sum(axis=(0,1))/(initrawdiag+eps)-1
+            if propnewdiag > 0.01: print(f'INFO: {tvec[t]}: Increasing number diagnosed this year from {initrawdiag:.3f} to {raw_diag[:,t].sum():.3f} (up {propnewdiag*100:.2f}%)')
+            if abs(numwillbedx - numdxforpmtct) > eps:
+                print(f"WARNING: Tried to diagnose {numwillbedx} out of {numundxhivpospregwomen.sum()} undiagnosed pregnant women but instead diagnosed {numdxforpmtct} at time {tvec[t]}")
+    elif calcproppmtct > 1:
+        calcproppmtct = 1
+        thisnumpmtct = calcproppmtct * (eps*dt+numdxhivpospregwomen.sum())  # put all dx people onto pmtct
+
+    # New behaviour calcproppmtct = numpmtct / dxpregwomen, whereas thisproppmtct = numpmtct /  allhiv+pregwomen
+    calcproppmtct = thisnumpmtct / (eps*dt+numdxhivpospregwomen.sum()) # eps*dt to make sure that backwards compatible
+    calcproppmtct = minimum(calcproppmtct,1)
+    if oldbehaviour: thisproppmtct = calcproppmtct  # old behaviour is calcproppmtct = numpmtct / dxpregwomen, and thisproppmtct = numpmtct / dxpregwomen
+    else:            thisproppmtct = thisnumpmtct / (eps+numhivpospregwomen.sum())
+    thisproppmtct = minimum(thisproppmtct, 1)
+
+    undxhivbirths = zeros(npops) # Store undiagnosed HIV+ births for this timestep
+    dxhivbirths = zeros(npops) # Store diagnosed HIV+ births for this timestep
+
+    # Calculate actual births, MTCT, and PMTCT
+    if len(motherpops) and len(childpops):
+        thisbirthrates = birthratesarr[:,:,t][ix_(motherpops,childpops)]
+        # print(t,version, 'mothers', numpotmothers[:, _all].sum(), motherpops, childpops, thisbirthrates.shape,thisbirthrates.sum(axis=1))
+        popbirths      = einsum('ij,i->ij', thisbirthrates, numpotmothers[motherpops, _all])
+        hivposbirths   = einsum('ij,i->ij', thisbirthrates, numpotmothers[motherpops, _allplhiv])
+        mtctundx       = einsum('ij,i->ij', thisbirthrates, numpotmothers[motherpops, _undx]) * effmtct[t] # Births to undiagnosed mothers
+        mtcttx         = einsum('ij,i->ij', thisbirthrates, numpotmothers[motherpops, _alltx]) * pmtcteff[t] # Births to mothers on treatment
+        thiseligbirths = einsum('ij,i->ij', thisbirthrates, numpotmothers[motherpops, _alldx]) # Births to diagnosed mothers eligible for PMTCT
+        # print(t, version, 'mothers2', popbirths.sum(), motherpops, childpops, thisbirthrates.shape,thisbirthrates.sum(axis=1))
+
+        thisreceivepmtct =  thiseligbirths * calcproppmtct
+        mtctpmtct        = (thiseligbirths * calcproppmtct)     * pmtcteff[t] # MTCT from those receiving PMTCT
+        mtctdx           = (thiseligbirths * (1-calcproppmtct)) * effmtct[t]  # MTCT from those diagnosed not receiving PMTCT
+
+        thispopmtct = mtctundx + mtctdx + mtcttx + mtctpmtct  # Total MTCT, adding up all components
+        undxhivbirths[childpops] += mtctundx.sum(axis=0)  # Births to add to undx
+        dxhivbirths[childpops]   += (mtctdx + mtcttx + mtctpmtct).sum(axis=0)  # Births add to dx
+
+        raw_receivepmtct[motherpops, t] += (thisreceivepmtct * timestepsonpmtct).sum(axis=1)  # annualise / convert from births to preg women
+        raw_mtct[childpops, t] += thispopmtct.sum(axis=0)/dt
+        state_distribution_plhiv_from = einsum('ij,i->ij', people[:,motherpops,t], plhivmap)
+
+        raw_mtctfrom = einsum('j,ij,j->ij', thispopmtct.sum(axis=1)/dt, state_distribution_plhiv_from, 1/(state_distribution_plhiv_from.sum(axis=0)+eps) ) #WARNING: not accurate based on differential diagnosis by state potentially, but the best that's feasible
+        if advancedtracking:
+            childpopsblankmotherpopst = ix_([mtct],childpops,arange(nstates),motherpops,[t])
+            raw_incionpopbypopmethods[childpopsblankmotherpopst] += \
+                expand_dims(einsum('ij,ki,i->jki',thispopmtct/dt, state_distribution_plhiv_from, 1/(state_distribution_plhiv_from.sum(axis=0)+eps)), axis=(0,-1)) #WARNING: same warning as above, but I'm not 100% sure this is correct
+        raw_births[childpops, t]     += popbirths.sum(axis=0)    /dt
+        raw_hivbirths[motherpops, t] += hivposbirths.sum(axis=1) /dt
+
+        raw_inci[:,t] += raw_mtct[:,t] # Update infections acquired based on PMTCT calculation
+        raw_incibypop[:,:,t] += raw_mtctfrom # Update infections caused based on PMTCT
+
+    return undxhivbirths, dxhivbirths, thisproppmtct
