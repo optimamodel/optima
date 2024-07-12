@@ -13,6 +13,7 @@ from optima import Settings, getresults, convertlimits, gettvecdt, loadpartable,
 import optima as op
 from sciris import cp
 import hashlib
+from scipy.stats import truncnorm
 
 defaultsmoothness = 1.0 # The number of years of smoothing to do by default
 generalkeys = ['male', 'female', 'popkeys', 'injects', 'fromto', 'transmatrix'] # General parameter keys that are just copied
@@ -636,7 +637,7 @@ class Constant(Par):
     
     def sample(self, rng_sampler=None):
         ''' Recalculate ysample '''
-        self.ysample = self.prior.sample(n=1, rng_sampler=rng_sampler)[0]
+        self.ysample = self.prior.sample(n=1, rng_sampler=rng_sampler, best=self.y)[0]
         return None
     
     def updateprior(self, verbose=2):
@@ -700,7 +701,7 @@ class Metapar(Par):
         ''' Recalculate ysample '''
         self.ysample = odict()
         for key in self.keys():
-            self.ysample[key] = self.prior[key].sample(rng_sampler=rng_sampler)[0]
+            self.ysample[key] = self.prior[key].sample(rng_sampler=rng_sampler, best=self.y[key])[0]
         return None
     
     def updateprior(self, verbose=2):
@@ -779,7 +780,7 @@ class Timepar(Par):
     
     def sample(self, rng_sampler=None):
         ''' Recalculate msample '''
-        self.msample = self.prior.sample(n=1, rng_sampler=rng_sampler)[0]
+        self.msample = self.prior.sample(n=1, rng_sampler=rng_sampler, best=self.m)[0]
         return None
     
     def updateprior(self, verbose=2):
@@ -811,7 +812,7 @@ class Timepar(Par):
             if not sample:
                 meta = self.m
             else:
-                if sample=='new' or self.msample is None: self.sample(rng_sampler=rng_sampler) # msample doesn't exist, make it
+                if sample=='new' or self.msample is None: self.sample(rng_sampler=rng_sampler, best=self.m) # msample doesn't exist, make it
                 meta = self.msample
         
         # Set things up and do the interpolation
@@ -854,7 +855,7 @@ class Popsizepar(Par):
     
     def sample(self, rng_sampler=None):
         ''' Recalculate msample -- same as Timepar'''
-        self.msample = self.prior.sample(n=1, rng_sampler=rng_sampler)[0]
+        self.msample = self.prior.sample(n=1, rng_sampler=rng_sampler, best=self.m)[0]
         return None
     
     def updateprior(self, verbose=2):
@@ -888,7 +889,7 @@ class Popsizepar(Par):
             if not sample:
                 meta = self.m
             else:
-                if sample=='new' or self.msample is None: self.sample(rng_sampler=rng_sampler) # msample doesn't exist, make it
+                if sample=='new' or self.msample is None: self.sample(rng_sampler=rng_sampler, best=self.m) # msample doesn't exist, make it
                 meta = self.msample
                 
                 
@@ -941,7 +942,7 @@ class Yearpar(Par):
     def keys(self):
         return None 
     
-    def sample(self, rng_sampler=None):
+    def sample(self, rng_sampler=None, best=None):
         ''' No sampling, so simply return the value '''
         return self.t
     
@@ -966,8 +967,12 @@ class Dist(object):
         output = defaultrepr(self)
         return output
     
-    def sample(self, n=1, rng_sampler=None):
-        ''' Draw random samples from the specified distribution '''
+    def sample(self, n=1, rng_sampler=None, best=None):
+        ''' Draw random samples from the specified distribution 
+        Optionally specify a best value (e.g. the defined parameter value)
+        '''
+        if best is None:
+            best = mean(self.pars) #if not specified take the midpoint
         if self.dist=='uniform':
             if rng_sampler is None:
                 samples = uniform(low=self.pars[0], high=self.pars[1], size=n)
@@ -975,10 +980,13 @@ class Dist(object):
                 samples = rng_sampler.uniform(low=self.pars[0], high=self.pars[1], size=n)
             return samples
         if self.dist=='normal':
-            if rng_sampler is None:
-                return normal(loc=self.pars[0], scale=self.pars[1], size=n)
-            else:
-                return rng_sampler.normal(loc=self.pars[0], scale=self.pars[1], size=n)
+            #Take a normal distribution centered on the best value assuming the low and high values represent a 95% confidence interval but rejecting samples outside of this range (to avoid model errors)
+            normal_samples = truncnorm.rvs(a=-2, b=2, loc=0, scale=0.5, size=n, random_state=rng_sampler) #+-2 standard deviations = 95% confidence interval
+            #rescale to the best/low/high
+            normal_samples[normal_samples < 0] *= (best - self.pars[0])
+            normal_samples[normal_samples > 0] *= (self.pars[1] - best)
+            normal_samples += best
+            return normal_samples
         else:
             errormsg = 'Distribution "%s" not defined; available choices are: uniform, normal' % self.dist
             raise OptimaException(errormsg)
