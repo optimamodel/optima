@@ -853,7 +853,7 @@ def model(simpars=None, settings=None, version=None, initpeople=None, initprops=
         ### Calculate births
         ##############################################################################################################
 
-        undxhivbirths, dxhivbirths, thisproppmtct = do_births(t, npts, dt, eps, birthratesarr, relhivbirth, people, npops, version, undx, dx, alldx, alltx, allplhiv, sus,mtct,nstates,
+        undxhivbirths, dxhivbirths, thisproppmtct = do_births(t, npts, dt, eps, birthratesarr, relhivbirth, people, npops, version, undx, dx, alldx, alltx, allplhiv, sus,mtct,nstates,dxnottx,
               motherpops, childpops, notmotherpops, effmtct, pmtcteff, plhivmap, advancedtracking, settings,
               numpmtct, proppmtct, raw_inci, raw_incibypop, raw_diagcd4, raw_incionpopbypopmethods, raw_mtct,
               raw_births, raw_hivbirths, raw_dxforpmtct, raw_receivepmtct, debug)
@@ -1111,7 +1111,7 @@ def model(simpars=None, settings=None, version=None, initpeople=None, initprops=
     return raw # Return raw results
 
 
-def do_births(t, npts, dt, eps, birthratesarr, relhivbirth, people, npops, version, undx, dx, alldx, alltx, allplhiv, sus,mtct,nstates,
+def do_births(t, npts, dt, eps, birthratesarr, relhivbirth, people, npops, version, undx, dx, alldx, alltx, allplhiv, sus,mtct,nstates,dxnottx,
               motherpops, childpops, notmotherpops, effmtct, pmtcteff, plhivmap, advancedtracking, settings,
               numpmtct, proppmtct, raw_inci, raw_incibypop, raw_diagcd4, raw_incionpopbypopmethods, raw_mtct,
               raw_births, raw_hivbirths, raw_dxforpmtct, raw_receivepmtct, debug):
