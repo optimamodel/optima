@@ -131,6 +131,9 @@ def model(simpars=None, settings=None, version=None, initpeople=None, initprops=
 
     allcd4          = [acute,gt500,gt350,gt200,gt50,lt50]
 
+    mtctgroupmap = zeros((3, nstates))
+    for i, group in enumerate((undx, dxnottx, alltx)): mtctgroupmap[i, group] = 1
+
     if debug and len(sus)!=2:
         errormsg = label + 'Definition of susceptibles has changed: expecting regular circumcised + VMMC, but actually length %i' % len(sus)
         raise OptimaException(errormsg)
@@ -851,7 +854,7 @@ def model(simpars=None, settings=None, version=None, initpeople=None, initprops=
         ##############################################################################################################
 
         undxhivbirths, dxhivbirths, thisproppmtct = do_births(t, npts, dt, eps, birthratesarr, relhivbirth, people, npops, version, undx, dx, alldx, alltx, allplhiv, sus,mtct,nstates,dxnottx,
-              motherpops, childpops, notmotherpops, effmtct, pmtcteff, plhivmap, advancedtracking, settings,
+              motherpops, childpops, notmotherpops, effmtct, pmtcteff, plhivmap, advancedtracking, settings, mtctgroupmap,
               numpmtct, proppmtct, raw_inci, raw_incibypop, raw_diagcd4, raw_incionpopbypopmethods, raw_mtct,
               raw_births, raw_hivbirths, raw_dxforpmtct, raw_receivepmtct, debug)
 
@@ -1109,7 +1112,7 @@ def model(simpars=None, settings=None, version=None, initpeople=None, initprops=
 
 
 def do_births(t, npts, dt, eps, birthratesarr, relhivbirth, people, npops, version, undx, dx, alldx, alltx, allplhiv, sus,mtct,nstates,dxnottx,
-              motherpops, childpops, notmotherpops, effmtct, pmtcteff, plhivmap, advancedtracking, settings,
+              motherpops, childpops, notmotherpops, effmtct, pmtcteff, plhivmap, advancedtracking, settings, mtctgroupmap,
               numpmtct, proppmtct, raw_inci, raw_incibypop, raw_diagcd4, raw_incionpopbypopmethods, raw_mtct,
               raw_births, raw_hivbirths, raw_dxforpmtct, raw_receivepmtct, debug):
 
@@ -1137,17 +1140,17 @@ def do_births(t, npts, dt, eps, birthratesarr, relhivbirth, people, npops, versi
 
     timestepsonpmtct = 1./dt # Specify the number of timesteps on which mothers are on PMTCT -- # WARNING: remove hard-coding
     _sus,_undx,_dxnottx,_alltx = range(4) # Start with underscore to not override other variables
-    nummothers = zeros((len(motherpops),4)) # nummothers is mothers in this timestep since birthratesarr is per timestep since # birth = simpars['birth']*dt
+    nummothers = zeros((4, len(motherpops))) # nummothers is mothers in this timestep since birthratesarr is per timestep since # birth = simpars['birth']*dt
 
+    thisbirthrates = birthratesarr[motherpops,:,t].sum(axis=1)
+    nummothers[_sus,:]    = people[:,motherpops,t][sus,:].sum(axis=0)     * thisbirthrates
+    nummothers[_undx,:]   = people[:,motherpops,t][undx,:].sum(axis=0)    * thisbirthrates
+    nummothers[_dxnottx,:]= people[:,motherpops,t][dxnottx,:].sum(axis=0) * thisbirthrates * relhivbirth
+    nummothers[_alltx,:]  = people[:,motherpops,t][alltx,:].sum(axis=0)   * thisbirthrates * relhivbirth
 
-    nummothers[:,_sus]    = people[ix_(sus, motherpops, [t])].sum(axis=(0,2))     * birthratesarr[motherpops,:,t].sum(axis=1)
-    nummothers[:,_undx]   = people[ix_(undx, motherpops, [t])].sum(axis=(0,2))    * birthratesarr[motherpops,:,t].sum(axis=1)  # THIS LINE
-    nummothers[:,_dxnottx]= people[ix_(dxnottx, motherpops, [t])].sum(axis=(0,2)) * birthratesarr[motherpops,:,t].sum(axis=1) * relhivbirth  # THIS LINE
-    nummothers[:,_alltx]  = people[ix_(alltx, motherpops, [t])].sum(axis=(0,2))   * birthratesarr[motherpops,:,t].sum(axis=1) * relhivbirth  # THIS LINE
-
-    nummothers_allplhiv = lambda _nummothers: _nummothers[:, _undx] + _nummothers[:, _dxnottx] + _nummothers[:, _alltx]
-    nummothers_alldx    = lambda _nummothers:                         _nummothers[:, _dxnottx] + _nummothers[:, _alltx]
-    nummothers_all      = lambda _nummothers: _nummothers[:,_sus] + nummothers_allplhiv(_nummothers)
+    nummothers_allplhiv = lambda _nummothers: _nummothers[_undx,:] + _nummothers[_dxnottx,:] + _nummothers[_alltx,:]
+    nummothers_alldx    = lambda _nummothers:                        _nummothers[_dxnottx,:] + _nummothers[_alltx,:]
+    nummothers_all      = lambda _nummothers: _nummothers[_sus,:] + nummothers_allplhiv(_nummothers)
 
     # old behaviour is proppmtctofdx =  numpmtct/ dxpregwomen, and proppmtct = numpmtct / dxpregwomen
     # New behaviour proppmtctofdx = numpmtct / dxpregwomen, whereas proppmtct = numpmtct / allhiv+pregwomen
@@ -1162,8 +1165,8 @@ def do_births(t, npts, dt, eps, birthratesarr, relhivbirth, people, npops, versi
         numtobedx = thisnumpmtct - nummothers_alldx(nummothers).sum()   # We are going to put all alldx on pmtct so how many more we need
         thisnumpmtct = (eps*dt + nummothers_alldx(nummothers).sum()) # put all dx people onto pmtct
 
-        proptobedx = min(numtobedx / (eps+nummothers[:,_undx].sum()), 1-eps)  # Can only diagnose 99.9% of preg women (not 100% to avoid roundoff errors giving negative people)
-        numwillbedx = proptobedx * nummothers[:,_undx].sum()
+        proptobedx = min(numtobedx / (eps+nummothers[_undx,:].sum()), 1-eps)  # Can only diagnose 99.9% of preg women (not 100% to avoid roundoff errors giving negative people)
+        numwillbedx = proptobedx * nummothers[_undx,:].sum()
 
         # Move people
         # Old behaviour:   thispoptobedx = einsum('ij,j->ij',people[undx, :, t],totalbirthrate) * relhivbirth * proptobedx # this is split by cd4 state
@@ -1182,8 +1185,8 @@ def do_births(t, npts, dt, eps, birthratesarr, relhivbirth, people, npops, versi
 
         putinstantlyontopmtct = True
         if putinstantlyontopmtct:
-            nummothers[:, _undx]     -= thispoptobedx.sum(axis=0) # assuming all diagnosed by ANC will go onto PMTCT
-            nummothers[:, _dxnottx]  += thispoptobedx.sum(axis=0) # eps not small enough
+            nummothers[_undx,:]     -= thispoptobedx.sum(axis=0) # assuming all diagnosed by ANC will go onto PMTCT
+            nummothers[_dxnottx,:]  += thispoptobedx.sum(axis=0) # eps not small enough
             thisnumpmtct             += thispoptobedx.sum()
 
         if debug and t < npts-1:
@@ -1208,52 +1211,50 @@ def do_births(t, npts, dt, eps, birthratesarr, relhivbirth, people, npops, versi
     proppmtctofplhiv = min(thisnumpmtct / (eps + nummothers_allplhiv(nummothers).sum()), 1)
 
 
-
     # Calculate actual births, MTCT, and PMTCT
-    if len(motherpops) and len(childpops):
-        thisbirthrates = birthratesarr[:,:,t][ix_(motherpops,childpops)]
-        thisbirthrates = thisbirthrates / thisbirthrates.sum(axis=1)[:,None]  # We already have the birthrates taken care of, just split into child population
+    thisbirthrates = birthratesarr[:,:,t][ix_(motherpops,childpops)]
+    thisbirthrates = thisbirthrates / thisbirthrates.sum(axis=1)[:,None]  # We already have the birthrates taken care of, just split into child population
 
-        births = zeros((10, len(motherpops),len(childpops)))
-        _allbirths, _fromhivpos, _fromundx, _fromdxnottx, _fromalltx, mtct_fromundx, mtct_fromdxnottx, mtct_fromalltx, pmtct_received, mtct_fromonpmtct = range(10)
+    births = zeros((10, len(motherpops),len(childpops)))
+    _allbirths, _fromhivpos, _fromundx, _fromdxnottx, _fromalltx, mtct_fromundx, mtct_fromdxnottx, mtct_fromalltx, pmtct_received, mtct_fromonpmtct = range(10)
 
-        births[_allbirths]   = einsum('ij,i->ij', thisbirthrates, nummothers_all(nummothers))
-        births[_fromhivpos]  = einsum('ij,i->ij', thisbirthrates, nummothers_allplhiv(nummothers))
-        # _fromundx + _fromdxnottx + _fromalltx = _fromhivpos
-        births[_fromundx]    = einsum('ij,i->ij', thisbirthrates, nummothers[:,_undx])
-        births[_fromdxnottx] = einsum('ij,i->ij', thisbirthrates, nummothers[:,_dxnottx])
-        births[_fromalltx]   = einsum('ij,i->ij', thisbirthrates, nummothers[:,_alltx])
+    births[_allbirths]   = einsum('ij,i->ij', thisbirthrates, nummothers_all(nummothers))
+    births[_fromhivpos]  = einsum('ij,i->ij', thisbirthrates, nummothers_allplhiv(nummothers))
+    # _fromundx + _fromdxnottx + _fromalltx = _fromhivpos
+    births[_fromundx]    = einsum('ij,i->ij', thisbirthrates, nummothers[_undx,:])
+    births[_fromdxnottx] = einsum('ij,i->ij', thisbirthrates, nummothers[_dxnottx,:])
+    births[_fromalltx]   = einsum('ij,i->ij', thisbirthrates, nummothers[_alltx,:])
 
-        # These 3 add to total mtct births
-        births[mtct_fromundx]    = births[_fromundx] * effmtct[t]
-        births[mtct_fromdxnottx] = births[_fromdxnottx] * (proppmtctofdx*pmtcteff[t] + (1-proppmtctofdx)*effmtct[t])
-        births[mtct_fromalltx]   = births[_fromalltx] * pmtcteff[t] # (proppmtctofdx*pmtcteff[t] + (1-proppmtctofdx)*pmtcteff[t])  # People on pmtct get pmtcteff[t], and people on art only also get pmtcteff[t] probability
+    # These 3 add to total mtct births
+    births[mtct_fromundx]    = births[_fromundx] * effmtct[t]
+    births[mtct_fromdxnottx] = births[_fromdxnottx] * (proppmtctofdx*pmtcteff[t] + (1-proppmtctofdx)*effmtct[t])
+    births[mtct_fromalltx]   = births[_fromalltx] * pmtcteff[t] # (proppmtctofdx*pmtcteff[t] + (1-proppmtctofdx)*pmtcteff[t])  # People on pmtct get pmtcteff[t], and people on art only also get pmtcteff[t] probability
 
-        # Don't include this in total, this would double up on dx, tx pmtct births
-        births[pmtct_received]   = (births[_fromdxnottx] + births[_fromalltx]) * proppmtctofdx
-        births[mtct_fromonpmtct] = (births[_fromdxnottx] + births[_fromalltx]) * proppmtctofdx * pmtcteff[t]
+    # Don't include this in total, this would double up on dx, tx pmtct births
+    births[pmtct_received]   = (births[_fromdxnottx] + births[_fromalltx]) * proppmtctofdx
+    births[mtct_fromonpmtct] = (births[_fromdxnottx] + births[_fromalltx]) * proppmtctofdx * pmtcteff[t]
 
-        # Outputs and update raw_s
-        undxhivbirths[childpops] = births[mtct_fromundx].sum(axis=0)
-        dxhivbirths[childpops]   = (births[mtct_fromdxnottx] + births[mtct_fromalltx]).sum(axis=0)  # Births to add to dx
+    # Outputs and update raw_s
+    undxhivbirths[childpops] = births[mtct_fromundx].sum(axis=0)
+    dxhivbirths[childpops]   = (births[mtct_fromdxnottx] + births[mtct_fromalltx]).sum(axis=0)  # Births to add to dx
 
-        raw_births[childpops, t]     = births[_allbirths].sum(axis=0)    /dt
-        raw_hivbirths[motherpops, t] = births[_fromhivpos].sum(axis=1)    /dt
-        raw_receivepmtct[motherpops, t] = births[pmtct_received].sum(axis=1) * timestepsonpmtct # annualise / convert from births to preg women
-        raw_mtct[childpops, t] += (births[mtct_fromundx] + births[mtct_fromdxnottx] + births[mtct_fromalltx]).sum(axis=0)/dt
-        raw_inci[childpops,t] += raw_mtct[childpops,t]  # already annualised
+    raw_births[childpops, t]     = births[_allbirths].sum(axis=0)    /dt
+    raw_hivbirths[motherpops, t] = births[_fromhivpos].sum(axis=1)    /dt
+    raw_receivepmtct[motherpops, t] = births[pmtct_received].sum(axis=1) * timestepsonpmtct # annualise / convert from births to preg women
+    raw_mtct[childpops, t] += (births[mtct_fromundx] + births[mtct_fromdxnottx] + births[mtct_fromalltx]).sum(axis=0)/dt
+    raw_inci[childpops,t] += raw_mtct[childpops,t]  # already annualised
 
-        state_distribution_plhiv_from = array([array([people[ix_([state], motherpops, [t])].sum(axis=(0,2)) if state in group else [0.]*len(motherpops) for state in settings.allstates]) for group in (undx, alldx, alltx)])
-        with errstate(divide='ignore', invalid='ignore'):
-            state_distribution_plhiv_from = state_distribution_plhiv_from / state_distribution_plhiv_from.sum(axis=1)[:,None,:]
-            state_distribution_plhiv_from[isnan(state_distribution_plhiv_from)] = 0
-        raw_incibypop[:,motherpops,t] += einsum('ijk,ilj->lj', births[[mtct_fromundx, mtct_fromdxnottx, mtct_fromalltx]],
-                                                state_distribution_plhiv_from)  / dt
+    state_distribution_plhiv_from = einsum('sm,gs->gsm', people[:, motherpops, t], mtctgroupmap)
+    with errstate(divide='ignore', invalid='ignore'):
+        state_distribution_plhiv_from = state_distribution_plhiv_from / state_distribution_plhiv_from.sum(axis=1)[:,None,:]
+        state_distribution_plhiv_from[isnan(state_distribution_plhiv_from)] = 0
+    raw_incibypop[:,motherpops,t] += einsum('ijk,ilj->lj', births[[mtct_fromundx, mtct_fromdxnottx, mtct_fromalltx]],
+                                            state_distribution_plhiv_from)  / dt
 
-        if advancedtracking:
-            childpopsblankmotherpopst = ix_([settings.mtct],childpops,arange(settings.nstates),motherpops,[t])
-            raw_incionpopbypopmethods[childpopsblankmotherpopst] = \
-                expand_dims(einsum('ijl,ikj->lkj', births[[mtct_fromundx, mtct_fromdxnottx, mtct_fromalltx]], state_distribution_plhiv_from), axis=(0,-1)) / dt
+    if advancedtracking:
+        childpopsblankmotherpopst = ix_([settings.mtct],childpops,arange(settings.nstates),motherpops,[t])
+        raw_incionpopbypopmethods[childpopsblankmotherpopst] = \
+            expand_dims(einsum('ijl,ikj->lkj', births[[mtct_fromundx, mtct_fromdxnottx, mtct_fromalltx]], state_distribution_plhiv_from), axis=(0,-1)) / dt
     return undxhivbirths, dxhivbirths, proppmtctofplhiv
 
 
