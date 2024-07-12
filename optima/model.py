@@ -30,9 +30,6 @@ def model(simpars=None, settings=None, version=None, initpeople=None, initprops=
     if initpeople is not None and initprops is None:
         print('WARNING, results with initpeople are unreliable if you don\'t also provide the full vectors of propdx, propcare etc through initprops!')
 
-    # PMTCT behaviour
-    oldbehaviour = compareversions(version,"2.12.0") < 0 # Remove new pmtct behaviour from 2.11.x versions and before
-
     # Extract key items
     popkeys         = simpars['popkeys']
     npops           = len(popkeys)

@@ -110,7 +110,7 @@ def setmigrations(which='migrations'):
         ('2.11.3', ('2.11.4', '2023-02-07',addallconstraintsoptim, 'Adds absconstraints and proporigconstraints to Optim, model works with initpeople and optimization improvements')),
         ('2.11.4', ('2.12.0', '2023-03-10',addinsertonlyacts,'Adds ANC testing to diagnose mothers to put onto PMTCT, actsreg etc only contain insertive acts, and relhivbirth only reduces birth rate of diagnosed HIV+ potential mothers.')),
         ('2.12.0', ('2.12.1', '2024-05-27',fixzeronumcircparset,'Reloads numcirc "Number of voluntary medical male circumcisions" from data - was previously overriden to be zero')),
-        ('2.12.1', ('2.12.2', '2024-05-27',None , 'Fix MTCT being double-counting MTCT of people on ART')),
+        ('2.12.1', ('2.12.2', '2024-07-12',None ,            'Fix MTCT: previously double-counting MTCT of people on ART')),
         ])
     
     

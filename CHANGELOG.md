@@ -58,7 +58,7 @@ Migration to a new version is done on load `P = get_latest_project("example", mi
  - An error will show if making a program with the same long or short name as another one.
  - The Optimization constraints are now proportional to the default budget (latest) for that progset (`proporigconstraints`). This means a 100% min constraint actually means the min budget is the latest budget - as opposed to having to scale it up or down depending on the total budget. If an Optim also has `contraints` and `absconstraints` those will also be followed and reflected in the constraints shown. But if you change the optimization then the `constraints` and `absconstraints` will be removed.
 
-## [2.12.2] - 
+## [2.12.3] - 
 ALL PLANNED / TODO:
  - !! TB/HIV co-infection mortality
  - Change acts to be better balanced
@@ -66,6 +66,12 @@ ALL PLANNED / TODO:
  - `Multiresultset.parsetname` and `Multiresultset.progsetname` is now an odict, with a key and value for each result.
  - Change `forcepopsize` to not affect the number of PLHIV. The previous assumption was to remove (or add) people from (or into) the susceptible and the "not on ART" states. Now people only are removed from (or added into) the susceptible states.
 
+
+# [2.12.2] - 2024-07-12
+ - Clean up MTCT code and fix problems:
+   - MTCT of people on ART was being double-counted
+   - Total births was too high - wasn't taking `relhivbirth` into account (but didn't add extra MTCT, just extra susceptible births)
+ - Fix rare negative people issue when FOI is very high - make FOI = min(FOI, 1)
 
 ## [2.12.1] - 2024-05-27
  - Fix `numcirc` being set to 0 in the `Parameterset` upon loading from data - meaning running with just a parset had no VMMC. Running scenarios or programs affecting `numcirc` (eg. with VMMC program) were still working, just not the calibration.
