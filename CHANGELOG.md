@@ -70,7 +70,7 @@ ALL PLANNED / TODO:
 # [2.12.2] - 2024-07-12
  - Clean up MTCT code and fix problems:
    - MTCT of people on ART was being double-counted
-   - Total births was too high - wasn't taking `relhivbirth` into account (but didn't add extra MTCT, just extra susceptible births)
+   - CHANGES to tx and dx split of PMTCT !!
  - Fix rare negative people issue when FOI is very high - make FOI = min(FOI, 1)
 
 ## [2.12.1] - 2024-05-27

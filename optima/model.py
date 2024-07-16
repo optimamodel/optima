@@ -1143,39 +1143,39 @@ def do_births(t, npts, dt, eps, birthratesarr, relhivbirth, people, npops, versi
     nummothers = zeros((4, len(motherpops))) # nummothers is mothers in this timestep since birthratesarr is per timestep since # birth = simpars['birth']*dt
 
     thisbirthrates = birthratesarr[motherpops,:,t].sum(axis=1)
-    nummothers[_sus,:]    = people[:,motherpops,t][sus,:].sum(axis=0)     * thisbirthrates
+    nummothers[_all,:]    = people[:,motherpops,t][:,:].sum(axis=0)       * thisbirthrates  # All births !! note birthratesarr is the total population birthrate not susceptible birthrate
     nummothers[_undx,:]   = people[:,motherpops,t][undx,:].sum(axis=0)    * thisbirthrates
     nummothers[_dxnottx,:]= people[:,motherpops,t][dxnottx,:].sum(axis=0) * thisbirthrates * relhivbirth
     nummothers[_alltx,:]  = people[:,motherpops,t][alltx,:].sum(axis=0)   * thisbirthrates * relhivbirth
 
     nummothers_allplhiv = lambda _nummothers: _nummothers[_undx,:] + _nummothers[_dxnottx,:] + _nummothers[_alltx,:]
     nummothers_alldx    = lambda _nummothers:                        _nummothers[_dxnottx,:] + _nummothers[_alltx,:]
-    nummothers_all      = lambda _nummothers: _nummothers[_sus,:] + nummothers_allplhiv(_nummothers)
+    # numothers_sus     = lambda _nummothers: _nummothers[_all,:] - nummothers_allplhiv(_nummothers)
 
-    # old behaviour is proppmtctofdx =  numpmtct/ dxpregwomen, and proppmtct = numpmtct / dxpregwomen
-    # New behaviour proppmtctofdx = numpmtct / dxpregwomen, whereas proppmtct = numpmtct / allhiv+pregwomen
+    # Old behaviour (pre 2.12.0) is proppmtctofdx =  numpmtct/ dxpregwomen, and proppmtct = numpmtct / dxpregwomen
+    # New behaviour (>= 2.12.0) proppmtctofdx = numpmtct / dxpregwomen, whereas proppmtct = numpmtct / allhiv+pregwomen
     if isnan(proppmtct[t]): thisnumpmtct = numpmtct[t] / timestepsonpmtct            # Proportion on PMTCT is not specified: use number, numpmtct[t] is per year so we convert to per this timestep
     else:                   thisnumpmtct = proppmtct[t] * nummothers_allplhiv(nummothers).sum()  # Else, just use the proportion specified
 
-    proppmtctofdx = thisnumpmtct / (eps*dt + nummothers_alldx(nummothers).sum()) # eps*dt to make sure that backwards compatible
+    proppmtctoftx = min(thisnumpmtct / (eps*dt + nummothers[_alltx,:].sum()),1)
+    proppmtctofdxnottx = max(thisnumpmtct - proppmtctoftx*nummothers[_alltx,:].sum(),0) / (eps*dt + nummothers[_dxnottx,:].sum()) # eps*dt to make sure that backwards compatible
 
     diagnosemothersforpmtct = True
-    if proppmtctofdx > 1 and diagnosemothersforpmtct: # Need more on PMTCT than we have available diagnosed
-        proppmtctofdx = 1
+    if proppmtctofdxnottx > 1 and diagnosemothersforpmtct: # Need more on PMTCT than we have available diagnosed
+        proppmtctofdxnottx = 1
         numtobedx = thisnumpmtct - nummothers_alldx(nummothers).sum()   # We are going to put all alldx on pmtct so how many more we need
         thisnumpmtct = (eps*dt + nummothers_alldx(nummothers).sum()) # put all dx people onto pmtct
 
         proptobedx = min(numtobedx / (eps+nummothers[_undx,:].sum()), 1-eps)  # Can only diagnose 99.9% of preg women (not 100% to avoid roundoff errors giving negative people)
-        numwillbedx = proptobedx * nummothers[_undx,:].sum()
 
         # Move people
-        # Old behaviour:   thispoptobedx = einsum('ij,j->ij',people[undx, :, t],totalbirthrate) * relhivbirth * proptobedx # this is split by cd4 state
-        thispoptobedx = einsum('ijl,jk->ij', people[ix_(undx,motherpops,[t])], birthratesarr[motherpops,:,t]) * proptobedx # this is split by cd4 state
+        thispoptobedx = einsum('ij,jk->ij', people[undx,:,t][:,motherpops], birthratesarr[motherpops,:,t]) * proptobedx # this is split by cd4 state
         if t<npts-1:
             people[ix_(undx, motherpops, [t+1])] -= thispoptobedx[:,:,None]
             people[ix_(dx, motherpops, [t+1])]   += thispoptobedx[:,:,None]
 
         if debug:
+            numwillbedx = proptobedx * nummothers[_undx, :].sum()
             initrawdiag = raw_diagcd4[:,:,t].sum(axis=(0,1))
             numdxforpmtct += thispoptobedx.sum()  # in this timestep aka not annualised
 
@@ -1187,7 +1187,7 @@ def do_births(t, npts, dt, eps, birthratesarr, relhivbirth, people, npops, versi
         if putinstantlyontopmtct:
             nummothers[_undx,:]     -= thispoptobedx.sum(axis=0) # assuming all diagnosed by ANC will go onto PMTCT
             nummothers[_dxnottx,:]  += thispoptobedx.sum(axis=0) # eps not small enough
-            thisnumpmtct             += thispoptobedx.sum()
+            thisnumpmtct            += thispoptobedx.sum()
 
         if debug and t < npts-1:
             if (people[undx,:,t+1] < 0).any():
@@ -1201,14 +1201,15 @@ def do_births(t, npts, dt, eps, birthratesarr, relhivbirth, people, npops, versi
             if propnewdiag > 0.01: print(f'INFO: {tvec[t]}: Increasing number diagnosed this year from {initrawdiag:.3f} to {raw_diag[:,t].sum():.3f} (up {propnewdiag*100:.2f}%)')
             if abs(numwillbedx - numdxforpmtct) > eps:
                 print(f"WARNING: Tried to diagnose {numwillbedx} out of {numundxhivpospregwomen.sum()} undiagnosed pregnant women but instead diagnosed {numdxforpmtct} at time {tvec[t]}")
-    elif proppmtctofdx > 1:
-        proppmtctofdx = 1
-        thisnumpmtct = proppmtctofdx * (eps*dt + nummothers_alldx(nummothers).sum())  # put all dx people onto pmtct
+    elif proppmtctofdxnottx > 1:
+        proppmtctofdxnottx = 1
+        thisnumpmtct = proppmtctofdxnottx * (eps*dt + nummothers_alldx(nummothers).sum())  # put all dx people onto pmtct
 
-    # New behaviour proppmtctofdx = numpmtct / dxpregwomen, whereas proppmtctofplhiv = numpmtct /  allhiv+pregwomen
-    proppmtctofdx = min(thisnumpmtct / (eps*dt + nummothers_alldx(nummothers).sum()), 1) # eps*dt to make sure that backwards compatible
-    #if oldbehaviour: proppmtctofplhiv = proppmtctofdx  # old behaviour is proppmtctofdx = numpmtct / dxpregwomen, and proppmtctofplhiv = numpmtct / dxpregwomen
-    proppmtctofplhiv = min(thisnumpmtct / (eps + nummothers_allplhiv(nummothers).sum()), 1)
+    # thisnumpmtct will now be the correct number we are actually reaching
+    proppmtctoftx = min(thisnumpmtct / (eps*dt + nummothers[_alltx,:].sum()),1)
+    proppmtctofdxnottx = max(thisnumpmtct - proppmtctoftx*nummothers[_alltx,:].sum(),0) / (eps*dt + nummothers[_dxnottx,:].sum()) # eps*dt to make sure that backwards compatible
+
+    proppmtctofplhiv = min(thisnumpmtct / (eps*dt + nummothers_allplhiv(nummothers).sum()), 1)
 
 
     # Calculate actual births, MTCT, and PMTCT
@@ -1218,7 +1219,7 @@ def do_births(t, npts, dt, eps, birthratesarr, relhivbirth, people, npops, versi
     births = zeros((10, len(motherpops),len(childpops)))
     _allbirths, _fromhivpos, _fromundx, _fromdxnottx, _fromalltx, mtct_fromundx, mtct_fromdxnottx, mtct_fromalltx, pmtct_received, mtct_fromonpmtct = range(10)
 
-    births[_allbirths]   = einsum('ij,i->ij', thisbirthrates, nummothers_all(nummothers))
+    births[_allbirths]   = einsum('ij,i->ij', thisbirthrates, nummothers[_all,:])
     births[_fromhivpos]  = einsum('ij,i->ij', thisbirthrates, nummothers_allplhiv(nummothers))
     # _fromundx + _fromdxnottx + _fromalltx = _fromhivpos
     births[_fromundx]    = einsum('ij,i->ij', thisbirthrates, nummothers[_undx,:])
@@ -1227,12 +1228,21 @@ def do_births(t, npts, dt, eps, birthratesarr, relhivbirth, people, npops, versi
 
     # These 3 add to total mtct births
     births[mtct_fromundx]    = births[_fromundx] * effmtct[t]
-    births[mtct_fromdxnottx] = births[_fromdxnottx] * (proppmtctofdx*pmtcteff[t] + (1-proppmtctofdx)*effmtct[t])
-    births[mtct_fromalltx]   = births[_fromalltx] * pmtcteff[t] # (proppmtctofdx*pmtcteff[t] + (1-proppmtctofdx)*pmtcteff[t])  # People on pmtct get pmtcteff[t], and people on art only also get pmtcteff[t] probability
+    births[mtct_fromdxnottx] = births[_fromdxnottx] * (proppmtctofdxnottx*pmtcteff[t] + (1-proppmtctofdxnottx)*effmtct[t])
+    births[mtct_fromalltx]   = births[_fromalltx] * pmtcteff[t] # (proppmtctoftx*pmtcteff[t] + (1-proppmtctoftx)*pmtcteff[t])  # People on pmtct get pmtcteff[t], and people on art only also get pmtcteff[t] probability
 
-    # Don't include this in total, this would double up on dx, tx pmtct births
-    births[pmtct_received]   = (births[_fromdxnottx] + births[_fromalltx]) * proppmtctofdx
-    births[mtct_fromonpmtct] = (births[_fromdxnottx] + births[_fromalltx]) * proppmtctofdx * pmtcteff[t]
+# current
+# 100 on ART, 100 dx not on ART, 100 on PMTCT -> 50 dx on PMTCT, 50 ART on PMTCT, 50 ART not PMTCT = 150 births on PMTCT
+# 100 on ART, 100 dx not on ART, 100 on PMTCT -> 100 on ART also PMTCT = 100 births on PMTCT
+
+# new
+# 100 on ART, 100 dx not on ART, 150 on PMTCT -> 100 on ART also PMTCT, 50 dx not on ART on PMTCT = 150 births on PMTCT
+# 100 on ART, 100 undx, 150 on PMTCT -> dx 50 -> 100 on ART also PMTCT, 50 dx not on ART on PMTCT = 150 births on PMTCT
+# proppmtctart -> 1 -> proppmtctdxnottx > 1
+#
+
+    births[pmtct_received]   = births[_fromdxnottx] * proppmtctofdxnottx + births[_fromalltx] * proppmtctoftx
+    births[mtct_fromonpmtct] = births[pmtct_received] * pmtcteff[t] # Don't include this in total, this would double up on dx, tx pmtct births
 
     # Outputs and update raw_s
     undxhivbirths[childpops] = births[mtct_fromundx].sum(axis=0)
@@ -1263,6 +1273,8 @@ def deprecated_births(t, npts, dt, eps, birthratesarr, relhivbirth, people, npop
                       motherpops, childpops, notmotherpops, effmtct, pmtcteff, plhivmap, advancedtracking,
                       numpmtct, proppmtct, raw_inci, raw_incibypop, raw_diagcd4, raw_incionpopbypopmethods, raw_mtct,
                       raw_births, raw_hivbirths, raw_dxforpmtct, raw_receivepmtct, debug):
+    ## Used for versions <= 2.12.1, the behaviour was consistent up to 2.11.4 and changed in 2.12.0.
+    # The new function above is for 2.12.2
 
     # Precalculate proportion on PMTCT, whether numpmtct or proppmtct is used
     # Now:
