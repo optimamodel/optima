@@ -141,6 +141,7 @@ def setrevisionmigrations(which='migrations'):
         ('2',   ('3', '2024-01-18', None,                           'Fix small unpickling bug and FE raises BadFileFormatError when uploading project that it cannot unpickle')),
         ('3',   ('4', '2024-01-18', updatemethodsettings,           'Update methods so `numinciallmethods` is split by regular, casual, commercial')),
         ('4',   ('5', '2024-06-26', None,                           'Update sampling of parameters to use default_rng to sample more randomly between parameters')),
+        ('5',   ('6', '2024-07-16', resetnumcircfromdata,           'Reset the fromdata attribute of the numcirc parameter to allow it to be updated')),
         ])
 
 
@@ -1696,6 +1697,16 @@ def updatemethodsettings(project=None, **kwargs):
 
         settings.now = 2023.0  # Default current year
         settings.dataend = 2040.0  # Default end year for data entry
+
+def resetnumcircfromdata(project=None, **kwargs):
+    '''
+        Migration between revision 5 and 6,
+        Resets fromdata attribute of numcirc to allow it to be updated from the databook in existing migrated projects
+    '''
+    if project is not None:
+        for parset in project.parsets.values():
+            parset.pars['numcirc'].fromdata = 1.0
+
 
 ##########################################################################################
 ### CORE MIGRATION FUNCTIONS

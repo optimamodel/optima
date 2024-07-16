@@ -4,6 +4,9 @@ Projects before `2.11.4` should be able to be migrated to version `2.11.4` witho
 
 Versions `2.11.4`, `2.12.0` and later all can be run using the branch `main`. A project will automatically update to the earliest supported version (currently `2.11.4`), but updating a project to the latest version can be done using the FE or `op.migrate(P, 'latest')`
 
+## Revision 6
+ - Reset the fromdata attribute of the numcirc parameter (to 1.0) to allow it to be updated (older version migration did not ensure this)
+
 ## Revision 5
  - Update random number generator seeding in `runsim` by seeding a list of `default_rng` objects that are passed through to parameters that need to be sampled within each individual `makesimpars` to both ensure consistency and to avoid all parameters being sampled based on the same seed (e.g. all low or all high)
  - When sampling, each parameter will use its own generator seeded by the global seed + a hash of the parameter short name - this means that changing which parameters are sampled will still be consistent for other parameters for the same seed, resulting in more consistent outputs
