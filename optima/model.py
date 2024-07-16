@@ -1139,7 +1139,7 @@ def do_births(t, npts, dt, eps, birthratesarr, relhivbirth, people, npops, versi
         return undxhivbirths, dxhivbirths, 0.0
 
     timestepsonpmtct = 1./dt # Specify the number of timesteps on which mothers are on PMTCT -- # WARNING: remove hard-coding
-    _sus,_undx,_dxnottx,_alltx = range(4) # Start with underscore to not override other variables
+    _all,_undx,_dxnottx,_alltx = range(4) # Start with underscore to not override other variables
     nummothers = zeros((4, len(motherpops))) # nummothers is mothers in this timestep since birthratesarr is per timestep since # birth = simpars['birth']*dt
 
     thisbirthrates = birthratesarr[motherpops,:,t].sum(axis=1)
