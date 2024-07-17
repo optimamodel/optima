@@ -671,6 +671,7 @@ class Programset(object):
                             cumulative_covered = 0. #make sure we can't have more than 100% coverage
                             #By sorting in descending order of program impact, and assuming that each person is only reached by the one most impactful program that they are reached by, we simplify the results.
                             for delt, cov in cov_tuple:
+                                if isnan(cov): outcomes[thispartype][thispop][yr] = nan
                                 #Coverage determined by interaction type
                                 #WARNING: a parameter with 'nested' or 'random' coverage and strong negative and strong positive deltas could get strange flipping results, but that's probably a problem with program definitions
                                 if self.covout[thispartype][thispop].interaction == 'additive' or len(progs_by_targetpar[thispartype][thispop])==1:
