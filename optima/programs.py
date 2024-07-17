@@ -766,9 +766,9 @@ class Programset(object):
                 name = parset.pars[key1].name
                 maxnamelen = max(len(name),maxnamelen)
                 maxkeylen = max(len(str(key2)),maxkeylen)
-                parvalue = parset.pars[key1].interp(tvec=year, asarray=False, usemeta=False)[key2]
-                budgetvalue = outcomes[key1][key2] 
-                if budgetvalue is not None: comparison.append([name, key2, parvalue[0], budgetvalue[0]])
+                parvalue = parset.pars[key1].interp(tvec=year, asarray=False, usemeta=False)[key2] ## NOTE!! use tvec from settings?
+                budgetvalue = outcomes[key1][key2]
+                if budgetvalue is not None: comparison.append([name, key2, parvalue[0], budgetvalue])
                 else: comparison.append([name, key2, parvalue[0], None])
         
         if doprint:
