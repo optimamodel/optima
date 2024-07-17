@@ -461,9 +461,12 @@ class Programset(object):
             totalbudget[program] = dcp(emptyarray)
             selectbudget[program] = []
             try:
-                for yrno, yr in enumerate(self.programs[program].costcovdata['t']):
-                    yrindex = findinds(tvec,yr)
-                    totalbudget[program][yrindex] = self.programs[program].costcovdata['cost'][yrno]
+                previndex = None
+                for yr, cost in sorted(zip(self.programs[program].costcovdata['t'], self.programs[program].costcovdata['cost']), key=lambda year_cost:year_cost[0] , reverse=True):
+                    if isnan(cost): continue
+                    yrindex = findinds(tvec,yr)[0]
+                    totalbudget[program][yrindex:previndex] = cost
+                    previndex = yrindex
                 lastbudget[program] = sanitize(totalbudget[program])[-1]
             except:
                 lastbudget[program] = nan # Initialize, to overwrite if there's data
@@ -487,7 +490,7 @@ class Programset(object):
     def getdefaultcoverage(self, t=None, parset=None, results=None, verbose=2, sample='best', proportion=False):
         ''' Extract the coverage levels corresponding to the default budget'''
         if t is not None: t = promotetoarray(t)
-        defaultbudget = self.getdefaultbudget() # WARNING: should be passing t here, but this causes interpolation issues
+        defaultbudget = self.getdefaultbudget(t=t) # FIXED previously: WARNING: should be passing t here, but this causes interpolation issues
         if t is not None:
             for prog,budget in defaultbudget.items():
                 defaultbudget[prog] = budget*ones(len(t))
