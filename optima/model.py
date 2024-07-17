@@ -1231,16 +1231,6 @@ def do_births(t, npts, dt, eps, birthratesarr, relhivbirth, people, npops, versi
     births[mtct_fromdxnottx] = births[_fromdxnottx] * (proppmtctofdxnottx*pmtcteff[t] + (1-proppmtctofdxnottx)*effmtct[t])
     births[mtct_fromalltx]   = births[_fromalltx] * pmtcteff[t] # (proppmtctoftx*pmtcteff[t] + (1-proppmtctoftx)*pmtcteff[t])  # People on pmtct get pmtcteff[t], and people on art only also get pmtcteff[t] probability
 
-# current
-# 100 on ART, 100 dx not on ART, 100 on PMTCT -> 50 dx on PMTCT, 50 ART on PMTCT, 50 ART not PMTCT = 150 births on PMTCT
-# 100 on ART, 100 dx not on ART, 100 on PMTCT -> 100 on ART also PMTCT = 100 births on PMTCT
-
-# new
-# 100 on ART, 100 dx not on ART, 150 on PMTCT -> 100 on ART also PMTCT, 50 dx not on ART on PMTCT = 150 births on PMTCT
-# 100 on ART, 100 undx, 150 on PMTCT -> dx 50 -> 100 on ART also PMTCT, 50 dx not on ART on PMTCT = 150 births on PMTCT
-# proppmtctart -> 1 -> proppmtctdxnottx > 1
-#
-
     births[pmtct_received]   = births[_fromdxnottx] * proppmtctofdxnottx + births[_fromalltx] * proppmtctoftx
     births[mtct_fromonpmtct] = births[pmtct_received] * pmtcteff[t] # Don't include this in total, this would double up on dx, tx pmtct births
 

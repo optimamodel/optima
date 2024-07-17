@@ -67,11 +67,16 @@ ALL PLANNED / TODO:
  - Change `forcepopsize` to not affect the number of PLHIV. The previous assumption was to remove (or add) people from (or into) the susceptible and the "not on ART" states. Now people only are removed from (or added into) the susceptible states.
 
 
-# [2.12.2] - 2024-07-12
+# [2.12.2] - 2024-07-17
  - Clean up MTCT code and fix problems:
    - MTCT of people on ART was being double-counted
-   - CHANGES to tx and dx split of PMTCT !!
- - Fix rare negative people issue when FOI is very high - make FOI = min(FOI, 1)
+   - Changed who PMTCT goes to based on their diagnosis / treatment state:
+     - Previously went randomly to anyone diagnosed, including people diagnosed but not in care. This meant some pregnant people on ART were not getting PMTCT but they were getting the low probability of transmission from being on ART.
+     - eg: 100 preg people on ART, 100 preg people who are dx but not on ART, data PMTCT: 100 on PMTCT -> 50 dx (not on ART people) on PMTCT, 50 people on ART also on PMTCT, 50 people on ART but not PMTCT = 150 births at the lower probability of being on PMTCT
+     - Now: first give PMTCT to anyone on ART, then if there is more PMTCT spots, put any diagnosed people not on ART onto PMTCT. Then if there is more PMTCT spots, try to diagnose people to put onto PMTCT (they can go onto ART next time step if there is spots).
+     - eg: 100 preg people on ART, 100 preg people who are dx but not on ART, data PMTCT: 100 on PMTCT -> *Only* 100 on ART also PMTCT = 100 births on PMTCT
+     - NOTE: this can mean that populations which have more people on ART get more PMTCT if there is only enough spots for the number of people on ART
+ - Fix rare negative people issue when FOI is very high (when probability of infection for a population is >1) - make FOI = min(FOI, 1)
 
 ## [2.12.1] - 2024-05-27
  - Fix `numcirc` being set to 0 in the `Parameterset` upon loading from data - meaning running with just a parset had no VMMC. Running scenarios or programs affecting `numcirc` (eg. with VMMC program) were still working, just not the calibration.
