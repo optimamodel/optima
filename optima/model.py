@@ -854,7 +854,7 @@ def model(simpars=None, settings=None, version=None, initpeople=None, initprops=
         ##############################################################################################################
 
         undxhivbirths, dxhivbirths, thisproppmtct = do_births(t, npts, dt, eps, birthratesarr, relhivbirth, people, npops, version, undx, dx, alldx, alltx, allplhiv, sus,mtct,nstates,dxnottx,
-              motherpops, childpops, notmotherpops, effmtct, pmtcteff, plhivmap, advancedtracking, settings, mtctgroupmap,
+              motherpops, childpops, notmotherpops, effmtct, pmtcteff, plhivmap, advancedtracking, settings, mtctgroupmap, tvec,
               numpmtct, proppmtct, raw_inci, raw_incibypop, raw_diagcd4, raw_incionpopbypopmethods, raw_mtct,
               raw_births, raw_hivbirths, raw_dxforpmtct, raw_receivepmtct, debug)
 
@@ -1112,7 +1112,7 @@ def model(simpars=None, settings=None, version=None, initpeople=None, initprops=
 
 
 def do_births(t, npts, dt, eps, birthratesarr, relhivbirth, people, npops, version, undx, dx, alldx, alltx, allplhiv, sus,mtct,nstates,dxnottx,
-              motherpops, childpops, notmotherpops, effmtct, pmtcteff, plhivmap, advancedtracking, settings, mtctgroupmap,
+              motherpops, childpops, notmotherpops, effmtct, pmtcteff, plhivmap, advancedtracking, settings, mtctgroupmap, tvec,
               numpmtct, proppmtct, raw_inci, raw_incibypop, raw_diagcd4, raw_incionpopbypopmethods, raw_mtct,
               raw_births, raw_hivbirths, raw_dxforpmtct, raw_receivepmtct, debug):
 
@@ -1177,7 +1177,7 @@ def do_births(t, npts, dt, eps, birthratesarr, relhivbirth, people, npops, versi
         if debug:
             numwillbedx = proptobedx * nummothers[_undx, :].sum()
             initrawdiag = raw_diagcd4[:,:,t].sum(axis=(0,1))
-            numdxforpmtct += thispoptobedx.sum()  # in this timestep aka not annualised
+            numdxforpmtct = thispoptobedx.sum()  # in this timestep aka not annualised
 
         # Update outputs
         raw_diagcd4[:,motherpops,t]  += thispoptobedx             /dt  # annualise
@@ -1193,12 +1193,12 @@ def do_births(t, npts, dt, eps, birthratesarr, relhivbirth, people, npops, versi
             if (people[undx,:,t+1] < 0).any():
                 print(f"WARNING: Tried to diagnose {thispoptobedx} pregnant HIV+ women from populations {motherpops} but this made the people negative:{people[undx,p1,t+1]}")
         if debug:
-            totalbirthrate = array(totalbirthrate)
+            totalbirthrate = array(thisbirthrates)
             avbirthrate = sum(totalbirthrate[totalbirthrate!=0]) / sum(totalbirthrate!=0)
-            propnexttime = avbirthrate * relhivbirth * timestepsonpmtct
-            if proptobedx > 0.01: print(f'INFO: {tvec[t]}: Diagnosing {numdxforpmtct:.2f}={proptobedx * 100:.2f}% (wanted {numtobedx:.2f}) of pregnant undiagnosed HIV+ women. Only approx {propnexttime*100:.2f}% of these will be pregnant next time step')
+            # propnexttime = avbirthrate * relhivbirth * timestepsonpmtct
+            if proptobedx > 0.01: print(f'DEBUG: {tvec[t]}: Diagnosing {numdxforpmtct:.2f}={proptobedx * 100:.2f}% (wanted {numtobedx:.2f}) of pregnant undiagnosed HIV+ women.')
             propnewdiag = raw_diagcd4[:,:,t].sum(axis=(0,1))/(initrawdiag+eps)-1
-            if propnewdiag > 0.01: print(f'INFO: {tvec[t]}: Increasing number diagnosed this year from {initrawdiag:.3f} to {raw_diag[:,t].sum():.3f} (up {propnewdiag*100:.2f}%)')
+            if propnewdiag > 0.01: print(f'DEBUG: {tvec[t]}: Increasing number diagnosed this year from {initrawdiag:.3f} to {raw_diagcd4[:,:,t].sum():.3f} (up {propnewdiag*100:.2f}%)')
             if abs(numwillbedx - numdxforpmtct) > eps:
                 print(f"WARNING: Tried to diagnose {numwillbedx} out of {numundxhivpospregwomen.sum()} undiagnosed pregnant women but instead diagnosed {numdxforpmtct} at time {tvec[t]}")
     elif proppmtctofdxnottx > 1:
