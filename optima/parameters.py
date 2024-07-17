@@ -812,7 +812,7 @@ class Timepar(Par):
             if not sample:
                 meta = self.m
             else:
-                if sample=='new' or self.msample is None: self.sample(rng_sampler=rng_sampler, best=self.m) # msample doesn't exist, make it
+                if sample=='new' or self.msample is None: self.sample(rng_sampler=rng_sampler) # msample doesn't exist, make it
                 meta = self.msample
         
         # Set things up and do the interpolation
