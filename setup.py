@@ -44,5 +44,6 @@ setup(
         'xlrd==1.2.0', #WARNING temporary to read xlsx files and needs to to be replaced with a migration to openpyxl
         'xlsxwriter',
         'sciris>=3.0.0',
+        'scipy',
     ],
 )

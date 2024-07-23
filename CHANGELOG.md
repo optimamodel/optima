@@ -4,6 +4,9 @@ Projects before `2.11.4` should be able to be migrated to version `2.11.4` witho
 
 Versions `2.11.4`, `2.12.0` and later all can be run using the branch `main`. A project will automatically update to the earliest supported version (currently `2.11.4`), but updating a project to the latest version can be done using the FE or `op.migrate(P, 'latest')`
 
+## Revision 6
+ - Reset the fromdata attribute of the numcirc parameter (to 1.0) to allow it to be updated (older version migration did not ensure this)
+
 ## Revision 5
  - Update random number generator seeding in `runsim` by seeding a list of `default_rng` objects that are passed through to parameters that need to be sampled within each individual `makesimpars` to both ensure consistency and to avoid all parameters being sampled based on the same seed (e.g. all low or all high)
  - When sampling, each parameter will use its own generator seeded by the global seed + a hash of the parameter short name - this means that changing which parameters are sampled will still be consistent for other parameters for the same seed, resulting in more consistent outputs
@@ -58,7 +61,7 @@ Migration to a new version is done on load `P = get_latest_project("example", mi
  - An error will show if making a program with the same long or short name as another one.
  - The Optimization constraints are now proportional to the default budget (latest) for that progset (`proporigconstraints`). This means a 100% min constraint actually means the min budget is the latest budget - as opposed to having to scale it up or down depending on the total budget. If an Optim also has `contraints` and `absconstraints` those will also be followed and reflected in the constraints shown. But if you change the optimization then the `constraints` and `absconstraints` will be removed.
 
-## [2.12.2] - 
+## [2.12.3] - 
 ALL PLANNED / TODO:
  - !! TB/HIV co-infection mortality
  - Change acts to be better balanced
@@ -66,6 +69,17 @@ ALL PLANNED / TODO:
  - `Multiresultset.parsetname` and `Multiresultset.progsetname` is now an odict, with a key and value for each result.
  - Change `forcepopsize` to not affect the number of PLHIV. The previous assumption was to remove (or add) people from (or into) the susceptible and the "not on ART" states. Now people only are removed from (or added into) the susceptible states.
 
+
+# [2.12.2] - 2024-07-17
+ - Clean up MTCT code and fix problems:
+   - MTCT of people on ART was being double-counted
+   - Changed who PMTCT goes to based on their diagnosis / treatment state:
+     - Previously went randomly to anyone diagnosed, including people diagnosed but not in care. This meant some pregnant people on ART were not getting PMTCT but they were getting the low probability of transmission from being on ART.
+     - eg: 100 preg people on ART, 100 preg people who are dx but not on ART, data PMTCT: 100 on PMTCT -> 50 dx (not on ART people) on PMTCT, 50 people on ART also on PMTCT, 50 people on ART but not PMTCT = 150 births at the lower probability of being on PMTCT
+     - Now: first give PMTCT to anyone on ART, then if there is more PMTCT spots, put any diagnosed people not on ART onto PMTCT. Then if there is more PMTCT spots, try to diagnose people to put onto PMTCT (they can go onto ART next time step if there is spots).
+     - eg: 100 preg people on ART, 100 preg people who are dx but not on ART, data PMTCT: 100 on PMTCT -> *Only* 100 on ART also PMTCT = 100 births on PMTCT
+     - NOTE: this can mean that populations which have more people on ART get more PMTCT if there is only enough spots for the number of people on ART
+ - Fix rare negative people issue when FOI is very high (when probability of infection for a population is >1) - make FOI = min(FOI, 1)
 
 ## [2.12.1] - 2024-05-27
  - Fix `numcirc` being set to 0 in the `Parameterset` upon loading from data - meaning running with just a parset had no VMMC. Running scenarios or programs affecting `numcirc` (eg. with VMMC program) were still working, just not the calibration.
