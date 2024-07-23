@@ -120,7 +120,7 @@ def loadspreadsheet(filename=None, folder=None, verbose=2, projectversion=None):
     ## Initialize other quantities
     blhindices = {'best':0, 'low':1, 'high':2} # Define best-low-high indices
     skipblanksheets = ['Optional indicators', 'Cascade'] # Don't check optional indicators, check everything else
-    skipblankpars = ['numcirc']
+    skipblankpars = []
     
     ## Actually open workbook
     try:  workbook = open_workbook(fullpath) # Open workbook
