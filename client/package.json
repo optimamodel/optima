@@ -25,7 +25,7 @@
     "gulp-util": "=3.0.6",
     "postcss-assets": "=3.0.3",
     "postcss-import": "=7.0.0",
-    "underscore": "=1.8.3"
+    "underscore": "=1.12.1"
   },
   "dependencies": {
     "gulp": "^3.9.1"
