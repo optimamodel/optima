@@ -1362,7 +1362,7 @@ def minoutcomes(project=None, optim=None, tvec=None, absconstraints=None, verbos
             else: printv(f'\nRunning {len(allargs)} optimizations in serial',2,verbose)
 
             # Need different settings for older than sciris 2.0.2
-            if compareversions(sc.__version__, '2.0.2') < 0:  not_parsettings = {'serial':True}
+            if compareversions(sc.__version__, '2.0.2') < 0 or compareversions(sc.__version__, '3.0.0') >= 0:  not_parsettings = {'serial':True}
             else: not_parsettings = {'parallelizer':'serial-nocopy'}
 
             try: asdrawresults = sc.parallelize(asd, iterkwargs=allargs, ncpus=int(ncpus), **(not_parsettings if not parallel else {}))
