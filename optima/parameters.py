@@ -6,7 +6,7 @@ parameters, the Parameterset class.
 Version: 2.1 (2017apr04)
 """
 
-from numpy import array, nan, isnan, isfinite, zeros, ones, argmax, mean, log, polyfit, exp, maximum, minimum, Inf, linspace, median, shape, append, logical_and, isin, multiply, frombuffer
+from numpy import array, nan, isnan, isfinite, zeros, ones, argmax, mean, log, polyfit, exp, maximum, minimum, inf, linspace, median, shape, append, logical_and, isin, multiply, frombuffer
 from numpy.random import uniform, normal, seed, default_rng
 from optima import OptimaException, compareversions, Link, LinkException, standard_dcp, odict, odict_custom, dataframe, printv, sanitize, uuid, today, getdate, makefilepath, smoothinterp, dcp, defaultrepr, isnumber, findinds, findnearest, getvaliddata, promotetoarray, promotetolist, inclusiverange # Utilities
 from optima import Settings, getresults, convertlimits, gettvecdt, loadpartable, loadtranstable # Heftier functions
@@ -1203,15 +1203,15 @@ def balance(act=None, which=None, data=None, popkeys=None, fpopkeys=None, mpopke
     # Decide which years to use -- use the earliest year, the latest year, and the most time points available
     yearstouse = []    
     for row in range(npops): yearstouse.append(getvaliddata(data['years'], data[which+act][row]))
-    minyear = Inf
-    maxyear = -Inf
+    minyear = inf
+    maxyear = -inf
     npts = 1 # Don't use fewer than 1 point
     for row in range(npops):
         minyear = minimum(minyear, min(yearstouse[row]))
         maxyear = maximum(maxyear, max(yearstouse[row]))
         npts = maximum(npts, len(yearstouse[row]))
-    if minyear==Inf:  minyear = data['years'][0] # If not set, reset to beginning
-    if maxyear==-Inf: maxyear = data['years'][-1] # If not set, reset to end
+    if minyear==inf:  minyear = data['years'][0] # If not set, reset to beginning
+    if maxyear==-inf: maxyear = data['years'][-1] # If not set, reset to end
     ctrlpts = linspace(minyear, maxyear, npts).round() # Force to be integer...WARNING, guess it doesn't have to be?
     
     # Interpolate over population acts data for each year
@@ -1844,7 +1844,7 @@ def checkifparsoverridepars(origpars, targetpars, progstartyear=None, progendyea
             timesnan = tvals[isnan(yvals)]
             if len(timesset) == 0: continue
             maxtimesetbefore = max(append(timesset[timesset<progstartyear], -1))
-            mintimesetafter  = min(append(timesset[timesset>=progendyear], Inf))
+            mintimesetafter  = min(append(timesset[timesset>=progendyear], inf))
             if logical_and(timesset>=progstartyear, timesset<progendyear).any(): # proportion is set during the programs
                 willoverride = True
             elif maxtimesetbefore>=0 or isfinite(mintimesetafter): # the prop is set either before or after programs
