@@ -2,12 +2,13 @@
 # -*- coding: utf-8 -*-
 
 from setuptools import setup, find_packages
+import runpy
 import os
 
-# Read version (adapted from Atomica)
+# Read version (adapted from Covasim)
 cwd = os.path.abspath(os.path.dirname(__file__))
-with open(os.path.join(cwd, 'optima', 'version.py'), 'r') as f:
-    version = [x.split('=')[1].replace('"','').strip() for x in f if x.startswith('version =')][0]
+versionpath = os.path.join(cwd, 'optima', 'version.py')
+version = runpy.run_path(versionpath)['version']
 
 # Read README.md for description
 with open(os.path.join(cwd,'README.md'), 'r') as f:
