@@ -597,7 +597,7 @@ class Resultset(object):
 
         return None
 
-    def export(self, filename=None, folder=None, bypop=True, sep=',', ind=None, key=None, sigfigs=None, writetofile=True, asexcel=True, verbose=2):
+    def export(self, filename=None, folder=None, bypop=True, sep=',', ind=None, key=None, sigfigs=None, writetofile=True, asexcel=True, exportother=False, verbose=2):
         """ Method for exporting results to an Excel or CSV file """
 
         # Handle export by either index or key -- WARNING, still inelegant at best! Accepts key or ind, not both
@@ -626,6 +626,27 @@ class Resultset(object):
                     if '(per 100 p.y.)' in self.main[mainkey].name: outputstr += ('%s' + sep) % sigfig(100 * data[t], sigfigs=sigfigs)
                     elif self.main[mainkey].ispercentage:           outputstr += ('%s'+prcstr+sep) % sigfig(data[t], sigfigs=sigfigs)
                     else:                                           outputstr += ('%s'+sep) % sigfig(data[t], sigfigs=sigfigs)
+        
+        if exportother:
+            otherkeys = self.other.keys()
+            for otherkey in otherkeys:
+                try: #put this in a try-except as not all 'other' outputs are in the correct form e.g. incionpopbypop has a different shape to others to capture detailed transmission.
+                    thisoutputstr = ''
+                    if bypop: thisoutputstr += '\n' # Add a line break between different indicators
+                    if bypop: popkeys = ['tot']+self.popkeys  # include total even for bypop -- WARNING, don't try to change this!
+                    else:     popkeys = ['tot']
+                    for pk, popkey in enumerate(popkeys):
+                        thisoutputstr += '\n'
+                        if bypop and popkey != 'tot': data = self.other[otherkey].pops[ind][pk-1, :]  # WARNING, assumes 'tot' is always the first entry
+                        else:                       data = self.other[otherkey].tot[ind][:]
+                        thisoutputstr += self.other[otherkey].name+sep+popkey+sep
+                        for t in range(npts):
+                            if '(per 100 p.y.)' in self.other[otherkey].name: thisoutputstr += ('%s' + sep) % sigfig(100 * data[t], sigfigs=sigfigs)
+                            elif self.other[otherkey].ispercentage:           thisoutputstr += ('%s'+prcstr+sep) % sigfig(data[t], sigfigs=sigfigs)
+                            else:                                             thisoutputstr += ('%s'+sep) % sigfig(data[t], sigfigs=sigfigs)
+                    outputstr += thisoutputstr #do this at the end to ensure entirely skipping outputs that don't work because they're more complicated
+                except:
+                    print (f'{otherkey} cannot be exported')
 
         # Handle budget and coverage
         thisbudget = []
