@@ -144,6 +144,7 @@ def setrevisionmigrations(which='migrations'):
         ('4',   ('5', '2024-06-26', None,                           'Update sampling of parameters to use default_rng to sample more randomly between parameters')),
         ('5',   ('6', '2024-07-16', resetnumcircfromdata,           'Reset the fromdata attribute of the numcirc parameter to allow it to be updated')),
         ('6',   ('7', '2024-06-26', None,                           'Add most "other" outputs to the standard excel sheet with optional argument')),
+        ('7',   ('8', '2024-06-27', None,                           'Update definition of "latediag" to be CD4<350 (and add separate output for undiagCD4<350 to align)')),
         ])
 
 
