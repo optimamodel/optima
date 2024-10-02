@@ -7,7 +7,7 @@ import os
 # Read version (adapted from Atomica)
 cwd = os.path.abspath(os.path.dirname(__file__))
 with open(os.path.join(cwd, 'optima', 'version.py'), 'r') as f:
-    version = [x.split("'")[-2].replace('"','').replace("'",'').strip() for x in f if x.startswith('supported_versions =')][0]
+    version = [x.split("]")[0].split("'")[-2].replace('"','').replace("'",'').strip() for x in f if x.startswith('supported_versions =')][0]
 
 # Read README.md for description
 with open(os.path.join(cwd,'README.md'), 'r') as f:
