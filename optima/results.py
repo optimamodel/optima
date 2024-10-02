@@ -142,8 +142,9 @@ class Resultset(object):
         self.other['numemiplhiv']       = Result('New PLHIV emigrants')
         if advancedtracking:
             self.other['numnewdiagcd4']      = Result('New HIV diagnoses by CD4 count', defaultplot='stacked')
-            self.other['proplatediag']       = Result('Proportion of new HIV diagnoses with CD4<200 (%)', ispercentage=True, defaultplot='total')
+            self.other['proplatediag']       = Result('Proportion of new HIV diagnoses with CD4<350 (%)', ispercentage=True, defaultplot='total')
             self.other['propundxcd4lt200']   = Result('Proportion of undiagnosed PLHIV with CD4<200 (%)', ispercentage=True, defaultplot='total')
+            self.other['propundxcd4lt350']   = Result('Proportion of undiagnosed PLHIV with CD4<350 (%)', ispercentage=True, defaultplot='total')
             self.other['numincionpopbypop']  = Result('New HIV infections acquired from pop', defaultplot='population+stacked')
             self.other['numtransitpopbypop'] = Result('HIV infections transitioned from pop', defaultplot='population+stacked')
             self.other['numincimethods']     = Result('New HIV infections by method of transmission', defaultplot='population+stacked')
@@ -349,6 +350,7 @@ class Resultset(object):
         alltx        = self.settings.alltx
         svl          = self.settings.svl
         aidsind      = self.settings.aidsind
+        latediagind  = self.settings.hivstates.index('gt200') #Late diag is CD4<350
         data         = self.data
         if advancedtracking:
             alldiagcd4         = assemble('diagcd4')
@@ -562,13 +564,17 @@ class Resultset(object):
                 self.other['numnewdiagcd4'].datatot = processdata(data['optnumdiag'], uncertainty=True)
                 self.other['numnewdiagcd4'].estimate = False  # It's real data, not just an estimate
 
-            # Assume CD4<200 is anything after aidsind (aidsind = location of 'gt50' = 50<CD4<200)
-            self.other['proplatediag'].pops = process(alldiagcd4[:,aidsind:,:,:][:,:,:,indices].sum(axis=1)/maximum(alldiag[:,:,indices],eps)) # Axis 1 is cd4 state
-            self.other['proplatediag'].tot  = process(alldiagcd4[:,aidsind:,:,:][:,:,:,indices].sum(axis=(1,2))/maximum(alldiag[:,:,indices].sum(axis=1),eps))  # Axis 1 is populations
+            # Follow definition of latediagind above (should be CD4<350 by standard)
+            self.other['proplatediag'].pops = process(alldiagcd4[:,latediagind:,:,:][:,:,:,indices].sum(axis=1)/maximum(alldiag[:,:,indices],eps)) # Axis 1 is cd4 state
+            self.other['proplatediag'].tot  = process(alldiagcd4[:,latediagind:,:,:][:,:,:,indices].sum(axis=(1,2))/maximum(alldiag[:,:,indices].sum(axis=1),eps))  # Axis 1 is populations
 
             undxcd4lt200 = array(undx)[aidsind:] # Assume anything after aidsind (aidsind = location of 'gt50' = 50<CD4<200)
             self.other['propundxcd4lt200'].pops = process(allpeople[:,undxcd4lt200,:,:][:,:,:,indices].sum(axis=1)/maximum(allpeople[:,undx,:,:][:,:,:,indices].sum(axis=1),eps))
             self.other['propundxcd4lt200'].tot  = process(allpeople[:,undxcd4lt200,:,:][:,:,:,indices].sum(axis=(1,2))/maximum(allpeople[:,undx,:,:][:,:,:,indices].sum(axis=(1,2)),eps))
+            
+            undxcd4lt350 = array(undx)[latediagind:] # Follow definition of latediagind above (should be CD4<350 by standard)
+            self.other['propundxcd4lt350'].pops = process(allpeople[:,undxcd4lt350,:,:][:,:,:,indices].sum(axis=1)/maximum(allpeople[:,undx,:,:][:,:,:,indices].sum(axis=1),eps))
+            self.other['propundxcd4lt350'].tot  = process(allpeople[:,undxcd4lt350,:,:][:,:,:,indices].sum(axis=(1,2))/maximum(allpeople[:,undx,:,:][:,:,:,indices].sum(axis=(1,2)),eps))
 
             self.other['numincionpopbypop'].pops = process(allincionpopbypop[:, :, :, :, indices].sum(axis=2))  # Axis 2 is health state of causers
             self.other['numincionpopbypop'].tot  = process(allincionpopbypop[:, :, :, :, indices].sum(axis=(2, 3)))  # Axis 3 is causer populations
@@ -597,7 +603,7 @@ class Resultset(object):
 
         return None
 
-    def export(self, filename=None, folder=None, bypop=True, sep=',', ind=None, key=None, sigfigs=None, writetofile=True, asexcel=True, verbose=2):
+    def export(self, filename=None, folder=None, bypop=True, sep=',', ind=None, key=None, sigfigs=None, writetofile=True, asexcel=True, exportother=False, verbose=2):
         """ Method for exporting results to an Excel or CSV file """
 
         # Handle export by either index or key -- WARNING, still inelegant at best! Accepts key or ind, not both
@@ -626,6 +632,27 @@ class Resultset(object):
                     if '(per 100 p.y.)' in self.main[mainkey].name: outputstr += ('%s' + sep) % sigfig(100 * data[t], sigfigs=sigfigs)
                     elif self.main[mainkey].ispercentage:           outputstr += ('%s'+prcstr+sep) % sigfig(data[t], sigfigs=sigfigs)
                     else:                                           outputstr += ('%s'+sep) % sigfig(data[t], sigfigs=sigfigs)
+        
+        if exportother:
+            otherkeys = self.other.keys()
+            for otherkey in otherkeys:
+                try: #put this in a try-except as not all 'other' outputs are in the correct form e.g. incionpopbypop has a different shape to others to capture detailed transmission.
+                    thisoutputstr = ''
+                    if bypop: thisoutputstr += '\n' # Add a line break between different indicators
+                    if bypop: popkeys = ['tot']+self.popkeys  # include total even for bypop -- WARNING, don't try to change this!
+                    else:     popkeys = ['tot']
+                    for pk, popkey in enumerate(popkeys):
+                        thisoutputstr += '\n'
+                        if bypop and popkey != 'tot': data = self.other[otherkey].pops[ind][pk-1, :]  # WARNING, assumes 'tot' is always the first entry
+                        else:                       data = self.other[otherkey].tot[ind][:]
+                        thisoutputstr += self.other[otherkey].name+sep+popkey+sep
+                        for t in range(npts):
+                            if '(per 100 p.y.)' in self.other[otherkey].name: thisoutputstr += ('%s' + sep) % sigfig(100 * data[t], sigfigs=sigfigs)
+                            elif self.other[otherkey].ispercentage:           thisoutputstr += ('%s'+prcstr+sep) % sigfig(data[t], sigfigs=sigfigs)
+                            else:                                             thisoutputstr += ('%s'+sep) % sigfig(data[t], sigfigs=sigfigs)
+                    outputstr += thisoutputstr #do this at the end to ensure entirely skipping outputs that don't work because they're more complicated
+                except:
+                    print (f'{otherkey} cannot be exported')
 
         # Handle budget and coverage
         thisbudget = []

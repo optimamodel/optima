@@ -4,6 +4,12 @@ Projects before `2.11.4` should be able to be migrated to version `2.11.4` witho
 
 Versions `2.11.4`, `2.12.0` and later all can be run using the branch `main`. A project will automatically update to the earliest supported version (currently `2.11.4`), but updating a project to the latest version can be done using the FE or `op.migrate(P, 'latest')`
 
+## Revision 8
+ - Update definition of "latediag" to be CD4<350 (and add separate output for undiagCD4<350 to align)
+
+## Revision 7
+ - Add most "other" outputs to the standard excel sheet with optional argument - this just adds everything that doesn't generate a hard error from a copy of the main code, so it could be improved, but these results are still useful for troubleshooting.
+
 ## Revision 6
  - Reset the fromdata attribute of the numcirc parameter (to 1.0) to allow it to be updated (older version migration did not ensure this)
 
