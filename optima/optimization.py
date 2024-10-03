@@ -2120,23 +2120,8 @@ def icers(name=None, project=None, parsetname=None, progsetname=None, objective=
             # Finally, calculate the outcome per dollar
             thisiecr = array(estimates).mean() # Average upper and lower estimates, if available -- "iecr" is the inverse of an icer
             if thisiecr<0:
-                if marginal:
-                    if (lowerdiffx<0 and upperdiffx<0) and (lowerdiffy>0 and upperdiffy>0): #cost saving both ends and having positive impact both ends: clearly beneficial
-                        thisecr = -2.0
-                    elif (lowerdiffx<0 or upperdiffx<0) and (lowerdiffy>0 or upperdiffy>0): #maybe cost saving and maybe having a positive impact...
-                        thisecr = -1.0
-                    else: #probably costing money and having a negative impact
-                        thisecr = 0.0
-                else:
-                    if baselinediffx<0 and baselinediffy>0: #cost saving and having positive impact: clearly beneficial
-                        thisecr = -2.0
-                    else: #probably costing money and having a negative impact:: set value to 0 which will set icer to extremely high
-                        thisecr = 0.0
-                if thisecr == 0:
-                    printv('WARNING, ICER for "%s" at budget ratio %0.1f is negative (%0.3e) due to negative impact on objective; setting ICER to 0.0' % (key, budgetratios[b], 1./(thisiecr+icereps)), 1, verbose)
-                else:
-                    printv('WARNING, ICER for "%s" at budget ratio %0.1f is negative (%0.3e) due to cost saving; setting ICER to %0.1f' % (key, budgetratios[b], 1./(thisiecr+icereps), thisecr), 1, verbose)
-                # thisiecr = 0.0;
+                thisiecr = 0.0
+                printv('WARNING, ICER for "%s" at budget ratio %0.1f is negative (%0.3e) due to cost saving; setting ICER to %0.1f' % (key, budgetratios[b], 1./(thisiecr+icereps), thisiecr), 1, verbose)
             y[key].append(thisiecr)
             
             if thisiecr >= 0:
