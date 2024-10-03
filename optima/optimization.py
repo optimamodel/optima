@@ -2002,7 +2002,8 @@ def icers(name=None, project=None, parsetname=None, progsetname=None, objective=
     
     # Set defaults
     eps = project.settings.eps
-    icereps = 1e-9 # A smaller epsilon for ensuring ICER divisions aren't zero
+    icereps = 1e-12 # A smaller epsilon for ensuring ICER divisions aren't zero
+    minbudget = 1000.
     if marginal     is None: marginal     = True
     if objective    is None: objective    = 'daly'
     if parsetname   is None: parsetname   = -1
@@ -2031,6 +2032,11 @@ def icers(name=None, project=None, parsetname=None, progsetname=None, objective=
     defaultbudget = project.defaultbudget(progsetname, optimizable=True)  # ...and just for optimizable programs
     keys = defaultbudget.keys() # Get the program keys
     nkeys = len(keys)
+    
+    #Set the minimum spend in the default budget so that ICERs can be generated
+    for key in keys:
+        if defaultbudget[key]<minbudget:
+            defaultbudget[key] = minbudget
     
     # Calculate the initial people distribution
     initresults = project.runsim(parsetname=parsetname, progsetname=progsetname, keepraw=True, verbose=0, label=project.name+'-minoutcomes', addresult=False, advancedtracking=True, end=objectives['end'])
@@ -2114,9 +2120,10 @@ def icers(name=None, project=None, parsetname=None, progsetname=None, objective=
             # Finally, calculate the outcome per dollar
             thisiecr = array(estimates).mean() # Average upper and lower estimates, if available -- "iecr" is the inverse of an icer
             if thisiecr<0:
-                printv('WARNING, ICER for "%s" at budget ratio %0.1f is negative (%0.3e); setting to 0' % (key, budgetratios[b], 1./(thisiecr+icereps)), 1, verbose)
-                thisiecr = 0.0;
+                thisiecr = 0.0
+                printv('WARNING, ICER for "%s" at budget ratio %0.1f is negative (%0.3e) due to cost saving; setting ICER to %0.1f' % (key, budgetratios[b], 1./(thisiecr+icereps), thisiecr), 1, verbose)
             y[key].append(thisiecr)
+            icer[key].append(1.0/(thisiecr+icereps))
     
     # Convert to arrays
     for key in keys:
@@ -2125,8 +2132,13 @@ def icers(name=None, project=None, parsetname=None, progsetname=None, objective=
         y[key]    = array(y[key]) 
     
     # Calculate actual ICERs
-    for key in keys:
-        icer[key] = 1.0/(y[key]+icereps)
+    # for key in keys:
+    #     if y[key]>=0:
+    #         icer[key] = 1.0/(y[key]+icereps)
+    #     elif y[key]==-1:
+    #         icer[key] = array([1.0/(y[key]+icereps)
+    #     elif y[key]==-1:
+    #         icer[key] = 'Cost saving'
     
     # Summarize results
     nearest = findnearest(budgetratios, 1.0)
