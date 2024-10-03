@@ -2208,11 +2208,11 @@ def ploticers(results=None, figsize=globalfigsize, lw=2, dotsize=30, titlesize=g
         raise OptimaException(errormsg)
     
     # Figure out y-axis limits
-    minicer  = icer[:].min()
+    minicer  = min([min([y if y>0 else 9e9 for y in x]) for x in icer[:]]) #filter out any <0 values
     maxicer  = icer[:].max()
     meanicer = icer[:].mean()
     totalbudget = results.defaultbudget[:].sum()
-    upperlim = min([maxicer, totalbudget, 10*meanicer, 50*minicer]) # Set the y limit based on the minimum of each of these different options
+    upperlim = min([maxicer, totalbudget, 10*meanicer, 100*minicer]) # Set the y limit based on the minimum of each of these different options
     
     # Do the plotting
     sizeratio = 1.5
@@ -2233,7 +2233,7 @@ def ploticers(results=None, figsize=globalfigsize, lw=2, dotsize=30, titlesize=g
     boxoff(ax)
     ax.title.set_fontsize(titlesize)
     ax.xaxis.label.set_fontsize(labelsize)
-    ax[-1].tick_params(axis='both', which='major', labelsize=ticksize)
+    ax.tick_params(axis='both', which='major', labelsize=ticksize)
 
     # Configure plot specifics
     ax.set_title('ICERs')
