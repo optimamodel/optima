@@ -2003,6 +2003,7 @@ def icers(name=None, project=None, parsetname=None, progsetname=None, objective=
     # Set defaults
     eps = project.settings.eps
     icereps = 1e-12 # A smaller epsilon for ensuring ICER divisions aren't zero
+    minbudget = 1000.
     if marginal     is None: marginal     = True
     if objective    is None: objective    = 'daly'
     if parsetname   is None: parsetname   = -1
@@ -2031,6 +2032,11 @@ def icers(name=None, project=None, parsetname=None, progsetname=None, objective=
     defaultbudget = project.defaultbudget(progsetname, optimizable=True)  # ...and just for optimizable programs
     keys = defaultbudget.keys() # Get the program keys
     nkeys = len(keys)
+    
+    #Set the minimum spend in the default budget so that ICERs can be generated
+    for key in keys:
+        if defaultbudget[key]<minbudget:
+            defaultbudget[key] = minbudget
     
     # Calculate the initial people distribution
     initresults = project.runsim(parsetname=parsetname, progsetname=progsetname, keepraw=True, verbose=0, label=project.name+'-minoutcomes', addresult=False, advancedtracking=True, end=objectives['end'])
