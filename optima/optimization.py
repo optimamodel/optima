@@ -2123,11 +2123,7 @@ def icers(name=None, project=None, parsetname=None, progsetname=None, objective=
                 thisiecr = 0.0
                 printv('WARNING, ICER for "%s" at budget ratio %0.1f is negative (%0.3e) due to cost saving; setting ICER to %0.1f' % (key, budgetratios[b], 1./(thisiecr+icereps), thisiecr), 1, verbose)
             y[key].append(thisiecr)
-            
-            if thisiecr >= 0:
-                icer[key].append(1.0/(thisiecr+icereps))
-            else:
-                icer[key].append(thisiecr)
+            icer[key].append(1.0/(thisiecr+icereps))
     
     # Convert to arrays
     for key in keys:
