@@ -137,14 +137,15 @@ def setrevisionmigrations(which='migrations'):
 
     migrations = op.odict([
         # Orig     New       Date         Migration           Description
-        ('0',   ('1', '2023-10-17', parsandprograms_odictcustom,    'Add P.revision, change Parameterset.pars and Programset.programs from odict to odict_custom and link them')),
-        ('1',   ('2', '2023-12-04', None,                           'Fix bug when deep-copying a `Parameterset`, the `pars` from a different `Parameterset` would get copied in certain cases')),
-        ('2',   ('3', '2024-01-18', None,                           'Fix small unpickling bug and FE raises BadFileFormatError when uploading project that it cannot unpickle')),
-        ('3',   ('4', '2024-01-18', updatemethodsettings,           'Update methods so `numinciallmethods` is split by regular, casual, commercial')),
-        ('4',   ('5', '2024-06-26', None,                           'Update sampling of parameters to use default_rng to sample more randomly between parameters')),
-        ('5',   ('6', '2024-07-16', resetnumcircfromdata,           'Reset the fromdata attribute of the numcirc parameter to allow it to be updated')),
-        ('6',   ('7', '2024-06-26', None,                           'Add most "other" outputs to the standard excel sheet with optional argument')),
-        ('7',   ('8', '2024-06-27', None,                           'Update definition of "latediag" to be CD4<350 (and add separate output for undiagCD4<350 to align)')),
+        ('0',   ('1',  '2023-10-17', parsandprograms_odictcustom,    'Add P.revision, change Parameterset.pars and Programset.programs from odict to odict_custom and link them')),
+        ('1',   ('2',  '2023-12-04', None,                           'Fix bug when deep-copying a `Parameterset`, the `pars` from a different `Parameterset` would get copied in certain cases')),
+        ('2',   ('3',  '2024-01-18', None,                           'Fix small unpickling bug and FE raises BadFileFormatError when uploading project that it cannot unpickle')),
+        ('3',   ('4',  '2024-01-18', updatemethodsettings,           'Update methods so `numinciallmethods` is split by regular, casual, commercial')),
+        ('4',   ('5',  '2024-06-26', None,                           'Update sampling of parameters to use default_rng to sample more randomly between parameters')),
+        ('5',   ('6',  '2024-07-16', resetnumcircfromdata,           'Reset the fromdata attribute of the numcirc parameter to allow it to be updated')),
+        ('6',   ('7',  '2024-08-26', None,                           'Add most "other" outputs to the standard excel sheet with optional argument')),
+        ('7',   ('8',  '2024-09-27', None,                           'Update definition of "latediag" to be CD4<350 (and add separate output for undiagCD4<350 to align)')),
+        ('8',   ('9',  '2024-10-07', None,                           'Update calculation of ICERs')),
         ])
 
 
