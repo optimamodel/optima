@@ -146,6 +146,7 @@ def setrevisionmigrations(which='migrations'):
         ('6',   ('7',  '2024-08-26', None,                           'Add most "other" outputs to the standard excel sheet with optional argument')),
         ('7',   ('8',  '2024-09-27', None,                           'Update definition of "latediag" to be CD4<350 (and add separate output for undiagCD4<350 to align)')),
         ('8',   ('9',  '2024-10-07', None,                           'Update calculation of ICERs')),
+        ('9',   ('10', '2024-10-09', None,                           'Add objective option for minimising number of prevalent undiagnosed HIV infections')),
         ])
 
 
