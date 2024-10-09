@@ -8,7 +8,7 @@ Versions `2.11.4`, `2.12.0` and later all can be run using the branch `main`. A 
  - Add objective option for minimising number of prevalent undiagnosed HIV infections
 
 ## Revision 9
- - Update calculation of ICERS to be based on a minimum $1000 budget for programs so that marginal ICERs can be calculated
+ - Update calculation of ICERS to be based on a minimum $1000 budget for programs so that marginal ICERs can be calculated (plus minor changes to ordering of operations)
 
 ## Revision 8
  - Update definition of "latediag" to be CD4<350 (and add separate output for undiagCD4<350 to align)
