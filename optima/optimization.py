@@ -240,7 +240,7 @@ def defaultobjectives(project=None, progsetname=None, which=None, verbose=2):
         
     objectives = odict() # Dictionary of all objectives
     objectives['which']          = which
-    objectives['keys']           = ['death', 'inci', 'daly'] # Define valid keys
+    objectives['keys']           = ['death', 'inci', 'daly', 'undiag'] # Define valid keys
     objectives['cascadekeys']    = ['propdiag', 'proptreat', 'propsuppressed']
     objectives['keylabels']      = odict({ # Define key labels
                                         'death':          'Deaths', 
@@ -261,17 +261,21 @@ def defaultobjectives(project=None, progsetname=None, which=None, verbose=2):
         objectives['deathweight'] = 5    # "Relative weight per death"
         objectives['inciweight']  = 1    # "Relative weight per new infection"
         objectives['dalyweight']  = 0    # "Relative weight per DALY"
+        objectives['undiagweight']= 0    # "Relative weight per undiagnosed person"
         objectives['deathfrac']   = None # Fraction of deaths to get to
         objectives['incifrac']    = None # Fraction of incidence to get to
         objectives['dalyfrac']    = None # Fraction of DALYs to get to
+        objectives['undiagfrac']  = None # "Relative weight per undiagnosed person"
     elif which=='money':
         objectives['base']        = 2015 # "Baseline year to compare outcomes to"
         objectives['deathweight'] = None # "Death weighting"
         objectives['inciweight']  = None # "Incidence weighting"
-        objectives['dalyweight']  = None # "Incidence weighting"
+        objectives['dalyweight']  = None # "DALY weighting"
+        objectives['undiagweight']= None # "Undiagnosed person"
         objectives['deathfrac']   = 0.25 # Fraction of deaths to avert
         objectives['incifrac']    = 0.25 # Fraction of incidence to avert
-        objectives['dalyfrac']    = 0 # Fraction of DALYs to avert
+        objectives['dalyfrac']    = 0    # Fraction of DALYs to avert
+        objectives['undiagfrac']  = 0 # Fraction of undiagnosed person years to avert
     else:
         raise OptimaException('"which" keyword argument must be either "outcome" or "money"')
 
@@ -688,7 +692,12 @@ def outcomecalc(budgetvec=None, which=None, project=None, parsetname=None, progs
         # Calculate the outcome
         for key in objectives['keys']:
             thisweight = objectives[key+'weight'] # e.g. objectives['inciweight'] #CKCHANGE
-            thisoutcome = results.main['num'+key].tot[0][indices].sum() # The instantaneous outcome e.g. main['numdeath'] -- 0 is since best
+
+            if key == 'undiag': # don't have numundiag as a result so just do plhiv - diag
+                thisoutcome = results.main['numplhiv'].tot[0][indices].sum() - results.main['numdiag'].tot[0][indices].sum()
+            else: # just extract the key from results.main
+                thisoutcome = results.main['num'+key].tot[0][indices].sum() # The instantaneous outcome e.g. main['numdeath'] -- 0 is since best
+
             rawoutcomes['num'+key] = thisoutcome*results.dt
             outcome += thisoutcome*thisweight*results.dt # Calculate objective
             if origoutcomes and penalty and thisweight>0:
@@ -734,7 +743,11 @@ def outcomecalc(budgetvec=None, which=None, project=None, parsetname=None, progs
         target = odict()
         targetfrac = odict([(key,objectives[key+'frac']) for key in objectives['keys']]) # e.g. {'inci':objectives['incifrac']} = 0.4 = 40% reduction in incidence
         for key in objectives['keys']:
-            thisresult = results.main['num'+key].tot[0] # the instantaneous outcome e.g. objectives['numdeath'] -- 0 is since best #CKCHANGE
+            if key == 'undiag': # don't have numundiag as a result so just do plhiv - diag
+                thisresult = results.main['numplhiv'].tot[0] - results.main['numdiag'].tot[0]
+            else: # just extract the key from results.main
+                thisresult = results.main['num'+key].tot[0] # the instantaneous outcome e.g. objectives['numdeath'] -- 0 is since best #CKCHANGE
+
             baseline[key] = float(thisresult[baseind])
             final[key] = float(thisresult[finalind])
             if targetfrac[key] is not None:
@@ -2002,7 +2015,8 @@ def icers(name=None, project=None, parsetname=None, progsetname=None, objective=
     
     # Set defaults
     eps = project.settings.eps
-    icereps = 1e-9 # A smaller epsilon for ensuring ICER divisions aren't zero
+    icereps = 1e-12 # A smaller epsilon for ensuring ICER divisions aren't zero
+    minbudget = 1000.
     if marginal     is None: marginal     = True
     if objective    is None: objective    = 'daly'
     if parsetname   is None: parsetname   = -1
@@ -2031,6 +2045,11 @@ def icers(name=None, project=None, parsetname=None, progsetname=None, objective=
     defaultbudget = project.defaultbudget(progsetname, optimizable=True)  # ...and just for optimizable programs
     keys = defaultbudget.keys() # Get the program keys
     nkeys = len(keys)
+    
+    #Set the minimum spend in the default budget so that ICERs can be generated
+    for key in keys:
+        if defaultbudget[key]<minbudget:
+            defaultbudget[key] = minbudget
     
     # Calculate the initial people distribution
     initresults = project.runsim(parsetname=parsetname, progsetname=progsetname, keepraw=True, verbose=0, label=project.name+'-minoutcomes', addresult=False, advancedtracking=True, end=objectives['end'])
@@ -2114,9 +2133,10 @@ def icers(name=None, project=None, parsetname=None, progsetname=None, objective=
             # Finally, calculate the outcome per dollar
             thisiecr = array(estimates).mean() # Average upper and lower estimates, if available -- "iecr" is the inverse of an icer
             if thisiecr<0:
-                printv('WARNING, ICER for "%s" at budget ratio %0.1f is negative (%0.3e); setting to 0' % (key, budgetratios[b], 1./(thisiecr+icereps)), 1, verbose)
-                thisiecr = 0.0;
+                thisiecr = 0.0
+                printv('WARNING, ICER for "%s" at budget ratio %0.1f is negative (%0.3e) due to cost saving; setting ICER to %0.1f' % (key, budgetratios[b], 1./(thisiecr+icereps), thisiecr), 1, verbose)
             y[key].append(thisiecr)
+            icer[key].append(1.0/(thisiecr+icereps))
     
     # Convert to arrays
     for key in keys:
@@ -2125,8 +2145,13 @@ def icers(name=None, project=None, parsetname=None, progsetname=None, objective=
         y[key]    = array(y[key]) 
     
     # Calculate actual ICERs
-    for key in keys:
-        icer[key] = 1.0/(y[key]+icereps)
+    # for key in keys:
+    #     if y[key]>=0:
+    #         icer[key] = 1.0/(y[key]+icereps)
+    #     elif y[key]==-1:
+    #         icer[key] = array([1.0/(y[key]+icereps)
+    #     elif y[key]==-1:
+    #         icer[key] = 'Cost saving'
     
     # Summarize results
     nearest = findnearest(budgetratios, 1.0)

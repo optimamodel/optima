@@ -1033,7 +1033,11 @@ class Multiresultset(Resultset):
         
         
     def comparebudgets(self, sep=',', sigfigs=3):
-        """ Make a separate sheet in the workbook with a comparison of budget and coverage for an optimization or scenarios """
+        """ Make a separate sheet in the workbook with a comparison of budget and coverage for an optimization or scenarios
+        NOTE: if the separator (sep) is in any of the program names or scenario names, it will be replaced with '' aka removed
+        """
+        orig_sep = sep
+        sep = '|||'
         def select_zeroth(possible_list):
             if checktype(possible_list, 'arraylike'):
                 return possible_list[0]  # Only pull out the first element if it's an array/list
@@ -1107,6 +1111,9 @@ class Multiresultset(Resultset):
             outputstr += sep.join([str(out)+prcstr+condstr for out in prog_coverages_percent_change])
             outputstr += '\n'
         outputstr += '\n'
+
+        outputstr = outputstr.replace(orig_sep, '')  # commas get removed from prognames, scennames
+        outputstr = outputstr.replace(sep, orig_sep)
 
         return outputstr
 
