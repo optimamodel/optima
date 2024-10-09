@@ -4,6 +4,9 @@ Projects before `2.11.4` should be able to be migrated to version `2.11.4` witho
 
 Versions `2.11.4`, `2.12.0` and later all can be run using the branch `main`. A project will automatically update to the earliest supported version (currently `2.11.4`), but updating a project to the latest version can be done using the FE or `op.migrate(P, 'latest')`
 
+## Revision 10
+ - Add objective option for minimising number of prevalent undiagnosed HIV infections
+
 ## Revision 9
  - Update calculation of ICERS to be based on a minimum $1000 budget for programs so that marginal ICERs can be calculated
 

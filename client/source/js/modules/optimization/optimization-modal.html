@@ -154,6 +154,12 @@
                 class="txbox"
                 style="display: inline; width: 5em;"
                 ng-model="state.optimization.objectives.dalyweight"/></p>
+        <p>Undiagnosed HIV infection: &nbsp;
+        <input
+                type="number"
+                class="txbox"
+                style="display: inline; width: 5em;"
+                ng-model="state.optimization.objectives.undiagweight"/></p>
         </div>
       <div style="display: inline-block; width: 40%; ">
         <p>Weight assigned to the proportion of people who are:</p>
@@ -184,24 +190,30 @@
     <div style="display:flex; width:100%; justify-content: space-around;">
       <div style="display: inline-block; width: 40%;">
         <p>Minimum fraction to avert of:</p>
-        <p>Infections: &nbsp;
+        <p>New HIV infections: &nbsp;
         <input
                 type="number"
                 class="txbox"
                 style="display: inline; width: 5em;"
                 ng-model="state.optimization.objectives.incifrac"/></p>
-        <p>Deaths:&nbsp;
+        <p>HIV-related deaths:&nbsp;
         <input
                 type="number"
                 class="txbox"
                 style="display: inline; width: 5em;"
                 ng-model="state.optimization.objectives.deathfrac"/></p>
-        <p>DALYs:&nbsp;
+        <p>HIV-related DALYs:&nbsp;
         <input
                 type="number"
                 class="txbox"
                 style="display: inline; width: 5em;"
                 ng-model="state.optimization.objectives.dalyfrac"/></p>
+        <p>Undiagnosed HIV infections:&nbsp;
+        <input
+                type="number"
+                class="txbox"
+                style="display: inline; width: 5em;"
+                ng-model="state.optimization.objectives.undiagfrac"/></p>
       </div>
       <div style="display: inline-block; width: 40%; ">
         <p>Minimum proportion of people who are:</p>

@@ -240,7 +240,7 @@ def defaultobjectives(project=None, progsetname=None, which=None, verbose=2):
         
     objectives = odict() # Dictionary of all objectives
     objectives['which']          = which
-    objectives['keys']           = ['death', 'inci', 'daly'] # Define valid keys
+    objectives['keys']           = ['death', 'inci', 'daly', 'undiag'] # Define valid keys
     objectives['cascadekeys']    = ['propdiag', 'proptreat', 'propsuppressed']
     objectives['keylabels']      = odict({ # Define key labels
                                         'death':          'Deaths', 
@@ -261,17 +261,21 @@ def defaultobjectives(project=None, progsetname=None, which=None, verbose=2):
         objectives['deathweight'] = 5    # "Relative weight per death"
         objectives['inciweight']  = 1    # "Relative weight per new infection"
         objectives['dalyweight']  = 0    # "Relative weight per DALY"
+        objectives['undiagweight']= 0    # "Relative weight per undiagnosed person"
         objectives['deathfrac']   = None # Fraction of deaths to get to
         objectives['incifrac']    = None # Fraction of incidence to get to
         objectives['dalyfrac']    = None # Fraction of DALYs to get to
+        objectives['undiagfrac']  = None # "Relative weight per undiagnosed person"
     elif which=='money':
         objectives['base']        = 2015 # "Baseline year to compare outcomes to"
         objectives['deathweight'] = None # "Death weighting"
         objectives['inciweight']  = None # "Incidence weighting"
-        objectives['dalyweight']  = None # "Incidence weighting"
+        objectives['dalyweight']  = None # "DALY weighting"
+        objectives['undiagweight']= None # "Undiagnosed person"
         objectives['deathfrac']   = 0.25 # Fraction of deaths to avert
         objectives['incifrac']    = 0.25 # Fraction of incidence to avert
-        objectives['dalyfrac']    = 0 # Fraction of DALYs to avert
+        objectives['dalyfrac']    = 0    # Fraction of DALYs to avert
+        objectives['undiagfrac']  = None # Fraction of undiagnosed person years to avert
     else:
         raise OptimaException('"which" keyword argument must be either "outcome" or "money"')
 
@@ -688,7 +692,12 @@ def outcomecalc(budgetvec=None, which=None, project=None, parsetname=None, progs
         # Calculate the outcome
         for key in objectives['keys']:
             thisweight = objectives[key+'weight'] # e.g. objectives['inciweight'] #CKCHANGE
-            thisoutcome = results.main['num'+key].tot[0][indices].sum() # The instantaneous outcome e.g. main['numdeath'] -- 0 is since best
+
+            if key == 'undiag': # don't have numundiag as a result so just do plhiv - diag
+                thisoutcome = results.main['numplhiv'].tot[0][indices].sum() - results.main['numdiag'].tot[0][indices].sum()
+            else: # just extract the key from results.main
+                thisoutcome = results.main['num'+key].tot[0][indices].sum() # The instantaneous outcome e.g. main['numdeath'] -- 0 is since best
+
             rawoutcomes['num'+key] = thisoutcome*results.dt
             outcome += thisoutcome*thisweight*results.dt # Calculate objective
             if origoutcomes and penalty and thisweight>0:
@@ -734,7 +743,11 @@ def outcomecalc(budgetvec=None, which=None, project=None, parsetname=None, progs
         target = odict()
         targetfrac = odict([(key,objectives[key+'frac']) for key in objectives['keys']]) # e.g. {'inci':objectives['incifrac']} = 0.4 = 40% reduction in incidence
         for key in objectives['keys']:
-            thisresult = results.main['num'+key].tot[0] # the instantaneous outcome e.g. objectives['numdeath'] -- 0 is since best #CKCHANGE
+            if key == 'undiag': # don't have numundiag as a result so just do plhiv - diag
+                thisresult = results.main['numplhiv'].tot[0] - results.main['numdiag'].tot[0]
+            else: # just extract the key from results.main
+                thisresult = results.main['num'+key].tot[0] # the instantaneous outcome e.g. objectives['numdeath'] -- 0 is since best #CKCHANGE
+
             baseline[key] = float(thisresult[baseind])
             final[key] = float(thisresult[finalind])
             if targetfrac[key] is not None:
