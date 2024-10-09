@@ -275,7 +275,7 @@ def defaultobjectives(project=None, progsetname=None, which=None, verbose=2):
         objectives['deathfrac']   = 0.25 # Fraction of deaths to avert
         objectives['incifrac']    = 0.25 # Fraction of incidence to avert
         objectives['dalyfrac']    = 0    # Fraction of DALYs to avert
-        objectives['undiagfrac']  = None # Fraction of undiagnosed person years to avert
+        objectives['undiagfrac']  = 0 # Fraction of undiagnosed person years to avert
     else:
         raise OptimaException('"which" keyword argument must be either "outcome" or "money"')
 
