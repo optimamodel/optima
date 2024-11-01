@@ -147,6 +147,7 @@ def setrevisionmigrations(which='migrations'):
         ('7',   ('8',  '2024-09-27', None,                           'Update definition of "latediag" to be CD4<350 (and add separate output for undiagCD4<350 to align)')),
         ('8',   ('9',  '2024-10-07', None,                           'Update calculation of ICERs')),
         ('9',   ('10', '2024-10-09', None,                           'Add objective option for minimising number of prevalent undiagnosed HIV infections')),
+        ('10',   ('11', '2024-11-01', None,                           'A couple of FE fixes')),
         ])
 
 

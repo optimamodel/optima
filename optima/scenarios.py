@@ -477,7 +477,7 @@ def checkifparsetoverridesscenario(project, parset, scen, progset=None, progendy
                     # warning, parsoverridingparsdict, overridetimes, overridevals, combinedwarningmsg, warningmessages
                     return False, odict(), odict(), odict(), '', []
 
-        progstartyear = scen.t
+        progstartyear = min(promotetoarray(scen.t))
 
         # warning, parsoverridingparsdict, overridetimes, overridevals, combinedwarningmsg, warningmessages = \
         return checkifparsetoverridesprogset(progset=progset, parset=parset, progendyear=progendyear, progstartyear=progstartyear, formatfor=formatfor, createmessages=createmessages)
