@@ -1308,7 +1308,7 @@ def exporttoexcel(filename=None, outdict=None):
         formats['bold'] = workbook.add_format({'bg_color': colors['edgyblue'], 'bold': True})
         formats['number'] = workbook.add_format({'bg_color': colors['fadedstrawberry'], 'num_format': 0x00})
         formats['percent'] = workbook.add_format({'bg_color': colors['fadedstrawberry'], 'num_format': 0x09})
-        formats['header'] = workbook.add_format({'bg_color': colors['gentlegreen'], 'color': colors['white'], 'bold': True})
+        formats['header'] = workbook.add_format({'bg_color': colors['gentlegreen'], 'font_color': colors['white'], 'bold': True})
         formats['increase'] = workbook.add_format({'bg_color': colors['increasegreen'], 'num_format': 0x09})
         formats['decrease'] = workbook.add_format({'bg_color': colors['decreasered'], 'num_format': 0x09})
         
