@@ -43,7 +43,7 @@ setup(
         'matplotlib>=1.4.2',
         'numpy>=1.10.1',
         'xlrd==1.2.0', #WARNING temporary to read xlsx files and needs to to be replaced with a migration to openpyxl
-        'xlsxwriter',
+        'xlsxwriter==3.2.0', #3.2.2 breaks functionality (not investigated)
         'sciris>=3.0.0',
         'scipy',
     ],
