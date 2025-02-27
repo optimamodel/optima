@@ -287,10 +287,10 @@ class OptimaFormats:
         self.formats['number']       = self.book.add_format({'locked':0, 'num_format':0x04, 'bg_color':OptimaFormats.BG_COLOR, 'border':1, 'border_color':OptimaFormats.BORDER_COLOR})
         self.formats['general']      = self.book.add_format({'locked':0, 'num_format':0x00, 'bg_color':OptimaFormats.BG_COLOR, 'border':1, 'border_color':OptimaFormats.BORDER_COLOR})
         self.formats['optional']     = self.book.add_format({'locked':0, 'num_format':0x00, 'bg_color':OptimaFormats.OPT_COLOR,'border':1, 'border_color':OptimaFormats.BORDER_COLOR})
-        self.formats['info_header']  = self.book.add_format({'align':'center','valign':'vcenter', 'color':'#D5AA1D','fg_color':'#0E0655', 'font_size':20})
+        self.formats['info_header']  = self.book.add_format({'align':'center','valign':'vcenter', 'font_color':'#D5AA1D','fg_color':'#0E0655', 'font_size':20})
         self.formats['grey']         = self.book.add_format({'fg_color':'#EEEEEE', 'text_wrap':True})
         self.formats['orange']       = self.book.add_format({'fg_color':'#FFC65E', 'text_wrap':True})
-        self.formats['info_url']     = self.book.add_format({'fg_color':'#EEEEEE', 'text_wrap':True, 'color':'blue','align':'center'})
+        self.formats['info_url']     = self.book.add_format({'fg_color':'#EEEEEE', 'text_wrap':True, 'font_color':'blue','align':'center'})
         self.formats['grey_bold']    = self.book.add_format({'fg_color':'#EEEEEE','bold':True})
         self.formats['merge_format'] = self.book.add_format({'bold': 1,'align': 'center','text_wrap':True})
 
