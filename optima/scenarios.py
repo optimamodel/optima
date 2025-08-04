@@ -124,7 +124,7 @@ def runscenarios(project=None, verbose=2, name=None, defaultparset=-1, debug=Fal
     all_kwargs = [None] * nscens
     for scenno, scen in enumerate(scenparsets):
         scenparset = scenparsets[scen]
-        project.scens[scenno].scenparset = scenparset # Copy into scenarios objects
+        project.scens[scenparsets.keys()[scenno]].scenparset = scenparset # Copy into scenarios objects
 
         # Items specific to program (budget or coverage) scenarios
         budget = scenlist[scenno].budget if isinstance(scenlist[scenno], Progscen) else None
