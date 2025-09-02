@@ -636,7 +636,7 @@ class Project(object):
                budget=None, coverage=None, budgetyears=None, data=None, n=1, sample=None, tosample=None, randseed=None,
                addresult=True, overwrite=True, keepraw=False, doround=False, die=True, debug=False, verbose=None,
                parsetname=None, progsetname=None, resultname=None, label=None, smoothness=None,
-               advancedtracking=None, parallel=False, ncpus=None, quantiles=None, **kwargs):
+               advancedtracking=None, parallel=False, parallelizer=None, ncpus=None, quantiles=None, **kwargs):
         ''' 
         This function runs a single simulation, or multiple simulations if n>1. This is the
         core function for actually running the model!!!!!!
@@ -701,7 +701,7 @@ class Project(object):
 
         else: # Run in parallel
             all_kwargs = {'settings':self.settings, 'version':self.version, 'die':die, 'debug':debug, 'verbose':verbose, 'label':self.name, 'advancedtracking':advancedtracking, **kwargs}
-            try: rawlist = parallelize(model, iterarg=simparslist, kwargs=all_kwargs, ncpus=ncpus) # ACTUALLY RUN THE MODEL
+            try: rawlist = parallelize(model, iterarg=simparslist, kwargs=all_kwargs, ncpus=ncpus, parallelizer=parallelizer) # ACTUALLY RUN THE MODEL
             except:
                 printv('\nWARNING: Could not run in parallel probably because this process is already running in parallel. Trying in serial...', 1, verbose)
                 rawlist = []
