@@ -191,6 +191,10 @@ class Parameterset(object):
     def restorelinks(self, project=None):
         if project is not None:
             self.projectref = Link(project)
+        if self.pars is not None:
+            if not isinstance(self.pars, odict_custom):
+                self.pars = odict_custom(self.pars, func=self.checkpropagateversion)
+            self.pars.func = self.checkpropagateversion
     
     def makepars(self, data=None, fix=True, verbose=2, start=None, end=None, projectversion=None):
         self.pars = makepars(data=data, verbose=verbose, parset=self, # Initialize as list with single entry

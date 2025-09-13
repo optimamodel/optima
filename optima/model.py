@@ -1,11 +1,12 @@
 ## Imports
-from numpy import zeros, exp, maximum, minimum, inf, array, isnan, einsum, floor, ones, power as npow, concatenate as cat, interp, nan, squeeze, isinf, isfinite, argsort, take_along_axis, put_along_axis, expand_dims, ix_, tile, arange, swapaxes, errstate, where, prod, isin
-from optima import OptimaException, printv, dcp, odict, findinds, compareversions, sanitize
+from functools import partial
+from numpy import zeros, exp, maximum, minimum, inf, array, isnan, einsum, floor, ones, power as npow, concatenate as cat, interp, nan, squeeze, isinf, isfinite, argsort, take_along_axis, put_along_axis, expand_dims, ix_, tile, arange, swapaxes, errstate, where, prod, isin, transpose
+from optima import OptimaException, printv, dcp, odict, findinds, compareversions, sanitize, promotetolist, isnumber
 
 __all__ = ['model']
 
 def model(simpars=None, settings=None, version=None, initpeople=None, initprops=None, verbose=None, die=False, debug=False,
-          label=None, startind=None, advancedtracking=False):
+          label=None, startind=None, advancedtracking=False, flattenraw=False):
     """
     Runs Optima's epidemiological model.
 
@@ -1100,16 +1101,87 @@ def model(simpars=None, settings=None, version=None, initpeople=None, initprops=
     raw['otherdeath']     = raw_otherdeath
     raw['emigration']     = raw_emi
     if advancedtracking:
-        raw['diagcd4']        = raw_diagcd4
-        raw['incionpopbypop'] = raw_incionpopbypopmethods.sum(axis=0) # Removes the method of transmission
-        raw['incimethods']    = raw_incionpopbypopmethods
-        raw['transitpopbypop']= raw_transitpopbypop
-        raw['props']          = raw_propsarr
+        raw['diagcd4']         = raw_diagcd4
+        raw['incimethods']     = flatten_unflatten_func(raw_incionpopbypopmethods, axes_flatten=(0, 1, 2, 3), doflatten=flattenraw) # Axis 0 is method, 1 is acquired pop, 2-3 is cd4 state and pop of from pop
+        raw['transitpopbypop'] = flatten_unflatten_func(raw_transitpopbypop, axes_flatten=(0, 1, 2), doflatten=flattenraw)
+        raw['props']           = raw_propsarr
 
     checkfornegativepeople(people) # Check only once for negative people, right before finishing
 
     return raw # Return raw results
 
+
+def return_original(arr, indices=None):
+    if indices is not None:
+        slicer = [slice(None) for axis in range(arr.ndim)]
+        axes = list(range(arr.ndim))
+        for axis, axisindices in indices.items():
+            axis = axes[axis]
+            slicer[axis] = axisindices
+        slicer = tuple(slicer)
+        output = arr[slicer]
+        return output
+
+    return arr
+
+def flatten_unflatten_func(arr, axes_flatten, doflatten):
+    if not doflatten: return partial(return_original, arr=arr)
+    original_shape = arr.shape
+
+    other_axes = [ax for ax in range(arr.ndim) if ax not in axes_flatten]
+    reordered_axes = list(axes_flatten) + list(other_axes)
+
+    nonzero_inds = where(arr.any(axis=tuple(other_axes)))
+
+    transposed = transpose(arr, reordered_axes)
+    flattened = transposed[nonzero_inds]
+
+    return partial(unflatten, flattened=flattened, axes_flatten=axes_flatten, original_shape=original_shape, reordered_axes=reordered_axes, nonzero_inds=nonzero_inds)
+
+def unflatten(flattened, axes_flatten, original_shape, reordered_axes, nonzero_inds, indices=None):
+    """
+        indices: A dictionary with {axis: indicesforthataxis}
+    """
+    this_shape = original_shape
+    if indices is not None and indices:
+        slicer = [slice(None) for axis in range(flattened.ndim)]
+        axes = list(range(len(original_shape)))
+        original_shape = list(original_shape)
+
+        new_shape = list(original_shape)
+        new_reordered_axes = list(reordered_axes)
+
+        for axis, axisindices in indices.items():
+            axis = axes[axis]
+            if axis in axes_flatten: raise OptimaException(f'Cannot efficiently index by axis {axis} when that is one of the flattened axes')
+            axis_index_in_flat = list(reordered_axes).index(axis) - len(axes_flatten) + 1
+            slicer[axis_index_in_flat] = axisindices
+
+            if isnumber(axisindices):
+                new_shape[axis] = None
+                new_reordered_axes = [ax if ax < axis else ax - 1 for ax in new_reordered_axes if ax != axis]
+
+        slicer = tuple(slicer)
+        flattened = flattened[slicer]
+
+        i = 1
+        for ax,shape in enumerate(new_shape):
+            if ax in axes_flatten: continue
+            if shape == None: continue
+
+            new_shape[ax] = flattened.shape[i]
+            i += 1
+
+        new_shape = [shape for shape in new_shape if shape is not None]
+
+        original_shape = tuple(new_shape)
+        reordered_axes = new_reordered_axes
+
+
+    unflattened = zeros(original_shape, dtype=flattened.dtype)
+    unflattened_transposed = transpose(unflattened, reordered_axes)
+    unflattened_transposed[nonzero_inds] = flattened
+    return unflattened
 
 def do_births(t, npts, dt, eps, birthratesarr, relhivbirth, people, npops, version, undx, dx, alldx, alltx, allplhiv, sus,mtct,nstates,dxnottx,
               motherpops, childpops, notmotherpops, effmtct, pmtcteff, plhivmap, advancedtracking, settings, mtctgroupmap, tvec,

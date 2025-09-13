@@ -4,6 +4,9 @@ if six.PY3:
 	unicode = str
 from copy import deepcopy, copy
 import types
+from uuid import uuid4 as uuid
+import concurrent.futures as cf
+from sciris import cpu_count
 
 __all__ = [
 'CancelException',
@@ -13,7 +16,7 @@ __all__ = [
 'odict', 'percentcomplete', 'perturb', 'printarr', 'pd', 'printdr', 'printv', 'printvars', 'printtologfile', 'promotetoarray',
 'promotetolist', 'promotetoodict', 'quantile', 'runcommand', 'sanitize', 'sanitizefilename', 'savetext', 'scaleratio', 'setylim',
 'sigfig', 'SItickformatter', 'SIticks', 'slacknotification', 'smoothinterp', 'tic', 'toc', 'today', 'vec2obj',
-'PersistentLink', 'standard_dcp', 'standard_cp', 'odict_custom'
+'PersistentLink', 'standard_dcp', 'standard_cp', 'odict_custom', 'parallelpool',
 ]
 
 ##############################################################################
@@ -712,11 +715,13 @@ def quantile(data, quantiles=[0.5, 0.25, 0.75]):
     '''
     Custom function for calculating quantiles most efficiently for a given dataset.
         data = a list of arrays, or an array where he first dimension is to be sorted
-        quantiles = a list of floats >=0 and <=1
+        quantiles = a list of floats >=0 and <=1, or one of ['keepall', 'keep', 'all', 'allsamples'] to keep all samples
     
     Version: 2014nov23
     '''
     from numpy import array
+    if quantiles in ['keepall', 'keep', 'all', 'allsamples']:
+        return data
     nsamples = len(data) # Number of samples in the dataset
     indices = (array(quantiles)*(nsamples-1)).round().astype(int) # Calculate the indices to pull out
     output = array(data)
@@ -1366,8 +1371,11 @@ def loadbalancer(maxload=None, index=None, interval=None, maxtime=None, label=No
             toohigh = False 
             if verbose: print(label+'CPU load fine (%0.2f/%0.2f), starting process %s after %i tries' % (currentload, maxload, index, count))
     return None
-    
-    
+
+def parallelpool(ncpus=None):
+    if ncpus is None: ncpus = cpu_count() // 2
+    pool = cf.ProcessPoolExecutor(max_workers=ncpus)
+    return pool
 
 def runcommand(command, printinput=False, printoutput=False):
    ''' Make it easier to run bash commands. Version: 1.1 Date: 2015sep03 '''
@@ -1475,28 +1483,48 @@ def standard_cp(obj):
     ''' Same idea as standard_dcp
     Don't use unless you understand it
     '''
-    obj._cp = obj.__copy__  # Save __copy__ for later
-    obj.__copy__ = None  # Setting to None means that copy.copy will use the default copier
+    class obj_std_cp(type(obj)):
+        __copy__ = None
+
+    orig_class = obj.__class__
+
+    # If we have a custom __deepcopy__ we need to delete it so that a new one can get created that is bound to the new object
+    if hasattr(obj, '__deepcopy__'):
+        orig_dcp = obj.__deepcopy__
+        del obj.__deepcopy__
+    else:
+        orig_dcp = '_None'
+    if hasattr(obj, '_dcp'):
+        del obj._dcp
+
+    obj.__class__ = obj_std_cp
 
     output = copy(obj)
 
-    output.__copy__ = output._cp
-    obj.__copy__    = obj._cp
+    obj.__class__ = orig_class
+    output.__class__ = orig_class
+
+    if orig_dcp != '_None': obj.__deepcopy__ = orig_dcp
+
+    if hasattr(output, 'uid'): output.uid = uuid()
+
     return output
 
 def standard_dcp(obj, memodict):
-    ''' Function that stores the __deepcopy__ so that we can use the standard
-        copy.deepcopy() to copy it and return to the original __deepcopy__
-        NOT THE SAME AS DCP since that will use the __deepcopy__ of the object (as intended)
+    '''
         In general don't use this unless you understand it
     '''
-    obj._dcp = obj.__deepcopy__  # Save __deepcopy__ for later
+    obj._dcp = obj.__deepcopy__  # Save __deepcopy__ for later, and it will get copied, but apply to the new obj
     obj.__deepcopy__ = None  # Setting to None means that copy.deepcopy will use the default copier
 
     output = deepcopy(obj, memodict)
 
-    output.__deepcopy__ = output._dcp
     obj.__deepcopy__    = obj._dcp
+    output.__deepcopy__ = output._dcp
+
+    del obj._dcp
+    del output._dcp
+
     return output
 
 ##############################################################################
@@ -2483,6 +2511,10 @@ class odict_custom(odict):
         else:  # The child call doesn't call the func
             out = super().__setitem__(key, value)
         return out
+
+    def cp(self):
+        ''' Doesn't keep the function as it is probably linked to the parent object'''
+        return self.__copy__()
 
     def __copy__(self):
         ''' Doesn't keep the function as it is probably linked to the parent object'''

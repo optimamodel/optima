@@ -4,6 +4,21 @@ Projects before `2.11.4` should be able to be migrated to version `2.11.4` witho
 
 Versions `2.11.4`, `2.12.0` and later all can be run using the branch `main`. A project will automatically update to the earliest supported version (currently `2.11.4`), but updating a project to the latest version can be done using the FE or `op.migrate(P, 'latest')`
 
+## Revision 12
+ - `Resultset.quantile` tracks which quantiles where used to generate the results: either a list of 3 floats or `'allsamples'` which keeps all the samples.
+ - `model()` takes `flattenraw` keyword to flatten the raw advancedtracking arrays to remove most of the values which are 0. `flattenraw = True` takes ~20% longer but it is more memory efficient and raw results are ~10x smaller. `flattenraw = False` is the default except when running with sensitivity and advancedtracking (which would previously cause OOM errors).
+     - **BREAKING CHANGE**: This only applies to `raw['incimethods'], raw['transitpopbypop']` so when those are accessed (even if `flattenraw = False`), you must call it: 
+     `raw['incimethods']()` or `raw['transitpopbypop']()` which will unflatten or return the original.
+ - **BREAKING CHANGE**: `raw['incionpopbypop']` has been removed as it was just a copy of `raw['incimethods']` ie: `raw['incionpopbypop'] = raw_incionpopbypopmethods.sum(axis=0) # Removes the method of transmission`
+ - `Resultset.version` and `Resultset.revision` track which version and revision were used to create the results
+ - `Resultset.__add__, Resultset.__sub__` work properly (actually subtracts the values) and sames the `.parentnames` and `.operation` in the resultant Resultset
+ - `Resultset.pars.func = None` now, if you want to have the `func` which checks the version of the parameters, then add the pars to a `Parameterset`. This was making some project files 10x too big if they were run in parallel.
+ - `Multiresultset.rawresultsets` keeps the original Resultsets if `keepresultsetlist=True` when creating it else `None`. (Needs the Resultsets to have unique names)
+ - `utils.py`: `standard_cp` and `standard_dcp` now work as originally intended (sometimes the `_dcp` would be pointing at the original object)
+ - `utils.py`: `parallelpool` is a wrapper around `cf.ProcessPoolExecutor`
+ - Improved `restorelinks()` for all objects
+ - `Project.runsim()` takes a `parallelizer` kwarg for using a shared pool when running in parallel
+
 ## Revision 11
  - Fix `checkifparsetoverridesscenario()` not working with multiple budget years
  - Small FE fixes
@@ -78,6 +93,7 @@ Migration to a new version is done on load `P = get_latest_project("example", mi
  - The Optimization constraints are now proportional to the default budget (latest) for that progset (`proporigconstraints`). This means a 100% min constraint actually means the min budget is the latest budget - as opposed to having to scale it up or down depending on the total budget. If an Optim also has `contraints` and `absconstraints` those will also be followed and reflected in the constraints shown. But if you change the optimization then the `constraints` and `absconstraints` will be removed.
 
 ## [2.12.3] - 
+ - More memory efficient `ResultsSet.make()` function which indexes the raw arrays when assembling not after: changes results by ~1e-9
 ALL PLANNED / TODO:
  - !! TB/HIV co-infection mortality
  - Change acts to be better balanced

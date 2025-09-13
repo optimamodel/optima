@@ -147,7 +147,8 @@ def setrevisionmigrations(which='migrations'):
         ('7',   ('8',  '2024-09-27', None,                           'Update definition of "latediag" to be CD4<350 (and add separate output for undiagCD4<350 to align)')),
         ('8',   ('9',  '2024-10-07', None,                           'Update calculation of ICERs')),
         ('9',   ('10', '2024-10-09', None,                           'Add objective option for minimising number of prevalent undiagnosed HIV infections')),
-        ('10',   ('11', '2024-11-01', None,                           'A couple of FE fixes')),
+        ('10',  ('11', '2024-11-01', None,                           'A couple of FE fixes')),
+        ('11',  ('12', '2025-09-13', refreshlinks,                   'Add options for sensitivity runs and improvements')),
         ])
 
 
@@ -1712,6 +1713,55 @@ def resetnumcircfromdata(project=None, **kwargs):
     if project is not None:
         for parset in project.parsets.values():
             parset.pars['numcirc'].fromdata = 1.0
+
+def refreshlinks(project=None, **kwargs):
+    '''
+        Migration between revision 11 and 12
+        Restores links, which resets odict_customs to have their correct function which could sometimes get linked to other resultsets
+        or removed
+        Removes _dcp, makes sure __deepcopy__ is linked to the current object and projectref linked to current projectref
+        The causes of these mistakes has (hopefully been fixed)
+    '''
+    if project is not None:
+        project.restorelinks()
+        project.results = op.odict()
+
+        from types import MethodType
+
+        # Now we clean up obj._dcp and obj.__deepcopy__ which under rare circumstances could be bound to another object
+        def rebind_deepcopy_method(method, obj): # Create a new __deepcopy__ function that is sure to be bound to the correct object
+            return type(method)(method.__func__, obj)
+
+        seen = set()
+        def clean_obj(obj, descend=False):
+            if id(obj) in seen: return
+            seen.add(id(obj))
+
+            for key in ['scenparset', 'pars', 'programs']:
+                try: clean_obj(getattr(obj, key))
+                except: pass
+                try: clean_obj(obj[key])
+                except: pass
+
+            if hasattr(obj, '_dcp'):
+                del obj._dcp
+            if hasattr(obj, '__deepcopy__') and isinstance(obj.__deepcopy__, MethodType):
+                obj.__deepcopy__ = rebind_deepcopy_method(obj.__deepcopy__, obj)
+            if hasattr(obj, 'projectref'):
+                if obj.projectref is not None:
+                    try:
+                        linked_project = obj.projectref()
+                        if id(linked_project) != id(project):
+                            obj.projectref = op.dcp(obj.projectref)  # Removes the link, makes it a Link(LinkException)
+                    except op.LinkException:
+                        pass
+            if hasattr(obj, 'func') and obj.func is not None and isinstance(obj.func, MethodType):
+                clean_obj(obj.func.__self__)
+
+        P = project
+        for obj in [P, P.parsets, P.progsets] + P.parsets.values() + P.progsets.values() + P.scens.values() + P.results.values():
+            clean_obj(obj)
+
 
 
 ##########################################################################################
