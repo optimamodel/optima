@@ -342,8 +342,13 @@ class Resultset(object):
         def assemble(key, sumaxis=None, call=False):
             ''' Assemble results into an array '''
             if call:
-                # thisindices = None if type(assembleindices) == slice and assembleindices == slice(None) else {-1:assembleindices}
-                output = array([raw[i][key]()[...,assembleindices] if sumaxis is None else raw[i][key]()[...,assembleindices].sum(axis=sumaxis) for i in range(nraw)])
+                def callandindex(func):
+                    if memoryefficient:  # Assumes assembleindices is array
+                        return func(indices={-1:assembleindices})  # More efficient to index before unflattening as copies less data but changes results very slightly, 2.12.3 change
+                    else:
+                        return func()[...,assembleindices]
+
+                output = array([callandindex(raw[i][key]) if sumaxis is None else callandindex(raw[i][key]).sum(axis=sumaxis) for i in range(nraw)])
             else:
                 output = array([raw[i][key][...,assembleindices] if sumaxis is None else raw[i][key][...,assembleindices].sum(axis=sumaxis) for i in range(nraw)])
             return output
