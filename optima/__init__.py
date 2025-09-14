@@ -134,7 +134,7 @@ class OptimaException(Exception):
 #####################################################################################################################
 
 # File I/O
-from sciris  import loadobj, saveobj #, loadstr, dumpstr # Insist sciris is installed
+from sciris  import loadobj, zsave as saveobj #, loadstr, dumpstr # Insist sciris is installed
 from .fileio import * # CK: may want to tidy up
 
 # Project settings
