@@ -1724,6 +1724,7 @@ def refreshlinks(project=None, **kwargs):
     '''
     if project is not None:
         project.restorelinks()
+        project.propagateversion(None, None, vals='all')
         project.results = op.odict()
 
         from types import MethodType

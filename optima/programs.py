@@ -79,7 +79,7 @@ class Programset(object):
             self.projectref = Link(project)
         if self.programs is not None:
             if not isinstance(self.programs, odict_custom):
-                self.programs = odict_custom(self.programs, func=self.checkpropagateversion)
+                self.programs = odict_custom(self.programs, func=None)
             self.programs.func = self.checkpropagateversion
 
     def propagateversion(self, odict, keys, values, die=True):

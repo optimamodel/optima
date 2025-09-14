@@ -91,23 +91,26 @@ class Project(object):
             self.propagateversion(None, None, 'all')
 
     def propagateversion(self, odict, keys, vals):
-        if vals == 'all':
-            vals = []
-            if self.parsets  is not None: vals.extend(self.parsets.values())
-            if self.progsets is not None: vals.extend(self.progsets.values())
-        vals = promotetolist(vals)
-        for val in vals:
-            val.projectversion = self.version
+        if hasattr(self, 'version'):
+            if vals == 'all':
+                vals = []
+                if self.parsets  is not None: vals.extend(self.parsets.values())
+                if self.progsets is not None: vals.extend(self.progsets.values())
+            vals = promotetolist(vals)
+            for val in vals:
+                val.projectversion = self.version
 
     def checkversion(self, odict, keys, values):
-        values = promotetolist(values)
-        for val in values:
-            if not hasattr(val, 'projectversion'):
-                raise OptimaException(f'Cannot add {type(val)} "{val.name if hasattr(val, "name") else None}" to Project "{self.name}" because it is '
-                                      f'missing a projectversion so it might not be compatible with Project.version={self.version}')
-            if val.projectversion is not None and val.projectversion != self.version:
-                raise OptimaException(f'Cannot add {type(val)} "{val.name if hasattr(val, "name") else None}" to project "{self.name}" because it has '
-                                      f'a different version {val.projectversion} than the project {self.version}')
+        if hasattr(self, 'version'):
+            values = promotetolist(values)
+            for val in values:
+                if not hasattr(val, 'projectversion'):
+                    raise OptimaException(f'Cannot add {type(val)} "{val.name if hasattr(val, "name") else None}" to Project "{self.name}" because it is '
+                                          f'missing a projectversion so it might not be compatible with Project.version={self.version}')
+                    val.projectversion = self.version
+                if val.projectversion is not None and val.projectversion != self.version:
+                    raise OptimaException(f'Cannot add {type(val)} "{val.name if hasattr(val, "name") else None}" to project "{self.name}" because it has '
+                                          f'a different version {val.projectversion} than the project {self.version}')
 
     def checkpropagateversionlink(self, odict, keys, vals):
         vals = promotetolist(vals)
@@ -600,7 +603,7 @@ class Project(object):
         for itemname in ['parsets','progsets']:
             item = getattr(self, itemname)
             if not isinstance(item, odict_custom):
-                setattr(self, itemname, odict_custom(item, func=self.checkpropagateversionlink))
+                setattr(self, itemname, odict_custom(item, func=None))
             item.func = self.checkpropagateversionlink
         return None
 
