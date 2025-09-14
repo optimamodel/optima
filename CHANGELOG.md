@@ -6,10 +6,10 @@ Versions `2.11.4`, `2.12.0` and later all can be run using the branch `main`. A 
 
 ## Revision 12
  - `Resultset.quantile` tracks which quantiles where used to generate the results: either a list of 3 floats or `'allsamples'` which keeps all the samples.
- - `model()` takes `flattenraw` keyword to flatten the raw advancedtracking arrays to remove most of the values which are 0. `flattenraw = True` takes ~20% longer but it is more memory efficient and raw results are ~10x smaller. `flattenraw = False` is the default except when running with sensitivity and advancedtracking (which would previously cause OOM errors).
+ - `model()` takes `flattenraw` keyword to flatten the raw advancedtracking arrays to remove most of the values which are 0. `flattenraw = True` takes ~20% longer but it is more memory efficient and raw results are 80-90% smaller (`advancedtracking=True, keepraw=True`). `flattenraw = False` is the default except when running with sensitivity and advancedtracking (which would previously cause OOM errors).
      - **BREAKING CHANGE**: This only applies to `raw['incimethods'], raw['transitpopbypop']` so when those are accessed (even if `flattenraw = False`), you must call it: 
      `raw['incimethods']()` or `raw['transitpopbypop']()` which will unflatten or return the original.
- - **BREAKING CHANGE**: `raw['incionpopbypop']` has been removed as it was just a copy of `raw['incimethods']` ie: `raw['incionpopbypop'] = raw_incionpopbypopmethods.sum(axis=0) # Removes the method of transmission`
+ - **BREAKING CHANGE**: `raw['incionpopbypop']` has been removed as it was just a copy of `raw['incimethods']` (saves ~10% raw results size). Tt was defined as: `raw['incionpopbypop'] = raw_incionpopbypopmethods.sum(axis=0) # Removes the method of transmission`
  - `Resultset.version` and `Resultset.revision` track which version and revision were used to create the results
  - `Resultset.__add__, Resultset.__sub__` work properly (actually subtracts the values) and sames the `.parentnames` and `.operation` in the resultant Resultset
  - `Resultset.pars.func = None` now, if you want to have the `func` which checks the version of the parameters, then add the pars to a `Parameterset`. This was making some project files 10x too big if they were run in parallel.
