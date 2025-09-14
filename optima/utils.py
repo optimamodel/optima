@@ -311,7 +311,7 @@ def printdata(data, name='Variable', depth=1, maxlen=40, indent='', level=0, sho
         else: datastring=''
         return string+datastring
     
-    string = printentry(data).replace('\n',' \ ') # Remove newlines
+    string = printentry(data).replace('\n',r' \ ') # Remove newlines
     print(level*'..' + indent + name + ' | ' + string)
 
     if depth>0:
@@ -1248,8 +1248,8 @@ def sanitizefilename(rawfilename):
     returns a "sanitized" version that is more usable.
     '''
     import re # Import regular expression package.
-    filtername = re.sub('[\!\?\"\'<>]', '', rawfilename) # Erase certain characters we don't want at all: !, ?, ", ', <, >
-    filtername = re.sub('[:/\\\*\|,]', '_', filtername) # Change certain characters that might be being used as separators from what they were to underscores: space, :, /, \, *, |, comma
+    filtername = re.sub(r'[\!\?\"\'<>]', '', rawfilename) # Erase certain characters we don't want at all: !, ?, ", ', <, >
+    filtername = re.sub(r'[:/\\\*\|,]', '_', filtername) # Change certain characters that might be being used as separators from what they were to underscores: space, :, /, \, *, |, comma
     return filtername # Return the sanitized file name.
 
 
