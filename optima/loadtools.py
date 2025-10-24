@@ -1721,6 +1721,8 @@ def refreshlinks(project=None, **kwargs):
         or removed
         Removes _dcp, makes sure __deepcopy__ is linked to the current object and projectref linked to current projectref
         The causes of these mistakes has (hopefully been fixed)
+        
+        Also adds a raw output for raw_popadjustments (no additional migration needed as results are reset here)
     '''
     if project is not None:
         project.restorelinks()

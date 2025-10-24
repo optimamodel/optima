@@ -9,6 +9,7 @@ Versions `2.11.4`, `2.12.0` and later all can be run using the branch `main`. A 
  - `model()` takes `flattenraw` keyword to flatten the raw advancedtracking arrays to remove most of the values which are 0. `flattenraw = True` takes ~20% longer but it is more memory efficient and raw results are 80-90% smaller (`advancedtracking=True, keepraw=True`). `flattenraw = False` is the default except when running with sensitivity and advancedtracking (which would previously cause OOM errors).
      - **BREAKING CHANGE**: This only applies to `raw['incimethods'], raw['transitpopbypop']` so when those are accessed (even if `flattenraw = False`), you must call it: 
      `raw['incimethods']()` or `raw['transitpopbypop']()` which will unflatten or return the original.
+ - `model.py` adjusted to include a raw_popadjustments parameter tracking the number of people who are created or deleted each time step (as timestep values, not annualised)
  - **BREAKING CHANGE**: `raw['incionpopbypop']` has been removed as it was just a copy of `raw['incimethods']` (saves ~10% raw results size). Tt was defined as: `raw['incionpopbypop'] = raw_incionpopbypopmethods.sum(axis=0) # Removes the method of transmission`
  - `Resultset.version` and `Resultset.revision` track which version and revision were used to create the results
  - `Resultset.__add__, Resultset.__sub__` work properly (actually subtracts the values) and sames the `.parentnames` and `.operation` in the resultant Resultset

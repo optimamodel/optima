@@ -73,6 +73,7 @@ def model(simpars=None, settings=None, version=None, initpeople=None, initprops=
     raw_emi             = zeros((nstates, npops, npts))        # Number of immigrants by state per year
     raw_immi            = zeros((nstates, npops, npts))        # Number of immigrants by state per year
     raw_transitpopbypop = zeros((npops, nstates, npops, npts)) # Number of ageing AND risk transitions to and from each population and each state
+    raw_popadjustments  = zeros((npops, npts))                 # Number of people created or deleted to maintain desired population size
 
     # Biological and failure parameters
     prog            = maximum(eps,1-exp(-dt/array([simpars['progacute'], simpars['proggt500'], simpars['proggt350'], simpars['proggt200'], simpars['proggt50'], 1./simpars['deathlt50']]) ))
@@ -966,6 +967,7 @@ def model(simpars=None, settings=None, version=None, initpeople=None, initprops=
             newpeople = popsize[noinflows,t+1] - people[:,:,t+1][:,noinflows].sum(axis=0) # Number of people to add according to simpars['popsize'] (can be negative)
             people[susreg,noinflows,t+1]   += newpeople*thissusreg/allsus # Add new people
             people[progcirc,noinflows,t+1] += newpeople*thisprogcirc/allsus # Add new people
+            raw_popadjustments[noinflows,t+1] += newpeople #track how many new people we added (or removed)
 
             # Check population sizes are correct
             actualpeople = people[:,:,t+1][:,noinflows].sum()
@@ -987,6 +989,8 @@ def model(simpars=None, settings=None, version=None, initpeople=None, initprops=
                         errormsg = label + 'Warning, expected population size is nowhere near calculated population size (t=%f, pop=%s, wanted=%f, actual=%f, ratio=%f)' % (t, popkeys[p], wantedpeople, actualpeople, ratio)
                         if die: raise OptimaException(errormsg)
                         else: printv(errormsg, 1, verbose=verbose)
+                    
+                    raw_popadjustments[p,t+1] += wantedpeople - actualpeople
                     people[susnotonart,p,t+1] *= ratio # It's OK, so scale to match
 
 
@@ -1105,6 +1109,7 @@ def model(simpars=None, settings=None, version=None, initpeople=None, initprops=
         raw['incimethods']     = flatten_unflatten_func(raw_incionpopbypopmethods, axes_flatten=(0, 1, 2, 3), doflatten=flattenraw) # Axis 0 is method, 1 is acquired pop, 2-3 is cd4 state and pop of from pop
         raw['transitpopbypop'] = flatten_unflatten_func(raw_transitpopbypop, axes_flatten=(0, 1, 2), doflatten=flattenraw)
         raw['props']           = raw_propsarr
+        raw['popadjustments'] = raw_popadjustments
 
     checkfornegativepeople(people) # Check only once for negative people, right before finishing
 
