@@ -74,6 +74,14 @@ class Programset(object):
         if name == 'projectversion' and hasattr(self, 'programs') and self.programs is not None:
             self.propagateversion(None, None, self.programs.values())
 
+    def restorelinks(self, project=None):
+        if project is not None:
+            self.projectref = Link(project)
+        if self.programs is not None:
+            if not isinstance(self.programs, odict_custom):
+                self.programs = odict_custom(self.programs, func=None)
+            self.programs.func = self.checkpropagateversion
+
     def propagateversion(self, odict, keys, values, die=True):
         ''' Dies because it should be able to add .projectversion to a Program'''
         values = promotetolist(values)

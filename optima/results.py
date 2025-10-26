@@ -5,9 +5,9 @@ Version: 2018nov19
 """
 
 from optima import OptimaException, Link, Settings, odict, pchip, plotpchip, sigfig # Classes/functions
-from optima import uuid, today, makefilepath, getdate, printv, dcp, objrepr, defaultrepr, sanitizefilename, sanitize # Printing/file utilities
+from optima import revision, compareversions, supported_versions, uuid, today, makefilepath, getdate, printv, dcp, objrepr, defaultrepr, sanitizefilename, sanitize # Printing/file utilities
 from optima import quantile, findinds, findnearest, promotetolist, promotetoarray, checktype # Numeric utilities
-from numpy import array, nan, zeros, arange, shape, maximum, log, swapaxes
+from numpy import array, nan, zeros, arange, shape, maximum, log, swapaxes, array_equal
 from numbers import Number
 from xlsxwriter import Workbook
 
@@ -64,6 +64,10 @@ class Resultset(object):
         self.parsetuid = parsetuid
         self.progsetname = progsetname
         self.advancedtracking = advancedtracking
+        self.revision = revision
+        self.version = None
+        self.quantiles = quantiles if quantiles is not None else [0.5, 0.25, 0.75]  # Default quantiles is IQR
+        if self.quantiles in ['keepall', 'keep', 'all', 'allsamples']: self.quantiles = 'allsamples' # 'allsamples' is the designated name
 
         # Turn inputs into lists if not already
         if raw is None: raise OptimaException('To generate results, you must feed in model output: none provided')
@@ -74,6 +78,7 @@ class Resultset(object):
         if project is not None:
             if data is None: data = project.data # Copy data if not supplied -- DO worry if data don't exist!
             if settings is None: settings = project.settings
+            self.version = project.version
 
         # Fundamental quantities -- populated by project.runsim()
         if keepraw: self.raw = raw # Keep raw, but only if asked
@@ -83,10 +88,10 @@ class Resultset(object):
         self.projectref = Link(project) # ...and just store the whole project
         self.projectinfo = project.getinfo() # Store key info from the project separately in case the link breaks
         if pars is not None:
-            self.pars = pars # Keep pars
+            self.pars = pars.cp() # Keep pars, but remove the .func that links it to the parset
         else: # Try various other ways of getting pars
             if parsetname is not None and parsetname in self.projectref().parsets.keys():
-                self.pars = self.projectref().parsets[parsetname].pars
+                self.pars = self.projectref().parsets[parsetname].pars.cp()
             else: raise OptimaException('To generate results, you must feed in a parset or pardict: none provided')
         self.data = dcp(data) # Store data
         self.budget = budget if budget is not None else odict() # Store budget
@@ -154,7 +159,7 @@ class Resultset(object):
         for healthkey,healthname in zip(self.settings.healthstates, self.settings.healthstatesfull): # Health keys: ['susreg', 'progcirc', 'undx', 'dx', 'care', 'lost', 'usvl', 'svl']
             self.other['only'+healthkey]   = Result(healthname) # Pick out only people in these health states
             
-        if domake: self.make(raw, verbose=verbose, quantiles=quantiles, doround=doround, advancedtracking=advancedtracking)
+        if domake: self.make(raw, verbose=verbose, doround=doround, advancedtracking=advancedtracking)
     
     
     def __repr__(self):
@@ -181,7 +186,7 @@ class Resultset(object):
         
         # Keep the properties of this first one
         R1 = dcp(self) 
-        R1.name += ' + ' + R2.name
+        # R1.name += ' + ' + R2.name
         R1.uid = uuid()
         R1.created = today()
         
@@ -196,10 +201,13 @@ class Resultset(object):
             raise OptimaException(errormsg)
         
         R = self._checkresultset(R2)
-        popsize1 = dcp(R.main['popsize'])
-        popsize2 = dcp(R2.main['popsize'])
         if   operation=='add': R.name += ' + ' + R2.name
         elif operation=='sub': R.name += ' - ' + R2.name
+        R.parentnames = (self.name, R2.name)  # Saves a reference to the parent results in the sum/difference result
+        R.operation = operation
+
+        popsize1 = dcp(self.main['popsize'])
+        popsize2 = dcp(R2.main['popsize'])
 
         R.projectref = self.projectref # ...and just store the whole project
         
@@ -225,9 +233,11 @@ class Resultset(object):
                 resultsobjs[typekey].tot  = 0*res1.tot  # Reset
                 resultsobjs[typekey].pops = 0*res1.pops # Reset
                 for t in range(shape(res1.tot)[-1]):
-                    resultsobjs[typekey].tot[:,t] = (res1.tot[:,t]*popsize1.tot[0,t] + res2.tot[:,t]*popsize2.tot[0,t]) / (popsize1.tot[0,t] + popsize2.tot[0,t])
+                    if   operation=='add': resultsobjs[typekey].tot[:,t] = (res1.tot[:,t]*popsize1.tot[0,t] + res2.tot[:,t]*popsize2.tot[0,t]) / (popsize1.tot[0,t] + popsize2.tot[0,t])
+                    elif operation=='sub': resultsobjs[typekey].tot[:,t] = (res1.tot[:,t]*popsize1.tot[0,t] - res2.tot[:,t]*popsize2.tot[0,t]) / (popsize1.tot[0,t] + popsize2.tot[0,t])
                     for p in range(len(R.popkeys)):
-                        resultsobjs[typekey].pops[:,p,t] = (res1.pops[:,p,t]*popsize1.pops[0,p,t] + res2.pops[:,p,t]*popsize2.pops[0,p,t]) / (popsize1.pops[0,p,t] + popsize2.pops[0,p,t])
+                        if   operation=='add': resultsobjs[typekey].pops[:,p,t] = (res1.pops[:,p,t]*popsize1.pops[0,p,t] + res2.pops[:,p,t]*popsize2.pops[0,p,t]) / (popsize1.pops[0,p,t] + popsize2.pops[0,p,t])
+                        elif operation=='sub': resultsobjs[typekey].pops[:,p,t] = (res1.pops[:,p,t]*popsize1.pops[0,p,t] - res2.pops[:,p,t]*popsize2.pops[0,p,t]) / (popsize1.pops[0,p,t] + popsize2.pops[0,p,t])
             else: # It's a number, can just sum the arrays
                 for attr in ['pops', 'tot']:
                     if   operation=='add': this = getattr(res1, attr) + getattr(res2, attr)
@@ -248,7 +258,8 @@ class Resultset(object):
         return R
             
         
-    def make(self, raw, quantiles=None, annual=True, verbose=2, doround=False, lifeexpectancy=None, discountrate=None, yllconstrained=None, advancedtracking=False):
+    def make(self, raw, annual=True, verbose=2, doround=False, lifeexpectancy=None, discountrate=None, yllconstrained=None,
+             advancedtracking=False, memoryefficient=None):
         """
         Gather standard results into a form suitable for plotting with uncertainties.
         Life expectancy is measured in years, and the discount rate is in absolute
@@ -259,7 +270,6 @@ class Resultset(object):
         
         
         # Initialize
-        if quantiles      is None: quantiles      = [0.5, 0.25, 0.75] # Can't be a kwarg since mutable
         if lifeexpectancy is None: lifeexpectancy = 80 # 80 year life expectancy
         if discountrate   is None: discountrate   = 0.03 # Discounting of 3% for YLL only
         if yllconstrained is None: yllconstrained = False # False by default (count all YLL for deaths incurred during model run), True = count only YLL within the timeframe of the model run, to be used with care if at all
@@ -278,7 +288,7 @@ class Resultset(object):
         # Define functions
         def process(rawdata, percent=False):
             ''' Process the outputs -- sort into quantiles and optionally round if it's a number '''
-            processed = quantile(rawdata, quantiles=quantiles) # Calculate the quantiles
+            processed = quantile(rawdata, quantiles=self.quantiles) # Calculate the quantiles
             if doround and not percent: processed = processed.round() # Optionally round
             return processed
         
@@ -319,11 +329,28 @@ class Resultset(object):
                 naninds = list(set(range(nyears)) - set(validinds))
                 processed[blh][0][naninds] = nan # Convert back to nan if no data entered for any population
             return processed
-        
-        
-        def assemble(key):
+
+        if memoryefficient is None:
+            memoryefficient = compareversions(self.version if self.version is not None else supported_versions[-1], '2.12.3') >= 0
+
+        if memoryefficient: # More memory efficient to index the raw arrays when assembling, not after
+            assembleindices = indices
+            indices = slice(None)
+        else:
+            assembleindices = slice(None)
+
+        def assemble(key, sumaxis=None, call=False):
             ''' Assemble results into an array '''
-            output = dcp(array([raw[i][key] for i in range(nraw)]))
+            if call:
+                def callandindex(func):
+                    if memoryefficient:  # Assumes assembleindices is array
+                        return func(indices={-1:assembleindices})  # More efficient to index before unflattening as copies less data but changes results very slightly, 2.12.3 change
+                    else:
+                        return func()[...,assembleindices]
+
+                output = array([callandindex(raw[i][key]) if sumaxis is None else callandindex(raw[i][key]).sum(axis=sumaxis) for i in range(nraw)])
+            else:
+                output = array([raw[i][key][...,assembleindices] if sumaxis is None else raw[i][key][...,assembleindices].sum(axis=sumaxis) for i in range(nraw)])
             return output
         
         # Initialize arrays
@@ -354,9 +381,9 @@ class Resultset(object):
         data         = self.data
         if advancedtracking:
             alldiagcd4         = assemble('diagcd4')
-            alltransitpopbypop = assemble('transitpopbypop')
-            allincionpopbypop  = assemble('incionpopbypop')
-            allincimethods     = assemble('incimethods')
+            alltransitpopbypop = assemble('transitpopbypop',            call=True)
+            allincionpopbypop  = assemble('incimethods', sumaxis=(0,2), call=True) if memoryefficient else assemble('incimethods', sumaxis=0, call=True)
+            allincimethods     = assemble('incimethods', sumaxis=(2,3), call=True) if memoryefficient else assemble('incimethods', call=True)
 
         # Actually do calculations
         self.main['prev'].pops = process(allpeople[:,allplhiv,:,:][:,:,:,indices].sum(axis=1) / (eps+allpeople[:,:,:,indices].sum(axis=1)), percent=True) # Axis 1 is health state
@@ -576,15 +603,22 @@ class Resultset(object):
             self.other['propundxcd4lt350'].pops = process(allpeople[:,undxcd4lt350,:,:][:,:,:,indices].sum(axis=1)/maximum(allpeople[:,undx,:,:][:,:,:,indices].sum(axis=1),eps))
             self.other['propundxcd4lt350'].tot  = process(allpeople[:,undxcd4lt350,:,:][:,:,:,indices].sum(axis=(1,2))/maximum(allpeople[:,undx,:,:][:,:,:,indices].sum(axis=(1,2)),eps))
 
-            self.other['numincionpopbypop'].pops = process(allincionpopbypop[:, :, :, :, indices].sum(axis=2))  # Axis 2 is health state of causers
-            self.other['numincionpopbypop'].tot  = process(allincionpopbypop[:, :, :, :, indices].sum(axis=(2, 3)))  # Axis 3 is causer populations
-            # Uncomment the lines below to check that numincionpopbypop is being calculated properly compared with numinci - it will show as data on the plots
-            # self.other['numincionpopbypop'].datatot = process(array([allinci[:,:,indices],allinci[:,:,indices],allinci[:,:,indices]])) # summing over both causing state and population gives total per acquired population
-            # self.other['numincionpopbypop'].estimate = False  # Not an estimate because the model produced the "data" - should match up
+            if memoryefficient:
+                self.other['numincionpopbypop'].pops = process(allincionpopbypop[:, :, :, indices])
+                self.other['numincionpopbypop'].tot  = process(allincionpopbypop[:, :, :, indices].sum(axis=2))  # Axis 2 is causer populations
+                # Uncomment the lines below to check that numincionpopbypop is being calculated properly compared with numinci - it will show as data on the plots
+                # self.other['numincionpopbypop'].datatot = process(array([allinci[:,:,indices],allinci[:,:,indices],allinci[:,:,indices]])) # summing over both causing state and population gives total per acquired population
+                # self.other['numincionpopbypop'].estimate = False  # Not an estimate because the model produced the "data" - should match up
 
-            self.other['numinciallmethods'].pops = process(swapaxes(allincimethods[:,:,:,:,:,indices].sum(axis=(3,4)),1,2))  # Axis 3 is health state of causers, axis 4 is causer population
-                                                                    # put population acquired into axis 1, method into axis 2
-            self.other['numinciallmethods'].tot  = process(allincimethods[:,:,:,:,:,indices].sum(axis=(2,3,4)))  # Sum over everything except, axis 0:scenario, axis 1:method, axis 5:time
+                self.other['numinciallmethods'].pops = process(swapaxes(allincimethods[:,:,:,indices], 1, 2))  # put population acquired into axis 1, method into axis 2
+                self.other['numinciallmethods'].tot  = process(allincimethods[:,:,:,indices].sum(axis=2))  # Sum over everything except, axis 0:scenario, axis 1:method, axis 5:time
+
+            else:
+                self.other['numincionpopbypop'].pops = process(allincionpopbypop[:, :, :, :, indices].sum(axis=2))  # Axis 2 is health state of causers
+                self.other['numincionpopbypop'].tot  = process(allincionpopbypop[:, :, :, :, indices].sum(axis=(2, 3)))  # Axis 3 is causer populations
+
+                self.other['numinciallmethods'].pops = process(swapaxes(allincimethods[:,:,:,:,:,indices].sum(axis=(3,4)),1,2))  # Axis 3 is health state of causers, axis 4 is causer population
+                self.other['numinciallmethods'].tot  = process(allincimethods[:,:,:,:,:,indices].sum(axis=(2,3,4)))  # Sum over everything except, axis 0:scenario, axis 1:method, axis 5:time
 
             self.other['numincimethods'].pops = process(swapaxes(swapaxes(array([self.other['numinciallmethods'].pops[:,:,methodinds,:].sum(axis=2) for methodinds in self.settings.methodindsgroups]),0,1),1,2))
             self.other['numincimethods'].tot  = process(swapaxes(         array([self.other['numinciallmethods'].tot[:,methodinds,:].sum(axis=1) for methodinds in self.settings.methodindsgroups])   ,0,1))
@@ -602,6 +636,23 @@ class Resultset(object):
             self.other['only'+healthkey].tot =  process(allpeople[:,healthinds,:,:][:,:,:,indices].sum(axis=(1,2))) # Axis 1 is populations
 
         return None
+
+    def quantile(self, quantiles=None):
+        if self.quantiles != 'allsamples':
+            print(f'Warning: calling quantile on a Resultset that is already quantiled (with quantiles={self.quantiles}) could result in unexpected quantiles')
+
+        if quantiles is None:
+            quantiles = [0.5, 0.25, 0.75]
+        if quantiles in ['keepall', 'keep', 'all', 'allsamples']:
+            quantiles = 'allsamples'
+
+        self.quantiles = quantiles
+
+        for key,res in self.main.items() + self.other.items():
+            res.pops = quantile(res.pops, self.quantiles)
+            res.tot = quantile(res.tot, self.quantiles)
+
+        return self
 
     def export(self, filename=None, folder=None, bypop=True, sep=',', ind=None, key=None, sigfigs=None, writetofile=True, asexcel=True, exportother=False, verbose=2):
         """ Method for exporting results to an Excel or CSV file """
@@ -636,7 +687,7 @@ class Resultset(object):
         if exportother:
             otherkeys = self.other.keys()
             for otherkey in otherkeys:
-                try: #put this in a try-except as not all 'other' outputs are in the correct form e.g. incionpopbypop has a different shape to others to capture detailed transmission.
+                try: #put this in a try-except as not all 'other' outputs are in the correct form e.g. incimethods has a different shape to others to capture detailed transmission.
                     thisoutputstr = ''
                     if bypop: thisoutputstr += '\n' # Add a line break between different indicators
                     if bypop: popkeys = ['tot']+self.popkeys  # include total even for bypop -- WARNING, don't try to change this!
@@ -859,7 +910,7 @@ class Resultset(object):
 
 class Multiresultset(Resultset):
     ''' Structure for holding multiple kinds of results, e.g. from an optimization, or scenarios '''
-    def __init__(self, resultsetlist=None, name=None):
+    def __init__(self, resultsetlist=None, name=None, keepresultsetlist=False):
         # Basic info
         self.name = name if name else 'default'
         self.uid = uuid()
@@ -875,9 +926,13 @@ class Multiresultset(Resultset):
         elif type(resultsetlist) in [odict, dict]: resultsetlist = resultsetlist.values() # Convert from odict to list
         elif resultsetlist is None: raise OptimaException('To generate multi-results, you must feed in a list of result sets: none provided')
         else: raise OptimaException('Resultsetlist type "%s" not understood' % str(type(resultsetlist)))
+        self.rawresultsets = None
+        if keepresultsetlist:
+            self.rawresultsets = odict({result.name:result for result in resultsetlist})
+            assert array_equal(self.rawresultsets.keys(), self.resultsetnames), f'Cannot create rawresultsets when names conflict: {self.resultsetnames}'
         
         # Fundamental quantities -- populated by project.runsim()
-        setupattrs = ['tvec', 'dt', 'popkeys', 'projectinfo', 'projectref', 'parsetname', 'progsetname', 'pars', 'data', 'datayears', 'settings'] # Attributes that should be the same across all results sets
+        setupattrs = ['tvec', 'dt', 'popkeys', 'projectinfo', 'projectref', 'parsetname', 'progsetname', 'pars', 'data', 'datayears', 'settings', 'quantiles', 'version', 'revision'] # Attributes that should be the same across all results sets
         for attr in setupattrs: setattr(self, attr, None) # Shared attributes across all resultsets
 
         # Main and other results -- time series, by population -- get right structure, but clear out results -- WARNING, must match format above!
@@ -901,6 +956,7 @@ class Multiresultset(Resultset):
             for attr in setupattrs:
                 orig = getattr(self, attr)
                 new = getattr(rset, attr)
+                if hasattr(new, 'func'): new.func = None # remove pars.func, it will get added back if it gets added to a parset
                 self.setup[key][attr] = new # Copy here too
                 if orig is None: setattr(self, attr, new) # For most purposes, only need one copy of these things since won't differ
             

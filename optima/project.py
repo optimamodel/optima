@@ -91,23 +91,26 @@ class Project(object):
             self.propagateversion(None, None, 'all')
 
     def propagateversion(self, odict, keys, vals):
-        if vals == 'all':
-            vals = []
-            if self.parsets  is not None: vals.extend(self.parsets.values())
-            if self.progsets is not None: vals.extend(self.progsets.values())
-        vals = promotetolist(vals)
-        for val in vals:
-            val.projectversion = self.version
+        if hasattr(self, 'version'):
+            if vals == 'all':
+                vals = []
+                if self.parsets  is not None: vals.extend(self.parsets.values())
+                if self.progsets is not None: vals.extend(self.progsets.values())
+            vals = promotetolist(vals)
+            for val in vals:
+                val.projectversion = self.version
 
     def checkversion(self, odict, keys, values):
-        values = promotetolist(values)
-        for val in values:
-            if not hasattr(val, 'projectversion'):
-                raise OptimaException(f'Cannot add {type(val)} "{val.name if hasattr(val, "name") else None}" to Project "{self.name}" because it is '
-                                      f'missing a projectversion so it might not be compatible with Project.version={self.version}')
-            if val.projectversion is not None and val.projectversion != self.version:
-                raise OptimaException(f'Cannot add {type(val)} "{val.name if hasattr(val, "name") else None}" to project "{self.name}" because it has '
-                                      f'a different version {val.projectversion} than the project {self.version}')
+        if hasattr(self, 'version'):
+            values = promotetolist(values)
+            for val in values:
+                if not hasattr(val, 'projectversion'):
+                    raise OptimaException(f'Cannot add {type(val)} "{val.name if hasattr(val, "name") else None}" to Project "{self.name}" because it is '
+                                          f'missing a projectversion so it might not be compatible with Project.version={self.version}')
+                    val.projectversion = self.version
+                if val.projectversion is not None and val.projectversion != self.version:
+                    raise OptimaException(f'Cannot add {type(val)} "{val.name if hasattr(val, "name") else None}" to project "{self.name}" because it has '
+                                          f'a different version {val.projectversion} than the project {self.version}')
 
     def checkpropagateversionlink(self, odict, keys, vals):
         vals = promotetolist(vals)
@@ -146,6 +149,14 @@ class Project(object):
         copy = standard_cp(self)
         copy.restorelinks()
         return copy
+
+    def cp(self, movelinks=True):
+        if movelinks: print('WARNING: copying a Project will make it so that the parsets[:].projectref point to the new Project, not the old one which they are still included in. '
+              'It is recommended to deepcopy the project instead.')
+        copy = standard_cp(self)
+        if movelinks: copy.restorelinks()
+        return copy
+
 
     def __deepcopy__(self, memodict={}):
         copy = standard_dcp(self, memodict)
@@ -588,6 +599,12 @@ class Project(object):
                 item.projectref = Link(self)
             if hasattr(item, 'restorelinks'):
                 item.restorelinks()
+
+        for itemname in ['parsets','progsets']:
+            item = getattr(self, itemname)
+            if not isinstance(item, odict_custom):
+                setattr(self, itemname, odict_custom(item, func=None))
+            item.func = self.checkpropagateversionlink
         return None
 
 
@@ -635,8 +652,8 @@ class Project(object):
     def runsim(self, name=None, pars=None, simpars=None, start=None, end=None, dt=None, tvec=None, 
                budget=None, coverage=None, budgetyears=None, data=None, n=1, sample=None, tosample=None, randseed=None,
                addresult=True, overwrite=True, keepraw=False, doround=False, die=True, debug=False, verbose=None,
-               parsetname=None, progsetname=None, resultname=None, label=None, smoothness=None,
-               advancedtracking=None, parallel=False, ncpus=None, quantiles=None, **kwargs):
+               parsetname=None, progsetname=None, resultname=None, label=None, smoothness=None, flattenraw=None,
+               advancedtracking=None, parallel=False, parallelizer=None, ncpus=None, quantiles=None, **kwargs):
         ''' 
         This function runs a single simulation, or multiple simulations if n>1. This is the
         core function for actually running the model!!!!!!
@@ -647,6 +664,7 @@ class Project(object):
         if verbose is None: verbose = self.settings.verbose
         if advancedtracking is None: advancedtracking = self.settings.advancedtracking # settings.advancedtracking defaults to False
         if ncpus is not None: ncpus = int(ncpus)
+        if flattenraw is None: flattenraw = n > 1 and advancedtracking
 
         # Extract parameters either from a parset stored in project or from input
         if parsetname is None:
@@ -696,18 +714,19 @@ class Project(object):
         if n == 1 or (not parallel): # Run single simulation as quick as possible (or just not in parallel)
             for ind,simpars in enumerate(simparslist):
                 raw = model(simpars=simpars, settings=self.settings, version=self.version, die=die, debug=debug, verbose=verbose,
-                            label=self.name, advancedtracking=advancedtracking, **kwargs) # ACTUALLY RUN THE MODEL
+                            label=self.name, advancedtracking=advancedtracking, flattenraw=flattenraw, **kwargs) # ACTUALLY RUN THE MODEL
                 rawlist.append(raw)
 
         else: # Run in parallel
-            all_kwargs = {'settings':self.settings, 'version':self.version, 'die':die, 'debug':debug, 'verbose':verbose, 'label':self.name, 'advancedtracking':advancedtracking, **kwargs}
-            try: rawlist = parallelize(model, iterarg=simparslist, kwargs=all_kwargs, ncpus=ncpus) # ACTUALLY RUN THE MODEL
+            all_kwargs = {'settings':self.settings, 'version':self.version, 'die':die, 'debug':debug, 'verbose':verbose,
+                          'label':self.name, 'advancedtracking':advancedtracking, 'flattenraw':flattenraw, **kwargs}
+            try: rawlist = parallelize(model, iterarg=simparslist, kwargs=all_kwargs, ncpus=ncpus, parallelizer=parallelizer) # ACTUALLY RUN THE MODEL
             except:
                 printv('\nWARNING: Could not run in parallel probably because this process is already running in parallel. Trying in serial...', 1, verbose)
                 rawlist = []
                 for ind,simpars in enumerate(simparslist):
                     raw = model(simpars=simpars, settings=self.settings, version=self.version, die=die, debug=debug, verbose=verbose,
-                                label=self.name, advancedtracking=advancedtracking, **kwargs) # ACTUALLY RUN THE MODEL
+                                label=self.name, advancedtracking=advancedtracking, flattenraw=flattenraw, **kwargs) # ACTUALLY RUN THE MODEL
                     rawlist.append(raw)
 
         # Store results if required
