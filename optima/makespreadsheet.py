@@ -235,6 +235,14 @@ def getyearindspads(datayears, startyear, endyear):
 
     return startind, padstartyears, endind, padendyears
 
+def padrow(row, before_after, mode='constant', constant_values=(nan, nan)):
+    # only set up to use these values currently
+    assert mode == 'constant'
+    assert constant_values == (nan, nan)
+    before, after = before_after
+    return [constant_values[0]] * before + list(row) + [constant_values[1]] * after
+
+
 def padunpad(name, datarow, datayears, startyear, endyear):
     startind, padstartyears, endind, padendyears = getyearindspads(datayears, startyear, endyear)
 
@@ -243,7 +251,7 @@ def padunpad(name, datarow, datayears, startyear, endyear):
     if not all(isnan(datarow[endind+1:])):
         raise OptimaException(f'Cannot stop spreadsheet at year {endyear} because there is non-empty data in parameter {name} after then: {list(zip(datayears[endind+1:],datarow[endind+1:]))}')
 
-    newdatarow = pad(datarow[startind:endind+1], (padstartyears, padendyears), mode='constant', constant_values=(nan, nan))
+    newdatarow = padrow(datarow[startind:endind+1], (padstartyears, padendyears), mode='constant', constant_values=(nan, nan))
 
     if len(newdatarow) != round(endyear - startyear) + 1:
         raise OptimaException(f'Could not properly pad parameter, had length {len(newdatarow)} expected {round(startyear - endyear) + 1}. input: {dict(name=name, datarow=datarow, datayears=datayears, startyear=startyear, endyear=endyear)}')
