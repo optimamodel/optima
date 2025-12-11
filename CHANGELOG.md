@@ -4,6 +4,9 @@ Projects before `2.11.4` should be able to be migrated to version `2.11.4` witho
 
 Versions `2.11.4`, `2.12.0` and later all can be run using the branch `main`. A project will automatically update to the earliest supported version (currently `2.11.4`), but updating a project to the latest version can be done using the FE or `op.migrate(P, 'latest')`
 
+## Revision 13
+ - `P.makespreadsheet` fix bug when padding a row which has 0 dimensional arrays in it. Fixed by using list functions not `np.pad`.
+
 ## Revision 12
  - `Resultset.quantile` tracks which quantiles where used to generate the results: either a list of 3 floats or `'allsamples'` which keeps all the samples.
  - `model()` takes `flattenraw` keyword to flatten the raw advancedtracking arrays to remove most of the values which are 0. `flattenraw = True` takes ~20% longer but it is more memory efficient and raw results are 80-90% smaller (`advancedtracking=True, keepraw=True`). `flattenraw = False` is the default except when running with sensitivity and advancedtracking (which would previously cause OOM errors).
