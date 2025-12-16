@@ -380,7 +380,7 @@ def setparscenvalues(parset=None, parname=None, forwhom=None, startyear=None, ve
 
 
 
-def defaultscenarios(project=None, which=None, startyear=2023, endyear=2025, parset=-1, progset=-1, dorun=True, doplot=True, **kwargs):
+def defaultscenarios(project=None, which=None, startyear=2026, endyear=2040, parset=-1, progset=-1, dorun=True, doplot=True, **kwargs):
     '''
     Add default scenarios to a project...examples include min-max budgets and 90-90-90.
     Keyword arguments are passed to runscenarios().

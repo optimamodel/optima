@@ -252,7 +252,7 @@ def defaultobjectives(project=None, progsetname=None, which=None, verbose=2):
     objectives['propdiag']       = 0
     objectives['proptreat']      = 0
     objectives['propsuppressed'] = 0
-    objectives['start']          = 2023 # "Year to begin optimization"
+    objectives['start']          = 2026 # "Year to begin optimization"
     objectives['end']            = 2030 # "Year to project outcomes to"
     objectives['budget']         = defaultbudget # "Annual budget to optimize"
     if which in ['outcome', 'outcomes']:
