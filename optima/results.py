@@ -687,7 +687,10 @@ class Resultset(object):
         if exportother:
             otherkeys = self.other.keys()
             for otherkey in otherkeys:
-                try: #put this in a try-except as not all 'other' outputs are in the correct form e.g. incimethods has a different shape to others to capture detailed transmission.
+                # not all 'other' outputs are in the correct form e.g. incimethods has a different shape to others to capture detailed transmission.
+                if otherkey in ['numnewdiagcd4', 'numincionpopbypop', 'numtransitpopbypop', 'numincimethods', 'numinciallmethods']:
+                    continue
+                try:
                     thisoutputstr = ''
                     if bypop: thisoutputstr += '\n' # Add a line break between different indicators
                     if bypop: popkeys = ['tot']+self.popkeys  # include total even for bypop -- WARNING, don't try to change this!
@@ -703,7 +706,7 @@ class Resultset(object):
                             else:                                             thisoutputstr += ('%s'+sep) % sigfig(data[t], sigfigs=sigfigs)
                     outputstr += thisoutputstr #do this at the end to ensure entirely skipping outputs that don't work because they're more complicated
                 except:
-                    print (f'{otherkey} cannot be exported')
+                    raise OptimaException(f'{otherkey} result cannot be exported')
 
         # Handle budget and coverage
         thisbudget = []
@@ -1118,7 +1121,7 @@ class Multiresultset(Resultset):
         outputstr += '\n'+'\n'
         # Budgets first
         for prog in all_progs:
-            prog_budgets = [select_zeroth(self.budgets[scen_key][prog]) for scen_key in scen_keys]
+            prog_budgets = [select_zeroth(self.budgets[scen_key][prog]) if prog in self.budgets[scen_key] else "" for scen_key in scen_keys ]
             outputstr += sep.join(['Budget', prog]) + sep
             outputstr += sep.join(map(str,prog_budgets))
             outputstr += '\n'
@@ -1129,8 +1132,9 @@ class Multiresultset(Resultset):
 
         # % of budget
         for prog in all_progs:
-            prog_budgets_percent = [select_zeroth(self.budgets[scen_key][prog]) / total_budgets[scen_key] if total_budgets[scen_key] >0 else ""
-                                        for scen_key in scen_keys]
+            prog_budgets_percent = [select_zeroth(self.budgets[scen_key][prog]) / total_budgets[scen_key]
+                                        if prog in self.budgets[scen_key] and total_budgets[scen_key] >0 else ""
+                                            for scen_key in scen_keys]
             outputstr += sep.join(['% of budget', prog]) + sep
             outputstr += sep.join([str(out)+prcstr for out in prog_budgets_percent])
             outputstr += '\n'
@@ -1139,7 +1143,7 @@ class Multiresultset(Resultset):
         # % budget change from baseline
         for prog in all_progs:
             baseline_prog_budget = select_zeroth(self.budgets[baseline_key][prog])
-            prog_budgets_percent_change = [select_zeroth(self.budgets[scen_key][prog]-baseline_prog_budget) / baseline_prog_budget if baseline_prog_budget > 0 else nan
+            prog_budgets_percent_change = [select_zeroth(self.budgets[scen_key][prog]-baseline_prog_budget) / baseline_prog_budget if prog in self.budgets[scen_key] and baseline_prog_budget > 0 else nan
                                     for scen_key in scen_keys]
             outputstr += sep.join(['% budget change from baseline', prog]) + sep
             outputstr += sep.join([str(out)+prcstr+condstr for out in prog_budgets_percent_change])
@@ -1152,7 +1156,7 @@ class Multiresultset(Resultset):
 
         # coverage
         for prog in all_progs:
-            prog_coverages = [select_zeroth(self.coverages[scen_key][prog]) for scen_key in scen_keys]
+            prog_coverages = [select_zeroth(self.coverages[scen_key][prog]) if prog in self.coverages[scen_key] else "" for scen_key in scen_keys]
             outputstr += sep.join(['Coverage', prog]) + sep
             outputstr += sep.join(map(str, prog_coverages))
             outputstr += '\n'
@@ -1161,7 +1165,7 @@ class Multiresultset(Resultset):
         # % coverage change from baseline
         for prog in all_progs:
             baseline_prog_coverage = select_zeroth(self.coverages[baseline_key][prog])
-            prog_coverages_percent_change = [select_zeroth(self.coverages[scen_key][prog]-baseline_prog_coverage) / baseline_prog_coverage if baseline_prog_coverage > 0 else nan
+            prog_coverages_percent_change = [select_zeroth(self.coverages[scen_key][prog]-baseline_prog_coverage) / baseline_prog_coverage if prog in self.coverages[scen_key] and baseline_prog_coverage > 0 else nan
                                     for scen_key in scen_keys]
             outputstr += sep.join(['% coverage change from baseline', prog]) + sep
             outputstr += sep.join([str(out)+prcstr+condstr for out in prog_coverages_percent_change])

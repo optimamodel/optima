@@ -492,13 +492,14 @@ def checkifparsetoverridesscenario(project, parset, scen, progset=None, progendy
 
         targetparsnames = [par['name'] for par in targetpars]
         targetparsstart = [par['startyear'] for par in targetpars]
-        targetparsend = [par['endyear'] for par in targetpars]
+        targetparsend = [par['endyear'] for par in targetpars if 'endyear' in par]
+        targetparsend = None if targetparsend == [] else max(targetparsend)
 
         warning, parsoverridingparsdict, overridetimes, overridevals = \
             checkifparsoverridepars(origpars,
                                     targetparsnames,
                                     progstartyear=min(targetparsstart),
-                                    progendyear=max(targetparsend)) # note that assumes that all Pars are set starting in the same year, and ending in the same year but this is good enough? for a warning
+                                    progendyear=targetparsend) # note that assumes that all Pars are set starting in the same year, and ending in the same year but this is good enough? for a warning
 
         combinedwarningmsg, warningmessages = None, None
         if createmessages:

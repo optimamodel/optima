@@ -150,6 +150,7 @@ def setrevisionmigrations(which='migrations'):
         ('10',  ('11', '2024-11-01', None,                           'A couple of FE fixes')),
         ('11',  ('12', '2025-09-13', refreshlinks,                   'Add options for sensitivity runs and improvements')),
         ('12',  ('13', '2025-12-12', None,                           'Fix makespreadsheet bug')),
+        ('13',  ('14', '2026-02-13', None,                           'Add deathbycarestatus and plhivbycarestatus plots + bug fixes')),
         ])
 
 

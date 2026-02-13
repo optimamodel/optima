@@ -306,12 +306,20 @@ def makeplots(results=None, toplot=None, die=False, verbose=2, plotstartyear=Non
     ## Add deaths by CD4 plot -- WARNING, only available if results includes raw
     if 'deathbycd4' in toplot:
         toplot.remove('deathbycd4') # Because everything else is passed to plotepi()
-        allplots['deathbycd4'] = plotbycd4(results, whattoplot='death', die=die, fig=fig, **kwargs)
+        allplots['deathbycd4'] = plotbycd4(results, whattoplot='death', plotstartyear=plotstartyear, plotendyear=plotendyear, die=die, fig=fig, **kwargs)
     
     ## Add PLHIV by CD4 plot -- WARNING, only available if results includes raw
     if 'plhivbycd4' in toplot:
         toplot.remove('plhivbycd4') # Because everything else is passed to plotepi()
-        allplots['plhivbycd4'] = plotbycd4(results, whattoplot='people', die=die, fig=fig, **kwargs)
+        allplots['plhivbycd4'] = plotbycd4(results, whattoplot='people', plotstartyear=plotstartyear, plotendyear=plotendyear, die=die, fig=fig, **kwargs)
+
+    if 'deathbycarestatus' in toplot:
+        toplot.remove('deathbycarestatus')  # Because everything else is passed to plotepi()
+        allplots['deathbycarestatus'] = plotbycd4(results, whattoplot='death', splitby='carestatus', plotstartyear=plotstartyear, plotendyear=plotendyear, die=die, fig=fig, **kwargs)
+
+    if 'plhivbycarestatus' in toplot:
+        toplot.remove('plhivbycarestatus')  # Because everything else is passed to plotepi()
+        allplots['plhivbycarestatus'] = plotbycd4(results, whattoplot='people', splitby='carestatus', plotstartyear=plotstartyear, plotendyear=plotendyear, die=die, fig=fig, **kwargs)
 
     ## Plot new infections, transitions, deaths and other death, giving total change in PLHIV
     if 'changeinplhivallsources' in toplot:
@@ -2101,8 +2109,10 @@ def plotbymethod(results, toplot=None, uncertainty=True, die=True, showdata=True
 ##################################################################
 ## Plot things by CD4
 ##################################################################
-def plotbycd4(results=None, whattoplot='people', figsize=globalfigsize, lw=2, titlesize=globaltitlesize, labelsize=globallabelsize, 
-                ticksize=globalticksize, legendsize=globallegendsize, ind=0, interactive=False, **kwargs):
+def plotbycd4(results=None, whattoplot='people', splitby='cd4', figsize=globalfigsize, lw=2, titlesize=globaltitlesize, labelsize=globallabelsize,
+              ticksize=globalticksize, legendsize=globallegendsize, ind=0, die=False,
+              dotsize=30, showdata=True,
+              plotstartyear=None, plotendyear=None, interactive=False, **kwargs):
     ''' 
     Plot deaths or people by CD4
     NOTE: do not call this function directly; instead, call via plotresults().
@@ -2130,10 +2140,15 @@ def plotbycd4(results=None, whattoplot='people', figsize=globalfigsize, lw=2, ti
     ax = []
     
     titlemap = {'people': 'PLHIV', 'death': 'Deaths'}
-    settings = results.projectref().settings
-    hivstates = settings.hivstates
+    datanamemap = {'people': 'numplhiv', 'death': 'numdeath'}
+    settings = results.settings
+    states = settings.hivstates if splitby == 'cd4' else settings.healthstates[2:]
+    statenames = settings.hivstatesfull if splitby == 'cd4' else settings.healthstatesfull[2:]
+    # hivstates = settings.hivstates
     indices = arange(0, len(results.raw[ind]['tvec']), int(round(1.0/(results.raw[ind]['tvec'][1]-results.raw[ind]['tvec'][0]))))
-    colors = gridcolors(len(hivstates))
+    colors = gridcolors(len(states))
+
+    startind, endind = getplotinds(plotstartyear=plotstartyear, plotendyear=plotendyear, tvec=results.tvec, die=die)
     
     for plt in range(nsims): # WARNING, copied from plotallocs()
         bottom = 0.*results.tvec # Easy way of setting to 0...
@@ -2142,13 +2157,42 @@ def plotbycd4(results=None, whattoplot='people', figsize=globalfigsize, lw=2, ti
         
         ## Do the plotting
         ax.append(fig.add_subplot(nsims,1,plt+1))
-        for s,state in enumerate(reversed(hivstates)): # Loop backwards so correct ordering -- first one at the top, not bottom
+        for s,(state,statefullname) in enumerate(reversed(list(zip(states, statenames)))): # Loop backwards so correct ordering -- first one at the top, not bottom
             if ismultisim: thisdata += results.raw[plt][ind][whattoplot][getattr(settings,state),:,:].sum(axis=(0,1))[indices] # If it's a multisim, need an extra index for the plot number
             else:          thisdata += results.raw[ind][whattoplot][getattr(settings,state),:,:].sum(axis=(0,1))[indices] # Get the best estimate
-            ax[-1].fill_between(results.tvec, bottom, thisdata, facecolor=colors[s], alpha=1, lw=0)
+            ax[-1].fill_between(results.tvec, bottom, thisdata, facecolor=colors[s], alpha=1, lw=0, label=statefullname)
             bottom = dcp(thisdata) # Set the bottom so it doesn't overwrite
             ax[-1].plot((0, 0), (0, 0), color=colors[len(colors)-s-1], linewidth=10) # Colors are in reverse order
             allydata.append(thisdata)
+
+        ## Try to plot data if we can get it - BASED ON plotepi()
+        datattrtype = 'tot'  # currently plotbycd4 only plots total - not by population
+        factor = 1 # only numbers currently not percentage
+        isestimate = results.main[datanamemap[whattoplot]].estimate
+        datacolor = estimatecolor if isestimate else realdatacolor  # Light grey for
+
+        try:  # Try loading actual data -- very likely to not exist
+            tmp = getattr(results.main[datanamemap[whattoplot]], 'data' + datattrtype)
+            databest = tmp[0][0]
+            datalow = tmp[1][0]
+            datahigh = tmp[2][0]
+        except:  # Don't worry if no data
+            databest = None
+            datalow = None
+            datahigh = None
+
+        if databest is not None and showdata:
+            ydataexists = logical_and(isfinite(datalow), isfinite(datahigh))
+            ydata = factor * array([datalow, datahigh])[:, ydataexists]
+            xdata = array([results.datayears, results.datayears])[:, ydataexists]
+            allydata.extend(ydata[0])
+            allydata.extend(ydata[1])
+            ax[-1].plot(xdata, ydata, c=datacolor, lw=1)
+            ax[-1].scatter(results.datayears, factor * databest, color=realdatacolor, s=dotsize, lw=0, zorder=datazorder)  # Without zorder, renders behind the graph
+            if isestimate:  # This is stupid, but since IE can't handle linewidths sensibly, plot a new point smaller than the other one
+                ydata = factor * databest
+                allydata.append(ydata)
+                ax[-1].scatter(results.datayears, ydata, color=estimatecolor, s=dotsize * 0.6, lw=0, zorder=datazorder + 1)
         
         ## Configure plot -- WARNING, copied from plotepi()
         boxoff(ax[-1])
@@ -2163,8 +2207,10 @@ def plotbycd4(results=None, whattoplot='people', figsize=globalfigsize, lw=2, ti
         else: ax[-1].set_title(titlemap[whattoplot])
         setylim(allydata, ax[-1])
         ax[-1].set_xlim((results.tvec[0], results.tvec[-1]))
-        ax[-1].legend(results.settings.hivstatesfull, **legendsettings) # Multiple entries, all populations
-        
+        handles, labels = ax[-1].get_legend_handles_labels()
+        ax[-1].legend(handles[::-1], labels[::-1], **legendsettings) # Multiple entries, all populations
+        ax[-1].set_xlim((results.tvec[startind], results.tvec[endind]))
+
     SIticks(ax=ax)
     
     return fig    
