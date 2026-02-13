@@ -687,7 +687,10 @@ class Resultset(object):
         if exportother:
             otherkeys = self.other.keys()
             for otherkey in otherkeys:
-                try: #put this in a try-except as not all 'other' outputs are in the correct form e.g. incimethods has a different shape to others to capture detailed transmission.
+                # not all 'other' outputs are in the correct form e.g. incimethods has a different shape to others to capture detailed transmission.
+                if otherkey in ['numnewdiagcd4', 'numincionpopbypop', 'numtransitpopbypop', 'numincimethods', 'numinciallmethods']:
+                    continue
+                try:
                     thisoutputstr = ''
                     if bypop: thisoutputstr += '\n' # Add a line break between different indicators
                     if bypop: popkeys = ['tot']+self.popkeys  # include total even for bypop -- WARNING, don't try to change this!
@@ -703,7 +706,7 @@ class Resultset(object):
                             else:                                             thisoutputstr += ('%s'+sep) % sigfig(data[t], sigfigs=sigfigs)
                     outputstr += thisoutputstr #do this at the end to ensure entirely skipping outputs that don't work because they're more complicated
                 except:
-                    print (f'{otherkey} cannot be exported')
+                    raise OptimaException(f'{otherkey} result cannot be exported')
 
         # Handle budget and coverage
         thisbudget = []
