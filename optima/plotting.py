@@ -2165,7 +2165,7 @@ def plotbycd4(results=None, whattoplot='people', splitby='cd4', figsize=globalfi
             ax[-1].plot((0, 0), (0, 0), color=colors[len(colors)-s-1], linewidth=10) # Colors are in reverse order
             allydata.append(thisdata)
 
-        ## Try to plot data if we can get it
+        ## Try to plot data if we can get it - BASED ON plotepi()
         datattrtype = 'tot'  # currently plotbycd4 only plots total - not by population
         factor = 1 # only numbers currently not percentage
         isestimate = results.main[datanamemap[whattoplot]].estimate
@@ -2173,7 +2173,6 @@ def plotbycd4(results=None, whattoplot='people', splitby='cd4', figsize=globalfi
 
         try:  # Try loading actual data -- very likely to not exist
             tmp = getattr(results.main[datanamemap[whattoplot]], 'data' + datattrtype)
-            print('TMP', tmp)
             databest = tmp[0][0]
             datalow = tmp[1][0]
             datahigh = tmp[2][0]
@@ -2184,7 +2183,6 @@ def plotbycd4(results=None, whattoplot='people', splitby='cd4', figsize=globalfi
 
         if databest is not None and showdata:
             ydataexists = logical_and(isfinite(datalow), isfinite(datahigh))
-            print(ydataexists)
             ydata = factor * array([datalow, datahigh])[:, ydataexists]
             xdata = array([results.datayears, results.datayears])[:, ydataexists]
             allydata.extend(ydata[0])
