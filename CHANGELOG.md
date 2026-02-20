@@ -4,6 +4,9 @@ Projects before `2.11.4` should be able to be migrated to version `2.11.4` witho
 
 Versions `2.11.4`, `2.12.0` and later all can be run using the branch `main`. A project will automatically update to the earliest supported version (currently `2.11.4`), but updating a project to the latest version can be done using the FE or `op.migrate(P, 'latest')`
 
+## Revision 15
+ - Bug fixes: optimization doesn't throw error when fully constrained, scenario FE error with warning
+
 ## Revision 14
  - Add 'deathbycarestatus' and 'plhivbycarestatus' plots to backend (using improved `plotbycd4()`)
  - Bug fixes: no Parscen 'endyear' and results export when different scenarios have different programs
