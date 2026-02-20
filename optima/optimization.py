@@ -8,7 +8,7 @@ from optima import OptimaException, Link, Multiresultset, ICER, asd, getresults 
 from optima import printv, dcp, odict, findinds, today, getdate, uuid, objrepr, promotetoarray, findnearest, sanitize, \
     inclusiverange, sigfig, compareversions, cpu_count # Utilities
 
-from numpy import zeros, ones, empty, arange, array, inf, isfinite, argmin, argsort, nan, floor, concatenate, exp, sqrt, logical_and, ceil
+from numpy import zeros, ones, empty, arange, array, inf, isfinite, argmin, argsort, nan, floor, concatenate, exp, sqrt, logical_and, ceil, array_equal
 from numpy.random import random, seed, randint
 from time import time
 import optima as op # Used by minmoney, at some point should make syntax consistent
@@ -1286,14 +1286,14 @@ def minoutcomes(project=None, optim=None, tvec=None, absconstraints=None, verbos
         printv('Outcome for zero budget (worst possible):    %0.0f' % extremeoutcomes['Zero'], 2, verbose)
 
     # Check extremes -- not quite fair since not constrained but oh well
-    if extremeoutcomes['Infinite'] >= extremeoutcomes['Zero']:
+    if extremeoutcomes['Infinite'] >= extremeoutcomes['Zero'] and not array_equal(extremeresults['Zero'].budget[:], extremeresults['Infinite'].budget[:]):
         errormsg = 'Infinite funding has a worse or identical outcome to no funding: %s vs. %s' % (extremeoutcomes['Infinite'], extremeoutcomes['Zero'])
         raise OptimaException(errormsg)
     for k,key in enumerate(extremeoutcomes.keys()):
         if extremeoutcomes[key] > extremeoutcomes['Zero']:
             errormsg = 'WARNING, funding for %s has a worse outcome than no funding: %s vs. %s' % (key, extremeoutcomes[key], extremeoutcomes['Zero'])
             if die: raise OptimaException(errormsg)
-            else:   print(errormsg)
+            else:   printv(errormsg, 1, verbose)
 
     ## Loop over budget scale factors
     tmpresults = odict()
