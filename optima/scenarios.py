@@ -492,7 +492,7 @@ def checkifparsetoverridesscenario(project, parset, scen, progset=None, progendy
 
         targetparsnames = [par['name'] for par in targetpars]
         targetparsstart = [par['startyear'] for par in targetpars]
-        targetparsend = [par['endyear'] for par in targetpars if 'endyear' in par]
+        targetparsend = [par['endyear'] if ('endyear' in par) and (par['endyear'] is not None) else 2100. for par in targetpars]
         targetparsend = None if targetparsend == [] else max(targetparsend)
 
         warning, parsoverridingparsdict, overridetimes, overridevals = \
