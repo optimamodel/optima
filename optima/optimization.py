@@ -1936,8 +1936,8 @@ def minmoney(project=None, optim=None, tvec=None, verbose=None, maxtime=None, fi
         pl.title('Optimized')
     
     # Impose lower limits only !!! why is this here ???
-    for key in absconstraints['min']:
-        newbudget[key] = max(newbudget[key], absconstraints['min'][key])
+    # for key in absconstraints['min']:
+    #     newbudget[key] = max(newbudget[key], absconstraints['min'][key])
     
     ## Tidy up -- WARNING, need to think of a way to process multiple inds
     args['doconstrainbudget'] = True
