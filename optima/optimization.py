@@ -8,7 +8,7 @@ from optima import OptimaException, Link, Multiresultset, ICER, asd, getresults 
 from optima import printv, dcp, odict, findinds, today, getdate, uuid, objrepr, promotetoarray, findnearest, sanitize, \
     inclusiverange, sigfig, compareversions, cpu_count # Utilities
 
-from numpy import zeros, ones, empty, arange, array, inf, isfinite, argmin, argsort, nan, floor, concatenate, exp, sqrt, logical_and, ceil
+from numpy import zeros, ones, empty, arange, array, inf, isfinite, argmin, argsort, nan, floor, concatenate, exp, sqrt, logical_and, ceil, array_equal
 from numpy.random import random, seed, randint
 from time import time
 import optima as op # Used by minmoney, at some point should make syntax consistent
@@ -673,7 +673,7 @@ def outcomecalc(budgetvec=None, which=None, project=None, parsetname=None, progs
     tvec       = project.settings.maketvec(end=objectives['end'])
     # initpeople = None # Not anymore! # WARNING, unfortunately initpeople is still causing mismatches -- turning off for now despite the large (2.5x) performance penalty
     if initpeople is None: startind = None
-    elif startind is None: startind = findnearest(tvec, objectives['start']) # Assume initpeople is from the start of the optimization
+    elif startind is None: raise Exception('initpeople is set but startind is not! Do not know when to start from!') # startind = findnearest(tvec, objectives['start']) # Assume initpeople is from the start of the optimization
     else: pass      # Assume initpeople and startind are corresponding to the same time
     results = project.runsim(pars=thisparsdict, parsetname=parsetname, progsetname=progsetname, coverage=thiscoverage, budget=budgetarray, budgetyears=paryears, tvec=tvec, initpeople=initpeople, initprops=initprops, startind=startind, verbose=0, label=project.name+'-optim-outcomecalc', doround=False, addresult=False, advancedtracking=False, **kwargs)
 
@@ -1286,14 +1286,14 @@ def minoutcomes(project=None, optim=None, tvec=None, absconstraints=None, verbos
         printv('Outcome for zero budget (worst possible):    %0.0f' % extremeoutcomes['Zero'], 2, verbose)
 
     # Check extremes -- not quite fair since not constrained but oh well
-    if extremeoutcomes['Infinite'] >= extremeoutcomes['Zero']:
+    if extremeoutcomes['Infinite'] >= extremeoutcomes['Zero'] and not array_equal(extremeresults['Zero'].budget[:], extremeresults['Infinite'].budget[:]):
         errormsg = 'Infinite funding has a worse or identical outcome to no funding: %s vs. %s' % (extremeoutcomes['Infinite'], extremeoutcomes['Zero'])
         raise OptimaException(errormsg)
     for k,key in enumerate(extremeoutcomes.keys()):
         if extremeoutcomes[key] > extremeoutcomes['Zero']:
             errormsg = 'WARNING, funding for %s has a worse outcome than no funding: %s vs. %s' % (key, extremeoutcomes[key], extremeoutcomes['Zero'])
             if die: raise OptimaException(errormsg)
-            else:   print(errormsg)
+            else:   printv(errormsg, 1, verbose)
 
     ## Loop over budget scale factors
     tmpresults = odict()
@@ -1561,7 +1561,7 @@ def minmoney(project=None, optim=None, tvec=None, verbose=None, maxtime=None, fi
 
     # Calculate initial people distribution
     results = project.runsim(pars=parset.pars, parsetname=optim.parsetname, progsetname=optim.progsetname, tvec=tvec, keepraw=True, verbose=0, label=project.name+'-minoutcomes', addresult=False, advancedtracking=True)
-    startind = findnearest(results.raw[0]['tvec'], optim.objectives['start']-1) ## !!! -1 is because of parameter interpolation / smoothing from the current parameters to the budget parameters, we have to start a year before the budget starts
+    startind = findnearest(results.raw[0]['tvec'], min(optim.objectives['base'], optim.objectives['start']) -1) ## !!! -1 is because of parameter interpolation / smoothing from the current parameters to the budget parameters, we have to start a year before the budget starts
     initpeople = results.raw[0]['people'][:,:,startind] # Pull out the people array corresponding to the start of the optimization -- there shouldn't be multiple raw arrays here
     initprops  = results.raw[0]['props'][:,startind,:]  # Need initprops if running with initpeople
     args.update({'startind':startind, 'initpeople':initpeople, 'initprops':initprops})
@@ -1936,8 +1936,8 @@ def minmoney(project=None, optim=None, tvec=None, verbose=None, maxtime=None, fi
         pl.title('Optimized')
     
     # Impose lower limits only !!! why is this here ???
-    for key in absconstraints['min']:
-        newbudget[key] = max(newbudget[key], absconstraints['min'][key])
+    # for key in absconstraints['min']:
+    #     newbudget[key] = max(newbudget[key], absconstraints['min'][key])
     
     ## Tidy up -- WARNING, need to think of a way to process multiple inds
     args['doconstrainbudget'] = True
