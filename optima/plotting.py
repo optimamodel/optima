@@ -13,7 +13,7 @@ Version: 2017jun03
 
 from optima import OptimaException, Resultset, Multiresultset, Parameterset, Settings, ICER, odict, printv, gridcolors, vectocolor, alpinecolormap, makefilepath, sigfig, dcp, findinds, findnearest, promotetolist, saveobj, promotetoodict, promotetoarray, boxoff, getvalidinds
 from optima import setylim, commaticks, SIticks
-from numpy import array, ndim, maximum, arange, zeros, mean, shape, isnan, linspace, minimum, concatenate,invert, swapaxes, flip, abs,cumsum, logical_and, isfinite, newaxis # Numeric functions
+from numpy import array, ndim, maximum, arange, zeros, mean, shape, isnan, linspace, minimum, concatenate,invert, swapaxes, flip, abs,cumsum, logical_and, isfinite, newaxis, sort # Numeric functions
 from pylab import gcf, get_fignums, close, ion, ioff, isinteractive, figure # Plotting functions
 from matplotlib.backends.backend_agg import new_figure_manager_given_figure as nfmgf # Warning -- assumes user has agg on their system, but should be ok. Use agg since doesn't require an X server
 from matplotlib.figure import Figure # This is the non-interactive version
@@ -2305,7 +2305,7 @@ def plotcostcov(program=None, year=None, parset=None, results=None, plotoptions=
         year = program.costcovfn.ccopars['t'] # Populate with default
     if not isinstance(parset, Parameterset):
         raise OptimaException('Please supply a parset, not "%s"' % parset)
-    year = promotetoarray(year)
+    year = sort(promotetoarray(year))
     colors = gridcolors(len(year))
     plotdata = odict()
     
